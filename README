@@ -1,3 +1,19 @@
+Web page: http://john.ccac.rwth-aachen.de:8000/as/
+Source repository: http://john.ccac.rwth-aachen.de:8000/ftp/as/source/c_version/
+
+This is a mirror of Alfred Arnold's "The Macroassembler AS". It is generated
+from the source drops at the source repository. No more detailed revision history
+(say CVS) is available as of this writing.
+
+For downloading, use repo/download.sh on the upstream branch. Then rebase the master
+branch onto it.
+
+I accept pull requests to the master branch, the upstream branch will remain pristine.
+
+- kuba@mareimbrium.org
+
+---
+
 Hello, AS-Users,
 
 OK, here it is, the C-Version of AS that is theoretically compilable
