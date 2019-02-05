@@ -28,13 +28,22 @@ done < <(
     | gawk 'match($0, /<a href="(asl-1.41r[0-9]+|asl-current-[^.]+)\.tar\.bz2">.*([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2})/, cap) { print cap[1] " " cap[2] }' \
 )
 
+unset auto
 for index in ${!archives[*]}; do
   archive="${archives[$index]}"
   time="${times[$index]}"
   echo "${revisions}" | grep "${archive}" >/dev/null && continue || true
   
-  read -p "No revision ${archive} / ${time}, download? [Y/n] " -e -i Y
-  [[ ${REPLY,,} =~ ^y ]] || continue
+  if [ ! ${auto} ]; then
+    read -p "No revision ${archive} / ${time}, download? [Y/n/auto] " -e -i Y
+    case "${REPLY}" in
+      Y) ;;
+    auto)
+      auto=1 ;;
+    *)
+      continue ;;
+    esac
+  fi
 
   case "${archive}" in
   asl-current-142-bld16) # the .tar.bz2 is damaged
