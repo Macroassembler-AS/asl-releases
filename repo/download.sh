@@ -1,9 +1,11 @@
 #! /usr/bin/env bash
 set -e
 URL=http://john.ccac.rwth-aachen.de:8000/ftp/as/source/c_version/
+AUTHOR="Alfred Arnold <alfred@ccac.rwth-aachen.de>"
 
 git status --short | while read; do
   echo "There are uncommitted changes in the repository, aborting.">&2
+  break
   exit 1
 done
 
@@ -14,15 +16,24 @@ read revisions < <(
 )
 
 echo "Downloading archive list...">&2
-read -a archives < <(
+unset archives times
+index=0
+
+while read archive time1 time2; do
+  archives[${index}]=${archive}
+  times[${index}]="${time1}T${time2}"
+  index=$((${index}+1))
+done < <(
   curl --silent "$URL" \
-    | gawk 'BEGIN {ORS=" "}  match($0, /<a href="(asl-1.41r[0-9]+|asl-current-[^.]+)\.tar\.bz2">/, cap) { print cap[1] } END {ORS=""; print"\n"}' \
+    | gawk 'match($0, /<a href="(asl-1.41r[0-9]+|asl-current-[^.]+)\.tar\.bz2">.*([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2})/, cap) { print cap[1] " " cap[2] }' \
 )
 
-for archive in "${archives[@]}"; do
+for index in ${!archives[*]}; do
+  archive="${archives[$index]}"
+  time="${times[$index]}"
   echo "${revisions}" | grep "${archive}" >/dev/null && continue || true
   
-  read -p "No revision ${archive}, download? [Y/n] " -e -i Y
+  read -p "No revision ${archive} / ${time}, download? [Y/n] " -e -i Y
   [[ ${REPLY,,} =~ ^y ]] || continue
 
   case "${archive}" in
@@ -57,5 +68,5 @@ for archive in "${archives[@]}"; do
   
   echo "Committing ${archive}..."
   git add --all
-  git commit --allow-empty -m "${archive}"
+  git commit --allow-empty --author="${AUTHOR}" --date="${time}" --message="${archive}"
 done
