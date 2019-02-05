@@ -57,5 +57,5 @@ for archive in "${archives[@]}"; do
   
   echo "Committing ${archive}..."
   git add --all
-  git commit -m "${archive}"
+  git commit --allow-empty -m "${archive}"
 done
