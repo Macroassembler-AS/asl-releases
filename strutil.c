@@ -599,7 +599,7 @@ unsigned fstrlenprint(FILE *pFile, const char *pStr, unsigned StrLen)
   const char *pRun, *pEnd;
 
   for (pRun = pStr, pEnd = pStr + StrLen; pRun < pEnd; pRun++)
-    if ((*pRun == '\\') || (*pRun == '"') || (!isprint(*pRun)))
+    if ((*pRun == '\\') || (*pRun == '"') || (*pRun == ' ') || (!isprint(*pRun)))
     {
       fprintf(pFile, "\\%03d", *pRun);
       Result += 4;
