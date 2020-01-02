@@ -828,14 +828,35 @@ static void ReadMacro(void)
   /* check arguments, sort out control directives */
 
   InitLstMacroExpMod(&Context.LstMacroExpMod);
-  Context.LstMacroExpMod.ORMask = LstMacroExp;
-  Context.LstMacroExpMod.ANDMask = eLstMacroExpAll & ~LstMacroExp;
   Context.DoPublic = False;
   Context.DoIntLabel = False;
   Context.GlobalSymbols = False;
   *Context.PList = '\0';
   Context.ParamCount = 0;
   ProcessMacroArgs(ProcessMACROArgs, &Context);
+
+  /* contradicting macro expansion? */
+
+  if (!ChkLstMacroExpMod(&Context.LstMacroExpMod))
+  {
+    WrError(ErrNum_ConflictingMacExpMod);
+    Context.ErrFlag = True;
+  }
+
+  /* merge in macro expansion defaults - global on/off has preference */
+
+  if (Context.LstMacroExpMod.SetAll || Context.LstMacroExpMod.ClrAll);
+  else
+  {
+    tLstMacroExp DefOn = LstMacroExp,
+                 DefOff = ~LstMacroExp & eLstMacroExpAll;
+
+    DefOn &= ~Context.LstMacroExpMod.ANDMask;
+    DefOff &= ~Context.LstMacroExpMod.ORMask;
+
+    Context.LstMacroExpMod.ORMask |= DefOn;
+    Context.LstMacroExpMod.ANDMask |= DefOff;
+  }
 
   /* Abbruch bei Fehler */
 
