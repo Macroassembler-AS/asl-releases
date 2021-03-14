@@ -544,17 +544,27 @@ static Boolean LayoutWord(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
   {
     case TempInt:
     ToInt:
-      if (mFirstPassUnknown(t.Flags)) t.Contents.Int &= 0xffff;
-      if (!mSymbolQuestionable(t.Flags) && !RangeCheck(t.Contents.Int, Int16)) WrStrErrorPos(ErrNum_OverRange, pExpr);
+      if (pCtx->Put16I)
+      {
+        if (mFirstPassUnknown(t.Flags)) t.Contents.Int &= 0xffff;
+        if (!mSymbolQuestionable(t.Flags) && !RangeCheck(t.Contents.Int, Int16)) WrStrErrorPos(ErrNum_OverRange, pExpr);
+        else
+        {
+          if (!pCtx->Put16I(t.Contents.Int, pCtx))
+            return Result;
+          Result = True;
+        }
+        break;
+      }
       else
       {
-        if (!pCtx->Put16I(t.Contents.Int, pCtx))
-          return Result;
-        Result = True;
+        t.Contents.Float = t.Contents.Int;
+        t.Typ = TempFloat;
       }
-      break;
+      /* fall-through */
     case TempFloat:
-      if (!FloatRangeCheck(t.Contents.Float, Float16)) WrStrErrorPos(ErrNum_OverRange, pExpr);
+      if (!pCtx->Put16F) WrStrErrorPos(ErrNum_StringOrIntButFloat, pExpr);
+      else if (!FloatRangeCheck(t.Contents.Float, Float16)) WrStrErrorPos(ErrNum_OverRange, pExpr);
       else
       {
         if (!pCtx->Put16F(t.Contents.Float, pCtx))
@@ -650,18 +660,28 @@ static Boolean LayoutDoubleWord(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
       break;
     case TempInt:
     ToInt:
-      if (mFirstPassUnknown(erg.Flags)) erg.Contents.Int &= 0xfffffffful;
-      if (!mSymbolQuestionable(erg.Flags) && !RangeCheck(erg.Contents.Int, Int32)) WrStrErrorPos(ErrNum_OverRange, pExpr);
+      if (pCtx->Put32I)
+      {
+        if (mFirstPassUnknown(erg.Flags)) erg.Contents.Int &= 0xfffffffful;
+        if (!mSymbolQuestionable(erg.Flags) && !RangeCheck(erg.Contents.Int, Int32)) WrStrErrorPos(ErrNum_OverRange, pExpr);
+        else
+        {
+          if (!pCtx->Put32I(erg.Contents.Int, pCtx))
+            return Result;
+          Cnt = 4;
+          Result = True;
+        }
+        break;
+      }
       else
       {
-        if (!pCtx->Put32I(erg.Contents.Int, pCtx))
-          return Result;
-        Cnt = 4;
-        Result = True;
+        erg.Contents.Float = erg.Contents.Int;
+        erg.Typ = TempFloat;
       }
-      break;
+      /* fall-through */
     case TempFloat:
-      if (!FloatRangeCheck(erg.Contents.Float, Float32)) WrStrErrorPos(ErrNum_OverRange, pExpr);
+      if (!pCtx->Put32F) WrStrErrorPos(ErrNum_StringOrIntButFloat, pExpr);
+      else if (!FloatRangeCheck(erg.Contents.Float, Float32)) WrStrErrorPos(ErrNum_OverRange, pExpr);
       else
       {
         if (!pCtx->Put32F(erg.Contents.Float, pCtx))
@@ -792,13 +812,23 @@ static Boolean LayoutQuadWord(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
       break;
     case TempInt:
     ToInt:
-      if (!pCtx->Put64I(erg.Contents.Int, pCtx))
-        return Result;
-      Cnt = 8;
-      Result = True;
-      break;
+      if (pCtx->Put64I)
+      {
+        if (!pCtx->Put64I(erg.Contents.Int, pCtx))
+          return Result;
+        Cnt = 8;
+        Result = True;
+        break;
+      }
+      else
+      {
+        erg.Contents.Float = erg.Contents.Int;
+        erg.Typ = TempFloat;
+      }
+      /* fall-through */
     case TempFloat:
-      if (!pCtx->Put64F(erg.Contents.Float, pCtx))
+      if (!pCtx->Put64F) WrStrErrorPos(ErrNum_StringOrIntButFloat, pExpr);
+      else if (!pCtx->Put64F(erg.Contents.Float, pCtx))
         return Result;
       Cnt = 8;
       Result = True;
@@ -1189,10 +1219,10 @@ static void DecodeIntelDx(tLayoutCtx *pLayoutCtx)
 /*!------------------------------------------------------------------------
  * \fn     DecodeIntelDN(Word BigEndian)
  * \brief  Intel-style constant disposition - nibbles
- * \param  BigEndian endianess
+ * \param  Flags Data Type & Endianess Flags
  * ------------------------------------------------------------------------ */
 
-void DecodeIntelDN(Word BigEndian)
+void DecodeIntelDN(Word Flags)
 {
   tLayoutCtx LayoutCtx;
 
@@ -1203,12 +1233,12 @@ void DecodeIntelDN(Word BigEndian)
   {
     case 1:
       LayoutCtx.Put4I = Put4I_To_8;
-      LayoutCtx.LoHiMap = BigEndian ? 1 : 0;
+      LayoutCtx.LoHiMap = (Flags & eIntPseudoFlag_BigEndian) ? 1 : 0;
       LayoutCtx.Replicate = Replicate4_To_8;
       break;
     case 2:
       LayoutCtx.Put4I = Put4I_To_16;
-      LayoutCtx.LoHiMap = BigEndian ? 3 : 0;
+      LayoutCtx.LoHiMap = (Flags & eIntPseudoFlag_BigEndian) ? 3 : 0;
       LayoutCtx.Replicate = Replicate4_To_16;
       break;
   }
@@ -1218,10 +1248,10 @@ void DecodeIntelDN(Word BigEndian)
 /*!------------------------------------------------------------------------
  * \fn     DecodeIntelDB(Word BigEndian)
  * \brief  Intel-style constant disposition - bytes
- * \param  BigEndian endianess
+ * \param  Flags Data Type & Endianess Flags
  * ------------------------------------------------------------------------ */
 
-void DecodeIntelDB(Word BigEndian)
+void DecodeIntelDB(Word Flags)
 {
   tLayoutCtx LayoutCtx;
 
@@ -1236,7 +1266,7 @@ void DecodeIntelDB(Word BigEndian)
       break;
     case 2:
       LayoutCtx.Put8I = Put8I_To_16;
-      LayoutCtx.LoHiMap = BigEndian ? 1 : 0;
+      LayoutCtx.LoHiMap = (Flags & eIntPseudoFlag_BigEndian) ? 1 : 0;
       LayoutCtx.Replicate = Replicate8_To_16;
       break;
   }
@@ -1248,10 +1278,10 @@ void DecodeIntelDB(Word BigEndian)
 /*!------------------------------------------------------------------------
  * \fn     DecodeIntelDW(Word BigEndian)
  * \brief  Intel-style constant disposition - words
- * \param  BigEndian endianess
+ * \param  Flags Data Type & Endianess Flags
  * ------------------------------------------------------------------------ */
 
-void DecodeIntelDW(Word BigEndian)
+void DecodeIntelDW(Word Flags)
 {
   tLayoutCtx LayoutCtx;
 
@@ -1261,14 +1291,14 @@ void DecodeIntelDW(Word BigEndian)
   switch (Grans[ActPC])
   {
     case 1:
-      LayoutCtx.Put16I = Put16I_To_8;
-      LayoutCtx.Put16F = Put16F_To_8;
-      LayoutCtx.LoHiMap = BigEndian ? 1 : 0;
+      LayoutCtx.Put16I = (Flags & eIntPseudoFlag_AllowInt) ? Put16I_To_8 : NULL;
+      LayoutCtx.Put16F = (Flags & eIntPseudoFlag_AllowFloat) ? Put16F_To_8 : NULL;
+      LayoutCtx.LoHiMap = (Flags & eIntPseudoFlag_BigEndian) ? 1 : 0;
       LayoutCtx.Replicate = Replicate8ToN_To_8;
       break;
     case 2:
-      LayoutCtx.Put16I = Put16I_To_16;
-      LayoutCtx.Put16F = Put16F_To_16;
+      LayoutCtx.Put16I = (Flags & eIntPseudoFlag_AllowInt) ? Put16I_To_16 : NULL;
+      LayoutCtx.Put16F = (Flags & eIntPseudoFlag_AllowFloat) ? Put16F_To_16 : NULL;
       LayoutCtx.Replicate = Replicate16ToN_To_16;
       break;
   }
@@ -1280,10 +1310,10 @@ void DecodeIntelDW(Word BigEndian)
 /*!------------------------------------------------------------------------
  * \fn     DecodeIntelDD(Word BigEndian)
  * \brief  Intel-style constant disposition - 32-bit words
- * \param  BigEndian endianess
+ * \param  Flags Data Type & Endianess Flags
  * ------------------------------------------------------------------------ */
 
-void DecodeIntelDD(Word BigEndian)
+void DecodeIntelDD(Word Flags)
 {
   tLayoutCtx LayoutCtx;
 
@@ -1293,15 +1323,15 @@ void DecodeIntelDD(Word BigEndian)
   switch (Grans[ActPC])
   {
     case 1:
-      LayoutCtx.Put32I = Put32I_To_8;
-      LayoutCtx.Put32F = Put32F_To_8;
-      LayoutCtx.LoHiMap = BigEndian ? 3 : 0;
+      LayoutCtx.Put32I = (Flags & eIntPseudoFlag_AllowInt) ? Put32I_To_8 : NULL;
+      LayoutCtx.Put32F = (Flags & eIntPseudoFlag_AllowFloat) ? Put32F_To_8 : NULL;
+      LayoutCtx.LoHiMap = (Flags & eIntPseudoFlag_BigEndian) ? 3 : 0;
       LayoutCtx.Replicate = Replicate8ToN_To_8;
       break;
     case 2:
-      LayoutCtx.Put32I = Put32I_To_16;
-      LayoutCtx.Put32F = Put32F_To_16;
-      LayoutCtx.LoHiMap = BigEndian ? 1 : 0;
+      LayoutCtx.Put32I = (Flags & eIntPseudoFlag_AllowInt) ? Put32I_To_16 : NULL;
+      LayoutCtx.Put32F = (Flags & eIntPseudoFlag_AllowFloat) ? Put32F_To_16 : NULL;
+      LayoutCtx.LoHiMap = (Flags & eIntPseudoFlag_BigEndian) ? 1 : 0;
       LayoutCtx.Replicate = Replicate16ToN_To_16;
       break;
   }
@@ -1313,10 +1343,10 @@ void DecodeIntelDD(Word BigEndian)
 /*!------------------------------------------------------------------------
  * \fn     DecodeIntelDQ(Word BigEndian)
  * \brief  Intel-style constant disposition - 64-bit words
- * \param  BigEndian endianess
+ * \param  Flags Data Type & Endianess Flags
  * ------------------------------------------------------------------------ */
 
-void DecodeIntelDQ(Word BigEndian)
+void DecodeIntelDQ(Word Flags)
 {
   tLayoutCtx LayoutCtx;
 
@@ -1326,15 +1356,15 @@ void DecodeIntelDQ(Word BigEndian)
   switch (Grans[ActPC])
   {
     case 1:
-      LayoutCtx.Put64I = Put64I_To_8;
-      LayoutCtx.Put64F = Put64F_To_8;
-      LayoutCtx.LoHiMap = BigEndian ? 7 : 0;
+      LayoutCtx.Put64I = (Flags & eIntPseudoFlag_AllowInt) ? Put64I_To_8 : NULL;
+      LayoutCtx.Put64F = (Flags & eIntPseudoFlag_AllowFloat) ? Put64F_To_8 : NULL;
+      LayoutCtx.LoHiMap = (Flags & eIntPseudoFlag_BigEndian) ? 7 : 0;
       LayoutCtx.Replicate = Replicate8ToN_To_8;
       break;
     case 2:
-      LayoutCtx.Put64I = Put64I_To_16;
-      LayoutCtx.Put64F = Put64F_To_16;
-      LayoutCtx.LoHiMap = BigEndian ? 3 : 0;
+      LayoutCtx.Put64I = (Flags & eIntPseudoFlag_AllowInt) ? Put64I_To_16 : NULL;
+      LayoutCtx.Put64F = (Flags & eIntPseudoFlag_AllowFloat) ? Put64F_To_16 : NULL;
+      LayoutCtx.LoHiMap = (Flags & eIntPseudoFlag_BigEndian) ? 3 : 0;
       LayoutCtx.Replicate = Replicate16ToN_To_16;
       break;
   }
@@ -1346,10 +1376,10 @@ void DecodeIntelDQ(Word BigEndian)
 /*!------------------------------------------------------------------------
  * \fn     DecodeIntelDT(Word BigEndian)
  * \brief  Intel-style constant disposition - 80-bit words
- * \param  BigEndian endianess
+ * \param  Flags Data Type & Endianess Flags
  * ------------------------------------------------------------------------ */
 
-void DecodeIntelDT(Word BigEndian)
+void DecodeIntelDT(Word Flags)
 {
   tLayoutCtx LayoutCtx;
 
@@ -1360,12 +1390,12 @@ void DecodeIntelDT(Word BigEndian)
   {
     case 1:
       LayoutCtx.Put80F = Put80F_To_8;
-      LayoutCtx.LoHiMap = BigEndian ? 1 : 0;
+      LayoutCtx.LoHiMap = (Flags & eIntPseudoFlag_BigEndian) ? 1 : 0;
       LayoutCtx.Replicate = Replicate8ToN_To_8;
       break;
     case 2:
       LayoutCtx.Put80F = Put80F_To_16;
-      LayoutCtx.LoHiMap = BigEndian ? 1 : 0;
+      LayoutCtx.LoHiMap = (Flags & eIntPseudoFlag_BigEndian) ? 1 : 0;
       LayoutCtx.Replicate = Replicate16ToN_To_16;
       break;
   }
@@ -1416,12 +1446,14 @@ Boolean DecodeIntelPseudo(Boolean BigEndian)
   if (!InstTables[Idx])
   {
     PInstTable InstTable = CreateInstTable(17);
-    AddInstTable(InstTable, "DN", BigEndian, DecodeIntelDN);
-    AddInstTable(InstTable, "DB", BigEndian, DecodeIntelDB);
-    AddInstTable(InstTable, "DW", BigEndian, DecodeIntelDW);
-    AddInstTable(InstTable, "DD", BigEndian, DecodeIntelDD);
-    AddInstTable(InstTable, "DQ", BigEndian, DecodeIntelDQ);
-    AddInstTable(InstTable, "DT", BigEndian, DecodeIntelDT);
+    Word Flag = BigEndian ? eIntPseudoFlag_BigEndian : eIntPseudoFlag_None;
+
+    AddInstTable(InstTable, "DN", Flag | eIntPseudoFlag_AllowInt, DecodeIntelDN);
+    AddInstTable(InstTable, "DB", Flag | eIntPseudoFlag_AllowInt, DecodeIntelDB);
+    AddInstTable(InstTable, "DW", Flag | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowFloat, DecodeIntelDW);
+    AddInstTable(InstTable, "DD", Flag | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowFloat, DecodeIntelDD);
+    AddInstTable(InstTable, "DQ", Flag | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowFloat, DecodeIntelDQ);
+    AddInstTable(InstTable, "DT", Flag | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowFloat, DecodeIntelDT);
     AddInstTable(InstTable, "DS", 0, DecodeIntelDS);
     InstTables[Idx] = InstTable;
   }

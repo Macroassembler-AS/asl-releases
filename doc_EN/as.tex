@@ -66,7 +66,7 @@
 
 \vspace{1cm}\par
 
-{\large Edition Februar 2021}
+{\large Edition March 2021}
 \end{raggedright}
 
 \clearpage
@@ -145,19 +145,10 @@ Shortly said, the GPL covers the following points:
 To accelerate the error diagnose and correction, please add the
 following details to the bug report:
 \begin{itemize}
-\item{hardware: \begin{itemize}
-                \item{processor type (with/without coprocessor)}
-                \item{amount of memory installed}
-                \item{video card}
-                \item{hard-disk type(s) and their interface(s)}
-                \end{itemize}}
-\item{software: \begin{itemize}
-                \item{operating system (MS-DOS, Novell-DOS, DR-DOS, OS/2,
-                      Windows) and version}
-                \item{resident (TSR) programs installed}
-                \item{version of AS including dates of the \tty{EXE}-files}
-                \end{itemize}}
-\item{if possible, the source file, in which the bug occurs}
+\item{Operating system (DOS, Windows, Linuc) and its version}
+\item{Version of AS used, resp. dates of the \tty{EXE}-files}
+\item{If you compiled the assembler yourself, the compiler used and its version}
+\item{If possible, the source file that triggered the bug}
 \end{itemize}
 You can contact me as follows:
 \begin{itemize}
@@ -276,6 +267,7 @@ following processor families have been implemented:
 \item{National Semiconductor COP4}
 \item{National Semiconductor COP8}
 \item{National Semiconductor SC144xx}
+\item{National Semiconductor NS32xxx}
 \item{Fairchild ACE}
 \item{Fairchild F8}
 \item{NEC $\mu$PD 78(C)1x}
@@ -3703,17 +3695,28 @@ instructions, since each of them supports different B field formats and
 their architecture has been optimized over time.
 %%-----------
 \begin{quote}
-bq) ACE1101, ACE1202
+bq) NS16008, NS32008, NS08032, NS16032, NS32016, NS32032, \\
+    NS32332, NS32CG16, NS32532
+\end{quote}
+National renamed the first-generation CPUs several times in the early
+years, NS16008/NS32008/NS08032 resp. NS16032/NS32016 are the same chips.
+NS32332 and NS32532 support an address space of  4 GBytes instead of 16
+MBytes, and the NS32CG16 is an embedded variant with additional instructions
+for bit block transfers.
+%%-----------
+\begin{quote}
+br) ACE1101, ACE1202
 \end{quote}
 %%-----------
 \begin{quote}
-br) F3850, MK3850, \\
+bs) F3850, MK3850, \\
     MK3870, MK3870/10, MK3870/12, "MK3870/20, MK3870/22, \\
     MK3870/30, MK3870/32, MK3870/40, MK3870/42, \\
-    MK3872, MK3873, MK3873/10, MK3873/12, MK3873/20, MK3873/22, \\
-    MK3874, MK3875, MK3875/22, MK3875/42, MK3876, MK38P70/02, \\
-    MK38C70, MK38C70/10, \\
-    MK38C70/20, MK97400, MK97410, MK97500, MK97501, MK97503
+    MK3872, MK3873, MK3873/10, MK3873/12, MK3873/20, \\
+    MK3873/22, MK3874, MK3875, MK3875/22, MK3875/42, \\
+    MK3876, MK38P70/02, MK38C70, MK38C70/10, \\
+    MK38C70/20, MK97400, MK97410, MK97500, MK97501, \\
+    MK97503
 \end{quote}
 This huge amount of variants partially results from the fact that
 Mostek renamed some variants in the early 80s.  The new naming scheme
@@ -3727,14 +3730,14 @@ while the MK3875 offers a second supply voltage pin to buffer the internal
 memory in standby mode.
 %%-----------
 \begin{quote}
-bs) 7810$\rightarrow$78C10
+bt) 7810$\rightarrow$78C10
 \end{quote}
 The NMOS version has no stop-mode; the respective command and the ZCM
 register are omitted.  \bb{CAUTION!}  NMOS and CMOS version partially
 differ in the reset values of some registers!
 %%-----------
 \begin{quote}
-bt) 7500 $\leftrightarrow$ 7508
+bu) 7500 $\leftrightarrow$ 7508
 \end{quote}
 There are two different types of CPU cores in the $\mu$PD75xx
 family: the 7566 represents the the 'instruction set B', which
@@ -3745,7 +3748,7 @@ CAUTION!} These instruction sets are not 100\% binary compatible!
 \begin{quote}
 \begin{tabbing}
 \hspace{0.7cm} \= \kill
-bu) \> 75402,\\
+bv) \> 75402,\\
     \> 75004, 75006, 75008,\\
     \> 75268,\\
     \> 75304, 75306, 75308, 75312, 75316,\\
@@ -3761,40 +3764,40 @@ peripherals on the one hand and by their instruction set's power on
 the other hand.
 %%-----------
 \begin{quote}
-bv) 78070
+bw) 78070
 \end{quote}
 This is currently the only member of NEC's 78K0 family I am familiar
 with.  Similar remarks like for the COP8 family apply!
 %%-----------
 \begin{quote}
-bw) 78214
+bx) 78214
 \end{quote}
 This is currently the representor of NEC's 78K2 family.
 %%-----------
 \begin{quote}
-bx) 78310
+by) 78310
 \end{quote}
 This is currently the representor of NEC's 78K3 family.
 %%-----------
 \begin{quote}
-by) 784026
+bz) 784026
 \end{quote}
 This is currently the representor of NEC's 78K4 family.
 %%-----------
 \begin{quote}
-bz) 7720 $\rightarrow$ 7725
+ca) 7720 $\rightarrow$ 7725
 \end{quote}
 The $\mu$PD7725 offers larger address spaces and som more instructions
 compared to his predecessor. {\bf CAUTION!}  The processors are not binary
 compatible to each other!
 %%-----------
 \begin{quote}
-ca) 77230
+cb) 77230
 \end{quote}
 %%-----------
 \begin{quote}
 \begin{tabbing}
-cb) \= SYM53C810, SYM53C860, SYM53C815, SYM53C825, \\
+cc) \= SYM53C810, SYM53C860, SYM53C815, SYM53C825, \\
     \> SYM53C875, SYM53C895
 \end{tabbing}
 \end{quote}
@@ -3803,37 +3806,37 @@ instruction variants, furthermore they are different in their set of
 internal registers.
 %%-----------
 \begin{quote}
-cc) MB89190
+cd) MB89190
 \end{quote}
 This processor type represents Fujitsu's F$^{2}$MC8L series...
 %%-----------
 \begin{quote}
-cd) MB9500
+ce) MB9500
 \end{quote}
 ...just like this one does it currently for the 16-bit variants from
 Fujitsu!
 %%-----------
 \begin{quote}
-ce) MSM5840, MSM5842, MSM58421, MSM58422, MSM5847
+cf) MSM5840, MSM5842, MSM58421, MSM58422, MSM5847
 \end{quote}
 These variants of the OLMS-40 family differ in their instruction
 set and in the amount of internal program and data memory.
 %%-----------
 \begin{quote}
-cf) MSM5054, MSM5055, MSM5056, MSM6051, MSM6052
+cg) MSM5054, MSM5055, MSM5056, MSM6051, MSM6052
 \end{quote}
 The as for the OLMS-40 family: differences in instruction
 set and the amount of internal program and data memory.
 %%-----------
 \begin{quote}
-cg) MN1610[ALT] $\rightarrow$ MN1613[ALT]
+ch) MN1610[ALT] $\rightarrow$ MN1613[ALT]
 \end{quote}
 In addition to its predecessor's features, the MN1613 offers a larger
 address space, a floating point unit and a couple of new machine
 instructions.
 %%-----------
 \begin{quote}
-ch) PMC150, PMS150, PFS154, PMC131, PMS130, PMS131 \\
+ci) PMC150, PMS150, PFS154, PMC131, PMS130, PMS131 \\
 PMS132, PMS132B, PMS152, PMS154B, PMS154C, PFS173 \\
 PMS133, PMS134, DF69, MCS11, PMC232, PMC234, PMC251 \\
 PMC271,PMC884, PMS232, PMS234, PMS271
@@ -3844,7 +3847,7 @@ the built-in peripherals, and their instruction set (both
 extent and binary coding).
 %%-----------
 \begin{quote}
-ci) 1802 $\rightarrow$ 1804, 1805, 1806 $\rightarrow$ 1804A,
+cj) 1802 $\rightarrow$ 1804, 1805, 1806 $\rightarrow$ 1804A,
 1805A, 1806A
 \end{quote}
 1804, 1805, and 1806 feature an instruction set that is slightly
@@ -3854,18 +3857,18 @@ an integrated timer.  The A variants extend the instruction set by
 subtraction in BCD format.
 %%-----------
 \begin{quote}
-cj) XS1
+ck) XS1
 \end{quote}
 This type represents the XCore-"family".
 %%-----------
 \begin{quote}
-ck) 1750
+cl) 1750
 \end{quote}
 MIL STD 1750 is a standard, therefore there is only one
 (standard) variant...
 %%-----------
 \begin{quote}
-cl) KENBAK
+cm) KENBAK
 \end{quote}
 Since there has never been a KENBAK-2, the target is simply KENBAK...
 
@@ -3939,11 +3942,12 @@ certain target supports such options.
 \ttindex{SUPMODE}\ttindex{FPU}\ttindex{PMMU}
 \label{SectSUPMODE}
 
-{\em\begin{tabbing}
- valid for: \= 680x0, FPU also for 80x86, i960, SUPMODE also for \\
-            \> TLCS-900, SH7000, i960, 29K, XA, PowerPC, M*Core, \\
-            \> and TMS9900
-\end{tabbing}}
+{\em
+SUPMODE valid for: 680x0, i960, TLCS-900, SH7000, i960, 29K, XA,\\
+PowerPC, M*Core, and TMS9900 \\
+FPU valid for: 680x0, NS32xxx, 80x86 \\
+PMMU valid for: 680x0, NS32xxx \\
+}
 
 These three switches allow to define which parts of the instruction set
 shall be disabled because the necessary preconditions are not valid for
@@ -3957,13 +3961,15 @@ The commands have the following meanings in detail:
       processor has to be within the supervisor mode.  The status
       variable is called \tty{INSUPMODE}.}
 \item{\tty{FPU}: allows or prohibits the commands of the numerical
-      coprocessors 8087 resp. 68881 or 68882.  The status variable
-      is called \tty{FPUAVAIL}.}
+      coprocessors 8087, NS32081/32381 resp. 68881 or 68882.  The status
+      variable is called \tty{FPUAVAIL}.  For NS32xxx as target, specifying
+      the explicit FPU type (\tty{NS32081} or \tty{NS32381}) is also possible,
+      to enable or disable the additional registers and instructions.}
 \item{\tty{PMMU}: allows or prohibits the commands of the memory
       management unit 68851 resp. of  the built-in MMU of the 68030.
       \bb{CAUTION!} The 68030-MMU supports only a relatively small subset
-      of the 68851 instructions.  The assembler cannot test this!
-      The status variable is called \tty{PMMUAVAIL}.}
+      of the 68851 instructions.  This is controlled via the \tty{FULLPMMU}
+      statement. The status variable is called \tty{PMMUAVAIL}.}
 \end{itemize}
 The usage of of instructions prohibited in this manner will generate a
 warning at \tty{SUPMODE}, at \tty{PMMU} and \tty{FPU} a real error
@@ -11643,6 +11649,11 @@ described by:
                {The processor type used as argument for \tty{CPU} command is
                 unknown to AS.}
                {the unknown processor type}
+\errentry{1431}{invalid FPU type}
+               {error}
+               {The co-processor type used as argument for \tty{FPU} command is
+                unknown to AS.}
+               {the unknown co-processor type}
 \errentry{1440}{invalid control register}
                {error}
                {The control register used by a \tty{MOVEC} is not (yet) available
@@ -11773,6 +11784,11 @@ described by:
                {This instrction is no longer allowed if exclusive
                 Z80 syntax mode for 8080/8085 instructions has been set.}
                {none}
+\errentry{1507}{FPU instruction not supported on ...}
+               {error}
+               {Although this FPU instruction exists, it cannot be used on
+                the selected type of FPU.}
+               {The instruction in question.}
 \errentry{1510}{invalid bit position}
                {error}
                {Either the number of bits specified is not allowed, or
@@ -12236,8 +12252,8 @@ described by:
                {the dimension argument that was 'too much'}
 \errentry{2230}{unknown integer notation}
                {error}
-               {The given integer notation does not exist, or the leading plus/minus
-                sign is missing.}
+               {The given integer notation does not exist, or the leading plus resp.
+                minus sign is missing.}
                {the argument in question}
 \errentry{2231}{invalid list of integer notations}
                {error}
@@ -12245,7 +12261,36 @@ described by:
                 be applied, because they would result in a contradiction.  Currently,
                 the only such case are 0hex und 0oct which cannot be used at the same
                 time.}
-               {}
+               {none}
+\errentry{2240}{invalid scale}
+               {error}
+               {The given argument cannot be used as scaling factor.}
+               {the argument in question}
+\errentry{2250}{conflicting string options}
+               {error}
+               {The string option is in contradiction to a previously given option.}
+               {the option in question}
+\errentry{2251}{unknown string option}
+               {error}
+               {The string option does not exist.}
+               {the option in question}
+\errentry{2252}{invalid cache invalidate mode}
+               {error}
+               {Only data, instruction, or both caches may be invalidated.}
+               {the argument in question}
+\errentry{2253}{invalid config list}
+               {error}
+               {The configuration list is either syntactically incorrect or
+                contains invalid elements.}
+               {The list in question or one of its elements}
+\errentry{2254}{conflicting config options}
+               {error}
+               {The option is in contradiction to a previously given option or repeats a previous one.}
+               {the option in question}
+\errentry{2255}{unknown config option}
+               {error}
+               {The option does not exist.}
+               {the option in question}
 \errentry{10001}{error in opening file}
                {fatal}
                {An error was detected while trying to open a file for input.}
@@ -12763,7 +12808,7 @@ follows (as stated before, without guarantee for completelessness!):
 Ernst Ahlers, Charles Altmann, Marco Awater, Len Bayles,
 Andreas Bolsch, Rolf Buchholz, Bernd Casimir, Nils Eilers,
 Gunther Ewald, Michael Haardt, Stephan Hruschka, Peter Kliegelh\"ofer,
-Ulf Meinke, Matthias Paul, Norbert Rosch, Curt J. Sampson,
+Ulf Meinke, Udo M\"oller, Matthias Paul, Norbert Rosch, Curt J. Sampson,
 Steffen Schmid, Leonhard Schneider, Ernst Schwab, Michael Schwingen,
 Oliver Sellke, Christian Stelter, Patrik Str\"omdahl,
 Tadashi G. Takaoka, Oliver Thamm, Thorsten Thiele, Leszek Ulman,

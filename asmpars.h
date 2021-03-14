@@ -45,6 +45,7 @@ typedef enum
   UInt22   ,
   UInt23   ,
   SInt24   , UInt24  , Int24   ,
+  SInt30   , UInt30  , Int30   ,
   SInt32   , UInt32  , Int32   ,
 #ifdef HAS64
   SInt64   , UInt64  , Int64   ,

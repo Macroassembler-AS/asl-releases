@@ -65,7 +65,7 @@ typedef enum
 } TColumn;
 
 #define MAXCOLS 30
-#define MAXROWS 300
+#define MAXROWS 500
 typedef char *TableLine[MAXCOLS];
 typedef struct
 {
@@ -96,7 +96,7 @@ static int TableNum, ErrState, FracState, BibIndent, BibCounter;
 #define TABMAX 100
 static int TabStops[TABMAX], TabStopCnt, CurrTabStop;
 static Boolean InAppendix, InMathMode;
-static TTable ThisTable;
+static TTable *pThisTable;
 static int CurrRow, CurrCol;
 static Boolean GermanMode;
 
@@ -758,9 +758,9 @@ static void InitTableRow(int Index)
 {
   int z;
 
-  for (z = 0; z < ThisTable.TColumnCount; ThisTable.Lines[Index][z++] = NULL);
-  ThisTable.MultiFlags[Index] = False;
-  ThisTable.LineFlags[Index] = False;
+  for (z = 0; z < pThisTable->TColumnCount; pThisTable->Lines[Index][z++] = NULL);
+  pThisTable->MultiFlags[Index] = False;
+  pThisTable->LineFlags[Index] = False;
 }
 
 static void NextTableColumn(void)
@@ -768,8 +768,8 @@ static void NextTableColumn(void)
   if (CurrEnv != EnvTabular)
     error("table separation char not within tabular environment");
 
-  if ((ThisTable.MultiFlags[CurrRow])
-   || (CurrCol >= ThisTable.TColumnCount))
+  if ((pThisTable->MultiFlags[CurrRow])
+   || (CurrCol >= pThisTable->TColumnCount))
     error("too many columns within row");
 
   CurrCol++;
@@ -777,7 +777,7 @@ static void NextTableColumn(void)
 
 static void AddTableEntry(const char *Part, char *Sep)
 {
-  char *Ptr = ThisTable.Lines[CurrRow][CurrCol];
+  char *Ptr = pThisTable->Lines[CurrRow][CurrCol];
   int nlen = Ptr ? strlen(Ptr) : 0;
   Boolean UseSep = (nlen > 0);
 
@@ -800,7 +800,7 @@ static void AddTableEntry(const char *Part, char *Sep)
   if (UseSep)
     strcat(Ptr, Sep);
   strcat(Ptr, Part);
-  ThisTable.Lines[CurrRow][CurrCol] = Ptr;
+  pThisTable->Lines[CurrRow][CurrCol] = Ptr;
 }
 
 static void DoPrnt(char *Ptr, TColumn Align, int len)
@@ -847,22 +847,22 @@ static void DumpTable(void)
   /* compute widths of individual rows */
   /* get index of first text column */
 
-  RowCnt = (ThisTable.Lines[CurrRow][0]) ? CurrRow + 1 : CurrRow;
+  RowCnt = (pThisTable->Lines[CurrRow][0]) ? CurrRow + 1 : CurrRow;
   firsttext = -1;
-  for (colz = colptr = 0; colz < ThisTable.ColumnCount; colz++)
-    if (ThisTable.ColTypes[colz] == ColBar)
-      ThisTable.ColLens[colz] = 1;
+  for (colz = colptr = 0; colz < pThisTable->ColumnCount; colz++)
+    if (pThisTable->ColTypes[colz] == ColBar)
+      pThisTable->ColLens[colz] = 1;
     else
     {
       ml = 0;
       for (rowz = 0; rowz < RowCnt; rowz++)
-        if ((!ThisTable.LineFlags[rowz]) && (!ThisTable.MultiFlags[rowz]))
+        if ((!pThisTable->LineFlags[rowz]) && (!pThisTable->MultiFlags[rowz]))
         {
-          l = (!ThisTable.Lines[rowz][colptr]) ? 0 : visible_strlen(ThisTable.Lines[rowz][colptr]);
+          l = (!pThisTable->Lines[rowz][colptr]) ? 0 : visible_strlen(pThisTable->Lines[rowz][colptr]);
           if (ml < l)
             ml = l;
         }
-      ThisTable.ColLens[colz] = ml + 2;
+      pThisTable->ColLens[colz] = ml + 2;
       colptr++;
       if (firsttext < 0)
         firsttext = colz;
@@ -870,7 +870,7 @@ static void DumpTable(void)
 
   /* get total width */
 
-  for (colz = sumlen = 0; colz < ThisTable.ColumnCount; sumlen += ThisTable.ColLens[colz++]);
+  for (colz = sumlen = 0; colz < pThisTable->ColumnCount; sumlen += pThisTable->ColLens[colz++]);
   indent = (RightMargin - LeftMargin + 1 - sumlen) / 2;
   if (indent < 0)
     indent = 0;
@@ -879,16 +879,16 @@ static void DumpTable(void)
 
   ml = 0;
   for (rowz = 0; rowz < RowCnt; rowz++)
-    if ((!ThisTable.LineFlags[rowz]) && (ThisTable.MultiFlags[rowz]))
+    if ((!pThisTable->LineFlags[rowz]) && (pThisTable->MultiFlags[rowz]))
     {
-      l = ThisTable.Lines[rowz][0] ? strlen(ThisTable.Lines[rowz][0]) : 0;
+      l = pThisTable->Lines[rowz][0] ? strlen(pThisTable->Lines[rowz][0]) : 0;
       if (ml < l)
         ml = l;
     }
   if (ml + 4 > sumlen)
   {
     diff = ml + 4 - sumlen;
-    ThisTable.ColLens[firsttext] += diff;
+    pThisTable->ColLens[firsttext] += diff;
   }
 
   /* print rows */
@@ -896,45 +896,45 @@ static void DumpTable(void)
   for (rowz = 0; rowz < RowCnt; rowz++)
   {
     outs(Blanks(LeftMargin - 1 + indent));
-    if (ThisTable.MultiFlags[rowz])
+    if (pThisTable->MultiFlags[rowz])
     {
       l = sumlen;
-      if (ThisTable.ColTypes[0] == ColBar)
+      if (pThisTable->ColTypes[0] == ColBar)
       {
         l--;
         outc('|');
       }
-      if (ThisTable.ColTypes[ThisTable.ColumnCount - 1] == ColBar)
+      if (pThisTable->ColTypes[pThisTable->ColumnCount - 1] == ColBar)
         l--;
-      for (colz = 0; colz < ThisTable.ColumnCount; colz++)
+      for (colz = 0; colz < pThisTable->ColumnCount; colz++)
       {
         if (!colz)
-          DoPrnt(ThisTable.Lines[rowz][colz], ThisTable.ColTypes[firsttext], l);
-        else if (ThisTable.Lines[rowz][colz])
-          free(ThisTable.Lines[rowz][colz]);
-        ThisTable.Lines[rowz][0] = NULL;
+          DoPrnt(pThisTable->Lines[rowz][colz], pThisTable->ColTypes[firsttext], l);
+        else if (pThisTable->Lines[rowz][colz])
+          free(pThisTable->Lines[rowz][colz]);
+        pThisTable->Lines[rowz][0] = NULL;
       }
-      if (ThisTable.ColTypes[ThisTable.ColumnCount - 1] == ColBar)
+      if (pThisTable->ColTypes[pThisTable->ColumnCount - 1] == ColBar)
         outc('|');
     }
     else
     {
-      for (colz = colptr = 0; colz < ThisTable.ColumnCount; colz++)
-        if (ThisTable.LineFlags[rowz])
+      for (colz = colptr = 0; colz < pThisTable->ColumnCount; colz++)
+        if (pThisTable->LineFlags[rowz])
         {
-          if (ThisTable.ColTypes[colz] == ColBar)
+          if (pThisTable->ColTypes[colz] == ColBar)
             outc('+');
           else
-            for (l = 0; l < ThisTable.ColLens[colz]; l++)
+            for (l = 0; l < pThisTable->ColLens[colz]; l++)
               outc('-');
         }
         else
-          if (ThisTable.ColTypes[colz] == ColBar)
+          if (pThisTable->ColTypes[colz] == ColBar)
             outc('|');
           else
           {
-            DoPrnt(ThisTable.Lines[rowz][colptr], ThisTable.ColTypes[colz], ThisTable.ColLens[colz]);
-            ThisTable.Lines[rowz][colptr] = NULL;
+            DoPrnt(pThisTable->Lines[rowz][colptr], pThisTable->ColTypes[colz], pThisTable->ColLens[colz]);
+            pThisTable->Lines[rowz][colptr] = NULL;
             colptr++;
           }
     }
@@ -993,7 +993,7 @@ static void TeXFlushLine(Word Index)
 
   if (CurrEnv == EnvTabular)
   {
-    for (CurrCol++; CurrCol < ThisTable.TColumnCount; ThisTable.Lines[CurrRow][CurrCol++] = as_strdup(""));
+    for (CurrCol++; CurrCol < pThisTable->TColumnCount; pThisTable->Lines[CurrRow][CurrCol++] = as_strdup(""));
     CurrRow++;
     if (CurrRow == MAXROWS)
       error("too many rows in table");
@@ -1319,14 +1319,14 @@ static void TeXBeginEnv(Word Index)
     case EnvTabular:
       FlushLine();
       assert_token("{");
-      ThisTable.ColumnCount = ThisTable.TColumnCount = 0;
+      pThisTable->ColumnCount = pThisTable->TColumnCount = 0;
       do
       {
         ReadToken(Add);
         done = !strcmp(Add, "}");
         if (!done)
         {
-          if (ThisTable.ColumnCount >= MAXCOLS)
+          if (pThisTable->ColumnCount >= MAXCOLS)
             error("too many columns in table");
           if (!strcmp(Add, "|"))
             NCol = ColBar;
@@ -1341,8 +1341,8 @@ static void TeXBeginEnv(Word Index)
             NCol = ColBar;
             error("unknown table column descriptor");
           }
-          if ((ThisTable.ColTypes[ThisTable.ColumnCount++] = NCol) != ColBar)
-           ThisTable.TColumnCount++;
+          if ((pThisTable->ColTypes[pThisTable->ColumnCount++] = NCol) != ColBar)
+           pThisTable->TColumnCount++;
         }
       }
       while (!done);
@@ -1727,9 +1727,9 @@ static void TeXHorLine(Word Index)
   if (CurrEnv != EnvTabular)
     error("\\hline outside of a table");
 
-  if (ThisTable.Lines[CurrRow][0])
+  if (pThisTable->Lines[CurrRow][0])
     InitTableRow(++CurrRow);
-  ThisTable.LineFlags[CurrRow] = True;
+  pThisTable->LineFlags[CurrRow] = True;
   InitTableRow(++CurrRow);
 }
 
@@ -1748,7 +1748,7 @@ static void TeXMultiColumn(Word Index)
   cnt = strtol(Token, &endptr, 10);
   if (*endptr != '\0')
     error("invalid numeric format to \\multicolumn");
-  if (cnt != ThisTable.TColumnCount)
+  if (cnt != pThisTable->TColumnCount)
     error("\\multicolumn must span entire table");
   assert_token("{");
   do
@@ -1756,7 +1756,7 @@ static void TeXMultiColumn(Word Index)
     ReadToken(Token);
   }
   while (strcmp(Token, "}"));
-  ThisTable.MultiFlags[CurrRow] = True;
+  pThisTable->MultiFlags[CurrRow] = True;
 }
 
 static void TeXIndex(Word Index)
@@ -2531,6 +2531,7 @@ int main(int argc, char **argv)
     exit(3);
   Codepage = NLS_GetCodepage();
   pCharacterTab = GetCharacterTab(Codepage);
+  pThisTable = (TTable*)calloc(1, sizeof(*pThisTable));
 
   TeXTable = CreateInstTable(301);
   AddInstTable(TeXTable, "\\", 0, TeXFlushLine);

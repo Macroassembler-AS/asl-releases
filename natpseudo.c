@@ -96,10 +96,10 @@ Boolean DecodeNatPseudo(void)
     InstTable = CreateInstTable(31);
 
     AddInstTable(InstTable, "SFR"  , 0     , DecodeSFR);
-    AddInstTable(InstTable, "ADDR" , True  , DecodeIntelDB);
-    AddInstTable(InstTable, "ADDRW", True  , DecodeIntelDW);
-    AddInstTable(InstTable, "BYTE" , False , DecodeIntelDB);
-    AddInstTable(InstTable, "WORD" , False , DecodeIntelDW);
+    AddInstTable(InstTable, "ADDR" , eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt , DecodeIntelDB);
+    AddInstTable(InstTable, "ADDRW", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt , DecodeIntelDW);
+    AddInstTable(InstTable, "BYTE" , eIntPseudoFlag_AllowInt , DecodeIntelDB);
+    AddInstTable(InstTable, "WORD" , eIntPseudoFlag_AllowInt , DecodeIntelDW);
     AddInstTable(InstTable, "DSB"  , 0     , DecodeDSx);
     AddInstTable(InstTable, "DSW"  , 1     , DecodeDSx);
     AddInstTable(InstTable, "FB"   , 0     , DecodeFx);

@@ -26,12 +26,20 @@ extern tZ80Syntax CurrZ80Syntax;
  * Global Functions
  *****************************************************************************/
 
-extern void DecodeIntelDN(Word BigEndian);
-extern void DecodeIntelDB(Word BigEndian);
-extern void DecodeIntelDW(Word BigEndian);
-extern void DecodeIntelDD(Word BigEndian);
-extern void DecodeIntelDQ(Word BigEndian);
-extern void DecodeIntelDT(Word BigEndian);
+enum
+{
+  eIntPseudoFlag_None = 0,
+  eIntPseudoFlag_BigEndian = 1 << 0,
+  eIntPseudoFlag_AllowInt = 1 << 1,
+  eIntPseudoFlag_AllowFloat = 1 << 2
+};
+
+extern void DecodeIntelDN(Word Flags);
+extern void DecodeIntelDB(Word Flags);
+extern void DecodeIntelDW(Word Flags);
+extern void DecodeIntelDD(Word Flags);
+extern void DecodeIntelDQ(Word Flags);
+extern void DecodeIntelDT(Word Flags);
    
 extern Boolean DecodeIntelPseudo(Boolean BigEndian);
 

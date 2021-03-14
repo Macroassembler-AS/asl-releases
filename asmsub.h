@@ -49,6 +49,13 @@ extern void TranslateString(char *s, int Length);
 
 extern ShortInt StrCaseCmp(const char *s1, const char *s2, LongInt Hand1, LongInt Hand2);
 
+extern char *MatchChars(const char *pStr, const char *pPattern, ...);
+extern char *MatchCharsRev(const char *pStr, const char *pPattern, ...);
+
+extern char *FindClosingParenthese(const char *pStr);
+
+extern char *FindOpeningParenthese(const char *pStrBegin, const char *pStrEnd, const char Bracks[2]);
+
 #ifdef PROFILE_MEMO
 static inline Boolean Memo(const char *s)
 {

@@ -371,6 +371,8 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
       msgno = Num_ErrMsgInvCmpMode; break;
     case ErrNum_InvCPUType:
       msgno = Num_ErrMsgInvCPUType; break;
+    case ErrNum_InvFPUType:
+      msgno = Num_ErrMsgInvFPUType; break;
     case ErrNum_InvCtrlReg:
       msgno = Num_ErrMsgInvCtrlReg; break;
     case ErrNum_InvReg:
@@ -422,6 +424,9 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
       msgno = Num_ErrMsgZ80SyntaxNotEnabled; break;
     case ErrNum_Z80SyntaxExclusive:
       msgno = Num_ErrMsgZ80SyntaxExclusive; break;
+    case ErrNum_FPUInstructionNotSupported:
+      as_snprintf(Buf, BufSize, getmessage(Num_ErrMsgInstructionNotOnThisFPUSupported), MomFPUIdent);
+      break;
     case ErrNum_AddrModeNotSupported:
       as_snprintf(Buf, BufSize, getmessage(Num_ErrMsgAddrModeNotOnThisCPUSupported), MomCPUIdent);
       break;
@@ -621,6 +626,20 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
       msgno = Num_ErrMsgInvIntFormat; break;
     case ErrNum_InvIntFormatList:
       msgno = Num_ErrMsgInvIntFormatList; break;
+    case ErrNum_InvScale:
+      msgno = Num_ErrMsgInvScale; break;
+    case ErrNum_ConfStringOpt:
+      msgno = Num_ErrMsgConfStringOpt; break;
+    case ErrNum_UnknownStringOpt:
+      msgno = Num_ErrMsgUnknownStringOpt; break;
+    case ErrNum_InvCacheInvMode:
+      msgno = Num_ErrMsgInvCacheInvMode; break;
+    case ErrNum_InvCfgList:
+      msgno = Num_ErrMsgInvCfgList; break;
+    case ErrNum_ConfBitBltOpt:
+      msgno = Num_ErrMsgConfBitBltOpt; break;
+    case ErrNum_UnknownBitBltOpt:
+      msgno = Num_ErrMsgUnknownBitBltOpt; break;
     case ErrNum_InternalError:
       msgno = Num_ErrMsgInternalError; break;
     case ErrNum_OpeningFile:

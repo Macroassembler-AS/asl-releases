@@ -37,7 +37,7 @@
 
 #ifdef __TURBOC__
 #ifdef __DPMI16__
-#define STKSIZE 35840
+#define STKSIZE 35328
 #else
 #define STKSIZE 49152
 #endif
@@ -167,7 +167,6 @@ static int SearchMultString(const char *pPos, const char *pSearch)
       return 0;
     pSearch += len + 1;
   }
-  return !strchr(pSearch, *pPos);
 }
 
 char *QuotMultPosQualify(const char *s, const char *pSearch, tQualifyQuoteFnc QualifyQuoteFnc)
@@ -300,6 +299,174 @@ void UpString(char *s)
     }
     LastBk = ThisBk;
   }
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     MatchChars(const char *pStr, const char *pPattern, ...)
+ * \brief  see if beginning of string matches given pattern
+ * \param  pStr string to check
+ * \param  pPattern expected pattern
+ * \return * to character following match or NULL if no match
+ * ------------------------------------------------------------------------ */
+
+char *MatchChars(const char *pStr, const char *pPattern, ...)
+{
+  va_list ap;
+  char *pResult = NULL;
+
+  va_start(ap, pPattern);
+  for (; *pPattern; pPattern++)
+    switch (*pPattern)
+    {
+      /* single space in pattern matches arbitrary # of spaces in string */
+      case ' ':
+        for (; as_isspace(*pStr); pStr++);
+        break;
+      case '?':
+      {
+        const char *pPatternStr = va_arg(ap, const char*);
+        char *pSave = va_arg(ap, char*);
+
+        if (!strchr(pPatternStr, as_toupper(*pStr)))
+          goto func_exit;
+        if (pSave)
+          *pSave = *pStr;
+        pStr++;
+        break;
+      }
+      default:
+        if (as_toupper(*pStr) != as_toupper(*pPattern))
+          goto func_exit;
+        pStr++;
+    }
+  pResult = (char*)pStr;
+func_exit:
+  va_end(ap);
+  return pResult;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     MatchCharsRev(const char *pStr, const char *pPattern, ...)
+ * \brief  see if end of string matches given pattern
+ * \param  pStr string to check
+ * \param  pPattern expected pattern
+ * \return * to trailing string matching pattern or NULL if no match
+ * ------------------------------------------------------------------------ */
+
+char *MatchCharsRev(const char *pStr, const char *pPattern, ...)
+{
+  va_list ap;
+  char *pResult = NULL;
+  const char *pPatternRun = pPattern + strlen(pPattern) - 1,
+             *pStrRun = pStr + strlen(pStr) - 1;
+
+  va_start(ap, pPattern);
+  for (; pPatternRun >= pPattern; pPatternRun--)
+    switch (*pPatternRun)
+    {
+      /* single space in pattern matches arbitrary # of spaces in string */
+      case ' ':
+        for (; (pStrRun >= pStr) && as_isspace(*pStrRun); pStrRun--);
+        break;
+      case '?':
+      {
+        const char *pPatternStr = va_arg(ap, const char*);
+        char *pSave = va_arg(ap, char*);
+
+        if (!strchr(pPatternStr, as_toupper(*pStrRun)))
+          goto func_exit;
+        if (pSave)
+          *pSave = *pStrRun;
+        pStrRun--;
+        break;
+      }
+      default:
+        if ((pStrRun < pStr) || (as_toupper(*pStrRun) != as_toupper(*pPatternRun)))
+          goto func_exit;
+        pStrRun--;
+    }
+  pResult = (char*)(pStrRun + 1);
+func_exit:
+  va_end(ap);
+  return pResult;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     FindClosingParenthese(const char *pStr)
+ * \brief  find matching closing parenthese
+ * \param  pStr * to string right after opening parenthese
+ * \return * to closing parenthese or NULL
+ * ------------------------------------------------------------------------ */
+
+char *FindClosingParenthese(const char *pStr)
+{
+  int Nest = 1;
+  Boolean InSgl = False, InDbl = False;
+
+  for (; *pStr; pStr++)
+  {
+    switch (*pStr)
+    {
+      case '\'':
+        if (!InDbl) InSgl = !InSgl;
+        break;
+      case '"':
+        if (!InSgl) InDbl = !InDbl;
+        break;
+      case '(':
+        if (!InSgl && !InDbl) Nest++;
+        break;
+      case ')':
+        if (!InSgl && !InDbl) Nest--;
+        if (!Nest)
+          return (char*)pStr;
+        break;
+      default:
+        break;
+    }
+  }
+  return NULL;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     FindOpeningParenthese(const char *pStrBegin, const char *pStrEnd, const char Bracks[2])
+ * \brief  find matching opening parenthese in string
+ * \param  pStrBegin start of string
+ * \param  pStrEnd end of string, preceding closing parenthese in question
+ * \param  Bracks opening & closing parenthese
+ * \return * to opening parenthese or NULL if not found
+ * ------------------------------------------------------------------------ */
+
+char *FindOpeningParenthese(const char *pStrBegin, const char *pStrEnd, const char Bracks[2])
+{
+  int Nest = 1;
+  Boolean InSgl = False, InDbl = False;
+
+  for (; pStrEnd >= pStrBegin; pStrEnd--)
+  {
+    if (*pStrEnd == Bracks[1])
+    {
+      if (!InSgl && !InDbl) Nest++;
+    }
+    else if (*pStrEnd == Bracks[0])
+    {
+      if (!InSgl && !InDbl) Nest--;
+      if (!Nest)
+        return (char*)pStrEnd;
+    }
+    else switch (*pStrEnd)
+    {
+      case '\'':
+        if (!InDbl) InSgl = !InSgl;
+        break;
+      case '"':
+        if (!InSgl) InDbl = !InDbl;
+        break;
+      default:
+        break;
+    }
+  }
+  return NULL;
 }
 
 /****************************************************************************/

@@ -1,6 +1,5 @@
-+------------------------- Test Application Z8008E --------------------------+
++-------------------------- Test Application NS32K --------------------------+
 |                                                                            |
-|         This is a (synthetic) test of the 8008 instruction set,            |
-|         written exclusively in Z80 style syntax                            |
+|     This is a (synthetic) test of the NS32000 instruction set              |
 |                                                                            |
 +----------------------------------------------------------------------------+

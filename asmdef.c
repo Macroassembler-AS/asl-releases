@@ -123,7 +123,9 @@ Boolean TurnWords;                       /* TRUE  = Motorola-Wortformat */
                                          /* FALSE = Intel-Wortformat */
 Byte HeaderID;	                         /* Kennbyte des Codeheaders */
 const char *PCSymbol;	                 /* Symbol, womit Programmzaehler erreicht wird. Inhalt Read Only! */
-Boolean (*SetIsOccupiedFnc)(void);       /* TRUE: SET instr, to be parsed by code generator */
+Boolean (*SetIsOccupiedFnc)(void),       /* TRUE: SET instr, to be parsed by code generator */
+        (*SaveIsOccupiedFnc)(void),      /* ditto for SAVE */
+        (*RestoreIsOccupiedFnc)(void);   /* ditto for RESTORE */
 Boolean SwitchIsOccupied,                /* TRUE: SWITCH/PAGE/SHIFT ist Prozessorbefehl */
         PageIsOccupied,
         ShiftIsOccupied;
@@ -162,9 +164,11 @@ StringPtr ShareName;                    /* Name des Sharefiles */
 CPUVar MomCPU, MomVirtCPU;              /* definierter/vorgegaukelter Prozessortyp */
 StringPtr MomCPUArgs;                   /* Arguments for Current Processor Type */
 char DefCPU[20];                        /* per Kommandozeile vorgegebene CPU */
-char MomCPUIdent[20];                   /* dessen Name in ASCII */
+char MomCPUIdent[20],                   /* dessen Name in ASCII */
+     MomFPUIdent[20];                   /* ditto FPU */
 
-Boolean FPUAvail;                       /* Koprozessor erlaubt ? */
+Boolean FPUAvail,                       /* Koprozessor erlaubt ? */
+        PMMUAvail;                      /* MMU-Befehle erlaubt? */
 Boolean DoPadding;                      /* auf gerade Byte-Zahl ausrichten ? */
 Boolean Packing;                        /* gepackte Ablage ? */
 Boolean DefSupAllowed, SupAllowed;      /* Supervisormode freigegeben */
@@ -320,6 +324,16 @@ void IncArgCnt(void)
 Boolean SetIsOccupied(void)
 {
   return SetIsOccupiedFnc && SetIsOccupiedFnc();
+}
+
+Boolean SaveIsOccupied(void)
+{
+  return SaveIsOccupiedFnc && SaveIsOccupiedFnc();
+}
+
+Boolean RestoreIsOccupied(void)
+{
+  return RestoreIsOccupiedFnc && RestoreIsOccupiedFnc();
 }
 
 void asmdef_init(void)

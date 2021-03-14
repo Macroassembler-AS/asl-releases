@@ -140,7 +140,9 @@ static void SetCPUCore(const tCPUDef *pCPUDef, const tStrComp *pCPUArgs)
   DissectReg = NULL;
   QualifyQuote = NULL;
   pPotMonadicOperator = NULL;
-  SetIsOccupiedFnc = NULL;
+  SetIsOccupiedFnc =
+  SaveIsOccupiedFnc =
+  RestoreIsOccupiedFnc = NULL;
   DecodeAttrPart = NULL;
   SwitchIsOccupied =
   PageIsOccupied =
@@ -2180,14 +2182,12 @@ static const PseudoOrder Pseudos[] =
   {"PUSHV",      CodePUSHV      , 0 },
   {"RADIX",      CodeRADIX      , 0 },
   {"READ",       CodeREAD       , 0 },
-  {"RESTORE",    CodeRESTORE    , 0 },
   {"RELAXED",    CodeRELAXED    , 0 },
   {"MACEXP",     CodeMACEXP     , 0x10 },
   {"MACEXP_DFT", CodeMACEXP     , 0 },
   {"MACEXP_OVR", CodeMACEXP     , 1 },
   {"RORG",       CodeRORG       , 0 },
   {"RSEG",       CodeSEGTYPE    , 0 },
-  {"SAVE",       CodeSAVE       , 0 },
   {"SECTION",    CodeSECTION    , 0 },
   {"SEGMENT",    CodeSEGMENT    , 0 },
   {"SHARED",     CodeSHARED     , 0 },
@@ -2210,6 +2210,11 @@ Boolean CodeGlobalPseudo(void)
         CodeSETEQU(True);
         return True;
       }
+      else if (!SaveIsOccupied() && Memo("SAVE"))
+      {
+        CodeSAVE(0);
+        return True;
+      }
       break;
     case 'E':
       if (Memo("EVAL"))
@@ -2223,6 +2228,13 @@ Boolean CodeGlobalPseudo(void)
        || (PageIsOccupied && Memo("PAGESIZE")))
       {
         CodePAGE(0);
+        return True;
+      }
+      break;
+    case 'R':
+      if (!RestoreIsOccupied() && Memo("RESTORE"))
+      {
+        CodeRESTORE(0);
         return True;
       }
       break;

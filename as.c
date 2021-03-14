@@ -124,6 +124,7 @@
 #include "codecop4.h"
 #include "codecop8.h"
 #include "codesc14xxx.h"
+#include "codens32k.h"
 #include "codeace.h"
 #include "codef8.h"
 #include "code78c10.h"
@@ -4306,6 +4307,7 @@ int main(int argc, char **argv)
     codecop4_init();
     codecop8_init();
     codesc14xxx_init();
+    codens32k_init();
     codeace_init();
     codef8_init();
     code53c8xx_init();

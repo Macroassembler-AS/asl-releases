@@ -93,6 +93,7 @@ static TFamilyDescr Descrs[] =
   { "COP4"         , 0x005f, eHexFormatIntel   },
   { "COP8"         , 0x006f, eHexFormatIntel   },
   { "SC14XXX"      , 0x006d, eHexFormatIntel   },
+  { "NS32000"      , 0x0008, eHexFormatIntel   },
   { "ACE"          , 0x0067, eHexFormatIntel   },
   { "F8"           , 0x0044, eHexFormatIntel   },
   { "75xx"         , 0x005d, eHexFormatIntel   },

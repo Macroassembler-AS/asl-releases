@@ -47,7 +47,7 @@
 
 \vspace{1cm}\par
 
-{\large Stand Februar 2021}
+{\large Stand M"arz 2021}
 \end{raggedright}
 
 \clearpage
@@ -139,18 +139,9 @@ zu schauen!
 Um eine m"oglichst schnelle Fehlerdiagnose und -korrektur zu erm"oglichen,
 bitte ich, Fehlerberichten folgende Angaben beizuf"ugen:
 \begin{itemize}
-\item{Hardware: \begin{itemize}
-                \item{Prozessortyp (mit/ohne Koprozessor)}
-                \item{Speicherausbau}
-                \item{Grafikkarte}
-                \item{Festplatte und Typ deren Interfaces}
-                \end{itemize}}
-\item{Software: \begin{itemize}
-                \item{Betriebssystem (MS/DR/Novell-DOS, OS/2, Windows)
-		und Version}
-                \item{installierte speicherresidente Programme}
-                \item{benutzte Version von AS + Datum des EXE-Files}
-                \end{itemize}}
+\item{Betriebssystem (DOS, Windows, Linux...) mit Version}
+\item{benutzte Version von AS bzw. Datum des EXE-Files}
+\item{bei selbst kompilierten Versionen: verwendeter Compiler und Version}
 \item{m"oglichst die Quelldatei, bei der der Fehler auftritt}
 \end{itemize}
 Zu erreichen bin ich folgenderma"sen:
@@ -270,6 +261,7 @@ folgende Prozessorfamilien implementiert:
 \item{National Semiconductor COP4}
 \item{National Semiconductor COP8}
 \item{National Semiconductor SC144xx}
+\item{National Semiconductor NS32xxx}
 \item{Fairchild ACE}
 \item{Fairchild F8}
 \item{NEC $\mu$PD78(C)1x}
@@ -3804,11 +3796,22 @@ unterst"utzt werden und deren Architektur im Laufe der Zeit optimiert
 wurde.
 %%-----------
 \begin{quote}
-bq) ACE1101, ACE1202
+bq) NS16008, NS32008, NS08032, NS16032, NS32016, NS32032, \\
+    NS32332, NS32CG16, NS32532
+\end{quote}
+National hat in den ersten Jahren die CPUs der ersten Generation
+mehrfach umbenannt, hinter NS16008/NS32008/NS08032 bzw.
+NS16032/NS32016 versteckt sich der gleiche Baustein.  NS32332
+und NS32532 unterst"utzen eine Adre"sraum von 4 GByte statt 16 MByte,
+und der NS32CG16 ist eine Embedded-Variante mit Zusatzbefehlen f"ur
+Bitblock-Transfers.
+%%-----------
+\begin{quote}
+br) ACE1101, ACE1202
 \end{quote}
 %%-----------
 \begin{quote}
-br) F3850, MK3850, \\
+bs) F3850, MK3850, \\
     MK3870, MK3870/10, MK3870/12, "MK3870/20, MK3870/22, \\
     MK3870/30, MK3870/32, MK3870/40, MK3870/42, \\
     MK3872, MK3873, MK3873/10, MK3873/12, MK3873/20, MK3873/22, \\
@@ -3830,14 +3833,14 @@ MK3875 bietet einen zweiten Betriebsspannungsanschlu"s, um den
 internen RAM-Inhalt im Standby halten zu k"onnen.
 %%-----------
 \begin{quote}
-bs) 7810 $\rightarrow$ 78C10
+bt) 7810 $\rightarrow$ 78C10
 \end{quote}
 Die NMOS-Version besitzt keinen STOP-Modus; der entspechende Befehl sowie
 das ZCM-Register fehlen demzufolge.  \bb{VORSICHT!} NMOS- und CMOS-Version
 differieren zum Teil in den Reset-Werten einiger Register!
 %%-----------
 \begin{quote}
-bt) 7566 $\leftrightarrow$ 7508
+bu) 7566 $\leftrightarrow$ 7508
 \end{quote}
 Es existieren in der $\mu$PD75xx-Familie zwei verschiedene
 CPU-Kerne: Der 7566 repr"asentiert den 'instruction set B', der
@@ -3849,7 +3852,7 @@ sind nicht 100\%-ig bin"arkompatibel!
 \begin{quote}
 \begin{tabbing}
 \hspace{0.7cm} \= \kill
-bu) \> 75402, \\
+bv) \> 75402, \\
     \> 75004, 75006, 75008, \\
     \> 75268, \\
     \> 75304, 75306, 75308, 75312, 75316, \\
@@ -3865,41 +3868,41 @@ unterscheiden sich einmal durch ihre on-chip-Peripherie und
 zum anderen durch die M"achtigkeit des Befehlssatzes.
 %%-----------
 \begin{quote}
-bv) 78070
+bw) 78070
 \end{quote}
 Dies ist das einzige, mir momentan vertraute Mitglied der
 78K0-Familie von NEC.  Es gelten "ahnliche Aussagen wie zur
 COP8-Familie!
 %%-----------
 \begin{quote}
-bw) 78214
+bx) 78214
 \end{quote}
 Dies ist momentan der Repr"asentant der 78K2-Familie von NEC.
 %%-----------
 \begin{quote}
-bx) 78310
+by) 78310
 \end{quote}
 Dies ist momentan der Repr"asentant der 78K3-Familie von NEC.
 %%-----------
 \begin{quote}
-by) 784026
+bz) 784026
 \end{quote}
 Dies ist momentan der Repr"asentant der 78K4-Familie von NEC.
 %%-----------
 \begin{quote}
-bz) 7720 $\rightarrow$ 7725
+ca) 7720 $\rightarrow$ 7725
 \end{quote}
 Der $\mu$PD7725 bietet im Vergleich zu seinem Vorg"anger gr"o"sere
 Adre"sr"aume und einige zus"atzliche Befehle. {\bf VORSICHT!}  Die
 Prozessoren sind nicht zueinander bin"arkompatibel!
 %%-----------
 \begin{quote}
-ca) 77230
+cb) 77230
 \end{quote}
 %%-----------
 \begin{quote}
 \begin{tabbing}
-cb) \= SYM53C810, SYM53C860, SYM53C815, SYM53C825, \\
+cc) \= SYM53C810, SYM53C860, SYM53C815, SYM53C825, \\
     \> SYM53C875, SYM53C895
 \end{tabbing}
 \end{quote}
@@ -3908,36 +3911,36 @@ einige Befehlsvarianten nicht, au"serdem unterscheiden sie sich in ihrem
 Satz interner Register.
 %%-----------
 \begin{quote}
-cc) MB89190
+cd) MB89190
 \end{quote}
 Dieser Prozessortyp repr"asentiert die F$^{2}$MC8L-Serie von Fujitsu...
 %%-----------
 \begin{quote}
-cd) MB9500
+ce) MB9500
 \end{quote}
 ...so wie dieser es momentan f"ur die 16-Bit-Varianten von Fujitsu tut!
 %%-----------
 \begin{quote}
-ce) MSM5840, MSM5842, MSM58421, MSM58422, MSM5847
+cf) MSM5840, MSM5842, MSM58421, MSM58422, MSM5847
 \end{quote}
 Diese Varianten der OLMS-40-Familie unterscheiden sich im
 Befehlssatz sowie im internen Programm- und Datenspeicher.
 %%-----------
 \begin{quote}
-cf) MSM5054, MSM5055, MSM5056, MSM6051, MSM6052
+cg) MSM5054, MSM5055, MSM5056, MSM6051, MSM6052
 \end{quote}
 Gleiches wie bei der OLMS-40-Familie: Unterschiede im
 Befehlssatz sowie im internen Programm- und Datenspeicher.
 %%-----------
 \begin{quote}
-cg) MN1610[ALT] $\rightarrow$ MN1613[ALT]
+ch) MN1610[ALT] $\rightarrow$ MN1613[ALT]
 \end{quote}
 Zus"atzlich zu den Funktionen seines Vorg"angers bietet der
 MN1613 einen gr"o"seren Adre"sraum, eine Floating-Point-Einheit
 sowie eine ganze Reihe neuer Befehle.
 %%-----------
 \begin{quote}
-ch) PMC150, PMS150, PFS154, PMC131, PMS130, PMS131 \\
+ci) PMC150, PMS150, PFS154, PMC131, PMS130, PMS131 \\
 PMS132, PMS132B, PMS152, PMS154B, PMS154C, PFS173 \\
 PMS133, PMS134, DF69, MCS11, PMC232, PMC234, PMC251 \\
 PMC271,PMC884, PMS232, PMS234, PMS271
@@ -3948,7 +3951,7 @@ des internen ROMs (l"oschbar oder OTP), der eingebauten
 Peripherie sowie in Umfang und Kodierung des Befehlssatzes.
 %%-----------
 \begin{quote}
-ci) 1802 $\rightarrow$ 1804, 1805, 1806 $\rightarrow$ 1804A, 1805A
+cj) 1802 $\rightarrow$ 1804, 1805, 1806 $\rightarrow$ 1804A, 1805A
 1806A
 \end{quote}
 1804, 1805 und 1806 haben gegen"uber dem 'Original' 1802 einen leicht
@@ -3958,18 +3961,18 @@ Timer.  Die A-Versionen erweitern den Befehlssatz um \tty{DSAV},
 BCD-Format.
 %%-----------
 \begin{quote}
-cj) XS1
+ck) XS1
 \end{quote}
 Dieser Typ repr"asentiert die XCore-''Familie''.
 %%-----------
 \begin{quote}
-ck) 1750
+cl) 1750
 \end{quote}
 MIL STD 1750 ist ein Standard, also gibt es auch nur eine
 (Standard-)Variante...
 %%-----------
 \begin{quote}
-cl) KENBAK
+cm) KENBAK
 \end{quote}
 Es hat nie einen KENBAK-2 gegeben...
 
@@ -4044,29 +4047,33 @@ jeweils zugeh"origen Unterkapitel mit prozessorspezifischen Hinweisen beschriebe
 \ttindex{SUPMODE}\ttindex{FPU}\ttindex{PMMU}
 \label{SectSUPMODE}
 
-{\em\begin{tabbing}
-G"ultigkeit: \= 680x0, FPU auch 80x86, i960, SUPMODE auch TLCS-900, \\
-             \> SH7000, i960, 29K, XA, PowerPC, M*CORE und TMS9900
-\end{tabbing}}
+{\em
+G"ultigkeit SUPMODE: 680x0, NS32xxx, i960, TLCS-900, SH7000,
+i960, 29K, XA, PowerPC, M*CORE und TMS9900 \\
+G"ultigkeit FPU: 680x0, NS32xxx, 80x86  \\
+G"ultigkeit PMMU: 680x0, NS32xxx \\
+}
 
 Mit diesen drei Schaltern kann bestimmt werden, auf welche Teile des
 Befehlssatzes verzichtet werden soll, weil die daf"ur n"otigen
 Vorbedingungen im folgenden Codest"uck nicht gegeben sind.  Als
 Parameter f"ur diese Befehle darf entweder \tty{ON} oder \tty{OFF} gegeben werden,
 der momentan gesetzte Zustand kann aus einer Variablen ausgelesen
-werden, die entweder TRUE oder FALSE ist.
-\par
-Die Befehle bedeuten im einzelnen folgendes:
+werden, die entweder TRUE oder FALSE ist.  Die Befehle bedeuten im einzelnen
+folgendes:
 \begin{itemize}
 \item{\tty{SUPMODE}: erlaubt bzw. sperrt Befehle, f"ur deren Ausf"uhrung
       der Prozessor im Supervisorstatus sein mu"s.  Die Statusvariable
       hei"st \tty{INSUPMODE}.}
 \item{\tty{FPU}: erlaubt bzw. sperrt die Befehle des numerischen Koprozessors
-      8087 bzw. 68881/68882.  Die Statusvariable hei"st \tty{FPUAVAIL}.}
+      8087, NS32081/32381 bzw. 68881/68882.  Die Statusvariable hei"st \tty{FPUAVAIL}.
+      F"ur NS32xxx als Ziel darf neben einem einfachen \tty{ON} oder \tty{OFF}
+      auch der FPU-Typ (\tty{NS32081} oder \tty{NS32381}) angegeben werden,
+      um die erweiterten Register und Befehle freizugeben oder zu verbieten.}
 \item{\tty{PMMU}: erlaubt bzw. sperrt die Befehle der Speicherverwaltungseinheit
       68851 bzw. der im 68030 eingebauten MMU.  \bb{ACHTUNG!} Die 68030-MMU
-      erlaubt nur eine rel. kleine Untermenge der 68851-Befehle.  Der
-      Assembler kann hier keine Pr"ufung vornehmen!  Die Statusvariable hei"st
+      erlaubt nur eine relativ kleine Untermenge der 68851-Befehle, dies wird
+      "uber den \tty{FULLPMMU}-Befehl gesteuert.  Die Statusvariable hei"st
       \tty{PMMUAVAIL}.}
 \end{itemize}
 Benutzung von auf diese Weise gesperrten Befehlen erzeugt bei \tty{SUPMODE}
@@ -4101,8 +4108,8 @@ diese Einstellung vor!  \tty{FULLPMMU} mu"s also auf jeden Fall nach dem
 \ttindex{PADDING}
 
 {\em G"ultigkeit: 680x0, 68xx, M*Core, XA, H8, SH7000, TMS9900,\\
-     MSP430(X), ST7/STM8, AVR (only if code segment granularity
-     is 8 bits)}
+     MSP430(X), ST7/STM8, AVR (nur wenn die Granularit"at des Code-Segments
+     8 Bit ist)}
 
 Diverse Prozessorfamilien verlangen, da"s Objekte von mehr als einem
 Byte L"ange auf einer geraden Adresse liegen m"ussen.  Neben Datenobjekten
@@ -11907,9 +11914,14 @@ Angaben:
                {keines}
 \errentry{1430}{Ung"ultiger Prozessortyp}
                {Fehler}
-               {Den mit CPU angeforderten Zielprozessor kennt AS
+               {Den mit \tty{CPU} angeforderten Zielprozessor kennt AS
                 nicht.}
                {der unbekannte Prozessortyp}
+\errentry{1431}{Ung"ultiger FPU-Typ}
+               {Fehler}
+               {Den mit \tty{FPU} angeforderten numerischen Koprozessor kennt AS
+                nicht.}
+               {der unbekannte FPU-Typ}
 \errentry{1440}{Ung"ultiges Kontrollregister}
                {Fehler}
                {Das bei z.B. \tty{MOVEC} benutzte
@@ -12053,6 +12065,12 @@ Angaben:
                 noch Z80-Syntax f"ur 8080/8085-Befehle erlaubt
                 wurde.}
                {keines}
+\errentry{1507}{FPU-Befehl auf dem ... nicht unterst"utzt}
+               {Fehler}
+               {Der benutzte FPU-Befehl existiert zwar
+                grunds"atzlich, der eingestellte FPU-Typ
+                beherrscht ihn aber noch nicht.}
+               {Der fragliche Befehl.}
 \errentry{1510}{Ung"ultige Bitstelle}
                {Fehler}
                {Die angegebene Bitnummer ist nicht erlaubt
@@ -12551,7 +12569,36 @@ Angaben:
                 kann nicht vorgenommen werden, weil sie zu einem Widerspruch f"uhren
                 w"urde.  Aktuell betrifft dies lediglich 0hex und 0oct, die nicht
                 gleichzeitig verwendet werden d"urfen.}
-               {}
+               {keines}
+\errentry{2240}{ung"ultige Skalierung}
+               {Fehler}
+               {Das angegebene Argument kann nicht als Skalierungsfaktor benutzt werden.}
+               {das fragliche Argument}
+\errentry{2250}{widerspr"uchliche String-Optionen}
+               {Fehler}
+               {Das angegebene String-Option steht im Widerspruch zu einer vorherigen in der Liste.}
+               {die fragliche Option}
+\errentry{2251}{unbekannte String-Option}
+               {Fehler}
+               {Das angegebene String-Option gibt es nicht.}
+               {die fragliche Option}
+\errentry{2252}{ung"ultiger Cache-Invalidierungs-Modus}
+               {Fehler}
+               {Es k"onnen nur Daten-, Instruktions- oder beide Caches invalidiert werden.}
+               {das fragliche Argument}
+\errentry{2253}{ung"ultige Config-Liste}
+               {Fehler}
+               {Die Konfigurationsliste ist entweder insgesamt syntaktisch falsch oder 
+                enth"alt ung"ultige Elemente.}
+               {Die fragliche Liste oder ein Element daraus.}
+\errentry{2254}{widerspr"uchliche Konfig-Optionen}
+               {Fehler}
+               {Das angegebene Option steht im Widerspruch zu einer vorherigen in der Liste oder ist dazu identisch.}
+               {die fragliche Option}
+\errentry{2255}{unbekannte Konfig-Option}
+               {Fehler}
+               {Das angegebene Option gibt es nicht.}
+               {die fragliche Option}
 \errentry{10001}{Fehler bein "Offnen der Datei}
                {fatal}
                {Beim Versuch, eine Datei zu "offnen, ist ein
@@ -13150,7 +13197,7 @@ Garantie auf Vollst"andigkeit!):
 Ernst Ahlers, Charles Altmann, Marco Awater, Len Bayles,
 Andreas Bolsch, Rolf Buchholz, Bernd Casimir, Nils Eilers,
 Gunther Ewald, Michael Haardt, Stephan Hruschka, Peter Kliegelh"ofer,
-Ulf Meinke, Matthias Paul, Norbert Rosch, Curt J. Sampson,
+Ulf Meinke, Udo M"oller, Matthias Paul, Norbert Rosch, Curt J. Sampson,
 Steffen Schmid, Leonhard Schneider, Ernst Schwab, Michael Schwingen,
 Oliver Sellke, Christian Stelter, Patrik Str"omdahl,
 Tadashi G. Takaoka, Oliver Thamm, Thorsten Thiele, Leszek Ulman,

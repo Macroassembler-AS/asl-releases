@@ -1,6 +1,6 @@
-+------------------------- Test Application Z8008E --------------------------+
++------------------------- Test Application GR32K ---------------------------+
 |                                                                            |
-|         This is a (synthetic) test of the 8008 instruction set,            |
-|         written exclusively in Z80 style syntax                            |
+|  This is a short, synthetic test of the graphics/BitBlt instructions       |
+|  incorporated into the NS32CG16.                                           |
 |                                                                            |
 +----------------------------------------------------------------------------+

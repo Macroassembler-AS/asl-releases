@@ -429,6 +429,10 @@ Message ErrMsgInvCPUType
  "ung&uuml;ltiger Prozessortyp"
  "invalid CPU type"
 
+Message ErrMsgInvFPUType
+ "ung&uuml;ltiger FPU-Typ"
+ "invalid FPU type"
+
 Message ErrMsgInvCtrlReg
  "ung&uuml;ltiges Kontrollregister"
  "invalid control register"
@@ -532,6 +536,10 @@ Message ErrMsgZ80SyntaxNotEnabled
 Message ErrMsgZ80SyntaxExclusive
  "nicht im Z80-Syntax Exklusiv-Modus erlaubt"
  "not allowed in exclusive Z80 syntax mode"
+
+Message ErrMsgInstructionNotOnThisFPUSupported
+ "FPU-Befehl auf dem %s nicht unterst&uuml;tzt"
+ "FPU instruction not supported on %s"
 
 Message ErrMsgInvBitPos
  "ung&uuml;ltige Bitstelle"
@@ -924,6 +932,34 @@ Message ErrMsgInvIntFormat
 Message ErrMsgInvIntFormatList
  "ung&uuml;ltige Liste an Integer-Schreibweisen"
  "invalid list of integer notations"
+
+Message ErrMsgInvScale
+ "ung&uuml;tige Skalierung"
+ "invalid scale"
+
+Message ErrMsgConfStringOpt
+ "widerspr&uuml;chliche String-Optionen"
+ "conflicting string options"
+
+Message ErrMsgUnknownStringOpt
+ "unbekannte String-Option"
+ "unknown string option"
+
+Message ErrMsgInvCacheInvMode
+ "ung&uuml;ltiger Cache-Invalidierungs-Modus"
+ "invalid cache invalidate mode"
+
+Message ErrMsgInvCfgList
+ "ung&uuml;ltige Config-Liste"
+ "invalid config list"
+
+Message ErrMsgConfBitBltOpt
+ "widerspr&uuml;chliche BITBLT-Optionen"
+ "conflicting BITBLT options"
+
+Message ErrMsgUnknownBitBltOpt
+ "unbekannte BITBLT Option"
+ "unknown BITBLT option"
 
 Message ErrMsgInternalError
  "interner Fehler"

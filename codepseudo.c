@@ -114,7 +114,7 @@ int FindDispBaseSplitWithQualifier(const char *pArg, int *pArgLen, tDispBaseSpli
       default:
         break;
     }
-    if (!Nest && (Start >= 0) && (SplitPos < 0))
+    if (!Nest && (SplitPos < 0))
       SplitPos = Start;
     else if (SplitPos >= 0)
     {
@@ -125,7 +125,10 @@ int FindDispBaseSplitWithQualifier(const char *pArg, int *pArgLen, tDispBaseSpli
         return Qualifier ? Qualifier(pArg, Start, SplitPos) : -1;
     }
   }
-  return -1;
+
+  /* if SplitPos >= 0, and we end up here, xxx is empty string or only consists of spaces: */
+
+  return SplitPos;
 }
 
 /*****************************************************************************

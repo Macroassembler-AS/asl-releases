@@ -104,12 +104,14 @@ extern char SrcSuffix[],IncSuffix[],PrgSuffix[],LstSuffix[],
 
 #define MomCPUName       "MOMCPU"     /* mom. Prozessortyp */
 #define MomCPUIdentName  "MOMCPUNAME" /* mom. Prozessortyp */
+#define MomFPUIdentName  "MOMFPUNAME" /* mom. Prozessortyp */
 #define SupAllowedCmdName "SUPMODE"   /* privilegierte Befehle erlaubt */
 #define SupAllowedSymName "INSUPMODE"
 #define DoPaddingName    "PADDING"    /* Padding an */
 #define PackingName      "PACKING"    /* gepackte Ablage an */
 #define MaximumName      "INMAXMODE"  /* CPU im Maximum-Modus */
 #define FPUAvailName     "HASFPU"     /* FPU-Befehle erlaubt */
+#define PMMUAvailName    "HASPMMU"    /* PMMU-Befehle erlaubt */
 #define ListOnName       "LISTON"     /* Listing an/aus */
 #define RelaxedName      "RELAXED"    /* alle Zahlenschreibweisen zugelassen */
 #define SrcModeName      "INSRCMODE"  /* CPU im Quellcode-kompatiblen Modus */
@@ -324,7 +326,9 @@ extern Byte HeaderID;
 extern const char *PCSymbol;
 extern tIntConstMode IntConstMode;
 extern Boolean IntConstModeIBMNoTerm;
-extern Boolean (*SetIsOccupiedFnc)(void);
+extern Boolean (*SetIsOccupiedFnc)(void),
+               (*SaveIsOccupiedFnc)(void),
+               (*RestoreIsOccupiedFnc)(void);
 extern Boolean SwitchIsOccupied, PageIsOccupied, ShiftIsOccupied;
 extern Boolean (*DecodeAttrPart)(void);
 extern void (*MakeCode)(void);
@@ -350,9 +354,11 @@ extern StringPtr ShareName;
 extern CPUVar MomCPU, MomVirtCPU;
 extern StringPtr MomCPUArgs;
 extern char DefCPU[20];
-extern char MomCPUIdent[20];
+extern char MomCPUIdent[20],
+            MomFPUIdent[20];
 
-extern Boolean FPUAvail;
+extern Boolean FPUAvail,
+               PMMUAvail;           /* PMMU-Befehle erlaubt? */
 extern Boolean DoPadding;
 extern Boolean Packing;
 extern Boolean DefSupAllowed, SupAllowed;
@@ -417,7 +423,8 @@ extern void IncArgCnt(void);
 
 
 extern Boolean SetIsOccupied(void);
-
+extern Boolean SaveIsOccupied(void);
+extern Boolean RestoreIsOccupied(void);
 
 extern void asmdef_init(void);
 #endif /* _ASMDEF_H */

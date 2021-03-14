@@ -122,7 +122,6 @@ typedef struct
 #define PMMURegCnt 13
 
 #define EMACAvailName  "HASEMAC"
-#define PMMUAvailName  "HASPMMU"     /* PMMU-Befehle erlaubt */
 #define FullPMMUName   "FULLPMMU"    /* voller PMMU-Befehlssatz */
 
 #define REG_SP 15
@@ -178,7 +177,6 @@ typedef struct
 
 static tSymbolSize OpSize;
 static ShortInt RelPos;
-static Boolean PMMUAvail;               /* PMMU-Befehle erlaubt? */
 static Boolean FullPMMU;                /* voller PMMU-Befehlssatz? */
 
 static FixedOrder *FixedOrders;

@@ -1,3 +1,7 @@
+2021-03-14 [1.42 Bld 197]
+
+- Addition    : Support NS32000 as target
+
 2021-03-02 [1.42 Bld 196]
 
 - Bugfix      : Correct ADDQ/SUBQ range checking for 68K
