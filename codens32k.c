@@ -48,19 +48,31 @@ typedef enum
   eFPUCount
 } tFPU;
 
+typedef enum
+{
+  ePMMUNone,
+  ePMMU16082,
+  ePMMU32082,
+  ePMMU32382,
+  ePMMU32532,
+  ePMMUCount
+} tPMMU;
+
 typedef struct
 {
   const char *pName;
-  Byte CPUType, DefFPU;
+  Byte CPUType, DefFPU, DefPMMU;
   IntType MemIntType;
 } tCPUProps;
 
 static char FPUNames[eFPUCount][8] = { "OFF", "NS16081", "NS32081", "NS32181", "NS32381", "NS32580" };
 
+static char PMMUNames[ePMMUCount][8] = { "OFF", "NS16082", "NS32082", "NS32382", "NS32532" };
+
 typedef struct
 {
   const char *pName;
-  Word Code;
+  Word Code, Mask;
   Boolean Privileged;
 } tCtlReg;
 
@@ -69,7 +81,7 @@ typedef struct
 #endif
 
 #define CtlRegCnt 13
-#define MMURegCnt 14
+#define MMURegCnt 18
 
 #define MAllowImm (1 << 0)
 #define MAllowReg (1 << 1)
@@ -80,6 +92,7 @@ static tCtlReg *CtlRegs, *MMURegs;
 static tSymbolSize OpSize;
 static const tCPUProps *pCurrCPUProps;
 static tFPU MomFPU;
+static tPMMU MomPMMU;
 
 /*!------------------------------------------------------------------------
  * \fn     SetOpSize(tSymbolSize Size, const tStrComp *pArg)
@@ -169,6 +182,35 @@ static void SetMomFPU(tFPU NewFPU)
       strmaxcpy(TmpCompStr, MomFPUIdentName, sizeof(TmpCompStr));
       strmaxcpy(MomFPUIdent, FPUNames[MomFPU], sizeof(MomFPUIdent));
       EnterStringSymbol(&TmpComp, FPUNames[MomFPU], True);
+      break;
+    }
+    default:
+      break;
+  }
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     SetMomPMMU(tFPU NewPMMU)
+ * \brief  set new PMMU type in use
+ * \param  NewPMMU new type
+ * ------------------------------------------------------------------------ */
+
+static void SetMomPMMU(tPMMU NewPMMU)
+{
+  switch ((MomPMMU = NewPMMU))
+  {
+    case ePMMU16082:
+    case ePMMU32082:
+    case ePMMU32382:
+    case ePMMU32532:
+    {
+      tStrComp TmpComp;
+      String TmpCompStr;
+
+      StrCompMkTemp(&TmpComp, TmpCompStr);
+      strmaxcpy(TmpCompStr, MomPMMUIdentName, sizeof(TmpCompStr));
+      strmaxcpy(MomPMMUIdent, PMMUNames[MomPMMU], sizeof(MomPMMUIdent));
+      EnterStringSymbol(&TmpComp, PMMUNames[MomPMMU], True);
       break;
     }
     default:
@@ -360,10 +402,15 @@ static Boolean DecodeMMUReg(const tStrComp *pArg, Word *pResult)
   for (z = 0; z < MMURegCnt; z++)
     if (!as_strcasecmp(pArg->Str, MMURegs[z].pName))
     {
+      if (!((MMURegs[z].Mask >> MomPMMU) & 1))
+      {
+        WrStrErrorPos(ErrNum_InvPMMUReg, pArg);
+        return False;
+      }
       *pResult = MMURegs[z].Code;
       return CheckSup(MMURegs[z].Privileged, pArg);
     }
-  WrStrErrorPos(ErrNum_InvReg, pArg);
+  WrStrErrorPos(ErrNum_InvPMMUReg, pArg);
   return False;
 }
 
@@ -714,6 +761,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrVals *pDest, Boolean AddrMode
     Disp1 = EvalStrIntExpression(&Mid, Int30, &OK);
     if (!OK)
       return False;
+    *(--Right.Str) = '0'; Right.Pos.Len++; Right.Pos.StartCol--;
     if (*Right.Str)
       Disp2 = EvalStrIntExpression(&Right, Int30, &OK);
     if (!OK)
@@ -1694,12 +1742,15 @@ static void DecodeCHECK_INDEX(Word Code)
 {
   tAdrVals BoundsAdrVals, SrcAdrVals;
   Word DestReg;
+  Boolean IsINDEX = Lo(Code) == 0x42,
+          IsCVTP = Lo(Code) == 0x06;
+
 
   if (ChkArgCnt(3, 3)
    && ChkNoAttrPart()
    && SetOpSizeFromCode(Code)
-   && DecodeAdr(&ArgStr[2], &BoundsAdrVals, 0)
-   && DecodeAdr(&ArgStr[3], &SrcAdrVals, MAllowReg | MAllowImm)
+   && DecodeAdr(&ArgStr[2], &BoundsAdrVals, IsINDEX ? (MAllowReg | MAllowImm) : 0)
+   && DecodeAdr(&ArgStr[3], &SrcAdrVals, MAllowReg | (IsCVTP ? 0 : MAllowImm))
    && DecodeReg(&ArgStr[1], &DestReg, NULL, eSymbolSize32Bit, True))
   {
     PutCode((((LongWord)BoundsAdrVals.Code) << 19)
@@ -2070,7 +2121,7 @@ static void CodeFPU(Word Code)
     }
     else if (!as_strcasecmp(ArgStr[1].Str, "ON"))
     {
-      SetFlag(&FPUAvail, FPUAvailName, False);
+      SetFlag(&FPUAvail, FPUAvailName, True);
       if (!MomFPU)
         SetMomFPU((tFPU)pCurrCPUProps->DefFPU);
     }
@@ -2087,6 +2138,45 @@ static void CodeFPU(Word Code)
         }
       if (FPU >= eFPUCount)
         WrStrErrorPos(ErrNum_InvFPUType, &ArgStr[1]);
+    }
+  }
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     void CodePMMU(Word Code)
+ * \brief  Handle PMMU Instruction
+ * ------------------------------------------------------------------------ */
+
+static void CodePMMU(Word Code)
+{
+  UNUSED(Code);
+
+  if (ChkArgCnt(1, 1))
+  {
+    if (!as_strcasecmp(ArgStr[1].Str, "OFF"))
+    {
+      SetFlag(&PMMUAvail, PMMUAvailName, False);
+      SetMomPMMU(ePMMUNone);
+    }
+    else if (!as_strcasecmp(ArgStr[1].Str, "ON"))
+    {
+      SetFlag(&PMMUAvail, PMMUAvailName, True);
+      if (!MomPMMU)
+        SetMomPMMU((tPMMU)pCurrCPUProps->DefPMMU);
+    }
+    else
+    {
+      tPMMU PMMU;
+
+      for (PMMU = (tPMMU)1; PMMU < ePMMUCount; PMMU++)
+        if (!as_strcasecmp(ArgStr[1].Str, PMMUNames[PMMU]))
+        {
+          SetFlag(&PMMUAvail, PMMUAvailName, True);
+          SetMomPMMU(PMMU);
+          break;
+        }
+      if (PMMU >= ePMMUCount)
+        WrStrErrorPos(ErrNum_InvPMMUType, &ArgStr[1]);
     }
   }
 }
@@ -2239,12 +2329,13 @@ static void AddCtl(const char *pName, Word Code, Boolean Privileged)
   CtlRegs[InstrZ++].Privileged = Privileged;
 }
 
-static void AddMMU(const char *pName, Word Code, Boolean Privileged)
+static void AddMMU(const char *pName, Word Code, Word Mask, Boolean Privileged)
 {
   if (InstrZ >= MMURegCnt)
     exit(255);
   MMURegs[InstrZ  ].pName      = pName;
   MMURegs[InstrZ  ].Code       = Code;
+  MMURegs[InstrZ  ].Mask       = Mask;
   MMURegs[InstrZ++].Privileged = Privileged;
 }
 
@@ -2271,21 +2362,24 @@ static void InitFields(void)
 
   MMURegs = (tCtlReg*)calloc(MMURegCnt, sizeof(*MMURegs));
   InstrZ = 0;
-  AddMMU("BAR"    , 0x00, True );
-  AddMMU("BMR"    , 0x02, True );
-  AddMMU("BDR"    , 0x03, True );
-  AddMMU("BEAR"   , 0x06, True );
-  AddMMU("FEW"    , 0x09, True );
-  AddMMU("ASR"    , 0x0a, True );
-  AddMMU("TEAR"   , 0x0b, True );
-  AddMMU("MCR"    , 0x09, True ); /* TODO: 8 according to National docu, but 9 according to sample code */
-  AddMMU("MSR"    , 0x0a, True );
-  AddMMU("TEAR"   , 0x0b, True );
-  AddMMU("PTB0"   , 0x0c, True );
-  AddMMU("PTB1"   , 0x0d, True );
-  AddMMU("IVAR0"  , 0x0e, True );
-  AddMMU("IVAR1"  , 0x0f, True );
-
+  AddMMU("BPR0"   , 0x00, (1 << ePMMU16082) | (1 << ePMMU32082)                                        , True );
+  AddMMU("BPR1"   , 0x00, (1 << ePMMU16082) | (1 << ePMMU32082)                                        , True );
+  AddMMU("MSR"    , 0x0a, (1 << ePMMU16082) | (1 << ePMMU32082)                     | (1 << ePMMU32532), True );
+  AddMMU("BCNT"   , 0x0b, (1 << ePMMU16082) | (1 << ePMMU32082)                                        , True );
+  AddMMU("PTB0"   , 0x0c, (1 << ePMMU16082) | (1 << ePMMU32082) | (1 << ePMMU32382) | (1 << ePMMU32532), True );
+  AddMMU("PTB1"   , 0x0d, (1 << ePMMU16082) | (1 << ePMMU32082) | (1 << ePMMU32382) | (1 << ePMMU32532), True );
+  AddMMU("EIA"    , 0x0f, (1 << ePMMU16082) | (1 << ePMMU32082)                                        , True );
+  AddMMU("BAR"    , 0x00,                                         (1 << ePMMU32382)                    , True );
+  AddMMU("BMR"    , 0x02,                                         (1 << ePMMU32382)                    , True );
+  AddMMU("BDR"    , 0x03,                                         (1 << ePMMU32382)                    , True );
+  AddMMU("BEAR"   , 0x06,                                         (1 << ePMMU32382)                    , True );
+  AddMMU("FEW"    , 0x09,                                         (1 << ePMMU32382)                    , True );
+  AddMMU("ASR"    , 0x0a,                                         (1 << ePMMU32382)                    , True );
+  AddMMU("TEAR"   , 0x0b,                                         (1 << ePMMU32382) | (1 << ePMMU32532), True );
+  /* TODO: 8 according to National docu, but 9 according to sample code */
+  AddMMU("MCR"    , 0x09,                                                             (1 << ePMMU32532), True );
+  AddMMU("IVAR0"  , 0x0e,                                         (1 << ePMMU32382) | (1 << ePMMU32532), True );/* w/o */
+  AddMMU("IVAR1"  , 0x0f,                                         (1 << ePMMU32382) | (1 << ePMMU32532), True );/* w/o */
 
   AddCondition("EQ",  0);
   AddCondition("NE",  1);
@@ -2483,6 +2577,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "FLOAT"  , eIntPseudoFlag_AllowFloat , DecodeIntelDD);
   AddInstTable(InstTable, "LONG"   , eIntPseudoFlag_AllowFloat , DecodeIntelDQ);
   AddInstTable(InstTable, "FPU"    , 0, CodeFPU);
+  AddInstTable(InstTable, "PMMU"   , 0, CodePMMU);
 
   /* BITBLT */
 
@@ -2572,6 +2667,7 @@ static void InitCode_NS32K(void)
   SetFlag(&PMMUAvail, PMMUAvailName, False);
   SetFlag(&FPUAvail, FPUAvailName, False);
   SetMomFPU(eFPUNone);
+  SetMomPMMU(ePMMUNone);
 }
 
 /*!------------------------------------------------------------------------
@@ -2618,9 +2714,10 @@ static void SwitchTo_NS32K(void *pUser)
 
   pCurrCPUProps = (const tCPUProps*)pUser;
 
-  /* default selection of "typical" companion FPU: */
+  /* default selection of "typical" companion FPU/PMMU: */
 
   SetMomFPU((tFPU)pCurrCPUProps->DefFPU);
+  SetMomPMMU((tPMMU)pCurrCPUProps->DefPMMU);
 
   PCSymbol = "*"; HeaderID = pDescr->Id;
   NOPCode = 0xa2;
@@ -2639,7 +2736,6 @@ static void SwitchTo_NS32K(void *pUser)
   IntConstModeIBMNoTerm = True;
   QualifyQuote = QualifyQuote_SingleQuoteConstant;
   InitFields();
-  AddONOFF("PMMU"    , &PMMUAvail , PMMUAvailName , False);
   AddONOFF(SupAllowedCmdName , &SupAllowed, SupAllowedSymName, False);
 }
 
@@ -2650,16 +2746,16 @@ static void SwitchTo_NS32K(void *pUser)
 
 static const tCPUProps CPUProps[] =
 {
-  { "NS16008", eCoreGen1, eFPU16081, UInt24 },
-  { "NS32008", eCoreGen1, eFPU32081, UInt24 },
-  { "NS08032", eCoreGen1, eFPU32081, UInt24 },
-  { "NS16032", eCoreGen1, eFPU16081, UInt24 },
-  { "NS32016", eCoreGen1, eFPU32081, UInt24 },
-  { "NS32032", eCoreGen1, eFPU32081, UInt24 },
-  { "NS32332", eCoreGen1, eFPU32381, UInt32 },
-  { "NS32CG16",eCoreGenE, eFPU32181, UInt24 },
-  { "NS32532", eCoreGen2, eFPU32381, UInt32 },
-  { NULL     , eCoreNone, eFPUNone , UInt1  }
+  { "NS16008", eCoreGen1, eFPU16081, ePMMU16082, UInt24 },
+  { "NS32008", eCoreGen1, eFPU32081, ePMMU32082, UInt24 },
+  { "NS08032", eCoreGen1, eFPU32081, ePMMU32082, UInt24 },
+  { "NS16032", eCoreGen1, eFPU16081, ePMMU16082, UInt24 },
+  { "NS32016", eCoreGen1, eFPU32081, ePMMU32082, UInt24 },
+  { "NS32032", eCoreGen1, eFPU32081, ePMMU32082, UInt24 },
+  { "NS32332", eCoreGen1, eFPU32381, ePMMU32382, UInt32 },
+  { "NS32CG16",eCoreGenE, eFPU32181, ePMMU32082, UInt24 },
+  { "NS32532", eCoreGen2, eFPU32381, ePMMU32532, UInt32 },
+  { NULL     , eCoreNone, eFPUNone , ePMMUNone , UInt1  }
 };
 
 void codens32k_init(void)

@@ -1,6 +1,6 @@
 	cpu	ns32016
 	fpu	ns32381
-	pmmu	on
+	pmmu	ns32382
 	relaxed	on
 	supmode on
 
@@ -73,8 +73,8 @@ sbase	equ	sb
 	absd	@0ffe000h,r0	; ditto, code like 0ffffe000h in 16 bits
 	absd	@100000h,r0	; 32 bit displacement
 
-	irp	disp2,,0,20,-20,200,-200,200000,-200000
-	irp	disp1,0,20,-20,200,-200,200000,-200000
+	irp	disp2,,+0,+20,-20,+200,-200,+200000,-200000
+	irp	disp1,+0,+20,-20,+200,-200,+200000,-200000
 	absd	ext(disp1)disp2,r0
 	absd	ext ( disp1 )  disp2,r0
 	endm
@@ -221,6 +221,7 @@ table:	db	x'0a, x'1a, x'3a, x'5a, x'7a, x'6a, x'4a
 	ibitw	r0, 1(r1)	; 4E 79 02 01
 
 	indexb	r0, 20(sb), -4(fp); 2E 04 D6 14 7C
+        indexw  r0, 20, r1	; 2E 45 A0 00 14
 
 	insw	r0, r2, 0(r1), 7; AE 41 12 00 07
 

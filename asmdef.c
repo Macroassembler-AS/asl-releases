@@ -165,7 +165,8 @@ CPUVar MomCPU, MomVirtCPU;              /* definierter/vorgegaukelter Prozessort
 StringPtr MomCPUArgs;                   /* Arguments for Current Processor Type */
 char DefCPU[20];                        /* per Kommandozeile vorgegebene CPU */
 char MomCPUIdent[20],                   /* dessen Name in ASCII */
-     MomFPUIdent[20];                   /* ditto FPU */
+     MomFPUIdent[20],                   /* ditto FPU */
+     MomPMMUIdent[20];                  /* ditto PMMU */
 
 Boolean FPUAvail,                       /* Koprozessor erlaubt ? */
         PMMUAvail;                      /* MMU-Befehle erlaubt? */

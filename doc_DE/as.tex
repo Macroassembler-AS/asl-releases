@@ -4068,13 +4068,16 @@ folgendes:
 \item{\tty{FPU}: erlaubt bzw. sperrt die Befehle des numerischen Koprozessors
       8087, NS32081/32381 bzw. 68881/68882.  Die Statusvariable hei"st \tty{FPUAVAIL}.
       F"ur NS32xxx als Ziel darf neben einem einfachen \tty{ON} oder \tty{OFF}
-      auch der FPU-Typ (\tty{NS32081} oder \tty{NS32381}) angegeben werden,
-      um die erweiterten Register und Befehle freizugeben oder zu verbieten.}
+      auch der FPU-Typ (\tty{NS32081}, \tty{NS32181}, \tty{NS32381} oder \tty{NS32580})
+      angegeben werden, um die erweiterten Register und Befehle freizugeben oder
+      zu verbieten.}
 \item{\tty{PMMU}: erlaubt bzw. sperrt die Befehle der Speicherverwaltungseinheit
       68851 bzw. der im 68030 eingebauten MMU.  \bb{ACHTUNG!} Die 68030-MMU
       erlaubt nur eine relativ kleine Untermenge der 68851-Befehle, dies wird
       "uber den \tty{FULLPMMU}-Befehl gesteuert.  Die Statusvariable hei"st
-      \tty{PMMUAVAIL}.}
+      \tty{PMMUAVAIL}. F"ur NS32xxx als Ziel darf neben einem einfachen \tty{ON}
+      oder \tty{OFF} auch der MMU-Typ (\tty{NS32082}, \tty{NS32382} oder \tty{NS32532})
+      angegeben werden, um den jeweiligen MUU-Registersatz freizugeben.}
 \end{itemize}
 Benutzung von auf diese Weise gesperrten Befehlen erzeugt bei \tty{SUPMODE}
 eine Warnung, bei \tty{PMMU} und \tty{FPU} eine echte Fehlermeldung.
@@ -11922,6 +11925,10 @@ Angaben:
                {Den mit \tty{FPU} angeforderten numerischen Koprozessor kennt AS
                 nicht.}
                {der unbekannte FPU-Typ}
+\errentry{1432}{Ung"ultiger PMMU-Typ}
+               {Fehler}
+               {Die mit \tty{PMMU} angeforderte MMU kennt AS nicht.}
+               {der unbekannte PMMU-Typ}
 \errentry{1440}{Ung"ultiges Kontrollregister}
                {Fehler}
                {Das bei z.B. \tty{MOVEC} benutzte

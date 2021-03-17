@@ -104,7 +104,8 @@ extern char SrcSuffix[],IncSuffix[],PrgSuffix[],LstSuffix[],
 
 #define MomCPUName       "MOMCPU"     /* mom. Prozessortyp */
 #define MomCPUIdentName  "MOMCPUNAME" /* mom. Prozessortyp */
-#define MomFPUIdentName  "MOMFPUNAME" /* mom. Prozessortyp */
+#define MomFPUIdentName  "MOMFPUNAME" /* mom. Koprozessortyp */
+#define MomPMMUIdentName  "MOMPMMUNAME" /* mom. MMU-Typ */
 #define SupAllowedCmdName "SUPMODE"   /* privilegierte Befehle erlaubt */
 #define SupAllowedSymName "INSUPMODE"
 #define DoPaddingName    "PADDING"    /* Padding an */
@@ -355,7 +356,8 @@ extern CPUVar MomCPU, MomVirtCPU;
 extern StringPtr MomCPUArgs;
 extern char DefCPU[20];
 extern char MomCPUIdent[20],
-            MomFPUIdent[20];
+            MomFPUIdent[20],
+            MomPMMUIdent[20];
 
 extern Boolean FPUAvail,
                PMMUAvail;           /* PMMU-Befehle erlaubt? */

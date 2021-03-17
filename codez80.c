@@ -537,6 +537,34 @@ static void DecodeAdr(const tStrComp *pArg)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     DecodeAdrWithF(const tStrComp *pArg, Boolean AllowF)
+ * \brief  Handle address expression, treating F as 8th register
+ * \param  pArg source argument
+ * \param  allow 'F' at all?
+ * ------------------------------------------------------------------------ */
+
+static void DecodeAdrWithF(const tStrComp *pArg, Boolean AllowF)
+{
+  if ((MomCPU == CPUZ80U) || (MomCPU == CPUZ180) || (MomCPU == CPUZ380))
+  {
+    /* if 110 denotes F, it cannot denote (HL) */
+    if (!as_strcasecmp(pArg->Str, "(HL)"))
+    {
+      AdrMode = ModNone;
+      WrStrErrorPos(ErrNum_InvAddrMode, pArg);
+      return;
+    }
+    if (AllowF && !as_strcasecmp(pArg->Str, "F"))
+    {
+      AdrMode = ModReg8;
+      AdrPart = 6;
+      return;
+    }
+  }
+  DecodeAdr(pArg);
+}
+
 static Boolean ImmIs8(void)
 {
   Word tmp;
@@ -2185,7 +2213,7 @@ static void DecodeTSTI(Word Code)
 
 static void DecodeIN_OUT(Word IsOUT)
 {
-  if ((ArgCnt == 1) && (!IsOUT))
+  if ((ArgCnt == 1) && !IsOUT)
   {
     if (!ChkExactCPU(CPUZ80U));
     else if (as_strcasecmp(ArgStr[1].Str, "(C)")) WrError(ErrNum_InvAddrMode);
@@ -2204,11 +2232,11 @@ static void DecodeIN_OUT(Word IsOUT)
 
     if (!as_strcasecmp(pPortArg->Str, "(C)"))
     {
-      OpSize = 0; DecodeAdr(pRegArg);
+      OpSize = 0; DecodeAdrWithF(pRegArg, !IsOUT);
       switch (AdrMode)
       {
         case ModReg8:
-          if ((AdrPart == 6) || (PrefixCnt != 0)) WrError(ErrNum_InvAddrMode);
+          if (PrefixCnt != 0) WrError(ErrNum_InvAddrMode);
           else
           {
             CodeLen = 2;
@@ -2301,9 +2329,19 @@ static void DecodeINW_OUTW(Word IsOUTW)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     DecodeIN0_OUT0(Word IsOUT0)
+ * \brief  Handle IN0/OUT0 instructions on Z180++
+ * \param  IsOUT0 1 for OUT0, 0 for IN0
+ * ------------------------------------------------------------------------ */
+
 static void DecodeIN0_OUT0(Word IsOUT0)
 {
-  if (ChkArgCnt(1, 2)
+  /* 'IN0 (C)' better should not be allowed at all, because it was a copy'n'waste from
+     the undocumented Z80 'IN (C)' which should better have been named 'IN F,(C)'.  But
+     I will leave it in for upward compatibility, and not implicitly assume A as register: */
+
+  if (ChkArgCnt(IsOUT0 ? 2 : 1, 2)
    && ChkMinCPU(CPUZ180))
   {
     Boolean OK;
@@ -2327,12 +2365,12 @@ static void DecodeIN0_OUT0(Word IsOUT0)
     }
     else
     {
-      DecodeAdr(pRegArg);
-      if ((AdrMode == ModReg8) && (AdrPart != 6) && (PrefixCnt == 0)) OK = True;
+      DecodeAdrWithF(pRegArg, !IsOUT0);
+      if ((AdrMode == ModReg8) && (PrefixCnt == 0)) OK = True;
       else
       {
         OK = False;
-        if (AdrMode != ModNone) WrError(ErrNum_InvAddrMode);
+        if (AdrMode != ModNone) WrStrErrorPos(ErrNum_InvAddrMode, pRegArg);
       }
     }
     if (OK)

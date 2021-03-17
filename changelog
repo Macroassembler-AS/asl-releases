@@ -1,3 +1,11 @@
+2021-03-17 [1.42 Bld 198]
+
+- Bugfix      : Some cleanups regarding Z180 I/O instructions
+- Addition    : PMMU instruction on NS32000 allows differentiation
+                of MMU variants
+- Bugfix      : NS32000: Correct addressing modes of INDEXi and CVTP
+- Bugfix      : NS32000: corrdct EXT addressing mode
+
 2021-03-14 [1.42 Bld 197]
 
 - Addition    : Support NS32000 as target

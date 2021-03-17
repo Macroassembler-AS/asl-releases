@@ -433,6 +433,10 @@ Message ErrMsgInvFPUType
  "ung&uuml;ltiger FPU-Typ"
  "invalid FPU type"
 
+Message ErrMsgInvPMMUType
+ "ung&uuml;ltiger PMMU-Typ"
+ "invalid PMMU type"
+
 Message ErrMsgInvCtrlReg
  "ung&uuml;ltiges Kontrollregister"
  "invalid control register"

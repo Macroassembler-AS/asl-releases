@@ -1,0 +1,7 @@
++------------------------- Test Application Z180IO --------------------------+
+|                                                                            |
+|    This test plays a bit with the Z180's I/O instructions, especially with |
+|    the special case of INPUTing to the F register - which was an           |
+|    undocumented feature on the Z80.                                        |
+|                                                                            |
++----------------------------------------------------------------------------+
