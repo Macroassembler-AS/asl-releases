@@ -10293,6 +10293,57 @@ IAR-Codes f"ur AS umsetzt, mu"s die Pr"aprozessorstatements nicht nur
 umwandeln, sondern auch aus Spalte 1 herausbewegen, da bei AS in Spalte 1
 nur Labels stehen d"urfen!
 
+%%---------------------------------------------------------------------------
+
+\section{NS32xxx}
+
+Wie es sich f"ur CISC-Prozessoren geh"ort, verf"ugt diese Serie "uber ausgefeilte
+und komplexe Adressierungsarten.  National definiert in ihren Manuals f"ur
+jede davon die Assembler-Syntax, und AS setzt auch genau diese um.  Wie bei
+fast jeder Architektur, f"ur die Werkzeuge von Drittherstellern erstellt wurden,
+gibt es jedoch auch Abweichungen und Erweiterungen, und ein paar davon habe
+ich auch ,,mitgenommen'':
+
+Die von National vorgesehene Methode, PC-relativ zu adressieren, ist folgende:
+\begin{verbatim}
+ movb r0,*+disp
+\end{verbatim}
+Das dr"uckt nat"urlich sehr klar aus, was in diesem Fall passiert, will man aber
+einfach eine bestimmte Speicherstelle PC-relativ adressieren, dann mu"s man die
+Distanz selber berechnen:
+\begin{verbatim}
+ movb r0,*+(addr-*)
+\end{verbatim}
+Die erste Vereinfachung ist, da"s es unter bestimmten Umst"anden auch ausreicht,
+einfach nur
+\begin{verbatim}
+ movb r0,addr
+\end{verbatim}
+zu schreiben - absolute Adressierung wird ja durch ein vorangestelltes \@-Zeichen
+kenntlich gemacht.  Diese vereinfachte Schreibweise ist unter folgenden Bedingungen
+erlaubt:
+\begin{itemize}
+\item{Immediate-Adressierung ist nicht erlaubt, z.B. weil es sich um einen
+      Zieloperanden handelt, so da"s keine Verwechslung damit m"oglich ist.}
+\item{Es wird mit einer Index-Erweiterung gearbeitet (in eckigen Klammern angeh"angt),
+      die nicht mit Immediate-Adressierung kombinierbar ist.}
+\end{itemize}
+Alternativ unterst"utzt AS f"ur PC-relative Addressierung immer die Schreibweise
+\begin{verbatim}
+ movb r0,addr(pc)
+\end{verbatim}
+Hier wird - analog zum 68000 - die Distanz ebenfalls automatisch berechnet.
+
+F"ur den External-Mode, der in der National-Syntax folgenderma"sen geschrieben
+wird:
+\begin{verbatim}
+ movb r0,ext(disp1)+disp2
+\end{verbatim}
+wird auch die Variante
+\begin{verbatim}
+ movb r0,disp2(disp1(ext))
+\end{verbatim}
+unterst"utzt, die wohl im UNIX-Umfeld g"angig war.
 
 %%---------------------------------------------------------------------------
 

@@ -10078,6 +10078,55 @@ column exclusively for labels!
 
 %%---------------------------------------------------------------------------
 
+\section{NS32xxx}
+
+As one might expect from a CISC processor, the NS32xxx series provides
+sophisticated and complex addressing modes.  National defied the assembly syntax
+for each of them in its manuals, and this is also the syntax AS implements.
+However, as for every architecture that was supported by third-party tools,
+there are deviations and extensions, and I added a few of them to AS:
+
+The syntax to use PC-relative addressing, as defined by National, is:
+\begin{verbatim}
+ movb r0,*+disp
+\end{verbatim}
+This of course quite clearly expresses what is happening at runtime, one however
+has to compute the distance himself if a certain memory location is to be
+addressed:
+\begin{verbatim}
+ movb r0,*+(addr-*)
+\end{verbatim}
+The first simplification is that under certain conditions, it is sufficient to
+just write:
+\begin{verbatim}
+ movb r0,addr
+\end{verbatim}
+since absolute addressierung is marked by a \@ prefix.  This is allowed under
+the following conditions:
+\begin{itemize}
+\item{Immediate addressierung is not allowed, e.g. because the operand is
+      the destination and there is no risk os ambiguities.}
+\item{An index extension is used (appended in square brackets), which must not
+      be combined with immediate addressing.}
+\end{itemize}
+As an alterntative, AS also supports the following way to use PC-relative addressing:
+\begin{verbatim}
+ movb r0,addr(pc)
+\end{verbatim}
+Analog to the 68000, the distance is computed automatically.
+
+The external mode, whis written this way in National syntax:
+\begin{verbatim}
+ movb r0,ext(disp1)+disp2
+\end{verbatim}
+there is another supported syntax variant:
+\begin{verbatim}
+ movb r0,disp2(disp1(ext))
+\end{verbatim}
+which used to be common in UNIX environments.
+
+%%---------------------------------------------------------------------------
+
 \section{uPD78(C)1x}
 \label{78C1xSpec}
 

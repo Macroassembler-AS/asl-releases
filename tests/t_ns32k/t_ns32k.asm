@@ -102,6 +102,16 @@ sbase	equ	sb
 	instr	*+10
 	endm
 
+	; alternate syntax to use PC-relative mode:
+
+	absd	*+(1000-*),r0
+	absd	1000(pc),r0
+
+	; alternate syntax to use external mode:
+
+	absd	ext(1000)+2000,r0
+	absd	2000(1000(ext)),r0
+
 	; now by their alphabetical order:
 
 	absf	f0,f2		; BE B5 00
@@ -310,6 +320,9 @@ table:	db	x'0a, x'1a, x'3a, x'5a, x'7a, x'6a, x'4a
 
 	rotb	4, r5	  	; 4E 40 A1 04
 	rotb	-3, 16(sp)	; 4E 40 A6 FD 10
+	; for shift/rotate, source (shift count) op size is fixed to 8 bits,
+        ; independent of destination operand's size:
+	rotd	1,r0		; 4E 03 A0 01
 
 	roundfb	f0, r0	  	; 3E 24 00
 	roundld	f2, 12(sb)	; 3E A3 16 0C
@@ -361,3 +374,28 @@ table:	db	x'0a, x'1a, x'3a, x'5a, x'7a, x'6a, x'4a
 	wrval	512(r0)		; 1E 07 40 82 00
 
 	xorb	-8(fp), -4(fp)	; 38 C6 78 7C
+
+	; The 16081/32081's registers are 32 bits wide.
+        ; If double precision is used, only even register (pair)s are allowed.
+	; MOVLF/MOVFL are special in the sense that they incorporate
+	; a single and a double precision operand.
+
+	fpu	ns32081
+
+	movlf	f2,f4		; 3E 16 11
+	expect	1760
+	movlf	f3,f4		; source not even
+	endexpect
+	movlf	f2,f5		; 3E 56 11
+	expect	1760
+	movlf	f3,f5		; source not even
+	endexpect
+
+	movfl	f0,f4		; 3E 1B 01
+	expect	1760
+	movfl	f0,f5		; dest not even
+	endexpect
+	movfl	f1,f4		; 3E 1B 09
+	expect	1760
+	movfl	f1,f5		; dest not even
+	endexpect

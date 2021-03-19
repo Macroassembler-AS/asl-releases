@@ -798,15 +798,21 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrVals *pDest, Boolean AddrMode
   if (SplitPos >= 0)
   {
     tStrComp OutDisp, InnerArg;
-    LongInt OutDispVal = 0;
-    Boolean OK = True;
+    LongInt OutDispVal;
+    tEvalResult OutEvalResult;
 
+    memset(&OutEvalResult, 0, sizeof(OutEvalResult));
     StrCompSplitRef(&OutDisp, &InnerArg, pArg, &pArg->Str[SplitPos]);
     if (OutDisp.Pos.Len)
     {
-      OutDispVal = EvalStrIntExpression(&OutDisp, Int30, &OK);
-      if (!OK)
+      OutDispVal = EvalStrIntExpressionWithResult(&OutDisp, Int30, &OutEvalResult);
+      if (!OutEvalResult.OK)
         return False;
+    }
+    else
+    {
+      OutEvalResult.OK = True;
+      OutDispVal = 0;
     }
 
     StrCompShorten(&InnerArg, 1);
@@ -814,18 +820,23 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrVals *pDest, Boolean AddrMode
     KillPostBlanksStrComp(&InnerArg);
     switch (DecodeReg(&InnerArg, &RegValue, NULL, eSymbolSize32Bit, False))
     {
-      /* TODO: should we allow disp(PC) as a convenient way for
-         PC-relative addressing? */
       case eIsReg: /* disp(Rn/FP/SP/SB) */
         pDest->Code = (RegValue < 8) ? AddrCode_Relative + RegValue : AddrCode_MemSpace + (RegValue - 8);
         if (!EncodeDisplacement(OutDispVal, pDest, ErrNum_OverRange, &OutDisp))
           return False;
         goto chk;
-      case eIsNoReg: /* disp2(disp1(FP/SP/SB)) */
+      IsPCRel:
+        if (EncodeDisplacement(OutDispVal - EProgCounter(), pDest, mFirstPassUnknownOrQuestionable(OutEvalResult.Flags) ? ErrNum_None : ErrNum_JmpDistTooBig, &OutDisp))
+          pDest->Code = AddrCode_MemSpace + 3;
+        goto chk;
+      case eIsNoReg:
       {
         tStrComp InDisp;
         LongInt InDispVal = 0;
-        
+
+        if (!as_strcasecmp(InnerArg.Str, "PC"))
+          goto IsPCRel;
+
         SplitPos = FindDispBaseSplit(InnerArg.Str, &ArgLen);
         if (SplitPos < 0)
         {
@@ -843,14 +854,27 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrVals *pDest, Boolean AddrMode
         StrCompShorten(&InnerArg, 1);
         KillPrefBlanksStrCompRef(&InnerArg);
         KillPostBlanksStrComp(&InnerArg);
-        if (DecodeReg(&InnerArg, &RegValue, NULL, eSymbolSize32Bit, True) != eIsReg)
-          return False;
-        if (RegValue < 8)
+
+        /* disp2(disp1(ext)) is an alias for EXT(disp1)+disp2 */
+
+        if (!as_strcasecmp(InnerArg.Str, "EXT"))
         {
-          WrStrErrorPos(ErrNum_InvReg, &InnerArg);
-          return False;
+          pDest->Code = AddrCode_External;
         }
-        pDest->Code = AddrCode_MemRelative + (RegValue - 8);
+
+        /* disp2(disp1(FP/SP/SB)) */
+
+        else
+        {
+          if (DecodeReg(&InnerArg, &RegValue, NULL, eSymbolSize32Bit, True) != eIsReg)
+            return False;
+          if (RegValue < 8)
+          {
+            WrStrErrorPos(ErrNum_InvReg, &InnerArg);
+            return False;
+          }
+          pDest->Code = AddrCode_MemRelative + (RegValue - 8);
+        }
         if (!EncodeDisplacement(InDispVal, pDest, ErrNum_OverRange, &InDisp)
          || !EncodeDisplacement(OutDispVal, pDest, ErrNum_OverRange, &OutDisp))
           return False;
@@ -1533,14 +1557,19 @@ static void DecodeSETCFG(Word Code)
  * \param  Code machine code
  * ------------------------------------------------------------------------ */
 
+#define FMT6_SRC8BIT 0x80
+
 static void DecodeFormat6(Word Code)
 {
   tAdrVals SrcAdrVals, DestAdrVals;
+  Boolean SrcIs8Bit = !!(Code & FMT6_SRC8BIT);
 
+  Code &= ~FMT6_SRC8BIT;
   if (ChkArgCnt(2, 2)
    && ChkNoAttrPart()
-   && SetOpSizeFromCode(Code)
+   && SetOpSizeFromCode(SrcIs8Bit ? 0x0000 : Code)
    && DecodeAdr(&ArgStr[1], &SrcAdrVals, MAllowReg | MAllowImm)
+   && ResetOpSize() && SetOpSizeFromCode(Code)
    && DecodeAdr(&ArgStr[2], &DestAdrVals, MAllowReg))
   {
     PutCode((((LongWord)SrcAdrVals.Code) << 19)
@@ -1880,7 +1909,7 @@ static void DecodeFLOOR_ROUND_TRUNC(Word Code)
 
   if (ChkArgCnt(2, 2)
    && ChkNoAttrPart()
-   && CheckFPUAvail(eFPU32081)
+   && CheckFPUAvail(eFPU16081)
    && SetFOpSizeFromCode(Code & 0x1)
    && DecodeAdr(&ArgStr[1], &SrcAdrVals, MAllowReg | MAllowImm)
    && ResetOpSize() && SetOpSizeFromCode(Code)
@@ -1910,7 +1939,7 @@ static void DecodeMOVif(Word Code)
 
   if (ChkArgCnt(2, 2)
    && ChkNoAttrPart()
-   && CheckFPUAvail(eFPU32081)
+   && CheckFPUAvail(eFPU16081)
    && SetOpSizeFromCode(Code)
    && DecodeAdr(&ArgStr[1], &SrcAdrVals, MAllowReg | MAllowImm)
    && ResetOpSize() && SetFOpSizeFromCode(Code & 0x1)
@@ -1944,7 +1973,7 @@ static void DecodeLFSR_SFSR(Word Code)
   Code &= ~FMT9_MAYIMM;
   if (ChkArgCnt(1, 1)
    && ChkNoAttrPart()
-   && CheckFPUAvail(eFPU32081)
+   && CheckFPUAvail(eFPU16081)
    && SetOpSize(eSymbolSize32Bit, &OpPart)
    && DecodeAdr(&ArgStr[1], &AdrVals, MAllowReg | (MayImm ? MAllowImm : 0)))
   {
@@ -1965,12 +1994,14 @@ static void DecodeLFSR_SFSR(Word Code)
 static void DecodeMOVF(Word Code)
 {
   tAdrVals SrcAdrVals, DestAdrVals;
+  Byte OpSize = (Code >> 8) & 1;
 
   if (ChkArgCnt(2, 2)
    && ChkNoAttrPart()
-   && CheckFPUAvail(eFPU32081)
-   && SetFOpSizeFromCode((Code >> 8) & 1)
+   && CheckFPUAvail(eFPU16081)
+   && SetFOpSizeFromCode(OpSize)
    && DecodeAdr(&ArgStr[1], &SrcAdrVals, MAllowReg | MAllowImm)
+   && ResetOpSize() && SetFOpSizeFromCode(OpSize ^ 1)
    && DecodeAdr(&ArgStr[2], &DestAdrVals, MAllowReg))
   {
     PutCode((((LongWord)SrcAdrVals.Code) << 19)
@@ -1995,7 +2026,7 @@ static void DecodeFormat11(Word Code)
 
   if (ChkArgCnt(2, 2)
    && ChkNoAttrPart()
-   && CheckFPUAvail(eFPU32081)
+   && CheckFPUAvail(eFPU16081)
    && SetOpSizeFromCode(Code)
    && DecodeAdr(&ArgStr[1], &SrcAdrVals, MAllowReg | MAllowImm)
    && DecodeAdr(&ArgStr[2], &DestAdrVals, MAllowReg))
@@ -2363,7 +2394,7 @@ static void InitFields(void)
   MMURegs = (tCtlReg*)calloc(MMURegCnt, sizeof(*MMURegs));
   InstrZ = 0;
   AddMMU("BPR0"   , 0x00, (1 << ePMMU16082) | (1 << ePMMU32082)                                        , True );
-  AddMMU("BPR1"   , 0x00, (1 << ePMMU16082) | (1 << ePMMU32082)                                        , True );
+  AddMMU("BPR1"   , 0x01, (1 << ePMMU16082) | (1 << ePMMU32082)                                        , True );
   AddMMU("MSR"    , 0x0a, (1 << ePMMU16082) | (1 << ePMMU32082)                     | (1 << ePMMU32532), True );
   AddMMU("BCNT"   , 0x0b, (1 << ePMMU16082) | (1 << ePMMU32082)                                        , True );
   AddMMU("PTB0"   , 0x0c, (1 << ePMMU16082) | (1 << ePMMU32082) | (1 << ePMMU32382) | (1 << ePMMU32532), True );
@@ -2469,15 +2500,15 @@ static void InitFields(void)
 
   AddSizeInstTable("ABS"   , (1 << eSymbolSize8Bit) | (1 << eSymbolSize16Bit) | (1 << eSymbolSize32Bit), 0x0c, DecodeFormat6);
   AddSizeInstTable("ADDP"  , (1 << eSymbolSize8Bit) | (1 << eSymbolSize16Bit) | (1 << eSymbolSize32Bit), 0x0f, DecodeFormat6);
-  AddSizeInstTable("ASH"   , (1 << eSymbolSize8Bit) | (1 << eSymbolSize16Bit) | (1 << eSymbolSize32Bit), 0x01, DecodeFormat6);
+  AddSizeInstTable("ASH"   , (1 << eSymbolSize8Bit) | (1 << eSymbolSize16Bit) | (1 << eSymbolSize32Bit), FMT6_SRC8BIT | 0x01, DecodeFormat6);
   AddSizeInstTable("CBIT"  , (1 << eSymbolSize8Bit) | (1 << eSymbolSize16Bit) | (1 << eSymbolSize32Bit), 0x02, DecodeFormat6);
   AddSizeInstTable("CBITI" , (1 << eSymbolSize8Bit) | (1 << eSymbolSize16Bit) | (1 << eSymbolSize32Bit), 0x03, DecodeFormat6);
   AddSizeInstTable("COM"   , (1 << eSymbolSize8Bit) | (1 << eSymbolSize16Bit) | (1 << eSymbolSize32Bit), 0x0d, DecodeFormat6);
   AddSizeInstTable("IBIT"  , (1 << eSymbolSize8Bit) | (1 << eSymbolSize16Bit) | (1 << eSymbolSize32Bit), 0x0e, DecodeFormat6);
-  AddSizeInstTable("LSH"   , (1 << eSymbolSize8Bit) | (1 << eSymbolSize16Bit) | (1 << eSymbolSize32Bit), 0x05, DecodeFormat6);
+  AddSizeInstTable("LSH"   , (1 << eSymbolSize8Bit) | (1 << eSymbolSize16Bit) | (1 << eSymbolSize32Bit), FMT6_SRC8BIT | 0x05, DecodeFormat6);
   AddSizeInstTable("NEG"   , (1 << eSymbolSize8Bit) | (1 << eSymbolSize16Bit) | (1 << eSymbolSize32Bit), 0x08, DecodeFormat6);
   AddSizeInstTable("NOT"   , (1 << eSymbolSize8Bit) | (1 << eSymbolSize16Bit) | (1 << eSymbolSize32Bit), 0x09, DecodeFormat6);
-  AddSizeInstTable("ROT"   , (1 << eSymbolSize8Bit) | (1 << eSymbolSize16Bit) | (1 << eSymbolSize32Bit), 0x00, DecodeFormat6);
+  AddSizeInstTable("ROT"   , (1 << eSymbolSize8Bit) | (1 << eSymbolSize16Bit) | (1 << eSymbolSize32Bit), FMT6_SRC8BIT | 0x00, DecodeFormat6);
   AddSizeInstTable("SBIT"  , (1 << eSymbolSize8Bit) | (1 << eSymbolSize16Bit) | (1 << eSymbolSize32Bit), 0x06, DecodeFormat6);
   AddSizeInstTable("SBITI" , (1 << eSymbolSize8Bit) | (1 << eSymbolSize16Bit) | (1 << eSymbolSize32Bit), 0x07, DecodeFormat6);
   AddSizeInstTable("SUBP"  , (1 << eSymbolSize8Bit) | (1 << eSymbolSize16Bit) | (1 << eSymbolSize32Bit), 0x0b, DecodeFormat6);

@@ -1,10 +1,19 @@
+2021-03-19 [1.42 Bld 199]
+
+- Bugfix      : Correct address of NS32082 BPR1 register 
+- Bugfix      : Correct operand size handling of NS32xxx MOVLF/MOVFL
+- Bugfix      : Correct operand size of NS32xxx shift/rotate instructions
+- Addition    : Allow addr(pc) as syntax for NS32xxx PC-relative addressing
+- Addition    : Allow disp2(disp1(ext)) as syntax variant for NS32xxx
+                external mode
+
 2021-03-17 [1.42 Bld 198]
 
 - Bugfix      : Some cleanups regarding Z180 I/O instructions
 - Addition    : PMMU instruction on NS32000 allows differentiation
                 of MMU variants
 - Bugfix      : NS32000: Correct addressing modes of INDEXi and CVTP
-- Bugfix      : NS32000: corrdct EXT addressing mode
+- Bugfix      : NS32000: Correct EXT addressing mode
 
 2021-03-14 [1.42 Bld 197]
 

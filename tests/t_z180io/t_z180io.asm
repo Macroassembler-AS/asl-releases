@@ -17,7 +17,7 @@ f	equ	10
 	expect	1110		; no implicit F reg for OUT0
 	out0	(12h)
 	endexpect
-	expect	1350		; F not allowed a ssource for OUT0
+	expect	1350		; F not allowed as source for OUT0
 	out0	(12h),f
 	endexpect
 	out0	(12h),b
