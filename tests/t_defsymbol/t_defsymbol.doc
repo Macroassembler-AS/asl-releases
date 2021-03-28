@@ -1,0 +1,8 @@
++---------------------- Test Application DEFSYMBOL --------------------------+
+|                                                                            |
+|  Testing Symbols defined via the command line.  On more thing I did not    |
+|  yet have a test case for...                                               |
+|  Note that for symbols defined on the command line, the relaxed mode is    |
+|  implicitly enabled.                                                       |
+|                                                                            |
++----------------------------------------------------------------------------+

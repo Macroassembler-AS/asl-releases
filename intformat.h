@@ -83,4 +83,6 @@ extern void SetIntConstRelaxedMode(Boolean NewRelaxedMode);
 
 extern tIntFormatId GetIntFormatId(const char *pIdent);
 
+extern void intformat_init(void);
+
 #endif /* _INTFORMAT_H */

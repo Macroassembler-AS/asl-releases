@@ -432,6 +432,8 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
     case ErrNum_AddrModeNotSupported:
       as_snprintf(Buf, BufSize, getmessage(Num_ErrMsgAddrModeNotOnThisCPUSupported), MomCPUIdent);
       break;
+    case ErrNum_CustomNotEnabled:
+      msgno = Num_ErrMsgCustomNotEnabled; break;
     case ErrNum_InvBitPos:
       msgno = Num_ErrMsgInvBitPos; break;
     case ErrNum_OnlyOnOff:

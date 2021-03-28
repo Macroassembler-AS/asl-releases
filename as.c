@@ -4213,6 +4213,7 @@ int main(int argc, char **argv)
     cpulist_init();
     asmsub_init();
     asmpars_init();
+    intformat_init();
 
     asmmac_init();
     asmstruct_init();

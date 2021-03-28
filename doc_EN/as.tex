@@ -3938,8 +3938,8 @@ certain target supports such options.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-\subsection{SUPMODE, FPU, PMMU}
-\ttindex{SUPMODE}\ttindex{FPU}\ttindex{PMMU}
+\subsection{SUPMODE, FPU, PMMU, CUSTOM}
+\ttindex{SUPMODE}\ttindex{FPU}\ttindex{PMMU}\ttindex{CUSTOM}
 \label{SectSUPMODE}
 
 {\em
@@ -3947,6 +3947,7 @@ SUPMODE valid for: 680x0, i960, TLCS-900, SH7000, i960, 29K, XA,\\
 PowerPC, M*Core, and TMS9900 \\
 FPU valid for: 680x0, NS32xxx, 80x86 \\
 PMMU valid for: 680x0, NS32xxx \\
+CUSTOM valid for: NS32xxx \\
 }
 
 These three switches allow to define which parts of the instruction set
@@ -3974,6 +3975,8 @@ The commands have the following meanings in detail:
       as target, specifying the explicit MMU type as target (\tty{NS32082},
       \tty{NS32381}, or \tty{NS32352}) is also possible, to enable access to
       the MMU-type-specific register set.}
+\item{\tty{CUSTOM}: allows or prohibits the commands reserved for custom
+      slave processors.}
 \end{itemize}
 The usage of of instructions prohibited in this manner will generate a
 warning at \tty{SUPMODE}, at \tty{PMMU} and \tty{FPU} a real error
@@ -11846,7 +11849,12 @@ described by:
                {error}
                {Although this FPU instruction exists, it cannot be used on
                 the selected type of FPU.}
-               {The instruction in question.}
+               {The instruction in question}
+\errentry{1508}{Custom instructions are not enabled}
+               {error}
+               {Custom instruction set extensions must be enabled
+                to use this instruction.}
+               {The instruction in question}
 \errentry{1510}{invalid bit position}
                {error}
                {Either the number of bits specified is not allowed, or

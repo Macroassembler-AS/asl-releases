@@ -4043,8 +4043,8 @@ jeweils zugeh"origen Unterkapitel mit prozessorspezifischen Hinweisen beschriebe
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-\subsection{SUPMODE, FPU, PMMU}
-\ttindex{SUPMODE}\ttindex{FPU}\ttindex{PMMU}
+\subsection{SUPMODE, FPU, PMMU, CUSTOM}
+\ttindex{SUPMODE}\ttindex{FPU}\ttindex{PMMU}\ttindex{CUSTOM}
 \label{SectSUPMODE}
 
 {\em
@@ -4052,9 +4052,10 @@ G"ultigkeit SUPMODE: 680x0, NS32xxx, i960, TLCS-900, SH7000,
 i960, 29K, XA, PowerPC, M*CORE und TMS9900 \\
 G"ultigkeit FPU: 680x0, NS32xxx, 80x86  \\
 G"ultigkeit PMMU: 680x0, NS32xxx \\
+G"ultigkeit CUSTOM: NS32xxx \\
 }
 
-Mit diesen drei Schaltern kann bestimmt werden, auf welche Teile des
+Mit diesen Schaltern kann bestimmt werden, auf welche Teile des
 Befehlssatzes verzichtet werden soll, weil die daf"ur n"otigen
 Vorbedingungen im folgenden Codest"uck nicht gegeben sind.  Als
 Parameter f"ur diese Befehle darf entweder \tty{ON} oder \tty{OFF} gegeben werden,
@@ -4078,6 +4079,8 @@ folgendes:
       \tty{PMMUAVAIL}. F"ur NS32xxx als Ziel darf neben einem einfachen \tty{ON}
       oder \tty{OFF} auch der MMU-Typ (\tty{NS32082}, \tty{NS32382} oder \tty{NS32532})
       angegeben werden, um den jeweiligen MUU-Registersatz freizugeben.}
+\item{\tty{CUSTOM}: erlaubt bzw. sperrt die f"ur benutzerdefinierte Slave-Prozessoren
+      vorgesehenen Befele.}
 \end{itemize}
 Benutzung von auf diese Weise gesperrten Befehlen erzeugt bei \tty{SUPMODE}
 eine Warnung, bei \tty{PMMU} und \tty{FPU} eine echte Fehlermeldung.
@@ -12128,7 +12131,12 @@ Angaben:
                {Der benutzte FPU-Befehl existiert zwar
                 grunds"atzlich, der eingestellte FPU-Typ
                 beherrscht ihn aber noch nicht.}
-               {Der fragliche Befehl.}
+               {Der fragliche Befehl}
+\errentry{1508}{Custom-Befehle nicht freigeschaltet}
+               {Fehler}
+               {Die benutzerdefinierten Befehlssatzerweiterungen
+                m"ussen erlaubt werden, um diesen Befehl zu benutzen.}
+               {Der fragliche Befehl}
 \errentry{1510}{Ung"ultige Bitstelle}
                {Fehler}
                {Die angegebene Bitnummer ist nicht erlaubt

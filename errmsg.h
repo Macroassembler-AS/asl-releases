@@ -150,6 +150,7 @@ typedef enum
   ErrNum_AddrModeNotSupported = 1505,
   ErrNum_Z80SyntaxExclusive = 1506,
   ErrNum_FPUInstructionNotSupported = 1507,
+  ErrNum_CustomNotEnabled = 1508,
   ErrNum_InvBitPos = 1510,
   ErrNum_OnlyOnOff = 1520,
   ErrNum_StackEmpty = 1530,

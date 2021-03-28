@@ -28,10 +28,14 @@
 #include "intpseudo.h"
 #include "codens32k.h"
 
+#define CustomAvailCmdName "CUSTOM"
+#define CustomAvailSymName "CUSTOM"
+
 typedef enum
 {
   eCoreNone,
   eCoreGen1,
+  eCoreGen1Ext,
   eCoreGenE,
   eCoreGen2,
   eCoreCount
@@ -93,6 +97,7 @@ static tSymbolSize OpSize;
 static const tCPUProps *pCurrCPUProps;
 static tFPU MomFPU;
 static tPMMU MomPMMU;
+static Boolean CustomAvail;
 
 /*!------------------------------------------------------------------------
  * \fn     SetOpSize(tSymbolSize Size, const tStrComp *pArg)
@@ -256,6 +261,22 @@ static Boolean CheckPMMUAvail(void)
   return True;
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     CheckCustomAvail(void)
+ * \brief  check whether Custom instructions are enabled
+ * \return False if not
+ * ------------------------------------------------------------------------ */
+
+static Boolean CheckCustomAvail(void)
+{
+  if (!CustomAvail)
+  {
+    WrStrErrorPos(ErrNum_CustomNotEnabled, &OpPart);
+    return False;
+  }
+  return True;
+}
+
 /*--------------------------------------------------------------------------*/
 /* Register Handling */
 
@@ -291,6 +312,7 @@ static Boolean DecodeRegCore(const char *pArg, Word *pRegNum, tSymbolSize *pRegS
   {
     case 'F': *pRegSize = eSymbolSizeFloat32Bit; return True;
     case 'R': *pRegSize = eSymbolSize32Bit; return True;
+    case 'L': *pRegSize = eSymbolSizeFloat64Bit; return True;
     default:
       return False;
   }
@@ -320,6 +342,9 @@ static void DissectReg_NS32K(char *pDest, size_t DestSize, tRegInt Value, tSymbo
     case eSymbolSizeFloat32Bit:
       as_snprintf(pDest, DestSize, "F%u", (unsigned)Value);
       break;
+    case eSymbolSizeFloat64Bit:
+      as_snprintf(pDest, DestSize, "L%u", (unsigned)Value);
+      break;
     default:
     unknown:
       as_snprintf(pDest, DestSize, "%d-%u", (int)InpSize, (unsigned)Value);
@@ -337,6 +362,13 @@ static void DissectReg_NS32K(char *pDest, size_t DestSize, tRegInt Value, tSymbo
  * \return reg eval result
  * ------------------------------------------------------------------------ */
 
+static Boolean MatchRegSize(tSymbolSize IsSize, tSymbolSize ReqSize)
+{
+  return (ReqSize == eSymbolSizeUnknown)
+      || (IsSize == ReqSize)
+      || ((ReqSize == eSymbolSizeFloat64Bit) && (IsSize == eSymbolSizeFloat32Bit));
+}
+
 static tRegEvalResult DecodeReg(const tStrComp *pArg, Word *pValue, tSymbolSize *pSize, tSymbolSize ChkRegSize, Boolean MustBeReg)
 {
   tEvalResult EvalResult;
@@ -353,9 +385,7 @@ static tRegEvalResult DecodeReg(const tStrComp *pArg, Word *pValue, tSymbolSize 
       *pValue = RegDescr.Reg;
   }
 
-  if ((RegEvalResult == eIsReg)
-   && (ChkRegSize != eSymbolSizeUnknown)
-   && (ChkRegSize != EvalResult.DataSize))
+  if ((RegEvalResult == eIsReg) && !MatchRegSize(EvalResult.DataSize, ChkRegSize))
   {
     WrStrErrorPos(ErrNum_InvOpSize, pArg);
     RegEvalResult = MustBeReg ? eIsNoReg : eRegAbort;
@@ -717,7 +747,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrVals *pDest, Boolean AddrMode
     NeedEvenReg = (OpSize == eSymbolSizeFloat64Bit) && (MomFPU < eFPU32181);
   else
     NeedEvenReg = !!(AddrModeMask & MAllowRegPair);
-  switch (DecodeReg(pArg, &RegValue, NULL, IsFloat ? eSymbolSizeFloat32Bit : eSymbolSize32Bit, False))
+  switch (DecodeReg(pArg, &RegValue, NULL, IsFloat ? OpSize : eSymbolSize32Bit, False))
   {
     case eIsReg:
       if (NeedEvenReg && (RegValue & 1))
@@ -918,6 +948,28 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrVals *pDest, Boolean AddrMode
         }
         break;
       }
+      case eSymbolSize64Bit:
+      {
+        LargeWord Val = EvalStrIntExpression(pArg,
+#ifdef HAS64
+                                             Int64,
+#else
+                                             Int32,
+#endif
+                                             &OK);
+        if (OK)
+        {
+          pDest->Disp[pDest->DispCnt++] = (Val >> 56) & 0xff;
+          pDest->Disp[pDest->DispCnt++] = (Val >> 48) & 0xff;
+          pDest->Disp[pDest->DispCnt++] = (Val >> 40) & 0xff;
+          pDest->Disp[pDest->DispCnt++] = (Val >> 32) & 0xff;
+          pDest->Disp[pDest->DispCnt++] = (Val >> 24) & 0xff;
+          pDest->Disp[pDest->DispCnt++] = (Val >> 16) & 0xff;
+          pDest->Disp[pDest->DispCnt++] = (Val >>  8) & 0xff;
+          pDest->Disp[pDest->DispCnt++] = (Val >>  0) & 0xff;
+        }
+        break;
+      }
       case eSymbolSizeFloat32Bit:
       {
         Double Val = EvalStrFloatExpression(pArg, Float32, &OK);
@@ -1041,6 +1093,26 @@ static LongWord SizeCodeF(tSymbolSize Size)
 }
 
 /*!------------------------------------------------------------------------
+ * \fn     SizeCodeC(tSymbolSize Size)
+ * \brief  transform (custom) operand size to c size in instruction
+ * \param  Size Operand Size
+ * \return Size Code
+ * ------------------------------------------------------------------------ */
+
+static LongWord SizeCodeC(tSymbolSize Size)
+{
+  switch (Size)
+  {
+    case eSymbolSize64Bit:
+      return 0;
+    case eSymbolSize32Bit:
+      return 1;
+    default:
+      return 0xff;
+  }
+}
+
+/*!------------------------------------------------------------------------
  * \fn     GetOpSizeFromCode(Word Code)
  * \brief  get operand size of instruction from insn name
  * \param  Code contains size in MSB
@@ -1056,7 +1128,7 @@ static tSymbolSize GetOpSizeFromCode(Word Code)
 
 /*!------------------------------------------------------------------------
  * \fn     SetOpSizeFromCode(Word Code)
- * \brief  set operand size of instruction from insn name
+ * \brief  set operand size of instruction from insn code MSB
  * \param  Code contains size in MSB
  * \return True if success
  * ------------------------------------------------------------------------ */
@@ -1068,14 +1140,26 @@ static Boolean SetOpSizeFromCode(Word Code)
 
 /*!------------------------------------------------------------------------
  * \fn     SetFOpSizeFromCode(Word Code)
- * \brief  set FP operand size of instruction from insn code LSB
+ * \brief  set FP operand size of instruction from insn code
  * \param  Code contains size in LSB
  * \return True if success
  * ------------------------------------------------------------------------ */
 
 static Boolean SetFOpSizeFromCode(Word Code)
 {
-  return SetOpSize(Code & 1 ? eSymbolSizeFloat32Bit : eSymbolSizeFloat64Bit, &OpPart);
+  return SetOpSize((Code & 1) ? eSymbolSizeFloat32Bit : eSymbolSizeFloat64Bit, &OpPart);
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     SetCOpSizeFromCode(Word Code)
+ * \brief  set custom operand size of instruction from insn code
+ * \param  Code contains size in LSB
+ * \return True if success
+ * ------------------------------------------------------------------------ */
+
+static Boolean SetCOpSizeFromCode(Word Code)
+{
+  return SetOpSize((Code & 1) ? eSymbolSize32Bit : eSymbolSize64Bit, &OpPart);
 }
 
 /*!------------------------------------------------------------------------
@@ -2111,7 +2195,7 @@ static void DecodeLMR_SMR(Word Code)
 
 /*!------------------------------------------------------------------------
  * \fn     DecodeRDVAL_WRVAL(Word Code)
- * \brief  Handle RDVAL/WRVAL Instruction
+ * \brief  Handle RDVAL/WRVAL Instructions
  * \param  Code Machine code & operand size
  * ------------------------------------------------------------------------ */
 
@@ -2131,6 +2215,223 @@ static void DecodeRDVAL_WRVAL(Word Code)
         | 0x1e, 3);
     AppendIndex(&AdrVals);
     AppendDisp(&AdrVals);
+  }
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     DecodeCCVci(Word Code)
+ * \brief  Handle CCVnci Instructions (Format 15.1)
+ * \param  Code Machine code & (integer) operand size
+ * ------------------------------------------------------------------------ */
+
+static void DecodeCCVci(Word Code)
+{
+  tAdrVals SrcAdrVals, DestAdrVals;
+
+  if (ChkArgCnt(2, 2)
+   && ChkNoAttrPart()
+   && CheckCustomAvail()
+   && SetCOpSizeFromCode(Code & 0x01)
+   && DecodeAdr(&ArgStr[1], &SrcAdrVals, MAllowReg | MAllowImm)
+   && ResetOpSize() && SetOpSizeFromCode(Code)
+   && DecodeAdr(&ArgStr[2], &DestAdrVals, MAllowReg))
+  {
+    PutCode((((LongWord)SrcAdrVals.Code) << 19)
+          | (((LongWord)DestAdrVals.Code) << 14)
+          | (Lo(Code) << 10)
+          | (SizeCodeI(OpSize) << 8)
+          | 0x36, 3);
+    AppendIndex(&SrcAdrVals);
+    AppendIndex(&DestAdrVals);
+    AppendDisp(&SrcAdrVals);
+    AppendDisp(&DestAdrVals);
+  }
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     DecodeCCVic(Word Code)
+ * \brief  Handle CCVnic Instructions (Format 15.1)
+ * \param  Code Machine code & (integer) operand size
+ * ------------------------------------------------------------------------ */
+
+static void DecodeCCVic(Word Code)
+{
+  tAdrVals SrcAdrVals, DestAdrVals;
+
+  if (ChkArgCnt(2, 2)
+   && ChkNoAttrPart()
+   && CheckCustomAvail()
+   && SetOpSizeFromCode(Code)
+   && DecodeAdr(&ArgStr[1], &SrcAdrVals, MAllowReg | MAllowImm)
+   && ResetOpSize() && SetCOpSizeFromCode(Code & 0x01)
+   && DecodeAdr(&ArgStr[2], &DestAdrVals, MAllowReg))
+  {
+    PutCode((((LongWord)SrcAdrVals.Code) << 19)
+          | (((LongWord)DestAdrVals.Code) << 14)
+          | (Lo(Code) << 10)
+          | (SizeCodeI(GetOpSizeFromCode(Code)) << 8)
+          | 0x36, 3);
+    AppendIndex(&SrcAdrVals);
+    AppendIndex(&DestAdrVals);
+    AppendDisp(&SrcAdrVals);
+    AppendDisp(&DestAdrVals);
+  }
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     DecodeCCVcc(Word Code)
+ * \brief  Handle CCVncc Instructions (Format 15.1)
+ * \param  Code Machine Code & Flags
+ * ------------------------------------------------------------------------ */
+
+static void DecodeCCVcc(Word Code)
+{
+  tAdrVals SrcAdrVals, DestAdrVals;
+  Byte OpSize = Code & 1;
+
+  if (ChkArgCnt(2, 2)
+   && ChkNoAttrPart()
+   && CheckCustomAvail()
+   && SetCOpSizeFromCode(OpSize)
+   && DecodeAdr(&ArgStr[1], &SrcAdrVals, MAllowReg | MAllowImm)
+   && ResetOpSize() && SetCOpSizeFromCode(OpSize ^ 1)
+   && DecodeAdr(&ArgStr[2], &DestAdrVals, MAllowReg))
+  {
+    PutCode((((LongWord)SrcAdrVals.Code) << 19)
+          | (((LongWord)DestAdrVals.Code) << 14)
+          | (Code << 10)
+          | 0x36, 3);
+    AppendIndex(&SrcAdrVals);
+    AppendIndex(&DestAdrVals);
+    AppendDisp(&SrcAdrVals);
+    AppendDisp(&DestAdrVals);
+  }
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     DecodeCATST(Word Code)
+ * \brief  Decode CATSTx Instructions (Format 15.0)
+ * \param  Code Machine Code
+ * ------------------------------------------------------------------------ */
+
+static void DecodeCATST(Word Code)
+{
+  tAdrVals AdrVals;
+
+  if (ChkArgCnt(1, 1)
+   && ChkNoAttrPart()
+   && SetOpSize(eSymbolSize32Bit, &OpPart)
+   && DecodeAdr(&ArgStr[1], &AdrVals, MAllowReg | MAllowImm))
+  {
+    PutCode((((LongWord)AdrVals.Code) << 19)
+          | (Code << 10)
+          | (SizeCodeI(OpSize) << 8)
+          | 0x16, 3);
+    AppendIndex(&AdrVals);
+    AppendDisp(&AdrVals);
+  }
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     DecodeLCR_SCR(Word Code)
+ * \brief  Handle LCR/SCR Instructions (Format 15.0)
+ * \param  Code Machine Code & Flags
+ * ------------------------------------------------------------------------ */
+
+#define FMT15_0_MAYIMM (1 << 7)
+
+static void DecodeLCR_SCR(Word Code)
+{
+  Boolean MayImm = !!(Code & FMT15_0_MAYIMM);
+  tAdrVals AdrVals;
+
+  Code &= ~FMT15_0_MAYIMM;
+  if (ChkArgCnt(2, 2)
+   && ChkNoAttrPart()
+   && CheckCustomAvail()
+   && CheckSup(True, &OpPart)
+   && SetOpSize(eSymbolSize32Bit, &OpPart)
+   && DecodeAdr(&ArgStr[2], &AdrVals, MAllowReg | (MayImm ? MAllowImm : 0)))
+  {
+    Boolean OK;
+    LongWord Reg = EvalStrIntExpression(&ArgStr[1], UInt4, &OK);
+
+    if (OK)
+    {
+      PutCode((((LongWord)AdrVals.Code) << 19)
+           | (Reg << 15)
+           | (Code << 10)
+           |  (SizeCodeI(OpSize) << 8)
+           | 0x16, 3);
+      AppendIndex(&AdrVals);
+      AppendDisp(&AdrVals);
+    }
+  }
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     DecodeFormatLCSR_SCSR(Word Code)
+ * \brief  Handle LCSR/SCSR Instructions (Format 15.1)
+ * \param  Code Machine Code & Flags
+ * ------------------------------------------------------------------------ */
+
+#define FMT15_1_MAYIMM (1 << 7)
+
+static void DecodeLCSR_SCSR(Word Code)
+{
+  Boolean MayImm = !!(Code & FMT15_1_MAYIMM);
+  tAdrVals AdrVals;
+
+  Code &= ~FMT15_1_MAYIMM;
+  if (ChkArgCnt(1, 1)
+   && ChkNoAttrPart()
+   && CheckCustomAvail()
+   && SetOpSize(eSymbolSize32Bit, &OpPart)
+   && DecodeAdr(&ArgStr[1], &AdrVals, MAllowReg | (MayImm ? MAllowImm : 0)))
+  {
+    PutCode((((LongWord)AdrVals.Code) << (MayImm ? 19 : 14))
+          | (((LongWord)Code) << 10)
+          | (SizeCodeI(OpSize) << 8)
+          | 0x36, 3);
+    AppendIndex(&AdrVals);
+    AppendDisp(&AdrVals);
+  }
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     DecodeFormat15_5_7(Word Code)
+ * \brief  Handle Format 15.5/15.7 Instructions
+ * \param  Code Machine code & operand size
+ * ------------------------------------------------------------------------ */
+
+#define FMT15_5_DESTMAYIMM 0x80
+#define FMT15_7 0x40
+
+static void DecodeFormat15_5_7(Word Code)
+{
+  tAdrVals SrcAdrVals, DestAdrVals;
+  unsigned DestMayImm = (Code & FMT15_5_DESTMAYIMM) ? MAllowImm : 0,
+           Is7 = !!(Code & FMT15_7);
+
+  Code &= ~(FMT15_5_DESTMAYIMM | FMT15_7);
+  if (ChkArgCnt(2, 2)
+   && ChkNoAttrPart()
+   && CheckCustomAvail()
+   && (!Is7 || CheckCore((1 << eCoreGen1Ext) | (1 << eCoreGen2)))
+   && SetOpSizeFromCode(Code)
+   && DecodeAdr(&ArgStr[1], &SrcAdrVals, MAllowReg | MAllowImm)
+   && DecodeAdr(&ArgStr[2], &DestAdrVals, MAllowReg| DestMayImm))
+  {
+    PutCode((((LongWord)SrcAdrVals.Code) << 19)
+          | (((LongWord)DestAdrVals.Code) << 14)
+          | (Lo(Code) << 10)
+          | (SizeCodeC(OpSize) << 8)
+          | (Is7 << 6)
+          | 0xb6, 3);
+    AppendIndex(&SrcAdrVals);
+    AppendIndex(&DestAdrVals);
+    AppendDisp(&SrcAdrVals);
+    AppendDisp(&DestAdrVals);
   }
 }
 
@@ -2337,6 +2638,19 @@ static void AddFSizeInstTable(const char *pName, unsigned SizeMask, Word Code, I
     if (SizeMask & (1 << Size))
     {
       as_snprintf(Name, sizeof(Name), "%s%c", pName, "FL"[Size - eSymbolSizeFloat32Bit]);
+      AddInstTable(InstTable, Name, Code | (Size << 8), Proc);
+    }
+}
+
+static void AddCSizeInstTable(const char *pName, unsigned SizeMask, Word Code, InstProc Proc)
+{
+  char Name[20];
+  tSymbolSize Size;
+
+  for (Size = eSymbolSize32Bit; Size <= eSymbolSize64Bit; Size++)
+    if (SizeMask & (1 << Size))
+    {
+      as_snprintf(Name, sizeof(Name), "%s%c", pName, "DQ"[Size - eSymbolSize32Bit]);
       AddInstTable(InstTable, Name, Code | (Size << 8), Proc);
     }
 }
@@ -2610,6 +2924,55 @@ static void InitFields(void)
   AddInstTable(InstTable, "FPU"    , 0, CodeFPU);
   AddInstTable(InstTable, "PMMU"   , 0, CodePMMU);
 
+  /* Format 15.0 */
+
+  AddInstTable(InstTable, "LCR", 0x0a | FMT15_0_MAYIMM, DecodeLCR_SCR);
+  AddInstTable(InstTable, "SCR", 0x0b                 , DecodeLCR_SCR);
+  AddInstTable(InstTable, "CATST0", 0x00, DecodeCATST);
+  AddInstTable(InstTable, "CATST1", 0x01, DecodeCATST);
+
+  /* Format 15.1 */
+
+  AddSizeInstTable("CCV0Q", (1 << eSymbolSize8Bit) | (1 << eSymbolSize16Bit) | (1 << eSymbolSize32Bit), 0x0e, DecodeCCVci);
+  AddSizeInstTable("CCV0D", (1 << eSymbolSize8Bit) | (1 << eSymbolSize16Bit) | (1 << eSymbolSize32Bit), 0x0f, DecodeCCVci);
+  AddSizeInstTable("CCV1Q", (1 << eSymbolSize8Bit) | (1 << eSymbolSize16Bit) | (1 << eSymbolSize32Bit), 0x0a, DecodeCCVci);
+  AddSizeInstTable("CCV1D", (1 << eSymbolSize8Bit) | (1 << eSymbolSize16Bit) | (1 << eSymbolSize32Bit), 0x0b, DecodeCCVci);
+  AddSizeInstTable("CCV2Q", (1 << eSymbolSize8Bit) | (1 << eSymbolSize16Bit) | (1 << eSymbolSize32Bit), 0x08, DecodeCCVci);
+  AddSizeInstTable("CCV2D", (1 << eSymbolSize8Bit) | (1 << eSymbolSize16Bit) | (1 << eSymbolSize32Bit), 0x09, DecodeCCVci);
+  AddInstTable(InstTable, "CCV3BQ", (eSymbolSize8Bit  << 8) | 0x00, DecodeCCVic);
+  AddInstTable(InstTable, "CCV3WQ", (eSymbolSize16Bit << 8) | 0x00, DecodeCCVic);
+  AddInstTable(InstTable, "CCV3DQ", (eSymbolSize32Bit << 8) | 0x00, DecodeCCVic);
+  AddInstTable(InstTable, "CCV3BD", (eSymbolSize8Bit  << 8) | 0x01, DecodeCCVic);
+  AddInstTable(InstTable, "CCV3WD", (eSymbolSize16Bit << 8) | 0x01, DecodeCCVic);
+  AddInstTable(InstTable, "CCV3DD", (eSymbolSize32Bit << 8) | 0x01, DecodeCCVic);
+  AddInstTable(InstTable, "CCV4DQ", 0x07, DecodeCCVcc);
+  AddInstTable(InstTable, "CCV5QD", 0x04, DecodeCCVcc);
+  AddInstTable(InstTable, "LCSR", 0x01 | FMT15_1_MAYIMM, DecodeLCSR_SCSR);
+  AddInstTable(InstTable, "SCSR", 0x06, DecodeLCSR_SCSR);
+
+  /* Format 15.5/15.7 */
+
+  AddCSizeInstTable("CCAL0", (1 << eSymbolSize32Bit) | (1 << eSymbolSize64Bit), 0x00, DecodeFormat15_5_7);
+  AddCSizeInstTable("CMOV0", (1 << eSymbolSize32Bit) | (1 << eSymbolSize64Bit), 0x01, DecodeFormat15_5_7);
+  AddCSizeInstTable("CCMP" , (1 << eSymbolSize32Bit) | (1 << eSymbolSize64Bit), FMT15_5_DESTMAYIMM | 0x02, DecodeFormat15_5_7);
+  AddCSizeInstTable("CCMP1", (1 << eSymbolSize32Bit) | (1 << eSymbolSize64Bit), FMT15_5_DESTMAYIMM | 0x03, DecodeFormat15_5_7);
+  AddCSizeInstTable("CCAL1", (1 << eSymbolSize32Bit) | (1 << eSymbolSize64Bit), 0x04, DecodeFormat15_5_7);
+  AddCSizeInstTable("CMOV2", (1 << eSymbolSize32Bit) | (1 << eSymbolSize64Bit), 0x05, DecodeFormat15_5_7);
+  AddCSizeInstTable("CCAL3", (1 << eSymbolSize32Bit) | (1 << eSymbolSize64Bit), 0x08, DecodeFormat15_5_7);
+  AddCSizeInstTable("CMOV3", (1 << eSymbolSize32Bit) | (1 << eSymbolSize64Bit), 0x09, DecodeFormat15_5_7);
+  AddCSizeInstTable("CCAL2", (1 << eSymbolSize32Bit) | (1 << eSymbolSize64Bit), 0x0c, DecodeFormat15_5_7);
+  AddCSizeInstTable("CMOV1", (1 << eSymbolSize32Bit) | (1 << eSymbolSize64Bit), 0x0d, DecodeFormat15_5_7);
+  AddCSizeInstTable("CCAL4", (1 << eSymbolSize32Bit) | (1 << eSymbolSize64Bit), FMT15_7 | 0x00, DecodeFormat15_5_7);
+  AddCSizeInstTable("CMOV4", (1 << eSymbolSize32Bit) | (1 << eSymbolSize64Bit), FMT15_7 | 0x01, DecodeFormat15_5_7);
+  AddCSizeInstTable("CCAL8", (1 << eSymbolSize32Bit) | (1 << eSymbolSize64Bit), FMT15_7 | 0x02, DecodeFormat15_5_7);
+  AddCSizeInstTable("CCAL9", (1 << eSymbolSize32Bit) | (1 << eSymbolSize64Bit), FMT15_7 | 0x03, DecodeFormat15_5_7);
+  AddCSizeInstTable("CCAL5", (1 << eSymbolSize32Bit) | (1 << eSymbolSize64Bit), FMT15_7 | 0x04, DecodeFormat15_5_7);
+  AddCSizeInstTable("CMOV6", (1 << eSymbolSize32Bit) | (1 << eSymbolSize64Bit), FMT15_7 | 0x05, DecodeFormat15_5_7);
+  AddCSizeInstTable("CCAL7", (1 << eSymbolSize32Bit) | (1 << eSymbolSize64Bit), FMT15_7 | 0x08, DecodeFormat15_5_7);
+  AddCSizeInstTable("CMOV7", (1 << eSymbolSize32Bit) | (1 << eSymbolSize64Bit), FMT15_7 | 0x09, DecodeFormat15_5_7);
+  AddCSizeInstTable("CCAL6", (1 << eSymbolSize32Bit) | (1 << eSymbolSize64Bit), FMT15_7 | 0x0c, DecodeFormat15_5_7);
+  AddCSizeInstTable("CMOV5", (1 << eSymbolSize32Bit) | (1 << eSymbolSize64Bit), FMT15_7 | 0x0d, DecodeFormat15_5_7);
+
   /* BITBLT */
 
   AddInstTable(InstTable, "BBAND"  , 0x12b, DecodeBB);
@@ -2697,6 +3060,7 @@ static void InitCode_NS32K(void)
 {
   SetFlag(&PMMUAvail, PMMUAvailName, False);
   SetFlag(&FPUAvail, FPUAvailName, False);
+  SetFlag(&CustomAvail, CustomAvailSymName, False);
   SetMomFPU(eFPUNone);
   SetMomPMMU(ePMMUNone);
 }
@@ -2768,6 +3132,7 @@ static void SwitchTo_NS32K(void *pUser)
   QualifyQuote = QualifyQuote_SingleQuoteConstant;
   InitFields();
   AddONOFF(SupAllowedCmdName , &SupAllowed, SupAllowedSymName, False);
+  AddONOFF(CustomAvailCmdName, &CustomAvail, CustomAvailSymName, False);
 }
 
 /*!------------------------------------------------------------------------
@@ -2777,16 +3142,16 @@ static void SwitchTo_NS32K(void *pUser)
 
 static const tCPUProps CPUProps[] =
 {
-  { "NS16008", eCoreGen1, eFPU16081, ePMMU16082, UInt24 },
-  { "NS32008", eCoreGen1, eFPU32081, ePMMU32082, UInt24 },
-  { "NS08032", eCoreGen1, eFPU32081, ePMMU32082, UInt24 },
-  { "NS16032", eCoreGen1, eFPU16081, ePMMU16082, UInt24 },
-  { "NS32016", eCoreGen1, eFPU32081, ePMMU32082, UInt24 },
-  { "NS32032", eCoreGen1, eFPU32081, ePMMU32082, UInt24 },
-  { "NS32332", eCoreGen1, eFPU32381, ePMMU32382, UInt32 },
-  { "NS32CG16",eCoreGenE, eFPU32181, ePMMU32082, UInt24 },
-  { "NS32532", eCoreGen2, eFPU32381, ePMMU32532, UInt32 },
-  { NULL     , eCoreNone, eFPUNone , ePMMUNone , UInt1  }
+  { "NS16008", eCoreGen1   , eFPU16081, ePMMU16082, UInt24 },
+  { "NS32008", eCoreGen1   , eFPU32081, ePMMU32082, UInt24 },
+  { "NS08032", eCoreGen1   , eFPU32081, ePMMU32082, UInt24 },
+  { "NS16032", eCoreGen1   , eFPU16081, ePMMU16082, UInt24 },
+  { "NS32016", eCoreGen1   , eFPU32081, ePMMU32082, UInt24 },
+  { "NS32032", eCoreGen1   , eFPU32081, ePMMU32082, UInt24 },
+  { "NS32332", eCoreGen1Ext, eFPU32381, ePMMU32382, UInt32 },
+  { "NS32CG16",eCoreGenE   , eFPU32181, ePMMU32082, UInt24 },
+  { "NS32532", eCoreGen2   , eFPU32381, ePMMU32532, UInt32 },
+  { NULL     , eCoreNone   , eFPUNone , ePMMUNone , UInt1  }
 };
 
 void codens32k_init(void)

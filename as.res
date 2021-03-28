@@ -531,7 +531,11 @@ Message ErrMsgPMMUNotEnabled
 
 Message ErrMsgFullPMMUNotEnabled
  "voller PMMU-Befehlssatz nicht freigeschaltet"
- "full PMMU instruction set is not enabed"
+ "full PMMU instruction set is not enabled"
+
+Message ErrMsgCustomNotEnabled
+ "Custom-Befehle nicht freigeschaltet"
+ "Custom instructions are not enabled"
 
 Message ErrMsgZ80SyntaxNotEnabled
  "Z80-Syntax nicht erlaubt"

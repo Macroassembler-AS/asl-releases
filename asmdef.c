@@ -347,8 +347,6 @@ void asmdef_init(void)
 
   SetMaxCodeLen(MaxCodeLen_Ini);
 
-  RelaxedMode = True;
-
   /* auf diese Weise wird PCSymbol defaultmaessig nicht erreichbar
      da das schon von den Konstantenparsern im Formelparser abgefangen
      wuerde */

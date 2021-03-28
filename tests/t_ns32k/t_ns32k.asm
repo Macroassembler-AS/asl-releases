@@ -399,3 +399,108 @@ table:	db	x'0a, x'1a, x'3a, x'5a, x'7a, x'6a, x'4a
 	expect	1760
 	movfl	f1,f5		; dest not even
 	endexpect
+
+	; Allow L<0..7> to refer to the FPU registers as 64 bits.
+	; Naturally, older FPUs only know L0/L2/L4/L6.
+
+	movlf	l2,f4		; 3E 16 11
+	expect	1760
+	movlf	l3,f4		; source not even
+	endexpect
+	movlf	l2,f5		; 3E 56 11
+	expect	1760
+	movlf	l3,f5		; source not even
+	endexpect
+
+	movfl	f0,l4		; 3E 1B 01
+	expect	1760
+	movfl	f0,l5		; dest not even
+	endexpect
+	movfl	f1,l4		; 3E 1B 09
+	expect	1760
+	movfl	f1,l5		; dest not even
+	endexpect
+
+	expect	1130
+	movlf	l2,l4		; only F allwed as dest
+	endexpect
+
+	custom	on
+
+	catst0	h'123456	; 16 03 A0 00 12 34 56
+	catst1	(r6)		; 16 07 70 00
+
+	lcr	7,12345		; 16 AB A3 00 00 30 39
+	scr	8,2100(sb)	; 16 2F D4 88 34
+
+	ccv2qb	100,4(r4)	; 36 20 A3 00 00 00 00 00 00 00 64 04
+	ccv2qw	100,4(r4)	; 36 21 A3 00 00 00 00 00 00 00 64 04
+	ccv2qd	100,4(r4)	; 36 23 A3 00 00 00 00 00 00 00 64 04
+	ccv2db	100,4(r4)	; 36 24 A3 00 00 00 64 04
+	ccv2dw	100,4(r4)	; 36 25 A3 00 00 00 64 04
+	ccv2dd	100,4(r4)	; 36 27 A3 00 00 00 64 04
+	ccv1qb	100,4(r4)	; 36 28 A3 00 00 00 00 00 00 00 64 04
+	ccv1qw	100,4(r4)	; 36 29 A3 00 00 00 00 00 00 00 64 04
+	ccv1qd	100,4(r4)	; 36 2B A3 00 00 00 00 00 00 00 64 04
+	ccv1db	100,4(r4)	; 36 2C A3 00 00 00 64 04
+	ccv1dw	100,4(r4)	; 36 2D A3 00 00 00 64 04
+	ccv1dd	100,4(r4)	; 36 2F A3 00 00 00 64 04
+	ccv0qb	100,4(r4)	; 36 38 A3 00 00 00 00 00 00 00 64 04
+	ccv0qw	100,4(r4)	; 36 39 A3 00 00 00 00 00 00 00 64 04
+	ccv0qd	100,4(r4)	; 36 3B A3 00 00 00 00 00 00 00 64 04
+	ccv0db	100,4(r4)	; 36 3C A3 00 00 00 64 04
+	ccv0dw	100,4(r4)	; 36 3D A3 00 00 00 64 04
+	ccv0dd	100,4(r4)	; 36 3F A3 00 00 00 64 04
+	ccv3bq	100,4(r4)	; 36 00 A3 64 04
+	ccv3wq	100,4(r4)	; 36 01 A3 00 64 04
+	ccv3dq	100,4(r4)	; 36 03 A3 00 00 00 64 04
+	ccv3bd	100,4(r4)	; 36 04 A3 64 04
+	ccv3wd	100,4(r4)	; 36 05 A3 00 64 04
+	ccv3dd	100,4(r4)	; 36 07 A3 00 00 00 64 04
+	ccv4dq	100,4(r4)	; 36 1C A3 00 00 00 64 04
+	ccv5qd	100,4(r4)	; 36 10 A3 00 00 00 00 00 00 00 64 04
+
+	lcsr	100		; 36 07 A0 00 00 00 64
+	scsr	@100		; 36 5B 05 80 64
+
+	ccal0d	@100,4(r4)	; B6 01 AB 80 64 04
+	ccal0q	@100,4(r4)	; B6 00 AB 80 64 04
+	cmov0d	100,4(sb)	; B6 85 A6 00 00 00 64 04
+	cmov0q	100,4(sb)	; B6 84 A6 00 00 00 00 00 00 00 64 04
+	ccmpd	100,200		; B6 09 A5 00 00 00 64 00 00 00 C8
+	ccmpq	100,200		; B6 08 A5 00 00 00 00 00 00 00 64 00 00 00 00 00 00 00 C8
+	ccmp1d	100,200		; B6 0D A5 00 00 00 64 00 00 00 C8
+	ccmp1q	100,200		; B6 0C A5 00 00 00 00 00 00 00 64 00 00 00 00 00 00 00 C8
+	ccal1d	@100,4(r4)	; B6 11 AB 80 64 04
+	ccal1q	@100,4(r4)	; B6 10 AB 80 64 04
+	cmov2d	100,4(sb)	; B6 95 A6 00 00 00 64 04
+	cmov2q	100,4(sb)	; B6 94 A6 00 00 00 00 00 00 00 64 04
+	ccal3d	@100,4(r4)	; B6 21 AB 80 64 04
+	ccal3q	@100,4(r4)	; B6 20 AB 80 64 04
+	cmov3d	100,4(sb)	; B6 A5 A6 00 00 00 64 04
+	cmov3q	100,4(sb)	; B6 A4 A6 00 00 00 00 00 00 00 64 04
+	ccal2d	@100,4(r4)	; B6 31 AB 80 64 04
+	ccal2q	@100,4(r4)	; B6 30 AB 80 64 04
+	cmov1d	100,4(sb)	; B6 B5 A6 00 00 00 64 04
+	cmov1q	100,4(sb)	; B6 B4 A6 00 00 00 00 00 00 00 64 04
+
+	ccal4d	@100,4(r4)	; F6 01 AB 80 64 04
+	ccal4q	@100,4(r4)	; F6 00 AB 80 64 04
+	cmov4d	100,4(sb)	; F6 85 A6 00 00 00 64 04
+	cmov4q	100,4(sb)	; F6 84 A6 00 00 00 00 00 00 00 64 04
+	ccal8d	@100,4(r4)	; F6 09 AB 80 64 04
+	ccal8q	@100,4(r4)	; F6 08 AB 80 64 04
+	ccal9d	@100,4(r4)	; F6 0D AB 80 64 04
+	ccal9q	@100,4(r4)	; F6 0C AB 80 64 04
+	ccal5d	@100,4(r4)	; F6 11 AB 80 64 04
+	ccal5q	@100,4(r4)	; F6 10 AB 80 64 04
+	cmov6d	100,4(sb)	; F6 95 A6 00 00 00 64 04
+	cmov6q	100,4(sb)	; F6 94 A6 00 00 00 00 00 00 00 64 04
+	ccal7d	@100,4(r4)	; F6 21 AB 80 64 04
+	ccal7q	@100,4(r4)	; F6 20 AB 80 64 04
+	cmov7d	100,4(sb)	; F6 A5 A6 00 00 00 64 04
+	cmov7q	100,4(sb)	; F6 A4 A6 00 00 00 00 00 00 00 64 04
+	ccal6d	@100,4(r4)	; F6 31 AB 80 64 04
+	ccal6q	@100,4(r4)	; F6 30 AB 80 64 04
+	cmov5d	100,4(sb)	; F6 B5 A6 00 00 00 64 04
+	cmov5q	100,4(sb)	; F6 B4 A6 00 00 00 00 00 00 00 64 04

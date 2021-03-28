@@ -1,0 +1,1 @@
+-cpu atmega8 -D Zahl_I=01h -D Zahl_C=0x02

@@ -1,3 +1,9 @@
+2021-03-28 [1.42 Bld 200]
+
+- Addition    : Add NS32K custom processor instructions
+- Addition    : Add NS32K floating point register names Lx
+- Bugfix      : repair -D <var>=<value> option
+
 2021-03-19 [1.42 Bld 199]
 
 - Bugfix      : Correct address of NS32082 BPR1 register 

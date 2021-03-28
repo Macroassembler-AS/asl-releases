@@ -368,11 +368,6 @@ void SetIntConstRelaxedMode(Boolean NewRelaxedMode)
   SetIntConstModeByMask(NativeIntConstModeMask | (NewRelaxedMode ? OtherIntConstModeMask : 0));
 }
 
-void intconst_init(void)
-{
-  IntConstMode = eIntConstModeC;
-}
-
 /*!------------------------------------------------------------------------
  * \fn     GetIntFormatId(const char *pIdent)
  * \brief  transform identifier to id
@@ -387,4 +382,17 @@ tIntFormatId GetIntFormatId(const char *pIdent)
    if (!as_strcasecmp(pIdent, pList->Ident))
      return (tIntFormatId)pList->Id;
   return eIntFormatNone;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     intformat_init(void)
+ * \brief  module initialization
+ * ------------------------------------------------------------------------ */
+
+void intformat_init(void)
+{
+  /* Allow all int const modes for handling possible -D options: */
+
+  RelaxedMode = True;
+  SetIntConstMode(eIntConstModeC);
 }
