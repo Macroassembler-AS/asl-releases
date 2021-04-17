@@ -959,6 +959,13 @@ static void DecodeMOVA(Word Code)
             break;
         }
         break;
+
+      /* 'MOVA ...,@Rn' is not defined, treat like 'MOVA ...,0(Rn)' */
+
+      case eModeIReg:
+        AdrParts.Mode = eModeRegDisp;
+        AdrParts.Val = 0;
+        /* fall-thru */
       case eModeRegDisp:
         if (ChkRange(AdrParts.Val, 0, 0xffff)
          && (DecodeReg(&ArgStr[1], &WAsmCode[0], True) == eIsReg))

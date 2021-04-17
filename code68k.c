@@ -931,9 +931,6 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
   ShortInt OutDispLen = -1;
   Boolean PreInd;
 
-#ifdef HAS64
-  QuadInt QVal;
-#endif
   LongInt HVal;
   Integer HVal16;
   ShortInt HVal8;
@@ -994,19 +991,24 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
           pResult->Vals[1] = HVal & 0xffff;
         }
         break;
-#ifdef HAS64
       case eSymbolSize64Bit:
+      {
+        LargeInt QVal = EvalStrIntExpressionWithFlags(&ImmArg, LargeIntType, &ValOK, &pResult->ImmSymFlags);
         pResult->Cnt = 8;
-        QVal = EvalStrIntExpressionWithFlags(&ImmArg, Int64, &ValOK, &pResult->ImmSymFlags);
         if (ValOK)
         {
+#ifdef HAS64
           pResult->Vals[0] = (QVal >> 48) & 0xffff;
           pResult->Vals[1] = (QVal >> 32) & 0xffff;
+#else
+          pResult->Vals[0] =
+          pResult->Vals[1] = (QVal & 0x80000000ul) ? 0xffff : 0x0000;
+#endif
           pResult->Vals[2] = (QVal >> 16) & 0xffff;
           pResult->Vals[3] = (QVal      ) & 0xffff;
         }
         break;
-#endif
+      }
       case eSymbolSizeFloat32Bit:
         pResult->Cnt = 4;
         DVal = EvalStrFloatExpression(&ImmArg, Float32, &ValOK);

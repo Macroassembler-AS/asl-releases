@@ -99,6 +99,8 @@ typedef enum
 DefCPPOps_Enum(tCodepage)
 #endif
 
+#include "datatypes.h"
+
 extern const tNLSCharacterTab *GetCharacterTab(tCodepage Codepage);
 
 extern const char NLS_HtmlCharacterTab[eCH_cnt][9];
@@ -107,8 +109,8 @@ extern int CharTab_GetLength(const tNLSCharacterTab *pTab, tNLSCharacter Charact
 
 extern const char *CharTab_GetNULTermString(const tNLSCharacterTab *pTab, tNLSCharacter Character, char *pBuffer);
 
-extern unsigned UTF8ToUnicode(const char* *ppChr);
+extern LongWord UTF8ToUnicode(const char* *ppChr);
 
-extern void UnicodeToUTF8(char* *ppChr, unsigned Unicode);
+extern void UnicodeToUTF8(char* *ppChr, LongWord Unicode);
 
 #endif /* _CHARDEFS_H */

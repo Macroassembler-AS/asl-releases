@@ -59,9 +59,13 @@ DefCPPOps_Enum(IntType)
 #endif
 
 #ifdef HAS64
-#define LargeWordType UInt64
+#define LargeUIntType UInt64
+#define LargeSIntType SInt64
+#define LargeIntType Int64
 #else
-#define LargeWordType UInt32
+#define LargeUIntType UInt32
+#define LargeSIntType SInt32
+#define LargeIntType Int32
 #endif
 
 typedef struct

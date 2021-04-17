@@ -1232,7 +1232,7 @@ static void ProcessIRPArgs(Boolean CtrlArg, const tStrComp *pArg, void *pUser)
   }
 }
 
-static void ExpandIRP(void)
+static Boolean ExpandIRP(void)
 {
   PInputTag Tag;
   tExpandIRPContext Context;
@@ -1244,7 +1244,7 @@ static void ExpandIRP(void)
   if (!IfAsm)
   {
     AddWaitENDM_Processor();
-    return;
+    return True;
   }
 
   /* 1. Parameter pruefen */
@@ -1269,7 +1269,7 @@ static void ExpandIRP(void)
     ClearStringList(&(Context.Params));
     free(Context.pOutputTag);
     AddWaitENDM_Processor();
-    return;
+    return False;
   }
 
   /* 2. Tag erzeugen */
@@ -1290,6 +1290,8 @@ static void ExpandIRP(void)
   /* 4. einbetten */
 
   FirstOutputTag = Context.pOutputTag;
+
+  return True;
 }
 
 /*--- IRPC: dito fuer Zeichen eines Strings ---------------------------------*/
@@ -1398,7 +1400,7 @@ static void ProcessIRPCArgs(Boolean CtrlArg, const tStrComp *pArg, void *pUser)
   }
 }
 
-static void ExpandIRPC(void)
+static Boolean ExpandIRPC(void)
 {
   PInputTag Tag;
   tExpandIRPCContext Context;
@@ -1410,7 +1412,7 @@ static void ExpandIRPC(void)
   if (!IfAsm)
   {
     AddWaitENDM_Processor();
-    return;
+    return True;
   }
 
   /* 1.Parameter pruefen */
@@ -1433,7 +1435,7 @@ static void ExpandIRPC(void)
   {
     ClearStringList(&(Context.pOutputTag->ParamNames));
     AddWaitENDM_Processor();
-    return;
+    return False;
   }
 
   /* 2. Tag erzeugen */
@@ -1454,6 +1456,8 @@ static void ExpandIRPC(void)
 
   Context.pOutputTag->Tag = Tag;
   FirstOutputTag = Context.pOutputTag;
+
+  return True;
 }
 
 /*--- Repetition -----------------------------------------------------------*/
@@ -1600,7 +1604,7 @@ static void ProcessREPTArgs(Boolean CtrlArg, const tStrComp *pArg, void *pUser)
   }
 }
 
-static void ExpandREPT(void)
+static Boolean ExpandREPT(void)
 {
   PInputTag Tag;
   POutputTag Neu;
@@ -1613,7 +1617,7 @@ static void ExpandREPT(void)
   if (!IfAsm)
   {
     AddWaitENDM_Processor();
-    return;
+    return True;
   }
 
   /* 1. Repetitionszahl ermitteln */
@@ -1631,7 +1635,7 @@ static void ExpandREPT(void)
   if (Context.ErrFlag)
   {
     AddWaitENDM_Processor();
-    return;
+    return False;
   }
 
   /* 2. Tag erzeugen */
@@ -1652,6 +1656,8 @@ static void ExpandREPT(void)
   Neu->Next      = FirstOutputTag;
   Neu->Tag       = Tag;
   FirstOutputTag = Neu;
+
+  return True;
 }
 
 /*- bedingte Wiederholung -------------------------------------------------------*/
@@ -1821,7 +1827,7 @@ static void ProcessWHILEArgs(Boolean CtrlArg, const tStrComp *pArg, void *pUser)
   }
 }
 
-static void ExpandWHILE(void)
+static Boolean ExpandWHILE(void)
 {
   PInputTag Tag;
   POutputTag Neu;
@@ -1834,7 +1840,7 @@ static void ExpandWHILE(void)
   if (!IfAsm)
   {
     AddWaitENDM_Processor();
-    return;
+    return True;
   }
 
   /* 1. Bedingung ermitteln */
@@ -1853,7 +1859,7 @@ static void ExpandWHILE(void)
   if (Context.ErrFlag)
   {
     AddWaitENDM_Processor();
-    return;
+    return False;
   }
 
   /* 2. Tag erzeugen */
@@ -1874,6 +1880,8 @@ static void ExpandWHILE(void)
   Neu->Next      = FirstOutputTag;
   Neu->Tag       = Tag;
   FirstOutputTag = Neu;
+
+  return True;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -2223,7 +2231,7 @@ static void Produce_Code(void)
 {
   PMacroRec OneMacro;
   PStructRec OneStruct;
-  Boolean SearchMacros, Found, IsMacro = False, IsStruct = False;
+  Boolean SearchMacros, Found, IsMacro = False, IsStruct = False, ResetLastLabel = True;
 
   ActListGran = ListGran();
   WasIF = WasMACRO = False;
@@ -2279,20 +2287,20 @@ static void Produce_Code(void)
     case 'I':
       /* Makroliste ? */
       Found = True;
-      if (Memo("IRP")) ExpandIRP();
-      else if (Memo("IRPC")) ExpandIRPC();
+      if (Memo("IRP")) ResetLastLabel = !ExpandIRP();
+      else if (Memo("IRPC")) ResetLastLabel = !ExpandIRPC();
       else Found = False;
       break;
     case 'R':
       /* Repetition ? */
       Found = True;
-      if (Memo("REPT")) ExpandREPT();
+      if (Memo("REPT")) ResetLastLabel = !ExpandREPT();
       else Found = False;
       break;
     case 'W':
       /* bedingte Repetition ? */
       Found = True;
-      if (Memo("WHILE")) ExpandWHILE();
+      if (Memo("WHILE")) ResetLastLabel = !ExpandWHILE();
       else Found = False;
       break;
   }
@@ -2341,6 +2349,7 @@ static void Produce_Code(void)
 
   else if (IsMacro)
   {
+    ResetLastLabel = False;
     if (IfAsm)
     {
       ExpandMacro(OneMacro);
@@ -2404,7 +2413,7 @@ static void Produce_Code(void)
 
   /* reset memory about previous label if it is a non-empty instruction */
 
-  if (*OpPart.Str)
+  if (*OpPart.Str && ResetLastLabel)
     LabelReset();
 
   /* dies ueberprueft implizit, ob von der letzten Eval...-Operation noch

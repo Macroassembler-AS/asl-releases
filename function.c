@@ -260,17 +260,11 @@ static void FuncSGN(TempResult *pResult, const TempResult *pArgs, unsigned ArgCn
   }
 }
 
-#ifdef HAS64
-# define LargeIntType SInt64
-#else
-# define LargeIntType SInt32
-#endif
-
 static void FuncINT(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   UNUSED(ArgCnt);
 
-  if (fabs(pArgs[0].Contents.Float) > IntTypeDefs[LargeIntType].Max)
+  if (fabs(pArgs[0].Contents.Float) > IntTypeDefs[LargeSIntType].Max)
   {
     pResult->Typ = TempNone;
     WrError(ErrNum_OverRange);

@@ -1,0 +1,13 @@
++------------------------ Test Application MSPPAD ---------------------------+
+|                                                                            |
+| This tests 'plays' a bit with implicit padding inserted by the assembler,  |
+| to advance the program counter to the next even address.  The important    |
+| detail is that a label in the current or previous (empty) line also gets   |
+| updated to this new address.  This requires a small state machine to keep  |
+| track of the most recently defined label, that gets reset each time a      |
+| padding was inserted right before the next machine instruction.  The state |
+| machine should remain uninfluenced by pseudo statements like macros, which |
+| does not always work - but the number of cases it works for is             |
+| increasing...                                                              |
+|                                                                            |
++----------------------------------------------------------------------------+

@@ -5935,6 +5935,7 @@ blah:
 	mova	2345(r6),r5		; 0x0635 0x0929
 	mova	r14,&12345h		; 0x0e61 0x2345
 	mova	r14,2345(r6)		; 0x0e76 0x0929
+	mova	r14,@r6                 ; 0x0e76 0x0000 ('@Rn' as dest treated like '0(Rn)')
 	mova	#12345h,r5		; 0x0185 0x2345
 	mova	r12,r7			; 0x0cc7
 

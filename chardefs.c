@@ -438,7 +438,7 @@ const char *CharTab_GetNULTermString(const tNLSCharacterTab *pTab, tNLSCharacter
  * \return Unicode value
  * ------------------------------------------------------------------------ */
 
-static int CheckOneUTF8(unsigned char Val, unsigned char Mask, unsigned *pPart)
+static int CheckOneUTF8(unsigned char Val, unsigned char Mask, LongWord *pPart)
 {
   if ((Val & Mask) == ((Mask << 1) & 0xff))
   {
@@ -449,9 +449,9 @@ static int CheckOneUTF8(unsigned char Val, unsigned char Mask, unsigned *pPart)
     return 0;
 }
 
-unsigned UTF8ToUnicode(const char* *ppChr)
+LongWord UTF8ToUnicode(const char* *ppChr)
 {
-  unsigned Part1, Part2, Part3, Part4;
+  LongWord Part1, Part2, Part3, Part4;
 
   if (CheckOneUTF8((*ppChr)[0], 0x80, &Part1))
   {
@@ -484,13 +484,13 @@ unsigned UTF8ToUnicode(const char* *ppChr)
 }
 
 /*!------------------------------------------------------------------------
- * \fn     UnicodeToUTF8(char* *ppChr, unsigned Unicode)
+ * \fn     UnicodeToUTF8(char* *ppChr, LongWord Unicode)
  * \brief  convert UTF-8 encoded char to Unicode
  * \param  ppChr * to destination (points afterwards to next character)
  * \param  Unicode Unicode value
  * ------------------------------------------------------------------------ */
 
-void UnicodeToUTF8(char* *ppChr, unsigned Unicode)
+void UnicodeToUTF8(char* *ppChr, LongWord Unicode)
 {
   if (Unicode <= 0x7f)
     *(*ppChr)++ = Unicode;
@@ -505,7 +505,7 @@ void UnicodeToUTF8(char* *ppChr, unsigned Unicode)
     *(*ppChr)++ = 0x80 | ((Unicode >> 6) & 0x3f);
     *(*ppChr)++ = 0x80 | ((Unicode >> 0) & 0x3f);
   }
-  else if (Unicode <= 0x10ffff)
+  else if (Unicode <= 0x10fffful)
   {
     *(*ppChr)++ = 0xc0 | ((Unicode >> 18) & 0x1f);
     *(*ppChr)++ = 0x80 | ((Unicode >> 12) & 0x3f);

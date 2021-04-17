@@ -1198,7 +1198,7 @@ void PrintChunk(ChunkList *NChunk, DissectBitProc Dissect, int ItemsPerLine)
     /* niedrigsten Start finden, der ueberhalb des letzten Endes liegt */
 
     Found = False;
-    FMin = IntTypeDefs[LargeWordType].Max;
+    FMin = IntTypeDefs[LargeUIntType].Max;
     for (z = 0; z < NChunk->RealLen; z++)
       if (NChunk->Chunks[z].Start >= NewMin)
         if (FMin > NChunk->Chunks[z].Start)

@@ -950,19 +950,21 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrVals *pDest, Boolean AddrMode
       }
       case eSymbolSize64Bit:
       {
-        LargeWord Val = EvalStrIntExpression(pArg,
-#ifdef HAS64
-                                             Int64,
-#else
-                                             Int32,
-#endif
-                                             &OK);
+        LargeWord Val = EvalStrIntExpression(pArg, LargeIntType, &OK);
         if (OK)
         {
+#ifdef HAS64
           pDest->Disp[pDest->DispCnt++] = (Val >> 56) & 0xff;
           pDest->Disp[pDest->DispCnt++] = (Val >> 48) & 0xff;
           pDest->Disp[pDest->DispCnt++] = (Val >> 40) & 0xff;
           pDest->Disp[pDest->DispCnt++] = (Val >> 32) & 0xff;
+#else
+          pDest->Disp[pDest->DispCnt + 0] =
+          pDest->Disp[pDest->DispCnt + 1] =
+          pDest->Disp[pDest->DispCnt + 2] =
+          pDest->Disp[pDest->DispCnt + 3] = (Val & 0x80000000ul) ? 0xff : 0x00;
+          pDest->DispCnt += 4;
+#endif
           pDest->Disp[pDest->DispCnt++] = (Val >> 24) & 0xff;
           pDest->Disp[pDest->DispCnt++] = (Val >> 16) & 0xff;
           pDest->Disp[pDest->DispCnt++] = (Val >>  8) & 0xff;

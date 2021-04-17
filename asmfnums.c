@@ -73,8 +73,8 @@ void AddFile(char *FName)
   Neu = (PToken) malloc(sizeof(TToken));
   Neu->Next = NULL;
   Neu->Name = as_strdup(FName);
-  Neu->FirstAddr = IntTypeDefs[LargeWordType].Max;
-  Neu->LastAddr  = IntTypeDefs[LargeWordType].Min;
+  Neu->FirstAddr = IntTypeDefs[LargeUIntType].Max;
+  Neu->LastAddr  = IntTypeDefs[LargeUIntType].Min;
   if (!FirstFile)
     FirstFile = Neu;
   else
@@ -131,8 +131,8 @@ void GetAddressRange(int File, LargeWord *Start, LargeWord *End)
 
   if (!Lauf)
   {
-    *Start = IntTypeDefs[LargeWordType].Max;
-    *End   = IntTypeDefs[LargeWordType].Min;
+    *Start = IntTypeDefs[LargeUIntType].Max;
+    *End   = IntTypeDefs[LargeUIntType].Min;
   }
   else
   {
@@ -147,8 +147,8 @@ void ResetAddressRanges(void)
 
   for (Run = FirstFile; Run; Run = Run->Next)
   {
-    Run->FirstAddr = IntTypeDefs[LargeWordType].Max;
-    Run->LastAddr  = IntTypeDefs[LargeWordType].Min;
+    Run->FirstAddr = IntTypeDefs[LargeUIntType].Max;
+    Run->LastAddr  = IntTypeDefs[LargeUIntType].Min;
   }
 }
 
