@@ -1,0 +1,13 @@
++------------------------- Test Application DUP -----------------------------+
+|                                                                            |
+|  Funny (and amazing) what weird issues users find: DUP is a keyword for    |
+|  the "Intel/MASM-style" DB/DW/DD... instructions, namely to duplicate the  |
+|  parenthized argument n times.  However, if you don't care about this      |
+|  feature, but you have a symbol of this name?  Well, you may put DUP into  |
+|  parentheses itself, which will protect DUP from being detected as         |
+|  keyword.  Starting with Build 202, there is some additional logic that    |
+|  will detect the duplicate operator only if there is a non-black           |
+|  duplication count argument in front of DUP.  This is checked in this test |
+|  case.                                                                     |
+|                                                                            |
++----------------------------------------------------------------------------+

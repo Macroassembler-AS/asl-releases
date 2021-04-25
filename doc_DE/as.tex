@@ -47,7 +47,7 @@
 
 \vspace{1cm}\par
 
-{\large Stand M"arz 2021}
+{\large Stand April 2021}
 \end{raggedright}
 
 \clearpage
@@ -5177,10 +5177,10 @@ verlegt:
 \begin{itemize}
 \item{\tty{DN}: 4-Bit-Integer}
 \item{\tty{DB}: Byte oder ASCII-String wie bei \tty{DC.B}}
-\item{\tty{DW}: 16-Bit-Integer oder half precision}
-\item{\tty{DD}: 32-Bit-Integer oder single precision}
-\item{\tty{DQ}: double precision (64 Bit)}
-\item{\tty{DT}: extended precision (80 Bit)}
+\item{\tty{DW}: 16-Bit-Integer oder Half Precision}
+\item{\tty{DD}: 32-Bit-Integer oder Single Precision}
+\item{\tty{DQ}: Double Precision (64 Bit)}
+\item{\tty{DT}: Extended Precision (80 Bit)}
 \end{itemize}
 Zum anderen erfolgt die Unterscheidung, ob Konstantendefinition oder
 Speicherreservierung, im Operanden.  Eine Reservierung von Speicher
@@ -5211,6 +5211,11 @@ Assemblers in Ber"uhrung kommen kann: maximal k"onnen 1024 Byte Code
 oder Daten in einer Zeile erzeugt werden.  Dies bezieht sich \bb{nicht}
 auf die Reservierung von Speicher, nur auf die Definition von
 Konstantenfeldern!
+\par
+Der \tty{DUP}-Operator wird nur erkannt, wenn er selber geklammert ist
+und links von ihm ein nicht-leeres Argument steht; auf diese Weise ist es
+m"oglich ein eventuell definiertes Symbol gleichen Namens auch als Argument
+zu verwenden.
 \par
 \ttindex{DEFB}\ttindex{DEFW}
 Um mit dem M80 vertr"aglich zu sein, darf im Z80-Modus anstelle von

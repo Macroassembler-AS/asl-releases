@@ -998,7 +998,7 @@ static void DecodeIntelPseudo_HandleQuote(int *pDepth, Byte *pQuote, char Ch)
 
 static Boolean DecodeIntelPseudo_LayoutMult(const tStrComp *pArg, struct sLayoutCtx *pCtx)
 {
-  int z, Depth, Len;
+  int z, Depth, Len, LastNonBlank;
   Boolean OK, LastValid, Result;
   Byte Quote;
   const char *pDupFnd, *pRun;
@@ -1007,24 +1007,31 @@ static Boolean DecodeIntelPseudo_LayoutMult(const tStrComp *pArg, struct sLayout
   pSaveComp = pCtx->pCurrComp;
   pCtx->pCurrComp = pArg;
 
-  /* search for DUP: exclude parts in parentheses,
-     and parts in quotation marks */
+  /* search for DUP:
+     - Exclude parts in parentheses, and parts in quotation marks.
+     - Assure there is some (non-blank) token before DUP, so if there
+       is e.g. a plain DUP as argument, it will not be interpreted as
+       DUP operator. */
 
   Depth = Quote = 0;
   LastValid = FALSE;
+  LastNonBlank = -1;
   pDupFnd = NULL; Len = strlen(pArg->Str);
   for (pRun = pArg->Str; pRun < pArg->Str + Len - 2; pRun++)
   {
     DecodeIntelPseudo_HandleQuote(&Depth, &Quote, *pRun);
-    if ((!Depth) && (!Quote))
+    if (!Depth && !Quote)
     {
-      if ((!LastValid)
-      &&  (!DecodeIntelPseudo_ValidSymChar(pRun[3]))
-      &&  (!as_strncasecmp(pRun, "DUP", 3)))
+      if (!LastValid
+       && (LastNonBlank >= 0)
+       && !DecodeIntelPseudo_ValidSymChar(pRun[3])
+       && !as_strncasecmp(pRun, "DUP", 3))
       {
         pDupFnd = pRun;
         break;
       }
+      if (!as_isspace(*pRun))
+        LastNonBlank = pRun - pArg->Str;
     }
     LastValid = DecodeIntelPseudo_ValidSymChar(*pRun);
   }

@@ -801,7 +801,7 @@ void WrXErrorPos(tErrorNum Num, const char *pExtendError, const struct sLineComp
   if (!CodeOutput && (Num == ErrNum_UnknownInstruction))
     return;
 
-  if ((SuppWarns) && (Num < 1000))
+  if (SuppWarns && (Num < 1000))
     return;
 
   pErrorMsg = ErrorNum2String(Num, h, sizeof(h));
@@ -870,9 +870,25 @@ void ChkIO(tErrorNum ErrNo)
 }
 
 /*!------------------------------------------------------------------------
+ * \fn     ChkXIO(tErrorNum ErrNo, char *pExtError)
+ * \brief  check for I/O error and report given error if yes
+ * \param  ErrNo error number to report if error occured
+ * \param  pExtError, file name, as plain string
+ * ------------------------------------------------------------------------ */
+
+void ChkXIO(tErrorNum ErrNo, char *pExtError)
+{
+  tStrComp TmpComp;
+
+  StrCompMkTemp(&TmpComp, pExtError);
+  ChkStrIO(ErrNo, &TmpComp);
+}
+
+/*!------------------------------------------------------------------------
  * \fn     void ChkIO(tErrorNum ErrNo)
  * \brief  check for I/O error and report given error if yes
  * \param  ErrNo error number to report if error occured
+ * \param  pComp, file name, as string component with position
  * ------------------------------------------------------------------------ */
 
 void ChkStrIO(tErrorNum ErrNo, const struct sStrComp *pComp)
@@ -884,10 +900,11 @@ void ChkStrIO(tErrorNum ErrNo, const struct sStrComp *pComp)
   if ((io == 0) || (io == 19) || (io == 25))
     return;
 
-  strmaxcpy(s, pComp->Str, STRINGSIZE);
-  strmaxcat(s, ": ", STRINGSIZE);
-  strmaxcat(s, GetErrorMsg(io), STRINGSIZE);
-  WrXErrorPos(ErrNo, s, &pComp->Pos);
+  as_snprintf(s, STRINGSIZE, "%s: %s", pComp->Str, GetErrorMsg(io));
+  if ((pComp->Pos.StartCol >= 0) || pComp->Pos.Len)
+    WrXErrorPos(ErrNo, s, &pComp->Pos);
+  else
+    WrXError(ErrNo, s);
 }
 
 /*!------------------------------------------------------------------------

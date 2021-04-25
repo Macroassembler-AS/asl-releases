@@ -1,3 +1,11 @@
+2021-04-25 [1.42 Bld 202]
+
+- Change      : Somewhat less unintuitive error message if source file cannot
+                be opened
+- Bugfix      : Better handling of DUP operator in DB, DW, DD... if there is
+                also a symbol of this name
+- Addition    : Add file name to all error messages when file open fails
+
 2021-04-17 [1.42 Bld 201]
 
 - Bugfix      : fix MSP430X MOVA instruction with 0(Rn) or @Rn as destination

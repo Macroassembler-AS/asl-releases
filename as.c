@@ -153,7 +153,6 @@
 static char *FileMask;
 static long StartTime, StopTime;
 static Boolean GlobErrFlag;
-static Boolean MasterFile;
 static unsigned MacroNestLevel = 0;
 
 /*=== Zeilen einlesen ======================================================*/
@@ -1945,20 +1944,21 @@ static void INCLUDE_Restorer(PInputTag PInp)
   IncDepth--;
 }
 
-static void ExpandINCLUDE(Boolean SearchPath)
+/*!------------------------------------------------------------------------
+ * \fn     ExpandINCLUDE_Core(const tStrComp *pArg, Boolean SearchPath)
+ * \brief  The actual core code to open a source file for assembly
+ * \param  pArg file's name to open
+ * \param  SearchPath searhc file in include path?
+ * ------------------------------------------------------------------------ */
+
+static void ExpandINCLUDE_Core(const tStrComp *pArg, Boolean SearchPath)
 {
   tStrComp FNameArg;
   String FNameArgStr;
   PInputTag Tag;
 
-  if (!IfAsm)
-    return;
-
-  if (!ChkArgCnt(1, 1))
-    return;
-
   StrCompMkTemp(&FNameArg, FNameArgStr);
-  INCLUDE_SearchCore(&FNameArg, &ArgStr[1], SearchPath);
+  INCLUDE_SearchCore(&FNameArg, pArg, SearchPath);
 
   /* Tag erzeugen */
 
@@ -1982,21 +1982,38 @@ static void ExpandINCLUDE(Boolean SearchPath)
   DeCygwinPath(FNameArg.Str);
 #endif
   Tag->Datei = fopen(FNameArg.Str, "r");
-  if (!Tag->Datei) ChkStrIO(ErrNum_OpeningFile, &ArgStr[1]);
+  if (!Tag->Datei) ChkStrIO(ErrNum_OpeningFile, pArg);
   setvbuf(Tag->Datei, (char*)Tag->Buffer, _IOFBF, BufferArraySize);
 
   /* neu besetzen */
 
   strmaxcpy(CurrFileName, FNameArg.Str, STRINGSIZE);
   Tag->LineZ = MomLineCounter = 0;
-  NextIncDepth++; AddFile(FNameArg.Str);
+  AddFile(FNameArg.Str);
   PushInclude(FNameArg.Str);
   if (++CurrIncludeLevel > MaxIncludeLevel)
-    WrStrErrorPos(ErrNum_MaxIncLevelExceeded, &ArgStr[1]);
+    WrStrErrorPos(ErrNum_MaxIncLevelExceeded, pArg);
 
   /* einhaengen */
 
   Tag->Next = FirstInputTag; FirstInputTag = Tag;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     ExpandINCLUDE(void)
+ * \brief  Handle INCLUDE statement
+ * ------------------------------------------------------------------------ */
+
+static void ExpandINCLUDE(void)
+{
+  if (!IfAsm)
+    return;
+
+  if (!ChkArgCnt(1, 1))
+    return;
+
+  ExpandINCLUDE_Core(&ArgStr[1], True);
+  NextIncDepth++;
 }
 
 /*=========================================================================*/
@@ -2077,9 +2094,19 @@ char *GetErrorPos(void)
   InitStr(&Str);
   CurrStrLen = 0;
 
+  /* no file has yet been opened: */
+
+  if (!FirstInputTag)
+  {
+    const char FixedName[] = "INTERNAL";
+
+    ReallocStr(&Str, strlen(FixedName) + 1);
+    strmaxcat(Str.pStr, FixedName, Str.AllocLen);
+  }
+
   /* for GNU error message style: */
 
-  if (GNUErrors)
+  else if (GNUErrors)
   {
     PInputTag pInnerTag = NULL;
     const char *pMsg;
@@ -2335,11 +2362,9 @@ static void Produce_Code(void)
         /* Includefile? */
         Found = True;
         if (Memo("INCLUDE"))
-        {
-          ExpandINCLUDE(True);
-          MasterFile = False;
-        }
-        else Found = False;
+          ExpandINCLUDE();
+        else
+          Found = False;
         break;
     }
 
@@ -2621,19 +2646,17 @@ static void ProcessFile(String FileName)
   long NxtTime, ListTime;
   const char *Name;
   char *Run;
+  tStrComp FileArg;
 
   dbgentry("ProcessFile");
 
-  as_snprintf(OneLine, STRINGSIZE, " INCLUDE \"%s\"", FileName);
-  MasterFile = False;
-  NextIncDepth = IncDepth;
-  SplitLine();
-  Produce_Code();
-  IncDepth = NextIncDepth;
+  *OneLine = *CurrFileName = '\0';
+  StrCompMkTemp(&FileArg, FileName);
+  ExpandINCLUDE_Core(&FileArg, False);
 
   ListTime = GTime();
 
-  while ((!InputEnd()) && (!ENDOccured))
+  while (!InputEnd() && !ENDOccured)
   {
     /* Zeile lesen */
 
@@ -2794,7 +2817,7 @@ static void AssembleFile_InitPass(void)
   AddFile(CurrFileName);
   CurrLine = 0;
 
-  IncDepth = -1;
+  IncDepth = 0;
   DoLst = eLstMacroExpAll;
 
   /* Pseudovariablen initialisieren */
@@ -3057,7 +3080,7 @@ static void AssembleFile(char *Name)
     {
       ShareFile = fopen(ShareName, "w");
       if (!ShareFile)
-        ChkIO(ErrNum_OpeningFile);
+        ChkXIO(ErrNum_OpeningFile, ShareName);
       errno = 0;
       switch (ShareMode)
       {
@@ -3078,21 +3101,21 @@ static void AssembleFile(char *Name)
     {
       MacProFile = fopen(MacProName, "w");
       if (!MacProFile)
-        ChkIO(ErrNum_OpeningFile);
+        ChkXIO(ErrNum_OpeningFile, MacProName);
     }
 
     if ((MacroOutput) && (PassNo == 1))
     {
       MacroFile = fopen(MacroName, "w");
       if (!MacroFile)
-        ChkIO(ErrNum_OpeningFile);
+        ChkXIO(ErrNum_OpeningFile, MacroName);
     }
 
     /* Listdatei oeffnen */
 
     OpenWithStandard(&LstFile, LstName);
     if (!LstFile)
-      ChkIO(ErrNum_OpeningFile);
+      ChkXIO(ErrNum_OpeningFile, LstName);
     if (!ListToNull)
     {
       errno = 0;

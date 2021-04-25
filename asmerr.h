@@ -37,6 +37,7 @@ extern void AsmErrPassInit(void);
 extern void AsmErrPassExit(void);
 
 extern void ChkIO(tErrorNum ErrNo);
+extern void ChkXIO(tErrorNum ErrNo, char *pExtError);
 extern void ChkStrIO(tErrorNum ErrNo, const struct sStrComp *pComp);
 
 #endif /* _ASMERR_H */

@@ -6,5 +6,6 @@
 
 # include "cppops.h"
 DefCPPOps_Enum(tFPU)
+DefCPPOps_Enum(tPMMU)
 
 #endif /* _CODENS32K_HPP */

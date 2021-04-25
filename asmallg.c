@@ -1530,7 +1530,7 @@ static void CodeLISTING(Word Index)
 
 void INCLUDE_SearchCore(tStrComp *pDest, const tStrComp *pArg, Boolean SearchPath)
 {
-  StrCompCopy(pDest, &ArgStr[1]);
+  StrCompCopy(pDest, pArg);
 
   if (pDest->Str[0] == '"')
   {
@@ -1553,7 +1553,7 @@ void INCLUDE_SearchCore(tStrComp *pDest, const tStrComp *pArg, Boolean SearchPat
     String FoundFileName;
 
     if (FSearch(FoundFileName, sizeof(FoundFileName), pDest->Str, CurrFileName, SearchPath ? IncludeList : ""))
-      ChkStrIO(ErrNum_OpeningFile, &ArgStr[1]);
+      ChkStrIO(ErrNum_OpeningFile, pArg);
     strmaxcpy(pDest->Str, FExpand(FoundFileName), STRINGSIZE - 1);
   }
 }
@@ -1607,7 +1607,7 @@ static void CodeBINCLUDE(Word Index)
       INCLUDE_SearchCore(&FNameArg, &ArgStr[1], True);
 
       F = fopen(FNameArg.Str, OPENRDMODE);
-      if (F == NULL) ChkIO(ErrNum_OpeningFile);
+      if (F == NULL) ChkXIO(ErrNum_OpeningFile, FNameArg.Str);
       errno = 0; FSize = FileSize(F); ChkIO(ErrNum_FileReadError);
       if (Len == -1)
       {

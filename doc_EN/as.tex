@@ -1,6 +1,6 @@
 %% Hello altogether,
 %%
-%% this is a release of the english AS manual.  I haven't
+%% this is a release of the English AS manual.  I haven't
 %% done the entire translation myself, large parts of it are the work of some
 %% other people around the net who deserve my deep appreciation for this job.
 %% My parts of the translation are the results of a brute-force attempt,
@@ -66,7 +66,7 @@
 
 \vspace{1cm}\par
 
-{\large Edition March 2021}
+{\large Edition April 2021}
 \end{raggedright}
 
 \clearpage
@@ -5055,7 +5055,7 @@ marked by a \tty{?} :
         dw      ?,?     ; reserves memory for 2 words (=4 byte)
         dd      -1      ; places the constant -1 (FFFFFFFFH) !
 \end{verbatim}
-Reserved memory and constant definition \bb{must not} be mixed within one
+Reserved memory and constant definitions \bb{must not} be mixed within one
 instruction:
 \begin{verbatim}
         db      "hello",?       ; --> error message
@@ -5069,10 +5069,15 @@ constant sequences or the reservation of whole memory blocks:
 As you can see, the \tty{DUP}-argument must be enclosed in parentheses,
 which is also why it may consist of several components, that may
 themselves be \tty{DUP}s...the stuff therefore works recursively.
+
 \tty{DUP} is however also a place where one can get in touch with another
 limit of the assembler: a maximum of 1024 bytes of code or data may be
 generated in one line.  This is not valid for the reservation of memory,
 only for the definition of constant arrays!
+
+The \tty{DUP} operator only gets recognized if it is itself not enclosed
+in parentheses, and if there is a non-empty argument to its left.  This
+way, it is possible to use a symbol of same name as argument.
 
 In order to be compatible to the M80, \tty{DEFB/DEFW} may be used instead of
 \tty{DB/DW} in Z80-mode.
