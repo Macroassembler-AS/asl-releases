@@ -49,7 +49,7 @@
 	SL	R0,SE		; 200E
 	SL	R0,CE		; 200F
 
-	;; Memory 
+	;; Memory
 	L	R0,(ADR)	; D000
 	ST	R1,(ADR+1)	; 9101
 	B	ADR		; C700

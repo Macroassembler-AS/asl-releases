@@ -17,7 +17,7 @@
 #include "asmdef.h"
 #include "asmsub.h"
 #include "asmpars.h"
-#include "asmitree.h"  
+#include "asmitree.h"
 #include "codevars.h"
 #include "headids.h"
 #include "intpseudo.h"
@@ -77,7 +77,7 @@ static void DecodeConst3(Word Code)
 }
 
 static void DecodeConst2(Word Code)
-{  
+{
   if (ChkArgCnt(1, 1))
   {
     Boolean OK;
@@ -93,7 +93,7 @@ static void DecodeConst2(Word Code)
 static void DecodeJmp(Word Code)
 {
   if (ChkArgCnt(1, 1))
-  {   
+  {
     tEvalResult EvalResult;
     Word Addr = EvalStrIntExpressionWithResult(&ArgStr[1], CodeAdrIntType, &EvalResult);
     if (EvalResult.OK)
@@ -110,14 +110,14 @@ static void DecodeJmpL(Word Code)
   UNUSED(Code);
 
   if (ChkArgCnt(1, 1))
-  {   
+  {
     tEvalResult EvalResult;
     Word Addr = EvalStrIntExpressionWithResult(&ArgStr[1], CodeAdrIntType, &EvalResult);
     if (EvalResult.OK)
     {
       ChkSpace(SegCode, EvalResult.AddrSpaceMask);
       BAsmCode[0] = 0x10 | ((Addr >> 6) & 15); /* LDP... */
-      BAsmCode[1] = (Code & 0xc0) | (Addr & 0x3f); 
+      BAsmCode[1] = (Code & 0xc0) | (Addr & 0x3f);
       CodeLen = 2;
     }
   }
@@ -125,7 +125,7 @@ static void DecodeJmpL(Word Code)
 
 /*---------------------------------------------------------------------------*/
 /* Dynamic Instruction Table Handling */
- 
+
 static void InitFields(void)
 {
   Boolean Is1100 = (MomCPU == CPU1100) || (MomCPU == CPU1300);

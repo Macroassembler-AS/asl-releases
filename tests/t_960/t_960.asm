@@ -34,7 +34,7 @@ start:
 
 	addc	sp,fp,rip	; Sonderregister
 
-	addi	r3,r4,r5	; nur noch mal zum Testen der Opcodes... 
+	addi	r3,r4,r5	; nur noch mal zum Testen der Opcodes...
 	addo	r3,r4,r5	
 
 	calls	g2		; nur ein Operand:

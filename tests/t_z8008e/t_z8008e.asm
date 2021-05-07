@@ -25,7 +25,7 @@
 	out	13h,a
 
 ;-----------------------------------
-; Jump Group 
+; Jump Group
 
 	; in exclusive Z80 mode, JP with one
 	; argument is interpreted as unconditional jump

@@ -47,7 +47,7 @@ extern size_t strmaxcat(char *Dest, const char *Src, size_t MaxLen);
 extern void strprep(char *Dest, const char *Src);
 extern void strmaxprep(char *Dest, const char *Src, size_t MaxLen);
 extern void strins(char *Dest, const char *Src, int Pos);
-extern void strmaxins(char *Dest, const char *Src, int Pos, size_t MaxLen); 
+extern void strmaxins(char *Dest, const char *Src, int Pos, size_t MaxLen);
 
 extern size_t as_strnlen(const char *pStr, size_t MaxLen);
 
@@ -83,11 +83,11 @@ extern int KillPostBlanks(char *s);
 extern char TabCompressed(char in);
 
 extern int strqcmp(const char *s1, const char *s2);
-  
+
 extern char *strmov(char *pDest, const char *pSrc);
 
 extern int strmemcpy(char *pDest, size_t DestSize, const char *pSrc, size_t SrcLen);
-  
+
 extern void strutil_init(void);
 
 /* avoid nasty "subscript has type char..." messages on some platforms */

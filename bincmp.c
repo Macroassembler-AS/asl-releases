@@ -8,7 +8,7 @@ char **argv;
   FILE *f1,*f2;
   unsigned char c1,c2;
   long pos = 0;
-  
+
   if (argc != 3)
   {
     fprintf(stderr, "calling convention: %s <file1> <file2>\n", argv[0]);

@@ -44,7 +44,7 @@ typedef enum
   PCMax    = SegEEData
 } tAddrSpace;
 
-/* Definition der im Code liegenden, zu patchenden Typen: 
+/* Definition der im Code liegenden, zu patchenden Typen:
 
    Dazu wird ein 32-Bit-Wert verwendet.  Das oberste Byte gibt den Basistyp
    an, hier ist momentan nur 0 fuer binaere Integers definiert.  Fuer diesen
@@ -58,7 +58,7 @@ typedef enum
    die an einer bestimmten Stelle eingepatcht wird, muss in den oberen (nicht
    gespeicherten) Bits identisch zur Adresse der Patchstelle selber sein.
    Ist Bit22=0, ist es ein normaler vorzeichenloser Int von 0...(2^n)-1
-   
+
    Daraus ergeben sich z. B. folgende einfachen Typen: */
 
 #define RelocTypeL8  0x00008008l

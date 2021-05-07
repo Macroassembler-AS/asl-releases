@@ -19,7 +19,7 @@
 	out	13h,a
 
 ;-----------------------------------
-; Jump Group 
+; Jump Group
 
 	; in non-exclusive Z80 mode, JP with one
 	; argument is interpreted as original 8008 mnemonic

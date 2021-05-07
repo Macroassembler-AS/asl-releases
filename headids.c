@@ -140,7 +140,7 @@ PFamilyDescr FindFamilyByName(const char *Name)
 
 PFamilyDescr FindFamilyById(Word Id)
 {
-  PFamilyDescr pRun;       
+  PFamilyDescr pRun;
 
   for (pRun = Descrs; pRun->Name != NULL; pRun++)
     if (Id == pRun->Id)

@@ -331,7 +331,7 @@ static void DecodeCALL(Word Code)
       DecodeJmpCore(0x42 | Cond);
   }
   else
-    DecodeJmpCore(0x46);  
+    DecodeJmpCore(0x46);
 }
 
 /*!------------------------------------------------------------------------
@@ -964,7 +964,7 @@ static void DecodeSingleReg(Word Index)
 static void DecodePORT(Word Index)
 {
   UNUSED(Index);
-              
+
   CodeEquate(SegIO, 0, 0x7);
 }
 
@@ -1019,11 +1019,11 @@ static void AddJmps(const char *NName, Byte NCode, int Pos)
 {
   char Memo[10], *p;
   int z;
-   
+
   strcpy(Memo, NName); p = strchr(Memo, '*');
-  for (z = 0; z < 4; z++) 
+  for (z = 0; z < 4; z++)
   {
-    *p = FlagNames[z];  
+    *p = FlagNames[z];
     AddJmp(Memo, NCode + (z << Pos));
   }
 }
@@ -1074,7 +1074,7 @@ static void InitFields(void)
   }
   else
   {
-    AddJmp("CAL", 0x46);   
+    AddJmp("CAL", 0x46);
     AddJmp("CS" , 0x72);
     AddJmps("CF*", 0x42, 3);
     AddJmps("CT*", 0x62, 3);

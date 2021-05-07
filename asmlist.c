@@ -116,7 +116,7 @@ void MakeList(const char *pSrcLine)
 
       if (TurnWords && (Gran != ActListGran) && (1 == ActListGran))
         DreheCodes();
-        
+
       do
       {
         /* If not the first code line, prepend blanks to fill up space below line number: */

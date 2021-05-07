@@ -147,7 +147,7 @@ void StrCompSplitCopy(tStrComp *pLeft, tStrComp *pRight, const tStrComp *pSrc, c
   pLeft->Pos.Len = pSplitPos - pSrc->Str;
   memmove(pLeft->Str, pSrc->Str, pLeft->Pos.Len);
   pLeft->Str[pLeft->Pos.Len] = '\0';
-  
+
   pRight->Pos.StartCol = pSrc->Pos.StartCol + (pLeft->Pos.Len + 1);
   pRight->Pos.Len = pSrc->Pos.Len - (pLeft->Pos.Len + 1);
   strcpy(pRight->Str, pSplitPos + 1);

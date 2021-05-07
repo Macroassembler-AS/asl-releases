@@ -28,7 +28,7 @@ extern PRelocEntry LastRelocs;
 
 extern PRelocEntry MergeRelocs(PRelocEntry *list1, PRelocEntry *list2,
                                 Boolean Add);
-                        
+
 extern void InvertRelocs(PRelocEntry *erg, PRelocEntry *src);
 
 extern void FreeRelocs(PRelocEntry *list);

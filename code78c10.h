@@ -6,9 +6,9 @@
 /*                                                                           */
 /* AS-Portierung                                                             */
 /*                                                                           */
-/* Codegenerator NEC uPD78(C)1x                                              */       
+/* Codegenerator NEC uPD78(C)1x                                              */
 /*                                                                           */
-/* Historie: 29.12.1996 Grundsteinlegung                                     */      
+/* Historie: 29.12.1996 Grundsteinlegung                                     */
 /*                                                                           */
 /*****************************************************************************/
 

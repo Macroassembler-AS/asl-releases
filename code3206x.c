@@ -47,7 +47,7 @@ typedef struct
   Byte AddrUsed;  /* Bit 0 -->Addr1 benutzt, Bit 1 -->Addr2 benutzt
                   Bit 2 -->LdSt1 benutzt, Bit 3 -->LdSt2 benutzt */
   Byte LongUsed;  /* Bit 0 -->lange Quelle, Bit 1-->langes Ziel */
-  Boolean AbsBranch; 
+  Boolean AbsBranch;
   Boolean StoreUsed, LongSrc, LongDest;
   TUnit U;
 } InstrRec;
@@ -521,8 +521,8 @@ static Boolean DecodeAdr(const tStrComp *pArg, Byte Mask, Boolean Signed, LongWo
   }
   else
   {
-    *AdrVal = Signed ? 
-              EvalStrIntExpression(pArg, SInt5, &OK) & 0x1f : 
+    *AdrVal = Signed ?
+              EvalStrIntExpression(pArg, SInt5, &OK) & 0x1f :
               EvalStrIntExpression(pArg, UInt5, &OK);
     if (OK)
       AdrMode = ModImm;
@@ -646,7 +646,7 @@ static Boolean DecodePseudo(void)
         t.Contents.Float = EvalStrFloatExpression(&ArgStr[z + 1], Float32, &OK);
         if (!OK)
           break;
-        Double_2_ieee4(t.Contents.Float, (Byte *) (DAsmCode + z), BigEndian);
+        Double_2_ieee4(t.Contents.Float, (Byte *) (DAsmCode + z), HostBigEndian);
       }
       if (OK) CodeLen = ArgCnt << 2;
     }
@@ -666,8 +666,8 @@ static Boolean DecodePseudo(void)
         t.Contents.Float = EvalStrFloatExpression(&ArgStr[z + 1], Float64, &OK);
         if (!OK)
           break;
-        Double_2_ieee8(t.Contents.Float, (Byte *) (DAsmCode + z2), BigEndian);
-        if (!BigEndian)
+        Double_2_ieee8(t.Contents.Float, (Byte *) (DAsmCode + z2), HostBigEndian);
+        if (!HostBigEndian)
         {
           DAsmCode[z2 + 2] = DAsmCode[z2 + 0];
           DAsmCode[z2 + 0] = DAsmCode[z2 + 1];
@@ -727,7 +727,7 @@ static Boolean DecodePseudo(void)
              }
              else
              {
-               Double_2_ieee4(t.Contents.Float, (Byte *) (DAsmCode + cnt), BigEndian);
+               Double_2_ieee4(t.Contents.Float, (Byte *) (DAsmCode + cnt), HostBigEndian);
                cnt++;
              }
              break;
@@ -870,7 +870,7 @@ static void DecodeMul(Word Index)
             break;
           case ModImm:
             __erg = Memo("MPY") ?
-                    CodeM(POrder->Code - 1, DReg, S1Reg, S2Reg) : 
+                    CodeM(POrder->Code - 1, DReg, S1Reg, S2Reg) :
                     CodeM(POrder->Code + 3, DReg, S1Reg, S2Reg);
             break;
         }
@@ -1365,7 +1365,7 @@ static void DecodeSUB(Word Index)
                   ThisCross = (IsCross(S1Reg)) || (IsCross(S2Reg));
                   /* what did I do here? */
                   __erg = IsCross(S1Reg) ?
-                          CodeL(0x37, DReg, S1Reg, S2Reg) : 
+                          CodeL(0x37, DReg, S1Reg, S2Reg) :
                           CodeL(0x47, DReg, S1Reg, S2Reg);
                 }
               }
@@ -1399,7 +1399,7 @@ static void DecodeSUBU(Word Index)
           AddSrc(S2Reg);
           ThisCross = IsCross(S1Reg) || IsCross(S2Reg);
           __erg = IsCross(S1Reg) ?
-                  CodeL(0x3f, DReg, S1Reg, S2Reg) : 
+                  CodeL(0x3f, DReg, S1Reg, S2Reg) :
                   CodeL(0x2f, DReg, S1Reg, S2Reg);
         }
       }
@@ -2454,7 +2454,7 @@ static void DecodeSSUB(Word Code)
 static void DecodeB(Word Code)
 {
   LongWord S2Reg, Code1;
-  LongInt Dist;   
+  LongInt Dist;
   Boolean WithImm, OK;
 
   UNUSED(Code);
@@ -2695,7 +2695,7 @@ static void MakeCode_3206X(void)
       AttrPart.Str[strlen(AttrPart.Str) - 1] = '\0';
     }
     if (*AttrPart.Str == '\0') ThisUnit = NoUnit;
-    else 
+    else
       for (; ThisUnit != LastUnit; ThisUnit++)
         if (!as_strcasecmp(AttrPart.Str, UnitNames[ThisUnit]))
           break;

@@ -91,7 +91,7 @@ void stdhandl_init(void)
   struct stat stdout_stat;
 
 #endif
-#endif   
+#endif
 
    /* wohin zeigt die Standardausgabe ? */
 
@@ -124,5 +124,5 @@ void stdhandl_init(void)
     Redirected = NoRedir;
 
 #endif
-#endif   
+#endif
 }

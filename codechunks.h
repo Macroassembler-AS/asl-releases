@@ -21,7 +21,7 @@ typedef struct
   Byte *pCode;
 } tCodeChunk;
 
-typedef struct 
+typedef struct
 {
   Word RealLen, AllocLen;
   tCodeChunk *Chunks;

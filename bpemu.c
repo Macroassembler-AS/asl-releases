@@ -86,7 +86,7 @@ char *FExpand(char *Src)
 #elif (defined __MINGW32__)
   {
     int DrvNum;
- 
+
     if (!*DrvPart)
     {
       DrvNum = _getdrive();
@@ -114,7 +114,7 @@ char *FExpand(char *Src)
   if (*CurrentDir!=PATHSEP)
     strmaxprep(CurrentDir, SPATHSEP, STRINGSIZE);
 
-  if (*Copy == PATHSEP) 
+  if (*Copy == PATHSEP)
   {
     strmaxcpy(CurrentDir, SPATHSEP, STRINGSIZE);
     strmov(Copy, Copy + 1);
@@ -154,7 +154,7 @@ char *FExpand(char *Src)
 
   strmaxcat(CurrentDir, Copy, STRINGSIZE);
 
-  return CurrentDir; 
+  return CurrentDir;
 }
 
 /*!------------------------------------------------------------------------
@@ -171,7 +171,7 @@ char *FExpand(char *Src)
 static int AssembleAndCheck(char *pDest, size_t DestSize, const char *pPath, unsigned PathLen, const char *pFileToSearch)
 {
   FILE *pDummy;
-  
+
   if (PathLen > DestSize - 1)
     PathLen = DestSize - 1;
   memcpy(pDest, pPath, PathLen);
@@ -252,7 +252,7 @@ long FileSize(FILE *file)
 {
   long Save = ftell(file), Size;
 
-  fseek(file, 0, SEEK_END); 
+  fseek(file, 0, SEEK_END);
   Size=ftell(file);
   fseek(file, Save, SEEK_SET);
   return Size;

@@ -18,7 +18,7 @@
 #include "asmdef.h"
 #include "asmsub.h"
 #include "asmpars.h"
-#include "asmitree.h"  
+#include "asmitree.h"
 #include "codepseudo.h"
 #include "intpseudo.h"
 #include "natpseudo.h"
@@ -352,7 +352,7 @@ static void DecodeAccMem(Word Code)
           break;
         case ModDir:
           BAsmCode[0] = DirPrefix;
-          BAsmCode[1] = SrcResult.Val; 
+          BAsmCode[1] = SrcResult.Val;
           BAsmCode[2] = Code;
           CodeLen = 3;
           break;
@@ -402,7 +402,7 @@ static void DecodeIFEQ(Word Code)
           case ModDir:
             BAsmCode[0] = DirPrefix;
             BAsmCode[1] = SrcResult.Val;
-            BAsmCode[2] = 0x82; 
+            BAsmCode[2] = 0x82;
             CodeLen = 3;
             break;
           case ModBInd:
@@ -453,7 +453,7 @@ static void DecodeIFNE(Word Code)
           case ModDir:
             BAsmCode[0] = DirPrefix;
             BAsmCode[1] = SrcResult.Val;
-            BAsmCode[2] = 0xb9; 
+            BAsmCode[2] = 0xb9;
             CodeLen = 3;
             break;
           case ModBInd:
@@ -568,7 +568,7 @@ static void DecodeJP(Word Code)
     {
       if (AdrInt == 0)
       {
-        BAsmCode[0] = NOPCode; 
+        BAsmCode[0] = NOPCode;
         CodeLen = 1;
         WrError(ErrNum_DistNull);
       }

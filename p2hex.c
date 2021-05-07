@@ -533,7 +533,7 @@ static void ProcessFile(const char *FileName, LongWord Offset)
           switch (ActFormat)
           {
             case eHexFormatTiDSK:
-              if (BigEndian)
+              if (HostBigEndian)
                 WSwap(WBuffer, TransLen);
               for (z = 0; z < (TransLen / 2); z++)
               {

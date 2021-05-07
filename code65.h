@@ -6,9 +6,9 @@
 /*                                                                           */
 /* AS-Portierung                                                             */
 /*                                                                           */
-/* Codegenerator 65xx/MELPS740                                               */                    
+/* Codegenerator 65xx/MELPS740                                               */
 /*                                                                           */
-/* Historie: 17.8.1996 Grundsteinlegung                                      */                          
+/* Historie: 17.8.1996 Grundsteinlegung                                      */
 /*                                                                           */
 /*****************************************************************************/
 

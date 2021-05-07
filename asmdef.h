@@ -361,7 +361,8 @@ extern char MomCPUIdent[20],
 
 extern Boolean FPUAvail,
                PMMUAvail;           /* PMMU-Befehle erlaubt? */
-extern Boolean DoPadding;
+extern Boolean DoPadding,
+               TargetBigEndian;
 extern Boolean Packing;
 extern Boolean DefSupAllowed, SupAllowed;
 extern Boolean Maximum;

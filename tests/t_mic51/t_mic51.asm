@@ -31,7 +31,7 @@ Init_Vektor     macro Vektor,Routine
         pop dpl
         pop dph
         pop acc
- 
+
                 endm
 
 DEC_DPTR        MACRO
@@ -1668,7 +1668,7 @@ Send_Mng_Load:  MOV     R0,#Msg_Registers
                 POP     DPL
                 POP     B
                 POP     Acc
-                RET        
+                RET
 ;--------------------------------------------------------------------------
 
 Receive_Sampler:

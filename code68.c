@@ -1,4 +1,4 @@
-/* code68.c */ 
+/* code68.c */
 /*****************************************************************************/
 /* SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only                     */
 /*                                                                           */
@@ -42,7 +42,7 @@ typedef struct
   Word Code;
 } RelOrder;
 
-typedef struct 
+typedef struct
 {
   Boolean MayImm;
   CPUVar MinCPU;    /* Shift  andere   ,Y   */
@@ -66,7 +66,7 @@ enum
 #define MModExt (1 << ModExt)
 #define MModInd (1 << ModInd)
 #define MModImm (1 << ModImm)
- 
+
 #define Page2Prefix 0x18
 #define Page3Prefix 0x1a
 #define Page4Prefix 0xcd
@@ -459,7 +459,7 @@ static void DecodeALU16(Word Index)
     {
       switch (forder->PageShift)
       {
-        case 1: 
+        case 1:
           if (PrefCnt == 1)
             BAsmCode[PrefCnt - 1] = Page4Prefix;
           else
@@ -712,7 +712,7 @@ static void DecodeSing8(Word Code)
   }
 }
 
-static void DecodeSing8_Acc(Word Code) 
+static void DecodeSing8_Acc(Word Code)
 {
   if (ChkArgCnt(0, 0))
   {
@@ -809,7 +809,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "BCLR" , 1, DecodeBxx);
   AddInstTable(InstTable, "BSET" , 0, DecodeBxx);
   AddInstTable(InstTable, "BTST" , 6, DecodeBTxx);
-  AddInstTable(InstTable, "BTGL" , 0, DecodeBTxx);   
+  AddInstTable(InstTable, "BTGL" , 0, DecodeBTxx);
 
   FixedOrders = (FixedOrder *) malloc(sizeof(FixedOrder) * FixedOrderCnt); InstrZ = 0;
   AddFixed("ABA"  ,CPU6800, CPU68HC11K4, 0x001b); AddFixed("ABX"  ,CPU6801, CPU68HC11K4, 0x003a);
@@ -869,7 +869,7 @@ static void InitFields(void)
   AddALU8("SBC", "SBCA", "SBCB", NULL , True , 0x82);
   AddALU8("STA", "STAA", "STAB", "STB", False, 0x87);
   AddALU8("SUB", "SUBA", "SUBB", NULL , True , 0x80);
-                         
+
   ALU16Orders = (ALU16Order *) malloc(sizeof(ALU16Order) * ALU16OrderCnt); InstrZ = 0;
   AddALU16("ADDD", True , CPU6801, 0, 0xc3);
   AddALU16("CPD" , True , CPU6811, 1, 0x83);
@@ -908,9 +908,9 @@ static void InitFields(void)
   AddInstTable(InstTable, "PULA", 0x32, DecodeSing8_Acc);
   AddInstTable(InstTable, "PULB", 0x33, DecodeSing8_Acc);
 
-  
+
   AddInstTable(InstTable, "AIM", 0x61, DecodeBit63);
-  AddInstTable(InstTable, "EIM", 0x65, DecodeBit63); 
+  AddInstTable(InstTable, "EIM", 0x65, DecodeBit63);
   AddInstTable(InstTable, "OIM", 0x62, DecodeBit63);
   AddInstTable(InstTable, "TIM", 0x6b, DecodeBit63);
 
@@ -983,7 +983,7 @@ static void SwitchFrom_68(void)
 static void SwitchTo_68(void)
 {
 #define ASSUMEHC11Count (sizeof(ASSUMEHC11s) / sizeof(*ASSUMEHC11s))
-  static const ASSUMERec ASSUMEHC11s[] = 
+  static const ASSUMERec ASSUMEHC11s[] =
   {
     {"MMSIZ", &Reg_MMSIZ, 0, 0xff, 0, SetK4Ranges},
     {"MMWBR", &Reg_MMWBR, 0, 0xff, 0, SetK4Ranges},

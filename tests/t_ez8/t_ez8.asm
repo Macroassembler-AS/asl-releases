@@ -118,8 +118,8 @@ test1:	jr	test1
 	adcx	r4,0b12h
 	adcx	46ch,#03h
 
-        addx    634h,0b12h 
-        addx    r4,0b12h  
+        addx    634h,0b12h
+        addx    r4,0b12h
         addx    46ch,#03h
 
         andx	93ah,142h

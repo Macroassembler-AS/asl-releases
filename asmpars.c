@@ -210,7 +210,7 @@ Boolean RangeCheck(LargeInt Wert, IntType Typ)
   if (((int)Typ) >= ((int)SInt32))
     return True;
 #else
-  if (((int)Typ) >= ((int)Int64))
+  if (((int)Typ) >= ((int)SInt64))
     return True;
 #endif
   else
@@ -1502,7 +1502,7 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
   if (LKlamm != 0)
   {
     tStrComp FName, FArg, Remainder;
-    
+
     /* erste Klammer suchen, Funktionsnamen abtrennen */
 
     KlPos = strchr(CopyComp.Str, '(');
@@ -1766,7 +1766,7 @@ LargeInt EvalStrIntExpressionWithResult(const tStrComp *pComp, IntType Type, tEv
 
   EvalStrExpression(pComp, &t);
   SetRelocs(t.Relocs);
-  
+
   switch (t.Typ)
   {
     case TempInt:
@@ -2356,7 +2356,7 @@ PSymbolEntry CreateSymbolEntry(const tStrComp *pName, LongInt *pDestHandle)
 {
   PSymbolEntry pNeu;
   String ExtName;
-  
+
   if (!ExpandStrSymbol(ExtName, sizeof(ExtName), pName))
     return NULL;
   if (!GetSymSection(ExtName, pDestHandle, pName))
@@ -2411,10 +2411,10 @@ void EnterExtSymbol(const tStrComp *pName, LargeInt Wert, Byte Typ, Boolean MayC
 {
   LongInt DestHandle;
   PSymbolEntry pNeu = CreateSymbolEntry(pName, &DestHandle);
-    
+
   if (!pNeu)
     return;
-    
+
   pNeu = (PSymbolEntry) calloc(1, sizeof(TSymbolEntry));
   pNeu->SymWert.Typ = TempInt;
   pNeu->SymWert.Contents.IWert = Wert;
@@ -2575,7 +2575,7 @@ void EnterStringSymbol(const tStrComp *pName, const char *pValue, Boolean MayCha
  * \param  MayChange variable or constant?
  * \param  AddList add value to listing?
  * ------------------------------------------------------------------------ */
-     
+
 void EnterRegSymbol(const struct sStrComp *pName, const tRegDescr *pDescr, tSymbolSize Size, Boolean MayChange, Boolean AddList)
 {
   LongInt DestHandle;
@@ -3820,7 +3820,7 @@ void ClearSectionList(void)
  * \brief  printf cross refence list of a single symbol table entry
  * \param  Node node base object
  * \param  pData actual symbol entry
- * \return 
+ * \return
  * ------------------------------------------------------------------------ */
 
 static void PrintCrossList_PNode(PTree Node, void *pData)
@@ -3953,7 +3953,7 @@ void ClearLocStack()
 static void PrintRegList_PNode(PTree Tree, void *pData)
 {
   PSymbolEntry Node = (PSymbolEntry) Tree;
-  
+
   if (Node->SymWert.Typ == TempReg)
   {
     TListContext *pContext = (TListContext*) pData;

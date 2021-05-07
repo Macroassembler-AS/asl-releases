@@ -145,7 +145,7 @@ typedef enum
   ErrNum_InstructionNotSupported = 1500,
   ErrNum_FPUNotEnabled = 1501,
   ErrNum_PMMUNotEnabled = 1502,
-  ErrNum_FullPMMUNotEnabled = 1503, 
+  ErrNum_FullPMMUNotEnabled = 1503,
   ErrNum_Z80SyntaxNotEnabled = 1504,
   ErrNum_AddrModeNotSupported = 1505,
   ErrNum_Z80SyntaxExclusive = 1506,

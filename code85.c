@@ -19,7 +19,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmallg.h"
-#include "codepseudo.h" 
+#include "codepseudo.h"
 #include "intpseudo.h"
 #include "asmitree.h"
 #include "codevars.h"
@@ -104,7 +104,7 @@ static const char Conditions[][4] =
 static Boolean DecodeCondition(const char *pAsc, Byte *pResult, Boolean WithX5)
 {
   int ConditionCnt = sizeof(Conditions) / sizeof(*Conditions);
-  
+
   if (!WithX5 || (MomCPU!= CPU8085U))
     ConditionCnt -= 2;
   for (*pResult = 0; *pResult < ConditionCnt; (*pResult)++)
@@ -127,8 +127,8 @@ static void DecodeAdr_Z80(tStrComp *pArg, Word Mask)
   {
     AdrMode = ModReg8;
     goto AdrFound;
-  }    
-  
+  }
+
   if ((Mask & MModIM) && !as_strcasecmp(pArg->Str, "IM"))
   {
     AdrMode = ModIM;
@@ -336,7 +336,7 @@ static void DecodeLDAX_STAX(Word Index)
   if (!ChkArgCnt(1, 1));
   else if (!ChkZ80Syntax(eSyntax808x));
   else if (!DecodeReg16(ArgStr[1].Str, CurrZ80Syntax, &Reg)) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
-  else 
+  else
   {
     switch (Reg)
     {
@@ -404,7 +404,7 @@ static void DecodeRST(Word Index)
     if (ChkZ80Syntax(eSyntaxZ80))
     {
       CodeLen = 1;
-      BAsmCode[0] = 0xcb; 
+      BAsmCode[0] = 0xcb;
     }
   }
   else
@@ -417,7 +417,7 @@ static void DecodeRST(Word Index)
     if (OK)
     {
       tZ80Syntax Syntax = (CurrZ80Syntax == eSyntaxBoth) ? ((AdrByte < 8) ? eSyntax808x : eSyntaxZ80): CurrZ80Syntax;
-      
+
       if (Syntax == eSyntax808x)
         BAsmCode[CodeLen++] = 0xc7 + (AdrByte << 3);
       else if (AdrByte & 7)
@@ -472,7 +472,7 @@ static void DecodeDAD(Word Index)
   }
 }
 
-static void DecodeDSUB(Word Index) 
+static void DecodeDSUB(Word Index)
 {
   UNUSED(Index);
 
@@ -483,14 +483,14 @@ static void DecodeDSUB(Word Index)
     if ((ArgCnt == 1)
      && (!DecodeReg16(ArgStr[1].Str, CurrZ80Syntax, &Reg) || (Reg != BCReg))) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
     else
-    {   
+    {
       CodeLen = 1;
       BAsmCode[0] = 0x08;
     }
   }
 }
 
-static void DecodeLHLX_SHLX(Word Index) 
+static void DecodeLHLX_SHLX(Word Index)
 {
   UNUSED(Index);
 
@@ -501,7 +501,7 @@ static void DecodeLHLX_SHLX(Word Index)
     if ((ArgCnt == 1)
      && (!DecodeReg16(ArgStr[1].Str, CurrZ80Syntax, &Reg) || (Reg != DEReg))) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
     else
-    {   
+    {
       CodeLen = 1;
       BAsmCode[0] = Index ? 0xed: 0xd9;
     }
@@ -691,7 +691,7 @@ static void DecodeEX(Word Code)
 {
   Byte HVal;
 
-  UNUSED(Code);   
+  UNUSED(Code);
 
   if (ChkArgCnt(2, 2)
    && ChkZ80Syntax(eSyntaxZ80))
@@ -745,7 +745,7 @@ static void DecodeEX(Word Code)
 static void DecodeADD(Word Code)
 {
   int MinArg, MaxArg;
-  
+
   UNUSED(Code);
 
   MinArg = (CurrZ80Syntax & eSyntax808x) ? 1 : 2;
@@ -799,17 +799,17 @@ static void DecodeADD(Word Code)
         case ModReg16:
           if (AdrVals[0] != HLReg) WrError(ErrNum_InvAddrMode);
           else
-          {   
+          {
             DecodeAdr_Z80(&ArgStr[2], MModReg16);
             switch (AdrMode)
             {
-              case ModReg16: 
+              case ModReg16:
                 BAsmCode[CodeLen++] = 0x09 | (AdrVals[0] << 4);
                 break;
               default:
                 break;
             }
-          }  
+          }
           break;
         default:
           break;
@@ -819,7 +819,7 @@ static void DecodeADD(Word Code)
     case 3: /* Z80 style of undoc 8085 : DE <- (HL,SP) + m */
     {
       Byte Reg;
-       
+
       if (!DecodeReg16(ArgStr[1].Str, CurrZ80Syntax, &Reg) || (Reg != DEReg)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
       else if (!DecodeReg16(ArgStr[2].Str, CurrZ80Syntax, &Reg) || (Reg < 2)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[2]);
       else
@@ -844,9 +844,9 @@ static void DecodeADC(Word Code)
 
   if (!ChkArgCnt((CurrZ80Syntax & eSyntax808x) ? 1 : 2, (CurrZ80Syntax & eSyntaxZ80) ? 2 : 1))
       return;
-      
+
   switch (ArgCnt)
-  {          
+  {
     case 1: /* 8080 style - 8 bit register src only */
     {
       Byte Reg;
@@ -1063,7 +1063,7 @@ static void DecodeCP(Word Code)
     }
     OpSize = 0;
   }
-  
+
   /* 1 argument -> must be compare anyway in pure Z80 syntax mode, otherwise assume 808x call-on-positive */
 
   else
@@ -1116,9 +1116,9 @@ static void DecodeJP(Word Code)
       return;
     }
   }
-  
+
   /* if one argument, it's unconditional JP in Z80 mode, or jump-if positive */
-  
+
   else
     Condition = (CurrZ80Syntax == eSyntaxZ80) ? 0xff : 6 << 3;
 
@@ -1242,7 +1242,7 @@ static void DecodeRLC(Word Code)
     case 1:
     {
       Byte Reg;
-      
+
       if (!DecodeReg16(ArgStr[1].Str, CurrZ80Syntax, &Reg) || (Reg != DEReg)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
       else
         BAsmCode[CodeLen++] = 0x18;
@@ -1254,7 +1254,7 @@ static void DecodeRLC(Word Code)
 static void DecodePORT(Word Index)
 {
   UNUSED(Index);
-              
+
   CodeEquate(SegIO, 0, 0xff);
 }
 
@@ -1276,12 +1276,12 @@ static void AddOp8(const char *NName, CPUVar NMinCPU, Word NCode, Word SyntaxMas
 {
   if (MomCPU >= NMinCPU)
     AddInstTable(InstTable, NName, (SyntaxMask << 8) | NCode, DecodeOp8);
-}                         
+}
 
 static void AddALU(const char *NName, Byte NCode, Word SyntaxMask)
 {
   AddInstTable(InstTable, NName, (SyntaxMask << 8) | NCode, DecodeALU);
-}           
+}
 
 static void InitFields(void)
 {

@@ -89,7 +89,7 @@ typedef struct
 
 #define MAllowImm (1 << 0)
 #define MAllowReg (1 << 1)
-#define MAllowRegPair (1 << 2) 
+#define MAllowRegPair (1 << 2)
 
 static tCtlReg *CtlRegs, *MMURegs;
 
@@ -1264,7 +1264,7 @@ static void DecodeRET(Word Code)
       AppendDisp(&AdrVals);
     }
   }
-} 
+}
 
 /*!------------------------------------------------------------------------
  * \fn     DecodeCXP(Word Code)
@@ -2622,7 +2622,7 @@ static void AddSizeInstTable(const char *pName, unsigned SizeMask, Word Code, In
 {
   char Name[20];
   tSymbolSize Size;
-  
+
   for (Size = eSymbolSize8Bit; Size <= eSymbolSize32Bit; Size++)
     if (SizeMask & (1 << Size))
     {
@@ -2903,7 +2903,7 @@ static void InitFields(void)
 
   AddFSizeInstTable("DOT"  , (1 << eSymbolSizeFloat32Bit) | (1 << eSymbolSizeFloat64Bit), 0x03 | FMT12_DESTMAYIMM, DecodeFormat12);
   AddFSizeInstTable("LOGB" , (1 << eSymbolSizeFloat32Bit) | (1 << eSymbolSizeFloat64Bit), 0x05, DecodeFormat12);
-  AddFSizeInstTable("POLY" , (1 << eSymbolSizeFloat32Bit) | (1 << eSymbolSizeFloat64Bit), 0x02 | FMT12_DESTMAYIMM, DecodeFormat12); 
+  AddFSizeInstTable("POLY" , (1 << eSymbolSizeFloat32Bit) | (1 << eSymbolSizeFloat64Bit), 0x02 | FMT12_DESTMAYIMM, DecodeFormat12);
   AddFSizeInstTable("SCALB", (1 << eSymbolSizeFloat32Bit) | (1 << eSymbolSizeFloat64Bit), 0x04, DecodeFormat12);
   AddFSizeInstTable("REM"  , (1 << eSymbolSizeFloat32Bit) | (1 << eSymbolSizeFloat64Bit), 0x00, DecodeFormat12);
   AddFSizeInstTable("SQRT" , (1 << eSymbolSizeFloat32Bit) | (1 << eSymbolSizeFloat64Bit), FMT12_580 | 0x01, DecodeFormat12);

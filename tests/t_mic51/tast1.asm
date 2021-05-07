@@ -1,6 +1,6 @@
 
 ; Aufgabe Nr.: Speichermodul fuer uP- Praktikum II
-; Autor: Joerg Vollandt 
+; Autor: Joerg Vollandt
 ; erstellt am : 21.05.1994
 ; letzte Aenderung am :
 ; Bemerkung : Routinen fuer ASCII- Tastatur
@@ -87,13 +87,13 @@ UPCASE2: POP PSW
 
 WAIT_KEY:
         ifdef joerg
-        
+
         JNB STROB,$
         CLR STROB
         RET
 
         elseif
-        
+
         JNB KB_CHAR_READY,$
         CLR KB_CHAR_READY
         RET

@@ -18,7 +18,8 @@
 #include "asmdef.h"
 #include "asmsub.h"
 #include "asmpars.h"
-#include "asmitree.h"  
+#include "asmitree.h"
+#include "asmallg.h"
 #include "intpseudo.h"
 #include "codevars.h"
 #include "codepseudo.h"
@@ -274,7 +275,7 @@ static void MakeCode_SCMP(void)
 
   /* Pseudoanweisungen */
 
-  if (DecodeIntelPseudo(False)) return;
+  if (DecodeIntelPseudo(TargetBigEndian)) return;
 
   if (!LookupInstTable(InstTable, OpPart.Str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
@@ -283,6 +284,11 @@ static void MakeCode_SCMP(void)
 static Boolean IsDef_SCMP(void)
 {
   return False;
+}
+
+static void InitPass_SCMP(void)
+{
+  SetFlag(&TargetBigEndian, BigEndianName, False);
 }
 
 static void SwitchFrom_SCMP(void)
@@ -305,6 +311,8 @@ static void SwitchTo_SCMP(void)
   MakeCode = MakeCode_SCMP; IsDef = IsDef_SCMP;
   SwitchFrom = SwitchFrom_SCMP; InitFields();
 
+  AddONOFF("BIGENDIAN", &TargetBigEndian, BigEndianName, False);
+
   QualifyQuote = QualifyQuote_SingleQuoteConstant;
   IntConstModeIBMNoTerm = True;
 }
@@ -312,4 +320,6 @@ static void SwitchTo_SCMP(void)
 void codescmp_init(void)
 {
   CPUSCMP = AddCPU("SC/MP", SwitchTo_SCMP);
+
+  AddInitPassProc(InitPass_SCMP);
 }

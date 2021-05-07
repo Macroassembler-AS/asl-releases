@@ -180,7 +180,7 @@ static Boolean DecodeCond(tStrComp *pSrc, LongWord *Dest)
 
   /* Negierung? */
 
-  GetToken(pSrc, &Tok);  
+  GetToken(pSrc, &Tok);
   if (as_strcasecmp(Tok.Str, "NOT") == 0)
     GetToken(pSrc, &Tok);
   else
@@ -248,7 +248,7 @@ static Boolean DecodeCond(tStrComp *pSrc, LongWord *Dest)
       *Dest |= 0x00040000 + Tmp;
     }
     GetToken(pSrc, &Tok);
-    if (*Tok.Str != '\0') 
+    if (*Tok.Str != '\0')
     {
       if (as_strcasecmp(Tok.Str, "AND"))
         return Err(ErrNum_InvAddrMode, Tok.Str);
@@ -333,7 +333,7 @@ static void DecodeJmps(Word Index)
       l = strlen(ArgStr[1].Str);
       if ((!as_strncasecmp(ArgStr[1].Str, "REL(", 4)) && (ArgStr[1].Str[l - 1] == ')'))
       {
-        if (*OpPart.Str == 'I') 
+        if (*OpPart.Str == 'I')
         {
           WrError(ErrNum_InvAddrMode);
           OK = False;
@@ -371,7 +371,7 @@ static void DecodeCHMOV(Word Index)
   Boolean OK;
 
   UNUSED(Index);
-  StrCompMkTemp(&Token, TokenStr);  
+  StrCompMkTemp(&Token, TokenStr);
 
   if ((ChkExactCPUList(ErrNum_InstructionNotSupported, CPU53C825, CPU53C875, CPU53C895, CPUNone) >= 0)
    && ChkArgCnt(2, 3))
@@ -526,7 +526,7 @@ static void DecodeMOVE(Word Index)
 
   UNUSED(Index);
   StrCompMkTemp(&Token, TokenStr);
-  
+
   if (!ChkArgCnt(1, 3));
   else if (ArgCnt == 1) /* MOVE Register */
   {
@@ -751,7 +751,7 @@ static void DecodeMOVE(Word Index)
                       DAsmCode[0] |= 0x30000000;
                       CodeLen = 8;
                       break;
-                    case REGISTER: 
+                    case REGISTER:
                       if (DReg != Tmp) WrError(ErrNum_InvAddrMode);
                       else
                       {
@@ -845,7 +845,7 @@ static void DecodeMOVE(Word Index)
           KillPostBlanksStrComp(&ArgStr[3]);
           if (!DecodePhase(ArgStr[3].Str, &ImmVal)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[3]);
           else
-          { 
+          {
             DAsmCode[0] |= ImmVal << 24;
             if (!as_strncasecmp(ArgStr[2].Str, "PTR", 3))
             {
@@ -1027,7 +1027,7 @@ static void InitFields(void)
   AddReg("TEMP"     , 0x1c, M_53C810 + M_53C815 + M_53C825 + M_53C860 + M_53C875 + M_53C895);
   AddReg("DFIFO"    , 0x20, M_53C810 + M_53C815 + M_53C825 + M_53C860 + M_53C875 + M_53C895);
   AddReg("CTEST4"   , 0x21, M_53C810 + M_53C815 + M_53C825 + M_53C860 + M_53C875 + M_53C895);
-  AddReg("CTEST5"   , 0x22, M_53C810 + M_53C815 + M_53C825 + M_53C860 + M_53C875 + M_53C895);  
+  AddReg("CTEST5"   , 0x22, M_53C810 + M_53C815 + M_53C825 + M_53C860 + M_53C875 + M_53C895);
   AddReg("CTEST6"   , 0x23, M_53C810 + M_53C815 + M_53C825 + M_53C860 + M_53C875 + M_53C895);
   AddReg("DBC"      , 0x24, M_53C810 + M_53C815 + M_53C825 + M_53C860 + M_53C875 + M_53C895);
   AddReg("DCMD"     , 0x27, M_53C810 + M_53C815 + M_53C825 + M_53C860 + M_53C875 + M_53C895);
@@ -1086,10 +1086,10 @@ static void MakeCode_53c8xx(void)
   CodeLen = 0;
   DontPrint = False;
 
-  /* zu ignorierendes */   
+  /* zu ignorierendes */
 
   if (Memo(""))
-    return; 
+    return;
 
   if (DecodeIntelPseudo(False))
     return;

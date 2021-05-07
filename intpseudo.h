@@ -11,7 +11,7 @@
 /*****************************************************************************/
 
 #include "datatypes.h"
-  
+
 typedef enum
 {
   eSyntaxNeither = 0,
@@ -40,7 +40,7 @@ extern void DecodeIntelDW(Word Flags);
 extern void DecodeIntelDD(Word Flags);
 extern void DecodeIntelDQ(Word Flags);
 extern void DecodeIntelDT(Word Flags);
-   
+
 extern Boolean DecodeIntelPseudo(Boolean BigEndian);
 
 extern void DecodeZ80SYNTAX(Word Code);

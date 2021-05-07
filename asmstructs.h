@@ -9,9 +9,10 @@
 /* functions for structure handling                                          */
 /*                                                                           */
 /*****************************************************************************/
-   
+
+
 #include "symbolsize.h"
-   
+
 struct sStructElem;
 struct sStrComp;
 

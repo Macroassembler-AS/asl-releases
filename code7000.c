@@ -628,8 +628,8 @@ static void DecodeAdr(const tStrComp *pArg, Word Mask, Boolean Signed)
           do
           {
             tStrComp LStrComp;
-            
-            as_snprintf(LComp.Str, STRINGSIZE, "%s%s", 
+
+            as_snprintf(LComp.Str, STRINGSIZE, "%s%s",
                         LiteralName(Lauf, Name, sizeof(Name)),
                         AdrStr);
             StrCompMkTemp(&LStrComp, LStr);
@@ -1242,7 +1242,7 @@ static void DecodeDCT_DCF(Word Cond)
 
   if (!ChkArgCnt(1, ArgCntMax))
     return;
-    
+
   pos = FirstBlank(ArgStr[1].Str);
   if (!pos)
   {
@@ -1284,7 +1284,7 @@ static void LTORG_32(void)
   PLiteral Lauf, EqLauf;
   String Name;
   tStrComp TmpComp;
-  
+
   Lauf = FirstLiteral;
   while (Lauf)
   {

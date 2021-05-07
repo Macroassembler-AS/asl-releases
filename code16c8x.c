@@ -185,7 +185,7 @@ static void DecodeJump(Word Index)
 
         XORVal = (ProgCounter() ^ AdrWord) & ~0x7ff;
 
-        /* add BCF/BSF instruction for non-matching upper address bits 
+        /* add BCF/BSF instruction for non-matching upper address bits
            - we might need to extend this for the PICs with more than
              8K of program space */
 
@@ -297,7 +297,7 @@ static void InitFields(void)
   AddFixed("SLEEP" , 0x0063);
   AddFixed("RETFIE", 0x0009);
   AddFixed("RETURN", 0x0008);
- 
+
   AddLit("ADDLW", 0x3e00);
   AddLit("ANDLW", 0x3900);
   AddLit("IORLW", 0x3800);

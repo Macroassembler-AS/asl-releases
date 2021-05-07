@@ -14,7 +14,7 @@ static char *getobj(const char *pSrc)
   static char buffer[255];
   int l = strlen(pSrc), bm5 = sizeof(buffer) - 5;
   char *pSearch;
-  
+
   if (l < bm5)
     l = bm5;
   memcpy(buffer, pSrc, l); buffer[l] = '\0';

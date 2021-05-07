@@ -11,7 +11,7 @@
 /*****************************************************************************/
 
 struct _ASSUMERec;
-  
+
 extern int FindInst(void *Field, int Size, int Count);
 
 extern Boolean IsIndirectGen(const char *Asc, const char *pBeginEnd);

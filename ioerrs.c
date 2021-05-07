@@ -25,7 +25,7 @@ typedef struct
 
 static TMsgCat MsgCat;
 
-static ErrorDef ErrorDefs[] = 
+static ErrorDef ErrorDefs[] =
 {
 #ifdef EPERM
   { EPERM       , Num_IoErr_EPERM },
@@ -176,7 +176,7 @@ static ErrorDef ErrorDefs[] =
 #endif
   { -1, -1 }
 };
-       
+
 char *hs;
 
 char *GetErrorMsg(int number)

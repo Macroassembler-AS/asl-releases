@@ -485,7 +485,7 @@ static ShortInt DecodeAdr(const tStrComp *pArg, Word Mask, tAdrResult *pResult)
 
       /* split displacement + register */
 
-      StrCompSplitRef(&Disp, &Reg, &Arg, pStart);  
+      StrCompSplitRef(&Disp, &Reg, &Arg, pStart);
 
        /* handle base register */
 
@@ -2060,7 +2060,7 @@ static void SwitchFrom_78K3(void)
 static void SwitchTo_78K3(void)
 {
   static const ASSUMERec ASSUME78K3s[] =
-  { 
+  {
     {"RSS" , &Reg_RSS , 0,  0x1,  0x0, NULL},
   };
 

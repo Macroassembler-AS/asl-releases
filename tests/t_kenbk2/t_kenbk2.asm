@@ -57,7 +57,7 @@ dest:
 	endm
 
 	; SKP0 and SKP1 will always skip two bytes, it is the programmer's
-        ; resposibility that this is either one two-byte insn or two one-byte insns. 
+        ; resposibility that this is either one two-byte insn or two one-byte insns.
         ; One may optionally add a skip target.  While this won't show up in the
         ; machine code, the assembler can verify if actually two bytes are skipped:
 

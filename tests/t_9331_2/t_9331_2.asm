@@ -13,7 +13,7 @@ start:
 	,	,	,	,	,wf0	,	,cp+	,dp1	,+	,so1	,w0	,	,	,	; data output (Lch)
 wait_edge:
 	jnc	,wait_edge(down),LRF		,	,	,	,	,	,	,			; down edge waiting
-	,	,	,	,	,	,	,cp+	,	,	,x	,si0	,	,	,	; 
+	,	,	,	,	,	,	,cp+	,	,	,x	,si0	,	,	,	;
 	mads,	,x	,y	,0	,	,	,cp+	,	,	,	,	,	,	,	;
 	,	,	,	,	,wf0	,	,	,	,	,so1	,w0	,	,	,	; data output (Rch)
 wait_SYNC:

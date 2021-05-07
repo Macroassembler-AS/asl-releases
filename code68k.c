@@ -297,7 +297,7 @@ static Boolean DecodeRegCore(const char *pArg, Word *pResult)
     *pResult = REG_SP | REG_MARK;
     return True;
   }
-  
+
   if (strlen(pArg) != 2)
     return False;
   if ((*pResult = pArg[1] - '0') > 7)
@@ -340,7 +340,7 @@ static Boolean DecodeFPRegCore(const char *pArg, Word *pResult)
     *pResult = REG_FPCTRL | REG_FPIAR;
     return True;
   }
-  
+
   if (strlen(pArg) != 3)
     return False;
   if (as_strncasecmp(pArg, "FP", 2))
@@ -1014,8 +1014,8 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
         DVal = EvalStrFloatExpression(&ImmArg, Float32, &ValOK);
         if (ValOK)
         {
-          Double_2_ieee4(DVal, (Byte *) SwapField, BigEndian);
-          if (BigEndian)
+          Double_2_ieee4(DVal, (Byte *) SwapField, HostBigEndian);
+          if (HostBigEndian)
             DWSwap((Byte *) SwapField, 4);
           pResult->Vals[0] = SwapField[1];
           pResult->Vals[1] = SwapField[0];
@@ -1026,8 +1026,8 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
         DVal = EvalStrFloatExpression(&ImmArg, Float64, &ValOK);
         if (ValOK)
         {
-          Double_2_ieee8(DVal, (Byte *) SwapField, BigEndian);
-          if (BigEndian)
+          Double_2_ieee8(DVal, (Byte *) SwapField, HostBigEndian);
+          if (HostBigEndian)
             QWSwap((Byte *) SwapField, 8);
           pResult->Vals[0] = SwapField[3];
           pResult->Vals[1] = SwapField[2];
@@ -1041,7 +1041,7 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
         if (ValOK)
         {
           Double_2_ieee10(DVal, (Byte *) SwapField, False);
-          if (BigEndian)
+          if (HostBigEndian)
             WSwap((Byte *) SwapField, 10);
           pResult->Vals[0] = SwapField[4];
           pResult->Vals[1] = 0;
@@ -5834,7 +5834,7 @@ static void DecodeCPNOP(Word Code)
 
 static void PutByte(Byte b)
 {
-  if ((CodeLen & 1) && (!BigEndian))
+  if ((CodeLen & 1) && !HostBigEndian)
   {
     BAsmCode[CodeLen] = BAsmCode[CodeLen - 1];
     BAsmCode[CodeLen - 1] = b;

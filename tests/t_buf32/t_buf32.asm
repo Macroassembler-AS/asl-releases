@@ -1970,10 +1970,10 @@ RUNONE  EQU  *
         STAA REGS+8
         LDAB #87                ; cycles to end of rti
         LDX  TCNT
-        ABX                     ;                     3~ 
-        STX  TOC5               ; oc5 match register         5~  
-        LDAA TCTL1              ;                     4~   
-        ANDA #$FE               ; set up oc5 low on match 2~    
+        ABX                     ;                     3~
+        STX  TOC5               ; oc5 match register         5~
+        LDAA TCTL1              ;                     4~
+        ANDA #$FE               ; set up oc5 low on match 2~
         STAA TCTL1              ; enable oc5 interrupt       4~    / 86~
 
 ;** RESTACK - Restore user stack and RTI to user code.

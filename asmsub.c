@@ -693,7 +693,7 @@ void FloatString(char *pDest, size_t DestSize, Double f)
     if (strlen(pDest) + n <= MaxLen)
     {
       *p = '\0';
-      d = strchr(pDest, '.'); 
+      d = strchr(pDest, '.');
       strmov(d, d + 1);
       d = (pDest[0] == '-') ? pDest + 1 : pDest;
       memmove(d - ExpVal + 1, d, strlen(pDest) + 1);
@@ -722,7 +722,7 @@ void StrSym(TempResult *t, Boolean WithSystem, char *Dest, size_t DestLen, unsig
 {
   size_t Len;
   LargeInt IntVal;
-  
+
   switch (t->Typ)
   {
     case TempInt:

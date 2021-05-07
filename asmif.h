@@ -17,7 +17,7 @@ typedef enum
   IfState_IFIF, IfState_IFELSE,
   IfState_CASESWITCH, IfState_CASECASE, IfState_CASEELSE
 } tIfState;
-     
+
 typedef struct _TIfSave
 {
   struct _TIfSave *Next;

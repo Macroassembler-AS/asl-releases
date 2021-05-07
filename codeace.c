@@ -162,7 +162,7 @@ static void DecodeAdr(const tStrComp *pArg, Word Mask)
         AdrMode = (DispOcc && (AdrVal != 0)) ? ModXDisp : ModXInd;
     }
   }
-   
+
   /* direkt */
 
   else
@@ -318,7 +318,7 @@ static void DecodeIFEQ(Word Index)
           case ModDir:
             BAsmCode[0] = 0x56;
             BAsmCode[1] = AdrVal;
-            CodeLen = 2; 
+            CodeLen = 2;
             break;
           case ModXInd:
             BAsmCode[0] = 0x09;
@@ -327,7 +327,7 @@ static void DecodeIFEQ(Word Index)
           case ModXDisp:
             BAsmCode[0] = 0x76;
             BAsmCode[1] = AdrVal;
-            CodeLen = 2; 
+            CodeLen = 2;
             break;
         }
         break;
@@ -381,7 +381,7 @@ static void DecodeIFGT(Word Index)
           case ModDir:
             BAsmCode[0] = 0x55;
             BAsmCode[1] = AdrVal;
-            CodeLen = 2; 
+            CodeLen = 2;
             break;
           case ModXInd:
             BAsmCode[0] = 0x0a;
@@ -390,7 +390,7 @@ static void DecodeIFGT(Word Index)
           case ModXDisp:
             BAsmCode[0] = 0x77;
             BAsmCode[1] = AdrVal;
-            CodeLen = 2; 
+            CodeLen = 2;
             break;
         }
         break;
@@ -478,7 +478,7 @@ static void DecodeJP(Word Index)
       {
         BAsmCode[0] = (Dist >= 0) ? 0xe0 + Dist : 0xc0 - Dist;
         CodeLen = 1;
-      } 
+      }
     }
   }
 }
@@ -504,7 +504,7 @@ static void DecodeLD(Word Index)
           case ModDir:
             BAsmCode[0] = 0x46;
             BAsmCode[1] = AdrVal;
-            CodeLen = 2; 
+            CodeLen = 2;
             break;
           case ModXInd:
             BAsmCode[0] = 0x0e;
@@ -513,7 +513,7 @@ static void DecodeLD(Word Index)
           case ModXDisp:
             BAsmCode[0] = 0x52;
             BAsmCode[1] = AdrVal;
-            CodeLen = 2; 
+            CodeLen = 2;
             break;
         }
         break;
@@ -588,7 +588,7 @@ static void DecodeST(Word Index)
           case ModDir:
             BAsmCode[0] = 0x47;
             BAsmCode[1] = AdrVal;
-            CodeLen = 2; 
+            CodeLen = 2;
             break;
           case ModXInd:
             BAsmCode[0] = 0x11;
@@ -597,7 +597,7 @@ static void DecodeST(Word Index)
           case ModXDisp:
             BAsmCode[0] = 0x40;
             BAsmCode[1] = AdrVal;
-            CodeLen = 2; 
+            CodeLen = 2;
             break;
         }
         break;

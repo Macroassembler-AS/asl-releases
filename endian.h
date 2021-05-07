@@ -17,7 +17,7 @@
 
 #include "datatypes.h"
 
-extern Boolean BigEndian;
+extern Boolean HostBigEndian;
 
 extern const char *Integ16Format, *Integ32Format, *Integ64Format;
 extern const char *IntegerFormat, *LongIntFormat, *QuadIntFormat;
@@ -35,6 +35,8 @@ extern void TSwap(void *Field, int Cnt);
 extern void DWSwap(void *Field, int Cnt);
 
 extern void QWSwap(void *Field, int Cnt);
+
+extern void TWSwap(void *Field, int Cnt);
 
 
 extern Boolean Read2(FILE *file, void *Ptr);

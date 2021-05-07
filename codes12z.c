@@ -757,7 +757,7 @@ static LongWord AssembleBitfieldSymbol(Byte BitPos, Byte Width, ShortInt OpSize,
   LongWord CodeOpSize = (OpSize == eSymbolSize24Bit) ? 3 : OpSize;
   int AddrShift = (OpSize == eSymbolSize24Bit) ? 5 : (3 + OpSize);
 
-  return BitPos 
+  return BitPos
        | (((LongWord)Address & 0xfff) << AddrShift)
        | (CodeOpSize << 20)
        | (((LongWord)(Width - 1) & 31) << 24);
@@ -806,7 +806,7 @@ static Byte EvalBitPosition(const tStrComp *pBitArg, Boolean *pOK, ShortInt OpSi
         Result &= 15;
       *pOK = ChkRange(Result, 0, 23);
       return Result;
-    }  
+    }
     case eSymbolSize32Bit:
       return EvalStrIntExpression(pBitArg, UInt5, pOK);
     default:
@@ -1065,7 +1065,7 @@ static void ExpandS12ZBit(const tStrComp *pVarName, const struct sStructElem *pS
 static void ExpandS12ZBitfield(const tStrComp *pVarName, const struct sStructElem *pStructElem, LargeWord Base)
 {
   LongWord Address = Base + pStructElem->Offset;
-  
+
   if (pInnermostNamedStruct)
   {
     PStructElem pElem = CloneStructElem(pVarName, pStructElem);

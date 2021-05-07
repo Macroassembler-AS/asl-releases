@@ -85,11 +85,11 @@ static FixedOrder *CondOrders;
 static FixedOrder *BCondOrders;
 
 static Byte AdrVals[5];
-static Byte AdrPart,AdrSize;
+static Byte AdrPart, AdrSize;
 static ShortInt AdrMode,OpSize;
 static Boolean MinOneIs0;
 
-static Boolean SrcMode, BigEndian;
+static Boolean SrcMode;
 
 static CPUVar CPU87C750, CPU8051, CPU8052, CPU80C320,
        CPU80501, CPU80502, CPU80504, CPU80515, CPU80517,
@@ -2611,7 +2611,7 @@ static void MakeCode_51(void)
 
   /* Pseudoanweisungen */
 
-  if (DecodeIntelPseudo(BigEndian))
+  if (DecodeIntelPseudo(TargetBigEndian))
     return;
 
   /* suchen */
@@ -2650,7 +2650,7 @@ static void InternSymbol_51(char *pArg, TempResult *pResult)
 {
   tRegInt Erg;
   tSymbolSize Size;
-  
+
   if (DecodeRegCore(pArg, &Erg, &Size))
   {
     pResult->Typ = TempReg;
@@ -2663,7 +2663,7 @@ static void InternSymbol_51(char *pArg, TempResult *pResult)
 static void InitPass_51(void)
 {
   SetFlag(&SrcMode, SrcModeName, False);
-  SetFlag(&BigEndian, BigEndianName, False);
+  SetFlag(&TargetBigEndian, BigEndianName, False);
 }
 
 static void SwitchFrom_51(void)
@@ -2732,7 +2732,7 @@ static void SwitchTo_51(void)
   InitFields();
   SwitchFrom = SwitchFrom_51;
   AddONOFF("SRCMODE"  , &SrcMode  , SrcModeName  , False);
-  AddONOFF("BIGENDIAN", &BigEndian, BigEndianName, False);
+  AddONOFF("BIGENDIAN", &TargetBigEndian, BigEndianName, False);
 }
 
 void code51_init(void)

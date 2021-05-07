@@ -352,7 +352,7 @@ Message2        fcb     7
 
                 nop
                 nop     3
-                
+
 
 ; ----- struct ----------------------------------------------------------
 
@@ -613,7 +613,7 @@ Message2        fcb     7
 
 
 ; ----- garbage in inactive if-clause -----------------------------------
-                
+
                 if 0
  !"#$%&'()*+,-./
 0123456789:;<=>?
@@ -779,7 +779,7 @@ Start           tfr     a,a             ; NOP
                 tfr     z,u
                 tfr     z,s
                 tfr     z,sp
-                
+
                 tfr     a,z
                 tfr     b,z
                 tfr     cc,z
@@ -1461,13 +1461,13 @@ AnotherLocal    cmpb    <AnotherLocal,pc            ; $E1,2+
 
                 ifdef __6309__
                 band    a.7,DirectByte.0            ; $1130,4
-                biand   b.6,DirectByte.1            ; $1131,4  
-                bor     cc.5,DirectByte.2           ; $1132,4  
-                bior    a.4,DirectByte.3            ; $1133,4  
-                beor    b.3,DirectByte.4            ; $1134,4  
-                bieor   cc.2,DirectByte.5           ; $1135,4  
-                ldbt    ccr.1,DirectByte.6          ; $1136,4  
-                stbt    ccr.0,DirectByte.7          ; $1137,4  
+                biand   b.6,DirectByte.1            ; $1131,4
+                bor     cc.5,DirectByte.2           ; $1132,4
+                bior    a.4,DirectByte.3            ; $1133,4
+                beor    b.3,DirectByte.4            ; $1134,4
+                bieor   cc.2,DirectByte.5           ; $1135,4
+                ldbt    ccr.1,DirectByte.6          ; $1136,4
+                stbt    ccr.0,DirectByte.7          ; $1137,4
 
                 tfr     x+,y+                       ; $1138,3
                 tfm     x+,y+                       ; alternate
@@ -1477,8 +1477,8 @@ AnotherLocal    cmpb    <AnotherLocal,pc            ; $E1,2+
                 tfm     s+,x                        ; alternate
                 tfr     x,y+                        ; $113B,3
                 tfm     x,y+                        ; alternate
-                bitmd    #128                       ; $113C,3  
-                ldmd     #1                         ; $113D,3  
+                bitmd    #128                       ; $113C,3
+                ldmd     #1                         ; $113D,3
                 endif
                 swi3                                ; $113F,2
                 swi     3                           ; alternate
@@ -1486,73 +1486,73 @@ AnotherLocal    cmpb    <AnotherLocal,pc            ; $E1,2+
 ; -----------------------------------------------------------------------
 
                 ifdef __6309__
-                come                                ; $1143,2  
-                dece                                ; $114A,2  
-                ince                                ; $114C,2  
-                tste                                ; $114D,2  
-                clre                                ; $114F,2  
+                come                                ; $1143,2
+                dece                                ; $114A,2
+                ince                                ; $114C,2
+                tste                                ; $114D,2
+                clre                                ; $114F,2
 
-                comf                                ; $1153,2  
-                decf                                ; $115A,2  
-                incf                                ; $115C,2  
-                tstf                                ; $115D,2  
-                clrf                                ; $115F,2  
+                comf                                ; $1153,2
+                decf                                ; $115A,2
+                incf                                ; $115C,2
+                tstf                                ; $115D,2
+                clrf                                ; $115F,2
                 endif
 
 ; -----------------------------------------------------------------------
 
                 ifdef __6309__
-                sube    #123                        ; $1180,3  
-                cmpe    #123                        ; $1181,3  
+                sube    #123                        ; $1180,3
+                cmpe    #123                        ; $1181,3
                 endif
                 cmpu    #12345                      ; $1183,4
                 ifdef __6309__
-                lde     #123                        ; $1186,3  
-                adde    #123                        ; $118B,3  
+                lde     #123                        ; $1186,3
+                adde    #123                        ; $118B,3
                 endif
                 cmps    #12345                      ; $118C,4
                 ifdef __6309__
-                divd    #123                        ; $118D,3  
-                divq    #12345                      ; $118E,4  
-                muld    #12345                      ; $118F,4  
+                divd    #123                        ; $118D,3
+                divq    #12345                      ; $118E,4
+                muld    #12345                      ; $118F,4
                 endif
 
 ; -----------------------------------------------------------------------
 
                 ifdef __6309__
-                sube    DirectByte                  ; $1190,3 
-                cmpe    DirectByte                  ; $1191,3 
+                sube    DirectByte                  ; $1190,3
+                cmpe    DirectByte                  ; $1191,3
                 endif
                 cmpu    DirectWord                  ; $1193,3
                 ifdef __6309__
-                lde     DirectByte                  ; $1196,3 
-                ste     DirectByte                  ; $1197,3 
-                adde    DirectByte                  ; $119B,3 
+                lde     DirectByte                  ; $1196,3
+                ste     DirectByte                  ; $1197,3
+                adde    DirectByte                  ; $119B,3
                 endif
                 cmps    DirectWord                  ; $119C,3
                 ifdef __6309__
-                divd    DirectWord                  ; $119D,3 
-                divq    DirectWord                  ; $119E,3 
-                muld    DirectWord                  ; $119F,3 
+                divd    DirectWord                  ; $119D,3
+                divq    DirectWord                  ; $119E,3
+                muld    DirectWord                  ; $119F,3
                 endif
 
 ; -----------------------------------------------------------------------
 
                 ifdef __6309__
-                sube    ,s+                         ; $11A0,3+ 
-                cmpe    ,s+                         ; $11A1,3+ 
+                sube    ,s+                         ; $11A0,3+
+                cmpe    ,s+                         ; $11A1,3+
                 endif
                 cmpu    ,s++                        ; $11A3,3+
                 ifdef __6309__
-                lde     ,s+                         ; $11A6,3+ 
-                ste     ,s+                         ; $11A7,3+ 
-                adde    ,s+                         ; $11AB,3+ 
+                lde     ,s+                         ; $11A6,3+
+                ste     ,s+                         ; $11A7,3+
+                adde    ,s+                         ; $11AB,3+
                 endif
                 cmps    ,s++                        ; $11AC,3+
                 ifdef __6309__
-                divd    ,s+                         ; $11AD,3+ 
-                divq    ,s++                        ; $11AE,3+ 
-                muld    ,s++                        ; $11AF,3+ 
+                divd    ,s+                         ; $11AD,3+
+                divq    ,s++                        ; $11AE,3+
+                muld    ,s++                        ; $11AF,3+
                 endif
 
 ; -----------------------------------------------------------------------
@@ -1586,11 +1586,11 @@ AnotherLocal    cmpb    <AnotherLocal,pc            ; $E1,2+
 ; -----------------------------------------------------------------------
 
                 ifdef __6309__
-                subf    DirectByte                  ; $11D0,3 
-                cmpf    DirectByte                  ; $11D1,3 
-                ldf     DirectByte                  ; $11D6,3 
-                stf     DirectByte                  ; $11D7,3 
-                addf    DirectByte                  ; $11DB,3 
+                subf    DirectByte                  ; $11D0,3
+                cmpf    DirectByte                  ; $11D1,3
+                ldf     DirectByte                  ; $11D6,3
+                stf     DirectByte                  ; $11D7,3
+                addf    DirectByte                  ; $11DB,3
 
                 subf    ,s+                         ; $11E0,3+
                 cmpf    ,s+                         ; $11E1,3+
@@ -1598,11 +1598,11 @@ AnotherLocal    cmpb    <AnotherLocal,pc            ; $E1,2+
                 stf     ,s+                         ; $11E7,3+
                 addf    ,s+                         ; $11EB,3+
 
-                subf    $9000                       ; $11F0,4 
-                cmpf    $9000                       ; $11F1,4 
-                ldf     $9000                       ; $11F6,4 
-                stf     $9000                       ; $11F7,4 
-                addf    $9000                       ; $11FB,4 
+                subf    $9000                       ; $11F0,4
+                cmpf    $9000                       ; $11F1,4
+                ldf     $9000                       ; $11F6,4
+                stf     $9000                       ; $11F7,4
+                addf    $9000                       ; $11FB,4
                 endif
 
 

@@ -35,7 +35,7 @@
 	; Now the nasty details about labels: The label's value should of
         ; course ; point to the instruction and not the (invisible) pad byte!
         ; This ; is the 'simple' case when the label and instruction are on
-        ; the ; same line: 
+        ; the ; same line:
 
 	dc.b	1
 label1:	nop
@@ -71,7 +71,7 @@ label4:
 pos3	equ	label4
 	nop
 	expect	180
-	jmp	label4	
+	jmp	label4
 	endexpect
 
 	; Only the most recent label is memorized and possibly adapted.  So

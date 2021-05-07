@@ -13,56 +13,7 @@
 /*           2001-10-13 added ARM/Linux                                      */
 /*                                                                           */
 /*****************************************************************************/
-/* $Id: sysdefs.h,v 1.16 2016/09/22 15:36:15 alfred Exp $                     */
-/*****************************************************************************
- * $Log: sysdefs.h,v $
- * Revision 1.16  2016/09/22 15:36:15  alfred
- * - use platform-dependent format string for LongInt
- *
- * Revision 1.15  2015/08/21 19:12:19  alfred
- * - avoid double definition if both K8 and x86_64 set
- *
- * Revision 1.14  2015/03/04 18:37:24  alfred
- * - add AArch64
- *
- * Revision 1.13  2014/05/29 10:59:06  alfred
- * - some const cleanups
- *
- * Revision 1.12  2012-11-28 20:47:29  alfred
- * - correct typo
- *
- * Revision 1.11  2012-08-22 20:01:22  alfred
- * - add OSX 32 bit
- *
- * Revision 1.10  2012-08-19 09:39:18  alfred
- * - consider OSX
- *
- * Revision 1.9  2012-05-16 21:04:23  alfred
- * - add Linux/MIPS
- *
- * Revision 1.8  2012-01-14 14:34:58  alfred
- * - add some platforms
- *
- * Revision 1.7  2008/01/02 22:32:21  alfred
- * - better heap checking for DOS target
- *
- * Revision 1.6  2007/11/24 22:48:08  alfred
- * - some NetBSD changes
- *
- * Revision 1.5  2007/09/16 08:56:04  alfred
- * - add K8 target
- *
- * Revision 1.4  2006/05/01 09:09:10  alfred
- * - treat __PPC__ like _POWER
- *
- * Revision 1.3  2004/02/08 20:39:25  alfred
- * -
- *
- * Revision 1.2  2004/01/17 16:12:35  alfred
- * - add ePOC
- *
- *****************************************************************************/
-  
+
 /* NOTE:
  *
  * when adding new platforms, " gcc -dM -E - <<<'' " might be helpful to
@@ -102,8 +53,8 @@
 
 /* For IBMC... */
 
-#ifdef _M_I386   
-#define __i386   
+#ifdef _M_I386
+#define __i386
 #endif
 
 #ifdef __i386__
@@ -209,7 +160,7 @@
 #define ARCHPRNAME "m68k"
 
 /*---------------------------------------------------------------------------*/
-/* SUN/3 with SunOS 4.x: 
+/* SUN/3 with SunOS 4.x:
 
    see my SunOS quarrels in the Sparc section... */
 
@@ -241,7 +192,7 @@ extern void bcopy();
 #endif
 
 /*---------------------------------------------------------------------------*/
-/* SUN/3 with NetBSD 1.x: 
+/* SUN/3 with NetBSD 1.x:
 
    quite a normal 32-Bit-UNIX system */
 
@@ -295,7 +246,7 @@ extern char *getenv();
 #endif
 
 /*---------------------------------------------------------------------------*/
-/* Linux/68K: 
+/* Linux/68K:
 
    quite a normal 32-Bit-UNIX system */
 
@@ -330,18 +281,18 @@ typedef unsigned long long Card64;
 #define ARCHPRNAME "sparc"
 
 /*---------------------------------------------------------------------------*/
-/* SUN Sparc with SunOS 4.1.x: 
+/* SUN Sparc with SunOS 4.1.x:
 
-   don't try cc, use gcc, it's hopeless without an ANSI-compliant compiler... 
+   don't try cc, use gcc, it's hopeless without an ANSI-compliant compiler...
    SunOS does have NLS support, but it does not have D_FMT and T_FMT
-   I should change this ... 
+   I should change this ...
    Though the manual pages claim that memmove and atexit exist, I could not
    find them in any library :-(  Fortunately, bcopy claims to be safe for
    overlapping arrays, we just have to reverse source and destination pointers.
    The sources themselves contain a switch to use on_exit instead of atexit
-   (it uses a different callback scheme, so we cannot just make a #define here...) 
-   To get rid of most of the messages about missing prototypes, add 
-   -D__USE_FIXED_PROTOTYPES__ to your compiler flags! 
+   (it uses a different callback scheme, so we cannot just make a #define here...)
+   To get rid of most of the messages about missing prototypes, add
+   -D__USE_FIXED_PROTOTYPES__ to your compiler flags!
    Apart from these few points, one could claim SunOS to be quite a normal
    32-bit-UNIX... */
 
@@ -376,7 +327,7 @@ extern void bcopy();
 #endif
 
 /*---------------------------------------------------------------------------*/
-/* SUN Sparc with Solaris 2.x: 
+/* SUN Sparc with Solaris 2.x:
 
    quite a normal 32-Bit-UNIX system */
 
@@ -405,7 +356,7 @@ typedef unsigned long long Card64;
 /* Sparc with NetBSD 1.x:
 
    quite a normal 32-Bit-UNIX system */
-   
+
 #ifdef __NetBSD__
 #define ARCHSYSNAME "sun-netbsd"
 #define DEFSMADE
@@ -426,7 +377,7 @@ typedef unsigned long long Card64;
 #define HAS64
 #define LOCALE_NLS
 #endif
-   
+
 /*---------------------------------------------------------------------------*/
 /* Sparc with Linux                                                          */
 
@@ -461,10 +412,10 @@ typedef unsigned long long Card64;
 #define ARCHPRNAME "mips"
 
 /*---------------------------------------------------------------------------*/
-/* R3000 with Ultrix 4.3: 
+/* R3000 with Ultrix 4.3:
 
-   nl_langinfo prototype is there, but no function in library ?! 
-   use long long only if you have gcc, c89 doesn't like them ! 
+   nl_langinfo prototype is there, but no function in library ?!
+   use long long only if you have gcc, c89 doesn't like them !
    cc isn't worth trying, believe me! */
 
 #ifdef __ultrix
@@ -494,7 +445,7 @@ typedef unsigned long long Card64;
 #endif
 
 /*---------------------------------------------------------------------------*/
-/* R2000/3000 with NetBSD 1.2: 
+/* R2000/3000 with NetBSD 1.2:
 
    quite a normal 32-Bit-UNIX system */
 
@@ -520,7 +471,7 @@ typedef unsigned long long Card64;
 #endif
 
 /*---------------------------------------------------------------------------*/
-/* R3000/4x00 with Irix 5.x: 
+/* R3000/4x00 with Irix 5.x:
 
   quite a normal 32-Bit-UNIX system
   seems also to work with 6.2... */
@@ -567,7 +518,7 @@ typedef unsigned long long Card64;
 #define LOCALE_NLS
 #endif
 
-#endif /* __mips */ 
+#endif /* __mips */
 
 /*===========================================================================*/
 /* HP-PA platforms */
@@ -600,7 +551,7 @@ typedef unsigned long long Card64;
 #define LOCALE_NLS
 #endif
 
-#endif /* __hppa */ 
+#endif /* __hppa */
 
 /*===========================================================================*/
 /* POWER platforms */
@@ -637,6 +588,13 @@ typedef unsigned long long Card64;
 /* POWER with Linux (Macintosh) */
 
 #ifdef __linux__
+
+/* no long long data type if C89 is used */
+
+#if (defined __STDC__) && (!defined __STDC_VERSION__)
+# define NOLONGLONG
+#endif
+
 #define ARCHSYSNAME "unknown-linux"
 #define DEFSMADE
 #define OPENRDMODE "r"
@@ -651,9 +609,11 @@ typedef unsigned short Card16;
 typedef signed int Integ32;
 #define PRIInteg32 "d"
 typedef unsigned int Card32;
+#ifndef NOLONGLONG
 typedef signed long long Integ64;
 typedef unsigned long long Card64;
-#define HAS64
+# define HAS64
+#endif /* !NOLONGLONG */
 #define LOCALE_NLS
 #endif
 
@@ -681,7 +641,7 @@ typedef unsigned long long Card64;
 #define NO_NLS
 #endif
 
-#endif /* _POWER */ 
+#endif /* _POWER */
 
 /*===========================================================================*/
 /* VAX platforms */
@@ -715,7 +675,7 @@ typedef unsigned int Card32;
 #endif
 
 /*---------------------------------------------------------------------------*/
-/* VAX with NetBSD 1.x: 
+/* VAX with NetBSD 1.x:
 
    quite a normal 32-Bit-UNIX system - apart from the float format... */
 
@@ -742,7 +702,7 @@ typedef unsigned long long Card64;
 
 #endif /* vax */
 
-#ifdef __aarch64__ 
+#ifdef __aarch64__
 
 #define ARCHPRNAME "aarch64"
 
@@ -775,13 +735,13 @@ typedef unsigned long Card64;
 /*===========================================================================*/
 /* DEC Alpha platforms */
 
-#ifdef __alpha 
+#ifdef __alpha
 
 #define ARCHPRNAME "alpha"
 
 /*---------------------------------------------------------------------------*/
 /* DEC Alpha with Digital UNIX and DEC C / GCC:
-   
+
    Alpha is a 64 bit machine, so we do not need to use extra longs
    OSF has full NLS support */
 
@@ -808,7 +768,7 @@ typedef unsigned long Card64;
 
 /*---------------------------------------------------------------------------*/
 /* DEC Alpha with Linux and GCC:
-   
+
    see OSF... */
 
 #ifdef __linux__
@@ -834,7 +794,7 @@ typedef unsigned long Card64;
 
 /*---------------------------------------------------------------------------*/
 /* DEC Alpha with NetBSD and GCC:
-   
+
    see OSF... */
 
 #ifdef __NetBSD__
@@ -884,13 +844,13 @@ typedef unsigned long Card64;
 /*===========================================================================*/
 /* Intel i386 platforms */
 
-#ifdef __i386 
+#ifdef __i386
 
 #define ARCHPRNAME "i386"
 
 /*---------------------------------------------------------------------------*/
 /* Intel i386 with NetBSD 1. and GCC: (tested on 1.5.3)
-   
+
    principally, a normal 32-bit UNIX */
 
 #ifdef __NetBSD__
@@ -916,7 +876,7 @@ typedef unsigned long long Card64;
 
 /*---------------------------------------------------------------------------*/
 /* Intel i386 with Linux and GCC:
-   
+
    principally, a normal 32-bit *NIX */
 
 #ifdef __linux__
@@ -1002,7 +962,7 @@ typedef unsigned long long Card64;
 
 /*---------------------------------------------------------------------------*/
 /* Intel i386 with WIN32 and Cygnus GCC:
-   
+
    well, not really a UNIX... */
 
 #ifdef _WIN32
@@ -1045,7 +1005,7 @@ typedef unsigned long long Card64;
 
 /*---------------------------------------------------------------------------*/
 /* Intel i386 with OS/2 and emx-GCC:
-   
+
    well, not really a UNIX... */
 
 #ifdef __EMX__
@@ -1079,12 +1039,12 @@ typedef unsigned long long Card64;
 
 /*---------------------------------------------------------------------------*/
 /* Intel i386 with OS/2 and IBMC:
-   
+
 well, not really a UNIX... */
-      
+
 #ifdef __IBMC__
 #define DEFSMADE
-#define NODUP   
+#define NODUP
 #define OPENRDMODE "rb"
 #define OPENWRMODE "wb"
 #define OPENUPMODE "rb+"
@@ -1104,12 +1064,12 @@ typedef signed int Integ32;
 #define PRIInteg32 "d"
 typedef unsigned int Card32;
 #define NOLONGLONG
-#define OS2_NLS   
+#define OS2_NLS
 #endif
-      
+
 /*---------------------------------------------------------------------------*/
 /* Intel x86 with MS-DOS and Borland-C:
-   
+
    well, not really a UNIX...
    assure we get a usable memory model */
 
@@ -1169,7 +1129,7 @@ typedef unsigned long Card32;
 
 /*---------------------------------------------------------------------------*/
 /* x86-64/amd64 with Linux/FreeBSD, OSX and GCC:
-   
+
    Principally, a normal *NIX. */
 
 #if defined(__linux__) || defined(__FreeBSD__) || defined(__APPLE__)
@@ -1312,7 +1272,7 @@ typedef unsigned int Card32;
 typedef signed long long Integ64;
 typedef unsigned long long Card64;
 #define HAS64
-#define NO_NLS 
+#define NO_NLS
 #endif /* __EPOCEMX__ */
 
 

@@ -6,9 +6,9 @@
 /*                                                                           */
 /* AS-Portierung                                                             */
 /*                                                                           */
-/* Emulation einiger Borland-Pascal-Funktionen                               */                      
+/* Emulation einiger Borland-Pascal-Funktionen                               */
 /*                                                                           */
-/* Historie: 20. 5.1996 Grundsteinlegung                                     */                      
+/* Historie: 20. 5.1996 Grundsteinlegung                                     */
 /*                                                                           */
 /*****************************************************************************/
 

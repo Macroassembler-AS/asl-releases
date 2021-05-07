@@ -51,7 +51,7 @@ typedef enum
   ModSP,
   ModSTBC,
   ModWDM,
-  ModPSW  /* no associated mask, only used for PUSH/POP! */ 
+  ModPSW  /* no associated mask, only used for PUSH/POP! */
 } tAdrMode;
 
 typedef enum
@@ -92,7 +92,7 @@ static const tAdrModeMask MModImm = (1UL << ModImm),
                           MModSP = (1UL << ModSP),
                           MModSTBC = (1UL << ModSTBC),
                           MModWDM = (1UL << ModWDM);
-                          
+
 /*-------------------------------------------------------------------------*/
 
 static CPUVar CPU784026;
@@ -3102,7 +3102,7 @@ static void DecodeBitRel(Word Code)
     switch ((BitAddr >> 28) & 15)
     {
       case eBitTypeSAddr1:
-        if (Code != 0xb0) 
+        if (Code != 0xb0)
           goto Common;
         BAsmCode[CodeLen++] = 0x3c;
         BAsmCode[CodeLen++] = 0x70 | ((BitAddr >> 24) & 7);

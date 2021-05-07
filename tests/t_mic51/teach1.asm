@@ -1,6 +1,6 @@
 
 ; Aufgabe Nr.: Teach- In Einheit fuer uP- Praktikum II
-; Autor: Joerg Vollandt 
+; Autor: Joerg Vollandt
 ; erstellt am : 31.05.1994
 ; letzte Aenderung am : 14.07.1994
 ; Bemerkung :

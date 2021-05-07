@@ -552,7 +552,7 @@ static void DecodeCMPR(Word Code)
 {
   Byte HReg;
 
-  UNUSED(Code); 
+  UNUSED(Code);
 
   if (ChkArgCnt(2, 2))
   {
@@ -1277,7 +1277,7 @@ static void SwitchTo_47C00(void)
     SegLimits[SegIO] = 0x1f;
   }
   else if (MomCPU == CPU470AC00)
-  { 
+  {
     SegLimits[SegCode] = 0x3fff;
     SegLimits[SegData] = 0x3ff;
     SegLimits[SegIO] = 0x1f;

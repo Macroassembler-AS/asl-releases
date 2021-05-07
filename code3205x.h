@@ -1,7 +1,7 @@
 #ifndef _CODE3205X_H
 #define _CODE3205X_H
 /*
- * AS-Portierung 
+ * AS-Portierung
  *
  * AS-Codegeneratormodul fuer die Texas Instruments TMS320C5x-Familie
  *

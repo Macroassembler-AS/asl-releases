@@ -77,7 +77,7 @@ PRelocEntry MergeRelocs(PRelocEntry *list1, PRelocEntry *list2, Boolean Add)
     {
       if (!PLast)
         PRes = PLast = PRun1;
-      else 
+      else
       {
         PLast->Next = PRun1;
         PLast = PRun1;
@@ -193,7 +193,7 @@ void SubPCRefReloc(void)
 
   if (!RelSegs)
     return;
- 
+
   /* search if PC subtraction evens out against an addition */
 
   for (Prev = NULL, Run = LastRelocs; Run; Prev = Run, Run = Run->Next)

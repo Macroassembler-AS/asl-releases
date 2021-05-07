@@ -158,7 +158,7 @@ static Boolean DecodeRegWithMemOpt(const tStrComp *pArg, Byte *pResult, Word Reg
     default:
     {
       tEvalResult EvalResult;
-      
+
       *pResult = EvalStrIntExpressionWithResult(pArg, UInt8, &EvalResult);
       if (!EvalResult.OK)
         return False;
@@ -460,9 +460,9 @@ static void CodeGen(Word Code)
     Boolean AddrOK;
     Byte Reg;
     tAdrData AdrData;
-    
+
     /* addressing mode is either given by keyword or by addressing syntax: */
-  
+
     if ((ArgCnt == 3) && DecodeAddrKeyword(ArgStr[1].Str, &AdrData.Mode))
     {
       AdrData.Val = EvalStrIntExpression(&ArgStr[3], Int8, &AddrOK);
@@ -570,7 +570,7 @@ static void CodeJumpGen(Word Code)
 
   /* transport the addressing mode's indirect bit (bit 0) to the
      corresponding instruction code's bit (bit 3): */
-  
+
   if (DecodeAdr(&ArgStr[ArgCnt], NULL, &AdrData, MModMemory | MModIndirect))
     CodeJumpCommon(Code | ((AdrData.Mode & 1) << 3), &AdrData);
 }
@@ -658,7 +658,7 @@ static void CodeSkip2(Word Code)
  * \brief  decode shift/rotate instructions
  * \param  Code instruction code in 1st byte
  * ------------------------------------------------------------------------ */
-    
+
 static void CodeShiftCore(Word Code, int ArgOffs)
 {
   Byte Reg;
@@ -666,7 +666,7 @@ static void CodeShiftCore(Word Code, int ArgOffs)
   if (DecodeRegWithMemOpt(&ArgStr[ArgCnt], &Reg, 3))
   {
     Byte Count = 1;
-    
+
     if (ArgCnt > ArgOffs)
     {
       tEvalResult EvalResult;
@@ -850,7 +850,7 @@ static void InitFields(void)
 
   AddInstTable(InstTable, "NOOP" , 0x80, CodeFixed);
   AddInstTable(InstTable, "HALT" , 0x00, CodeFixed);
-  
+
   AddInstTable(InstTable, "REG"  , 0   , CodeREG);
   AddInstTable(InstTable, "BIT"  , 0   , CodeBIT);
 }

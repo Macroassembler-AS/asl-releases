@@ -457,7 +457,7 @@ myp	pstruct
 	instr	(100,x)
 	endm
 
-	ld	d1,#3		; REG-IMM and REG-OPR1/2/3 equally good 
+	ld	d1,#3		; REG-IMM and REG-OPR1/2/3 equally good
 	ld.b	d1,#3
 	ld	d1,#$23		; REG-IMM
 	ld.b	d1,#$23	

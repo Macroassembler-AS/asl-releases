@@ -39,11 +39,11 @@ static void ClrBlanks(char *tmp)
 Boolean ProcessedEmpty(CMDProcessed Processed)
 {
   int z;
-   
+
   for (z = 1; z <= MAXPARAM; z++)
     if (Processed[z])
       return False;
-   return True; 
+   return True;
 }
 
 static void ProcessFile(char *Name_O, const CMDRec *pCMDRecs, int CMDRecCnt, CMDErrCallback ErrProc);
@@ -85,7 +85,7 @@ static CMDResult ProcessParam(const CMDRec *pCMDRecs, int CMDRecCnt, const char 
 #ifdef SLASHARGS
    || (*Param == '/')
 #endif
-   || (*Param == '+')) 
+   || (*Param == '+'))
   {
     Negate = (*Param == '+');
     Start = 1;
@@ -112,12 +112,12 @@ static CMDResult ProcessParam(const CMDRec *pCMDRecs, int CMDRecCnt, const char 
     for (Search = 0; Search < CMDRecCnt; Search++)
       if ((strlen(pCMDRecs[Search].Ident) > 1) && (!strcmp(s, pCMDRecs[Search].Ident)))
         break;
-    if (Search < CMDRecCnt) 
+    if (Search < CMDRecCnt)
       TempRes = pCMDRecs[Search].Callback(Negate, Next);
 
     else
     {
-      for (z = Start; z < (int)strlen(Param); z++) 
+      for (z = Start; z < (int)strlen(Param); z++)
         if (TempRes != CMDErr)
         {
           Search = 0;
@@ -157,7 +157,7 @@ static void DecodeLine(const CMDRec *pCMDRecs, int CMDRecCnt, char *OneLine,
   char *EnvStr[256], *start, *p;
   int EnvCnt = 0;
 
-  ClrBlanks(OneLine); 
+  ClrBlanks(OneLine);
   if ((*OneLine != '\0') && (*OneLine != ';'))
   {
     start = OneLine;
@@ -224,7 +224,7 @@ static void ProcessFile(char *Name_O, const CMDRec *pCMDRecs, int CMDRecCnt, CMD
                 const CMDRec *pCMDRecs, int CMDRecCnt,
                 CMDProcessed Unprocessed,
                 char *EnvName, CMDErrCallback ErrProc)
- * \brief  arguments from command line and environment 
+ * \brief  arguments from command line and environment
  * \param  argc command line arg count as handed to main()
  * \param  argv command line args as handed to main()
  * \param  pCMDRecs command line switch descriptors

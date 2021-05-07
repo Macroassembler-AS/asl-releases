@@ -76,7 +76,7 @@ static void ProcessSingle(const char *pFileName)
     if (Header == FileHeaderEnd)
     {
       errno = 0; fputs(getmessage(Num_MessGenerator), stdout); ChkIO(OutName);
-      do 
+      do
       {
         errno = 0; Ch = fgetc(ProgFile); ChkIO(pFileName);
         if (Ch != EOF)
@@ -117,7 +117,7 @@ static void ProcessSingle(const char *pFileName)
       for (z = 0,  PExp = RelocInfo->ExportEntries; z < RelocInfo->ExportCount; z++, PExp++)
         printf("%s  %08lX          %c          %s\n",
                getmessage(Num_MessExportInfo),
-               LoDWord(PExp->Value), 
+               LoDWord(PExp->Value),
                (PExp->Flags & RelFlag_Relative) ? 'R' : ' ',
                PExp->Name);
 

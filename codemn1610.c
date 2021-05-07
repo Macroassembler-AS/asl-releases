@@ -18,7 +18,7 @@
 #include "asmdef.h"
 #include "asmsub.h"
 #include "asmpars.h"
-#include "asmitree.h"  
+#include "asmitree.h"
 #include "codevars.h"
 #include "codepseudo.h"
 #include "errmsg.h"
@@ -1177,7 +1177,7 @@ static void DecodeBLK(Word Index)
 	Word ii1;
 	Word ii2;
 	Word reg;
-	   
+	
 	if (!ChkMinCPU(CPUMN1613)) return;
 
 	if (!ChkArgCnt(3,3)) return;

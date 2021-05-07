@@ -47,7 +47,7 @@
 
 \vspace{1cm}\par
 
-{\large Stand April 2021}
+{\large Stand Mai 2021}
 \end{raggedright}
 
 \clearpage
@@ -104,8 +104,8 @@ Linux angefertigt und formatiert.
 \cleardoublepage
 \chapter{Allgemeines}
 
-Diese Anleitung wendet sich an Leute, die bereits in Assembler programmiert
-haben und sich dar"uber informieren m"ochten, wie man mit AS umgeht.  Sie
+Diese Anleitung wendet sich an Programmierer, die bereits mit Assembler-Programmierung
+vertraut sind und sich dar"uber informieren m"ochten, wie man mit AS umgeht.  Sie
 hat eher die Form eines Referenz- und nicht Benutzerhandbuches.  Als solches
 macht sie weder den Versuch, die Sprache Assembler an sich zu erkl"aren, noch
 erl"autert sie die Architektur bestimmter Prozessoren.  Im Literaturverzeichnis
@@ -2461,6 +2461,12 @@ um das Symbol einem bestimmten Adre"sraum zuordnen.  AS ber"ucksichtigt
 dabei nicht, ob der benutzte Adre"sraum bei dem aktuell gesetzten
 Zielprozessor auch vorhanden ist!
 
+Als kleines verstecktes Extra ist es m"oglich, "uber \tty{SET} oder \tty{EQU}
+den Programmz"ahler zu setzen, also das zu machen, wozu man ansonsten \tty{ORG}
+verwenden w"urde.  Dazu gibt man als Symbolnamen den Sonderwert an, mit dem
+sich auch der aktuelle Programmz"ahler abfragen l"a"st, also je nach
+gew"ahlter Zielarchitektur ein Stern, ein Dollarzeichen oder \tty{PC}.
+
 Falls die gew"ahlte Zielarchitektur ein Attribut an den Befehlen zur Angabe
 der Operandengr"o"se unterst"utzt (z.B. 680x0), so ist dieses ebenfalls
 bei \tty{SET} und \tty{EQU} erlaubt.  Das definierte Symbol wird dann mit
@@ -4149,7 +4155,7 @@ Label und selber keine Anweisung enth"alt.  Im folgenden Beispiel:
 adr1:  nop
 
        dc.b     1
-adr2: 
+adr2:
        nop
 
        dc.b     1
@@ -4261,7 +4267,7 @@ kann man aus der Variablen \tty{INSRCMODE} auslesen.  Der Default ist
 \subsection{BIGENDIAN}
 \ttindex{BIGENDIAN}
 
-{\em G"ultigkeit: MCS-51/251, PowerPC}
+{\em G"ultigkeit: MCS-51/251, PowerPC, SC/MP}
 
 Bei den Prozessoren der 8051-Serie ist Intel seinen eigenen Prinzipien
 untreu geworden: Der Prozessor verwendet entgegen jeglicher Tradition

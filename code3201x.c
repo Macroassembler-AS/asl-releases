@@ -197,13 +197,13 @@ static void DecodeAdrShift(Word Index)
           Cnt = 3;
         }
       }
-      else 
+      else
       {
         HasSh = True;
         Cnt = 3;
       }
     }
-    else 
+    else
     {
       Cnt = 3;
       HasSh = (ArgCnt == 2);
@@ -448,7 +448,7 @@ static void InitFields(void)
 
 static void DeinitFields(void)
 {
-  DestroyInstTable(InstTable); 
+  DestroyInstTable(InstTable);
 
   free(AdrShiftOrders);
   free(ImmOrders);

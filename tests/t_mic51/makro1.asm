@@ -1,6 +1,6 @@
 
 ; Aufgabe Nr.: Speichermodul fuer uP- Praktikum II
-; Autor: Joerg Vollandt 
+; Autor: Joerg Vollandt
 ; erstellt am : 21.05.1994
 ; letzte Aenderung am : 01.08.1994
 ; Bemerkung : Makros
@@ -8,7 +8,7 @@
 ; Dateiname : makro1.asm
 ;
 
-;---------------------------------------------------------------------  
+;---------------------------------------------------------------------
 ; Funktion : Direkter Bitmove- Befehl
 ; Aufrufparameter : -
 ; Ruechgabeparameter : -
@@ -366,7 +366,7 @@ WAIT_NET: LCALL READ_STATUS
         POP ACC
 
         endm
-                                        
+
 ;---------------------------------------------------------------------
 ; Funktion : Message ausgeben
 ; Aufrufparameter : wie definiert

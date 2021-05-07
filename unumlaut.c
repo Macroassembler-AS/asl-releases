@@ -15,7 +15,7 @@ void *ckmalloc(size_t s)
 {
   void *tmp = malloc(s);
 
-  if (!tmp) 
+  if (!tmp)
   {
     fprintf(stderr, "allocation error(malloc): out of memory");
     exit(255);
@@ -66,7 +66,7 @@ int main(int argc, char **argv)
       argv[z] = as_strdup(argv[z]);
       for (p = argv[z]; *p; p++)
         if (*p == '\\')
-          *p = '/';      
+          *p = '/';
     }
   }
 #endif

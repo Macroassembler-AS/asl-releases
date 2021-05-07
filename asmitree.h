@@ -20,7 +20,7 @@ Word Index
 );
 
 typedef struct _TInstTreeNode
-{ 
+{
   struct _TInstTreeNode *Left,*Right;
   InstProc Proc;
   char *Name;

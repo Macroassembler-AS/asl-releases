@@ -152,7 +152,7 @@ static Boolean DecodeRegBitPacked(const tStrComp *pArg, Word *pPackedResult)
 {
   Word BitSymbol, RegAddr, BitPos;
   tEvalResult EvalResult;
-  
+
   if (!DecodeBitSymbol(pArg, &BitSymbol, &EvalResult))
     return False;
   SplitBitSymbol(BitSymbol, &RegAddr, &BitPos);
@@ -181,7 +181,7 @@ static void DecodeNOT(Word Code)
 {
   if (!ChkArgCnt(1, 1))
     return;
-    
+
   if (!as_strcasecmp(ArgStr[1].Str, "W"))
     WAsmCode[CodeLen++] = 0xfff;
   else
@@ -459,7 +459,7 @@ static void DecodeSKIP(Word Code)
 
   if (!ChkArgCnt(0, 0))
     return;
-  
+
   WAsmCode[CodeLen++] = EProgCounter() & 1 ? 0x702 : 0x602;
 }
 
@@ -506,7 +506,7 @@ static void DecodeZERO(Word Code)
   {
     Size = EvalStrIntExpressionWithFlags(&ArgStr[1], Int16, &ValOK, &Flags);
     if (mFirstPassUnknown(Flags)) WrError(ErrNum_FirstPassCalc);
-    if (ValOK && !mFirstPassUnknown(Flags)) 
+    if (ValOK && !mFirstPassUnknown(Flags))
     {
       if (SetMaxCodeLen(Size << 1)) WrError(ErrNum_CodeOverflow);
       else

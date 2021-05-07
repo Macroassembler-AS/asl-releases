@@ -1,3 +1,10 @@
+2021-05-07 [1.42 Bld 203]
+
+- Addition    : Allow changing the program counter by assigning value to PC
+                symbol
+- Addition    : Allow BIGENDIAN for SC/MP
+- Bugfix      : Several bugfixes if host system is big-endian
+
 2021-04-25 [1.42 Bld 202]
 
 - Change      : Somewhat less unintuitive error message if source file cannot

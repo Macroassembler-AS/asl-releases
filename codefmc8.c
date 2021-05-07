@@ -1,4 +1,4 @@
-/* codefmc8.c */ 
+/* codefmc8.c */
 /****************************************************************************/
 /* SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only                     */
 /*                                                                           */
@@ -81,7 +81,7 @@ static void DecodeAdr(const tStrComp *pArg, unsigned Mask)
 
   else if (!as_strcasecmp(pArg->Str, "SP"))
   {
-    AdrMode = ModReg16; 
+    AdrMode = ModReg16;
     AdrPart = 1;
   }
 
@@ -288,7 +288,7 @@ static void DecodeRel(Word Code)
       if (((Adr < -128) || (Adr > 127)) && !mSymbolQuestionable(Flags)) WrError(ErrNum_JmpDistTooBig);
       else
       {
-        BAsmCode[0] = Code; 
+        BAsmCode[0] = Code;
         BAsmCode[1] = Adr & 0xff;
         CodeLen = 2;
       }
@@ -300,7 +300,7 @@ static void DecodeMOV(Word Index)
 {
   Byte HReg;
   UNUSED(Index);
-  
+
   if (ChkArgCnt(2, 2))
   {
     OpSize = 0;
@@ -476,7 +476,7 @@ static void DecodeMOVW(Word Index)
             break;
         }
         break;
-       
+
       case ModDir:
         BAsmCode[1] = AdrVals[0];
         DecodeAdr(&ArgStr[2], MModAcc);
@@ -503,7 +503,7 @@ static void DecodeMOVW(Word Index)
 
       case ModExt:
         BAsmCode[1] = AdrVals[0];
-        BAsmCode[2] = AdrVals[1]; 
+        BAsmCode[2] = AdrVals[1];
         DecodeAdr(&ArgStr[2], MModAcc);
         switch (AdrMode)
         {
@@ -538,7 +538,7 @@ static void DecodeMOVW(Word Index)
             BAsmCode[0] = 0xe4 + HReg;
             memcpy(BAsmCode + 1, AdrVals, AdrCnt);
             CodeLen = 1 + AdrCnt;
-            break; 
+            break;
         }
         break;
 
@@ -883,7 +883,7 @@ static void AddAcc(const char *NName, Byte NCode)
 }
 
 static void AddRel(const char *NName, Byte NCode)
-{  
+{
   AddInstTable(InstTable, NName, NCode, DecodeRel);
 }
 

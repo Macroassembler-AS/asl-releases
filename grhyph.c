@@ -507,7 +507,7 @@ char *GRHyphens[]={
 % of a set of the internal TeX parameters including the trie memory
 % size parameter specifying the used memory for the hyphenation
 % patterns.
-% 
+%
 % emTeX (PC):
 %   You can set the used memory size of the trie using the
 %   `-mt<number>' option on the command line or in the
@@ -563,6 +563,6 @@ char *GRHyphens[]={
 %%   Right brace   \}     Tilde         \~}
 %%
 \endinput
-%% 
+%%
 %% End of file `ghyph31.tex'.
 */

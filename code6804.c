@@ -361,12 +361,12 @@ static void AddFixed(const char *NName, LongInt NCode)
   AddInstTable(InstTable, NName, InstrZ++, DecodeFixed);
 }
 
-static void AddRel(const char *NName, LongInt NCode)   
+static void AddRel(const char *NName, LongInt NCode)
 {
   AddInstTable(InstTable, NName, NCode, DecodeRel);
 }
 
-static void AddALU(const char *NName, LongInt NCode)   
+static void AddALU(const char *NName, LongInt NCode)
 {
   AddInstTable(InstTable, NName, NCode, DecodeALU);
 }

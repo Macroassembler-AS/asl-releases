@@ -7,7 +7,7 @@
 /*                                                                           */
 /*****************************************************************************/
 
-#include "stdinc.h" 
+#include "stdinc.h"
 #include <ctype.h>
 
 #include "dasmdef.h"
@@ -378,7 +378,7 @@ static void Disassemble_68(LargeWord Address, tDisassInfo *pInfo, Boolean AsData
       OpAddr = Data[0];
       pOp = MakeSymbolic(OpAddr, 1, NULL, NumBuf, sizeof(NumBuf));
       as_snprintf(pInfo->SrcLine, sizeof(pInfo->SrcLine), "%s\t%s", pOpcode->Memo, pOp);
-      break; 
+      break;
     case eIndexed:
       if (!RetrieveData(Address + 1, Data, 1))
         return;
@@ -390,7 +390,7 @@ static void Disassemble_68(LargeWord Address, tDisassInfo *pInfo, Boolean AsData
         pInfo->pRemark = "indirect jump, investigate here";
       if ((pOpcode->NextAddresses == 1) && (!strcmp(pOpcode->Memo, "jsr")))
         pInfo->pRemark = "indirect subroutine call, investigate here";
-      break; 
+      break;
     case eExtended:
       if (!RetrieveData(Address + 1, Data, 2))
         return;
@@ -402,7 +402,7 @@ static void Disassemble_68(LargeWord Address, tDisassInfo *pInfo, Boolean AsData
         pSymbolPrefix = NULL;
       pOp = MakeSymbolic(OpAddr, 2, pSymbolPrefix, NumBuf, sizeof(NumBuf));
       as_snprintf(pInfo->SrcLine, sizeof(pInfo->SrcLine), "%s\t%s", pOpcode->Memo, pOp);
-      break; 
+      break;
     case eImmediate:
       if (!RetrieveData(Address + 1, Data, pOpcode->OpSize + 1))
         return;
@@ -410,7 +410,7 @@ static void Disassemble_68(LargeWord Address, tDisassInfo *pInfo, Boolean AsData
       OpAddr = pOpcode->OpSize ? (((Word)Data[0]) << 8) | Data[1] : Data[0];
       pOp = MakeSymbolic(OpAddr, pOpcode->OpSize + 1, NULL, NumBuf, sizeof(NumBuf));
       as_snprintf(pInfo->SrcLine, sizeof(pInfo->SrcLine), "%s\t#%s", pOpcode->Memo, pOp);
-      break; 
+      break;
     case eRelative:
       if (!RetrieveData(Address + 1, Data, 1))
         return;
@@ -451,7 +451,7 @@ static void Disassemble_68(LargeWord Address, tDisassInfo *pInfo, Boolean AsData
     pInfo->NextAddresses[pInfo->NextAddressCount++] = OpAddr;
   if (pOpcode->NextAddresses & 1)
     pInfo->NextAddresses[pInfo->NextAddressCount++] = (Address + pInfo->CodeLen) % 0xffff;
-  
+
   if (nData != pInfo->CodeLen)
     as_snprcatf(pInfo->SrcLine, sizeof(pInfo->SrcLine), " ; ouch %u != %u", nData, pInfo->CodeLen);
 }

@@ -467,11 +467,11 @@
 	ex	rh5,1234h
 	ex	r5,1234h(r6)
 	ex	rh5,1234h(r6)
-	ex	@r6,r5 
+	ex	@r6,r5
 	ex	@r6,rh5
-	ex	1234h,r5 
+	ex	1234h,r5
 	ex	1234h,rh5
-	ex	1234h(r6),r5 
+	ex	1234h(r6),r5
 	ex	1234h(r6),rh5
 
 	exts	r5

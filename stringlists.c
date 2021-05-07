@@ -54,7 +54,7 @@ void AddStringListLast(StringList *List, const char *NewStr)
 {
   StringRecPtr Neu, Lauf;
 
-  Neu = (StringRecPtr) malloc(sizeof(StringRec)); 
+  Neu = (StringRecPtr) malloc(sizeof(StringRec));
   Neu->Content = NewStr ? as_strdup(NewStr) : NULL;
   Neu->Next = NULL;
   if (!*List)

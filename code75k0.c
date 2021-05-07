@@ -18,7 +18,7 @@
 #include "asmdef.h"
 #include "asmsub.h"
 #include "asmpars.h"
-#include "asmitree.h"  
+#include "asmitree.h"
 #include "codepseudo.h"
 #include "intpseudo.h"
 #include "codevars.h"
@@ -591,7 +591,7 @@ static void DecodeMOV(Word Code)
             {
               BAsmCode[0] = 0x93; BAsmCode[1] = DestResult.Part; CodeLen = 2;
             }
-            break; 
+            break;
           case ModReg8:
             if (SrcResult.Part != 0) WrError(ErrNum_InvAddrMode);
             else
@@ -629,7 +629,7 @@ static void DecodeXCH(Word Code)
             if (DestResult.Part == 0) PutCode(0xd8 + SrcResult.Part);
             else if (SrcResult.Part == 0) PutCode(0xd8 + DestResult.Part);
             else WrError(ErrNum_InvAddrMode);
-            break; 
+            break;
           case ModAbs:
             if (DestResult.Part != 0) WrError(ErrNum_InvAddrMode);
             else
@@ -711,7 +711,7 @@ static void DecodeXCH(Word Code)
 
         DecodeAdr(&ArgStr[2], MModReg4 | MModReg8, &SrcResult);
         switch (SrcResult.Mode)
-        { 
+        {
           case ModReg4:
             if (SrcResult.Part != 0) WrError(ErrNum_InvAddrMode);
             else PutCode(0xe8 + DestResult.Part);
@@ -829,7 +829,7 @@ static void DecodeADDS(Word Code)
           DecodeAdr(&ArgStr[2], MModImm | MModInd, &Result);
           switch (Result.Mode)
           {
-            case ModImm: 
+            case ModImm:
               PutCode(0x60 + Result.Part); break;
             case ModInd:
               if (Result.Part == 1) PutCode(0xd2); else WrError(ErrNum_InvAddrMode);
@@ -1169,7 +1169,7 @@ static void DecodeAcc(Word Code)
 {
   if (!ChkArgCnt(1, 1));
   else if (as_strcasecmp(ArgStr[1].Str, "A")) WrError(ErrNum_InvAddrMode);
-  else 
+  else
     PutCode(Code);
 }
 
@@ -1365,7 +1365,7 @@ static void DecodeBR(Word Code)
 
 static void DecodeBRCB(Word Code)
 {
-  UNUSED(Code);  
+  UNUSED(Code);
 
   if (ChkArgCnt(1, 1))
   {
@@ -1558,7 +1558,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "CALL", 0, DecodeCALL);
   AddInstTable(InstTable, "CALLF", 0, DecodeCALLF);
   AddInstTable(InstTable, "GETI", 0, DecodeGETI);
-  AddInstTable(InstTable, "EI", 1, DecodeEI_DI);  
+  AddInstTable(InstTable, "EI", 1, DecodeEI_DI);
   AddInstTable(InstTable, "DI", 0, DecodeEI_DI);
   AddInstTable(InstTable, "SEL", 0, DecodeSEL);
   AddInstTable(InstTable, "SFR", 0, DecodeSFR);
@@ -1692,7 +1692,7 @@ static const tCPUProps CPUProps[] =
   { ""     , 0        }
 };
 
-void code75k0_init(void) 
+void code75k0_init(void)
 {
   const tCPUProps *pProps;
 

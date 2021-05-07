@@ -51,7 +51,7 @@ typedef struct
 {
   Word Code;
   Byte OpSize;
-  CPUVar MinCPU;  
+  CPUVar MinCPU;
 } Reg;
 
 enum
@@ -120,7 +120,7 @@ static PInstTable RegTable;
 /* Address Expression Decoder */
 
 enum
-{ 
+{
   eRegA = 0,
   eRegB = 1,
   eRegCCRL = 2,
@@ -202,7 +202,7 @@ static Boolean ValidReg(const char *Asc_o)
 
   if ((*Asc_o == '-') || (*Asc_o == '+'))
     strcpy(Asc, Asc_o + 1);
-  else 
+  else
   {
     strcpy(Asc, Asc_o);
     if ((l > 0) && ((Asc_o[l - 1] == '-') || (Asc_o[l - 1] == '+')))
@@ -212,7 +212,7 @@ static Boolean ValidReg(const char *Asc_o)
 }
 
 enum
-{ 
+{
   eIdxRegA = 0,
   eIdxRegB = 1,
   eIdxRegD = 2
@@ -659,7 +659,7 @@ static void DecodeGen(Word Index)
       }
       else
       {
-        BAsmCode[0] = Hi(pOrder->Code); 
+        BAsmCode[0] = Hi(pOrder->Code);
         BAsmCode[1] = Lo(pOrder->Code);
         CodeLen = 2;
       }
@@ -760,7 +760,7 @@ static void DecodeJmp(Word Index)
 {
   JmpOrder *pOrder = JmpOrders + Index;
   Word Mask;
-  
+
   if (!ChkArgCnt(1, 2));
   else if (*AttrPart.Str) WrError(ErrNum_UseLessAttr);
   else
@@ -948,7 +948,7 @@ static void DecodeMOV(Word Index)
     ExPos = 2;
     BAsmCode[0] = 0x18;
     BAsmCode[1] = (1 - Index) << 3;
-    
+
     Mask = MModImm | MModExt | MModIdx;
     if (MomCPU >= CPU6812X)
       Mask |= MModIdx1 | MModIdx2 | MModDIdx | MModIIdx2;
@@ -1003,7 +1003,7 @@ static void DecodeMOV(Word Index)
           case ModIIdx2:
             BAsmCode[1] |= 1;
             memcpy(BAsmCode + 2, AdrVals, AdrCnt);
-            memcpy(BAsmCode + 2 + AdrCnt, HAdrVals, HCnt);    
+            memcpy(BAsmCode + 2 + AdrCnt, HAdrVals, HCnt);
             break;
         }
         break;
@@ -1233,7 +1233,7 @@ static void DecodeBTAS(Word Index)
   UNUSED(Index);
 
   if (!ChkArgCnt(2, 3));
-  else if (!ChkMinCPU(CPU6812X)); 
+  else if (!ChkMinCPU(CPU6812X));
   else if (*AttrPart.Str) WrError(ErrNum_UseLessAttr);
   else
   {
@@ -1489,9 +1489,9 @@ static void InitFields(void)
   AddGen("LDX"  , 0x00ce, True , True , True , eSymbolSize16Bit  , CPU6812 );
   AddGen("LDY"  , 0x00cd, True , True , True , eSymbolSize16Bit  , CPU6812 );
   AddGen("LSL"  , 0x0048, False, False, True , eSymbolSizeUnknown, CPU6812 );
-  AddGen("LSLW" , 0x1848, False, False, True , eSymbolSizeUnknown, CPU6812X); 
+  AddGen("LSLW" , 0x1848, False, False, True , eSymbolSizeUnknown, CPU6812X);
   AddGen("LSR"  , 0x0044, False, False, True , eSymbolSizeUnknown, CPU6812 );
-  AddGen("LSRW" , 0x1844, False, False, True , eSymbolSizeUnknown, CPU6812X); 
+  AddGen("LSRW" , 0x1844, False, False, True , eSymbolSizeUnknown, CPU6812X);
   AddGen("MAXA" , 0x18f8, False, False, False, eSymbolSizeUnknown, CPU6812 );
   AddGen("MAXM" , 0x18fc, False, False, False, eSymbolSizeUnknown, CPU6812 );
   AddGen("MINA" , 0x18f9, False, False, False, eSymbolSizeUnknown, CPU6812 );
@@ -1503,9 +1503,9 @@ static void InitFields(void)
   AddGen("ORX"  , 0x188a, True , True , True , eSymbolSize16Bit  , CPU6812X);
   AddGen("ORY"  , 0x18ca, True , True , True , eSymbolSize16Bit  , CPU6812X);
   AddGen("ROL"  , 0x0045, False, False, True , eSymbolSizeUnknown, CPU6812 );
-  AddGen("ROLW" , 0x1845, False, False, True , eSymbolSizeUnknown, CPU6812X); 
+  AddGen("ROLW" , 0x1845, False, False, True , eSymbolSizeUnknown, CPU6812X);
   AddGen("ROR"  , 0x0046, False, False, True , eSymbolSizeUnknown, CPU6812 );
-  AddGen("RORW" , 0x1846, False, False, True , eSymbolSizeUnknown, CPU6812X); 
+  AddGen("RORW" , 0x1846, False, False, True , eSymbolSizeUnknown, CPU6812X);
   AddGen("SBCA" , 0x0082, True , True , True , eSymbolSize8Bit   , CPU6812 );
   AddGen("SBCB" , 0x00c2, True , True , True , eSymbolSize8Bit   , CPU6812 );
   AddGen("SBED" , 0x1883, True , True , True , eSymbolSize16Bit  , CPU6812X);
@@ -1554,7 +1554,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "ORCC"  , 0x04, DecodeLogic);
   AddInstTable(InstTable, "BSET"  , 0x0c, DecodeBit);
   AddInstTable(InstTable, "BCLR"  , 0x0d, DecodeBit);
-  AddInstTable(InstTable, "CALL"  , 0   , DecodeCALL);  
+  AddInstTable(InstTable, "CALL"  , 0   , DecodeCALL);
   AddInstTable(InstTable, "PCALL" , 0   , DecodePCALL);
   AddInstTable(InstTable, "BRSET" , 0x00, DecodeBrBit);
   AddInstTable(InstTable, "BRCLR" , 0x01, DecodeBrBit);

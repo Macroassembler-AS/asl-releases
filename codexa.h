@@ -6,9 +6,9 @@
 /*                                                                           */
 /* AS-Portierung                                                             */
 /*                                                                           */
-/* AS-Codegenerator Philips XA                                               */                    
+/* AS-Codegenerator Philips XA                                               */
 /*                                                                           */
-/* Historie: 25.10.1996 Grundsteinlegung                                     */                           
+/* Historie: 25.10.1996 Grundsteinlegung                                     */
 /*                                                                           */
 /*****************************************************************************/
 

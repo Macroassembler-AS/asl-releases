@@ -75,7 +75,7 @@ static void FreeNoUserProc(void *pUserData)
 CPUVar AddCPUWithArgs(const char *NewName, tCPUSwitchProc Switcher, const tCPUArg *pArgs)
 {
   tNoUserData *pData = (tNoUserData*)malloc(sizeof(*pData));
-  
+
   pData->Switcher = Switcher;
   return AddCPUUserWithArgs(NewName, SwitchNoUserProc, pData, FreeNoUserProc, pArgs);
 }

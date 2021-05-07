@@ -13,115 +13,115 @@
 #define MEM2MODES @rw0+10,@rw1-10,@rw2+20,@rw3-30,@rw4+40,@rw5-50,@rw6+60,@rw7-70,@rw0+1000,@rw1-1000,@rw2+2000,@rw3-3000,@rw0+rw7,@rw1+rw7,@pc+5,1234h
 
 enum8_x macro memo
-	irp	var,R8MODES 
+	irp	var,R8MODES
 	memo	var
 	endm
 	irp	var,MEM1MODES,MEM1AMODES
 	memo	var
 	endm
-	irp	var,MEM2MODES 
+	irp	var,MEM2MODES
 	memo	var
 	endm
 	endm
 
 enum16_x macro memo
-	irp	var,R16MODES 
+	irp	var,R16MODES
 	memo	var
 	endm
 	irp	var,MEM1MODES,MEM1AMODES
 	memo	var
 	endm
-	irp	var,MEM2MODES 
+	irp	var,MEM2MODES
 	memo	var
 	endm
 	endm
 
 enum32_x macro memo
-	irp	var,R32MODES 
+	irp	var,R32MODES
 	memo	var
 	endm
-	irp	var,MEM1MODES,MEM1AMODES 
+	irp	var,MEM1MODES,MEM1AMODES
 	memo	var
 	endm
-	irp	var,MEM2MODES 
+	irp	var,MEM2MODES
 	memo	var
 	endm
 	endm
 
 enum8_px macro memo,par
-	irp	var,R8MODES 
+	irp	var,R8MODES
 	memo	par,var
 	endm
-	irp	var,MEM1MODES,MEM1AMODES 
+	irp	var,MEM1MODES,MEM1AMODES
 	memo	par,var
 	endm
-	irp	var,MEM2MODES 
+	irp	var,MEM2MODES
 	memo	par,var
 	endm
 	endm
 
 enum16_px macro memo,par
-	irp	var,R16MODES 
+	irp	var,R16MODES
 	memo	par,var
 	endm
 	irp	var,MEM1MODES,MEM1AMODES
 	memo	par,var
 	endm
-	irp	var,MEM2MODES 
+	irp	var,MEM2MODES
 	memo	par,var
 	endm
 	endm
 
 enum32_px macro memo,par
-	irp	var,R32MODES 
+	irp	var,R32MODES
 	memo	par,var
 	endm
 	irp	var,MEM1MODES,MEM1AMODES
 	memo	par,var
 	endm
-	irp	var,MEM2MODES 
+	irp	var,MEM2MODES
 	memo	par,var
 	endm
 	endm
 
 enum8_xp macro memo,par
-	irp	var,R8MODES 
+	irp	var,R8MODES
 	memo	var,par
 	endm
 	irp	var,MEM1MODES,MEM1AMODES
 	memo	var,par
 	endm
-	irp	var,MEM2MODES 
+	irp	var,MEM2MODES
 	memo	var,par
 	endm
 	endm
 
 enum16_xp macro memo,par
-	irp	var,R16MODES 
+	irp	var,R16MODES
 	memo	var,par
 	endm
 	irp	var,MEM1MODES,MEM1AMODES
 	memo	var,par
 	endm
-	irp	var,MEM2MODES 
+	irp	var,MEM2MODES
 	memo	var,par
 	endm
 	endm
 
 enum32_xp macro memo,par
-	irp	var,R32MODES 
+	irp	var,R32MODES
 	memo	var,par
 	endm
 	irp	var,MEM1MODES,MEM1AMODES
 	memo	var,par
 	endm
-	irp	var,MEM2MODES 
+	irp	var,MEM2MODES
 	memo	var,par
 	endm
 	endm
 
 enum8_xpp macro memo,par1,par2
-	irp	var,R8MODES 
+	irp	var,R8MODES
 	memo	var,par1,par2
 	endm
 	irp	var,MEM1MODES
@@ -133,7 +133,7 @@ enum8_xpp macro memo,par1,par2
 	endm
 
 enum16_xpp macro memo,par1,par2
-	irp	var,R16MODES 
+	irp	var,R16MODES
 	memo	var,par1,par2
 	endm
 	irp	var,MEM1MODES
@@ -339,8 +339,8 @@ enumseg macro 	memo
 
 	enum16_xp dwbnz,$
 
-	ext  
-	extw 
+	ext
+	extw
 
 	enum8_x inc
 
@@ -356,7 +356,7 @@ enumseg macro 	memo
 	int	0ff1234h
 	int	#11
 
-	int9 
+	int9
 
 	intp	123456h
 
@@ -562,7 +562,7 @@ enumseg macro 	memo
 	negw	a
 	enum16_x negw
 
-	nop  
+	nop
 
 	not	a
 	enum8_x	not
@@ -601,9 +601,9 @@ enumseg macro 	memo
 	pushw	rw1,rw3-rw4
 	pushw	rw6-rw2,rw4
 
-	ret  
-	reti 
-	retp 
+	ret
+	reti
+	retp
 
 	rolc	a
 	enum8_x rolc
@@ -642,7 +642,7 @@ enumseg macro 	memo
 	enum16_px subw,a
 	enum16_xp subw,a
 
-	swap 
+	swap
 	swapw
 
 	unlink
@@ -673,7 +673,7 @@ enumseg macro 	memo
 	enum16_px xorw,a
 	enum16_xp xorw,a
 
-	zext 
+	zext
 	zextw
 
 ;-------------------------------------------------------------------------

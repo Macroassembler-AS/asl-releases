@@ -1,7 +1,7 @@
 
 ; Aufgabe Nr.: Teach- In Einheit fuer uP- Praktikum II
 ;              --- Link- Modul ---
-; Autor: Joerg Vollandt 
+; Autor: Joerg Vollandt
 ; erstellt am : 13.06.1994
 ; letzte Aenderung am : 02.08.1994
 ; Bemerkung :

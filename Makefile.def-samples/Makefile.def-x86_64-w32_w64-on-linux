@@ -57,6 +57,22 @@ TARG_EXEXTENSION = $(HOST_EXEXTENSION)
 #TARG_RUNCMD = wine
 #TEX2DOC_FLAGS=-codepage 1252
 
+# Build PPC binaries, e.g. to test support for big endian host systems
+# On Debian, install the following:
+# gcc-powerpc64-linux-gnu
+# gcc-powerpc-linux-gnu
+# qemu-system-ppc
+# qemu-user-static
+
+TARG_OBJDIR = ppc-linux/
+TARG_CC = powerpc-linux-gnu-gcc
+TARG_CFLAGS = $(CFLAGS)
+TARG_OBJEXTENSION = .o
+TARG_LD = $(TARG_CC)
+TARG_LDFLAGS = $(LDFLAGS) -static
+TARG_EXEXTENSION =
+TARG_RUNCMD = qemu-ppc-static
+
 # -------------------------------------------------------------------------
 # directories where binaries, includes, and manpages should go during
 # installation

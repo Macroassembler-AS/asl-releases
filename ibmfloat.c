@@ -100,11 +100,11 @@ Boolean Double2IBMFloat(Word *pDest, double Src, Boolean ToDouble)
 #endif
 
   /* (2a) Round-to-the-nearest for single precision: */
-  
+
   if (!ToDouble)
   {
     Boolean RoundUp;
-    
+
     /* Bits 27..4 of mantissa will make it into dest, so the decision bit is bit 3: */
 
     if (Mantissa & 0x8) /* fraction is >= 0.5 */
@@ -112,7 +112,7 @@ Boolean Double2IBMFloat(Word *pDest, double Src, Boolean ToDouble)
       if ((Mantissa & 7) || Fraction) /* fraction is > 0.5 -> round up */
         RoundUp = True;
       else /* fraction is 0.5 -> round towards even, i.e. round up if mantissa is odd */
-        RoundUp = !!(Mantissa & 0x10); 
+        RoundUp = !!(Mantissa & 0x10);
     }
     else /* fraction is < 0.5 -> round down */
       RoundUp = False;

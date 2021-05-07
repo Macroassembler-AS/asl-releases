@@ -155,7 +155,7 @@ void ReadRecordHeader(Byte *Header, Byte *CPU, Byte* Segment,
                       Byte *Gran, const char *Name, FILE *f)
 {
 #ifdef _WIN32
-   /* CygWin B20 seems to mix up the file pointer under certain 
+   /* CygWin B20 seems to mix up the file pointer under certain
       conditions. Difficult to reproduce, so we reposition it. */
 
   long pos;
@@ -267,7 +267,7 @@ PRelocInfo ReadRelocInfo(FILE *f)
   Boolean OK = FALSE;
   LongWord StringLen, StringPos;
   LongInt z;
-  
+
   /* get memory for structure */
 
   PInfo = (PRelocInfo) malloc(sizeof(TRelocInfo));
@@ -497,7 +497,7 @@ Boolean RemoveOffset(char *Name, LongWord *Offset)
 void EraseFile(const char *FileName, LongWord Offset)
 {
   UNUSED(Offset);
-   
+
   if (unlink(FileName) == -1)
     ChkIO(FileName);
 }
@@ -524,7 +524,7 @@ Boolean AddressWildcard(const char *addr)
 void *ckmalloc(size_t s)
 {
   void *tmp = malloc(s);
-  if (tmp == NULL) 
+  if (tmp == NULL)
   {
     fprintf(stderr,"allocation error(malloc): out of memory");
     exit(255);

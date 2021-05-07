@@ -1,5 +1,5 @@
 /*
- * AS-Portierung 
+ * AS-Portierung
  *
  * AS-Codegeneratormodul fuer die Texas Instruments TMS320C5x-Familie
  *
@@ -146,13 +146,13 @@ static Boolean DecodeAdr(const tStrComp *pArg, int MinArgCnt, int aux, Boolean M
 
     if (Must1 && (h >= 0x80) && !mFirstPassUnknown(EvalResult.Flags))
     {
-      WrError(ErrNum_UnderRange); 
+      WrError(ErrNum_UnderRange);
       return False;
     }
 
     /* nur untere 7 Bit gespeichert */
 
-    AdrMode = h & 0x7f; 
+    AdrMode = h & 0x7f;
     ChkSpace(SegData, EvalResult.AddrSpaceMask);
   }
 
@@ -204,7 +204,7 @@ static Word DecodeCond(int argp)
     argp++;
   }
 
-  if ((cnttp > 1) || (cntzl > 1) || (cntv > 1) || (cntc > 1)) 
+  if ((cnttp > 1) || (cntzl > 1) || (cntv > 1) || (cntc > 1))
     WrStrErrorPos(ErrNum_UndefCond, &ArgStr[argp]);
 
   return ret;
@@ -235,7 +235,7 @@ static void DecodeFixed(Word Index)
   if (ChkArgCnt(0, 0)
    && ChkMinCPU(pOrder->MinCPU))
   {
-    CodeLen = 1; 
+    CodeLen = 1;
     WAsmCode[0] = pOrder->Code;
   }
 }
@@ -248,7 +248,7 @@ static void DecodeCmdAdr(Word Index)
    && ChkMinCPU(pOrder->MinCPU)
    && DecodeAdr(&ArgStr[1], 1, 2, False))
   {
-    CodeLen = 1; 
+    CodeLen = 1;
     WAsmCode[0] = pOrder->Code | AdrMode;
   }
 }
@@ -286,7 +286,7 @@ static void DecodeCmdJmp(Word Index)
       WAsmCode[1] = EvalStrIntExpression(&ArgStr[1], Int16, &OK);
       if (OK)
       {
-        CodeLen = 2; 
+        CodeLen = 2;
         WAsmCode[0] = pOrder->Code | AdrMode;
       }
     }
@@ -304,7 +304,7 @@ static void DecodeCmdPlu(Word Index)
     if (ChkArgCnt(2, 3))
     {
       WAsmCode[1] = EvalStrIntExpressionOffs(&ArgStr[1], 1, Int16, &OK);
-      if ((OK) && (DecodeAdr(&ArgStr[2], 2, 3, False))) 
+      if ((OK) && (DecodeAdr(&ArgStr[2], 2, 3, False)))
       {
         CodeLen = 2;
         WAsmCode[0] = pOrder->Code | 0x0400 | AdrMode;
@@ -427,7 +427,7 @@ static void DecodeLogic(Word Index)
   {
     if (DecodeAdr(&ArgStr[1], 1, 2, False))
     {
-      CodeLen = 1; 
+      CodeLen = 1;
       WAsmCode[0] = (Index & 0xff00) | AdrMode;
     }
   }
@@ -484,7 +484,7 @@ static void DecodeBLDD(Word Index)
     if ((OK) && (DecodeAdr(&ArgStr[2], 2, 3, False)))
     {
       CodeLen = 2;
-      WAsmCode[0] = 0xa800 | AdrMode;          
+      WAsmCode[0] = 0xa800 | AdrMode;
     }
   }
   else if (*ArgStr[2].Str == '#')
@@ -521,7 +521,7 @@ static void DecodeBLPD(Word Index)
     if ((OK) && (DecodeAdr(&ArgStr[2], 2, 3, False)))
     {
       CodeLen = 2;
-      WAsmCode[0] = 0xa500 | AdrMode;          
+      WAsmCode[0] = 0xa500 | AdrMode;
     }
   }
   else
@@ -649,7 +649,7 @@ static void DecodeLACL(Word Index)
       if (OK)
       {
         CodeLen = 1;
-        WAsmCode[0] |= 0xb900;   
+        WAsmCode[0] |= 0xb900;
       }
     }
   }
@@ -724,7 +724,7 @@ static void DecodeLDP(Word Index)
       if (OK)
       {
         CodeLen = 1;
-        WAsmCode[0] = (konst & 0x1ff) | 0xbc00;        
+        WAsmCode[0] = (konst & 0x1ff) | 0xbc00;
       }
     }
   }
@@ -796,7 +796,7 @@ static void DecodeMPY(Word Index)
           {
             CodeLen = 2;              /* What does that mean? */
             WAsmCode[0] = 0xbe80;
-            WAsmCode[1] = Imm; 
+            WAsmCode[1] = Imm;
           }
         }
         else
@@ -1013,7 +1013,7 @@ static void DecodeRPTZ(Word Index)
 
 static void DecodeXC(Word Index)
 {
-  Word Mode; 
+  Word Mode;
   Boolean OK;
   tSymbolFlags Flags;
 
@@ -1194,7 +1194,7 @@ static void InitFields(void)
   AddCond("TC",  CPU32050 , 0x0ff, 0x100, 0, 0, 0, 1);
   AddCond("UNC", CPU32050 , 0x0ff, 0x300, 0, 0, 0, 1);
   AddCond(NULL,  CPU32050 , 0xfff, 0x000, 0, 0, 0, 0);
-  
+
   BitTable = (tBitTable *) malloc(sizeof(tBitTable) * BitCnt); InstrZ = 0;
   AddBit("OVM",  CPU320203, 0xbe42 ); AddBit("SXM",  CPU320203, 0xbe46 );
   AddBit("HM",   CPU32050 , 0xbe48 ); AddBit("TC",   CPU320203, 0xbe4a );
@@ -1262,11 +1262,11 @@ static void DeinitFields(void)
 
 static void MakeCode_3205x(void)
 {
-  CodeLen = 0; 
+  CodeLen = 0;
   DontPrint = False;
 
   /* zu ignorierendes */
-     
+
   if (Memo(""))
     return;
 
@@ -1303,7 +1303,7 @@ static void SwitchTo_3205x(void)
   SetIntConstMode(eIntConstModeIntel);
 
   PCSymbol = "$";
-  HeaderID = 0x77; 
+  HeaderID = 0x77;
   NOPCode = 0x8b00;
   DivideChars = ",";
   HasAttrs = False;
@@ -1315,7 +1315,7 @@ static void SwitchTo_3205x(void)
   SegLimits[SegData] = 0xffff;
   Grans[SegIO  ] = 2; ListGrans[SegIO  ] = 2; SegInits[SegIO  ] = 0;
   SegLimits[SegIO  ] = 0xffff;
-  
+
   MakeCode = MakeCode_3205x;
   IsDef = IsDef_3205x;
   SwitchFrom = SwitchFrom_3205x;

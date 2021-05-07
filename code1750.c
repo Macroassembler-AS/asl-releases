@@ -559,8 +559,8 @@ static void DecodeFLOAT(Word Extended)
            Field[1], Field[2], Field[3], Field[4], Field[5], Field[6], Field[7]);
 #endif
 
-    /* 1750 format has no implicit leading one in mantissa; i.e. mantissa can only 
-       represent values of 1 > mant >= -1. If number is not denormalized, we have to 
+    /* 1750 format has no implicit leading one in mantissa; i.e. mantissa can only
+       represent values of 1 > mant >= -1. If number is not denormalized, we have to
        increase the exponent and shift the mantissa by one to the right: */
 
     if (Exponent > 0)

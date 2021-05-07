@@ -42,11 +42,11 @@
 	.byte	0,0,0,0,0,0,0	; 000000C8  00000000000000
 procexit:
 	rett	4		; 000000CF  4204 now start the test
-                            
+
 	.align	16
-zero:	.double	0,0,0,0		; 000000E0  0000000000000000 
+zero:	.double	0,0,0,0		; 000000E0  0000000000000000
           			;           0000000000000000
-                            
+
 	; ABORT Service Routine at x'80
 pages:	.double x'2007,x'3007,x'4007,x'5007 ;000000F0  0720000007300000
 				;           0740000007500000
@@ -55,14 +55,14 @@ abo:	save	[r0,r1,r2]	; 00000100  6207
 always:
 	addqd	1,r0		; 00000105  8F00
 	br	always		; 00000107  EA7E
-                            
+
 	; User Program at x'FF0
 	.align 16
 use:	movd	x'12345678,r7	; 00000110  D7A112345678
 	movw	100,r6		; 00000116  95A10064
 	movb	'!',r0		; 0000011A  14A021
 	addr	-800(sb),r1	; 0000011D  67D0BCE0
-                            
+
 	.align	16
 	; only for example
 	.long	3.5e6		; 00000130  00000000F0B34A41

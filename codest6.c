@@ -442,7 +442,7 @@ static void DecodeJP_CALL(Word Code)
 
       /* CPU program space's page 1 (800h...0fffh) always accesses ROM space page 1.
          CPU program space's page 0 (000h...7ffh) accesses 2K ROM space pages as defined by PRPR. */
-         
+
       if (!mFirstPassUnknown(Flags) && (DestPage != 1))
       {
         Word SrcPage = EProgCounter() >> 11;
@@ -451,7 +451,7 @@ static void DecodeJP_CALL(Word Code)
            Jump from any other page is only allowed back to page 1 or within same page. */
 
         if (DestPage != ((SrcPage == 1) ? PRPRVal : SrcPage)) WrError(ErrNum_InAccPage);
-          
+
         AdrInt &= 0x7ff;
       }
       CodeLen = 2;

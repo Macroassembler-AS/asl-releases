@@ -21,7 +21,7 @@
 #include "asmcode.h"
 #include "asmallg.h"
 #include "asmitree.h"
-#include "codepseudo.h" 
+#include "codepseudo.h"
 #include "intpseudo.h"
 #include "codevars.h"
 #include "errmsg.h"
@@ -42,7 +42,7 @@ typedef struct
 {
   const char *Name;
   Byte Code;
-} Condition; 
+} Condition;
 
 /*-------------------------------------------------------------------------*/
 /* Praefixtyp */
@@ -155,7 +155,7 @@ static Boolean ExtendPrefix(PrefType *Dest, tOpPrefix AddPrefix)
       SPart = 1;
       break;
     case Pref_IN_LW:
-    case Pref_IB_LW: 
+    case Pref_IB_LW:
     case Pref_IW_LW:
       SPart = 2;
       break;
@@ -419,7 +419,7 @@ static void DecodeAdr(const tStrComp *pArg)
         else
         {        /* SP,IX,IY */
           /* we replace the register name with '0 ', making it a valid
-             expression for the parser.  Removing the outer parentheses saves 
+             expression for the parser.  Removing the outer parentheses saves
              a level of recursion in the parser: */
 
           pArg->Str[1] = '0';
@@ -1562,7 +1562,7 @@ static void DecodeADC_SBC(Word IsSBC)
           if ((IsSBC) && (CodeLen != 0))
             BAsmCode[PrefixCnt] += 0x10;
         }
-        break; 
+        break;
       case ModReg16:
         if ((AdrPart != 2) || (PrefixCnt != 0)) WrError(ErrNum_InvAddrMode);
         else
@@ -1797,7 +1797,7 @@ static void DecodeBit(Word Code)
         }
         break;
       default:
-        if (AdrMode != ModNone) WrError(ErrNum_InvAddrMode); 
+        if (AdrMode != ModNone) WrError(ErrNum_InvAddrMode);
     }
   }
 }
@@ -2002,7 +2002,7 @@ static void DecodeEX(Word Index)
 
   UNUSED(Index);
 
-  /* work around the parser problem related to the ' character */ 
+  /* work around the parser problem related to the ' character */
 
   if (!as_strncasecmp(ArgStr[2].Str, "AF\'", 3))
     ArgStr[2].Str[3] = '\0';
@@ -2837,7 +2837,7 @@ static void DecodeRST(Word Code)
     RadixBase = SaveRadixBase;
 
     if (mFirstPassUnknown(Flags))
-      AdrByte = AdrByte & 0x38;  
+      AdrByte = AdrByte & 0x38;
     if (OK)
     {
       if ((AdrByte > 0x38) || (AdrByte & 7)) WrError(ErrNum_NotFromThisAddress);
@@ -3192,13 +3192,13 @@ static void InitFields(void)
   InstrZ = 0; HLOrders = (BaseOrder *) malloc(sizeof(BaseOrder) * HLOrderCnt);
   AddHL("CPLW" , CPUZ380, 2, 0xdd2f);  AddHL("NEGW" , CPUZ380, 2, 0xed54);
   AddHL("EXTSW", CPUZ380, 2, 0xed75);
- 
+
   AddALU("SUB", "SUBW", 2); AddALU("AND", "ANDW", 4);
   AddALU("OR" , "ORW" , 6); AddALU("XOR", "XORW", 5);
   AddALU("CP" , "CPW" , 7);
 
   AddShift("RLC" , "RLCW" , 0); AddShift("RRC", "RRCW", 1);
-  AddShift("RL"  , "RLW"  , 2); AddShift("RR" , "RRW" , 3); 
+  AddShift("RL"  , "RLW"  , 2); AddShift("RR" , "RRW" , 3);
   AddShift("SLA" , "SLAW" , 4); AddShift("SRA", "SRAW", 5);
   AddShift("SLIA", NULL   , 6); AddShift("SRL", "SRLW", 7);
   AddShift("SLS" , NULL   , 6);
@@ -3249,7 +3249,7 @@ static void StripPref(const char *Arg, Byte Opcode)
           break;
 
       /* copy out new opcode */
- 
+
       OpPart.Pos.StartCol = ArgStr[1].Pos.StartCol;
       OpPart.Pos.Len = strmemcpy(OpPart.Str, STRINGSIZE, ArgStr[1].Str, ptr - ArgStr[1].Str);
       NLS_UpString(OpPart.Str);

@@ -33,7 +33,7 @@ typedef struct
 
 typedef struct
 {
-  Byte CodeImm, CodeAbs8, CodeAbs16, CodeIdxX8, CodeIdxX16, 
+  Byte CodeImm, CodeAbs8, CodeAbs16, CodeIdxX8, CodeIdxX16,
        CodeIdxY8, CodeIdxY16;
 } XYOrder;
 
@@ -90,7 +90,7 @@ enum
 #define XYOrderCnt 6
 
 #define PushRegCnt 10
-static const char PushRegNames[PushRegCnt][4] = 
+static const char PushRegNames[PushRegCnt][4] =
 {
   "A", "B", "X", "Y", "DPR", "DT", "DBR", "PG", "PBR", "PS"
 };
@@ -963,7 +963,7 @@ static void DecodeMulDiv(Word Code)
         memcpy(BAsmCode + 2, AdrVals, AdrCnt);
         CodeLen = 2 + AdrCnt;
       }
-    } 
+    }
   }
 }
 

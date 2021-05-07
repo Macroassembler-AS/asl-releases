@@ -2,7 +2,7 @@
 
 	; NOTE: The test values commented out work
         ; on a "typical" x86 system, but may not on
-        ;others due to runding errors
+        ; others due to rounding errors
 
 ;	dc.c	5.96046447754e-8	; smallest positive subnormal number (0001)
 ;	dc.c	0.000060975552		; largest subnormal number (03ff)

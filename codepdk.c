@@ -148,7 +148,7 @@ static tAdrMode DecodeAdr(tStrComp *pArg, Word Mask, IntType MemIntType, Word *p
       goto check;
     EitherUnknown = EitherUnknown || mFirstPassUnknown(EvalResult2.Flags);
     Num1 += Num2;
- 
+
     if (EitherUnknown)
     {
       Num1 &= SegLimits[SegData];

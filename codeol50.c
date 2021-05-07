@@ -935,7 +935,7 @@ static void InitFields(void)
   AddFixed("ACTIVATE", 0x0490, M_6051);
   AddFixed("KENAB"   , 0x04e8, M_6051);
   AddFixed("KDSAB"   , 0x04e4, M_6051);
-  AddFixed("STOP"    , 0x0e00, M_6052); 
+  AddFixed("STOP"    , 0x0e00, M_6052);
   AddFixed("ACT"     , 0x0e20, M_6052);
   AddFixed("EI"      , 0x0e68, M_6052);
   AddFixed("DI"      , 0x0e64, M_6052);

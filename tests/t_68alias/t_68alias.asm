@@ -2,7 +2,7 @@
 	page	0
 
 	; all three variants in each block should result in the
-	; same machine code: 
+	; same machine code:
 
 	ldab	$aa
 	lda	b,$aa

@@ -169,20 +169,20 @@ void opencatalog(PMsgCat Catalog, const char *File, const char *Path, LongInt Ms
         {
           String Dest;
           int Result;
-          
+
 #ifdef __CYGWIN32__
           DeCygWinDirList(pCopy);
 #endif
           Result = FSearch(Dest, sizeof(Dest), File, NULL, ptr);
           MsgFile = Result ? NULL : myopen(Dest, MsgId1, MsgId2);
-          
+
           /* absolutely last resort: if we were found via PATH (no slashes in argv[0]/Path), look up this
              path and replace bin/ with lib/ for 'companion path': */
-      
+
           if (!MsgFile && !strrchr(Path, PATHSEP) && !FSearch(Dest, sizeof(Dest), Path, NULL, ptr))
           {
             char *pSep2;
-            
+
             strreplace(Dest, SPATHSEP "bin", SPATHSEP "lib", 0, sizeof(Dest));
             pSep2 = strrchr(Dest, PATHSEP);
             if (pSep2)
@@ -258,7 +258,7 @@ void opencatalog(PMsgCat Catalog, const char *File, const char *Path, LongInt Ms
   Catalog->StrPosis[0] = 0;
   if ((int)fread(Catalog->StrPosis + 1, 4, Catalog->MsgCount - 1, MsgFile) + 1 != Catalog->MsgCount)
     error(ERdMsg);
-  if (BigEndian)
+  if (HostBigEndian)
     DSwap(Catalog->StrPosis + 1, (Catalog->MsgCount - 1) << 2);
   for (z = 1; z < Catalog->MsgCount; z++)
   {

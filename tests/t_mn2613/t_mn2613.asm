@@ -60,7 +60,7 @@
 	endm
 
 	irp	instr,lr,str
-	instr	r2, ( r3 ) 
+	instr	r2, ( r3 )
 	instr	r2,ssbr,-(r4)
 	instr	r2,tsr0,(r1)+
 	endm

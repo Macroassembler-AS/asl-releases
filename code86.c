@@ -19,7 +19,7 @@
 #include "asmpars.h"
 #include "asmallg.h"
 #include "codepseudo.h"
-#include "intpseudo.h" 
+#include "intpseudo.h"
 #include "asmitree.h"
 #include "codevars.h"
 
@@ -1083,7 +1083,7 @@ static void DecodeXCHG(Word Index)
             BAsmCode[CodeLen+1] = AdrMode | (AdrByte << 3);
             MoveAdr(2);
             CodeLen += AdrCnt + 2;
-            break; 
+            break;
           default:
             if (AdrType != TypeNone)
               WrError(ErrNum_InvAddrMode);
@@ -1279,7 +1279,7 @@ static void DecodeALU2(Word Index)
               WrError(ErrNum_InvAddrMode);
         }
         break;
-      default: 
+      default:
         if (AdrType != TypeNone)
           WrError(ErrNum_InvAddrMode);
     }
@@ -1637,7 +1637,7 @@ static void DecodeFBSTP(Word Code)
 static void DecodeFCOM_FCOMP(Word Code)
 {
   if (!FPUEntry(&Code))
-    return;     
+    return;
 
   if (ChkArgCnt(1, 1))
   {
@@ -1662,7 +1662,7 @@ static void DecodeFCOM_FCOMP(Word Code)
           CodeLen += 2 + AdrCnt;
         }
         break;
-      default: 
+      default:
         if (AdrType != TypeNone)
           WrError(ErrNum_InvAddrMode);
     }
@@ -1815,7 +1815,7 @@ static void DecodeFIADD_FIMUL(Word Code)
           }
         }
         break;
-      default: 
+      default:
         if (AdrType != TypeNone)
           WrError(ErrNum_InvAddrMode);
     }
@@ -1827,7 +1827,7 @@ static void DecodeFADDP_FMULP(Word Code)
 {
   if (!FPUEntry(&Code))
     return;
-   
+
   if (ChkArgCnt(2, 2))
   {
     DecodeAdr(&ArgStr[2]);
@@ -1997,7 +1997,7 @@ static void DecodeFSUBP_FSUBRP_FDIVP_FDIVRP(Word Code)
 {
   if (!FPUEntry(&Code))
     return;
- 
+
   if (ChkArgCnt(2, 2))
   {
     DecodeAdr(&ArgStr[2]);
@@ -2033,7 +2033,7 @@ static void DecodeFPU16(Word Code)
 {
   if (!FPUEntry(&Code))
     return;
- 
+
   if (ChkArgCnt(1, 1))
   {
     OpSize = 1;
@@ -2057,7 +2057,7 @@ static void DecodeFSAVE_FRSTOR(Word Code)
 {
   if (!FPUEntry(&Code))
     return;
- 
+
   if (ChkArgCnt(1, 1))
   {
     DecodeAdr(&ArgStr[1]);
@@ -2531,7 +2531,7 @@ static void AddFPU16(const char *NName, Word NCode)
 
 static void AddString(const char *NName, CPUVar NMin, Word NCode)
 {
-  if (InstrZ >= StringOrderCnt) exit(255); 
+  if (InstrZ >= StringOrderCnt) exit(255);
   StringOrders[InstrZ].Name = NName;
   StringOrders[InstrZ].MinCPU = NMin;
   StringOrders[InstrZ].Code = NCode;
@@ -2664,7 +2664,7 @@ static void InitFields(void)
   AddFixed("FINT",  CPUV35,   0x0f92);  AddFixed("MOVSPA",CPUV35,   0x0f25);
   AddFixed("SEGES", CPU8086,  0x0026);  AddFixed("SEGCS", CPU8086,  0x002e);
   AddFixed("SEGSS", CPU8086,  0x0036);  AddFixed("SEGDS", CPU8086,  0x003e);
-  AddFixed("FWAIT", CPU8086,  0x009b);  
+  AddFixed("FWAIT", CPU8086,  0x009b);
 
   AddFPUFixed("FCOMPP", 0xded9); AddFPUFixed("FTST",   0xd9e4);
   AddFPUFixed("FXAM",   0xd9e5); AddFPUFixed("FLDZ",   0xd9ee);

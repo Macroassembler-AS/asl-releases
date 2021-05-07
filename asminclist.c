@@ -93,7 +93,7 @@ void PrintIncludeList(void)
 
 static void ClearIncludeList_ClearNode(PFileNode Node)
 {
-  int z; 
+  int z;
 
   ChkStack();
 

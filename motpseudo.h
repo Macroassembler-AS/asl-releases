@@ -11,7 +11,7 @@
 /*****************************************************************************/
 
 #include "symbolsize.h"
-  
+
 /*****************************************************************************
  * Global Functions
  *****************************************************************************/
@@ -21,7 +21,7 @@ struct sStrComp;
 extern void DecodeMotoBYT(Word Code);
 extern void DecodeMotoADR(Word Code);
 extern void DecodeMotoDFS(Word Code);
-    
+
 extern Boolean DecodeMotoPseudo(Boolean Turn);
 
 extern void ConvertMotoFloatDec(Double F, Byte *pDest, Boolean NeedsBig);

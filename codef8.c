@@ -173,7 +173,7 @@ static void DecodeBranchCore(const tStrComp *pArg, Word Code)
   Boolean OK;
   LongInt Dist;
   tSymbolFlags Flags;
-  
+
   Dist = EvalStrIntExpressionWithFlags(pArg, UInt16, &OK, &Flags) - (EProgCounter() + 1);
   if (OK)
   {
@@ -184,7 +184,7 @@ static void DecodeBranchCore(const tStrComp *pArg, Word Code)
       BAsmCode[1] = Dist & 0xff;
       CodeLen = 2;
     }
-  } 
+  }
 }
 
 static void DecodeBranch(Word Code)

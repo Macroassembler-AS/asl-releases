@@ -21,7 +21,7 @@
 #include "asmpars.h"
 #include "asmallg.h"
 #include "asmitree.h"
-#include "codepseudo.h" 
+#include "codepseudo.h"
 #include "intpseudo.h"
 #include "codevars.h"
 #include "errmsg.h"
@@ -871,7 +871,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "CONSTN", False, DecodeCONSTH_CONSTN);
   AddInstTable(InstTable, "CONVERT", 0, DecodeCONVERT);
   AddInstTable(InstTable, "EXHWS", 0, DecodeEXHWS);
-  AddInstTable(InstTable, "INV", 0x9f00, DecodeINV_IRETINV);   
+  AddInstTable(InstTable, "INV", 0x9f00, DecodeINV_IRETINV);
   AddInstTable(InstTable, "IRETINV", 0x8c00, DecodeINV_IRETINV);
   AddInstTable(InstTable, "MFSR", 0, DecodeMFSR);
   AddInstTable(InstTable, "MTSR", 0, DecodeMTSR);
@@ -1045,7 +1045,7 @@ static void SwitchFrom_29K(void)
 
 static void SwitchTo_29K(void)
 {
-  static ASSUMERec ASSUME29Ks[] = 
+  static ASSUMERec ASSUME29Ks[] =
   {
     {"RBP", &Reg_RBP, 0, 0xff, 0x00000000, NULL}
   };

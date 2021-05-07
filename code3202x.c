@@ -1,5 +1,5 @@
 /*
- * AS-Portierung 
+ * AS-Portierung
  *
  * AS-Codegeneratormodul fuer die Texas Instruments TMS320C2x-Familie
  *
@@ -103,14 +103,14 @@ static Boolean DecodeAdr(const tStrComp *pArg, int MinArgCnt, int aux, Boolean M
       return False;
     }
     h = EvalStrIntExpressionWithResult(pArg, Int16, &EvalResult);
-    if (!EvalResult.OK) 
+    if (!EvalResult.OK)
       return False;
     if (Must1 && (h >= 0x80) && !mFirstPassUnknown(EvalResult.Flags))
     {
-      WrError(ErrNum_UnderRange); 
+      WrError(ErrNum_UnderRange);
       return False;
     }
-    AdrMode = h & 0x7f; 
+    AdrMode = h & 0x7f;
     ChkSpace(SegData, EvalResult.AddrSpaceMask);
     return True;
   }
@@ -118,7 +118,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, int MinArgCnt, int aux, Boolean M
   if (aux <= ArgCnt)
   {
     h = EvalARExpression(&ArgStr[aux], &AdrOK);
-    if (AdrOK) 
+    if (AdrOK)
       AdrMode |= 0x8 | h;
     return AdrOK;
   }
@@ -137,8 +137,8 @@ static void DecodeCNFD(Word Code)
   if (ChkArgCnt(0, 0)
    && ChkExcludeCPU(CPU32026))
   {
-    CodeLen = 1; 
-    WAsmCode[0] = 0xce04; 
+    CodeLen = 1;
+    WAsmCode[0] = 0xce04;
   }
 }
 
@@ -149,7 +149,7 @@ static void DecodeCNFP(Word Code)
   if (ChkArgCnt(0, 0)
    && ChkExcludeCPU(CPU32026))
   {
-    CodeLen = 1; 
+    CodeLen = 1;
     WAsmCode[0] = 0xce05;
   }
 }
@@ -207,11 +207,11 @@ static void DecodeJmp(Word Code)
       WAsmCode[1] = EvalStrIntExpression(&ArgStr[1], Int16, &OK);
       if (OK)
       {
-        CodeLen = 2; 
+        CodeLen = 2;
         WAsmCode[0] = Code | (AdrMode & 0x7f);
       }
     }
-  }  
+  }
 }
 
 /* nur Adresse */
@@ -242,7 +242,7 @@ static void Decode2ndAdr(Word Index)
     WAsmCode[1] = EvalStrIntExpression(&ArgStr[1], Int16, &OK);
     if (OK && DecodeAdr(&ArgStr[2], 2, 3, pOrder->Must1))
     {
-      CodeLen = 2; 
+      CodeLen = 2;
       WAsmCode[0] = pOrder->Code | AdrMode;
     }
   }
@@ -256,7 +256,7 @@ static void DecodeShiftAdr(Word Index)
 
   if (ChkArgCnt(1, 3))
   {
-    Boolean OK;   
+    Boolean OK;
     Word AdrWord;
     tSymbolFlags Flags;
 
@@ -264,7 +264,7 @@ static void DecodeShiftAdr(Word Index)
     {
       if (ArgCnt < 2)
       {
-        OK = True; 
+        OK = True;
         AdrWord = 0;
         Flags = eSymbolFlag_None;
       }
@@ -274,12 +274,12 @@ static void DecodeShiftAdr(Word Index)
         if (OK && mFirstPassUnknown(Flags))
           AdrWord = 0;
       }
-      if (OK) 
+      if (OK)
       {
         if (pOrder->AllowShifts < AdrWord) WrError(ErrNum_InvShiftArg);
         else
         {
-          CodeLen = 1; 
+          CodeLen = 1;
           WAsmCode[0] = pOrder->Code | AdrMode | (AdrWord << 8);
         }
       }
@@ -333,7 +333,7 @@ static void DecodeImm(Word Index)
           if (ArgCnt == 2)
           {
             AdrWord = EvalStrIntExpressionWithResult(&ArgStr[2], Int4, &EvalResult);
-            if (EvalResult.OK && mFirstPassUnknown(EvalResult.Flags)) 
+            if (EvalResult.OK && mFirstPassUnknown(EvalResult.Flags))
              AdrWord = 0;
           }
           if (EvalResult.OK)
@@ -346,7 +346,7 @@ static void DecodeImm(Word Index)
       }
       else if (ChkRange(AdrLong, pOrder->Min, pOrder->Max))
       {
-        CodeLen = 1; 
+        CodeLen = 1;
         WAsmCode[0] = pOrder->Code | (AdrLong & pOrder->Mask);
       }
     }
@@ -366,7 +366,7 @@ static void DecodeLARP(Word Code)
 
     if (OK)
     {
-      CodeLen = 1; 
+      CodeLen = 1;
       WAsmCode[0] = 0x5588 | AdrWord;
     }
   }
@@ -651,19 +651,19 @@ static void DeinitFields(void)
 
 /* ---------------------------------------------------------------------- */
 
-static void MakeCode_3202x(void) 
+static void MakeCode_3202x(void)
 {
-  CodeLen = 0; 
+  CodeLen = 0;
   DontPrint = False;
 
   /* zu ignorierendes */
 
-  if (Memo("")) 
+  if (Memo(""))
     return;
 
   /* Pseudoanweisungen */
 
-  if (DecodeTIPseudo()) 
+  if (DecodeTIPseudo())
     return;
 
   if (!LookupInstTable(InstTable, OpPart.Str))
@@ -688,15 +688,15 @@ static void SwitchFrom_3202x(void)
 
 static void SwitchTo_3202x(void)
 {
-  TurnWords = False; 
+  TurnWords = False;
   SetIntConstMode(eIntConstModeIntel);
-  
+
   PCSymbol = "$";
-  HeaderID = 0x75; 
+  HeaderID = 0x75;
   NOPCode = 0x5500;
   DivideChars = ",";
   HasAttrs = False;
-  
+
   ValidSegs = (1 << SegCode) | (1 << SegData) | (1 << SegIO);
   Grans[SegCode] = 2; ListGrans[SegCode] = 2; SegInits[SegCode] = 0;
         SegLimits[SegCode] = 0xffff;
@@ -704,8 +704,8 @@ static void SwitchTo_3202x(void)
         SegLimits[SegData] = 0xffff;
   Grans[SegIO  ] = 2; ListGrans[SegIO  ] = 2; SegInits[SegIO  ] = 0;
         SegLimits[SegIO  ] = 0xf;
-  
-  MakeCode = MakeCode_3202x; 
+
+  MakeCode = MakeCode_3202x;
   IsDef = IsDef_3202x; SwitchFrom = SwitchFrom_3202x;
   InitFields();
 }
@@ -717,6 +717,6 @@ void code3202x_init(void)
   CPU32025 = AddCPU("320C25", SwitchTo_3202x);
   CPU32026 = AddCPU("320C26", SwitchTo_3202x);
   CPU32028 = AddCPU("320C28", SwitchTo_3202x);
-  
+
   AddCopyright("TMS320C2x-Generator (C) 1994/96 Thomas Sailer");
 }

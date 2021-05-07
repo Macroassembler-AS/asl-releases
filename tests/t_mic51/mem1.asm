@@ -1,6 +1,6 @@
 
 ; Aufgabe Nr.: Speichermodul fuer uP- Praktikum II
-; Autor: Joerg Vollandt 
+; Autor: Joerg Vollandt
 ; erstellt am : 21.05.1994
 ; letzte Aenderung am : 02.08.1994
 ; Bemerkung : Routinen fuer die Speicherverwaltung
@@ -61,7 +61,7 @@ BLOCKNR         DW      ?
 MEM_ANF         DB      1000 DUP (?)      ; Speichergroesse in Bytes
 MEM_ENDE
 
-;---------------------------------------------------------------------  
+;---------------------------------------------------------------------
         SEGMENT CODE
 ;---------------------------------------------------------------------
 ; Funktion : Initialisieren des Speichermoduls
@@ -670,7 +670,7 @@ CHECK_SUM_ENDE:
 
 PUT_ELEMENT_MEM:
         PUSH PSW
-        GET_16 NEXT_FREE                
+        GET_16 NEXT_FREE
         LCALL CHECK_EOM_POINTER         ; testen ob DPTR < MEM_ENDE
         JC GET_ELEMENT_ERROR            ; wenn nicht Fehler
         LCALL CHECK_WR_POINTER          ; testen ob MEM_ANF <= DPTR <= NEXT_FREE
@@ -703,7 +703,7 @@ PUT_ELEMENT_ERROR:
 
 GET_ELEMENT_MEM:
         PUSH PSW
-        GET_16 RD_POINTER               
+        GET_16 RD_POINTER
         LCALL CHECK_EOM_POINTER         ; testen ob DPTR < MEM_ENDE
         JC GET_ELEMENT_ERROR            ; wenn nicht Fehler
         LCALL CHECK_RD_POINTER          ; testen ob MEM_ANF <= DPTR < NEXT_FREE

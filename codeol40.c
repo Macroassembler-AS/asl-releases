@@ -118,10 +118,10 @@ static void DecodeAdr(const tStrComp *pArg, Word Mask)
 AdrFound:
 
   if ((AdrMode != ModNone) && (!(Mask & (1 << AdrMode))))
-  {    
+  {
     WrError(ErrNum_InvAddrMode);
     AdrMode = ModNone; AdrCnt = 0;
-  } 
+  }
 }
 
 /*-------------------------------------------------------------------------*/

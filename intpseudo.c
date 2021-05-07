@@ -713,12 +713,7 @@ static Boolean LayoutDoubleWord(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
     case TempAll:
       assert(0);
   }
-
-  if (Result && Cnt)
-  {
-    if (BigEndian)
-      DSwap(BAsmCode + pCtx->CurrCodeFill.FullWordCnt - Cnt, Cnt);
-  }
+  (void)Cnt;
 
   return Result;
 }
@@ -856,12 +851,8 @@ static Boolean LayoutQuadWord(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
     case TempAll:
       assert(0);
   }
+  (void)Cnt;
 
-  if (Result)
-  {
-    if (BigEndian)
-      QSwap(BAsmCode + pCtx->CurrCodeFill.FullWordCnt - Cnt, Cnt);
-  }
   return Result;
 }
 
@@ -944,12 +935,8 @@ static Boolean LayoutTenBytes(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
     case TempAll:
       assert(0);
   }
+  (void)Cnt;
 
-  if (Result)
-  {
-    if (BigEndian)
-      TSwap(BAsmCode + pCtx->CurrCodeFill.FullWordCnt - Cnt, Cnt);
-  }
   return Result;
 }
 
@@ -1224,7 +1211,7 @@ static void DecodeIntelDx(tLayoutCtx *pLayoutCtx)
 }
 
 /*!------------------------------------------------------------------------
- * \fn     DecodeIntelDN(Word BigEndian)
+ * \fn     DecodeIntelDN(Word Flags)
  * \brief  Intel-style constant disposition - nibbles
  * \param  Flags Data Type & Endianess Flags
  * ------------------------------------------------------------------------ */
@@ -1283,7 +1270,7 @@ void DecodeIntelDB(Word Flags)
 }
 
 /*!------------------------------------------------------------------------
- * \fn     DecodeIntelDW(Word BigEndian)
+ * \fn     DecodeIntelDW(Word Flags)
  * \brief  Intel-style constant disposition - words
  * \param  Flags Data Type & Endianess Flags
  * ------------------------------------------------------------------------ */
@@ -1315,7 +1302,7 @@ void DecodeIntelDW(Word Flags)
 }
 
 /*!------------------------------------------------------------------------
- * \fn     DecodeIntelDD(Word BigEndian)
+ * \fn     DecodeIntelDD(Word Flags)
  * \brief  Intel-style constant disposition - 32-bit words
  * \param  Flags Data Type & Endianess Flags
  * ------------------------------------------------------------------------ */
@@ -1348,7 +1335,7 @@ void DecodeIntelDD(Word Flags)
 }
 
 /*!------------------------------------------------------------------------
- * \fn     DecodeIntelDQ(Word BigEndian)
+ * \fn     DecodeIntelDQ(Word Flags)
  * \brief  Intel-style constant disposition - 64-bit words
  * \param  Flags Data Type & Endianess Flags
  * ------------------------------------------------------------------------ */
@@ -1381,7 +1368,7 @@ void DecodeIntelDQ(Word Flags)
 }
 
 /*!------------------------------------------------------------------------
- * \fn     DecodeIntelDT(Word BigEndian)
+ * \fn     DecodeIntelDT(Word Flags)
  * \brief  Intel-style constant disposition - 80-bit words
  * \param  Flags Data Type & Endianess Flags
  * ------------------------------------------------------------------------ */

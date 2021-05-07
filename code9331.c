@@ -13,7 +13,7 @@
 #include <string.h>
 
 #include "bpemu.h"
-#include "strutil.h" 
+#include "strutil.h"
 #include "asmdef.h"
 #include "asmsub.h"
 #include "asmpars.h"
@@ -118,7 +118,7 @@ static Boolean DecodeDEST(const char *pArg, LongWord *pResult, Boolean AllowAll)
     "Y", "DP", "XAD", "PO",
     "SO0", "SO1", "SO2", "XD",
     "C", "O", "D", "B",
-    "XA", "A", 
+    "XA", "A",
     NULL
   };
   Boolean Result;
@@ -328,7 +328,7 @@ static Boolean DecodeGFX(const char *pArg, LongWord *pResult)
 {
   static const char *pNames[] =
   {
-    "GFS", "", "", "GFC", 
+    "GFS", "", "", "GFC",
     NULL
   };
 

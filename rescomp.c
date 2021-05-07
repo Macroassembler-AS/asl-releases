@@ -43,7 +43,7 @@ typedef struct
 
 /*****************************************************************************/
 
-#ifdef __TURBOC__ 
+#ifdef __TURBOC__
 unsigned _stklen = 16384;
 #endif
 
@@ -183,7 +183,7 @@ static void Process_LANGS(char *Line)
           *p3 = '\0'; num = strtol(p2, &end, 10); p2 = p3 + 1;
           break;
         default:
-          num = 0; 
+          num = 0;
           break;
       }
       if (*end) SynError("numeric format");
@@ -223,7 +223,7 @@ static void Process_MESSAGE(char *Line)
   KillPrefBlanks(Line); KillPostBlanks(Line);
   if (HFile) fprintf(HFile, "#define Num_%s %d\n", Line, MsgCounter);
   MsgCounter++;
-  
+
   for (z = MsgCats; z < MsgCats + CatCount; z++)
   {
     *Msg = '\0';
@@ -424,7 +424,7 @@ void *ckmalloc(size_t s)
 {
   void *tmp = malloc(s);
 
-  if (!tmp) 
+  if (!tmp)
   {
     fprintf(stderr, "allocation error(malloc): out of memory");
     exit(255);

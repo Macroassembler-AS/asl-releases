@@ -132,7 +132,7 @@ static void DecodeTRIS(Word Code)
   UNUSED(Code);
 
   if (ChkArgCnt(1, 1))
-  {   
+  {
     tEvalResult EvalResult;
     Word AdrWord = EvalStrIntExpressionWithResult(&ArgStr[1], UInt3, &EvalResult);
 

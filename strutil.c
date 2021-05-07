@@ -183,7 +183,7 @@ static void ResetFormatContext(tFormatContext *pContext)
   pContext->ForceLeadZero =
   pContext->Signed =
   pContext->LeftAlign =
-  pContext->AddPlus = 
+  pContext->AddPlus =
   pContext->ForceUpper = False;
 }
 
@@ -725,7 +725,7 @@ unsigned snstrlenprint(char *pDest, size_t DestLen,
 size_t as_strnlen(const char *pStr, size_t MaxLen)
 {
   size_t Res = 0;
-  
+
   for (; (MaxLen > 0); MaxLen--, pStr++, Res++)
     if (!*pStr)
       break;
@@ -758,9 +758,9 @@ int strreplace(char *pHaystack, const char *pFrom, const char *pTo, size_t ToMax
     pPos = strstr(pSearch, pFrom);
     if (!pPos)
       return Count;
-      
+
     /* compute some stuff upon first occurence when needed */
-      
+
     if (FromLen < 0)
     {
       HaystackLen = strlen(pHaystack);
@@ -780,10 +780,10 @@ int strreplace(char *pHaystack, const char *pFrom, const char *pTo, size_t ToMax
         TailLen = 0;
     }
     if (TailLen > 0)
-      memmove(pPos + ToLen, pPos + FromLen, TailLen); 
+      memmove(pPos + ToLen, pPos + FromLen, TailLen);
 
     /* See how much of 'To' still fits into buffer, and set accordingly: */
-      
+
     if (HeadLen + ToLen >= (int)HaystackSize)
     {
       ToLen = HaystackSize - 1 - ToLen;
@@ -792,16 +792,16 @@ int strreplace(char *pHaystack, const char *pFrom, const char *pTo, size_t ToMax
     }
     if (ToLen > 0)
       memcpy(pPos, pTo, ToLen);
-      
+
     /* Update length & terminate new string */
-      
+
     HaystackLen = HeadLen + ToLen + TailLen;
     pHaystack[HaystackLen] = '\0';
 
     /* continue searching behind replacement: */
 
     pSearch = &pHaystack[HeadLen + ToLen];
-    
+
     Count++;
   }
 }
@@ -933,7 +933,7 @@ int ReadLnCont(FILE *Datei, char *Zeile, int MaxLen)
 int DigitVal(char ch, int Base)
 {
   int Result;
-  
+
   /* Ziffern 0..9 ergeben selbiges */
 
   if ((ch >= '0') && (ch <= '9'))
@@ -953,7 +953,7 @@ int DigitVal(char ch, int Base)
 
   else
     Result = -1;
-    
+
   return (Result >= Base) ? -1 : Result;
 }
 

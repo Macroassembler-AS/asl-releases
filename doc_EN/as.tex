@@ -66,7 +66,7 @@
 
 \vspace{1cm}\par
 
-{\large Edition April 2021}
+{\large Edition May 2021}
 \end{raggedright}
 
 \clearpage
@@ -112,7 +112,7 @@ the Linux operating system.
 \cleardoublepage
 \chapter{Introduction}
 
-This instruction is meant for those people who are already very familiar
+This instruction is meant for programmers who are already very familiar
 with Assembler and who like to know how to work with AS.  It is rather a
 reference than a user's manual and so it neither tries to explain the
 ''language assembler'' nor the processors.  I have listed further
@@ -2396,6 +2396,13 @@ may be given as a second or thirsd parameter, allowing to assign the symbol to a
 specific address space.  AS does not check at this point if the used
 address space exists on the currently active target processor!
 
+A little hidden extra feature allows to set the program counter via
+\tty{SET} or \tty{EQU}, something one would ordinarily do via \tty{ORG}.
+To accomplish this, use the special value as symbol name that may also
+be used to query the current program counter's value.  Depending on the
+selected target architecture, this is either an asterisk, a dollar sign
+or \tty{PC}.
+
 In case the target architecture supports instruction attributes to define
 the operand size (e.g. on 680x0), those are also allowed for \tty{SET} and
 \tty{EQU}.  The operand size will be stored along with the symbol's value in
@@ -4041,7 +4048,7 @@ follwing example:
 adr1:  nop
 
        dc.b     1
-adr2: 
+adr2:
        nop
 
        dc.b     1
@@ -4145,7 +4152,7 @@ required.  The current setting may be read from the variable
 \subsection{BIGENDIAN}
 \ttindex{BIGENDIAN}
 
-{\em valid for: MCS-51/251, PowerPC}
+{\em valid for: MCS-51/251, PowerPC, SC/MP}
 
 Intel broke with its own principles when the 8051 series was designed: in
 contrast to all traditions, the processor uses big-endian ordering for all

@@ -1138,7 +1138,7 @@ static Boolean IsDef_AVR(void)
 static void InternSymbol_AVR(char *pArg, TempResult *pResult)
 {
   Word RegValue;
-  
+
   if (DecodeRegCore(pArg, &RegValue))
   {
     pResult->Typ = TempReg;

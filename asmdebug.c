@@ -245,17 +245,17 @@ static void DumpDebugInfo_Atmel(void)
     if (Run->Contents.Space == SegCode)
     {
       LTurn = Run->Contents.Address;
-      if (!BigEndian)
+      if (!HostBigEndian)
         DSwap(&LTurn, 4);
       if (fwrite(((Byte *) &LTurn)+1, 1, 3, OBJFile) != 3) ChkIO(ErrNum_FileWriteError);
       WTurn = Run->Contents.Code;
-      if (!BigEndian)
+      if (!HostBigEndian)
         WSwap(&WTurn, 2);
       if (fwrite(&WTurn, 1, 2, OBJFile) != 2) ChkIO(ErrNum_FileWriteError);
       TNum = Run->Contents.FileName - 1;
       if (fwrite(&TNum, 1, 1, OBJFile) != 1) ChkIO(ErrNum_FileWriteError);
       WTurn = Run->Contents.LineNum;
-      if (!BigEndian)
+      if (!HostBigEndian)
         WSwap(&WTurn, 2);
       if (fwrite(&WTurn, 1, 2, OBJFile) != 2) ChkIO(ErrNum_FileWriteError);
       TNum = Ord(Run->Contents.InMacro);
@@ -276,9 +276,9 @@ static void DumpDebugInfo_Atmel(void)
   /* korrekte Positionen in Kopf schreiben */
 
   rewind(OBJFile);
-  if (!BigEndian) DSwap(&FNamePos, 4);
+  if (!HostBigEndian) DSwap(&FNamePos, 4);
   if (fwrite(&FNamePos, 1, 4, OBJFile) != 4) ChkIO(ErrNum_FileWriteError);
-  if (!BigEndian) DSwap(&RecPos, 4);
+  if (!HostBigEndian) DSwap(&RecPos, 4);
   if (fwrite(&RecPos, 1, 4, OBJFile) != 4) ChkIO(ErrNum_FileWriteError);
 
   fclose(OBJFile);

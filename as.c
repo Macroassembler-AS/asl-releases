@@ -2861,7 +2861,7 @@ static void AssembleFile_InitPass(void)
   else
   {
     tStrComp TmpComp2;
-    
+
     StrCompMkTemp(&TmpComp2, DefCPU);
     if (!SetCPUByName(&TmpComp2))
       SetCPUByType(0, NULL);

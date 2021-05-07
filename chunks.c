@@ -22,7 +22,7 @@
 
 void InitChunk(ChunkList *NChunk)
 {
-  NChunk->RealLen = 0; 
+  NChunk->RealLen = 0;
   NChunk->AllocLen = 0;
   NChunk->Chunks = NULL;
 }
@@ -45,7 +45,7 @@ static Boolean Overlap(LargeWord Start1, LargeWord Len1, LargeWord Start2, Large
 }
 
 static void SetChunk(OneChunk *NChunk,
-                     LargeWord Start1, LargeWord Len1, 
+                     LargeWord Start1, LargeWord Len1,
                      LargeWord Start2, LargeWord Len2)
 {
   NChunk->Start  = min(Start1, Start2);
@@ -56,7 +56,7 @@ static void IncChunk(ChunkList *NChunk)
 {
   if (NChunk->RealLen + 1 > NChunk->AllocLen)
   {
-    if (NChunk->RealLen == 0) 
+    if (NChunk->RealLen == 0)
       NChunk->Chunks = (OneChunk *) malloc(sizeof(OneChunk));
     else
       NChunk->Chunks = (OneChunk *) realloc(NChunk->Chunks, sizeof(OneChunk) * (NChunk->RealLen + 1));
@@ -124,8 +124,8 @@ Boolean AddChunk(ChunkList *NChunk, LargeWord NewStart, LargeWord NewLen, Boolea
   else
   {
     IncChunk(NChunk);
-    
-    NChunk->Chunks[NChunk->RealLen].Length = NewLen; 
+
+    NChunk->Chunks[NChunk->RealLen].Length = NewLen;
     NChunk->Chunks[NChunk->RealLen].Start = NewStart;
     NChunk->RealLen++;
   }

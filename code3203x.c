@@ -4,7 +4,7 @@
 /*                                                                           */
 /* AS-Portierung                                                             */
 /*                                                                           */
-/* Codegenerator TMS320C3x/C4x-Familie                                       */               
+/* Codegenerator TMS320C3x/C4x-Familie                                       */
 /*                                                                           */
 /*****************************************************************************/
 
@@ -137,7 +137,7 @@ static Boolean DecodeReg(const char *Asc, Byte *Erg)
     if (OK)
     {
       if (Is4x() && (*Erg >= 8))
-        *Erg += 20; 
+        *Erg += 20;
       return True;
     }
   }
@@ -613,7 +613,7 @@ static void DecodeGen(Word Index)
 
   if ((CurrGenInfo.pOrder->SwapOps) && (!CurrGenInfo.Is3))
   {
-    pArg[3] = pArg[1]; 
+    pArg[3] = pArg[1];
     pArg[1] = pArg[2];
     pArg[2] = pArg[3];
   }
@@ -754,7 +754,7 @@ static void DecodeGen(Word Index)
           CurrGenInfo.Src1Part = AdrPart;
         }
         break;
-      case ModNone: 
+      case ModNone:
         return;
     }
   }
@@ -965,7 +965,7 @@ static void DecodeLDA(Word Code)
 {
   Byte HReg;
 
-  if (!ChkArgCnt(2, 2)); 
+  if (!ChkArgCnt(2, 2));
   else if (!ChkMinCPU(CPU32040));
   else if (ThisPar) WrError(ErrNum_ParNotPossible);
   else if (!DecodeReg(ArgStr[2].Str, &HReg)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[2]);
@@ -1195,7 +1195,7 @@ static void DecodeLDPK(Word Code)
     {
       DAsmCode[0] = (((LongWord)Code) << 23)
                   | (((LongWord)AdrMode) << 21)
-                  | (((LongWord)Dest) << 16)   
+                  | (((LongWord)Dest) << 16)
                   | AdrPart;
       CodeLen = 1;
     }
@@ -1302,7 +1302,7 @@ static void DecodeBR_BRD_CALL_C3x(Word Code)
   else if (ThisPar) WrError(ErrNum_ParNotPossible);
   else
   {
-    Boolean OK;   
+    Boolean OK;
     tSymbolFlags Flags;
     LongInt AdrLong = EvalAdrExpression(&ArgStr[1], &OK, &Flags);
 
@@ -1323,7 +1323,7 @@ static void DecodeBR_BRD_CALL_LAJ_C4x(Word Code)
   else if (ThisPar) WrError(ErrNum_ParNotPossible);
   else
   {
-    Boolean OK;   
+    Boolean OK;
     tSymbolFlags Flags;
     LongInt AdrLong = EvalAdrExpression(&ArgStr[1], &OK, &Flags) - (EProgCounter() + Dist);
 
@@ -1408,7 +1408,7 @@ static void DecodeDBcc(Word Code)
 {
   LongWord CondCode = Lo(Code),
            DFlag = ((LongWord)Hi(Code)) << 21;
-  LongInt Disp = DFlag ? 3 : 1;  
+  LongInt Disp = DFlag ? 3 : 1;
   Byte HReg, HReg2;
 
   if (!ChkArgCnt(2, 2));
@@ -1429,7 +1429,7 @@ static void DecodeDBcc(Word Code)
     }
     else
     {
-      Boolean OK;   
+      Boolean OK;
       tSymbolFlags Flags;
       LongInt AdrLong = EvalAdrExpression(&ArgStr[2], &OK, &Flags) - (EProgCounter() + Disp);
 

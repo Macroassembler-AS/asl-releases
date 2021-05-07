@@ -1,6 +1,6 @@
 
 ; Aufgabe Nr.: Speichermodul fuer uP- Praktikum II
-; Autor: Joerg Vollandt 
+; Autor: Joerg Vollandt
 ; erstellt am : 30.06.1994
 ; letzte Aenderung am : 01.07.1994
 ; Bemerkung : Wird in das gegebene File "MAIN.ASM" includet.
@@ -56,7 +56,7 @@ DUMP_BYTE2: MOVX A,@DPTR
         MOVX A,@DPTR
         LCALL A_LCD
         INC DPTR
-        
+
         LCALL CHAR_ACC
         LCALL UPCASE
         IFMAKE 'D',LJMP DUMP_ADR

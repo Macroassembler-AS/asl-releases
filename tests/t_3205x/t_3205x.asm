@@ -131,7 +131,7 @@
 	lar	ar2, #1000
 
 	ldp	123
-	ldp	*  
+	ldp	*
 	ldp	*, ar2
 	ldp	#40
 
@@ -172,7 +172,7 @@
 	mac	1234h, *, ar2
 
 	macd	1234h, 123
-	macd	1234h, *  
+	macd	1234h, *
 	macd	1234h, *, ar2
 
 	mar	123
@@ -186,11 +186,11 @@
 	mpy	#-300
 
         mpya    123
-        mpya    *  
+        mpya    *
         mpya    *, ar2
 
         mpys    123
-        mpys    *  
+        mpys    *
         mpys    *, ar2
 
         mpyu    123
@@ -241,7 +241,7 @@
 
 	rpt	#30
 	rpt	123
-	rpt	*  
+	rpt	*
 	rpt	*, ar2
 
 	sach	123
@@ -277,12 +277,12 @@
 	spac
 
         spl     123
-        spl     *  
-        spl     *, ar2  
+        spl     *
+        spl     *, ar2
 
         sph     123
-        sph     *  
-        sph     *, ar2  
+        sph     *
+        sph     *, ar2
 
 	splk	#1234, 123
 	splk	#1234, *
@@ -295,7 +295,7 @@
 	sqra	*, ar2
 
         sqrs    123
-        sqrs    *  
+        sqrs    *
         sqrs    *, ar2
 
 	sst	#0, 123
@@ -321,8 +321,8 @@
 	sub	*,3,AR2
 	sub	*,16,AR2
 
-        subb    123   
-        subb    *     
+        subb    123
+        subb    *
         subb    *, ar2
 
         subc    123

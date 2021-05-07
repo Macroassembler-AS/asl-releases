@@ -120,7 +120,7 @@ static void DecodeAdr(const tStrComp *pArg, Word Mask)
   {
     switch (OpSize)
     {
-      case 0: 
+      case 0:
         AdrVals[0] = EvalStrIntExpressionOffs(pArg, 1, Int8, &OK);
         break;
       case 1:
@@ -957,7 +957,7 @@ static void DecodeMOV1(Word Index)
 static void DecodeBit2(Word Index)
 {
   Byte HReg;
- 
+
   if (!ChkArgCnt(2, 2));
   else if (as_strcasecmp(ArgStr[1].Str, "CY")) WrError(ErrNum_InvAddrMode);
   else if (DecodeBitAdr(&ArgStr[2], &HReg))
@@ -972,7 +972,7 @@ static void DecodeBit2(Word Index)
 static void DecodeSETCLR1(Word Index)
 {
   Byte HReg;
- 
+
   if (!ChkArgCnt(1, 1));
   else if (!as_strcasecmp(ArgStr[1].Str, "CY"))
   {
@@ -1083,7 +1083,7 @@ static void DecodeBR(Word Index)
   Boolean OK;
   Byte HReg;
 
-  UNUSED(Index);  
+  UNUSED(Index);
 
   if (!ChkArgCnt(1, 1));
   else if ((!as_strcasecmp(ArgStr[1].Str, "AX")) || (!as_strcasecmp(ArgStr[1].Str, "RP0")))
@@ -1097,7 +1097,7 @@ static void DecodeBR(Word Index)
     unsigned Offset = 0;
     tSymbolFlags Flags;
 
-    if (*ArgStr[1].Str == '!') 
+    if (*ArgStr[1].Str == '!')
     {
       Offset++;
       HReg = 1;
@@ -1161,7 +1161,7 @@ static void DecodeRel(Word Index)
   }
 }
 
-static void DecodeBRel(Word Index)  
+static void DecodeBRel(Word Index)
 {
   Integer AdrInt;
   tSymbolFlags Flags;
@@ -1219,7 +1219,7 @@ static void DecodeDBNZ(Word Index)
   Boolean OK;
 
   UNUSED(Index);
- 
+
   if (ChkArgCnt(2, 2))
   {
     DecodeAdr(&ArgStr[1], MModReg8 + MModShort);
@@ -1328,7 +1328,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "CALLF", 0, DecodeCALLF);
   AddInstTable(InstTable, "CALLT", 0, DecodeCALLT);
   AddInstTable(InstTable, "BR"   , 0, DecodeBR);
-  AddInstTable(InstTable, "DBNZ" , 0, DecodeDBNZ); 
+  AddInstTable(InstTable, "DBNZ" , 0, DecodeDBNZ);
   AddInstTable(InstTable, "SEL"  , 0, DecodeSEL);
 
   AddFixed("BRK"  , 0x00bf); AddFixed("RET"  , 0x00af);

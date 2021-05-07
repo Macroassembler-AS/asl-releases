@@ -191,7 +191,7 @@ static void DecodeAdr(tStrComp *pArg, LongWord Mask)
     else
     {
       tStrComp RegComp;
-      
+
       pArg->Str[l - 2] = '\0'; pArg->Pos.Len -= 2;
       StrCompRefRight(&RegComp, pArg, 1);
       if (!DecodeReg(RegComp.Str, &AdrPart, &Size)) WrStrErrorPos(ErrNum_InvReg, &RegComp);
@@ -247,13 +247,13 @@ static void DecodeAdr(tStrComp *pArg, LongWord Mask)
     /* discard closing ) at end */
 
     pArg->Str[--l] = '\0'; pArg->Pos.Len--;
-    
+
     /* split off part in () */
 
     StrCompRefRight(&RegComp, pArg, p + 2 - pArg->Str);
 
     /* truncate arg to everything before ( */
-    
+
     p[1] = '\0';
     pArg->Pos.Len = p + 1 - pArg->Str;
     if (DecodeReg(RegComp.Str, &AdrPart, &Size))

@@ -7,7 +7,7 @@
 /* Tree management                                                           */
 /*                                                                           */
 /*****************************************************************************/
-           
+
 #include "stdinc.h"
 #include <string.h>
 #include <ctype.h>
@@ -210,7 +210,7 @@ Boolean EnterTree(PTree *PDest, PTree Neu, TTreeAdder Adder, void *pData)
            (*PDest)->Balance = 0;
            break;
        }
-   }  
+   }
 
   /* otherwise we might replace the node */
 

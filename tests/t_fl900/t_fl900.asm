@@ -151,7 +151,7 @@ FConst2         dd      2.0
 FConst100000    dd      100000.0
 FConstM1        dd      -1.0
 FConstM2        dd      -2.0
-FConstPi        dd      40490fdbh       ; um Vergleichsfehler durch Rundung zu 
+FConstPi        dd      40490fdbh       ; um Vergleichsfehler durch Rundung zu
 					; vermeiden
 Ergs            dd      30 dup (?)      ; Platz fuer Ergebnisse
 

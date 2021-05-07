@@ -1090,7 +1090,7 @@ a24bit	bit	addr24.4
 
 si	set	""
 	irp	instr,and,or
-si	set	"INSTR"   
+si	set	"INSTR"
 	instr	cy,s2bit
 	{si}1	cy,s2bit
 	instr	cy,s1bit

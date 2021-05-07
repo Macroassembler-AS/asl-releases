@@ -32,7 +32,7 @@ typedef struct
   Byte Code;
 } BaseOrder;
 
-typedef struct 
+typedef struct
 {
   CPUVar MinCPU;
   Byte Code;
@@ -40,7 +40,7 @@ typedef struct
   tSymbolSize Size;
 } ALUOrder;
 
-typedef struct 
+typedef struct
 {
   CPUVar MinCPU;
   Byte Code;
@@ -499,7 +499,7 @@ static void DecodeDBNZx(Word Index)
 
 static void DecodeDBNZ(Word Index)
 {
-  Boolean OK;   
+  Boolean OK;
   tSymbolFlags Flags;
   LongInt AdrInt;
   Byte Disp = 0;

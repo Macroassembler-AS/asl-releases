@@ -12,7 +12,7 @@
 /*                                                                           */
 /*****************************************************************************/
 
-extern void AddLineInfo(Boolean InMacro, LongInt LineNum, char *FileName, 
+extern void AddLineInfo(Boolean InMacro, LongInt LineNum, char *FileName,
                         ShortInt Space, LargeInt Address, LargeInt Len);
 
 extern void InitLineInfo(void);

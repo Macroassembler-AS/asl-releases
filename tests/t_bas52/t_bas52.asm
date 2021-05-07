@@ -1,18 +1,18 @@
 ;  December 18, 1986
-;  MS-DOS compatible Source code for MCS BASIC-52 (tm) 
+;  MS-DOS compatible Source code for MCS BASIC-52 (tm)
 ;  Assembles with ASM51 Macro Assembler Version 2.2
 ;
 ;  The following source code does not include the floating point math
 ;  routines. These are seperately compiled using FP52.SRC.
 ;
-;  Both the BASIC.SRC and FP52.SRC programs assemble into ABSOLUTE 
-;  object files, and do not need to be relocated or linked. The FP52 
+;  Both the BASIC.SRC and FP52.SRC programs assemble into ABSOLUTE
+;  object files, and do not need to be relocated or linked. The FP52
 ;  object code and the BASIC object code, when compiled without modification
 ;  of the source listings, create the same object code that is found on
 ;  the MCS BASIC-52 Version 1.1 microcontrollers.
 ;
 ;  The original source code had 7 "include" files that have been incorporated
-;  into this file for ease of assembly. 
+;  into this file for ease of assembly.
 ;  These 7 files are: LOOK52.SRC, BAS52.RST, BAS52.PGM, BAS52.TL, BAS52.OUT,
 ;  BAS52.PWM, and BAS52.CLK.
 ;
@@ -80,7 +80,7 @@
 	;***************************************************************
 	;
 	AJMP	CRST		;START THE PROGRAM
-        db	037h		; ******AA inserted 
+        db	037h		; ******AA inserted
 	;
 	ORG	3H
 	;
@@ -255,7 +255,7 @@ RO1:	LCALL	DELTST		;SEE IF INTGER PRESENT ******AA CALL-->LCALL, INTGER-->DELTST
 	MOV	R4,#R1B0	;SAVE THE NUMBER ******AA ABS-->IMM, R0B0-->R0B1 ?!?
 	JNC	$+6		; ******AA $+4-->$+6 ???
 	;MOV	R4,#01H		;ONE IF NO INTEGER PRESENT ******AA repl. by next two
-	LCALL	ONE		; ******AA 
+	LCALL	ONE		; ******AA
         MOV	R4,A            ; ******AA
 	ACALL	ROMFD		;FIND THE PROGRAM
 	CJNE	R4,#0,RFX	;EXIT IF R4 <> 0

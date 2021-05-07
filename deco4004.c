@@ -7,7 +7,7 @@
 /*                                                                           */
 /*****************************************************************************/
 
-#include "stdinc.h" 
+#include "stdinc.h"
 #include <ctype.h>
 
 #include "dasmdef.h"
@@ -472,7 +472,7 @@ static void Disassemble_4004(LargeWord Address, tDisassInfo *pInfo, Boolean AsDa
     pInfo->NextAddresses[pInfo->NextAddressCount++] = OpAddr;
   if (pOpcode->NextAddresses & 1)
     pInfo->NextAddresses[pInfo->NextAddressCount++] = (Address + pInfo->CodeLen) % 0xfff;
-  
+
   if (nData != pInfo->CodeLen)
     as_snprcatf(pInfo->SrcLine, sizeof(pInfo->SrcLine), " ; ouch %u != %u", nData, pInfo->CodeLen);
 }

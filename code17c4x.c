@@ -200,7 +200,7 @@ static void DecodeCALL_GOTO(Word Code)
   {
     Boolean OK;
     Word AdrWord;
-    tSymbolFlags Flags;    
+    tSymbolFlags Flags;
 
     AdrWord = EvalStrIntExpressionWithFlags(&ArgStr[1], UInt16, &OK, &Flags);
     if (OK && ChkSamePage(ProgCounter(), AdrWord, 13, Flags))

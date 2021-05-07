@@ -101,7 +101,7 @@ static void DecodeJmp(Word Index)
   {
     Word Addr;
     Boolean OK;
- 
+
     Addr = EvalStrIntExpression(&ArgStr[1], AdrInt, &OK);
     if (OK)
     {
@@ -110,7 +110,7 @@ static void DecodeJmp(Word Index)
     }
   }
 }
- 
+
 static void DecodeReg(Word Index)
 {
   if (ChkArgCnt(1, 1))
@@ -118,7 +118,7 @@ static void DecodeReg(Word Index)
     Byte Reg;
     Boolean OK;
 
-    Reg = EvalStrIntExpression(&ArgStr[1], UInt2, &OK);   
+    Reg = EvalStrIntExpression(&ArgStr[1], UInt2, &OK);
     if (OK)
     {
       BAsmCode[CodeLen++] = Index | ((Reg & 3) << 4);;
@@ -157,7 +157,7 @@ static void DecodeRMB(Word Index)
     Byte Reg;
     Boolean OK;
     static Byte Vals[4] = { 0x4c, 0x45, 0x42, 0x43 };
- 
+
     Reg = EvalStrIntExpression(&ArgStr[1], UInt2, &OK);
     if (OK)
     {
@@ -171,29 +171,29 @@ static void DecodeSMB(Word Index)
   UNUSED(Index);
 
   if (ChkArgCnt(1, 1))
-  {   
+  {
     Byte Reg;
     Boolean OK;
     static Byte Vals[4] = { 0x4d, 0x47, 0x46, 0x4b };
- 
+
     Reg = EvalStrIntExpression(&ArgStr[1], UInt2, &OK);
     if (OK)
     {
-      BAsmCode[CodeLen++] = Vals[Reg & 3];                
+      BAsmCode[CodeLen++] = Vals[Reg & 3];
     }
-  }  
-}    
+  }
+}
 
 static void DecodeXAD(Word Index)
 {
   UNUSED(Index);
 
   if (ChkArgCnt(2, 2))
-  {   
+  {
     Byte Reg1, Reg2;
     Boolean OK;
     tSymbolFlags Flags;
- 
+
     Reg1 = EvalStrIntExpressionWithFlags(&ArgStr[1], UInt2, &OK, &Flags);
     if (mFirstPassUnknown(Flags) && (MomCPU < CPUCOP420))
       Reg1 = 3;
@@ -212,18 +212,18 @@ static void DecodeXAD(Word Index)
         }
       }
     }
-  }  
-}    
-     
+  }
+}
+
 static void DecodeLBI(Word Index)
 {
   UNUSED(Index);
 
   if (ChkArgCnt(2, 2))
-  {   
+  {
     Byte Reg, Val;
     Boolean OK;
- 
+
     Reg = EvalStrIntExpression(&ArgStr[1], UInt2, &OK);
     if (OK)
     {
@@ -258,10 +258,10 @@ static void DecodeLDD(Word Index)
 
   if (ChkArgCnt(2, 2)
    && (ChkExactCPUMask(M_CPUCOP420 | M_CPUCOP440 | M_CPUCOP440, CPUCOP410) >= 0))
-  {   
+  {
     Byte Reg, Val;
     Boolean OK;
- 
+
     Reg = EvalStrIntExpression(&ArgStr[1], UInt2, &OK);
     if (OK)
     {
@@ -284,7 +284,7 @@ static void DecodeJSRP(Word Index)
     Word Addr;
     Boolean OK;
     tSymbolFlags Flags;
- 
+
     Addr = EvalStrIntExpressionWithFlags(&ArgStr[1], AdrInt, &OK, &Flags);
     if (mFirstPassUnknown(Flags))
       Addr = 2 << 6;
@@ -295,8 +295,8 @@ static void DecodeJSRP(Word Index)
       else
         BAsmCode[CodeLen++] = 0x80 | (Addr & 0x3f);
     }
-  }   
-}     
+  }
+}
 
 static void DecodeJP(Word Index)
 {
@@ -307,7 +307,7 @@ static void DecodeJP(Word Index)
     Word Addr, CurrPC;
     Boolean OK;
     tSymbolFlags Flags;
- 
+
     Addr = EvalStrIntExpressionWithFlags(&ArgStr[1], AdrInt, &OK, &Flags);
     if (mFirstPassUnknown(Flags))
       Addr = EProgCounter() & (~0x1f);
@@ -336,8 +336,8 @@ static void DecodeJP(Word Index)
           WrError(ErrNum_NotFromThisAddress);
       }
     }
-  }   
-}     
+  }
+}
 
 /*---------------------------------------------------------------------------*/
 /* Code Table Handling */
@@ -407,8 +407,8 @@ static void InitFields(void)
   AddFixed("ADT"  , 0x4a,                 M_CPUCOP420 | M_CPUCOP440 | M_CPUCOP444);
   AddFixed("CASC" , 0x10,                 M_CPUCOP420 | M_CPUCOP440 | M_CPUCOP444);
   AddFixed("CQMA" , 0x332c,               M_CPUCOP420 | M_CPUCOP440 | M_CPUCOP444);
-  AddFixed("SKT"  , 0x41,                 M_CPUCOP420 | M_CPUCOP440 | M_CPUCOP444);  
-  AddFixed("XABR" , 0x12,                 M_CPUCOP420 | M_CPUCOP440 | M_CPUCOP444);  
+  AddFixed("SKT"  , 0x41,                 M_CPUCOP420 | M_CPUCOP440 | M_CPUCOP444);
+  AddFixed("XABR" , 0x12,                 M_CPUCOP420 | M_CPUCOP440 | M_CPUCOP444);
   AddFixed("ININ" , 0x3328,               M_CPUCOP420 | M_CPUCOP440 | M_CPUCOP444);
   AddFixed("INIL" , 0x3329,               M_CPUCOP420 | M_CPUCOP440 | M_CPUCOP444);
   AddFixed("OR"   , 0x331a,                             M_CPUCOP440              );
@@ -424,7 +424,7 @@ static void InitFields(void)
   InstrZ = 0;
   AddImm("STII" , 0x70,   M_CPUCOP410 | M_CPUCOP420 | M_CPUCOP440 | M_CPUCOP444);
   AddImm("LEI"  , 0x3360, M_CPUCOP410 | M_CPUCOP420 | M_CPUCOP440 | M_CPUCOP444);
-  AddImm("OGI"  , 0x3350,               M_CPUCOP420 | M_CPUCOP440 | M_CPUCOP444);                 
+  AddImm("OGI"  , 0x3350,               M_CPUCOP420 | M_CPUCOP440 | M_CPUCOP444);
 
   AddInstTable(InstTable, "JMP"  , 0x60, DecodeJmp);
   AddInstTable(InstTable, "JSR"  , 0x68, DecodeJmp);
@@ -440,7 +440,7 @@ static void InitFields(void)
 
   AddInstTable(InstTable, "XAD"  , 0x00, DecodeXAD);
 
-  AddInstTable(InstTable, "LBI"  , 0x00, DecodeLBI);  
+  AddInstTable(InstTable, "LBI"  , 0x00, DecodeLBI);
 
   AddInstTable(InstTable, "LDD"  , 0x00, DecodeLDD);
 

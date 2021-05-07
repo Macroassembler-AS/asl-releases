@@ -30,7 +30,7 @@ extern void CloseFile(void);
 extern void WriteBytes(void);
 
 extern void RetractWords(Word Cnt);
- 
+
 extern void InsertPadding(unsigned NumBytes, Boolean OnlyReserve);
 
 extern void asmcode_init(void);

@@ -142,7 +142,7 @@ b_psw	bit	psw.6
         xch     a,saddr
 	xch	saddr,a
 
-        xch     a,sfr  
+        xch     a,sfr
 	xch	sfr,a
 
 	xch	saddr,saddr2
@@ -175,14 +175,14 @@ b_psw	bit	psw.6
         xch     a,1[b]
 	xch	1[b],a
 
-        xch     a,&[de] 
+        xch     a,&[de]
 	xch	&[de],a
         xch     a,&[hl]
 	xch	&[hl],a
         xch     a,&[de+]
 	xch	&[de+],a
         xch     a,&[de-]
-	xch	&[de-],a 
+	xch	&[de-],a
         xch     a,&[hl+]
 	xch	&[hl+],a
         xch     a,&[hl-]
@@ -193,7 +193,7 @@ b_psw	bit	psw.6
         xch     a,&[sp+5]
 	xch	&[sp+5],a
         xch     a,&[hl+7]
-	xch	&[hl+7],a 
+	xch	&[hl+7],a
         xch     a,&17[de]
 	xch	&17[de],a
         xch     a,&1234h[a]
@@ -251,7 +251,7 @@ b_psw	bit	psw.6
 	op	sfr,#0aah
 
 	irp	reg1,x,a,c,b,e,d,l,h
-	irp	reg2,x,a,c,b,e,d,l,h 
+	irp	reg2,x,a,c,b,e,d,l,h
 	op	reg1,reg2
 	endm
 	endm
@@ -276,7 +276,7 @@ b_psw	bit	psw.6
 	op	a,10000[hl]
 	op	a,1[b]
 
-	op	a,&[de] 
+	op	a,&[de]
 	op	a,&[hl]
 	op	a,&[de+]
         op	a,&[de-]
@@ -335,7 +335,7 @@ __cnt   set     0
 	irp	op,shrw,shlw
 	op	reg,__cnt
 	endm
-__cnt   set     __cnt+1  
+__cnt   set     __cnt+1
 	endm
 
 	irp	op,ror4,rol4
@@ -373,17 +373,17 @@ __cnt   set     __cnt+1
 	and1	cy,/saddr.2
         and1    cy,b_saddr
 	and1	cy,/b_saddr
-        and1    cy,sfr.3  
+        and1    cy,sfr.3
 	and1	cy,/sfr.3
-        and1    cy,b_sfr  
+        and1    cy,b_sfr
 	and1	cy,/b_sfr
-        and1    cy,a.4    
+        and1    cy,a.4
 	and1	cy,/a.4
-        and1    cy,b_a  
+        and1    cy,b_a
 	and1	cy,/b_a
-        and1    cy,x.5  
+        and1    cy,x.5
 	and1	cy,/x.5
-        and1    cy,b_x    
+        and1    cy,b_x
 	and1	cy,/b_x
         and1    cy,psw.6
 	and1	cy,/psw.6
@@ -394,17 +394,17 @@ __cnt   set     __cnt+1
 	or1	cy,/saddr.2
         or1	cy,b_saddr
 	or1	cy,/b_saddr
-        or1	cy,sfr.3  
+        or1	cy,sfr.3
 	or1	cy,/sfr.3
-        or1	cy,b_sfr  
+        or1	cy,b_sfr
 	or1	cy,/b_sfr
-        or1	cy,a.4    
+        or1	cy,a.4
 	or1	cy,/a.4
-        or1	cy,b_a  
+        or1	cy,b_a
 	or1	cy,/b_a
-        or1	cy,x.5  
+        or1	cy,x.5
 	or1	cy,/x.5
-        or1	cy,b_x    
+        or1	cy,b_x
 	or1	cy,/b_x
         or1	cy,psw.6
 	or1	cy,/psw.6
@@ -413,24 +413,24 @@ __cnt   set     __cnt+1
 
         xor1	cy,saddr.2
         xor1	cy,b_saddr
-        xor1	cy,sfr.3  
-        xor1	cy,b_sfr  
-        xor1	cy,a.4    
-        xor1	cy,b_a  
-        xor1	cy,x.5  
-        xor1	cy,b_x    
+        xor1	cy,sfr.3
+        xor1	cy,b_sfr
+        xor1	cy,a.4
+        xor1	cy,b_a
+        xor1	cy,x.5
+        xor1	cy,b_x
         xor1	cy,psw.6
         xor1	cy,b_psw
 
 	irp	op,set1,clr1,not1
         op	saddr.2
         op	b_saddr
-        op	sfr.3  
-        op	b_sfr  
-        op	a.4    
-        op	b_a  
-        op	x.5  
-        op	b_x    
+        op	sfr.3
+        op	b_sfr
+        op	a.4
+        op	b_a
+        op	x.5
+        op	b_x
         op	psw.6
         op	b_psw
 	op	cy

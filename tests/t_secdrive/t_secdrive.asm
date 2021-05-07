@@ -211,7 +211,7 @@ GoOn:
 ;* Treiberkopf                                                                *
 ;******************************************************************************
 
- 
+
               assume  cs:code,ds:nothing,ss:nothing,es:nothing
 
                 org     0
@@ -276,7 +276,7 @@ DrTab_BPBs      dd      2*MaxDrives dup (?)
 DrCnt           db      0               ; Anzahl gefundener Laufwerke
 DrOfs           db      0               ; erster freier Laufwerksbuchstabe
 
-DrPar		struct			; Plattenparametersatz: 
+DrPar		struct			; Plattenparametersatz:
 Cyls		 dw	?		;  Zylinderzahl
 Heads		 db	?		;  Kopfzahl
 RedWr		 dw	?		;  Startzylinder reduzierter Schreibstrom
@@ -526,7 +526,7 @@ OK:             ret
 ;*              Out :   AL = phys. Laufwerk                                   *
 ;*                      AH = Kopf                                             *
 ;*                      BX = Zylinder                                         *
-;*                      CH = Sektor                                           * 
+;*                      CH = Sektor                                           *
 ;******************************************************************************
 
                 proc    TranslateParams
@@ -870,7 +870,7 @@ Write_Verify:   mov     al,es:[bx+Rh_Unit] ; Laufwerksnummer prfen
                 call    DoWrite         ; schreiben
 
                 ljc     StateError      ; bei Fehlern vorher abbrechen
-                
+
                 les     bx,[Rh_Ptr]     ; Parameter nochmal fr Verify laden
                 mov     al,es:[bx+Rh_Unit]
                 mov     ch,al
@@ -1000,7 +1000,7 @@ Init_Menu:      mov     al,[MomDrive]
 ; Schritt 2b: Masterpartitionssektor lesen
 
 ReadMaster:     mov     al,[MomDrive]
-		mov	ah,0		; Kopf... 
+		mov	ah,0		; Kopf...
 		sub	bx,bx		; ...Zylinder...
 		mov	cx,0101h	; ...ein Sektor ab Sektor 1
                 mov     di,ds
@@ -1177,7 +1177,7 @@ ScanParts_LAcc: inc     bx                      ; einen Eintrag weiter
                 cmp     byte ptr [bx],0         ; Tabellenende ?
 		je	ScanParts_Next		; ja-->war nix
 		cmp	al,[bx]			; gefunden ?
-		jne	ScanParts_LAcc		; 
+		jne	ScanParts_LAcc		;
 
 		mov	bx,[bp+si+ParTab_LinSec] ; linearen Startsektor ausrechnen
 		mov	cx,[bp+si+ParTab_LinSec+2]

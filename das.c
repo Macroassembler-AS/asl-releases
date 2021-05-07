@@ -414,7 +414,7 @@ static CMDResult CMD_EntryAddress(Boolean Negate, const char *pArg)
 
   if (pName && *pName)
     AddInvSymbol(pName, Address);
-  AddEntryAddress(Address);  
+  AddEntryAddress(Address);
 
   return CMDArg;
 }

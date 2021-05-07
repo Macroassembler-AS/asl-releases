@@ -21,7 +21,7 @@
 #include "asmcode.h"
 #include "asmitree.h"
 #include "headids.h"
-#include "codevars.h"            
+#include "codevars.h"
 #include "errmsg.h"
 
 #include "code7720.h"
@@ -90,7 +90,7 @@ static Boolean ChkOpPresent(OpComps Comp)
 }
 
 /*---------------------------------------------------------------------------*/
-/* Dekoder */                               
+/* Dekoder */
 
 static void DecodeJmp(Word Code)
 {
@@ -210,7 +210,7 @@ static void DecodeALU2(Word Code)
 {
   LongWord Acc = 0xff, Src;
   char ch;
-  
+
   if (!ChkOpPresent(ALUField))
     return;
 
@@ -235,7 +235,7 @@ static void DecodeALU1(Word Code)
 {
   LongWord Acc = 0xff;
   char ch;
-  
+
   if (!ChkOpPresent(ALUField))
     return;
 
@@ -428,26 +428,26 @@ static void InitFields(void)
   AddInstTable(OpTable, "DPINC", 1, DecodeDPL);
   AddInstTable(OpTable, "DPDEC", 2, DecodeDPL);
   AddInstTable(OpTable, "DPCLR", 3, DecodeDPL);
-  AddInstTable(OpTable, "M0", 0, DecodeDPH);   
-  AddInstTable(OpTable, "M1", 1, DecodeDPH);   
-  AddInstTable(OpTable, "M2", 2, DecodeDPH);   
-  AddInstTable(OpTable, "M3", 3, DecodeDPH);   
-  AddInstTable(OpTable, "M4", 4, DecodeDPH);   
-  AddInstTable(OpTable, "M5", 5, DecodeDPH);   
-  AddInstTable(OpTable, "M6", 6, DecodeDPH);   
-  AddInstTable(OpTable, "M7", 7, DecodeDPH);   
+  AddInstTable(OpTable, "M0", 0, DecodeDPH);
+  AddInstTable(OpTable, "M1", 1, DecodeDPH);
+  AddInstTable(OpTable, "M2", 2, DecodeDPH);
+  AddInstTable(OpTable, "M3", 3, DecodeDPH);
+  AddInstTable(OpTable, "M4", 4, DecodeDPH);
+  AddInstTable(OpTable, "M5", 5, DecodeDPH);
+  AddInstTable(OpTable, "M6", 6, DecodeDPH);
+  AddInstTable(OpTable, "M7", 7, DecodeDPH);
   if (MomCPU >= CPU7725)
   {
-    AddInstTable(OpTable, "M8", 8, DecodeDPH);   
-    AddInstTable(OpTable, "M9", 9, DecodeDPH);   
-    AddInstTable(OpTable, "MA", 10, DecodeDPH);   
-    AddInstTable(OpTable, "MB", 11, DecodeDPH);   
-    AddInstTable(OpTable, "MC", 12, DecodeDPH);   
-    AddInstTable(OpTable, "MD", 13, DecodeDPH);   
-    AddInstTable(OpTable, "ME", 14, DecodeDPH);   
-    AddInstTable(OpTable, "MF", 15, DecodeDPH);   
+    AddInstTable(OpTable, "M8", 8, DecodeDPH);
+    AddInstTable(OpTable, "M9", 9, DecodeDPH);
+    AddInstTable(OpTable, "MA", 10, DecodeDPH);
+    AddInstTable(OpTable, "MB", 11, DecodeDPH);
+    AddInstTable(OpTable, "MC", 12, DecodeDPH);
+    AddInstTable(OpTable, "MD", 13, DecodeDPH);
+    AddInstTable(OpTable, "ME", 14, DecodeDPH);
+    AddInstTable(OpTable, "MF", 15, DecodeDPH);
   }
-  AddInstTable(OpTable, "RPNOP", 0, DecodeRP);   
+  AddInstTable(OpTable, "RPNOP", 0, DecodeRP);
   AddInstTable(OpTable, "RPDEC", 1, DecodeRP);
   AddInstTable(OpTable, "RET", 1, DecodeRET);
 

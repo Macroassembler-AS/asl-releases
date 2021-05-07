@@ -448,11 +448,11 @@ static void InitFields(void)
   AddImm("ORI"  , 0x00f9, CPU1802);
   AddImm("XRI"  , 0x00fb, CPU1802);
   AddImm("ANI"  , 0x00fa, CPU1802);
-  AddImm("ADI"  , 0x00fc, CPU1802);  
+  AddImm("ADI"  , 0x00fc, CPU1802);
   AddImm("ADCI" , 0x007c, CPU1802);
   AddImm("SDI"  , 0x00fd, CPU1802);
-  AddImm("SDBI" , 0x007d, CPU1802);  
-  AddImm("SMI"  , 0x00ff, CPU1802);  
+  AddImm("SDBI" , 0x007d, CPU1802);
+  AddImm("SMI"  , 0x00ff, CPU1802);
   AddImm("SMBI" , 0x007f, CPU1802);
   AddImm("DADI" , 0x68fc, CPU1804A);
   AddImm("DACI" , 0x687c, CPU1804A);

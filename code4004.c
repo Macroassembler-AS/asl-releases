@@ -369,7 +369,7 @@ static void DecodeFIM(Word Index)
 
 static void DecodeDATA_4004(Word Code)
 {
-  UNUSED(Code); 
+  UNUSED(Code);
 
   DecodeDATA(Int8, Int4);
 }
@@ -475,7 +475,7 @@ static void DeinitFields(void)
 static void InternSymbol_4004(char *pArg, TempResult *pResult)
 {
   Byte RegValue;
-  
+
   if (DecodeRegCore(pArg, &RegValue, strlen(pArg)))
   {
     pResult->Typ = TempReg;

@@ -117,7 +117,7 @@ static Boolean DecodeXY(tStrComp *pArg, Word *pX, Word *pY, Boolean Signed)
   if (*pEnd != ')')
   {
     WrError(ErrNum_BrackErr);
-    return False; 
+    return False;
   }
   *pEnd = '\0';
   Tot.Pos.Len--;
@@ -126,7 +126,7 @@ static Boolean DecodeXY(tStrComp *pArg, Word *pX, Word *pY, Boolean Signed)
   if (!pPos)
   {
     WrError(ErrNum_UseLessAttr);
-    return False; 
+    return False;
   }
   StrCompSplitRef(&Left, &Right, &Tot, pPos);
 
@@ -252,7 +252,7 @@ static void DeinitFields(void)
 
 static Boolean IsDef_Vector(void)
 {
-  return FALSE; 
+  return FALSE;
 }
 
 static void SwitchFrom_Vector(void)

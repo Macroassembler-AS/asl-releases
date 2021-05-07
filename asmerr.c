@@ -39,7 +39,7 @@ static Boolean InExpect = False;
 static void ClearExpectErrors(void)
 {
   tExpectError *pOld;
-  
+
   while (pExpectErrors)
   {
     pOld = pExpectErrors;
@@ -57,7 +57,7 @@ static void AddExpectError(tExpectError *pExpectError)
 static tExpectError *FindAndTakeExpectError(tErrorNum Num)
 {
   tExpectError *pRun, *pPrev;
-  
+
   for (pRun = pExpectErrors, pPrev = NULL; pRun; pPrev = pRun, pRun = pRun->pNext)
     if (Num == pRun->Num)
     {
@@ -164,7 +164,7 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
 {
   int msgno = -1;
 
-  *Buf = '\0';  
+  *Buf = '\0';
   switch (Num)
   {
     case ErrNum_UselessDisp:
@@ -669,7 +669,7 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
 /*!------------------------------------------------------------------------
  * \fn     WrErrorString(const char *pMessage, const char *pAdd, Boolean Warning, Boolean Fatal,
                          const char *pExtendError, const struct sLineComp *pLineComp)
- * \brief  write error message, combined with string component of current src line 
+ * \brief  write error message, combined with string component of current src line
  * \param  pMessage textual error message
  * \param  Warning error is warning?
  * \param  Fatal error is fatal?
@@ -778,7 +778,7 @@ void WrErrorString(const char *pMessage, const char *pAdd, Boolean Warning, Bool
 
 /*!------------------------------------------------------------------------
  * \fn     WrXErrorPos(tErrorNum Num, const char *pExtendError, const struct sLineComp *pLineComp)
- * \brief  write number-coded error message, combined with extended explamation and string component of current src line 
+ * \brief  write number-coded error message, combined with extended explamation and string component of current src line
  * \param  Num error number
  * \param  pExtendError extended error explanation
  * \param  pLineComp associated string component
@@ -819,7 +819,7 @@ void WrXErrorPos(tErrorNum Num, const char *pExtendError, const struct sLineComp
 
 /*!------------------------------------------------------------------------
  * \fn     WrStrErrorPos(tErrorNum Num, const const struct sLineComp *pLineComp)
- * \brief  write number-coded error message, combined with string component of current src line 
+ * \brief  write number-coded error message, combined with string component of current src line
  * \param  Num error number
  * \param  pStrComp associated string component
  * ------------------------------------------------------------------------ */
@@ -915,7 +915,7 @@ void ChkStrIO(tErrorNum ErrNo, const struct sStrComp *pComp)
 void CodeEXPECT(Word Code)
 {
   UNUSED(Code);
-  
+
   if (!ChkArgCnt(1, ArgCntMax));
   else if (InExpect) WrStrErrorPos(ErrNum_NoNestExpect, &OpPart);
   else
@@ -923,7 +923,7 @@ void CodeEXPECT(Word Code)
     int z;
     Boolean OK;
     tErrorNum Num;
-    
+
     for (z = 1; z <= ArgCnt; z++)
     {
       Num = (tErrorNum)EvalStrIntExpression(&ArgStr[z], UInt16, &OK);
@@ -946,14 +946,14 @@ void CodeEXPECT(Word Code)
 void CodeENDEXPECT(Word Code)
 {
   UNUSED(Code);
-  
+
   if (!ChkArgCnt(0, 0));
   else if (!InExpect) WrStrErrorPos(ErrNum_MissingEXPECT, &OpPart);
   else
   {
     tExpectError *pCurr;
     String h;
-    
+
     while (pExpectErrors)
     {
       pCurr = pExpectErrors;

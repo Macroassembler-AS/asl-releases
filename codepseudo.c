@@ -42,7 +42,7 @@
  *              enclosed in 'extra' parentheses.
  * Result:      TRUE if indirect
  *****************************************************************************/
-   
+
 Boolean IsIndirectGen(const char *Asc, const char *pBeginEnd)
 {
   int z,Level,l;
@@ -136,7 +136,7 @@ int FindDispBaseSplitWithQualifier(const char *pArg, int *pArgLen, tDispBaseSpli
  * Purpose:     EQU for different segment
  * Result:      -
  *****************************************************************************/
-   
+
 void CodeEquate(ShortInt DestSeg, LargeInt Min, LargeInt Max)
 {
   Boolean OK;
@@ -224,6 +224,6 @@ Boolean QualifyQuote_SingleQuoteConstant(const char *pStart, const char *pQuoteP
   /* Other token or string continues -> cannot be such a constant, otherwise we
      have a match and the ' does NOT lead in a character string: */
 
-  return isalnum(*pRun);
+  return as_isalnum(*pRun);
 }
 

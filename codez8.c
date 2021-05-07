@@ -145,7 +145,7 @@ static const tCPUProps *pCurrCPUProps;
 static LongInt RPVal, RP0Val, RP1Val;
 static IntType RegSpaceType;
 
-/*--------------------------------------------------------------------------*/ 
+/*--------------------------------------------------------------------------*/
 /* address expression decoding routines */
 
 /*!------------------------------------------------------------------------
@@ -182,7 +182,7 @@ static Boolean IsWReg(const tStrComp *pArg, Byte *pResult, Boolean MustBeReg)
   tRegDescr RegDescr;
   tEvalResult EvalResult;
   tRegEvalResult RegEvalResult;
-  
+
   if (IsWRegCore(pArg->Str, pResult))
     return True;
 
@@ -226,7 +226,7 @@ static Boolean IsWRReg(const tStrComp *pArg, Byte *pResult, Boolean MustBeReg)
   tRegDescr RegDescr;
   tEvalResult EvalResult;
   tRegEvalResult RegEvalResult;
-  
+
   if (IsWRRegCore(pArg->Str, pResult))
     return True;
 
@@ -250,7 +250,7 @@ static tRegEvalResult IsWRegOrWRReg(const tStrComp *pArg, Byte *pResult, tSymbol
 {
   tEvalResult EvalResult;
   tRegEvalResult RegEvalResult;
-  
+
   if (IsWRegCore(pArg->Str, pResult))
   {
     EvalResult.DataSize = eSymbolSize8Bit;
@@ -365,7 +365,7 @@ static Boolean ChkAdr(Word Mask, const tStrComp *pArg)
      return False;
    }
    return True;
-}     
+}
 
 /*!------------------------------------------------------------------------
  * \fn     IsWRegAddress(Word Address, Byte *pWorkReg)
@@ -489,7 +489,7 @@ static ShortInt IsWRegWithRP(const tStrComp *pComp, Byte *pResult, Word Mask16Mo
   }
 
   if (Mask8Modes && IsWRegAddress(Address, pResult))
-    return eSymbolSize8Bit;    
+    return eSymbolSize8Bit;
 
   WrStrErrorPos(ErrNum_InvReg, pComp);
   return eSymbolSizeUnknown;
@@ -645,7 +645,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, Word Mask)
       return False;
     }
     StrCompSplitRef(&Left, &Right, &Right, p);
-    
+
     switch (IsWRegWithRP(&Right, &AdrVal, Mask & (MModIndRR | MModIndRR16), Mask & MModInd))
     {
       case eSymbolSize8Bit:
@@ -959,7 +959,7 @@ static Boolean DecodeWRBitArg(int StartArg, int EndArg, Byte *pResult)
     return False;
   }
   *pResult = ((Address & 15) << 3) | BitPos;
-  return True; 
+  return True;
 }
 
 /*!------------------------------------------------------------------------
@@ -1215,10 +1215,10 @@ static void DecodeLD(Word Index)
         DecodeAdr(&ArgStr[2], MModWReg | MModReg | MModIWReg | MModIReg | MModImm | MModInd);
         switch (AdrType)
         {
-          case ModWReg: 
+          case ModWReg:
             if (pCurrCPUProps->CoreFlags & eCoreZ8Encore)
             {
-              BAsmCode[0] = 0xe4;   
+              BAsmCode[0] = 0xe4;
               BAsmCode[1] = AdrVal + pCurrCPUProps->WorkOfs;
               BAsmCode[2] = Save + pCurrCPUProps->WorkOfs;
               CodeLen = 3;
@@ -1230,7 +1230,7 @@ static void DecodeLD(Word Index)
               CodeLen = 2;
             }
             break;
-          case ModReg: 
+          case ModReg:
             if (pCurrCPUProps->CoreFlags & eCoreZ8Encore)
             {
               BAsmCode[0] = 0xe4;
@@ -1662,7 +1662,7 @@ static void DecodeJP(Word Index)
   if (ChkArgCnt(1, 2)
    && ChkCoreFlags(eCoreZ8NMOS | eCoreZ8CMOS | eCoreSuper8 | eCoreZ8Encore))
   {
-    z = (ArgCnt == 1) ? TrueCond : DecodeCond(&ArgStr[1]);                 
+    z = (ArgCnt == 1) ? TrueCond : DecodeCond(&ArgStr[1]);
     if (z < CondCnt)
     {
       DecodeAdr(&ArgStr[ArgCnt], MModIWRReg | MModIRReg | MModDA);
@@ -1736,12 +1736,12 @@ static void DecodeStackExt(Word Index)
 static void DecodeStackDI(Word Code)
 {
   int MemIdx = ((Code >> 4) & 15) - 7;
-  
+
   if (ChkArgCnt(2, 2)
      && ChkCoreFlags(eCoreSuper8))
   {
     Byte Reg;
-    
+
     DecodeAdr(&ArgStr[3 - MemIdx], MModReg | MModWReg);
     Reg = (AdrType == ModWReg) ? AdrVal + pCurrCPUProps->WorkOfs : AdrVal;
     if (AdrType != ModNone)
@@ -1763,7 +1763,7 @@ static void DecodeStackDI(Word Code)
 static void DecodeTRAP(Word Index)
 {
   UNUSED(Index);
- 
+
   if (ChkArgCnt(1, 1)
    && ChkCoreFlags(eCoreZ8Encore)
    && DecodeAdr(&ArgStr[1], MModImm))
@@ -1777,7 +1777,7 @@ static void DecodeTRAP(Word Index)
 static void DecodeBSWAP(Word Index)
 {
   UNUSED(Index);
- 
+
   if (ChkArgCnt(1, 1)
    && ChkCoreFlags(eCoreZ8Encore)
    && DecodeAdr(&ArgStr[1], MModReg))
@@ -1791,7 +1791,7 @@ static void DecodeBSWAP(Word Index)
 static void DecodeMULT(Word Index)
 {
   UNUSED(Index);
- 
+
   if (ChkArgCnt(1, 1)
    && ChkCoreFlags(eCoreZ8Encore))
   {
@@ -1865,7 +1865,7 @@ static void DecodeLDX(Word Index)
         {
           case ModXReg:
             Save += LongWorkOfs;
-            BAsmCode[0] = 0xe8; 
+            BAsmCode[0] = 0xe8;
             BAsmCode[1] = AdrWVal >> 4;
             BAsmCode[2] = ((AdrWVal & 15) << 4) | (Hi(Save) & 15);
             BAsmCode[3] = Lo(Save);
@@ -1878,7 +1878,7 @@ static void DecodeLDX(Word Index)
             CodeLen = 3;
             break;
           case ModImm:
-            BAsmCode[0] = 0xe9; 
+            BAsmCode[0] = 0xe9;
             BAsmCode[1] = AdrVal;
             BAsmCode[2] = Hi(LongWorkOfs | Save);
             BAsmCode[3] = Lo(LongWorkOfs | Save);
@@ -1920,13 +1920,13 @@ static void DecodeLDX(Word Index)
           case ModReg:
             BAsmCode[0] = 0x96;
             BAsmCode[1] = AdrVal;
-            BAsmCode[2] = Save;  
+            BAsmCode[2] = Save;
             CodeLen = 3;
             break;
           case ModWeird:
             BAsmCode[0] = 0x87;
             BAsmCode[1] = AdrVal;
-            BAsmCode[2] = Save;  
+            BAsmCode[2] = Save;
             CodeLen = 3;
             break;
         }
@@ -1939,7 +1939,7 @@ static void DecodeLDX(Word Index)
           case ModReg:
             BAsmCode[0] = 0x96;
             BAsmCode[1] = AdrVal;
-            BAsmCode[2] = Save;  
+            BAsmCode[2] = Save;
             CodeLen = 3;
             break;
         }
@@ -1963,26 +1963,26 @@ static void DecodeLDX(Word Index)
         switch (AdrType)
         {
           case ModWReg:
-            BAsmCode[0] = 0x94; 
+            BAsmCode[0] = 0x94;
             BAsmCode[1] = (AdrVal << 4) | (Hi(Save) & 15);
             BAsmCode[2] = Lo(Save);
             CodeLen = 3;
             break;
           case ModIWReg:
-            BAsmCode[0] = 0x95; 
+            BAsmCode[0] = 0x95;
             BAsmCode[1] = (AdrVal << 4) | (Hi(Save) & 15);
             BAsmCode[2] = Lo(Save);
             CodeLen = 3;
             break;
           case ModXReg:
-            BAsmCode[0] = 0xe8; 
+            BAsmCode[0] = 0xe8;
             BAsmCode[1] = AdrWVal >> 4;
             BAsmCode[2] = ((AdrWVal & 15) << 4) | (Hi(Save) & 15);
             BAsmCode[3] = Lo(Save);
             CodeLen = 4;
             break;
           case ModImm:
-            BAsmCode[0] = 0xe9; 
+            BAsmCode[0] = 0xe9;
             BAsmCode[1] = AdrVal;
             BAsmCode[2] = (Hi(Save) & 15);
             BAsmCode[3] = Lo(Save);
@@ -2043,7 +2043,7 @@ static void DecodeLDW(Word Code)
           break;
       }
     }
-  }  
+  }
 }
 
 static void DecodeLDWX(Word Index)
@@ -2455,7 +2455,7 @@ static void AddFixed(const char *NName, Word Code, tCoreFlags CoreFlags)
 
 static void AddALU2(const char *NName, Word Code, tCoreFlags CoreFlags)
 {
-  if (InstrZ >= ALU2OrderCnt) 
+  if (InstrZ >= ALU2OrderCnt)
     exit(255);
   ALU2Orders[InstrZ].Code = Code;
   ALU2Orders[InstrZ].CoreFlags = CoreFlags;
@@ -2464,7 +2464,7 @@ static void AddALU2(const char *NName, Word Code, tCoreFlags CoreFlags)
 
 static void AddALUX(const char *NName, Word Code, tCoreFlags CoreFlags)
 {
-  if (InstrZ >= ALUXOrderCnt) 
+  if (InstrZ >= ALUXOrderCnt)
     exit(255);
   ALUXOrders[InstrZ].Code = Code;
   ALUXOrders[InstrZ].CoreFlags = CoreFlags;
@@ -2488,7 +2488,7 @@ static void AddCondition(const char *NName, Byte NCode)
   Conditions[InstrZ].Name = NName;
   Conditions[InstrZ++].Code = NCode;
 }
-   
+
 static void InitFields(void)
 {
   InstTable = CreateInstTable(201);
@@ -2505,7 +2505,7 @@ static void InitFields(void)
   AddFixed("RET"  , 0xaf   , eCoreZ8NMOS | eCoreZ8CMOS | eCoreSuper8 | eCoreZ8Encore);
   AddFixed("SCF"  , 0xdf   , eCoreZ8NMOS | eCoreZ8CMOS | eCoreSuper8 | eCoreZ8Encore);
   AddFixed("STOP" , 0x6f   ,               eCoreZ8CMOS               | eCoreZ8Encore);
-  AddFixed("ATM"  , 0x2f   , eCoreZ8NMOS | eCoreZ8CMOS               | eCoreZ8Encore);  
+  AddFixed("ATM"  , 0x2f   , eCoreZ8NMOS | eCoreZ8CMOS               | eCoreZ8Encore);
   AddFixed("BRK"  , 0x00   ,                                           eCoreZ8Encore);
   AddFixed("WDH"  , 0x4f   , eCoreZ8NMOS | eCoreZ8CMOS                              );
   AddFixed("WDT"  , 0x5f   , eCoreZ8NMOS | eCoreZ8CMOS               | eCoreZ8Encore);
@@ -2606,7 +2606,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "RDR", 0x01d5, DecodeSRP);
   AddInstTable(InstTable, "DJNZ", 0, DecodeDJNZ);
   AddInstTable(InstTable, "LEA", 0, DecodeLEA);
-  
+
   AddInstTable(InstTable, "POPX" , 0xd8, DecodeStackExt);
   AddInstTable(InstTable, "PUSHX", 0xc8, DecodeStackExt);
   AddInstTable(InstTable, "POPUD", 0x92, DecodeStackDI);
@@ -2779,7 +2779,7 @@ static void SwitchTo_Z8(void *pUser)
   else
   {
     RegSpaceType = UInt8;
-    SegLimits[SegData] = 0xff; 
+    SegLimits[SegData] = 0xff;
   }
 
   pASSUMERecs = ASSUMEeZ8s;

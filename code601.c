@@ -26,7 +26,7 @@
 
 #include "code601.h"
 
-typedef struct 
+typedef struct
 {
   const char *Name;
   LongWord Code;
@@ -78,8 +78,6 @@ static BaseOrder *FRegDispOrders;
 static BaseOrder *Reg2ImmOrders;
 static BaseOrder *Imm16Orders;
 static BaseOrder *Imm16SwapOrders;
-
-static Boolean BigEnd;
 
 static CPUVar CPU403, CPU403C, CPU505, CPU601, CPU821, CPU6000;
 
@@ -210,7 +208,7 @@ static void PutCode(LongWord Code)
 {
 #if 0
   memcpy(BAsmCode, &Code, 4);
-  if (!BigEndian)
+  if (!TargetBigEndian)
     DSwap((void *)BAsmCode, 4);
 #endif
   DAsmCode[0] = Code;
@@ -872,7 +870,7 @@ static void DecodeMTFB_MTTB(Word Code)
     if      ((Memo("MFTB")) || (Memo("MFTBL"))) TmpComp.Str = (char*)"268";
     else if (Memo("MFTBU")) TmpComp.Str = (char*)"269";
     else if ((Memo("MTTB")) || (Memo("MTTBL"))) TmpComp.Str = (char*)"284";
-    else if (Memo("MTTBU")) TmpComp.Str = (char*)"285"; 
+    else if (Memo("MTTBU")) TmpComp.Str = (char*)"285";
     pArg2 = &TmpComp;
     /* already swapped */
   }
@@ -1348,7 +1346,7 @@ static void DecodeTLBRE_TLBWE(Word Code)
               (Src3 << 11) + (946 << 1) + (LCode << 1));
       CodeLen = 4;
     }
-  } 
+  }
 }
 
 /*-------------------------------------------------------------------------*/
@@ -1581,7 +1579,7 @@ static void AddReg3Swap(const char *NName1, const char *NName2, LongWord NCode, 
   AddSReg3Swap(pSrcName, NCode, NMask);
   if (WithFL)
   {
-    as_snprintf(NName, sizeof(NName), "%s.", pSrcName); 
+    as_snprintf(NName, sizeof(NName), "%s.", pSrcName);
     AddSReg3Swap(NName, NCode | 0x001, NMask);
   }
 }
@@ -2053,7 +2051,7 @@ static void MakeCode_601(void)
 
   /* Pseudoanweisungen */
 
-  if (DecodeIntelPseudo(BigEnd))
+  if (DecodeIntelPseudo(TargetBigEndian))
     return;
 
   if (!LookupInstTable(InstTable, OpPart.Str))
@@ -2067,7 +2065,7 @@ static Boolean IsDef_601(void)
 
 static void InitPass_601(void)
 {
-  SetFlag(&BigEnd, BigEndianName, False);
+  SetFlag(&TargetBigEndian, BigEndianName, False);
 }
 
 /*!------------------------------------------------------------------------
@@ -2140,7 +2138,7 @@ static void SwitchTo_601(void)
   InternSymbol = InternSymbol_601;
   DissectReg = DissectReg_601;
   AddONOFF(SupAllowedCmdName, &SupAllowed, SupAllowedSymName, False);
-  AddONOFF("BIGENDIAN", &BigEnd,     BigEndianName,  False);
+  AddONOFF("BIGENDIAN", &TargetBigEndian,   BigEndianName,  False);
 
   InitFields();
 }

@@ -11,7 +11,7 @@
 /*****************************************************************************/
 
 extern Boolean BalanceTrees;
-           
+
 typedef struct _TTree
 {
   struct _TTree *Left, *Right;
@@ -35,5 +35,5 @@ extern void DumpTree(PTree Tree);
 extern PTree SearchTree(PTree Tree, char *Name, LongInt Attribute);
 
 extern Boolean EnterTree(PTree *PDest, PTree Neu, TTreeAdder Adder, void *pData);
-           
+
 #endif /* _TREES_H */

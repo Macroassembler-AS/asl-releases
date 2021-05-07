@@ -310,7 +310,7 @@ void WriteBytes(void)
   if (CodeLen == 0)
     return;
   ErgLen = CodeLen * Granularity();
-  if ((TurnWords != 0) != (BigEndian != 0))
+  if ((TurnWords != 0) != (HostBigEndian != 0))
     DreheCodes();
   if (((LongInt)LenSoFar) + ((LongInt)ErgLen) > 0xffff)
     NewRecord(PCs[ActPC]);
@@ -331,7 +331,7 @@ void WriteBytes(void)
       ChkIO(ErrNum_FileWriteError);
   }
   LenSoFar += ErgLen;
-  if ((TurnWords != 0) != (BigEndian != 0))
+  if ((TurnWords != 0) != (HostBigEndian != 0))
     DreheCodes();
 }
 

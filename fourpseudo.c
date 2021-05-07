@@ -92,7 +92,7 @@ void DecodeDATA(IntType CodeIntType, IntType DataIntType)
 
             /* word width 24..31 bits: pack three characters into one dword */
 
-            if (ValMask >= 0xfffffful) 
+            if (ValMask >= 0xfffffful)
             {
               if (!bpos)
                 DAsmCode[CodeLen++] = TransCh;
@@ -117,7 +117,7 @@ void DecodeDATA(IntType CodeIntType, IntType DataIntType)
             }
 
             /* word width 16 bits: pack two characters into one word */
- 
+
             else if (ValMask == 0xfffful)
             {
               if (!bpos)

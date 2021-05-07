@@ -6,9 +6,9 @@
 /*                                                                           */
 /* AS-Portierung                                                             */
 /*                                                                           */
-/* Codegenerator TMS3201x-Familie                                            */                     
+/* Codegenerator TMS3201x-Familie                                            */
 /*                                                                           */
-/* Historie: 28.11.1996 Grundsteinlegung                                     */                         
+/* Historie: 28.11.1996 Grundsteinlegung                                     */
 /*                                                                           */
 /*****************************************************************************/
 

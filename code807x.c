@@ -73,7 +73,7 @@ static Boolean SetOpSize(int NewSize)
     Result = False;
   }
 
-  return Result;  
+  return Result;
 }
 
 static Boolean GetReg16(char *Asc, Byte *AdrPart)
@@ -145,7 +145,7 @@ static void DecodeAdr(int Index, Byte Mask, LongInt PCDelta)
 
   if (GetReg16(ArgStr[Index].Str, &AdrPart))
   {
-    if (SetOpSize(1))  
+    if (SetOpSize(1))
       AdrMode = ModReg;
     goto AdrFound;
   }
@@ -361,7 +361,7 @@ static void DecodeST(Word Index)
   UNUSED(Index);
 
   if (ChkArgCnt(1, 3))
-  {   
+  {
     DecodeAdr(1, MModAcc, 0);
     switch (AdrMode)
     {
@@ -466,7 +466,7 @@ static void DecodeSSM(Word Code)
 static void DecodeADDSUB(Word Index)
 {
   if (ChkArgCnt(1, 3))
-  {   
+  {
     DecodeAdr(1, MModAcc, 0);
     switch (AdrMode)
     {
@@ -494,7 +494,7 @@ static void DecodeADDSUB(Word Index)
 static void DecodeMulDiv(Word Index)
 {
   if (ChkArgCnt(2, 2))
-  {   
+  {
     OpSize = 1;
     DecodeAdr(1, MModAcc, 0);
     if (AdrMode == ModAcc)
@@ -744,7 +744,7 @@ static void DeinitFields(void)
 
 /*---------------------------------------------------------------------------*/
 
-static void MakeCode_807x(void) 
+static void MakeCode_807x(void)
 {
    CodeLen=0; DontPrint=False; OpSize = -1;
 

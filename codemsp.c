@@ -523,13 +523,24 @@ static void PutByte(Word Value)
   CodeLen++;
 }
 
+static void AppendAdrVals(const tAdrParts *pParts)
+{
+  Word i;
+
+  for (i = 0; i < pParts->Cnt; i++)
+  {
+    WAsmCode[CodeLen >> 1] = pParts->Val;
+    CodeLen += 2;
+  }
+}
+
 static void ConstructTwoOp(Word Code, const tAdrParts *pSrcParts, const tAdrParts *pDestParts)
 {
   WAsmCode[CodeLen >> 1] = Code | (pSrcParts->Part << 8) | (pDestParts->Mode << 7)
                          | GetBW() | (pSrcParts->Mode << 4) | pDestParts->Part;
   CodeLen += 2;
-  memcpy(WAsmCode + (CodeLen >> 1), &pSrcParts->Val, pSrcParts->Cnt << 1); CodeLen += pSrcParts->Cnt << 1;
-  memcpy(WAsmCode + (CodeLen >> 1), &pDestParts->Val, pDestParts->Cnt << 1); CodeLen += pDestParts->Cnt << 1;
+  AppendAdrVals(pSrcParts);
+  AppendAdrVals(pDestParts);
 }
 
 static void ConstructTwoOpX(Word Code, const tAdrParts *pSrcParts, const tAdrParts *pDestParts)
@@ -843,9 +854,8 @@ static void DecodeOneOp(Word Index)
     if (DecodeAdr(&ArgStr[1], eExtModeNo, 15, True, &AdrParts))
     {
       if (Odd(EProgCounter())) WrError(ErrNum_AddrNotAligned);
-      WAsmCode[0] = pOrder->Code | GetBW() | (AdrParts.Mode << 4) | AdrParts.Part;
-      memcpy(WAsmCode + 1, &AdrParts.Val, AdrParts.Cnt << 1);
-      CodeLen = (1 + AdrParts.Cnt) << 1;
+      WAsmCode[0] = pOrder->Code | GetBW() | (AdrParts.Mode << 4) | AdrParts.Part; CodeLen += 2;
+      AppendAdrVals(&AdrParts);
     }
   }
 }
@@ -868,23 +878,23 @@ static void DecodeOneOpX(Word Index)
       Word ActBW = pOrder->MayByte ? GetBW() : 0;
 
       if (Odd(EProgCounter())) WrError(ErrNum_AddrNotAligned);
-      WAsmCode[0] = 0x1800 | GetAL();
+      WAsmCode[CodeLen >> 1] = 0x1800 | GetAL();
 
       /* put bits 16:19 of operand into bits 0:3 or 7:10 of extension word? */
 
       if (AdrParts.Cnt)
-        WAsmCode[0] |= (((AdrParts.Val >> 16) & 15) << 7);
+        WAsmCode[CodeLen >> 1] |= (((AdrParts.Val >> 16) & 15) << 7);
 
       /* repeat only supported for register op */
 
       if (AdrParts.Mode == eModeReg)
       {
-        WAsmCode[0] |= MultPrefix;
+        WAsmCode[CodeLen >> 1] |= MultPrefix;
         MultPrefix = 0;
       }
-      WAsmCode[1] = pOrder->Code | ActBW | (AdrParts.Mode << 4) | AdrParts.Part;
-      memcpy(WAsmCode + 2, &AdrParts.Val, AdrParts.Cnt << 1);
-      CodeLen = (2 + AdrParts.Cnt) << 1;
+      CodeLen += 2;
+      WAsmCode[CodeLen >> 1] = pOrder->Code | ActBW | (AdrParts.Mode << 4) | AdrParts.Part; CodeLen += 2;
+      AppendAdrVals(&AdrParts);
     }
   }
 }
@@ -1111,9 +1121,8 @@ static void DecodeCALLA(Word Code)
     else if ((AdrParts.Mode == eModeRegDisp) && (((AdrParts.Val & 0xfffff) > 0x7fff) && ((AdrParts.Val & 0xfffff) < 0xf8000))) WrError(ErrNum_OverRange);
     else
     {
-      WAsmCode[0] = 0x1340 | (AdrParts.Mode << 4) | (AdrParts.Part);
-      memcpy(WAsmCode + 1, &AdrParts.Val, AdrParts.Cnt << 1);
-      CodeLen = (1 + AdrParts.Cnt) << 1;
+      WAsmCode[CodeLen >> 1] = 0x1340 | (AdrParts.Mode << 4) | (AdrParts.Part); CodeLen += 2;
+      AppendAdrVals(&AdrParts);
     }
   }
 }
@@ -1514,7 +1523,7 @@ static void InternSymbol_MSP(char *pArg, TempResult *pResult)
 
 static Boolean DecodeAttrPart_MSP(void)
 {
-  if (strlen(AttrPart.Str) > 1) 
+  if (strlen(AttrPart.Str) > 1)
   {
     WrStrErrorPos(ErrNum_UndefAttr, &AttrPart);
     return False;

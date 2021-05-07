@@ -33,7 +33,7 @@ typedef struct
   Byte Code;
 } BaseOrder;
 
-typedef struct 
+typedef struct
 {
   char *Name;
   CPUVar MinCPU;
@@ -41,7 +41,7 @@ typedef struct
   Word Mask;
 } ALUOrder;
 
-typedef struct 
+typedef struct
 {
   char *Name;
   CPUVar MinCPU;
@@ -179,7 +179,7 @@ static void DecodeAdr(Byte Start, Byte Stop, Word Mask)
         else
         {
           AdrCnt = 1;
-          AdrVals[0] = Lo(AdrWord); 
+          AdrVals[0] = Lo(AdrWord);
 	  AdrMode = ModDir;
 	  if (ZeroMode == 0)
 	  {
@@ -196,17 +196,17 @@ static void DecodeAdr(Byte Start, Byte Stop, Word Mask)
                 AdrMode = ModTny;
               else
                 WrError(ErrNum_ConfOpSizes);
-	      return; 
+	      return;
 	    }
-            else if (Mask & MModSrt) 
+            else if (Mask & MModSrt)
 	    {
 	      if (AdrVals[0] <= 0x1f)
                 AdrMode = ModSrt;
               else
                 WrError(ErrNum_ConfOpSizes);
-	      return; 
+	      return;
 	    }
-	    else 
+	    else
 	    {
 	      AdrMode = ModNone;
 	      WrError(ErrNum_NoShortAddr);
@@ -446,7 +446,7 @@ static void DecodeDBNZx(Word Index)
         BAsmCode[2] = AdrInt & 0xff;
         CodeLen = 3;
       }
-      else 
+      else
       {
         BAsmCode[0] = 0x4b;
         BAsmCode[1] = AdrInt & 0xff;
@@ -458,7 +458,7 @@ static void DecodeDBNZx(Word Index)
 
 static void DecodeDBNZ(Word Index)
 {
-  Boolean OK;   
+  Boolean OK;
   tSymbolFlags Flags;
   LongInt AdrInt;
   Byte Disp = 0;
@@ -503,7 +503,7 @@ static void DecodeLDX(Word Index)
 
   BAsmCode[0] = 0x4e;
 
-  if (ChkArgCnt(1, 2)) 
+  if (ChkArgCnt(1, 2))
   {
     DecodeAdr(1, ArgCnt, (Index == 0) ? (MModImm | MModDir | MModIX) : MModDir);
     if (AdrMode != ModNone)
@@ -534,14 +534,14 @@ static void DecodeLDX(Word Index)
       }
       CodeLen = 3;
     }
-  }  
+  }
 }
 
 static void DecodeTST(Word Index)
 {
 
-  BAsmCode[0] = 0x4e;  
-  
+  BAsmCode[0] = 0x4e;
+
   if (Index == 1)
   {
     if (ChkArgCnt(0, 0))
@@ -549,8 +549,8 @@ static void DecodeTST(Word Index)
       BAsmCode[1] = 0x0f;
       BAsmCode[2] = 0x0f;
       CodeLen = 3;
-    }  
-  } 
+    }
+  }
   else if (Index == 2)
   {
     BAsmCode[0] = 0xaa;
@@ -671,7 +671,7 @@ static void DecodeBx(Word Index)
   if (ChkArgCnt(2, 2))
   {
     if (!as_strcasecmp(ArgStr[2].Str, "D[X]")) BAsmCode[1] = 0x0e;
-    else if  (!as_strcasecmp(ArgStr[2].Str, "X")) BAsmCode[1] = 0x0f;  
+    else if  (!as_strcasecmp(ArgStr[2].Str, "X")) BAsmCode[1] = 0x0f;
     else BAsmCode[1] = EvalStrIntExpression(&ArgStr[2], Int8, &OK);
 
     if (OK)
@@ -697,7 +697,7 @@ static void DecodeBRx(Word Index)
     if (!as_strcasecmp(ArgStr[2].Str, "D[X]"))
       BAsmCode[1] = 0x0e;
     else if (!as_strcasecmp(ArgStr[2].Str, "X"))
-      BAsmCode[1] = 0x0f;  
+      BAsmCode[1] = 0x0f;
     else
       BAsmCode[1] = EvalStrIntExpression(&ArgStr[2], Int8, &OK);
 
@@ -774,7 +774,7 @@ static void InitFields(void)
   AddFixed("LSLA", CPU68RS08, 0x48); AddFixed("ROLA", CPU68RS08, 0x49);
   AddFixed("DECA", CPU68RS08, 0x4a); AddFixed("DECX", CPU68RS08, 0x5f);
   AddFixed("INCA", CPU68RS08, 0x4c); AddFixed("INCX", CPU68RS08, 0x2f);
-  AddFixed("CLRA", CPU68RS08, 0x4f); AddFixed("CLRX", CPU68RS08, 0x8f); 
+  AddFixed("CLRA", CPU68RS08, 0x4f); AddFixed("CLRX", CPU68RS08, 0x8f);
   AddFixed("STOP", CPU68RS08, 0xae); AddFixed("WAIT", CPU68RS08, 0xaf);
   AddFixed("BGND", CPU68RS08, 0xbf);
 
@@ -783,7 +783,7 @@ static void InitFields(void)
   AddRel("BCC" , CPU68RS08, 0x34); AddRel("BCS" , CPU68RS08, 0x35);
   AddRel("BHS" , CPU68RS08, 0x34); AddRel("BLO" , CPU68RS08, 0x35);
   AddRel("BNE" , CPU68RS08, 0x36); AddRel("BEQ" , CPU68RS08, 0x37);
-  AddRel("BSR" , CPU68RS08, 0xad); 
+  AddRel("BSR" , CPU68RS08, 0xad);
 
   ALUOrders=(ALUOrder *) malloc(sizeof(ALUOrder) * ALUOrderCnt); InstrZ = 0;
   AddALU("ADC" , CPU68RS08, 0x09, MModImm | MModDir | MModIX  | MModX);
@@ -818,7 +818,7 @@ static void InitFields(void)
 
   AddInstTable(InstTable, "TST"  , 0, DecodeTST);
   AddInstTable(InstTable, "TSTX" , 1, DecodeTST);
-  AddInstTable(InstTable, "TSTA" , 2, DecodeTST);  
+  AddInstTable(InstTable, "TSTA" , 2, DecodeTST);
 
   AddInstTable(InstTable, "LDX"  , 0, DecodeLDX);
   AddInstTable(InstTable, "STX"  , 1, DecodeLDX);

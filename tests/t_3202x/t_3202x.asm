@@ -6,7 +6,7 @@
 
 	cpu	320c28
 
-	abs 
+	abs
 	cmpl
 	neg
 	rol

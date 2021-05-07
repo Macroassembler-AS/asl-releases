@@ -26,7 +26,7 @@
 #include "asmpars.h"
 #include "asmitree.h"
 #include "headids.h"
-#include "codevars.h"            
+#include "codevars.h"
 #include "errmsg.h"
 
 #include "code77230.h"
@@ -58,11 +58,11 @@ typedef struct
 enum
 {
   InstrLDI, InstrBranch,
-  InstrALU, InstrMove, 
+  InstrALU, InstrMove,
   InstrM0, InstrM1, InstrDP0, InstrDP1,
   InstrEA, InstrRP, InstrFC, InstrLC,
   InstrBASE0, InstrBASE1, InstrRPC,
-  InstrP2, InstrP3, InstrEM, InstrBM, 
+  InstrP2, InstrP3, InstrEM, InstrBM,
   InstrL, InstrRW, InstrWT, InstrNF, InstrWI,
   InstrFIS, InstrFD, InstrSHV, InstrRPS, InstrNAL, InstrCnt
 };
@@ -297,26 +297,26 @@ static void DecodeALU1(Word Index)
   DiscardArgs();
 }
 
-static void DecodeALU2(Word Index)             
-{                                                  
-  FixedOrder *Op = ALU2Orders + Index;                    
-  LongWord DReg, SReg;                                      
-                                                      
-  if (!SplitArgs(2)) return;                       
+static void DecodeALU2(Word Index)
+{
+  FixedOrder *Op = ALU2Orders + Index;
+  LongWord DReg, SReg;
+
+  if (!SplitArgs(2)) return;
   if ((!DecodeReg(ArgStr[1].Str, &DReg, DestRegs, DestRegCnt))
-   || (DReg < 16) || (DReg > 23))                         
+   || (DReg < 16) || (DReg > 23))
   {
     WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
-    Error = True;             
-  }                                                
+    Error = True;
+  }
   else if (!DecodeReg(ArgStr[2].Str, &SReg, ALUSrcRegs, ALUSrcRegCnt))
   {
     WrStrErrorPos(ErrNum_InvReg, &ArgStr[2]);
-    Error = True;             
+    Error = True;
   }
   else
     AddComp(InstrALU, (Op->Code << 17) + (SReg << 3) + (DReg & 7));
-  DiscardArgs();                                      
+  DiscardArgs();
 }
 
 static void DecodeM0(Word Index)
@@ -344,7 +344,7 @@ static void DecodeDP0(Word Index)
 
   AddComp(InstrDP0, Index);
   DiscardArgs();
-}  
+}
 
 static void DecodeDP1(Word Index)
 {
@@ -487,7 +487,7 @@ static void DecodeEM(Word Index)
 static void DecodeRW(Word Index)
 {
   if (!SplitArgs(0))
-    return;   
+    return;
 
   AddComp(InstrRW, Index);
   DiscardArgs();
@@ -551,7 +551,7 @@ static void DecodeSHV(Word Index)
     Value &= 31;
   Error = (Value > 46) ? True : !Error;
   if (!Error)
-    AddComp(InstrSHV, (Index << 6) + Value);     
+    AddComp(InstrSHV, (Index << 6) + Value);
   DiscardArgs();
 }
 
@@ -559,7 +559,7 @@ static void DecodeRPS(Word Index)
 {
   LongWord Value;
   UNUSED(Index);
-  
+
   if (!SplitArgs(1))
     return;
   Value = EvalStrIntExpression(&ArgStr[1], UInt9, &Error);
@@ -586,7 +586,7 @@ static void DecodeNAL(Word Index)
     if (ChkSamePage(Value, EProgCounter(), 9, Flags))
       AddComp(InstrNAL, Value & 0x1ff);
   }
-  DiscardArgs();  
+  DiscardArgs();
 }
 
 static Boolean DecodePseudo(void)
@@ -618,7 +618,7 @@ static Boolean DecodePseudo(void)
               if ((z & 3) == 3)
                 CodeLen++;
             }
-            if ((z & 3) != 0) 
+            if ((z & 3) != 0)
             {
               DAsmCode[CodeLen] = (DAsmCode[CodeLen]) << ((4 - (z & 3)) << 3);
               CodeLen++;
@@ -641,7 +641,7 @@ static Boolean DecodePseudo(void)
               OK = False;
               break;
             }
-            Double_2_ieee4(t.Contents.Float, (Byte*) &temp, BigEndian);
+            Double_2_ieee4(t.Contents.Float, (Byte*) &temp, HostBigEndian);
             sign = (temp >> 31) & 1;
             expo = (temp >> 23) & 255;
             mant = temp & 0x7fffff;
@@ -834,7 +834,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "CLRPSW" , 6, DecodeFIS);
 
   AddInstTable(InstTable, "SPIE", 1, DecodeFD);
-  AddInstTable(InstTable, "IESP", 2, DecodeFD); 
+  AddInstTable(InstTable, "IESP", 2, DecodeFD);
 
   AddInstTable(InstTable, "SETSVL", 0, DecodeSHV);
   AddInstTable(InstTable, "SETSVR", 1, DecodeSHV);
@@ -912,7 +912,7 @@ static void InitFields(void)
   InstrDefs[InstrFD] = 0;
   InstrDefs[InstrFIS] = 0;
   InstrDefs[InstrL] = 0;
-  InstrDefs[InstrM0] = 0; 
+  InstrDefs[InstrM0] = 0;
   InstrDefs[InstrM1] = 0;
   InstrDefs[InstrNF] = 0;
   InstrDefs[InstrRP] = 0;
@@ -1135,9 +1135,9 @@ static void SwitchTo_77230(void)
   Grans[SegXData] = 4; ListGrans[SegXData] = 4; SegInits[SegXData] = 0;
   SegLimits[SegXData] = 0x1ff;
   Grans[SegYData] = 4; ListGrans[SegYData] = 4; SegInits[SegYData] = 0;
-  SegLimits[SegYData] = 0x1ff;  
+  SegLimits[SegYData] = 0x1ff;
   Grans[SegRData] = 4; ListGrans[SegRData] = 4; SegInits[SegRData] = 0;
-  SegLimits[SegRData] = 0x3ff;  
+  SegLimits[SegRData] = 0x3ff;
 
   MakeCode = MakeCode_77230;
   IsDef = IsDef_77230;
@@ -1150,6 +1150,6 @@ static void SwitchTo_77230(void)
 /* Initialisierung */
 
 void code77230_init(void)
-{  
+{
   CPU77230 = AddCPU("77230", SwitchTo_77230);
 }

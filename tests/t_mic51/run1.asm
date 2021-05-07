@@ -1,6 +1,6 @@
 ;
 ; Aufgabe Nr.: Speichermodul fuer uP- Praktikum II
-; Autor: Joerg Vollandt 
+; Autor: Joerg Vollandt
 ; erstellt am : 01.07.1994
 ; letzte Aenderung am : 02.08.1994
 ; Bemerkung :

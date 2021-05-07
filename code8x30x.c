@@ -21,7 +21,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmitree.h"
-#include "codevars.h"            
+#include "codevars.h"
 #include "errmsg.h"
 
 #include "code8x30x.h"
@@ -284,7 +284,7 @@ static void DecodeAri(Word Code)
 
   if (ChkArgCnt(2, 3)
    && DecodeReg(&ArgStr[ArgCnt], &DestReg, &DestLen))
-  {      
+  {
     if (DestReg < 16)         /* Ziel Register */
     {
       if (ArgCnt == 2)        /* wenn nur zwei Operanden und Ziel Register... */
@@ -385,7 +385,7 @@ static void DecodeXEC(Word Code)
   {
     p = HasDisp(ArgStr[1].Str);
     if (!p) WrError(ErrNum_InvAddrMode);
-    else 
+    else
     {
       tStrComp DispArg, RegArg;
 
@@ -417,7 +417,7 @@ static void DecodeXEC(Word Code)
           if (OK)
           {
             if (Rot == 0xffff)
-             Rot = (SrcLen == -1) ? 0 : SrcLen; 
+             Rot = (SrcLen == -1) ? 0 : SrcLen;
             if ((SrcLen != -1) && (Rot != SrcLen)) WrError(ErrNum_ConfOpSizes);
             else
             {

@@ -229,7 +229,7 @@ extern Boolean PushSymbol(const struct sStrComp *pSymName, const struct sStrComp
 extern Boolean PopSymbol(const struct sStrComp *pSymName, const struct sStrComp *pStackName);
 
 extern void ClearStacks(void);
- 
+
 
 extern void EnterFunction(const struct sStrComp *pComp, char *FDefinition, Byte NewCnt);
 

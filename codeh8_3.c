@@ -56,7 +56,7 @@
 
 /* keep in the same order as in registration */
 
-#define M_CPUH8_300L  (1 << 0) 
+#define M_CPUH8_300L  (1 << 0)
 #define M_CPU6413308  (1 << 1)
 #define M_CPUH8_300   (1 << 2)
 #define M_CPU6413309  (1 << 3)
@@ -489,7 +489,7 @@ static void DecodeAdr(tStrComp *pArg, Word Mask)
          AdrMode = ModPostInc;
          goto chk;
       }
-      Arg.Str[ArgLen - 1] = '+'; Arg.Pos.Len++; 
+      Arg.Str[ArgLen - 1] = '+'; Arg.Pos.Len++;
     }
 
     if (IsIndirect(Arg.Str))
@@ -745,7 +745,7 @@ static void DissectBit_H8_3(char *pDest, size_t DestSize, LargeWord Inp)
 
   DissectBitSymbol(Inp, &Address, &BitPos);
 
-  as_snprintf(pDest, DestSize, "#%u,$%s%x", BitPos, 
+  as_snprintf(pDest, DestSize, "#%u,$%s%x", BitPos,
               (HexStartCharacter == 'A') ? (CPU16 ? "FF" : "FFFF") : (CPU16 ? "ff" : "ffff"),
               (unsigned)Address);
 }
@@ -1288,7 +1288,7 @@ static void DecodeLDC_STC(Word CodeIsSTC)
            break;
          case ModAbs24:
            CodeLen = 8;
-           WAsmCode[0] = 0x0140; 
+           WAsmCode[0] = 0x0140;
            WAsmCode[1] = 0x6b20 + CodeIsSTC;
            memcpy(WAsmCode + 2, AdrVals, AdrCnt);
            break;
@@ -1707,7 +1707,7 @@ static void DecodeBit2(Word Code)
           Bit = EvalBitPosition(&ArgStr[1], &OK);
           break;
         default: /* eRegAbort */
-          return; 
+          return;
       }
       if (OK)
       {
@@ -2046,7 +2046,7 @@ static void DecodeTRAPA(Word Code)
 {
   UNUSED(Code);
 
-  if (ChkArgCnt(1, 1) 
+  if (ChkArgCnt(1, 1)
    && ChkMinCPU(CPU6413309))
   {
     Boolean OK;

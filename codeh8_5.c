@@ -1208,7 +1208,7 @@ static void DecodeCMP(Word Dummy)
         CopyAdr();
 
 
-        DecodeAdr(&ArgStr[1], MModAll 
+        DecodeAdr(&ArgStr[1], MModAll
 #if CMP_IMMVARIABLE
                             | MModImmVariable
 #endif

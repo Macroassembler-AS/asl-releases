@@ -111,7 +111,7 @@ static void SetCPUCore(const tCPUDef *pCPUDef, const tStrComp *pCPUArgs)
   LargeInt HCPU;
   int Digit, Base;
   const char *pRun;
-  
+
   tStrComp TmpComp;
   static const char Default_CommentLeadIn[] = { ';', '\0', '\0' };
   String TmpCompStr;
@@ -318,14 +318,60 @@ static void CodeCPU(Word Index)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     CodeORG_Core(const tStrComp *pArg)
+ * \brief  core function of ORG statement
+ * \param  pArg source argument holding new address
+ * ------------------------------------------------------------------------ */
+
+static void CodeORG_Core(const tStrComp *pArg)
+{
+  LargeWord HVal;
+  Boolean ValOK;
+  tSymbolFlags Flags;
+
+  HVal = EvalStrIntExpressionWithFlags(pArg, LargeUIntType, &ValOK, &Flags);
+  if (ValOK)
+  {
+    if (mFirstPassUnknown(Flags)) WrStrErrorPos(ErrNum_FirstPassCalc, pArg);
+    else if (PCs[ActPC] != HVal)
+    {
+      PCs[ActPC] = HVal;
+      DontPrint = True;
+    }
+  }
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     CodeORG(Word Index)
+ * \brief  handle ORG statement
+ * ------------------------------------------------------------------------ */
+
+static void CodeORG(Word Index)
+{
+  UNUSED(Index);
+
+  if (*AttrPart.Str != '\0') WrError(ErrNum_UseLessAttr);
+  else if (ChkArgCnt(1, 1))
+    CodeORG_Core(&ArgStr[1]);
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     CodeSETEQU(Word MayChange)
+ * \brief  handle EQU/SET/EVAL statements
+ * \param  MayChange 0 for EQU, 1 for SET/EVAL
+ * ------------------------------------------------------------------------ */
 
 static void CodeSETEQU(Word MayChange)
 {
   TempResult t;
   Integer DestSeg;
+  const tStrComp *pName = *LabPart.Str ? &LabPart : &ArgStr[1];
   int ValIndex = *LabPart.Str ? 1 : 2;
 
-  if (ChkArgCnt(ValIndex, ValIndex + 1))
+  if ((ArgCnt == ValIndex) && !strcmp(pName->Str, PCSymbol))
+    CodeORG_Core(&ArgStr[ValIndex]);
+  else if (ChkArgCnt(ValIndex, ValIndex + 1))
   {
     EvalStrExpression(&ArgStr[ValIndex], &t);
     if (!mFirstPassUnknown(t.Flags))
@@ -349,8 +395,6 @@ static void CodeSETEQU(Word MayChange)
       if (DestSeg > PCMax) WrStrErrorPos(ErrNum_UnknownSegment, &ArgStr[ValIndex + 1]);
       else
       {
-        const tStrComp *pName = *LabPart.Str ? &LabPart : &ArgStr[1];
-
         SetListLineVal(&t);
         PushLocHandle(-1);
         switch (t.Typ)
@@ -449,30 +493,6 @@ void CodeNAMEREG(Word Index)
 
   if (ChkArgCnt(2, 2))
     CodeREGCore(&ArgStr[2], &ArgStr[1]);
-}
-
-static void CodeORG(Word Index)
-{
-  LargeWord HVal;
-  Boolean ValOK;
-  tSymbolFlags Flags;
-  UNUSED(Index);
-
-  if (*AttrPart.Str != '\0') WrError(ErrNum_UseLessAttr);
-  else if (ChkArgCnt(1, 1))
-  {
-#ifndef HAS64
-    HVal = EvalStrIntExpressionWithFlags(&ArgStr[1], UInt32, &ValOK, &Flags);
-#else
-    HVal = EvalStrIntExpressionWithFlags(&ArgStr[1], Int64, &ValOK, &Flags);
-#endif
-    if (mFirstPassUnknown(Flags)) WrError(ErrNum_FirstPassCalc);
-    if (ValOK && !mFirstPassUnknown(Flags) && (PCs[ActPC] != HVal))
-    {
-      PCs[ActPC] = HVal;
-      DontPrint = True;
-    }
-  }
 }
 
 static void CodeRORG(Word Index)

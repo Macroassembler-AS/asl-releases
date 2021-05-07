@@ -21,7 +21,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmitree.h"
-#include "codevars.h" 
+#include "codevars.h"
 #include "headids.h"
 #include "intpseudo.h"
 #include "errmsg.h"
@@ -205,7 +205,7 @@ static void DecodeCondAbs(Word Index)
   Byte Cond;
   Word Address;
   Boolean OK, IndFlag;
-  
+
   if (!ChkArgCnt(2, 2));
   else if (!DecodeCondition(ArgStr[1].Str, &Cond)) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
   else
@@ -304,7 +304,7 @@ static void DecodeBrAbs(Word Index)
 static void DecodeCond(Word Index)
 {
   Byte Cond;
-  
+
   if (!ChkArgCnt(1, 1));
   else if (!DecodeCondition(ArgStr[1].Str, &Cond)) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
   else
@@ -326,7 +326,7 @@ static void DecodeZero(Word Index)
     if (OK)
     {
       if (IndFlag)
-        BAsmCode[1] |= 0x80; 
+        BAsmCode[1] |= 0x80;
       CodeLen = 2;
     }
   }
@@ -379,11 +379,11 @@ static void AddRegAbs2(const char *pName, Word Code)
 {
   AddInstTable(InstTable, pName, Code, DecodeRegAbs2);
 }
-   
+
 static void AddBrAbs(const char *pName, Word Code)
 {
   AddInstTable(InstTable, pName, Code, DecodeBrAbs);
-}  
+}
 
 static void AddCond(const char *pName, Word Code)
 {

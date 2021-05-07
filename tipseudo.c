@@ -96,7 +96,7 @@ static void pseudo_lqxx(Integer num)
     }
 
     res = ldexp(EvalStrFloatExpression(pArg, Float64, &ok), num);
-    if (!ok) 
+    if (!ok)
       break;
 
     if ((res > 2147483647.49) || (res < -2147483647.49))
@@ -109,7 +109,7 @@ static void pseudo_lqxx(Integer num)
     WAsmCode[CodeLen++] = resli & 0xffff;
     WAsmCode[CodeLen++] = resli >> 16;
   }
-   
+
   if (!ok)
     CodeLen = 0;
 }
@@ -167,7 +167,7 @@ static void pseudo_store(tcallback callback, Word MaxMultCharLen)
         break;
     }
   }
-   
+
   if (!ok)
     CodeLen = 0;
 }
@@ -214,9 +214,9 @@ static void wr_code_byte_hilo(Boolean *ok, int *adr, LongInt val, tSymbolFlags F
     *ok = False;
     return;
   }
-  if ((*adr) & 1) 
+  if ((*adr) & 1)
     WAsmCode[((*adr)++) / 2] |= val & 0xff;
-  else 
+  else
     WAsmCode[((*adr)++) / 2] = val << 8;
   CodeLen = ((*adr) + 1) / 2;
 }
@@ -229,9 +229,9 @@ static void wr_code_byte_lohi(Boolean *ok, int *adr, LongInt val, tSymbolFlags F
     *ok = False;
     return;
   }
-  if ((*adr) & 1) 
+  if ((*adr) & 1)
     WAsmCode[((*adr)++) / 2] |= val << 8;
-  else 
+  else
     WAsmCode[((*adr)++) / 2] = val & 0xff;
   CodeLen = ((*adr) + 1) / 2;
 }
@@ -435,7 +435,7 @@ static void DecodeSTRING(Word Code)
 {
   UNUSED(Code);
 
-  pseudo_store(wr_code_byte_hilo, 1); 
+  pseudo_store(wr_code_byte_hilo, 1);
 }
 
 /*!------------------------------------------------------------------------
@@ -447,7 +447,7 @@ static void DecodeRSTRING(Word Code)
 {
   UNUSED(Code);
 
-  pseudo_store(wr_code_byte_lohi, 1); 
+  pseudo_store(wr_code_byte_lohi, 1);
 }
 
 /*!------------------------------------------------------------------------
@@ -459,7 +459,7 @@ static void DecodeBYTE(Word Code)
 {
   UNUSED(Code);
 
-  pseudo_store(wr_code_byte, 1); 
+  pseudo_store(wr_code_byte, 1);
 }
 
 /*!------------------------------------------------------------------------
@@ -471,7 +471,7 @@ static void DecodeWORD(Word Code)
 {
   UNUSED(Code);
 
-  pseudo_store(wr_code_word, 2); 
+  pseudo_store(wr_code_word, 2);
 }
 
 /*!------------------------------------------------------------------------
@@ -483,7 +483,7 @@ static void DecodeLONG(Word Code)
 {
   UNUSED(Code);
 
-  pseudo_store(wr_code_long, 4); 
+  pseudo_store(wr_code_long, 4);
 }
 
 /*!------------------------------------------------------------------------
@@ -584,11 +584,11 @@ Boolean IsTIDef(void)
 {
   static const char *defs[] =
   {
-    "BSS", "STRING", "RSTRING", 
+    "BSS", "STRING", "RSTRING",
     "BYTE", "WORD", "LONG", "FLOAT",
-    "DOUBLE", "EFLOAT", "BFLOAT", 
+    "DOUBLE", "EFLOAT", "BFLOAT",
     "TFLOAT", NULL
-  }; 
+  };
   const char **cp = defs;
 
   while (*cp)

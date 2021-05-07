@@ -170,7 +170,8 @@ char MomCPUIdent[20],                   /* dessen Name in ASCII */
 
 Boolean FPUAvail,                       /* Koprozessor erlaubt ? */
         PMMUAvail;                      /* MMU-Befehle erlaubt? */
-Boolean DoPadding;                      /* auf gerade Byte-Zahl ausrichten ? */
+Boolean DoPadding,                      /* auf gerade Byte-Zahl ausrichten ? */
+        TargetBigEndian;                /* Datenablage Big Endian? */
 Boolean Packing;                        /* gepackte Ablage ? */
 Boolean DefSupAllowed, SupAllowed;      /* Supervisormode freigegeben */
 Boolean Maximum;                        /* CPU nicht kastriert */

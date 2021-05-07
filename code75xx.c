@@ -19,7 +19,7 @@
 #include "asmdef.h"
 #include "asmsub.h"
 #include "asmpars.h"
-#include "asmitree.h"  
+#include "asmitree.h"
 #include "codepseudo.h"
 #include "intpseudo.h"
 #include "codevars.h"
@@ -527,7 +527,7 @@ static void SwitchTo_75xx(void)
   SwitchFrom = SwitchFrom_75xx; InitFields();
 }
 
-void code75xx_init(void) 
+void code75xx_init(void)
 {
   CPU7566 = AddCPU("7566", SwitchTo_75xx);
   CPU7508 = AddCPU("7508", SwitchTo_75xx);

@@ -29,7 +29,7 @@
 
 #include "code97c241.h"
 
-typedef struct 
+typedef struct
 {
   Byte Code;
   Byte Mask;     /* B0..2=OpSizes, B4=-MayImm, B5=-MayReg */
@@ -43,7 +43,7 @@ typedef struct
   enum { Equal, FirstCounts, SecondCounts, Op2Half } SizeType;
   Boolean ImmKorr, ImmErl, RegErl;
 } GAOrder;
-           
+
 
 #define ConditionCount 20
 #define RMWOrderCount 14
@@ -154,7 +154,7 @@ static Boolean DecodeRegCore(const char *pArg, Byte *pResult, tSymbolSize *pSize
 
   switch (as_toupper(pArg[1]))
   {
-    case 'B': 
+    case 'B':
       *pSize = eSymbolSize8Bit;
       break;
     case 'W':
@@ -246,7 +246,7 @@ static Boolean DecodeSpecReg(char *Asc, Byte *Result)
 static Boolean DecodeRegAdr(const tStrComp *pArg, Byte *pResult)
 {
   tSymbolSize Size;
-  
+
   if (DecodeReg(pArg, pResult, &Size, True) != eIsReg)
     return False;
   if (OpSize == eSymbolSizeUnknown)
@@ -303,7 +303,7 @@ static void DecodeAdr(const tStrComp *pArg, Byte PrefInd, Boolean MayImm, Boolea
     if ((*Arg.Str == '-') && (Arg.Str[1] == '-'))
     {
       tStrComp RegComp;
-      
+
       StrCompRefRight(&RegComp, &Arg, 2);
       if (DecodeReg(&RegComp, &Reg, &Size, True) == eIsReg)
       {
@@ -382,7 +382,7 @@ static void DecodeAdr(const tStrComp *pArg, Byte PrefInd, Boolean MayImm, Boolea
         KillPostBlanksStrComp(&TmpComp);
       }
       ArgLen = strlen(Arg.Str);
-      if ((EPos == Arg.Str + ArgLen - 2) 
+      if ((EPos == Arg.Str + ArgLen - 2)
        && ((Arg.Str[ArgLen - 1] == '1') || (Arg.Str[ArgLen - 1] == '2') || (Arg.Str[ArgLen - 1] == '4') || (Arg.Str[ArgLen - 1] == '8'))
        && ((RegEvalResult = DecodeReg(&TmpComp, &Reg, &Size, False)) != eIsNoReg))
       {
@@ -475,7 +475,7 @@ static void DecodeAdr(const tStrComp *pArg, Byte PrefInd, Boolean MayImm, Boolea
           DispPart = 1;
         DispAcc = MinFlag ? DispAcc - DispPart : DispAcc + DispPart;
       }
-       
+
       if (PMPos)
         Arg = Remainder;
       MinFlag = NMinFlag;
@@ -1266,7 +1266,7 @@ static void DecodeBit(Word Code)
              && (ImmValue > 0)
              && (ImmValue < (1 << (OpSize + 3))))
               Format = 'S';
-            else 
+            else
               Format = DecideGA();
           }
           switch (Format)
@@ -2293,7 +2293,7 @@ static void AddGAFirst(const char *NName, Word NCode)
 static void AddGASecond(const char *NName, Word NCode)
 {
   AddInstTable(InstTable, NName, NCode, DecodeGASecond);
-}                               
+}
 
 static void InitFields(void)
 {
@@ -2419,8 +2419,8 @@ static void InitFields(void)
   AddGASecond("BS1B" , 0x56);
   AddGASecond("BS1F" , 0x57);
 
-  AddInstTable(InstTable, "CPSZ", 0, DecodeString);   
-  AddInstTable(InstTable, "CPSN", 1, DecodeString); 
+  AddInstTable(InstTable, "CPSZ", 0, DecodeString);
+  AddInstTable(InstTable, "CPSN", 1, DecodeString);
   AddInstTable(InstTable, "LDS" , 3, DecodeString);
 
   Conditions = (const char **) malloc(sizeof(char *)*ConditionCount); InstrZ = 0;

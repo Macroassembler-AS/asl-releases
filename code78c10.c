@@ -17,7 +17,7 @@
 #include "asmdef.h"
 #include "asmsub.h"
 #include "asmpars.h"
-#include "asmitree.h"  
+#include "asmitree.h"
 #include "codepseudo.h"
 #include "intpseudo.h"
 #include "codevars.h"
@@ -198,7 +198,7 @@ static Boolean Decode_rpa2(const tStrComp *pArg, Boolean *pWasIndirect, ShortInt
   char *p, Save;
   Boolean OK;
   ShortInt BaseReg;
-  tStrComp Left, Right;  
+  tStrComp Left, Right;
 
   if (DecodeAdrMode(pArg->Str, AdrModes, Erg, pWasIndirect))
   {
@@ -327,11 +327,11 @@ static Boolean Decode_irf(char *Asc, ShortInt *Erg)
 {
 #undef FlagCnt
 #define FlagCnt 18
-  static const char FlagNames[FlagCnt][5] = 
-           { "NMI" , "FT0" , "FT1" , "F1"  , "F2"  , "FE0" , 
-             "FE1" , "FEIN", "FAD" , "FSR" , "FST" , "ER"  , 
+  static const char FlagNames[FlagCnt][5] =
+           { "NMI" , "FT0" , "FT1" , "F1"  , "F2"  , "FE0" ,
+             "FE1" , "FEIN", "FAD" , "FSR" , "FST" , "ER"  ,
              "OV"  , "AN4" , "AN5" , "AN6" , "AN7" , "SB"   };
-  static const ShortInt FlagCodes[FlagCnt] = 
+  static const ShortInt FlagCodes[FlagCnt] =
             { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 16, 17, 18, 19, 20 };
 
   for (*Erg = 0; *Erg < FlagCnt; (*Erg)++)
@@ -394,7 +394,7 @@ static void DecodeMOV(Word Code)
       CodeLen = 1;
       BAsmCode[0] = 0x08 + HReg;
     }
-    else 
+    else
     {
       AdrInt = EvalStrIntExpression(&ArgStr[2], Int16, &OK);
       if (OK)
@@ -899,7 +899,7 @@ static void DecodeCALF(Word Code)
 static void DecodeCALT(Word Code)
 {
   UNUSED(Code);
- 
+
   if (ChkArgCnt(1, 1))
   {
     Boolean OK;
@@ -1020,7 +1020,7 @@ static void InitFields(void)
 {
   InstTable = CreateInstTable(301);
   SetDynamicInstTable(InstTable);
-  
+
   AddInstTable(InstTable, "MOV", 0, DecodeMOV);
   AddInstTable(InstTable, "MVI", 0, DecodeMVI);
   AddInstTable(InstTable, "MVIW", 0, DecodeMVIW);

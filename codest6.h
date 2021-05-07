@@ -6,9 +6,9 @@
 /*                                                                           */
 /* AS-Portierung                                                             */
 /*                                                                           */
-/* Codegenerator ST6-Familie                                                 */       
+/* Codegenerator ST6-Familie                                                 */
 /*                                                                           */
-/* Historie: 14.11.1996 Grundsteinlegung                                     */        
+/* Historie: 14.11.1996 Grundsteinlegung                                     */
 /*                                                                           */
 /*****************************************************************************/
 

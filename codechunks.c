@@ -113,7 +113,7 @@ int ReadCodeChunk(tCodeChunk *pChunk, const char *pFileName, LargeWord Start, La
   if (!pCode)
   {
     Result = ENOMEM;
-    goto func_exit; 
+    goto func_exit;
   }
 
   if (fread(pCode, 1, Length, pFile) != Length)
@@ -126,7 +126,7 @@ int ReadCodeChunk(tCodeChunk *pChunk, const char *pFileName, LargeWord Start, La
   pChunk->Length = Length;
   SetCodePtr(pChunk, pCode, 1);
   pCode = NULL;
-   
+
   Result = 0;
 
 func_exit:
@@ -134,7 +134,7 @@ func_exit:
     free(pCode);
   if (pFile)
     fclose(pFile);
-  return Result; 
+  return Result;
 }
 
 void FreeCodeChunk(tCodeChunk *pChunk)

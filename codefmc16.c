@@ -1,4 +1,4 @@
-/* codefmc16.c */ 
+/* codefmc16.c */
 /****************************************************************************/
 /* SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only                     */
 /*                                                                           */
@@ -200,8 +200,8 @@ static Boolean DecodeAdr(const tStrComp *pArg, int Mask)
           goto found;
         }
         break;
-      case '0': case '1': case '2': case '3': 
-      case '4': case '5': case '6': case '7': 
+      case '0': case '1': case '2': case '3':
+      case '4': case '5': case '6': case '7':
         if (pArg->Str[2] == '\0')
         {
           AdrPart = pArg->Str[1] - '0';
@@ -243,7 +243,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, int Mask)
         if (OpSize >= 2)
         {
           AdrVals[AdrCnt++] = (ImmVal >> 16) & 0xff;
-          AdrVals[AdrCnt++] = (ImmVal >> 24) & 0xff; 
+          AdrVals[AdrCnt++] = (ImmVal >> 24) & 0xff;
         }
       }
     }
@@ -751,7 +751,7 @@ static void DecodeBBcc(Word Index)
   Byte BitPos, HLen;
   LongInt Addr;
   Boolean OK;
-  
+
   if ((ChkArgCnt(2, 2))
    && (SplitBit(&ArgStr[1], &BitPos)))
   {
@@ -966,7 +966,7 @@ static void DecodeCmpBranch(Word Index)
 static void DecodeBit(Word Index)
 {
   Byte BitPos;
-  
+
   if ((ChkArgCnt(1, 1))
    && (SplitBit(&ArgStr[1], &BitPos)))
   {
@@ -1131,7 +1131,7 @@ static void DecodeString(Word Code)
     {
       BAsmCode[1] += Code + AdrPart;
       BAsmCode[0] = 0x6e;
-      CodeLen = 2; 
+      CodeLen = 2;
     }
   }
 }
@@ -1351,7 +1351,7 @@ static void DecodeMOV(Word Index)
         DecodeAdr(&ArgStr[2], MModAcc);
         switch (AdrMode)
         {
-          case ModAcc:  
+          case ModAcc:
             BAsmCode[0] = 0x6f;
             BAsmCode[1] = 0x30 | (AdrPart << 1);
             CodeLen = 3;
@@ -1397,7 +1397,7 @@ static void DecodeMOV(Word Index)
               BAsmCode[0] = 0x6f;
               CodeLen = 2;
               break;
-          } 
+          }
         } /* 1 = ModSpec */
         break;
       case ModReg:
@@ -1462,7 +1462,7 @@ static void DecodeMOV(Word Index)
     }
   }
 }
-        
+
 static void DecodeMOVB(Word Index)
 {
   if (ChkArgCnt(2, 2))
@@ -2168,12 +2168,12 @@ static void InitFields(void)
   AddShift("LSRL" , 0x1f, FALSE); AddShift("SHLW" , 0x0c, TRUE );
   AddShift("SHRW" , 0x0f, TRUE );
 
-  AddBranch("BZ"  , 0xf0); AddBranch("BEQ" , 0xf0); AddBranch("BNZ" , 0xf1); 
-  AddBranch("BNE" , 0xf1); AddBranch("BC"  , 0xf2); AddBranch("BLO" , 0xf2); 
-  AddBranch("BNC" , 0xf3); AddBranch("BHS" , 0xf3); AddBranch("BN"  , 0xf4); 
-  AddBranch("BP"  , 0xf5); AddBranch("BV"  , 0xf6); AddBranch("BNV" , 0xf7); 
-  AddBranch("BT"  , 0xf8); AddBranch("BNT" , 0xf9); AddBranch("BLT" , 0xfa); 
-  AddBranch("BGE" , 0xfb); AddBranch("BLE" , 0xfc); AddBranch("BGT" , 0xfd); 
+  AddBranch("BZ"  , 0xf0); AddBranch("BEQ" , 0xf0); AddBranch("BNZ" , 0xf1);
+  AddBranch("BNE" , 0xf1); AddBranch("BC"  , 0xf2); AddBranch("BLO" , 0xf2);
+  AddBranch("BNC" , 0xf3); AddBranch("BHS" , 0xf3); AddBranch("BN"  , 0xf4);
+  AddBranch("BP"  , 0xf5); AddBranch("BV"  , 0xf6); AddBranch("BNV" , 0xf7);
+  AddBranch("BT"  , 0xf8); AddBranch("BNT" , 0xf9); AddBranch("BLT" , 0xfa);
+  AddBranch("BGE" , 0xfb); AddBranch("BLE" , 0xfc); AddBranch("BGT" , 0xfd);
   AddBranch("BLS" , 0xfe); AddBranch("BHI" , 0xff); AddBranch("BRA" , 0x60);
 
   AddIncDec("INC"  , 0x42); AddIncDec("INCW" , 0x43); AddIncDec("INCL" , 0x41);

@@ -30,10 +30,10 @@ Boolean InEnv, char *Arg
 
 typedef struct
 {
-  const char *Ident; 
+  const char *Ident;
   CMDCallback Callback;
 } CMDRec;
-         
+
 #define MAXPARAM 256
 typedef Boolean CMDProcessed[MAXPARAM + 1];
 

@@ -76,7 +76,7 @@ void Double_2_ieee4(Double inp, Byte *pDest, Boolean NeedsBig)
 #else
 # error define host floating point format
 #endif
-  if (BigEndian != NeedsBig)
+  if (HostBigEndian != NeedsBig)
     DSwap(pDest, 4);
 }
 
@@ -97,7 +97,7 @@ void Double_2_ieee8(Double inp, Byte *pDest, Boolean NeedsBig)
 #else
 # error define host floating point format
 #endif
-  if (BigEndian != NeedsBig)
+  if (HostBigEndian != NeedsBig)
     QSwap(pDest, 8);
 }
 
@@ -120,7 +120,7 @@ void Double_2_ieee10(Double inp, Byte *pDest, Boolean NeedsBig)
   Boolean Denormal;
 
   memcpy(Buffer, &inp, 8);
-  if (BigEndian)
+  if (HostBigEndian)
     QSwap(Buffer, 8);
   Sign = (Buffer[7] & 0x80);
   Exponent = (Buffer[6] >> 4) + (((Word) Buffer[7] & 0x7f) << 4);
@@ -232,7 +232,7 @@ Boolean Double_2_ieee2(Double inp, Byte *pDest, Boolean NeedsBig)
 #endif
 
  /* (2) Round-to-the-nearest for FP16: */
- 
+
    /* Bits 27..18 of fractional part of mantissa will make it into dest, so the decision bit is bit 17: */
 
    if (Mantissa & 0x20000ul) /* fraction is >= 0.5 */
@@ -240,7 +240,7 @@ Boolean Double_2_ieee2(Double inp, Byte *pDest, Boolean NeedsBig)
      if ((Mantissa & 0x1fffful) || Fraction) /* fraction is > 0.5 -> round up */
        RoundUp = True;
      else /* fraction is 0.5 -> round towards even, i.e. round up if mantissa is odd */
-       RoundUp = !!(Mantissa & 0x40000ul); 
+       RoundUp = !!(Mantissa & 0x40000ul);
    }
    else /* fraction is < 0.5 -> round down */
      RoundUp = False;
@@ -283,9 +283,9 @@ Boolean Double_2_ieee2(Double inp, Byte *pDest, Boolean NeedsBig)
       Exponent = -15;
 
     /* For denormal numbers, exponent is 2^(-14) and not 2^(-15)!
-       So if we end up with an exponent of 2^(-15), convert 
+       So if we end up with an exponent of 2^(-15), convert
        mantissa so it corresponds to 2^(-14): */
-      
+
     else if (Exponent == -15)
       Mantissa >>= 1;
 

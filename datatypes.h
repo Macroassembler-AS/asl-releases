@@ -49,7 +49,7 @@ typedef char Char;
 typedef double Double;
 typedef float Single;
 
-typedef Byte Boolean; 
+typedef Byte Boolean;
 
 #ifndef STRINGSIZE
 # define STRINGSIZE 256

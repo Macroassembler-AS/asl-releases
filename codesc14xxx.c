@@ -226,7 +226,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "DW", 0, DecodeDW);
   AddInstTable(InstTable, "DW16", 0, DecodeDW);
   AddInstTable(InstTable, "DS", 0, DecodeDS);
-  AddInstTable(InstTable, "DS8", 0, DecodeDS);  
+  AddInstTable(InstTable, "DS8", 0, DecodeDS);
   AddInstTable(InstTable, "DS16", 0, DecodeDS16);
 
   /* standard set */
@@ -361,7 +361,7 @@ static void InitFields(void)
   AddFixed("MEN2"     , 0xa7, M_14400 | M_14401                               | M_14420 | M_14421                    , 0x00, 0x00);
   AddFixed("M_RD"     , 0xa8, M_14400 | M_14401                               | M_14420 | M_14421                    , 0x00, 0xff);
   AddFixed("M_WRS"    , 0xb8, M_14400                                         | M_14420 | M_14421                    , 0x00, 0xff);
-  AddFixed("A_ALAW"   , 0xc3, M_14400 | M_14401                               | M_14420 | M_14421                    , 0x00, 0x00); 
+  AddFixed("A_ALAW"   , 0xc3, M_14400 | M_14401                               | M_14420 | M_14421                    , 0x00, 0x00);
   AddFixed("A_DT"     , 0xc4, M_14400 | M_14401                               | M_14420 | M_14421                    , 0x00, 0x00);
   AddFixed("A_LIN"    , 0xc8,                                                   M_14420 | M_14421                    , 0x00, 0x00);
   AddFixed("A_DT1"    , 0xcd,                                                   M_14420 | M_14421                    , 0x00, 0x00);

@@ -542,13 +542,13 @@ void ConvertMotoFloatDec(Double F, Byte *pDest, Boolean NeedsBig)
       DigIns(Exp[z], epos + 20, pDest);
   }
 
-  if (BigEndian)
+  if (HostBigEndian)
     WSwap(pDest, 12);
 }
 
 static void EnterByte(LargeWord b)
 {
-  if (((CodeLen & 1) == 1) && (!BigEndian) && (ListGran() != 1))
+  if (((CodeLen & 1) == 1) && (!HostBigEndian) && (ListGran() != 1))
   {
     BAsmCode[CodeLen    ] = BAsmCode[CodeLen - 1];
     BAsmCode[CodeLen - 1] = b;
@@ -862,7 +862,7 @@ void DecodeMotoDC(tSymbolSize OpSize, Boolean Turn)
       ConvertFloat = Double_2_ieee2_wrap;
       EnterFloat = EnterIEEE2;
       FloatTypeEnum = Float16;
-      Swap = WSwap;
+      Swap = NULL;
       break;
     case eSymbolSizeFloat32Bit:
       ConvertFloat = Double_2_ieee4;
@@ -887,7 +887,7 @@ void DecodeMotoDC(tSymbolSize OpSize, Boolean Turn)
       ConvertFloat = Double_2_ieee10;
       EnterFloat = EnterIEEE10;
       FloatTypeEnum = Float80;
-      Swap = WSwap;
+      Swap = TWSwap;
       break;
     case eSymbolSizeFloatDec96Bit:
       ConvertFloat = ConvertMotoFloatDec;
@@ -990,7 +990,7 @@ void DecodeMotoDC(tSymbolSize OpSize, Boolean Turn)
           break;
         HandleFloat:
         case TempFloat:
-          if ((!ConvertFloat) || (!EnterFloat))
+          if (!ConvertFloat || !EnterFloat)
           {
             WrStrErrorPos(ErrNum_StringOrIntButFloat, pArg);
             OK = False;
@@ -1009,8 +1009,8 @@ void DecodeMotoDC(tSymbolSize OpSize, Boolean Turn)
           {
             Word TurnField[8];
 
-            ConvertFloat(t.Contents.Float, (Byte *) TurnField, BigEndian);
-            if (BigEndian  && Swap)
+            ConvertFloat(t.Contents.Float, (Byte *) TurnField, HostBigEndian);
+            if (HostBigEndian && Swap)
               Swap((void*) TurnField, WSize);
             for (z2 = 0; z2 < Rep; z2++)
               EnterFloat(TurnField);
@@ -1035,8 +1035,8 @@ void DecodeMotoDC(tSymbolSize OpSize, Boolean Turn)
                   {
                     Word TurnField[8];
 
-                    ConvertFloat(CharTransTable[(usint) (*zp & 0xff)], (Byte *) TurnField, BigEndian);
-                    if ((BigEndian)  && (Swap))
+                    ConvertFloat(CharTransTable[(usint) (*zp & 0xff)], (Byte *) TurnField, HostBigEndian);
+                    if (HostBigEndian && Swap)
                       Swap((void*) TurnField, WSize);
                     EnterFloat(TurnField);
                   }

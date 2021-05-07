@@ -310,7 +310,7 @@ static Boolean DecodeCondition(int StartIndex, Word *Result, int *errindex, Bool
 {
   int z, z2;
   Word CurrClass, CurrMask;
-  
+
   *Result = CurrMask = 0; CurrClass = 0xffff; *ErrUnknown = False;
 
   for (z = StartIndex; z <= ArgCnt; z++)
@@ -555,7 +555,7 @@ static void DecodeADDSUB(Word Index)
             break;
         }
 
-	/* now start applying the variants */        
+	/* now start applying the variants */
 
         if (Shift == 255) /* TS case */
         {
@@ -573,7 +573,7 @@ static void DecodeADDSUB(Word Index)
           if (*AdrVals != DestAcc) WrError(ErrNum_InvAddrMode);
           else if (ThisPar) WrError(ErrNum_ParNotPossible);
           else
-          {   
+          {
             WAsmCode[0] |= 0xa000 | (Index << 9) | (DestAcc << 8);
             CodeLen = 1;
           }
@@ -910,7 +910,7 @@ static void DecodeMAC(Word Index)
       Word HMode = *AdrVals, HCnt = AdrCnt;
       if (AdrCnt)
         WAsmCode[1] = AdrVals[1];
-     
+
       /* syntax 2+4 have at least 3 operands, handle syntax 1 */
 
       if (ArgCnt == 2)
@@ -1014,7 +1014,7 @@ static void DecodeMACDP(Word Index)
 static void DecodeFIRS(Word Index)
 {
   (void)Index;
- 
+
   if (!ChkArgCnt(3, 3));
   else if (ThisPar) WrError(ErrNum_ParNotPossible);
   else if (DecodeAdr(&ArgStr[1], MModMem))
@@ -1267,7 +1267,7 @@ static void DecodeMAS(Word Index)
             else
               *WAsmCode |= ((*WAsmCode & 0x100) << 1);
             if (AdrMode != ModNone)
-              CodeLen = 1;            
+              CodeLen = 1;
           }
       }
     }
@@ -1375,7 +1375,7 @@ static void DecodeLog(Word Index)
 
       case ModImm:  /* Variant 2,3 */
         if (ChkArgCnt(2, 4))
-        {     
+        {
           WAsmCode[1] = *AdrVals;
           if (DecodeAdr(&ArgStr[ArgCnt], MModAcc))
           {
@@ -1566,7 +1566,7 @@ static void DecodeINTR(Word Index)
   else if (ThisPar) WrError(ErrNum_ParNotPossible);
   else if (LastRep) WrError(ErrNum_NotRepeatable);
   else
-  {   
+  {
     *WAsmCode = Index | EvalStrIntExpression(&ArgStr[1], UInt5, &OK);
     if (OK)
       CodeLen = 1;
@@ -1765,7 +1765,7 @@ static void DecodeLD(Word Index)
       }
     }
   }
-  
+
   else if (!as_strcasecmp(ArgStr[ArgCnt].Str, "DP"))
   {
     if (!ChkArgCnt(2, 2));
@@ -1795,7 +1795,7 @@ static void DecodeLD(Word Index)
     if (!ChkArgCnt(2, 2));
     else if (ThisPar) WrError(ErrNum_ParNotPossible);
     else
-    {   
+    {
       OpSize = UInt3;
       if (DecodeAdr(&ArgStr[1], MModImm))
       {
@@ -1835,7 +1835,7 @@ static void DecodeLD(Word Index)
           break;
         case ModImm:
           if (ChkArgCnt(2, 2))
-          {   
+          {
             WAsmCode[0] = 0xed00 | (AdrVals[0] & 0x1f);
             CodeLen = 1;
           }
@@ -1921,7 +1921,7 @@ static void DecodeLD(Word Index)
           {
             if (ThisPar) WrError(ErrNum_ParNotPossible);
             else
-            {   
+            {
               WAsmCode[0] |= 0x4400 | AdrVals[0];
               if (AdrCnt)
                 WAsmCode[1] = AdrVals[1];
@@ -2132,7 +2132,7 @@ static void DecodeSTLH(Word Index)
   else if (DecodeAdr(&ArgStr[1], MModAcc))
   {
     *WAsmCode = Index | (*AdrVals << 8);
-    OK = True; 
+    OK = True;
     if (ArgCnt == 2)
       Shift = 0;
     else if (!as_strcasecmp(ArgStr[2].Str, "ASM"))
@@ -2285,7 +2285,7 @@ static void DecodeMVdmadmmr(Word Index)
       *WAsmCode = Index | *AdrVals;
       WAsmCode[1] = EvalStrIntExpressionWithResult(pArg1, UInt16, &EvalResult);
       if (EvalResult.OK)
-      { 
+      {
         ChkSpace(SegData, EvalResult.AddrSpaceMask);
         CodeLen = 2;
       }
@@ -2760,7 +2760,7 @@ static void SwitchTo_32054x(void)
 
   MakeCode = MakeCode_32054x;
   IsDef = IsDef_32054x;
-  
+
   pASSUMERecs = ASSUME3254xs;
   ASSUMERecCnt = ASSUME3254xCount;
 

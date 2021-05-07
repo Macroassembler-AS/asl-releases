@@ -187,7 +187,7 @@ static Boolean DecodeAdr(const tStrComp *pArg)
       }
     }
     return False;
-  }  
+  }
 
   if (DecodeReg(pArg, &AdrPart))
     return True;
@@ -225,7 +225,7 @@ static Boolean DecodeBitField(tStrComp *pArg, Word *pResult)
 
 static void PutByte(Byte Value)
 {
-  if ((CodeLen & 1) && (!BigEndian))
+  if ((CodeLen & 1) && !HostBigEndian)
   {
     BAsmCode[CodeLen] = BAsmCode[CodeLen - 1];
     BAsmCode[CodeLen - 1] = Value;
@@ -264,7 +264,7 @@ static Boolean DecodeCond(const tStrComp *pArg, Word *pResult)
   const char *pConds[] =
     { "EQ", "NE", "HE", "L", "GE", "LT", "LE", "H", "LTE", "GT", NULL },
   **pRun;
-  
+
   for (pRun = pConds; *pRun; pRun++)
     if (!as_strcasecmp(pArg->Str, *pRun))
     {
@@ -283,7 +283,7 @@ static void CheckSupMode(void)
   if (!SupAllowed && (pCurrCPUProps->CoreFlags & eCoreFlagSupMode))
     WrError(ErrNum_PrivOrder);
 }
- 
+
 static Boolean CheckCore(Byte CoreReqFlags)
 {
   if (!(CoreReqFlags & pCurrCPUProps->CoreFlags))
@@ -480,7 +480,7 @@ static void DecodeType16(Word Index)
    && DecodeBitField(&ArgStr[3], &BitField))
   {
     Word AdrCnt1 = AdrCnt;
-    
+
     WAsmCode[0] = pOrder->Code | (BitField & 0x000f);
     WAsmCode[1] = (BitField & 0xf000) | AdrPart;
     WAsmCode[2] = AdrVal;
@@ -500,7 +500,7 @@ static void DecodeMOVA(Word Code)
    && DecodeAdr(&ArgStr[1]))
   {
     Word AdrCnt1 = AdrCnt;
-    
+
     WAsmCode[0] = Code;
     WAsmCode[1] = AdrPart;
     WAsmCode[2] = AdrVal;
@@ -517,14 +517,14 @@ static void DecodeType20(Word Index)
 {
   const tOrder *pOrder = &Type20Orders[Index];
   Word Condition;
-  
+
   if (ChkArgCnt(3, 3)
    && CheckCore(pOrder->Flags & eCoreAll)
    && DecodeCond(&ArgStr[1], &Condition)
    && DecodeAdr(&ArgStr[2]))
   {
     Word AdrCnt1 = AdrCnt;
-    
+
     WAsmCode[0] = pOrder->Code;
     WAsmCode[1] = AdrPart | (Condition << 12);
     WAsmCode[2] = AdrVal;
@@ -547,7 +547,7 @@ static void DecodeType17(Word Index)
   {
     Word Delta, Dist;
     Boolean OK;
-    
+
     if ((ArgCnt == 3) && *ArgStr[2].Str)
       Delta = EvalStrIntExpression(&ArgStr[2], UInt4, &OK);
     else
@@ -973,7 +973,7 @@ static void DecodeFLOAT(Word DestLen)
 static void DecodeBSS(Word Code)
 {
   Boolean OK;
-  Word HVal16;  
+  Word HVal16;
   tSymbolFlags Flags;
 
   UNUSED(Code);

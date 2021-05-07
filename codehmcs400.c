@@ -163,7 +163,7 @@ static void DecodeAdr(const tStrComp *pArg, Word Mask)
   if (EvalResult.OK)
   {
     if (!mFirstPassUnknown(EvalResult.Flags) && (AdrVal > SegLimits[SegData])) WrError(ErrNum_OverRange);
-    else   
+    else
     {
       AdrMode = ModDir;
       AdrVal &= IntTypeDefs[DataIntType].Mask;
@@ -171,15 +171,15 @@ static void DecodeAdr(const tStrComp *pArg, Word Mask)
     }
     goto AdrFound;
   }
-      
+
 
 AdrFound:
 
   if ((AdrMode != ModNone) && (!(Mask & (1 << AdrMode))))
-  {    
+  {
     WrError(ErrNum_InvAddrMode);
     AdrMode = ModNone; AdrCnt = 0;
-  } 
+  }
 }
 
 /*-------------------------------------------------------------------------*/
@@ -457,7 +457,7 @@ static void DecodeADD(Word Code)
   if (ChkArgCnt(2, 2))
   {
     DecodeAdr(&ArgStr[2], MModA | MModY);
-    switch (AdrMode)  
+    switch (AdrMode)
     {
       case ModA:
         DecodeAdr(&ArgStr[1], MModImm | MModM | MModDir);
@@ -495,7 +495,7 @@ static void DecodeADC(Word Code)
   if (ChkArgCnt(2, 2))
   {
     DecodeAdr(&ArgStr[2], MModA);
-    switch (AdrMode)  
+    switch (AdrMode)
     {
       case ModA:
         DecodeAdr(&ArgStr[1], MModM | MModDir);
@@ -521,7 +521,7 @@ static void DecodeSUB(Word Code)
   if (ChkArgCnt(2, 2))
   {
     DecodeAdr(&ArgStr[2], MModY);
-    switch (AdrMode)  
+    switch (AdrMode)
     {
       case ModY:
         DecodeAdr(&ArgStr[1], MModA);
@@ -543,7 +543,7 @@ static void DecodeSBC(Word Code)
   if (ChkArgCnt(2, 2))
   {
     DecodeAdr(&ArgStr[2], MModA);
-    switch (AdrMode)  
+    switch (AdrMode)
     {
       case ModA:
         DecodeAdr(&ArgStr[1], MModM | MModDir);
@@ -571,7 +571,7 @@ static void DecodeOR(Word Code)
   else if (ChkArgCnt(2, 2))
   {
     DecodeAdr(&ArgStr[2], MModA);
-    switch (AdrMode)  
+    switch (AdrMode)
     {
       case ModA:
         DecodeAdr(&ArgStr[1], MModB | MModM | MModDir);
@@ -600,7 +600,7 @@ static void DecodeAND(Word Code)
   if (ChkArgCnt(2, 2))
   {
     DecodeAdr(&ArgStr[2], MModA);
-    switch (AdrMode)  
+    switch (AdrMode)
     {
       case ModA:
         DecodeAdr(&ArgStr[1], MModM | MModDir);
@@ -626,7 +626,7 @@ static void DecodeEOR(Word Code)
   if (ChkArgCnt(2, 2))
   {
     DecodeAdr(&ArgStr[2], MModA);
-    switch (AdrMode)  
+    switch (AdrMode)
     {
       case ModA:
         DecodeAdr(&ArgStr[1], MModM | MModDir);
@@ -992,24 +992,24 @@ static void InitFields(void)
   AddInstTable(InstTable, "AMC",    0x018, CodeFixed);
   AddInstTable(InstTable, "SMC",    0x098, CodeFixed);
   AddInstTable(InstTable, "ANM",    0x09c, CodeFixed);
-  AddInstTable(InstTable, "ORM",    0x00c, CodeFixed); 
-  AddInstTable(InstTable, "EORM",   0x01c, CodeFixed); 
-  AddInstTable(InstTable, "ANEM",   0x004, CodeFixed); 
-  AddInstTable(InstTable, "BNEM",   0x044, CodeFixed); 
-  AddInstTable(InstTable, "ALEM",   0x014, CodeFixed); 
-  AddInstTable(InstTable, "BLEM",   0x0c4, CodeFixed); 
-  AddInstTable(InstTable, "RTN",    0x010, CodeFixed); 
-  AddInstTable(InstTable, "RTNI",   0x011, CodeFixed); 
-  AddInstTable(InstTable, "SED",    0x0e4, CodeFixed); 
-  AddInstTable(InstTable, "RED",    0x064, CodeFixed); 
-  AddInstTable(InstTable, "TD",     0x0e0, CodeFixed); 
-  AddInstTable(InstTable, "NOP",    0x000, CodeFixed); 
-  AddInstTable(InstTable, "SBY",    0x14c, CodeFixed); 
+  AddInstTable(InstTable, "ORM",    0x00c, CodeFixed);
+  AddInstTable(InstTable, "EORM",   0x01c, CodeFixed);
+  AddInstTable(InstTable, "ANEM",   0x004, CodeFixed);
+  AddInstTable(InstTable, "BNEM",   0x044, CodeFixed);
+  AddInstTable(InstTable, "ALEM",   0x014, CodeFixed);
+  AddInstTable(InstTable, "BLEM",   0x0c4, CodeFixed);
+  AddInstTable(InstTable, "RTN",    0x010, CodeFixed);
+  AddInstTable(InstTable, "RTNI",   0x011, CodeFixed);
+  AddInstTable(InstTable, "SED",    0x0e4, CodeFixed);
+  AddInstTable(InstTable, "RED",    0x064, CodeFixed);
+  AddInstTable(InstTable, "TD",     0x0e0, CodeFixed);
+  AddInstTable(InstTable, "NOP",    0x000, CodeFixed);
+  AddInstTable(InstTable, "SBY",    0x14c, CodeFixed);
   AddInstTable(InstTable, "STOP",   0x14d, CodeFixed);
 
   AddInstTable(InstTable, "LAI",    0x230, CodeImm);
-  AddInstTable(InstTable, "LBI",    0x200, CodeImm);  
-  AddInstTable(InstTable, "LMIIY",  0x290, CodeImm);  
+  AddInstTable(InstTable, "LBI",    0x200, CodeImm);
+  AddInstTable(InstTable, "LMIIY",  0x290, CodeImm);
   AddInstTable(InstTable, "LWI",   0x80f0, CodeImm);
   AddInstTable(InstTable, "LXI",    0x220, CodeImm);
   AddInstTable(InstTable, "LYI",    0x210, CodeImm);

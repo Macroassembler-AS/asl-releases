@@ -217,7 +217,7 @@ void AddCite(const char *pName, const char *pValue)
  * \brief  retrieve value of citation
  * \param  pName name of citation
  * \param  pDest result buffer
- * \return 
+ * \return
  * ------------------------------------------------------------------------ */
 
 void GetCite(char *pName, char *pDest)

@@ -778,7 +778,7 @@ static tAdrMode DecodeAdr(const tStrComp *pArg, unsigned ModeMask, tAdrVals *pAd
     if (OK)
     {
       /* Immediate: is the same coding as indirect, however with register field = 0.
-         This why register 0 is not allowed for indirect mode. 
+         This why register 0 is not allowed for indirect mode.
          As an exception, immediate value is placed in pAdrVals->Val for bit number: */
 
       pAdrVals->Mode = eModImm;
@@ -2773,7 +2773,7 @@ static void DecodePUSH_POP(Word Code)
    && DecodeAdr(&ArgStr[RegArg], MModIReg, &RegAdrVals))
   {
     tAdrVals OpAdrVals;
-    
+
     ImmOpSize = (OpSize == eSymbolSizeUnknown) ? eSymbolSize16Bit : OpSize;
     if (DecodeAdr(&ArgStr[OpArg], MModReg | MModIReg | MModDirect | MModIndexed | (IsPOP ? 0 : MModImm), &OpAdrVals))
     {

@@ -20,7 +20,7 @@
 #include "asmpars.h"
 #include "asmallg.h"
 #include "asmitree.h"
-#include "codepseudo.h" 
+#include "codepseudo.h"
 #include "intpseudo.h"
 #include "motpseudo.h"
 #include "codevars.h"
@@ -55,7 +55,7 @@
 #define eSymbolSize4Bit ((tSymbolSize)-2)
 
 typedef struct
-{   
+{
   Byte SizeMask;
   Byte Code;
 } RegOrder;
@@ -1362,7 +1362,7 @@ static void DecodeADDSMOVS(Word Index)
             break;
         }
         break;
-    } 
+    }
   }
 }
 
@@ -1948,7 +1948,7 @@ static void MakeCode_XA(void)
        ((*LabPart.Str != '\0') ||((ArgCnt == 1) && (!strcmp(ArgStr[1].Str, "$")))) )
   {
     ForceAlign();
-    if (*LabPart.Str != '\0') 
+    if (*LabPart.Str != '\0')
       EnterIntSymbol(&LabPart, EProgCounter() + CodeLen, ActPC, False);
   }
 
@@ -2021,7 +2021,7 @@ static void SetInv(const char *Name1, const char *Name2, InvOrder *Orders)
 
 static void InitFields(void)
 {
-  InstTable = CreateInstTable(201); 
+  InstTable = CreateInstTable(201);
   AddInstTable(InstTable, "MOV"  , 0, DecodeMOV);
   AddInstTable(InstTable, "MOVC" , 0, DecodeMOVC);
   AddInstTable(InstTable, "MOVX" , 0, DecodeMOVX);

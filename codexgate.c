@@ -137,7 +137,7 @@ static void DecodeBranch(Word Index)
   tSymbolFlags Flags;
 
   if (ChkArgCnt(1, 1))
-  {   
+  {
     Dist = EvalStrIntExpressionWithFlags(&ArgStr[1], UInt16, &OK, &Flags) - (EProgCounter() + 2);
     if (OK)
     {
@@ -155,27 +155,27 @@ static void DecodeBranch(Word Index)
 static void DecodeBRA(Word Index)
 {
   LongInt Dist;
-  Boolean OK;  
+  Boolean OK;
   tSymbolFlags Flags;
 
   UNUSED(Index);
 
   if (ChkArgCnt(1, 1))
-  {   
+  {
     Dist = EvalStrIntExpressionWithFlags(&ArgStr[1], UInt16, &OK, &Flags) - (EProgCounter() + 2);
     if (OK)
     {
       if (!mSymbolQuestionable(Flags) && (Dist & 1)) WrError(ErrNum_NotAligned);
       else if (!mSymbolQuestionable(Flags) && ((Dist < -1024) || (Dist > 1022))) WrError(ErrNum_NotAligned);
       else
-      {   
+      {
         WAsmCode[0] = 0x3c00 | ((Dist >> 1) & 0x03ff);
         CodeLen = 2;
       }
-    }  
-  }    
-}      
-       
+    }
+  }
+}
+
 static void DecodeShift(Word Index)
 {
   Word DReg, SReg;
@@ -345,7 +345,7 @@ static void DecodeReg1(Word Index)
   Word Reg;
 
   if (ChkArgCnt(1, 1) && DecodeArgReg(1, &Reg))
-  {   
+  {
     WAsmCode[0] = Index | (Reg << 8);
     CodeLen = 2;
   }
@@ -356,7 +356,7 @@ static void DecodeTST(Word Index)
   Word Reg;
 
   if (ChkArgCnt(1, 1) && DecodeArgReg(1, &Reg))
-  {   
+  {
     WAsmCode[0] = Index | (Reg << 5);
     CodeLen = 2;
   }
@@ -378,7 +378,7 @@ static void DecodeSem(Word Index)
     }
   }
   else if (DecodeArgReg(1, &Reg))
-  {   
+  {
     WAsmCode[0] = Index | (Reg << 8) | 1;
     CodeLen = 2;
   }
@@ -430,7 +430,7 @@ static void DecodeTFR(Word Index)
     }
     else
       OK = False;
-    
+
     if (!OK) WrError(ErrNum_OverRange);
     else if (DecodeArgReg(RegIdx, &Reg))
     {
@@ -445,7 +445,7 @@ static void DecodeCmp(Word Index)
   Word DReg, Src;
   Boolean OK;
 
-  UNUSED(Index);  
+  UNUSED(Index);
 
   if (ChkArgCnt(2, 2) && DecodeArgReg(1, &DReg))
   {
@@ -629,7 +629,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "BFINSX", 0x7803, DecodeReg3);
 
   AddInstTable(InstTable, "ADC"  , 0x1803, DecodeReg23);
-  AddInstTable(InstTable, "SBC"  , 0x1801, DecodeReg23); 
+  AddInstTable(InstTable, "SBC"  , 0x1801, DecodeReg23);
 
   AddInstTable(InstTable, "CPC"  , 0x1801, DecodeCPC);
   AddInstTable(InstTable, "MOV"  , 0x1002, DecodeMOV);
@@ -654,7 +654,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "CMP"  , 0     , DecodeCmp);
 
   AddInstTable(InstTable, "LDB"  , 0x4000, DecodeMem);
-  AddInstTable(InstTable, "LDW"  , 0x4800, DecodeMem); 
+  AddInstTable(InstTable, "LDW"  , 0x4800, DecodeMem);
   AddInstTable(InstTable, "STB"  , 0x5000, DecodeMem);
   AddInstTable(InstTable, "STW"  , 0x5800, DecodeMem);
 
@@ -749,7 +749,7 @@ static void SwitchTo_XGATE(void)
 }
 
 /*--------------------------------------------------------------------------*/
-/* Initialisierung */  
+/* Initialisierung */
 
 void codexgate_init(void)
 {

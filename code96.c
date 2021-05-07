@@ -16,7 +16,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmitree.h"
-#include "codepseudo.h" 
+#include "codepseudo.h"
 #include "intpseudo.h"
 #include "codevars.h"
 #include "errmsg.h"
@@ -293,7 +293,7 @@ static void DecodeAdr(const tStrComp *pArg, Byte Mask, Boolean AddrWide)
         if ((!(BReg & 0xffff0000)) && ChkWork(&BReg) && !ForceSize)
         {
           AdrType = ModDir;
-          AdrCnt = 1; 
+          AdrCnt = 1;
           AdrVals[0] = Lo(BReg);
         }
         else if (AddrWide)
@@ -302,7 +302,7 @@ static void DecodeAdr(const tStrComp *pArg, Byte Mask, Boolean AddrWide)
           AdrMode = 3;
           AdrCnt = 4;
           AdrVals[0] = 0;
-          AdrVals[1] = AdrWord & 0xff; 
+          AdrVals[1] = AdrWord & 0xff;
           AdrVals[2] = (AdrWord >> 8) & 0xff;
           AdrVals[3] = (AdrWord >> 16) & 0xff;
         }
@@ -820,7 +820,7 @@ static void DecodeMac(Word Code)
         BAsmCode[HReg] = Lo(Code);
         CodeLen = 1 + HReg;
       }
-    }  
+    }
   }
 }
 
@@ -848,9 +848,9 @@ static void DecodeMVAC_MSAC(Word Code)
           if (AdrVals[0] < 32) WrError(ErrNum_UnderRange);
           else CodeLen = 3;
       }
-    } 
-  }      
-}        
+    }
+  }
+}
 
 static void DecodeRpt(Word Code)
 {
@@ -862,7 +862,7 @@ static void DecodeRpt(Word Code)
     if (AdrType != ModNone)
     {
       if (AdrMode == 3) WrError(ErrNum_InvAddrMode);
-      else   
+      else
       {
         BAsmCode[0] = 0x40 + AdrMode;
         memcpy(BAsmCode + 1, AdrVals, AdrCnt);
@@ -1089,7 +1089,7 @@ static void DecodeECALL(Word Code)
     {
       BAsmCode[0] = 0xf1;
       BAsmCode[1] = AdrInt & 0xff;
-      BAsmCode[2] = (AdrInt >> 8) & 0xff; 
+      BAsmCode[2] = (AdrInt >> 8) & 0xff;
       BAsmCode[3] = (AdrInt >> 16) & 0xff;
       CodeLen = 4;
     }
@@ -1130,8 +1130,8 @@ static void DecodeEJMP_EBR(Word Code)
       BAsmCode[3] = (AdrInt >> 16) & 0xff;
       CodeLen = 4;
     }
-  }  
-}    
+  }
+}
 
 /*---------------------------------------------------------------------------*/
 
@@ -1290,7 +1290,7 @@ static void InitFields(void)
   AddRel("JVT"  , 0xdc);
 
   AddMac("MAC"   , 0x00, False); AddMac("SMAC"  , 0x01, False);
-  AddMac("MACR"  , 0x04, True ); AddMac("SMACR" , 0x05, True ); 
+  AddMac("MACR"  , 0x04, True ); AddMac("SMACR" , 0x05, True );
   AddMac("MACZ"  , 0x08, False); AddMac("SMACZ" , 0x09, False);
   AddMac("MACRZ" , 0x0c, True ); AddMac("SMACRZ", 0x0d, True );
 

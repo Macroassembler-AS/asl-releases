@@ -564,7 +564,7 @@ static Boolean DecodeBitAdr(Boolean MayShort, tAdrResult *pResult)
   if (!Pos1)
   {
     DecodeDisp(&ArgStr[ArgCnt], UInt16, UInt13, &DispAcc, &OK);
-    if (OK && (DispAcc < 0x10000))     /* RMS 09: This is optional, it detects rollover of the bit address. */ 
+    if (OK && (DispAcc < 0x10000))     /* RMS 09: This is optional, it detects rollover of the bit address. */
     {
       pResult->Mode = 15;
       pResult->Vals[0] = DispAcc & 0xff;
@@ -1455,7 +1455,7 @@ static void DecodeCMP(Word Code)
    && CheckFormat("GQS"))
   {
     tAdrResult DestAdrResult, SrcAdrResult;
-    
+
     if ((DecodeAdr(&ArgStr[2], MModGen, &DestAdrResult) != ModNone)
      && (DecodeAdr(&ArgStr[1], MModImm | MModGen, &SrcAdrResult) != ModNone))
     {
@@ -1502,7 +1502,7 @@ static void DecodeCMP(Word Code)
               }
               /* else? */
             }
-            break; 
+            break;
           case 3:
             if (OpSize != 0) WrError(ErrNum_InvOpSize);
             else if (!IsShort(DestAdrResult.Mode, &SMode)) WrError(ErrNum_InvAddrMode);
@@ -1540,7 +1540,7 @@ static void DecodeSUB(Word Code)
    && CheckFormat("GQS"))
   {
     tAdrResult DestAdrResult, SrcAdrResult;
-    
+
     if ((DecodeAdr(&ArgStr[2], MModGen, &DestAdrResult) != ModNone)
      && (DecodeAdr(&ArgStr[1], MModImm | MModGen, &SrcAdrResult) != ModNone))
     {
@@ -1619,7 +1619,7 @@ static void DecodeGen1(Word Code)
    && CheckFormat("G"))
   {
     tAdrResult AdrResult;
-    
+
     if (DecodeAdr(&ArgStr[1], MModGen, &AdrResult) != ModNone)
     {
       if (OpSize == eSymbolSizeUnknown) WrError(ErrNum_UndefOpSizes);
@@ -1643,7 +1643,7 @@ static void DecodeGen2(Word Index)
    && CheckFormat("G"))
   {
     tAdrResult DestAdrResult, SrcAdrResult;
-    
+
     if ((DecodeAdr(&ArgStr[2], MModGen, &DestAdrResult) != ModNone)
      && (DecodeAdr(&ArgStr[1], MModGen | MModImm, &SrcAdrResult) != ModNone))
     {
@@ -1664,7 +1664,7 @@ static void DecodeINC_DEC(Word IsDEC)
    && CheckFormat("G"))
   {
     tAdrResult AdrResult;
-    
+
     if (DecodeAdr(&ArgStr[1], MModGen, &AdrResult) != ModNone)
     {
       if (OpSize == eSymbolSizeUnknown) WrError(ErrNum_UndefOpSizes);
@@ -1693,7 +1693,7 @@ static void DecodeDiv(Word Index)
    && CheckFormat("G"))
   {
     tAdrResult AdrResult;
-    
+
     if (DecodeAdr(&ArgStr[1], MModImm | MModGen, &AdrResult) != ModNone)
     {
       if (OpSize == eSymbolSizeUnknown) WrError(ErrNum_UndefOpSizes);
@@ -1721,14 +1721,14 @@ static void DecodeBCD(Word Code)
   if (ChkArgCnt(2, 2))
   {
     tAdrResult DestAdrResult;
-    
+
     if (DecodeAdr(&ArgStr[2], MModGen, &DestAdrResult) != ModNone)
     {
       if (DestAdrResult.Mode != 0) WrError(ErrNum_InvAddrMode);
       else
       {
         tAdrResult SrcAdrResult;
-        
+
         if (DecodeAdr(&ArgStr[1], MModGen | MModImm, &SrcAdrResult) != ModNone)
         {
           if (SrcAdrResult.Type == ModImm)
@@ -1759,7 +1759,7 @@ static void DecodeEXTS(Word Code)
    && CheckFormat("G"))
   {
     tAdrResult AdrResult;
-    
+
     if (DecodeAdr(&ArgStr[1], MModGen, &AdrResult) != ModNone)
     {
       if (OpSize == eSymbolSizeUnknown) OpSize = 0;
@@ -1799,7 +1799,7 @@ static void DecodeNOT(Word Code)
    && CheckFormat("GS"))
   {
     tAdrResult AdrResult;
-    
+
     if (DecodeAdr(&ArgStr[1], MModGen, &AdrResult) != ModNone)
     {
       if (OpSize == eSymbolSizeUnknown) WrError(ErrNum_UndefOpSizes);
@@ -1845,7 +1845,7 @@ static void DecodeAND_OR(Word IsOR)
    && CheckFormat("GS"))        /* RMS 01: The format codes are G and S, not G and Q */
   {
     tAdrResult DestAdrResult, SrcAdrResult;
-    
+
     if ((DecodeAdr(&ArgStr[2], MModGen, &DestAdrResult) != ModNone)
      && (DecodeAdr(&ArgStr[1], MModGen | MModImm, &SrcAdrResult) != ModNone))
     {
@@ -1912,7 +1912,7 @@ static void DecodeROT(Word Code)
    && CheckFormat("G"))
   {
     tAdrResult DestAdrResult;
-    
+
     if (DecodeAdr(&ArgStr[2], MModGen, &DestAdrResult) != ModNone)
     {
       if (OpSize == eSymbolSizeUnknown) WrError(ErrNum_UndefOpSizes);
@@ -1920,7 +1920,7 @@ static void DecodeROT(Word Code)
       else
       {
         tAdrResult SrcAdrResult;
-        
+
         OpSize2 = OpSize;
         OpSize = 0;
         if (DecodeAdr(&ArgStr[1], MModGen | MModImm, &SrcAdrResult) == ModGen)
@@ -1961,7 +1961,7 @@ static void DecodeSHA_SHL(Word IsSHA)
    && CheckFormat("G"))
   {
     tAdrResult DestAdrResult;
-    
+
     if (DecodeAdr(&ArgStr[2], MModGen | MModReg32, &DestAdrResult) != ModNone)
     {
       if (OpSize == eSymbolSizeUnknown) WrError(ErrNum_UndefOpSizes);
@@ -1969,7 +1969,7 @@ static void DecodeSHA_SHL(Word IsSHA)
       else
       {
         tAdrResult SrcAdrResult;
-        
+
         OpSize2 = OpSize; OpSize = 0;
         if (DecodeAdr(&ArgStr[1], MModImm | MModGen, &SrcAdrResult) == ModGen)
         {
@@ -2024,7 +2024,7 @@ static void DecodeBit(Word Code)
   if (CheckFormat(MayShort ? "GS" : "G"))
   {
     tAdrResult AdrResult;
-    
+
     if (DecodeBitAdr((FormatCode != 1) && MayShort, &AdrResult))
     {
       if (AdrResult.Mode >= 16)
@@ -2079,7 +2079,7 @@ static void DecodeJMP(Word Code)
                If it's an unknown symbol, make PC+1 the "safe" value, otherwise
                the user will get OUT OF RANGE errors on every attempt to use JMP.S
                Since the instruction can only branch forward, and AS stuffs the PC
-               back for a "temp" forward reference value, the range-checking will 
+               back for a "temp" forward reference value, the range-checking will
                always fail.
 
                One side-effect also is that for auto-determination purposes, one
@@ -2104,14 +2104,14 @@ static void DecodeJMP(Word Code)
     }
     /*
        The following code is to deal with a silicon bug in the first generation of
-       M16C CPUs (the so-called M16C/60 group).  It has been observed that this 
+       M16C CPUs (the so-called M16C/60 group).  It has been observed that this
        silicon bug has been fixed as of the M16C/61, so we disable JMP.S promotion
        to JMP.B when the target crosses a 64k boundary for those CPUs.
-       
+
        Since M16C is a "generic" specification, we do JMP.S promotion for that
        CPU specification, as follows:
 
-         RMS 11: According to Mitsubishi App Note M16C-06-9612 
+         RMS 11: According to Mitsubishi App Note M16C-06-9612
          JMP.S cannot cross a 64k boundary.. so trim up to JMP.B
 
        It is admittedly a very low likelihood of occurrence [JMP.S has only 8
@@ -2122,7 +2122,7 @@ static void DecodeJMP(Word Code)
     */
     if ((MomCPU == CPUM16C) || (MomCPU == CPUM30600M8))
     {
-      if (OpSize == 4) 
+      if (OpSize == 4)
       {
         if ( (AdrLong & 0x0f0000) != (((int)EProgCounter()) & 0x0f0000) )
           OpSize = 0;
@@ -2130,8 +2130,8 @@ static void DecodeJMP(Word Code)
     }
     switch (OpSize)
     {
-      case 4:         
-        if (((Diff < 1) || (Diff > 9)) && !mSymbolQuestionable(Flags) ) WrError(ErrNum_JmpDistTooBig); 
+      case 4:
+        if (((Diff < 1) || (Diff > 9)) && !mSymbolQuestionable(Flags) ) WrError(ErrNum_JmpDistTooBig);
         else
         {
           if (Diff == 1)
@@ -2224,7 +2224,7 @@ static void DecodeJMPI_JSRI(Word Code)
    && CheckFormat("G"))
   {
     tAdrResult AdrResult;
-    
+
     if (OpSize == 7)
       OpSize = 2;
     DecodeAdr(&ArgStr[1], MModGen | MModDisp20 | MModReg32| MModAReg32, &AdrResult);
@@ -2259,7 +2259,7 @@ static void DecodeJMPS_JSRS(Word Code)
   if (ChkArgCnt(1, 1))
   {
     tAdrResult AdrResult;
-    
+
     OpSize = 0;
     if (DecodeAdr(&ArgStr[1], MModImm, &AdrResult) != ModNone)
     {
@@ -2282,7 +2282,7 @@ static void DecodeADJNZ_SBJNZ(Word IsSBJNZ)
    && CheckFormat("G"))
   {
     tAdrResult DestAdrResult;
-    
+
     if (DecodeAdr(&ArgStr[2], MModGen, &DestAdrResult) != ModNone)
     {
       ShortInt OpSize2;
@@ -2351,7 +2351,7 @@ static void DecodeINT(Word Code)
 static void DecodeBM(Word Code)
 {
   tAdrResult AdrResult;
-  
+
   if ((ArgCnt == 1) && (!as_strcasecmp(ArgStr[1].Str, "C")))
   {
     BAsmCode[0] = 0x7d;
@@ -2701,7 +2701,7 @@ static Boolean DecodeAttrPart_M16C(void)
     case 'D': AttrPartOpSize = eSymbolSizeFloat32Bit; break;
     case 'X': AttrPartOpSize = eSymbolSizeFloat64Bit; break;
     case 'A': AttrPartOpSize = eSymbolSizeFloat96Bit; break;
-    default: 
+    default:
       WrStrErrorPos(ErrNum_UndefAttr, &AttrPart); return False;
   }
   return True;

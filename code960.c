@@ -183,7 +183,7 @@ static Boolean DecodeFPRegCore(const char *pArg, LongWord *pResult)
   if (!as_strncasecmp(pArg, "FP", 2))
   {
     char *pEnd;
-    
+
     *pResult = strtoul(pArg + 2, &pEnd, 10);
     if (!*pEnd && (*pResult <= 3))
       return True;
@@ -234,7 +234,7 @@ static void DissectReg_960(char *pDest, size_t DestSize, tRegInt Value, tSymbolS
  * \param  MustBeReg True if register is expected
  * \return reg eval result
  * ------------------------------------------------------------------------ */
-      
+
 static tRegEvalResult DecodeIReg(const tStrComp *pArg, LongWord *pResult, Boolean MustBeReg)
 {
   if (DecodeIRegCore(pArg->Str, pResult))
@@ -254,7 +254,7 @@ static tRegEvalResult DecodeIReg(const tStrComp *pArg, LongWord *pResult, Boolea
     return RegEvalResult;
   }
 }
-      
+
 /*!------------------------------------------------------------------------
  * \fn     DecodeIOrFPReg(const tStrComp *pArg, LongWord *pResult, tSymbolSize *pSize, Boolean MustBeReg)
  * \brief  check whether argument is a CPU/FPU register or register alias
@@ -264,7 +264,7 @@ static tRegEvalResult DecodeIReg(const tStrComp *pArg, LongWord *pResult, Boolea
  * \param  MustBeReg True if register is expected
  * \return reg eval result
  * ------------------------------------------------------------------------ */
-      
+
 static tRegEvalResult DecodeIOrFPReg(const tStrComp *pArg, LongWord *pResult, tSymbolSize *pSize, Boolean MustBeReg)
 {
   if (DecodeIRegCore(pArg->Str, pResult))
@@ -293,7 +293,7 @@ static tRegEvalResult DecodeIOrFPReg(const tStrComp *pArg, LongWord *pResult, tS
     return RegEvalResult;
   }
 }
-      
+
 static Boolean DecodeAdr(const tStrComp *pArg, Byte Mask, OpType Type, LongWord *Erg, LongWord *Mode)
 {
   Double FVal;
@@ -411,7 +411,7 @@ static int DecodeMem(const tStrComp *pArg, LongWord *Erg, LongWord *Ext)
         }
         if (DecodeIReg(&RegArg, &Index, True) != eIsReg)
           return -1;
-        
+
         break;
       case ')':
         if (Base != NOREG) return AddrError(ErrNum_InvAddrMode);

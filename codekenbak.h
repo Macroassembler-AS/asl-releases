@@ -9,7 +9,7 @@
 /* Codegenerator KENBAK(-1)                                                  */
 /*                                                                           */
 /*****************************************************************************/
- 
+
 extern void codekenbak_init(void);
 
 #endif /* _CODEKENBAK_H */

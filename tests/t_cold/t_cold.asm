@@ -89,7 +89,7 @@
 		cmpi.b		#$55,d3
 		cmpi.w		#$6666,d3
 
-		intouch		(a4)		; $f42(1|reg) 
+		intouch		(a4)		; $f42(1|reg)
 
 		mov3q		#-1,d3		; %1010 iii1 01ee eaaa
 		mov3q.l		#-1,d3

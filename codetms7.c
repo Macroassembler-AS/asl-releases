@@ -18,7 +18,7 @@
 #include "asmdef.h"
 #include "asmsub.h"
 #include "asmpars.h"
-#include "asmitree.h"  
+#include "asmitree.h"
 #include "intpseudo.h"
 #include "codevars.h"
 #include "errmsg.h"
@@ -576,7 +576,7 @@ static void DecodeMOV(Word IsMOVP)
       case ModReg:
         BAsmCode[1] = BAsmCode[2] = AdrVals[0];
         DecodeAdr(&ArgStr[1], MModAccA | MModAccB | MModReg | MModPort | MModImm);
-        switch (AdrType) 
+        switch (AdrType)
         {
           case ModAccA:
             BAsmCode[0] = 0xd0;

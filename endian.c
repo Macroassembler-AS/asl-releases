@@ -16,13 +16,20 @@
 
 /*****************************************************************************/
 
-Boolean BigEndian;
+Boolean HostBigEndian;
 
 const char *Integ16Format, *Integ32Format, *Integ64Format;
 const char *IntegerFormat, *LongIntFormat, *QuadIntFormat;
 const char *LargeIntFormat, *LargeHIntFormat;
 
 /*****************************************************************************/
+
+#define SWAP(x,y) \
+do \
+{ \
+  Swap = x; x = y; y = Swap; \
+} \
+while (0)
 
 void WSwap(void *Field, int Cnt)
 {
@@ -31,9 +38,7 @@ void WSwap(void *Field, int Cnt)
 
   for (z = 0; z < Cnt / 2; z++, Run += 2)
   {
-    Swap = Run[0];
-    Run[0] = Run[1];
-    Run[1] = Swap;
+    SWAP(Run[0], Run[1]);
   }
 }
 
@@ -44,8 +49,8 @@ void DSwap(void *Field, int Cnt)
 
   for (z = 0; z < Cnt / 4; z++, Run += 4)
   {
-    Swap = Run[0]; Run[0] = Run[3]; Run[3] = Swap;
-    Swap = Run[1]; Run[1] = Run[2]; Run[2] = Swap;
+    SWAP(Run[0], Run[3]);
+    SWAP(Run[1], Run[2]);
   }
 }
 
@@ -56,10 +61,10 @@ void QSwap(void *Field, int Cnt)
 
   for (z = 0; z < Cnt / 8; z++, Run += 8)
   {
-    Swap = Run[0]; Run[0] = Run[7]; Run[7] = Swap;
-    Swap = Run[1]; Run[1] = Run[6]; Run[6] = Swap;
-    Swap = Run[2]; Run[2] = Run[5]; Run[5] = Swap;
-    Swap = Run[3]; Run[3] = Run[4]; Run[4] = Swap;
+    SWAP(Run[0], Run[7]);
+    SWAP(Run[1], Run[6]);
+    SWAP(Run[2], Run[5]);
+    SWAP(Run[3], Run[4]);
   }
 }
 
@@ -70,11 +75,11 @@ void TSwap(void *Field, int Cnt)
 
   for (z = 0; z < Cnt / 10; z++, Run += 10)
   {
-    Swap = Run[0]; Run[0] = Run[9]; Run[9] = Swap;
-    Swap = Run[1]; Run[1] = Run[8]; Run[8] = Swap;
-    Swap = Run[2]; Run[2] = Run[7]; Run[7] = Swap;
-    Swap = Run[3]; Run[3] = Run[6]; Run[6] = Swap;
-    Swap = Run[4]; Run[4] = Run[5]; Run[5] = Swap;
+    SWAP(Run[0], Run[9]);
+    SWAP(Run[1], Run[8]);
+    SWAP(Run[2], Run[7]);
+    SWAP(Run[3], Run[6]);
+    SWAP(Run[4], Run[5]);
   }
 }
 
@@ -85,8 +90,8 @@ void DWSwap(void *Field, int Cnt)
 
   for (z = 0; z < Cnt / 4; z++, Run += 4)
   {
-    Swap = Run[0]; Run[0] = Run[2]; Run[2] = Swap;
-    Swap = Run[1]; Run[1] = Run[3]; Run[3] = Swap;
+    SWAP(Run[0], Run[2]);
+    SWAP(Run[1], Run[3]);
   }
 }
 
@@ -97,10 +102,25 @@ void QWSwap(void *Field, int Cnt)
 
   for (z = 0; z < Cnt / 8; z++, Run += 8)
   {
-    Swap = Run[0]; Run[0] = Run[6]; Run[6] = Swap;
-    Swap = Run[1]; Run[1] = Run[7]; Run[7] = Swap;
-    Swap = Run[2]; Run[2] = Run[4]; Run[4] = Swap;
-    Swap = Run[3]; Run[3] = Run[5]; Run[5] = Swap;
+    SWAP(Run[0], Run[6]);
+    SWAP(Run[1], Run[7]);
+    SWAP(Run[2], Run[4]);
+    SWAP(Run[3], Run[5]);
+  }
+}
+
+void TWSwap(void *Field, int Cnt)
+{
+  register unsigned char *Run = (unsigned char *) Field, Swap;
+  register int z;
+
+  for (z = 0; z < Cnt / 10; z++, Run += 10)
+  {
+    SWAP(Run[0], Run[8]);
+    SWAP(Run[1], Run[9]);
+    SWAP(Run[2], Run[6]);
+    SWAP(Run[3], Run[7]);
+    /* center word needs not be swapped with itself */
   }
 }
 
@@ -108,7 +128,7 @@ Boolean Read2(FILE *file, void *Ptr)
 {
   if (fread(Ptr, 1, 2, file) != 2)
     return False;
-  if (BigEndian)
+  if (HostBigEndian)
     WSwap(Ptr, 2);
   return True;
 }
@@ -117,7 +137,7 @@ Boolean Read4(FILE *file, void *Ptr)
 {
   if (fread(Ptr, 1, 4, file) != 4)
     return False;
-  if (BigEndian)
+  if (HostBigEndian)
     DSwap(Ptr, 4);
   return True;
 }
@@ -126,7 +146,7 @@ Boolean Read8(FILE *file, void *Ptr)
 {
   if (fread(Ptr, 1, 8, file) != 8)
     return False;
-  if (BigEndian)
+  if (HostBigEndian)
     QSwap(Ptr, 8);
   return True;
 }
@@ -136,10 +156,10 @@ Boolean Write2(FILE *file, void *Ptr)
 {
   Boolean OK;
 
-  if (BigEndian)
+  if (HostBigEndian)
     WSwap(Ptr, 2);
   OK = (fwrite(Ptr, 1, 2, file) == 2);
-  if (BigEndian)
+  if (HostBigEndian)
     WSwap(Ptr, 2);
   return OK;
 }
@@ -148,10 +168,10 @@ Boolean Write4(FILE *file, void *Ptr)
 {
   Boolean OK;
 
-  if (BigEndian)
+  if (HostBigEndian)
     DSwap(Ptr, 4);
   OK = (fwrite(Ptr, 1, 4, file) == 4);
-  if (BigEndian)
+  if (HostBigEndian)
     DSwap(Ptr, 4);
   return OK;
 }
@@ -160,10 +180,10 @@ Boolean Write8(FILE *file, void *Ptr)
 {
   Boolean OK;
 
-  if (BigEndian)
+  if (HostBigEndian)
     QSwap(Ptr, 8);
   OK = (fwrite(Ptr, 1, 8, file) == 8);
-  if (BigEndian)
+  if (HostBigEndian)
     QSwap(Ptr, 8);
   return OK;
 }
@@ -377,5 +397,5 @@ void endian_init(void)
 
   memset(TwoFace.field, 0, sizeof(int));
   TwoFace.field[0] = 1;
-  BigEndian = ((TwoFace.test) != 1);
+  HostBigEndian = ((TwoFace.test) != 1);
 }
