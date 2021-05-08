@@ -294,6 +294,7 @@ static void InitPass_SCMP(void)
 static void SwitchFrom_SCMP(void)
 {
   DeinitFields();
+  ClearONOFF();
 }
 
 static void SwitchTo_SCMP(void)

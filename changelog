@@ -1,3 +1,7 @@
+2021-05-08 [1.42 Bld 204]
+
+- Bugfix      : fix SC/MP target
+
 2021-05-07 [1.42 Bld 203]
 
 - Addition    : Allow changing the program counter by assigning value to PC
