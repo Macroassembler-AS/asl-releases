@@ -1145,7 +1145,7 @@ typedef unsigned long Card32;
 /*===========================================================================*/
 /* AMD opteron/athlon64/k8 platforms */
 
-#if (defined __k8__) && (!defined __x86_64)
+#if (defined __k8__) && (!defined __x86_64) && (!defined __i386)
 
 #define ARCHPRNAME "k8"
 
@@ -1242,6 +1242,40 @@ typedef unsigned long long Card64;
 #define HAS64
 #endif
 #define LOCALE_NLS
+#endif
+
+/*---------------------------------------------------------------------------*/
+/* Intel i386 with WIN32 and Cygnus GCC:
+
+   well, not really a UNIX... */
+
+#ifdef _WIN32
+#define ARCHSYSNAME "unknown-win32"
+#define DEFSMADE
+#define OPENRDMODE "rb"
+#define OPENWRMODE "wb"
+#define OPENUPMODE "rb+"
+#define IEEEFLOAT
+#define SLASHARGS
+#define PATHSEP '\\'
+#define SPATHSEP "\\"
+#define DIRSEP ';'
+#define SDIRSEP ";"
+#define DRSEP ':'
+#define SDRSEP ":"
+#define NULLDEV "NUL"
+typedef signed char Integ8;
+typedef unsigned char Card8;
+typedef signed short Integ16;
+typedef unsigned short Card16;
+#define HAS16
+typedef signed int Integ32;
+#define PRIInteg32 "d"
+typedef unsigned int Card32;
+typedef signed long long Integ64;
+typedef unsigned long long Card64;
+#define HAS64
+#define NO_NLS
 #endif
 
 #endif /* __x86_64 */
