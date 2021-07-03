@@ -59,6 +59,7 @@ void DecodeDATA(IntType CodeIntType, IntType DataIntType)
   Word MaxMultCharLen = (Lo(IntTypeDefs[ValIntType].SignAndWidth) + 7) / 8;
   LargeWord UnknownMask = ValMask / 2;
 
+  as_tempres_ini(&t);
   if (ChkArgCnt(1, ArgCntMax))
   {
     ValOK = True;
@@ -84,8 +85,8 @@ void DecodeDATA(IntType CodeIntType, IntType DataIntType)
           if (MultiCharToInt(&t, MaxMultCharLen))
             goto ToInt;
 
-          for (z2 = 0, cp = (unsigned char *)t.Contents.Ascii.Contents, bpos = 0;
-               z2 < t.Contents.Ascii.Length;
+          for (z2 = 0, cp = (unsigned char *)t.Contents.str.p_str, bpos = 0;
+               z2 < t.Contents.str.len;
                z2++, cp++)
           {
             TransCh = CharTransTable[((usint)*cp) & 0xff];
@@ -169,4 +170,5 @@ void DecodeDATA(IntType CodeIntType, IntType DataIntType)
     if (!ValOK)
       CodeLen = 0;
   }
+  as_tempres_free(&t);
 }

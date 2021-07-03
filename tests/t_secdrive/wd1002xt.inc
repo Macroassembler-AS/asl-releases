@@ -1,8 +1,8 @@
 ;******************************************************************************
 ;*                                                                            *
-;*  Includedatei fÅr SECMAIN.ASM                                              *
-;*  liefert low-level-Routinen fÅr SecMain                                    *
-;*  Version hier fÅr WD1002XT-kompatible Kontroller:                          *
+;*  Includedatei fuer SECMAIN.ASM                                             *
+;*  liefert low-level-Routinen fuer SecMain                                   *
+;*  Version hier fuer WD1002XT-kompatible Kontroller:                         *
 ;*  MFM, RLL (?)                                                              *
 ;*                                                                            *
 ;*  Historie: 28.12.1994                                                      *
@@ -16,10 +16,10 @@
 ;------------------------------------------------------------------------------
 ; Portadressen
 
-Port_Base       equ     320h            ; primÑre Basisadresse
+Port_Base       equ     320h            ; primaere Basisadresse
 Port_Data       equ     Port_Base+0     ; Datenregister (R+W)
 Port_Status     equ     Port_Base+1     ; Statusregister (R)
-Port_Reset      equ     Port_Base+1     ; Reset auslîsen (W)
+Port_Reset      equ     Port_Base+1     ; Reset ausloesen (W)
 Port_Config     equ     Port_Base+2     ; Jumper auslesen (R)
 Port_Select     equ     Port_Base+2     ; Kontroller selektieren (W)
 Port_IRQDRQ     equ     Port_Base+3     ; IRQ/DRQ-Leitungen freigeben (W)
@@ -35,7 +35,7 @@ Cmd_SetParams   equ     00ch            ; Laufwerksparameter setzen
 Cmd_Seek        equ     00bh            ; Spur anfahren
 Cmd_Read        equ     008h            ; Sektoren lesen
 Cmd_Write       equ     00ah            ; Sektoren schreiben
-Cmd_Verify      equ     005h            ; Sektoren auf Lesbarkeit prÅfen
+Cmd_Verify      equ     005h            ; Sektoren auf Lesbarkeit pruefen
 Cmd_WriteBuffer equ     00fh            ; Sektorpuffer beschreiben
 Cmd_FormatDisk  equ     004h            ; Laufwerk formatieren
 Cmd_FormatTrack equ     006h            ; Spur formatieren
@@ -51,13 +51,13 @@ IODelay         macro
 ;------------------------------------------------------------------------------
 ; Puffer
 
-CmdBufSize      equ     6               ; enthÑlt Kommandoblock fÅr WD1002
+CmdBufSize      equ     6               ; enthaelt Kommandoblock fuer WD1002
 CmdBuf          db      CmdBufSize dup (0)
 
-StatBufSize     equ     4               ; enthÑlt Statusinfo vom WD1002
+StatBufSize     equ     4               ; enthaelt Statusinfo vom WD1002
 StatBuf         db      StatBufSize dup (0)
 
-GeomBufSize     equ     8               ; enthÑlt Parametertabelle fÅr Laufwerk
+GeomBufSize     equ     8               ; enthaelt Parametertabelle fuer Laufwerk
 GeomBuf         db      GeomBufSize dup (0)
 
 ;******************************************************************************
@@ -74,7 +74,7 @@ GeomBuf         db      GeomBufSize dup (0)
                 mov     ah,45h          ; Retry on, 70us Steprate
                 mov     word ptr[CmdBuf+4],ax
 
-                pop     ax              ; Register zurÅck
+                pop     ax              ; Register zurueck
 
                 ret
 
@@ -100,17 +100,17 @@ GeomBuf         db      GeomBufSize dup (0)
 OutLoop:        in      al,dx           ; Status lesen
                 btst    al,0            ; warten, bis REQ-Bit auf 1
                 jz      OutLoop
-                btst    al,1            ; IO-Bit mu· 0 sein
+                btst    al,1            ; IO-Bit muss 0 sein
                 stc
                 jnz     ErrEnd
                 mov     dl,Lo(Port_Data); ein Byte auf Datenport ausgeben
                 seges
                 outsb
-                mov     dl,Lo(Port_Status) ; zurÅck fÅr nÑchsten Durchlauf
+                mov     dl,Lo(Port_Status) ; zurueck fuer naechsten Durchlauf
                 loop    OutLoop
 ZeroLoop:       clc                     ; Ende ohne Fehler
 ErrEnd:
-                pop     si              ; Register zurÅck
+                pop     si              ; Register zurueck
                 pop     dx
                 pop     cx
                 pop     ax
@@ -139,16 +139,16 @@ ErrEnd:
 InLoop:         in      al,dx           ; Status lesen
                 btst    al,0            ; warten, bis REQ-Bit auf 1
                 jz      InLoop
-                btst    al,1            ; IO-Bit mu· 1 sein
+                btst    al,1            ; IO-Bit muss 1 sein
                 stc
                 jz      ErrEnd
                 mov     dl,Lo(Port_Data); ein Byte von Datenport einlesen
                 insb
-                mov     dl,Lo(Port_Status) ; zurÅck fÅr nÑchsten Durchlauf
+                mov     dl,Lo(Port_Status) ; zurueck fuer naechsten Durchlauf
                 loop    InLoop
 ZeroLoop:       clc                     ; Ende ohne Fehler
 ErrEnd:
-                pop     di              ; Register zurÅck
+                pop     di              ; Register zurueck
                 pop     dx
                 pop     cx
                 pop     ax
@@ -174,19 +174,19 @@ Loop:           in      al,dx
                 jz      Loop
                 mov     dl,Lo(Port_Data); CCB auslesen
                 in      al,dx
-                mov     ah,al           ; retten fÅr Fehlerabfrage
+                mov     ah,al           ; retten fuer Fehlerabfrage
                 and     al,2            ; Bit 1 ausmaskieren
                 clc
                 ljz      End             ; wenn = 0, kein Fehler und AL=0
 
-                push    cx              ; zusÑtzliche Register retten
+                push    cx              ; zusaetzliche Register retten
                 push    si
                 push    di
                 push    es
 
                 call    InitCmdBuf      ; ansonsten Kommando absetzen, um
                 mov     [CmdBuf],Cmd_GetStatus ; Status zu lesen
-                and     ah,20h          ; Status fÅr korr. Laufwerk abfragen
+                and     ah,20h          ; Status fuer korr. Laufwerk abfragen
                 mov     [CmdBuf+1],ah
                 mov     dx,Port_Status
 WaitNBusy:      in      al,dx
@@ -213,13 +213,13 @@ Loop2:          in      al,dx
                 mov     al,[StatBuf]    ; Fehlercode = 1.Byte,
                 and     al,7fh          ; Bit 0..6
                 stc                     ; Carry signalisiert Fehler
-                pop     es              ; zusÑtzliche Register zurÅck
+                pop     es              ; zusaetzliche Register zurueck
                 pop     di
                 pop     si
                 pop     cx
 
 End:            mov     ah,0            ; MSB ohne Bedeutung
-                pop     dx              ; Register zurÅck
+                pop     dx              ; Register zurueck
                 ret
 
                 endp
@@ -244,15 +244,15 @@ TransLoop:      lodsw                   ; einen Eintrag laden
                 je      TransEnd
                 cmp     al,bl           ; Treffer?
                 jne     TransLoop       ; nein, weitersuchen
-                mov     al,ah           ; Åbersetzten Code laden
-                cmp     al,0            ; Code fÅr kein Fehler?
+                mov     al,ah           ; uebersetzten Code laden
+                cmp     al,0            ; Code fuer kein Fehler?
                 clc
                 je      Ende            ; ja, C=0
                 jmp     TransErr        ; ansonsten C=1
 TransEnd:       mov     al,04h          ; Aborted Command annehmen
 TransErr:       stc                     ; Fehlerflag setzen
 
-Ende:           pop     si              ; Register zurÅck
+Ende:           pop     si              ; Register zurueck
                 pop     bx
 
                 ret
@@ -295,10 +295,10 @@ WaitNBusy:      in      al,dx
                 mov     ax,ds           ; Adresse Kommandoblock
                 mov     es,ax
                 lea     si,[CmdBuf]
-                mov     cx,CmdBufSize   ; LÑnge Kommandoblock
+                mov     cx,CmdBufSize   ; Laenge Kommandoblock
                 call    SendBlock       ; Kommandoblock abschicken
 
-                pop     es              ; Register zurÅck
+                pop     es              ; Register zurueck
                 pop     si
                 pop     dx
                 pop     ax
@@ -323,7 +323,7 @@ WaitNBusy:      in      al,dx
                 or      al,ah
                 mov     [CmdBuf+1],al   ; als 2. Byte im Kommandopuffer schreiben
 
-                pop     ax              ; Register zurÅck
+                pop     ax              ; Register zurueck
 
                 ret
 
@@ -348,7 +348,7 @@ WaitNBusy:      in      al,dx
                 mov     [CmdBuf+2],al
                 mov     [CmdBuf+4],cl   ; Sektorzahl
 
-                pop     ax             ; Register zurÅck
+                pop     ax             ; Register zurueck
                 ret
 
                 endp
@@ -367,7 +367,7 @@ WaitNBusy:      in      al,dx
 
                 ret
 
-IdentMsg        db      "Low-Level-Routinen fÅr WD1002S-WX2 und kompatible Controller",CR,LF,'$'
+IdentMsg        db      "Low-Level-Routinen f",UUML,"r WD1002S-WX2 und kompatible Controller",CR,LF,'$'
 
                 endp
 
@@ -386,13 +386,13 @@ IdentMsg        db      "Low-Level-Routinen fÅr WD1002S-WX2 und kompatible Contr
                 mov     dx,Port_Status  ; auf Status
 BWait:          in      al,dx
                 btst    al,3            ; auf NOT BUSY warten
-                loopnz  BWait           ; oder bis 64K DurchlÑufe durch
+                loopnz  BWait           ; oder bis 64K Durchlaeufe durch
                 or      cx,cx           ; Timeout ?
                 jne     NTOut
                 mov     al,Diag_Timeout ; ja: Fehlercode setzen...
                 jmp     End             ; ...und Feierabend
 
-NTOut:          call    InitCmdBuf      ; Kommando Selbsttest ausfÅhren
+NTOut:          call    InitCmdBuf      ; Kommando Selbsttest ausfuehren
                 mov     al,Cmd_Diagnose
                 call    ExecCmd
                 call    BuildStatus     ; Status holen
@@ -404,7 +404,7 @@ NTOut:          call    InitCmdBuf      ; Kommando Selbsttest ausfÅhren
 DoTrans:        lea     bx,[TransTbl]   ; ansonsten umsetzen
                 xlat
 
-End:            pop     dx              ; Register zurÅck
+End:            pop     dx              ; Register zurueck
                 pop     bx
                 pop     cx
                 ret
@@ -432,7 +432,7 @@ TransTbl:       db      Diag_NoError    ; Code 0: kein Fehler
                 push    cx
 
                 call    InitCmdBuf      ; testen, ob Laufwerk bereit
-                mov     ah,0            ; Kopf dafÅr unwichtig
+                mov     ah,0            ; Kopf dafuer unwichtig
                 call    SetDriveEnv
                 mov     dl,al           ; Laufwerksnummer retten, gleichzeitig
                 mov     dh,0            ; Kopf auf 0 setzen
@@ -461,7 +461,7 @@ TransTbl:       db      Diag_NoError    ; Code 0: kein Fehler
                 call    BuildStatus
                 call    TranslateStatus
 
-TotEnde:        pop     dx              ; Register zurÅck
+TotEnde:        pop     dx              ; Register zurueck
                 pop     ax
 
                 ret
@@ -508,7 +508,7 @@ TotEnde:        pop     dx              ; Register zurÅck
                 call    BuildStatus
                 call    TranslateStatus
 
-                pop     es              ; Register zurÅck
+                pop     es              ; Register zurueck
                 pop     si
                 pop     cx
 
@@ -557,14 +557,14 @@ RLoop:          in      al,dx
                 pop     cx
                 dec     cl
                 add     di,SecSize
-                jnz     RLoop           ; und nÑchsten Sektor verarbeiten
+                jnz     RLoop           ; und naechsten Sektor verarbeiten
 
 ErrEnd:         PrChar  '5'
                 call    BuildStatus
                 PrChar  '6'
                 call    TranslateStatus
 
-                pop     es              ; Register zurÅck
+                pop     es              ; Register zurueck
                 pop     di
                 pop     dx
                 pop     cx
@@ -599,7 +599,7 @@ ErrEnd:         PrChar  '5'
                 call    BuildStatus
                 call    TranslateStatus
 
-                pop     dx              ; Register zurÅck
+                pop     dx              ; Register zurueck
                 pop     cx
                 pop     bx
 
@@ -645,12 +645,12 @@ WLoop:          in      al,dx
                 pop     cx
                 dec     cl
                 add     si,SecSize
-                jnz     WLoop           ; und nÑchsten Sektor verarbeiten
+                jnz     WLoop           ; und naechsten Sektor verarbeiten
 
 ErrEnd:         call    BuildStatus
                 call    TranslateStatus
 
-                pop     es              ; Register zurÅck
+                pop     es              ; Register zurueck
                 pop     si
                 pop     dx
                 pop     cx
@@ -694,7 +694,7 @@ ErrEnd:         call    BuildStatus
                 jc      End             ; unwahrscheinlich, aber...
 
                 call    InitCmdBuf      ; Puffer initialisieren
-                mov     al,bl           ; Laufwerk wieder zurÅck
+                mov     al,bl           ; Laufwerk wieder zurueck
                 mov     ah,0            ; Startkopf ist 0
                 call    SetDriveEnv
                 mov     [CmdBuf+4],bh   ; Interleave einschreiben
@@ -704,7 +704,7 @@ ErrEnd:         call    BuildStatus
 ErrEnd:         call    BuildStatus
 End:            call    TranslateStatus
 
-                pop     es              ; Register zurÅck
+                pop     es              ; Register zurueck
                 pop     di
                 pop     si
                 pop     dx
@@ -731,7 +731,7 @@ End:            call    TranslateStatus
 
                 call    InitCmdBuf      ; Parameter einschreiben
                 call    SetDriveEnv
-                mov     ch,1            ; Sektorinformation mu· nur gÅltig sein
+                mov     ch,1            ; Sektorinformation muss nur gueltig sein
                 call    SetTransParams
                 mov     al,Cmd_FormatTrack
                 call    ExecCmd
@@ -758,7 +758,7 @@ End:            call    TranslateStatus
 
                 call    InitCmdBuf      ; Parameter einschreiben
                 call    SetDriveEnv
-                mov     cx,0103h        ; Sektorinformation mu· nur gÅltig sein
+                mov     cx,0103h        ; Sektorinformation muss nur gueltig sein
                 call    SetTransParams
                 mov     al,Cmd_FormatBad
                 call    ExecCmd

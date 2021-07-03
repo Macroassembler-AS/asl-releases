@@ -31,6 +31,8 @@
 
 #include "intpseudo.h"
 
+#define LEAVE goto func_exit
+
 /*****************************************************************************
  * Local Types
  *****************************************************************************/
@@ -325,6 +327,7 @@ static Boolean LayoutNibble(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
   Boolean Result = False;
   TempResult t;
 
+  as_tempres_ini(&t);
   EvalStrExpression(pExpr, &t);
   switch (t.Typ)
   {
@@ -334,7 +337,7 @@ static Boolean LayoutNibble(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
       else
       {
         if (!pCtx->Put4I(t.Contents.Int, pCtx))
-          return Result;
+          LEAVE;
         Result = True;
       }
       break;
@@ -348,6 +351,8 @@ static Boolean LayoutNibble(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
       break;
   }
 
+func_exit:
+  as_tempres_free(&t);
   return Result;
 }
 
@@ -421,6 +426,7 @@ static Boolean LayoutByte(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
   Boolean Result = False;
   TempResult t;
 
+  as_tempres_ini(&t);
   EvalStrExpression(pExpr, &t);
   switch (t.Typ)
   {
@@ -431,7 +437,7 @@ static Boolean LayoutByte(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
       else
       {
         if (!pCtx->Put8I(t.Contents.Int, pCtx))
-          return Result;
+          LEAVE;
         Result = True;
       }
       break;
@@ -445,11 +451,11 @@ static Boolean LayoutByte(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
       if (MultiCharToInt(&t, 1))
         goto ToInt;
 
-      TranslateString(t.Contents.Ascii.Contents, t.Contents.Ascii.Length);
+      TranslateString(t.Contents.str.p_str, t.Contents.str.len);
 
-      for (z = 0; z < t.Contents.Ascii.Length; z++)
-        if (!pCtx->Put8I(t.Contents.Ascii.Contents[z], pCtx))
-          return Result;
+      for (z = 0; z < t.Contents.str.len; z++)
+        if (!pCtx->Put8I(t.Contents.str.p_str[z], pCtx))
+          LEAVE;
 
       Result = True;
       break;
@@ -458,6 +464,8 @@ static Boolean LayoutByte(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
       break;
   }
 
+func_exit:
+  as_tempres_free(&t);
   return Result;
 }
 
@@ -538,6 +546,7 @@ static Boolean LayoutWord(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
   Boolean Result = False;
   TempResult t;
 
+  as_tempres_ini(&t);
   EvalStrExpression(pExpr, &t);
   Result = True;
   switch (t.Typ)
@@ -551,16 +560,13 @@ static Boolean LayoutWord(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
         else
         {
           if (!pCtx->Put16I(t.Contents.Int, pCtx))
-            return Result;
+            LEAVE;
           Result = True;
         }
         break;
       }
       else
-      {
-        t.Contents.Float = t.Contents.Int;
-        t.Typ = TempFloat;
-      }
+        TempResultToFloat(&t);
       /* fall-through */
     case TempFloat:
       if (!pCtx->Put16F) WrStrErrorPos(ErrNum_StringOrIntButFloat, pExpr);
@@ -568,7 +574,7 @@ static Boolean LayoutWord(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
       else
       {
         if (!pCtx->Put16F(t.Contents.Float, pCtx))
-          return Result;
+          LEAVE;
         Result = True;
       }
       break;
@@ -579,11 +585,11 @@ static Boolean LayoutWord(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
       if (MultiCharToInt(&t, 2))
         goto ToInt;
 
-      TranslateString(t.Contents.Ascii.Contents, t.Contents.Ascii.Length);
+      TranslateString(t.Contents.str.p_str, t.Contents.str.len);
 
-      for (z = 0; z < t.Contents.Ascii.Length; z++)
-        if (!pCtx->Put16I(t.Contents.Ascii.Contents[z], pCtx))
-          return Result;
+      for (z = 0; z < t.Contents.str.len; z++)
+        if (!pCtx->Put16I(t.Contents.str.p_str[z], pCtx))
+          LEAVE;
 
       Result = True;
       break;
@@ -592,6 +598,8 @@ static Boolean LayoutWord(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
       break;
   }
 
+func_exit:
+  as_tempres_free(&t);
   return Result;
 }
 
@@ -652,6 +660,7 @@ static Boolean LayoutDoubleWord(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
   Boolean Result = False;
   Word Cnt = 0;
 
+  as_tempres_ini(&erg);
   EvalStrExpression(pExpr, &erg);
   Result = False;
   switch (erg.Typ)
@@ -667,17 +676,14 @@ static Boolean LayoutDoubleWord(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
         else
         {
           if (!pCtx->Put32I(erg.Contents.Int, pCtx))
-            return Result;
+            LEAVE;
           Cnt = 4;
           Result = True;
         }
         break;
       }
       else
-      {
-        erg.Contents.Float = erg.Contents.Int;
-        erg.Typ = TempFloat;
-      }
+        TempResultToFloat(&erg);
       /* fall-through */
     case TempFloat:
       if (!pCtx->Put32F) WrStrErrorPos(ErrNum_StringOrIntButFloat, pExpr);
@@ -685,7 +691,7 @@ static Boolean LayoutDoubleWord(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
       else
       {
         if (!pCtx->Put32F(erg.Contents.Float, pCtx))
-          return Result;
+          LEAVE;
         Cnt = 4;
         Result = True;
       }
@@ -697,13 +703,13 @@ static Boolean LayoutDoubleWord(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
       if (MultiCharToInt(&erg, 4))
         goto ToInt;
 
-      TranslateString(erg.Contents.Ascii.Contents, erg.Contents.Ascii.Length);
+      TranslateString(erg.Contents.str.p_str, erg.Contents.str.len);
 
-      for (z = 0; z < erg.Contents.Ascii.Length; z++)
-        if (!pCtx->Put32I(erg.Contents.Ascii.Contents[z], pCtx))
-          return Result;
+      for (z = 0; z < erg.Contents.str.len; z++)
+        if (!pCtx->Put32I(erg.Contents.str.p_str[z], pCtx))
+          LEAVE;
 
-      Cnt = erg.Contents.Ascii.Length * 4;
+      Cnt = erg.Contents.str.len * 4;
       Result = True;
       break;
     }
@@ -715,6 +721,8 @@ static Boolean LayoutDoubleWord(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
   }
   (void)Cnt;
 
+func_exit:
+  as_tempres_free(&erg);
   return Result;
 }
 
@@ -799,6 +807,7 @@ static Boolean LayoutQuadWord(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
   TempResult erg;
   Word Cnt  = 0;
 
+  as_tempres_ini(&erg);
   EvalStrExpression(pExpr, &erg);
   Result = False;
   switch(erg.Typ)
@@ -810,21 +819,18 @@ static Boolean LayoutQuadWord(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
       if (pCtx->Put64I)
       {
         if (!pCtx->Put64I(erg.Contents.Int, pCtx))
-          return Result;
+          LEAVE;
         Cnt = 8;
         Result = True;
         break;
       }
       else
-      {
-        erg.Contents.Float = erg.Contents.Int;
-        erg.Typ = TempFloat;
-      }
+        TempResultToFloat(&erg);
       /* fall-through */
     case TempFloat:
       if (!pCtx->Put64F) WrStrErrorPos(ErrNum_StringOrIntButFloat, pExpr);
       else if (!pCtx->Put64F(erg.Contents.Float, pCtx))
-        return Result;
+        LEAVE;
       Cnt = 8;
       Result = True;
       break;
@@ -835,13 +841,13 @@ static Boolean LayoutQuadWord(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
       if (MultiCharToInt(&erg, 8))
         goto ToInt;
 
-      TranslateString(erg.Contents.Ascii.Contents, erg.Contents.Ascii.Length);
+      TranslateString(erg.Contents.str.p_str, erg.Contents.str.len);
 
-      for (z = 0; z < erg.Contents.Ascii.Length; z++)
-        if (!pCtx->Put64I(erg.Contents.Ascii.Contents[z], pCtx))
-          return Result;
+      for (z = 0; z < erg.Contents.str.len; z++)
+        if (!pCtx->Put64I(erg.Contents.str.p_str[z], pCtx))
+          LEAVE;
 
-      Cnt = erg.Contents.Ascii.Length * 8;
+      Cnt = erg.Contents.str.len * 8;
       Result = True;
       break;
     }
@@ -853,6 +859,8 @@ static Boolean LayoutQuadWord(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
   }
   (void)Cnt;
 
+func_exit:
+  as_tempres_free(&erg);
   return Result;
 }
 
@@ -895,6 +903,7 @@ static Boolean LayoutTenBytes(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
   TempResult erg;
   Word Cnt;
 
+  as_tempres_ini(&erg);
   EvalStrExpression(pExpr, &erg);
   Result = False;
   switch(erg.Typ)
@@ -903,12 +912,11 @@ static Boolean LayoutTenBytes(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
       break;
     case TempInt:
     ToInt:
-      erg.Contents.Float = erg.Contents.Int;
-      erg.Typ = TempFloat;
+      TempResultToFloat(&erg);
       /* fall-through */
     case TempFloat:
       if (!pCtx->Put80F(erg.Contents.Float, pCtx))
-        return Result;
+        LEAVE;
       Cnt = 10;
       Result = True;
       break;
@@ -919,13 +927,13 @@ static Boolean LayoutTenBytes(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
       if (MultiCharToInt(&erg, 4))
         goto ToInt;
 
-      TranslateString(erg.Contents.Ascii.Contents, erg.Contents.Ascii.Length);
+      TranslateString(erg.Contents.str.p_str, erg.Contents.str.len);
 
-      for (z = 0; z < erg.Contents.Ascii.Length; z++)
-        if (!pCtx->Put80F(erg.Contents.Ascii.Contents[z], pCtx))
-          return Result;
+      for (z = 0; z < erg.Contents.str.len; z++)
+        if (!pCtx->Put80F(erg.Contents.str.p_str[z], pCtx))
+          LEAVE;
 
-      Cnt = erg.Contents.Ascii.Length * 10;
+      Cnt = erg.Contents.str.len * 10;
       Result = True;
       break;
     }
@@ -937,6 +945,8 @@ static Boolean LayoutTenBytes(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
   }
   (void)Cnt;
 
+func_exit:
+  as_tempres_free(&erg);
   return Result;
 }
 
@@ -1003,8 +1013,8 @@ static Boolean DecodeIntelPseudo_LayoutMult(const tStrComp *pArg, struct sLayout
   Depth = Quote = 0;
   LastValid = FALSE;
   LastNonBlank = -1;
-  pDupFnd = NULL; Len = strlen(pArg->Str);
-  for (pRun = pArg->Str; pRun < pArg->Str + Len - 2; pRun++)
+  pDupFnd = NULL; Len = strlen(pArg->str.p_str);
+  for (pRun = pArg->str.p_str; pRun < pArg->str.p_str + Len - 2; pRun++)
   {
     DecodeIntelPseudo_HandleQuote(&Depth, &Quote, *pRun);
     if (!Depth && !Quote)
@@ -1018,7 +1028,7 @@ static Boolean DecodeIntelPseudo_LayoutMult(const tStrComp *pArg, struct sLayout
         break;
       }
       if (!as_isspace(*pRun))
-        LastNonBlank = pRun - pArg->Str;
+        LastNonBlank = pRun - pArg->str.p_str;
     }
     LastValid = DecodeIntelPseudo_ValidSymChar(*pRun);
   }
@@ -1036,9 +1046,9 @@ static Boolean DecodeIntelPseudo_LayoutMult(const tStrComp *pArg, struct sLayout
 
     /* operate on copy */
 
-    StrCompMkTemp(&Copy, CopyStr);
+    StrCompMkTemp(&Copy, CopyStr, sizeof(CopyStr));
     StrCompCopy(&Copy, pArg);
-    pSep = Copy.Str + (pDupFnd - pArg->Str);
+    pSep = Copy.str.p_str + (pDupFnd - pArg->str.p_str);
 
     /* evaluate count */
 
@@ -1068,8 +1078,8 @@ static Boolean DecodeIntelPseudo_LayoutMult(const tStrComp *pArg, struct sLayout
 
     StrCompIncRefLeft(&RemArg, 2);
     KillPrefBlanksStrCompRef(&RemArg);
-    Len = strlen(RemArg.Str);
-    if ((Len >= 2) && (*RemArg.Str == '(') && (RemArg.Str[Len - 1] == ')'))
+    Len = strlen(RemArg.str.p_str);
+    if ((Len >= 2) && (*RemArg.str.p_str == '(') && (RemArg.str.p_str[Len - 1] == ')'))
     {
       StrCompIncRefLeft(&RemArg, 1);
       StrCompShorten(&RemArg, 1);
@@ -1079,7 +1089,7 @@ static Boolean DecodeIntelPseudo_LayoutMult(const tStrComp *pArg, struct sLayout
     do
     {
       pSep = NULL; Quote = Depth = 0;
-      for (pRun = RemArg.Str; *pRun; pRun++)
+      for (pRun = RemArg.str.p_str; *pRun; pRun++)
       {
         DecodeIntelPseudo_HandleQuote(&Depth, &Quote, *pRun);
         if ((!Depth) && (!Quote) && (*pRun == ','))
@@ -1134,7 +1144,7 @@ static Boolean DecodeIntelPseudo_LayoutMult(const tStrComp *pArg, struct sLayout
 
   /* no DUP: simple expression.  Differentiate space reservation & data disposition */
 
-  else if (!strcmp(pArg->Str, "?"))
+  else if (!strcmp(pArg->str.p_str, "?"))
   {
     Result = SetDSFlag(pCtx, DSSpace);
     if (Result)
@@ -1177,7 +1187,7 @@ static void DecodeIntelDx(tLayoutCtx *pLayoutCtx)
   OK = True;
   forallargs(pArg, OK)
   {
-    if (!*pArg->Str)
+    if (!*pArg->str.p_str)
     {
       OK = FALSE;
       WrStrErrorPos(ErrNum_EmptyArgument, pArg);
@@ -1264,7 +1274,7 @@ void DecodeIntelDB(Word Flags)
       LayoutCtx.Replicate = Replicate8_To_16;
       break;
   }
-  if (*LabPart.Str)
+  if (*LabPart.str.p_str)
     SetSymbolOrStructElemSize(&LabPart, eSymbolSize8Bit);
   DecodeIntelDx(&LayoutCtx);
 }
@@ -1296,7 +1306,7 @@ void DecodeIntelDW(Word Flags)
       LayoutCtx.Replicate = Replicate16ToN_To_16;
       break;
   }
-  if (*LabPart.Str)
+  if (*LabPart.str.p_str)
     SetSymbolOrStructElemSize(&LabPart, eSymbolSize16Bit);
   DecodeIntelDx(&LayoutCtx);
 }
@@ -1329,7 +1339,7 @@ void DecodeIntelDD(Word Flags)
       LayoutCtx.Replicate = Replicate16ToN_To_16;
       break;
   }
-  if (*LabPart.Str)
+  if (*LabPart.str.p_str)
     SetSymbolOrStructElemSize(&LabPart, eSymbolSize32Bit);
   DecodeIntelDx(&LayoutCtx);
 }
@@ -1362,7 +1372,7 @@ void DecodeIntelDQ(Word Flags)
       LayoutCtx.Replicate = Replicate16ToN_To_16;
       break;
   }
-  if (*LabPart.Str)
+  if (*LabPart.str.p_str)
     SetSymbolOrStructElemSize(&LabPart, eSymbolSize64Bit);
   DecodeIntelDx(&LayoutCtx);
 }
@@ -1393,7 +1403,7 @@ void DecodeIntelDT(Word Flags)
       LayoutCtx.Replicate = Replicate16ToN_To_16;
       break;
   }
-  if (*LabPart.Str)
+  if (*LabPart.str.p_str)
     SetSymbolOrStructElemSize(&LabPart, eSymbolSize80Bit);
   DecodeIntelDx(&LayoutCtx);
 }
@@ -1451,7 +1461,7 @@ Boolean DecodeIntelPseudo(Boolean BigEndian)
     AddInstTable(InstTable, "DS", 0, DecodeIntelDS);
     InstTables[Idx] = InstTable;
   }
-  return LookupInstTable(InstTables[Idx], OpPart.Str);
+  return LookupInstTable(InstTables[Idx], OpPart.str.p_str);
 }
 
 /*!------------------------------------------------------------------------
@@ -1467,22 +1477,22 @@ void DecodeZ80SYNTAX(Word Code)
   {
     tStrComp TmpComp;
 
-    StrCompMkTemp(&TmpComp, Z80SyntaxName);
-    NLS_UpString(ArgStr[1].Str);
-    if (!as_strcasecmp(ArgStr[1].Str, "OFF"))
+    StrCompMkTemp(&TmpComp, Z80SyntaxName, 0);
+    NLS_UpString(ArgStr[1].str.p_str);
+    if (!as_strcasecmp(ArgStr[1].str.p_str, "OFF"))
     {
       CurrZ80Syntax = eSyntax808x;
-      EnterIntSymbol(&TmpComp, 0, 0, True);
+      EnterIntSymbol(&TmpComp, 0, SegNone, True);
     }
-    else if (!as_strcasecmp(ArgStr[1].Str, "ON"))
+    else if (!as_strcasecmp(ArgStr[1].str.p_str, "ON"))
     {
       CurrZ80Syntax = eSyntaxBoth;
-      EnterIntSymbol(&TmpComp, 1, 0, True);
+      EnterIntSymbol(&TmpComp, 1, SegNone, True);
     }
-    else if (!as_strcasecmp(ArgStr[1].Str, "EXCLUSIVE"))
+    else if (!as_strcasecmp(ArgStr[1].str.p_str, "EXCLUSIVE"))
     {
       CurrZ80Syntax = eSyntaxZ80;
-      EnterIntSymbol(&TmpComp, 2, 0, True);
+      EnterIntSymbol(&TmpComp, 2, SegNone, True);
     }
     else
       WrStrErrorPos(ErrNum_InvArg, &ArgStr[1]);
@@ -1522,8 +1532,8 @@ static void InitCode(void)
   tStrComp TmpComp;
 
   CurrZ80Syntax = eSyntax808x;
-  StrCompMkTemp(&TmpComp, Z80SyntaxName);
-  EnterIntSymbol(&TmpComp, 0, 0, True);
+  StrCompMkTemp(&TmpComp, Z80SyntaxName, 0);
+  EnterIntSymbol(&TmpComp, 0, SegNone, True);
 }
 
 void intpseudo_init(void)

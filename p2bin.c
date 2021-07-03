@@ -530,12 +530,9 @@ static CMDResult CMD_AutoErase(Boolean Negate, const char *Arg)
 
 static CMDResult CMD_ForceSegment(Boolean Negate,  const char *Arg)
 {
-  int z;
+  int z = addrspace_lookup(Arg);
 
-  for (z = 0; z <= PCMax; z++)
-   if (!as_strcasecmp(Arg, SegNames[z]))
-     break;
-  if (z > PCMax)
+  if (z >= SegCount)
     return CMDErr;
 
   if (!Negate)

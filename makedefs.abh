@@ -1,6 +1,7 @@
 include $(TARG_OBJDIR)codeobjs.dep
 include $(TARG_OBJDIR)codez8000.dep
 include $(TARG_OBJDIR)codens32k.dep
+include $(TARG_OBJDIR)codepdk.dep
 include $(TARG_OBJDIR)asmobjs.dep
 include $(TARG_OBJDIR)asobjs.dep
 include $(TARG_OBJDIR)dasmobjs.dep
@@ -12,6 +13,8 @@ include $(TARG_OBJDIR)alinobjs.dep
 include $(TARG_OBJDIR)pbinobjs.dep
 include $(TARG_OBJDIR)p2hxobjs.dep
 include $(TARG_OBJDIR)p2bnobjs.dep
+include $(TARG_OBJDIR)intformat.dep
+include $(TARG_OBJDIR)addrspace.dep
 include $(OBJDIR)rescobjs.dep
 include $(OBJDIR)tx2dobjs.dep
 include $(OBJDIR)tx2hobjs.dep

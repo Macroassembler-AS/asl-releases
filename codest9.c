@@ -133,7 +133,7 @@ static void DecodeAdr(tStrComp *pArg, LongWord Mask)
 
   /* immediate */
 
-  if (*pArg->Str == '#')
+  if (*pArg->str.p_str == '#')
   {
     switch (OpSize)
     {
@@ -156,7 +156,7 @@ static void DecodeAdr(tStrComp *pArg, LongWord Mask)
 
   /* Arbeitsregister */
 
-  if (DecodeReg(pArg->Str, &AdrPart, &Size))
+  if (DecodeReg(pArg->str.p_str, &AdrPart, &Size))
   {
     if (Size == 0)
     {
@@ -181,20 +181,20 @@ static void DecodeAdr(tStrComp *pArg, LongWord Mask)
     goto func_exit;
   }
 
-  l = strlen(pArg->Str);
+  l = strlen(pArg->str.p_str);
 
   /* Postinkrement */
 
-  if ((l > 0) && (pArg->Str[l - 1] == '+'))
+  if ((l > 0) && (pArg->str.p_str[l - 1] == '+'))
   {
-    if ((l < 3) || (*pArg->Str != '(') || (pArg->Str[l - 2] != ')')) WrError(ErrNum_InvAddrMode);
+    if ((l < 3) || (*pArg->str.p_str != '(') || (pArg->str.p_str[l - 2] != ')')) WrError(ErrNum_InvAddrMode);
     else
     {
       tStrComp RegComp;
 
-      pArg->Str[l - 2] = '\0'; pArg->Pos.Len -= 2;
+      pArg->str.p_str[l - 2] = '\0'; pArg->Pos.Len -= 2;
       StrCompRefRight(&RegComp, pArg, 1);
-      if (!DecodeReg(RegComp.Str, &AdrPart, &Size)) WrStrErrorPos(ErrNum_InvReg, &RegComp);
+      if (!DecodeReg(RegComp.str.p_str, &AdrPart, &Size)) WrStrErrorPos(ErrNum_InvReg, &RegComp);
       AdrMode = (Size == 0) ? ModIncWReg : ModIncWRReg;
     }
     goto func_exit;
@@ -202,13 +202,13 @@ static void DecodeAdr(tStrComp *pArg, LongWord Mask)
 
   /* Predekrement */
 
-  if ((*pArg->Str == '-') && (pArg->Str[1] == '(') && (pArg->Str[l - 1] == ')'))
+  if ((*pArg->str.p_str == '-') && (pArg->str.p_str[1] == '(') && (pArg->str.p_str[l - 1] == ')'))
   {
     tStrComp RegComp;
 
-    pArg->Str[l - 1] = '\0';  pArg->Pos.Len--;
+    pArg->str.p_str[l - 1] = '\0';  pArg->Pos.Len--;
     StrCompRefRight(&RegComp, pArg, 2);
-    if (DecodeReg(RegComp.Str, &AdrPart, &Size))
+    if (DecodeReg(RegComp.str.p_str, &AdrPart, &Size))
     {
       if (Size == 0) WrError(ErrNum_InvAddrMode); else AdrMode = ModDecWRReg;
       goto func_exit;
@@ -217,14 +217,14 @@ static void DecodeAdr(tStrComp *pArg, LongWord Mask)
 
   /* indirekt<->direkt */
 
-  if ((l < 3) || (pArg->Str[l - 1] != ')'))
+  if ((l < 3) || (pArg->str.p_str[l - 1] != ')'))
   {
-    IsIndirect = False; p = pArg->Str;
+    IsIndirect = False; p = pArg->str.p_str;
   }
   else
   {
-    level = 0; p = pArg->Str + l - 2; flg = 0;
-    while ((p >= pArg->Str) && (level >= 0))
+    level = 0; p = pArg->str.p_str + l - 2; flg = 0;
+    while ((p >= pArg->str.p_str) && (level >= 0))
     {
       switch (*p)
       {
@@ -235,7 +235,7 @@ static void DecodeAdr(tStrComp *pArg, LongWord Mask)
       }
       p--;
     }
-    IsIndirect = (level == -1) && ((p < pArg->Str) || ((*p == '.') || (*p == '_') || (isdigit(((unsigned int)*p) & 0xff)) || (isalpha(((unsigned int)*p) & 0xff))));
+    IsIndirect = (level == -1) && ((p < pArg->str.p_str) || ((*p == '.') || (*p == '_') || (isdigit(((unsigned int)*p) & 0xff)) || (isalpha(((unsigned int)*p) & 0xff))));
   }
 
   /* indirekt */
@@ -246,17 +246,17 @@ static void DecodeAdr(tStrComp *pArg, LongWord Mask)
 
     /* discard closing ) at end */
 
-    pArg->Str[--l] = '\0'; pArg->Pos.Len--;
+    pArg->str.p_str[--l] = '\0'; pArg->Pos.Len--;
 
     /* split off part in () */
 
-    StrCompRefRight(&RegComp, pArg, p + 2 - pArg->Str);
+    StrCompRefRight(&RegComp, pArg, p + 2 - pArg->str.p_str);
 
     /* truncate arg to everything before ( */
 
     p[1] = '\0';
-    pArg->Pos.Len = p + 1 - pArg->Str;
-    if (DecodeReg(RegComp.Str, &AdrPart, &Size))
+    pArg->Pos.Len = p + 1 - pArg->str.p_str;
+    if (DecodeReg(RegComp.str.p_str, &AdrPart, &Size))
     {
       if (Size == 0)   /* d(r) */
       {
@@ -276,7 +276,7 @@ static void DecodeAdr(tStrComp *pArg, LongWord Mask)
       }
       else            /* ...(rr) */
       {
-        if (DecodeReg(pArg->Str, AdrVals, &Size))
+        if (DecodeReg(pArg->str.p_str, AdrVals, &Size))
         {             /* rr(rr) */
           if (Size != 1) WrError(ErrNum_InvAddrMode);
           else
@@ -408,15 +408,15 @@ static Boolean SplitBit(tStrComp *pDest, const tStrComp *pSrc, Byte *pErg)
   Byte Inv = 0;
 
   StrCompRefRight(pDest, pSrc, 0);
-  p = RQuotPos(pDest->Str, '.');
-  if ((!p) || (p == pDest->Str + strlen(pDest->Str) + 1))
+  p = RQuotPos(pDest->str.p_str, '.');
+  if ((!p) || (p == pDest->str.p_str + strlen(pDest->str.p_str) + 1))
   {
     Integer val;
 
-    if (*pDest->Str == '!')
+    if (*pDest->str.p_str == '!')
     {
       Inv = 1;
-      pDest->Str++;
+      pDest->str.p_str++;
       pDest->Pos.StartCol++;
       pDest->Pos.Len--;
     }
@@ -424,14 +424,14 @@ static Boolean SplitBit(tStrComp *pDest, const tStrComp *pSrc, Byte *pErg)
     if (OK)
     {
       *pErg = (val & 15) ^ Inv;
-      as_snprintf(pDest->Str, STRINGSIZE, "r%d", (int)(val >> 4));
+      as_snprintf(pDest->str.p_str, STRINGSIZE, "r%d", (int)(val >> 4));
       return True;
     }
     return False;
   }
 
   Inv = !!(p[1] == '!');
-  *pErg = Inv + (EvalStrIntExpressionOffs(pSrc, p + 1 + Inv - pSrc->Str, UInt3, &OK) << 1);
+  *pErg = Inv + (EvalStrIntExpressionOffs(pSrc, p + 1 + Inv - pSrc->str.p_str, UInt3, &OK) << 1);
   *p = '\0';
   return OK;
 }
@@ -1685,7 +1685,7 @@ static void DecodeSPP(Word Code)
   UNUSED(Code);
 
   if (!ChkArgCnt(1, 1));
-  else if (*ArgStr[1].Str != '#') WrError(ErrNum_InvAddrMode);
+  else if (*ArgStr[1].str.p_str != '#') WrError(ErrNum_InvAddrMode);
   else
   {
     BAsmCode[1] = (EvalStrIntExpressionOffs(&ArgStr[1], 1, UInt6, &OK) << 2) + 0x02;
@@ -1702,7 +1702,7 @@ static void DecodeSRP(Word Code)
   Boolean OK;
 
   if (!ChkArgCnt(1, 1));
-  else if (*ArgStr[1].Str != '#') WrError(ErrNum_InvAddrMode);
+  else if (*ArgStr[1].str.p_str != '#') WrError(ErrNum_InvAddrMode);
   else
   {
     BAsmCode[1] = EvalStrIntExpressionOffs(&ArgStr[1], 1, UInt5, &OK) << 3;
@@ -1946,7 +1946,7 @@ static void MakeCode_ST9(void)
 
   if (DecodeIntelPseudo(True)) return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 
@@ -1967,11 +1967,13 @@ static void SwitchFrom_ST9(void)
 
 static void InternSymbol_ST9(char *Asc, TempResult *Erg)
 {
-  Boolean Err;
+  Boolean OK;
   Boolean Pair;
+  LargeInt Num;
 
-  Erg->Typ = TempNone;
-  if ((strlen(Asc) < 2) || (*Asc != 'R')) return;
+  as_tempres_set_none(Erg);
+  if ((strlen(Asc) < 2) || (*Asc != 'R'))
+    return;
   Asc++;
 
   if (*Asc == 'R')
@@ -1982,13 +1984,13 @@ static void InternSymbol_ST9(char *Asc, TempResult *Erg)
   else
     Pair = False;
 
-  Erg->Contents.Int = ConstLongInt(Asc, &Err, 10);
-  if ((!Err) || (Erg->Contents.Int < 0) || (Erg->Contents.Int > 255)) return;
-  if ((Erg->Contents.Int & 0xf0) == 0xd0) return;
-  if ((Pair) && (Odd(Erg->Contents.Int))) return;
+  Num = ConstLongInt(Asc, &OK, 10);
+  if (!OK || (Num < 0) || (Num > 255)) return;
+  if ((Num & 0xf0) == 0xd0) return;
+  if (Pair && Odd(Num)) return;
 
-  if (Pair) Erg->Contents.Int += 0x100;
-  Erg->Typ = TempInt; Erg->AddrSpaceMask |= (1 << SegReg);
+  if (Pair) Num += 0x100;
+  as_tempres_set_int(Erg, Num); Erg->AddrSpaceMask |= (1 << SegReg);
 }
 
 static void SwitchTo_ST9(void)

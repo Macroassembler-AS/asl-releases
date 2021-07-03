@@ -183,7 +183,7 @@ static Boolean IsWReg(const tStrComp *pArg, Byte *pResult, Boolean MustBeReg)
   tEvalResult EvalResult;
   tRegEvalResult RegEvalResult;
 
-  if (IsWRegCore(pArg->Str, pResult))
+  if (IsWRegCore(pArg->str.p_str, pResult))
     return True;
 
   RegEvalResult = EvalStrRegExpressionAsOperand(pArg, &RegDescr, &EvalResult, eSymbolSize8Bit, MustBeReg);
@@ -227,7 +227,7 @@ static Boolean IsWRReg(const tStrComp *pArg, Byte *pResult, Boolean MustBeReg)
   tEvalResult EvalResult;
   tRegEvalResult RegEvalResult;
 
-  if (IsWRRegCore(pArg->Str, pResult))
+  if (IsWRRegCore(pArg->str.p_str, pResult))
     return True;
 
   RegEvalResult = EvalStrRegExpressionAsOperand(pArg, &RegDescr, &EvalResult, eSymbolSize16Bit, MustBeReg);
@@ -251,12 +251,12 @@ static tRegEvalResult IsWRegOrWRReg(const tStrComp *pArg, Byte *pResult, tSymbol
   tEvalResult EvalResult;
   tRegEvalResult RegEvalResult;
 
-  if (IsWRegCore(pArg->Str, pResult))
+  if (IsWRegCore(pArg->str.p_str, pResult))
   {
     EvalResult.DataSize = eSymbolSize8Bit;
     RegEvalResult = eIsReg;
   }
-  else if (IsWRRegCore(pArg->Str, pResult))
+  else if (IsWRRegCore(pArg->str.p_str, pResult))
   {
     EvalResult.DataSize = eSymbolSize16Bit;
     RegEvalResult = eIsReg;
@@ -514,7 +514,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, Word Mask)
 
   /* immediate ? */
 
-  if (*pArg->Str == '#')
+  if (*pArg->str.p_str == '#')
   {
     switch (OpSize)
     {
@@ -546,7 +546,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, Word Mask)
 
   /* treat absolute address as register? */
 
-  if (*pArg->Str == '!')
+  if (*pArg->str.p_str == '!')
   {
     AdrWVal = EvalStrIntExpressionOffsWithResult(pArg, 1, UInt16, &EvalResult);
     if (EvalResult.OK)
@@ -561,13 +561,13 @@ static Boolean DecodeAdr(const tStrComp *pArg, Word Mask)
 
   /* indirekte Konstrukte ? */
 
-  if (*pArg->Str == '@')
+  if (*pArg->str.p_str == '@')
   {
     tStrComp Comp;
     tRegEvalResult RegEvalResult;
 
     StrCompRefRight(&Comp, pArg, 1);
-    if ((strlen(Comp.Str) >= 6) && (!as_strncasecmp(Comp.Str, ".RR", 3)) && (IsIndirect(Comp.Str + 3)))
+    if ((strlen(Comp.str.p_str) >= 6) && (!as_strncasecmp(Comp.str.p_str, ".RR", 3)) && (IsIndirect(Comp.str.p_str + 3)))
     {
       AdrVal = EvalStrIntExpressionOffsWithResult(&Comp, 3, Int8, &EvalResult);
       if (EvalResult.OK)
@@ -598,7 +598,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, Word Mask)
         return False;
       }
 
-      AdrWVal = EvalStrIntExpressionOffsWithResult(&Comp, ForceLen = GetForceLen(pArg->Str), Int8, &EvalResult);
+      AdrWVal = EvalStrIntExpressionOffsWithResult(&Comp, ForceLen = GetForceLen(pArg->str.p_str), Int8, &EvalResult);
       if (EvalResult.OK)
       {
         ChkSpace(SegData, EvalResult.AddrSpaceMask);
@@ -631,14 +631,14 @@ static Boolean DecodeAdr(const tStrComp *pArg, Word Mask)
 
   /* indiziert ? */
 
-  l = strlen(pArg->Str);
-  if ((l > 4) && (pArg->Str[l - 1] == ')'))
+  l = strlen(pArg->str.p_str);
+  if ((l > 4) && (pArg->str.p_str[l - 1] == ')'))
   {
     tStrComp Left, Right;
 
     StrCompRefRight(&Right, pArg, 0);
     StrCompShorten(&Right, 1);
-    p = RQuotPos(pArg->Str, '(');
+    p = RQuotPos(pArg->str.p_str, '(');
     if (!p)
     {
       WrStrErrorPos(ErrNum_BrackErr, pArg);
@@ -681,7 +681,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, Word Mask)
 
   /* simple direct address ? */
 
-  AdrWVal = EvalStrIntExpressionOffsWithResult(pArg, ForceLen = GetForceLen(pArg->Str),
+  AdrWVal = EvalStrIntExpressionOffsWithResult(pArg, ForceLen = GetForceLen(pArg->str.p_str),
                                       (Mask & MModDA) ? UInt16 : RegSpaceType, &EvalResult);
   if (EvalResult.OK)
   {
@@ -729,9 +729,9 @@ static int DecodeCond(const tStrComp *pArg)
 {
   int z;
 
-  NLS_UpString(pArg->Str);
+  NLS_UpString(pArg->str.p_str);
   for (z = 0; z < CondCnt; z++)
-    if (strcmp(Conditions[z].Name, pArg->Str) == 0)
+    if (strcmp(Conditions[z].Name, pArg->str.p_str) == 0)
       break;
 
   if (z >= CondCnt)
@@ -771,7 +771,7 @@ static Byte EvalBitPosition(const tStrComp *pBitArg, Boolean *pOK, ShortInt OpSi
   switch (OpSize)
   {
     case eSymbolSize8Bit:
-      return EvalStrIntExpressionOffs(pBitArg, !!(*pBitArg->Str == '#'), UInt3, pOK);
+      return EvalStrIntExpressionOffs(pBitArg, !!(*pBitArg->str.p_str == '#'), UInt3, pOK);
     default:
       WrStrErrorPos(ErrNum_InvOpSize, pBitArg);
       *pOK = False;
@@ -2316,7 +2316,7 @@ static void DecodeBit2(Word Code)
       {
         int BitStart, BitEnd, RegIdx;
 
-        if ((*ArgStr[2].Str == '#') && Hi(Code))
+        if ((*ArgStr[2].str.p_str == '#') && Hi(Code))
         {
           BitStart = 1;
           BitEnd = 2;
@@ -2421,7 +2421,7 @@ static void DecodeDEFBIT(Word Code)
     pElement = CreateStructElem(&LabPart);
     if (!pElement)
       return;
-    pElement->pRefElemName = as_strdup(ArgStr[1].Str);
+    pElement->pRefElemName = as_strdup(ArgStr[1].str.p_str);
     pElement->OpSize = eSymbolSize8Bit;
     pElement->BitPos = BitPos;
     pElement->ExpandFnc = ExpandZ8Bit;
@@ -2697,7 +2697,7 @@ static void MakeCode_Z8(void)
   if (DecodeIntelPseudo(True))
     return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

@@ -101,9 +101,9 @@ static LongInt SpecPage, RegB, MPR[8];
 
 static unsigned ChkZero(const tStrComp *pArg, Byte *erg)
 {
- if ((strlen(pArg->Str) > 1) && ((*pArg->Str == '<') || (*pArg->Str == '>')))
+ if ((strlen(pArg->str.p_str) > 1) && ((*pArg->str.p_str == '<') || (*pArg->str.p_str == '>')))
  {
-   *erg = Ord(*pArg->Str == '<') + 1;
+   *erg = Ord(*pArg->str.p_str == '<') + 1;
    return 1;
  }
  else
@@ -250,7 +250,7 @@ static void DecodeAdr(tAdrResult *pResult, const NormOrder *pOrder)
   {
     /* 1. Akkuadressierung */
 
-    if (!as_strcasecmp(ArgStr[1].Str, "A"))
+    if (!as_strcasecmp(ArgStr[1].str.p_str, "A"))
     {
       pResult->AdrCnt = 0;
       pResult->ErgMode = ModAcc;
@@ -258,7 +258,7 @@ static void DecodeAdr(tAdrResult *pResult, const NormOrder *pOrder)
 
     /* 2. immediate ? */
 
-    else if (*ArgStr[1].Str == '#')
+    else if (*ArgStr[1].str.p_str == '#')
     {
       IntType Type = Memo("PHW") ? Int16 : Int8;
       Word Value;
@@ -276,7 +276,7 @@ static void DecodeAdr(tAdrResult *pResult, const NormOrder *pOrder)
 
     /* 3. Special Page ? */
 
-    else if (*ArgStr[1].Str == '\\')
+    else if (*ArgStr[1].str.p_str == '\\')
     {
       tSymbolFlags Flags;
 
@@ -297,9 +297,9 @@ static void DecodeAdr(tAdrResult *pResult, const NormOrder *pOrder)
 
     /* 4. X-inner-indirekt ? */
 
-    else if ((strlen(ArgStr[1].Str) >= 5) && (!as_strcasecmp(ArgStr[1].Str + strlen(ArgStr[1].Str) - 3, ",X)")))
+    else if ((strlen(ArgStr[1].str.p_str) >= 5) && (!as_strcasecmp(ArgStr[1].str.p_str + strlen(ArgStr[1].str.p_str) - 3, ",X)")))
     {
-      if (*ArgStr[1].Str != '(') WrError(ErrNum_InvAddrMode);
+      if (*ArgStr[1].str.p_str != '(') WrError(ErrNum_InvAddrMode);
       else
       {
         tStrComp AddrArg;
@@ -334,7 +334,7 @@ static void DecodeAdr(tAdrResult *pResult, const NormOrder *pOrder)
     {
       /* 5. indirekt absolut ? */
 
-      if (IsIndirect(ArgStr[1].Str))
+      if (IsIndirect(ArgStr[1].str.p_str))
       {
         tStrComp AddrArg;
 
@@ -400,13 +400,13 @@ static void DecodeAdr(tAdrResult *pResult, const NormOrder *pOrder)
 
   else if (ArgCnt == 2)
   {
-    Boolean Indir1 = IsIndirect(ArgStr[1].Str);
+    Boolean Indir1 = IsIndirect(ArgStr[1].str.p_str);
 
     /* 7. stack-relative (65CE02-specific) ? */
 
-    if (Indir1 && !as_strcasecmp(ArgStr[2].Str, "Y") && (!as_strcasecmp(ArgStr[1].Str + strlen(ArgStr[1].Str) - 4, ",SP)")))
+    if (Indir1 && !as_strcasecmp(ArgStr[2].str.p_str, "Y") && (!as_strcasecmp(ArgStr[1].str.p_str + strlen(ArgStr[1].str.p_str) - 4, ",SP)")))
     {
-      if (*ArgStr[1].Str != '(') WrError(ErrNum_InvAddrMode);
+      if (*ArgStr[1].str.p_str != '(') WrError(ErrNum_InvAddrMode);
       else
       {
         tStrComp DistArg;
@@ -425,11 +425,11 @@ static void DecodeAdr(tAdrResult *pResult, const NormOrder *pOrder)
     /* 8. X,Y,Z-outer-indirekt ? */
 
     else if (Indir1
-          && (!as_strcasecmp(ArgStr[2].Str, "X")
-           || !as_strcasecmp(ArgStr[2].Str, "Y")
-           || !as_strcasecmp(ArgStr[2].Str, "Z")))
+          && (!as_strcasecmp(ArgStr[2].str.p_str, "X")
+           || !as_strcasecmp(ArgStr[2].str.p_str, "Y")
+           || !as_strcasecmp(ArgStr[2].str.p_str, "Z")))
     {
-      int Mode = toupper(ArgStr[2].Str[0]) - 'X';
+      int Mode = toupper(ArgStr[2].str.p_str[0]) - 'X';
       tStrComp AddrArg;
 
       StrCompRefRight(&AddrArg, &ArgStr[1], 1);
@@ -456,9 +456,9 @@ static void DecodeAdr(tAdrResult *pResult, const NormOrder *pOrder)
         if (ValOK)
         {
           pResult->AdrCnt = 1;
-          if (!as_strcasecmp(ArgStr[2].Str, "X"))
+          if (!as_strcasecmp(ArgStr[2].str.p_str, "X"))
             pResult->ErgMode = ModZIX;
-          else if (!as_strcasecmp(ArgStr[2].Str, "Y"))
+          else if (!as_strcasecmp(ArgStr[2].str.p_str, "Y"))
             pResult->ErgMode = ModZIY;
           else
             WrStrErrorPos(ErrNum_InvReg, &ArgStr[2]);
@@ -472,16 +472,16 @@ static void DecodeAdr(tAdrResult *pResult, const NormOrder *pOrder)
           pResult->AdrCnt = 2;
           pResult->AdrVals[0] = Lo(AdrWord);
           pResult->AdrVals[1] = Hi(AdrWord);
-          if (!as_strcasecmp(ArgStr[2].Str, "X"))
+          if (!as_strcasecmp(ArgStr[2].str.p_str, "X"))
             pResult->ErgMode = ModIX;
-          else if (!as_strcasecmp(ArgStr[2].Str, "Y"))
+          else if (!as_strcasecmp(ArgStr[2].str.p_str, "Y"))
             pResult->ErgMode = ModIY;
           else
             WrStrErrorPos(ErrNum_InvReg, &ArgStr[2]);
           if (pResult->ErgMode != -1)
           {
             if (IsBasePage(pResult->AdrVals[1]) && (ZeroMode == 0))
-              ChkZeroMode(pResult, pOrder, (!as_strcasecmp(ArgStr[2].Str, "X")) ? ModZIX : ModZIY);
+              ChkZeroMode(pResult, pOrder, (!as_strcasecmp(ArgStr[2].str.p_str, "X")) ? ModZIX : ModZIY);
           }
         }
       }
@@ -542,7 +542,7 @@ static void DecodeBRK(Word Index)
     {
       Boolean OK;
 
-      BAsmCode[1] = EvalStrIntExpressionOffs(&ArgStr[1], !!(*ArgStr[1].Str == '#'), Int8, &OK);
+      BAsmCode[1] = EvalStrIntExpressionOffs(&ArgStr[1], !!(*ArgStr[1].str.p_str == '#'), Int8, &OK);
       if (OK)
         CodeLen = 2;
     }
@@ -562,7 +562,7 @@ static void DecodeSEB_CLB(Word Code)
     if (ValOK)
     {
       BAsmCode[0] = Code + (BitNo << 5);
-      if (!as_strcasecmp(ArgStr[2].Str, "A"))
+      if (!as_strcasecmp(ArgStr[2].str.p_str, "A"))
         CodeLen = 1;
       else
       {
@@ -591,7 +591,7 @@ static void DecodeBBC_BBS(Word Code)
     if (ValOK)
     {
       BAsmCode[0] = (BAsmCode[0] << 5) + Code;
-      b = (as_strcasecmp(ArgStr[2].Str, "A") != 0);
+      b = (as_strcasecmp(ArgStr[2].str.p_str, "A") != 0);
       if (!b)
         ValOK = True;
       else
@@ -691,7 +691,7 @@ static void DecodeRBA_SBA(Word Code)
     Addr = EvalStrIntExpression(&ArgStr[1], UInt16, &OK);
     if (OK)
     {
-      BAsmCode[3] = EvalStrIntExpressionOffs(&ArgStr[2], ImmStart(ArgStr[2].Str), UInt8, &OK);
+      BAsmCode[3] = EvalStrIntExpressionOffs(&ArgStr[2], ImmStart(ArgStr[2].str.p_str), UInt8, &OK);
       if (OK)
       {
         BAsmCode[0] = Code;
@@ -714,7 +714,7 @@ static void DecodeBAR_BAS(Word Code)
     Addr = EvalStrIntExpression(&ArgStr[1], UInt16, &OK);
     if (OK)
     {
-      BAsmCode[3] = EvalStrIntExpressionOffs(&ArgStr[2], ImmStart(ArgStr[2].Str), UInt8, &OK);
+      BAsmCode[3] = EvalStrIntExpressionOffs(&ArgStr[2], ImmStart(ArgStr[2].str.p_str), UInt8, &OK);
       if (OK)
       {
         tSymbolFlags Flags;
@@ -749,7 +749,7 @@ static void DecodeSTI(Word Code)
     BAsmCode[1] = EvalStrIntExpression(&ArgStr[1], UInt8, &OK);
     if (OK)
     {
-      BAsmCode[2] = EvalStrIntExpressionOffs(&ArgStr[2], ImmStart(ArgStr[2].Str), UInt8, &OK);
+      BAsmCode[2] = EvalStrIntExpressionOffs(&ArgStr[2], ImmStart(ArgStr[2].str.p_str), UInt8, &OK);
       if (OK)
       {
         BAsmCode[0] = 0xb2;
@@ -772,7 +772,7 @@ static void DecodeLDM(Word Code)
     BAsmCode[2] = EvalStrIntExpression(&ArgStr[2], UInt8, &ValOK);
     if (ValOK)
     {
-      if (*ArgStr[1].Str != '#') WrError(ErrNum_InvAddrMode);
+      if (*ArgStr[1].str.p_str != '#') WrError(ErrNum_InvAddrMode);
       else
       {
         BAsmCode[1] = EvalStrIntExpressionOffs(&ArgStr[1], 1, Int8, &ValOK);
@@ -868,7 +868,7 @@ static void DecodeTST(Word Index)
     if (!ChkArgCnt(1, ArgCntMax))
       return;
 
-    ImmVal = EvalStrIntExpressionOffs(&ArgStr[1], ImmStart(ArgStr[1].Str), Int8, &OK);
+    ImmVal = EvalStrIntExpressionOffs(&ArgStr[1], ImmStart(ArgStr[1].str.p_str), Int8, &OK);
     if (!OK)
       return;
     for (z = 1; z <= ArgCnt - 1; z++)
@@ -2427,7 +2427,7 @@ static void MakeCode_65(void)
     return;
   }
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

@@ -95,7 +95,7 @@ static Boolean DecodeBaseReg(const char *pAsc, Word *pResult)
 
 static Boolean DecodeArgReg(unsigned Index, Word *pResult)
 {
-  Boolean Result = DecodeReg(ArgStr[Index].Str, pResult);
+  Boolean Result = DecodeReg(ArgStr[Index].str.p_str, pResult);
 
   if (!Result)
     WrStrErrorPos(ErrNum_InvReg, &ArgStr[Index]);
@@ -104,7 +104,7 @@ static Boolean DecodeArgReg(unsigned Index, Word *pResult)
 
 static Boolean DecodeArgBaseReg(unsigned Index, Word *pResult)
 {
-  Boolean Result = DecodeBaseReg(ArgStr[Index].Str, pResult);
+  Boolean Result = DecodeBaseReg(ArgStr[Index].str.p_str, pResult);
 
   if (!Result)
     WrStrErrorPos(ErrNum_InvReg, &ArgStr[Index]);
@@ -175,7 +175,7 @@ static Boolean DecodeCondition(const char *pAsc, Word *pResult)
 
 static Boolean DecodeArgCondition(unsigned Index, Word *pResult)
 {
-  Boolean Result = DecodeCondition(ArgStr[Index].Str, pResult);
+  Boolean Result = DecodeCondition(ArgStr[Index].str.p_str, pResult);
 
   if (!Result)
     WrStrErrorPos(ErrNum_UndefCond, &ArgStr[Index]);
@@ -234,10 +234,10 @@ static Boolean DecodeArgXIOCmd(unsigned Index, Word *pResult)
   const tCondition *pRun;
   Boolean OK;
 
-  if (isalpha(ArgStr[Index].Str[0]))
+  if (isalpha(ArgStr[Index].str.p_str[0]))
   {
     for (pRun = XIO; pRun->pName; pRun++)
-      if (!as_strcasecmp(ArgStr[Index].Str, pRun->pName))
+      if (!as_strcasecmp(ArgStr[Index].str.p_str, pRun->pName))
       {
         *pResult = pRun->Code;
         return True;
@@ -910,7 +910,7 @@ static void MakeCode_1750(void)
   if (Memo(""))
     return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

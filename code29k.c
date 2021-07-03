@@ -87,7 +87,7 @@ static Boolean IsSup(LongWord RegNo)
 
 static Boolean ChkCPU(CPUVar Min)
 {
-  return StringListPresent(Emulations, OpPart.Str) ? True : ChkMinCPU(Min);
+  return StringListPresent(Emulations, OpPart.str.p_str) ? True : ChkMinCPU(Min);
 }
 
 /*-------------------------------------------------------------------------*/
@@ -169,7 +169,7 @@ static tRegEvalResult DecodeReg(const tStrComp *pArg, LongWord *pResult, Boolean
   tEvalResult EvalResult;
   tRegDescr RegDescr;
 
-  if (DecodeRegCore(pArg->Str, pResult))
+  if (DecodeRegCore(pArg->str.p_str, pResult))
     RegEvalResult = eIsReg;
   else
   {
@@ -213,7 +213,7 @@ static Boolean DecodeSpReg(char *Asc_O, LongWord *Erg)
 
 static Boolean DecodeArgSpReg(int ArgIndex, LongWord *pRes)
 {
-  Boolean Result = DecodeSpReg(ArgStr[ArgIndex].Str, pRes);
+  Boolean Result = DecodeSpReg(ArgStr[ArgIndex].str.p_str, pRes);
 
   if (!Result)
     WrStrErrorPos(ErrNum_InvCtrlReg, &ArgStr[ArgIndex]);
@@ -783,9 +783,9 @@ static void DecodeEMULATED(Word Code)
   if (ChkArgCnt(1, ArgCntMax))
     for (z = 1; z <= ArgCnt; z++)
     {
-      NLS_UpString(ArgStr[z].Str);
-      if (!StringListPresent(Emulations, ArgStr[z].Str))
-        AddStringListLast(&Emulations, ArgStr[z].Str);
+      NLS_UpString(ArgStr[z].str.p_str);
+      if (!StringListPresent(Emulations, ArgStr[z].str.p_str))
+        AddStringListLast(&Emulations, ArgStr[z].str.p_str);
     }
 }
 
@@ -1015,7 +1015,7 @@ static void MakeCode_29K(void)
 
   /* Nullanweisung */
 
-  if (Memo("") && !*AttrPart.Str && (ArgCnt == 0))
+  if (Memo("") && !*AttrPart.str.p_str && (ArgCnt == 0))
     return;
 
   /* Pseudoanweisungen */
@@ -1023,7 +1023,7 @@ static void MakeCode_29K(void)
   if (DecodeIntelPseudo(True))
     return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 
@@ -1036,11 +1036,6 @@ static void InitCode_29K(void)
 static Boolean IsDef_29K(void)
 {
   return Memo("REG");
-}
-
-static void SwitchFrom_29K(void)
-{
-  DeinitFields(); ClearONOFF();
 }
 
 static void SwitchTo_29K(void)
@@ -1072,7 +1067,7 @@ static void SwitchTo_29K(void)
   pASSUMERecs = ASSUME29Ks;
   ASSUMERecCnt = ASSUME29KCount;
 
-  SwitchFrom = SwitchFrom_29K; InitFields();
+  SwitchFrom = DeinitFields; InitFields();
 }
 
 void code29k_init(void)

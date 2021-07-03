@@ -38,6 +38,9 @@
 
 #define LOCSYMSIGHT 3       /* max. sight for nameless temporary symbols */
 
+#define LEAVE  goto func_exit
+#define LEAVE2 goto func_exit2
+
 /* Mask, Min 6 Max are computed at initialization */
 
 tIntTypeDef IntTypeDefs[IntTypeCnt] =
@@ -117,21 +120,17 @@ LongInt LocHandleCnt;          /* mom. verwendeter lokaler Handle            */
 typedef struct sSymbolEntry
 {
   TTree Tree;
-  Byte SymType;
-  tSymbolSize SymSize;
   Boolean Defined, Used, Changeable;
-  SymbolVal SymWert;
+  TempResult SymWert;
   PCrossRef RefList;
   Byte FileNum;
   LongInt LineNum;
-  tSymbolFlags Flags;
-  TRelocEntry *Relocs;
 } TSymbolEntry, *PSymbolEntry;
 
 typedef struct sSymbolStackEntry
 {
   struct sSymbolStackEntry *Next;
-  SymbolVal Contents;
+  TempResult Contents;
 } TSymbolStackEntry, *PSymbolStackEntry;
 
 typedef struct sSymbolStack
@@ -375,23 +374,23 @@ static Boolean ProcessBk(char **Start, char *Erg)
 }
 
 /*!------------------------------------------------------------------------
- * \fn     DynString2Int(const struct sDynString *pDynString)
+ * \fn     NonZString2Int(const struct as_nonz_dynstr *p_str)
  * \brief  convert string to its "ASCII representation"
- * \param  pDynString string containing characters
+ * \param  p_str string containing characters
  * \return -1 or converted int
  * ------------------------------------------------------------------------ */
 
-LargeInt DynString2Int(const struct sDynString *pDynString)
+LargeInt NonZString2Int(const struct as_nonz_dynstr *p_str)
 {
-  if ((pDynString->Length > 0) && (pDynString->Length <= 4))
+  if ((p_str->len > 0) && (p_str->len <= 4))
   {
     const char *pRun;
     Byte Digit;
     LargeInt Result;
 
     Result = 0;
-    for (pRun = pDynString->Contents;
-         pRun < pDynString->Contents + pDynString->Length;
+    for (pRun = p_str->p_str;
+         pRun < p_str->p_str + p_str->len;
          pRun++)
     {
       Digit = (usint) *pRun;
@@ -402,14 +401,17 @@ LargeInt DynString2Int(const struct sDynString *pDynString)
   return -1;
 }
 
-Boolean Int2DynString(struct sDynString *pDynString, LargeInt Src)
+Boolean Int2NonZString(struct as_nonz_dynstr *p_str, LargeInt Src)
 {
   int Search;
   Byte Digit;
-  char *pDest = &pDynString->Contents[sizeof(pDynString->Contents)];
+  char *pDest;
 
-  pDynString->Length = 0;
-  while (Src)
+  if (p_str->capacity < 32)
+    as_nonz_dynstr_realloc(p_str, 32);
+  p_str->len = 0;
+  pDest = &p_str->p_str[p_str->capacity];
+  while (Src && (p_str->len < p_str->capacity))
   {
     Digit = Src & 0xff;
     Src = (Src >> 8) & 0xfffffful;
@@ -417,11 +419,11 @@ Boolean Int2DynString(struct sDynString *pDynString, LargeInt Src)
       if (CharTransTable[Search] == Digit)
       {
         *(--pDest) = Search;
-        pDynString->Length++;
+        p_str->len++;
         break;
       }
   }
-  memmove(pDynString->Contents, pDest, pDynString->Length);
+  memmove(p_str->p_str, pDest, p_str->len);
   return True;
 }
 
@@ -440,11 +442,10 @@ int TempResultToInt(TempResult *pResult)
       break;
     case TempString:
     {
-      LargeInt Result = DynString2Int(&pResult->Contents.Ascii);
+      LargeInt Result = NonZString2Int(&pResult->Contents.str);
       if (Result >= 0)
       {
-        pResult->Typ = TempInt;
-        pResult->Contents.Int = Result;
+        as_tempres_set_int(pResult, Result);
         break;
       }
       /* else */
@@ -467,7 +468,9 @@ int TempResultToInt(TempResult *pResult)
 
 Boolean MultiCharToInt(TempResult *pResult, unsigned MaxLen)
 {
-  if ((pResult->Contents.Ascii.Length <= MaxLen) && (pResult->Flags & eSymbolFlag_StringSingleQuoted))
+  if ((pResult->Typ == TempString)
+   && (pResult->Contents.str.len <= MaxLen)
+   && (pResult->Flags & eSymbolFlag_StringSingleQuoted))
   {
     TempResultToInt(pResult);
     return True;
@@ -492,10 +495,10 @@ Boolean ExpandStrSymbol(char *pDest, size_t DestSize, const tStrComp *pSrc)
   *pDest = '\0'; StrCompRefRight(&SrcComp, pSrc, 0);
   while (True)
   {
-    pStart = strchr(SrcComp.Str, '{');
+    pStart = strchr(SrcComp.str.p_str, '{');
     if (pStart)
     {
-      unsigned ls = pStart - SrcComp.Str, ld = strlen(pDest);
+      unsigned ls = pStart - SrcComp.str.p_str, ld = strlen(pDest);
       String Expr, Result;
       tStrComp ExprComp;
       tEvalResult EvalResult;
@@ -503,7 +506,7 @@ Boolean ExpandStrSymbol(char *pDest, size_t DestSize, const tStrComp *pSrc)
 
       if (ld + ls + 1 > DestSize)
         ls = DestSize - 1 - ld;
-      memcpy(pDest + ld, SrcComp.Str, ls);
+      memcpy(pDest + ld, SrcComp.str.p_str, ls);
       pDest[ld + ls] = '\0';
 
       pStop = QuotPos(pStart + 1, '}');
@@ -512,8 +515,8 @@ Boolean ExpandStrSymbol(char *pDest, size_t DestSize, const tStrComp *pSrc)
         WrStrErrorPos(ErrNum_InvSymName, pSrc);
         return False;
       }
-      StrCompMkTemp(&ExprComp, Expr);
-      StrCompCopySub(&ExprComp, &SrcComp, pStart + 1 - SrcComp.Str, pStop - pStart - 1);
+      StrCompMkTemp(&ExprComp, Expr, sizeof(Expr));
+      StrCompCopySub(&ExprComp, &SrcComp, pStart + 1 - SrcComp.str.p_str, pStop - pStart - 1);
       EvalStrStringExpressionWithResult(&ExprComp, &EvalResult, Result);
       if (!EvalResult.OK)
         return False;
@@ -525,11 +528,11 @@ Boolean ExpandStrSymbol(char *pDest, size_t DestSize, const tStrComp *pSrc)
       if (!CaseSensitive)
         UpString(Result);
       strmaxcat(pDest, Result, DestSize);
-      StrCompIncRefLeft(&SrcComp, pStop + 1 - SrcComp.Str);
+      StrCompIncRefLeft(&SrcComp, pStop + 1 - SrcComp.str.p_str);
     }
     else
     {
-      strmaxcat(pDest, SrcComp.Str, DestSize);
+      strmaxcat(pDest, SrcComp.str.p_str, DestSize);
       return True;
     }
   }
@@ -814,7 +817,7 @@ static Boolean GetSymSection(char *Name, LongInt *Erg, const tStrComp *pUnexpCom
   strmaxcpy(Part, q + 1, STRINGSIZE);
   *q = '\0';
 
-  StrCompMkTemp(&TmpComp, Part);
+  StrCompMkTemp(&TmpComp, Part, sizeof(Part));
   return IdentifySection(&TmpComp, Erg);
 }
 
@@ -949,23 +952,21 @@ static Double ConstFloatVal(const char *pExpr, FloatType Typ, Boolean *pResult)
 
 static void ConstStringVal(const tStrComp *pExpr, TempResult *pDest, Boolean *pResult)
 {
-  String CopyStr;
-  tStrComp Copy, Remainder;
+  tStrComp Raw, Copy, Remainder;
   char *pPos, QuoteChar;
   int l, TLen;
 
-  StrCompMkTemp(&Copy, CopyStr);
   *pResult = False;
 
-  l = strlen(pExpr->Str);
+  l = strlen(pExpr->str.p_str);
   if (l < 2)
     return;
-  switch (*pExpr->Str)
+  switch (*pExpr->str.p_str)
   {
     case '"':
     case '\'':
-      QuoteChar = *pExpr->Str;
-      if (pExpr->Str[l - 1] == QuoteChar)
+      QuoteChar = *pExpr->str.p_str;
+      if (pExpr->str.p_str[l - 1] == QuoteChar)
       {
         if ('\'' == QuoteChar)
           pDest->Flags |= eSymbolFlag_StringSingleQuoted;
@@ -976,28 +977,31 @@ static void ConstStringVal(const tStrComp *pExpr, TempResult *pDest, Boolean *pR
       return;
   }
 
-  StrCompCopy(&Copy, pExpr);
-  StrCompIncRefLeft(&Copy, 1);
-  StrCompShorten(&Copy, 1);
+  StrCompAlloc(&Raw, STRINGSIZE);
+  StrCompCopySub(&Raw, pExpr, 1, l - 2);
+  /* use LEAVE from now on instead of return */
 
   /* go through source */
 
-  pDest->Typ = TempNone;
-  pDest->Contents.Ascii.Length = 0;
+  as_tempres_set_c_str(pDest, "");
+  StrCompRefRight(&Copy, &Raw, 0);
   while (1)
   {
-    pPos = strchr(Copy.Str, '\\');
+    pPos = strchr(Copy.str.p_str, '\\');
     if (pPos)
       StrCompSplitRef(&Copy, &Remainder, &Copy, pPos);
 
     /* " before \ -> not a simple string but something like "...." ... " */
 
-    if (strchr(Copy.Str, QuoteChar))
-      return;
+    if (strchr(Copy.str.p_str, QuoteChar))
+    {
+      as_tempres_set_none(pDest);
+      LEAVE;
+    }
 
     /* copy part up to next '\' verbatim: */
 
-    DynStringAppend(&pDest->Contents.Ascii, Copy.Str, strlen(Copy.Str));
+    as_nonz_dynstr_append_raw(&pDest->Contents.str, Copy.str.p_str, strlen(Copy.str.p_str));
 
     /* are we done? If not, advance pointer to behind '\' */
 
@@ -1007,19 +1011,24 @@ static void ConstStringVal(const tStrComp *pExpr, TempResult *pDest, Boolean *pR
 
     /* treat escaped section: stringification? */
 
-    if (*Copy.Str == '{')
+    if (*Copy.str.p_str == '{')
     {
       TempResult t;
       char *pStr;
       String Str;
+      Boolean OK = True;
 
+      as_tempres_ini(&t);
       StrCompIncRefLeft(&Copy, 1);
 
       /* cut out part in {...} */
 
-      pPos = QuotPos(Copy.Str, '}');
+      pPos = QuotPos(Copy.str.p_str, '}');
       if (!pPos)
-        return;
+      {
+        OK = False;
+        LEAVE2;
+      }
       StrCompSplitRef(&Copy, &Remainder, &Copy, pPos);
       KillPrefBlanksStrCompRef(&Copy);
       KillPostBlanksStrComp(&Copy);
@@ -1031,8 +1040,7 @@ static void ConstStringVal(const tStrComp *pExpr, TempResult *pDest, Boolean *pR
       {
         WrStrErrorPos(ErrNum_NoRelocs, &Copy);
         FreeRelocs(&t.Relocs);
-        *pResult = True;
-        return;
+        as_tempres_set_none(&t);
       }
 
       /* append result */
@@ -1049,36 +1057,51 @@ static void ConstStringVal(const tStrComp *pExpr, TempResult *pDest, Boolean *pR
           TLen = strlen(pStr);
           break;
         case TempString:
-          pStr = t.Contents.Ascii.Contents;
-          TLen = t.Contents.Ascii.Length;
+          pStr = t.Contents.str.p_str;
+          TLen = t.Contents.str.len;
           break;
         default:
           *pResult = True;
-          return;
+          OK = False;
       }
-      DynStringAppend(&pDest->Contents.Ascii, pStr, TLen);
-      pDest->Flags |= t.Flags & eSymbolFlags_Promotable;
+      if (OK)
+      {
+        as_nonz_dynstr_append_raw(&pDest->Contents.str, pStr, TLen);
+        pDest->Flags |= t.Flags & eSymbolFlags_Promotable;
+      }
 
       /* advance source pointer to behind '}' */
 
       Copy = Remainder;
+
+   func_exit2:
+      as_tempres_free(&t);
+      if (!OK)
+      {
+        as_tempres_set_none(pDest);
+        LEAVE;
+      }
     }
 
     /* simple character escape: */
 
     else
     {
-      char Res, *pNext = Copy.Str;
+      char Res, *pNext = Copy.str.p_str;
 
       if (!ProcessBk(&pNext, &Res))
-        return;
-      DynStringAppend(&pDest->Contents.Ascii, &Res, 1);
-      StrCompIncRefLeft(&Copy, pNext - Copy.Str);
+      {
+        as_tempres_set_none(pDest);
+        LEAVE;
+      }
+      as_nonz_dynstr_append_raw(&pDest->Contents.str, &Res, 1);
+      StrCompIncRefLeft(&Copy, pNext - Copy.str.p_str);
     }
   }
 
-  pDest->Typ = TempString;
   *pResult = True;
+func_exit:
+  StrCompFree(&Raw);
 }
 
 
@@ -1207,7 +1230,6 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
   Boolean InSgl, InDbl, NextEscaped, ThisEscaped;
   PFunction ValFunc;
   tStrComp CopyComp, STempComp;
-  String CopyStr, stemp;
   char *KlPos, *zp, *pOpPos;
   const tFunction *pFunction;
   PRelocEntry TReloc;
@@ -1217,17 +1239,17 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
 
   ChkStack();
 
-  StrCompMkTemp(&CopyComp, CopyStr);
-  StrCompMkTemp(&STempComp, stemp);
+  for (z1 = 0; z1 < 3; z1++)
+    as_tempres_ini(&InVals[z1]);
+  StrCompAlloc(&CopyComp, STRINGSIZE);
+  StrCompAlloc(&STempComp, STRINGSIZE);
 
   if (MakeDebug)
-    fprintf(Debug, "Parse '%s'\n", pExpr->Str);
-
-  memset(InVals, 0, sizeof(InVals));
+    fprintf(Debug, "Parse '%s'\n", pExpr->str.p_str);
 
   /* Annahme Fehler */
 
-  pErg->Typ = TempNone;
+  as_tempres_set_none(pErg);
   pErg->Relocs = NULL;
   pErg->Flags = eSymbolFlag_None;
   pErg->AddrSpaceMask = 0;
@@ -1240,15 +1262,14 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
   /* sort out local symbols like - and +++.  Do it now to get them out of the
      formula parser's way. */
 
-  ChkTmp2(CopyComp.Str, CopyComp.Str, FALSE);
+  ChkTmp2(CopyComp.str.p_str, CopyComp.str.p_str, FALSE);
   StrCompCopy(&STempComp, &CopyComp);
 
   /* Programmzaehler ? */
 
-  if ((PCSymbol) && (!as_strcasecmp(CopyComp.Str, PCSymbol)))
+  if (PCSymbol && (!as_strcasecmp(CopyComp.str.p_str, PCSymbol)))
   {
-    pErg->Typ = TempInt;
-    pErg->Contents.Int = EProgCounter();
+    as_tempres_set_int(pErg, EProgCounter());
     pErg->Relocs = NULL;
     pErg->AddrSpaceMask |= 1 << ActPC;
     LEAVE;
@@ -1256,7 +1277,7 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
 
   /* Konstanten ? */
 
-  pErg->Contents.Int = ConstIntVal(CopyComp.Str, (IntType) (IntTypeCnt - 1), &OK);
+  pErg->Contents.Int = ConstIntVal(CopyComp.str.p_str, (IntType) (IntTypeCnt - 1), &OK);
   if (OK)
   {
     pErg->Typ = TempInt;
@@ -1264,7 +1285,7 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
     LEAVE;
   }
 
-  pErg->Contents.Float = ConstFloatVal(CopyComp.Str, Float80, &OK);
+  pErg->Contents.Float = ConstFloatVal(CopyComp.str.p_str, Float80, &OK);
   if (OK)
   {
     pErg->Typ = TempFloat;
@@ -1282,9 +1303,11 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
   /* durch Codegenerator gegebene Konstanten ? */
 
   pErg->Relocs = NULL;
-  InternSymbol(CopyComp.Str, pErg);
+  InternSymbol(CopyComp.str.p_str, pErg);
   if (pErg->Typ != TempNone)
+  {
     LEAVE;
+  }
 
   /* find out which operators *might* occur in expression */
 
@@ -1298,14 +1321,14 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
   NextEscaped = False;
   for (pOp = Operators + 1; pOp->Id; pOp++)
   {
-    pOpPos = (pOp->IdLen == 1) ? (strchr(CopyComp.Str, *pOp->Id)) : (strstr(CopyComp.Str, pOp->Id));
+    pOpPos = (pOp->IdLen == 1) ? (strchr(CopyComp.str.p_str, *pOp->Id)) : (strstr(CopyComp.str.p_str, pOp->Id));
     if (pOpPos)
       FOps[FOpCnt++] = pOp;
   }
 
   /* nach Operator hoechster Rangstufe ausserhalb Klammern suchen */
 
-  for (zp = CopyComp.Str; *zp; zp++, ThisEscaped = NextEscaped)
+  for (zp = CopyComp.str.p_str; *zp; zp++, ThisEscaped = NextEscaped)
   {
     NextEscaped = False;
     switch (*zp)
@@ -1333,7 +1356,7 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
       case '\'':
         if (!InDbl && !ThisEscaped)
         {
-          if (InSgl || !QualifyQuote || QualifyQuote(CopyComp.Str, zp))
+          if (InSgl || !QualifyQuote || QualifyQuote(CopyComp.str.p_str, zp))
             InSgl = !InSgl;
         }
         break;
@@ -1358,7 +1381,7 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
               if (Operators[LocOpMax].Priority >= Operators[OpMax].Priority)
               {
                 OpMax = LocOpMax;
-                OpPos = zp - CopyComp.Str;
+                OpPos = zp - CopyComp.str.p_str;
               }
             }
           }
@@ -1401,10 +1424,10 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
 
     /* Operandenzahl pruefen */
 
-    CompLen = strlen(CopyComp.Str);
+    CompLen = strlen(CopyComp.str.p_str);
     if (CompLen <= 1)
       ThisArgCnt = 0;
-    else if (!OpPos || (OpPos == (int)strlen(CopyComp.Str) - 1))
+    else if (!OpPos || (OpPos == (int)strlen(CopyComp.str.p_str) - 1))
       ThisArgCnt = 1;
     else
       ThisArgCnt = 2;
@@ -1413,23 +1436,19 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
 
     /* Teilausdruecke rekursiv auswerten */
 
-    Save = StrCompSplitRef(&InArgs[0], &InArgs[1], &CopyComp, CopyComp.Str + OpPos);
+    Save = StrCompSplitRef(&InArgs[0], &InArgs[1], &CopyComp, CopyComp.str.p_str + OpPos);
     StrCompIncRefLeft(&InArgs[1], strlen(pOp->Id) - 1);
     EvalStrExpression(&InArgs[1], &InVals[1]);
     if (pOp->Dyadic)
       EvalStrExpression(&InArgs[0], &InVals[0]);
     else if (InVals[1].Typ == TempFloat)
-    {
-      InVals[0].Typ = TempFloat;
-      InVals[0].Contents.Float = 0.0;
-    }
+      as_tempres_set_float(&InVals[0], 0.0);
     else
     {
-      InVals[0].Typ = TempInt;
-      InVals[0].Contents.Int = 0;
+      as_tempres_set_int(&InVals[0], 0);
       InVals[0].Relocs = NULL;
     }
-    CopyComp.Str[OpPos] = Save;
+    CopyComp.str.p_str[OpPos] = Save;
 
     /* Abbruch, falls dabei Fehler */
 
@@ -1505,7 +1524,7 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
 
     /* erste Klammer suchen, Funktionsnamen abtrennen */
 
-    KlPos = strchr(CopyComp.Str, '(');
+    KlPos = strchr(CopyComp.str.p_str, '(');
 
     /* Funktionsnamen abschneiden */
 
@@ -1515,35 +1534,35 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
 
     /* Nullfunktion: nur Argument */
 
-    if (*FName.Str == '\0')
+    if (*FName.str.p_str == '\0')
     {
-      EvalStrExpression(&FArg, &InVals[0]);
-      *pErg = InVals[0];
+      EvalStrExpression(&FArg, pErg);
       LEAVE;
     }
 
     /* selbstdefinierte Funktion ? */
 
-    ValFunc = FindFunction(FName.Str);
+    ValFunc = FindFunction(FName.str.p_str);
     if (ValFunc)
     {
-      String CompArgStr;
+      as_dynstr_t CompArgStr;
       tStrComp CompArg;
+      as_dynstr_t stemp;
 
       PromotedFlags = eSymbolFlag_None;
       PromotedAddrSpaceMask = 0;
       PromotedDataSize = eSymbolSizeUnknown;
-      StrCompMkTemp(&CompArg, CompArgStr);
-      strmaxcpy(CompArg.Str, ValFunc->Definition, STRINGSIZE);
+      as_dynstr_ini_c_str(&CompArgStr, ValFunc->Definition);
+      as_dynstr_ini(&stemp, STRINGSIZE);
       for (z1 = 1; z1 <= ValFunc->ArguCnt; z1++)
       {
-        if (!*FArg.Str)
+        if (!*FArg.str.p_str)
         {
           WrError(ErrNum_InvFuncArgCnt);
-          LEAVE;
+          LEAVE2;
         }
 
-        KlPos = QuotPos(FArg.Str, ',');
+        KlPos = QuotPos(FArg.str.p_str, ',');
         if (KlPos)
           StrCompSplitRef(&FArg, &Remainder, &FArg, KlPos);
 
@@ -1552,7 +1571,7 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
         {
           WrStrErrorPos(ErrNum_NoRelocs, &FArg);
           FreeRelocs(&InVals[0].Relocs);
-          return;
+          LEAVE2;
         }
         PromotedFlags |= InVals[0].Flags & eSymbolFlags_Promotable;
         PromotedAddrSpaceMask |= InVals[0].AddrSpaceMask;
@@ -1563,53 +1582,54 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
         else
           StrCompReset(&FArg);
 
-        strmaxcpy(stemp, "(", STRINGSIZE);
-        if (TempResultToPlainString(stemp + 1, &InVals[0], STRINGSIZE - 1))
-          LEAVE;
-        strmaxcat(stemp,")", STRINGSIZE);
-        ExpandLine(stemp, z1, CompArg.Str, sizeof(CompArgStr));
+        as_sdprintf(&stemp, "(");
+        if (as_tempres_append_dynstr(&stemp, &InVals[0]))
+          LEAVE2;
+        as_sdprcatf(&stemp, ")");
+        ExpandLine(stemp.p_str, z1, &CompArgStr);
       }
-      if (*FArg.Str)
+      if (*FArg.str.p_str)
       {
         WrError(ErrNum_InvFuncArgCnt);
-        LEAVE;
+        LEAVE2;
       }
+      StrCompMkTemp(&CompArg, CompArgStr.p_str, CompArgStr.capacity);
       EvalStrExpression(&CompArg, pErg);
       pErg->Flags |= PromotedFlags;
       pErg->AddrSpaceMask |= PromotedAddrSpaceMask;
       if (pErg->DataSize == eSymbolSizeUnknown) pErg->DataSize = PromotedDataSize;
+func_exit2:
+      as_dynstr_free(&stemp);
+      as_dynstr_free(&CompArgStr);
       LEAVE;
     }
 
     /* hier einmal umwandeln ist effizienter */
 
-    NLS_UpString(FName.Str);
+    NLS_UpString(FName.str.p_str);
 
     /* symbolbezogene Funktionen */
 
-    if (!strcmp(FName.Str, "SYMTYPE"))
+    if (!strcmp(FName.str.p_str, "SYMTYPE"))
     {
-      pErg->Typ = TempInt;
-      pErg->Contents.Int = GetSymbolType(&FArg);
+      as_tempres_set_int(pErg, GetSymbolType(&FArg));
       LEAVE;
     }
 
-    else if (!strcmp(FName.Str, "DEFINED"))
+    else if (!strcmp(FName.str.p_str, "DEFINED"))
     {
-      pErg->Typ = TempInt;
-      pErg->Contents.Int = !!IsSymbolDefined(&FArg);
+      as_tempres_set_int(pErg, !!IsSymbolDefined(&FArg));
       LEAVE;
     }
 
-    else if (!strcmp(FName.Str, "ASSUMEDVAL"))
+    else if (!strcmp(FName.str.p_str, "ASSUMEDVAL"))
     {
       unsigned IdxAssume;
 
       for (IdxAssume = 0; IdxAssume < ASSUMERecCnt; IdxAssume++)
-        if (!as_strcasecmp(FArg.Str, pASSUMERecs[IdxAssume].Name))
+        if (!as_strcasecmp(FArg.str.p_str, pASSUMERecs[IdxAssume].Name))
         {
-          pErg->Typ = TempInt;
-          pErg->Contents.Int = *(pASSUMERecs[IdxAssume].Dest);
+          as_tempres_set_int(pErg, *(pASSUMERecs[IdxAssume].Dest));
           LEAVE;
         }
       WrStrErrorPos(ErrNum_SymbolUndef, &FArg);
@@ -1624,7 +1644,7 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
     PromotedDataSize = eSymbolSizeUnknown;
     do
     {
-      zp = QuotPos(FArg.Str, ',');
+      zp = QuotPos(FArg.str.p_str, ',');
       if (zp)
         StrCompSplitRef(&InArgs[cnt], &Remainder, &FArg, zp);
       else
@@ -1659,7 +1679,7 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
     /* search function */
 
     for (pFunction = Functions; pFunction->pName; pFunction++)
-      if (!strcmp(FName.Str, pFunction->pName))
+      if (!strcmp(FName.str.p_str, pFunction->pName))
         break;
     if (!pFunction->pName)
     {
@@ -1699,42 +1719,37 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
   KillPrefBlanksStrComp(&CopyComp);
   KillPostBlanksStrComp(&CopyComp);
 
-  ChkTmp1(CopyComp.Str, FALSE);
+  ChkTmp1(CopyComp.str.p_str, FALSE);
 
   /* interne Symbole ? */
 
-  if (!as_strcasecmp(CopyComp.Str, "MOMFILE"))
+  if (!as_strcasecmp(CopyComp.str.p_str, "MOMFILE"))
   {
-    pErg->Typ = TempString;
-    CString2DynString(&pErg->Contents.Ascii, CurrFileName);
+    as_tempres_set_c_str(pErg, CurrFileName);
     LEAVE;
   }
 
-  if (!as_strcasecmp(CopyComp.Str, "MOMLINE"))
+  if (!as_strcasecmp(CopyComp.str.p_str, "MOMLINE"))
   {
-    pErg->Typ = TempInt;
-    pErg->Contents.Int = CurrLine;
+    as_tempres_set_int(pErg, CurrLine);
     LEAVE;
   }
 
-  if (!as_strcasecmp(CopyComp.Str, "MOMPASS"))
+  if (!as_strcasecmp(CopyComp.str.p_str, "MOMPASS"))
   {
-    pErg->Typ = TempInt;
-    pErg->Contents.Int = PassNo;
+    as_tempres_set_int(pErg, PassNo);
     LEAVE;
   }
 
-  if (!as_strcasecmp(CopyComp.Str, "MOMSECTION"))
+  if (!as_strcasecmp(CopyComp.str.p_str, "MOMSECTION"))
   {
-    pErg->Typ = TempString;
-    CString2DynString(&pErg->Contents.Ascii, GetSectionName(MomSectionHandle));
+    as_tempres_set_c_str(pErg, GetSectionName(MomSectionHandle));
     LEAVE;
   }
 
-  if (!as_strcasecmp(CopyComp.Str, "MOMSEGMENT"))
+  if (!as_strcasecmp(CopyComp.str.p_str, "MOMSEGMENT"))
   {
-    pErg->Typ = TempString;
-    CString2DynString(&pErg->Contents.Ascii, SegNames[ActPC]);
+    as_tempres_set_c_str(pErg, SegNames[ActPC]);
     LEAVE;
   }
 
@@ -1744,24 +1759,31 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
 
 func_exit:
 
+  StrCompFree(&CopyComp);
+  StrCompFree(&STempComp);
+
   for (z1 = 0; z1 < 3; z1++)
+  {
     if (InVals[z1].Relocs)
       FreeRelocs(&InVals[z1].Relocs);
+    as_tempres_free(&InVals[z1]);
+  }
 }
 
 void EvalExpression(const char *pExpr, TempResult *pErg)
 {
   tStrComp Expr;
 
-  StrCompMkTemp(&Expr, (char*)pExpr);
+  StrCompMkTemp(&Expr, (char*)pExpr, 0);
   EvalStrExpression(&Expr, pErg);
 }
 
 LargeInt EvalStrIntExpressionWithResult(const tStrComp *pComp, IntType Type, tEvalResult *pResult)
 {
   TempResult t;
-  LargeInt Result;
+  LargeInt Result = -1;
 
+  as_tempres_ini(&t);
   EvalResultClear(pResult);
 
   EvalStrExpression(pComp, &t);
@@ -1777,7 +1799,7 @@ LargeInt EvalStrIntExpressionWithResult(const tStrComp *pComp, IntType Type, tEv
       break;
     case TempString:
     {
-      int l = t.Contents.Ascii.Length;
+      int l = t.Contents.str.len;
 
       if ((l > 0) && (l <= 4))
       {
@@ -1785,8 +1807,8 @@ LargeInt EvalStrIntExpressionWithResult(const tStrComp *pComp, IntType Type, tEv
         Byte Digit;
 
         Result = 0;
-        for (pRun = t.Contents.Ascii.Contents;
-             pRun < t.Contents.Ascii.Contents + l;
+        for (pRun = t.Contents.str.p_str;
+             pRun < t.Contents.str.p_str + l;
              pRun++)
         {
           Digit = (usint) *pRun;
@@ -1801,7 +1823,7 @@ LargeInt EvalStrIntExpressionWithResult(const tStrComp *pComp, IntType Type, tEv
       {
         WrStrErrorPos(ErrNum_IntButString, pComp);
         FreeRelocs(&LastRelocs);
-        return -1;
+        LEAVE;
       }
     }
     /* else fall-through */
@@ -1809,7 +1831,7 @@ LargeInt EvalStrIntExpressionWithResult(const tStrComp *pComp, IntType Type, tEv
       if (t.Typ != TempNone)
         WrStrErrorPos(DeduceExpectTypeErrMsgMask(TempInt | TempString, t.Typ), pComp);
       FreeRelocs(&LastRelocs);
-      return -1;
+      LEAVE;
   }
 
   if (mFirstPassUnknown(t.Flags))
@@ -1821,20 +1843,22 @@ LargeInt EvalStrIntExpressionWithResult(const tStrComp *pComp, IntType Type, tEv
     {
       FreeRelocs(&LastRelocs);
       WrStrErrorPos(ErrNum_OverRange, pComp);
-      return -1;
+      Result = -1;
+      LEAVE;
     }
     else
     {
       WrStrErrorPos(ErrNum_WOverRange, pComp);
       pResult->OK = True;
-      return Result & IntTypeDefs[(int)Type].Mask;
+      Result &= IntTypeDefs[(int)Type].Mask;
     }
   }
   else
-  {
     pResult->OK = True;
-    return Result;
-  }
+
+func_exit:
+  as_tempres_free(&t);
+  return Result;
 }
 
 LargeInt EvalStrIntExpressionWithFlags(const tStrComp *pComp, IntType Type, Boolean *pResult, tSymbolFlags *pFlags)
@@ -1893,16 +1917,18 @@ LargeInt EvalStrIntExpressionOffs(const tStrComp *pComp, int Offset, IntType Typ
 Double EvalStrFloatExpressionWithResult(const tStrComp *pExpr, FloatType Type, tEvalResult *pResult)
 {
   TempResult t;
+  Double Result = -1;
 
+  as_tempres_ini(&t);
   EvalResultClear(pResult);
 
   EvalStrExpression(pExpr, &t);
   switch (t.Typ)
   {
     case TempNone:
-      return -1;
+      LEAVE;
     case TempInt:
-      t.Contents.Float = t.Contents.Int;
+      Result = t.Contents.Int;
       pResult->Flags = t.Flags;
       pResult->AddrSpaceMask = t.AddrSpaceMask;
       pResult->DataSize = t.DataSize;
@@ -1910,20 +1936,22 @@ Double EvalStrFloatExpressionWithResult(const tStrComp *pExpr, FloatType Type, t
     case TempString:
     {
       WrStrErrorPos(ErrNum_FloatButString, pExpr);
-      return -1;
+      LEAVE;
     }
     default:
-      break;
+      Result = t.Contents.Float;
   }
 
-  if (!FloatRangeCheck(t.Contents.Float, Type))
+  if (!FloatRangeCheck(Result, Type))
   {
     WrStrErrorPos(ErrNum_OverRange, pExpr);
-    return -1;
+    LEAVE;
   }
 
   pResult->OK = True;
-  return t.Contents.Float;
+func_exit:
+  as_tempres_free(&t);
+  return Result;
 }
 
 Double EvalStrFloatExpression(const tStrComp *pExpr, FloatType Type, Boolean *pResult)
@@ -1940,6 +1968,7 @@ void EvalStrStringExpressionWithResult(const tStrComp *pExpr, tEvalResult *pResu
 {
   TempResult t;
 
+  as_tempres_ini(&t);
   EvalResultClear(pResult);
 
   EvalStrExpression(pExpr, &t);
@@ -1962,12 +1991,13 @@ void EvalStrStringExpressionWithResult(const tStrComp *pExpr, tEvalResult *pResu
   }
   else
   {
-    DynString2CString(pEvalResult, &t.Contents.Ascii, STRINGSIZE);
+    as_nonz_dynstr_to_c_str(pEvalResult, &t.Contents.str, STRINGSIZE);
     pResult->Flags = t.Flags;
     pResult->AddrSpaceMask = t.AddrSpaceMask;
     pResult->DataSize = t.DataSize;
     pResult->OK = True;
   }
+  as_tempres_free(&t);
 }
 
 void EvalStrStringExpression(const tStrComp *pExpr, Boolean *pResult, char *pEvalResult)
@@ -2020,7 +2050,7 @@ tErrorNum EvalStrRegExpressionWithResult(const struct sStrComp *pExpr, tRegDescr
     return ErrNum_SymbolUndef;
 
   pEntry->Used = True;
-  pEvalResult->DataSize = pEntry->SymSize;
+  pEvalResult->DataSize = pEntry->SymWert.DataSize;
 
   if (pEntry->SymWert.Typ != TempReg)
     return ErrNum_ExpectReg;
@@ -2080,7 +2110,6 @@ tRegEvalResult EvalStrRegExpressionAsOperand(const tStrComp *pArg, struct sRegDe
       if (MustBeReg)
         WrStrErrorPos(ErrorNum, pArg);
       return eIsNoReg;
-      break;
     default:
       WrStrErrorPos(ErrorNum, pArg);
       return MustBeReg ? eIsNoReg : eRegAbort;
@@ -2097,8 +2126,7 @@ static void FreeSymbolEntry(PSymbolEntry *Node, Boolean Destroy)
    (*Node)->Tree.Name = NULL;
   }
 
-  if ((*Node)->SymWert.Typ == TempString)
-    free((*Node)->SymWert.Contents.String.Contents);
+  as_tempres_free(&(*Node)->SymWert);
 
   while ((*Node)->RefList)
   {
@@ -2107,7 +2135,7 @@ static void FreeSymbolEntry(PSymbolEntry *Node, Boolean Destroy)
     (*Node)->RefList = Lauf;
   }
 
-  FreeRelocs(&((*Node)->Relocs));
+  FreeRelocs(&((*Node)->SymWert.Relocs));
 
   if (Destroy)
   {
@@ -2179,10 +2207,11 @@ static Boolean SymbolAdder(PTree *PDest, PTree Neu, void *pData)
   {
     if (!EnterStruct->MayChange)
     {
+      /* TODO TempResult */
       if ((NewEntry->SymWert.Typ != (*Node)->SymWert.Typ)
-       || ((NewEntry->SymWert.Typ == TempString) && (strlencmp(NewEntry->SymWert.Contents.String.Contents, NewEntry->SymWert.Contents.String.Length, (*Node)->SymWert.Contents.String.Contents, (*Node)->SymWert.Contents.String.Length)))
-       || ((NewEntry->SymWert.Typ == TempFloat ) && (NewEntry->SymWert.Contents.FWert != (*Node)->SymWert.Contents.FWert))
-       || ((NewEntry->SymWert.Typ == TempInt   ) && (NewEntry->SymWert.Contents.IWert != (*Node)->SymWert.Contents.IWert)))
+       || ((NewEntry->SymWert.Typ == TempString) && (as_nonz_dynstr_cmp(&NewEntry->SymWert.Contents.str, &(*Node)->SymWert.Contents.str)))
+       || ((NewEntry->SymWert.Typ == TempFloat ) && (NewEntry->SymWert.Contents.Float != (*Node)->SymWert.Contents.Float))
+       || ((NewEntry->SymWert.Typ == TempInt   ) && (NewEntry->SymWert.Contents.Int   != (*Node)->SymWert.Contents.Int  )))
        {
          if ((!Repass) && (JmpErrors>0))
          {
@@ -2296,12 +2325,13 @@ static void EnterSymbol(PSymbolEntry Neu, Boolean MayChange, LongInt ResHandle)
       *Copy = (*Neu);
       Copy->Tree.Name = as_strdup(CombName);
       Copy->Tree.Attribute = Lauf->DestSection;
-      Copy->Relocs = DupRelocs(Neu->Relocs);
+      Copy->SymWert.Relocs = DupRelocs(Neu->SymWert.Relocs);
       if (Copy->SymWert.Typ == TempString)
       {
-        Copy->SymWert.Contents.String.Contents = (char*)malloc(Neu->SymWert.Contents.String.Length);
-        memcpy(Copy->SymWert.Contents.String.Contents, Neu->SymWert.Contents.String.Contents,
-               Copy->SymWert.Contents.String.Length = Neu->SymWert.Contents.String.Length);
+        size_t l = Neu->SymWert.Contents.str.len;
+        Copy->SymWert.Contents.str.p_str = (char*)malloc(l);
+        memcpy(Copy->SymWert.Contents.str.p_str, Neu->SymWert.Contents.str.p_str,
+               Copy->SymWert.Contents.str.len = Copy->SymWert.Contents.str.capacity = l);
       }
       EnterTree(&TreeRoot, &(Copy->Tree), SymbolAdder, &EnterStruct);
     }
@@ -2337,16 +2367,15 @@ void PrintSymTree(char *Name)
 
 void ChangeSymbol(PSymbolEntry pEntry, LargeInt Value)
 {
-  pEntry->SymWert.Typ = TempInt;
-  pEntry->SymWert.Contents.IWert = Value;
+  as_tempres_set_int(&pEntry->SymWert, Value);
 }
 
 /*!------------------------------------------------------------------------
- * \fn     EnterIntSymbolWithFlags(const tStrComp *pName, LargeInt Wert, Byte Typ, Boolean MayChange, tSymbolFlags Flags)
+ * \fn     EnterIntSymbolWithFlags(const tStrComp *pName, LargeInt Wert, as_addrspace_t addrspace, Boolean MayChange, tSymbolFlags Flags)
  * \brief  add integer symbol to symbol table
  * \param  pName unexpanded name
  * \param  Wert integer value
- * \param  Typ symbol type
+ * \param  addrspace symbol's address space
  * \param  MayChange constant or variable?
  * \param  Flags additional flags
  * \return * to newly created entry in tree
@@ -2369,10 +2398,11 @@ PSymbolEntry CreateSymbolEntry(const tStrComp *pName, LongInt *pDestHandle)
   }
   pNeu = (PSymbolEntry) calloc(1, sizeof(TSymbolEntry));
   pNeu->Tree.Name = as_strdup(ExtName);
+  as_tempres_ini(&pNeu->SymWert);
   return pNeu;
 }
 
-PSymbolEntry EnterIntSymbolWithFlags(const tStrComp *pName, LargeInt Wert, Byte Typ, Boolean MayChange, tSymbolFlags Flags)
+PSymbolEntry EnterIntSymbolWithFlags(const tStrComp *pName, LargeInt Wert, as_addrspace_t addrspace, Boolean MayChange, tSymbolFlags Flags)
 {
   LongInt DestHandle;
   PSymbolEntry pNeu = CreateSymbolEntry(pName, &DestHandle);
@@ -2380,13 +2410,12 @@ PSymbolEntry EnterIntSymbolWithFlags(const tStrComp *pName, LargeInt Wert, Byte 
   if (!pNeu)
     return NULL;
 
-  pNeu->SymWert.Typ = TempInt;
-  pNeu->SymWert.Contents.IWert = Wert;
-  pNeu->SymType = Typ;
-  pNeu->Flags = Flags;
-  pNeu->SymSize = eSymbolSizeUnknown;
+  as_tempres_set_int(&pNeu->SymWert, Wert);
+  pNeu->SymWert.AddrSpaceMask = (addrspace != SegNone) ? 1 << addrspace : 0;
+  pNeu->SymWert.Flags = Flags;
+  pNeu->SymWert.DataSize = eSymbolSizeUnknown;
   pNeu->RefList = NULL;
-  pNeu->Relocs = NULL;
+  pNeu->SymWert.Relocs = NULL;
 
   if ((MomLocHandle == -1) || (DestHandle != -2))
   {
@@ -2400,14 +2429,15 @@ PSymbolEntry EnterIntSymbolWithFlags(const tStrComp *pName, LargeInt Wert, Byte 
 }
 
 /*!------------------------------------------------------------------------
- * \fn     EnterExtSymbol(const tStrComp *pName, LargeInt Wert, Byte Typ, Boolean MayChange)
+ * \fn     EnterExtSymbol(const tStrComp *pName, LargeInt Wert, as_addrspace_t addrspace, Boolean MayChange)
  * \brief  create extended symbol
  * \param  pName unexpanded name
  * \param  Wert symbol value
+ * \param  AddrSpace symbol's address space
  * \param  MayChange variable or constant?
  * ------------------------------------------------------------------------ */
 
-void EnterExtSymbol(const tStrComp *pName, LargeInt Wert, Byte Typ, Boolean MayChange)
+void EnterExtSymbol(const tStrComp *pName, LargeInt Wert, as_addrspace_t addrspace, Boolean MayChange)
 {
   LongInt DestHandle;
   PSymbolEntry pNeu = CreateSymbolEntry(pName, &DestHandle);
@@ -2415,17 +2445,15 @@ void EnterExtSymbol(const tStrComp *pName, LargeInt Wert, Byte Typ, Boolean MayC
   if (!pNeu)
     return;
 
-  pNeu = (PSymbolEntry) calloc(1, sizeof(TSymbolEntry));
-  pNeu->SymWert.Typ = TempInt;
-  pNeu->SymWert.Contents.IWert = Wert;
-  pNeu->SymType = Typ;
-  pNeu->Flags = eSymbolFlag_None;
-  pNeu->SymSize = eSymbolSizeUnknown;
+  as_tempres_set_int(&pNeu->SymWert, Wert);  
+  pNeu->SymWert.AddrSpaceMask = (addrspace != SegNone) ? 1 << addrspace : 0;
+  pNeu->SymWert.Flags = eSymbolFlag_None;
+  pNeu->SymWert.DataSize = eSymbolSizeUnknown;
   pNeu->RefList = NULL;
-  pNeu->Relocs = (PRelocEntry) malloc(sizeof(TRelocEntry));
-  pNeu->Relocs->Next = NULL;
-  pNeu->Relocs->Ref = as_strdup(pNeu->Tree.Name);
-  pNeu->Relocs->Add = True;
+  pNeu->SymWert.Relocs = (PRelocEntry) malloc(sizeof(TRelocEntry));
+  pNeu->SymWert.Relocs->Next = NULL;
+  pNeu->SymWert.Relocs->Ref = as_strdup(pNeu->Tree.Name);
+  pNeu->SymWert.Relocs->Add = True;
 
   if ((MomLocHandle == -1) || (DestHandle != -2))
   {
@@ -2438,16 +2466,16 @@ void EnterExtSymbol(const tStrComp *pName, LargeInt Wert, Byte Typ, Boolean MayC
 }
 
 /*!------------------------------------------------------------------------
- * \fn     EnterRelSymbol(const tStrComp *pName, LargeInt Wert, Byte Typ, Boolean MayChange)
+ * \fn     EnterRelSymbol(const tStrComp *pName, LargeInt Wert, as_addrspace_t addrspace, Boolean MayChange)
  * \brief  enter relocatable symbol
  * \param  pName unexpanded name
  * \param  Wert symbol value
- * \param  Typ symbol type
+ * \param  addrspace symbol's address space
  * \param  MayChange variable or constant?
  * \return * to created entry in tree
  * ------------------------------------------------------------------------ */
 
-PSymbolEntry EnterRelSymbol(const tStrComp *pName, LargeInt Wert, Byte Typ, Boolean MayChange)
+PSymbolEntry EnterRelSymbol(const tStrComp *pName, LargeInt Wert, as_addrspace_t addrspace, Boolean MayChange)
 {
   LongInt DestHandle;
   PSymbolEntry pNeu = CreateSymbolEntry(pName, &DestHandle);
@@ -2455,16 +2483,15 @@ PSymbolEntry EnterRelSymbol(const tStrComp *pName, LargeInt Wert, Byte Typ, Bool
   if (!pNeu)
     return NULL;
 
-  pNeu->SymWert.Typ = TempInt;
-  pNeu->SymWert.Contents.IWert = Wert;
-  pNeu->SymType = Typ;
-  pNeu->Flags = eSymbolFlag_None;
-  pNeu->SymSize = eSymbolSizeUnknown;
+  as_tempres_set_int(&pNeu->SymWert, Wert);
+  pNeu->SymWert.AddrSpaceMask = (addrspace != SegNone) ? 1 << addrspace : 0;
+  pNeu->SymWert.Flags = eSymbolFlag_None;
+  pNeu->SymWert.DataSize = eSymbolSizeUnknown;
   pNeu->RefList = NULL;
-  pNeu->Relocs = (PRelocEntry) malloc(sizeof(TRelocEntry));
-  pNeu->Relocs->Next = NULL;
-  pNeu->Relocs->Ref = as_strdup(RelName_SegStart);
-  pNeu->Relocs->Add = True;
+  pNeu->SymWert.Relocs = (PRelocEntry) malloc(sizeof(TRelocEntry));
+  pNeu->SymWert.Relocs->Next = NULL;
+  pNeu->SymWert.Relocs->Ref = as_strdup(RelName_SegStart);
+  pNeu->SymWert.Relocs->Add = True;
 
   if ((MomLocHandle == -1) || (DestHandle != -2))
   {
@@ -2494,13 +2521,12 @@ void EnterFloatSymbol(const tStrComp *pName, Double Wert, Boolean MayChange)
   if (!pNeu)
     return;
 
-  pNeu->SymWert.Typ = TempFloat;
-  pNeu->SymWert.Contents.FWert = Wert;
-  pNeu->SymType = 0;
-  pNeu->Flags = eSymbolFlag_None;
-  pNeu->SymSize = eSymbolSizeUnknown;
+  as_tempres_set_float(&pNeu->SymWert, Wert);
+  pNeu->SymWert.AddrSpaceMask = 0;
+  pNeu->SymWert.Flags = eSymbolFlag_None;
+  pNeu->SymWert.DataSize = eSymbolSizeUnknown;
   pNeu->RefList = NULL;
-  pNeu->Relocs = NULL;
+  pNeu->SymWert.Relocs = NULL;
 
   if ((MomLocHandle == -1) || (DestHandle != -2))
   {
@@ -2513,7 +2539,7 @@ void EnterFloatSymbol(const tStrComp *pName, Double Wert, Boolean MayChange)
 }
 
 /*!------------------------------------------------------------------------
- * \fn     EnterDynStringSymbolWithFlags(const tStrComp *pName, const tDynString *pValue, Boolean MayChange, tSymbolFlags Flags)
+ * \fn     EnterNonZStringSymbolWithFlags(const tStrComp *pName, const as_nonz_dynstr_t *p_value, Boolean MayChange, tSymbolFlags Flags)
  * \brief  enter string symbol
  * \param  pName unexpanded name
  * \param  pValue symbol value
@@ -2521,7 +2547,7 @@ void EnterFloatSymbol(const tStrComp *pName, Double Wert, Boolean MayChange)
  * \param  Flags special symbol flags to store
  * ------------------------------------------------------------------------ */
 
-void EnterDynStringSymbolWithFlags(const tStrComp *pName, const tDynString *pValue, Boolean MayChange, tSymbolFlags Flags)
+void EnterNonZStringSymbolWithFlags(const tStrComp *pName, const as_nonz_dynstr_t *p_value, Boolean MayChange, tSymbolFlags Flags)
 {
   LongInt DestHandle;
   PSymbolEntry pNeu = CreateSymbolEntry(pName, &DestHandle);
@@ -2529,15 +2555,17 @@ void EnterDynStringSymbolWithFlags(const tStrComp *pName, const tDynString *pVal
   if (!pNeu)
     return;
 
-  pNeu->SymWert.Contents.String.Contents = (char*)malloc(pValue->Length);
-  memcpy(pNeu->SymWert.Contents.String.Contents, pValue->Contents, pValue->Length);
-  pNeu->SymWert.Contents.String.Length = pValue->Length;
+  /* TODO: TempRes alloc exact len */
+  pNeu->SymWert.Contents.str.p_str = (char*)malloc(p_value->len);
+  memcpy(pNeu->SymWert.Contents.str.p_str, p_value->p_str, p_value->len);
+  pNeu->SymWert.Contents.str.len =
+  pNeu->SymWert.Contents.str.capacity = p_value->len;
   pNeu->SymWert.Typ = TempString;
-  pNeu->SymType = 0;
-  pNeu->Flags = Flags;
-  pNeu->SymSize = eSymbolSizeUnknown;
+  pNeu->SymWert.AddrSpaceMask = 0;
+  pNeu->SymWert.Flags = Flags;
+  pNeu->SymWert.DataSize = eSymbolSizeUnknown;
   pNeu->RefList = NULL;
-  pNeu->Relocs = NULL;
+  pNeu->SymWert.Relocs = NULL;
 
   if ((MomLocHandle == -1) || (DestHandle != -2))
   {
@@ -2559,11 +2587,11 @@ void EnterDynStringSymbolWithFlags(const tStrComp *pName, const tDynString *pVal
 
 void EnterStringSymbol(const tStrComp *pName, const char *pValue, Boolean MayChange)
 {
-  tDynString DynString;
+  as_nonz_dynstr_t NonZString;
 
-  DynString.Length = 0;
-  DynStringAppend(&DynString, pValue, -1);
-  EnterDynStringSymbol(pName, &DynString, MayChange);
+  as_nonz_dynstr_ini_c_str(&NonZString, pValue);
+  EnterNonZStringSymbol(pName, &NonZString, MayChange);
+  as_nonz_dynstr_free(&NonZString);
 }
 
 /*!------------------------------------------------------------------------
@@ -2584,13 +2612,12 @@ void EnterRegSymbol(const struct sStrComp *pName, const tRegDescr *pDescr, tSymb
   if (!pNeu)
     return;
 
-  pNeu->SymWert.Typ = TempReg;
-  pNeu->SymWert.Contents.RegDescr = *pDescr;
-  pNeu->SymType = 0;
-  pNeu->Flags = eSymbolFlag_None;
-  pNeu->SymSize = Size;
+  as_tempres_set_reg(&pNeu->SymWert, pDescr);
+  pNeu->SymWert.AddrSpaceMask = 0;
+  pNeu->SymWert.Flags = eSymbolFlag_None;
+  pNeu->SymWert.DataSize = Size;
   pNeu->RefList = NULL;
-  pNeu->Relocs = NULL;
+  pNeu->SymWert.Relocs = NULL;
 
   if ((MomLocHandle == -1) || (DestHandle != -2))
   {
@@ -2810,34 +2837,16 @@ void LookupSymbol(const struct sStrComp *pComp, TempResult *pValue, Boolean Want
     pEntry = FindNode(ExpName, ReqType);
   if (pEntry)
   {
-    switch (pValue->Typ = pEntry->SymWert.Typ)
-    {
-      case TempInt:
-        pValue->Contents.Int = pEntry->SymWert.Contents.IWert;
-        break;
-      case TempFloat:
-        pValue->Contents.Float = pEntry->SymWert.Contents.FWert;
-        break;
-      case TempString:
-        pValue->Contents.Ascii.Length = 0;
-        DynStringAppend(&pValue->Contents.Ascii, pEntry->SymWert.Contents.String.Contents, pEntry->SymWert.Contents.String.Length);
-        break;
-      case TempReg:
-        pValue->Contents.RegDescr = pEntry->SymWert.Contents.RegDescr;
-        break;
-      default:
-        break;
-    }
+    as_tempres_copy_value(pValue, &pEntry->SymWert);
     if (pValue->Typ != TempNone)
     {
       if (WantRelocs)
-        pValue->Relocs = DupRelocs(pEntry->Relocs);
-      pValue->Flags = pEntry->Flags;
+        pValue->Relocs = DupRelocs(pEntry->SymWert.Relocs);
+      pValue->Flags = pEntry->SymWert.Flags;
     }
-    if (pEntry->SymType != 0)
-      pValue->AddrSpaceMask |= 1 << pEntry->SymType;
-    if ((pEntry->SymSize != eSymbolSizeUnknown) && (pValue->DataSize == eSymbolSizeUnknown))
-      pValue->DataSize = pEntry->SymSize;
+    pValue->AddrSpaceMask = pEntry->SymWert.AddrSpaceMask;
+    if ((pEntry->SymWert.DataSize != eSymbolSizeUnknown) && (pValue->DataSize == eSymbolSizeUnknown))
+      pValue->DataSize = pEntry->SymWert.DataSize;
     if (!pEntry->Defined)
     {
       if (Repass)
@@ -2851,8 +2860,7 @@ void LookupSymbol(const struct sStrComp *pComp, TempResult *pValue, Boolean Want
 
   else if (PassNo <= MaxSymPass) /* !pEntry */
   {
-    pValue->Typ = TempInt;
-    pValue->Contents.Int = EProgCounter();
+    as_tempres_set_int(pValue, EProgCounter());
     Repass = True;
     if ((MsgIfRepass) && (PassNo >= PassNoForMessage))
       WrStrErrorPos(ErrNum_RepassUnknown, pComp);
@@ -2872,7 +2880,7 @@ void LookupSymbol(const struct sStrComp *pComp, TempResult *pValue, Boolean Want
 void SetSymbolOrStructElemSize(const struct sStrComp *pName, tSymbolSize Size)
 {
   if (pInnermostNamedStruct)
-    SetStructElemSize(pInnermostNamedStruct->StructRec, pName->Str, Size);
+    SetStructElemSize(pInnermostNamedStruct->StructRec, pName->str.p_str, Size);
   else
   {
     PSymbolEntry pEntry;
@@ -2887,7 +2895,7 @@ void SetSymbolOrStructElemSize(const struct sStrComp *pName, tSymbolSize Size)
     if (!pEntry)
       pEntry = FindNode(ExpName, TempInt);
     if (pEntry)
-      pEntry->SymSize = Size;
+      pEntry->SymWert.DataSize = Size;
     DoRefs = HRef;
   }
 }
@@ -2909,7 +2917,7 @@ ShortInt GetSymbolSize(const struct sStrComp *pName)
   pEntry = FindLocNode(ExpName, TempInt);
   if (!pEntry)
     pEntry = FindNode(ExpName, TempInt);
-  return pEntry ? pEntry->SymSize : -1;
+  return pEntry ? pEntry->SymWert.DataSize : eSymbolSizeUnknown;
 }
 
 /*!------------------------------------------------------------------------
@@ -2982,6 +2990,16 @@ Boolean IsSymbolChangeable(const struct sStrComp *pName)
  * \return type or -1 if non-existent
  * ------------------------------------------------------------------------ */
 
+as_addrspace_t addrspace_from_mask(unsigned mask)
+{
+  as_addrspace_t space;
+
+  for (space = SegCode; space < SegCount; space++)
+    if (mask & (1 << space))
+      return space;
+  return SegNone;
+}
+
 Integer GetSymbolType(const struct sStrComp *pName)
 {
   PSymbolEntry pEntry;
@@ -2996,43 +3014,20 @@ Integer GetSymbolType(const struct sStrComp *pName)
 
   if (!pEntry)
     return -1;
-  else if (pEntry->SymType == TempReg)
+  else if (pEntry->SymWert.Typ == TempReg)
     return 0x80;
   else
-    return pEntry->SymType;
-}
-
-static void ConvertSymbolVal(const PSymbolEntry pInp, TempResult *Outp)
-{
-  switch (Outp->Typ = pInp->SymWert.Typ)
-  {
-    case TempInt:
-      Outp->Contents.Int = pInp->SymWert.Contents.IWert;
-      break;
-    case TempFloat:
-      Outp->Contents.Float = pInp->SymWert.Contents.FWert;
-      break;
-    case TempString:
-      Outp->Contents.Ascii.Length = 0;
-      DynStringAppend(&Outp->Contents.Ascii, pInp->SymWert.Contents.String.Contents, pInp->SymWert.Contents.String.Length);
-      break;
-    case TempReg:
-      Outp->Contents.RegDescr = pInp->SymWert.Contents.RegDescr;
-      break;
-    default:
-      break;
-  }
-  Outp->Flags = pInp->Flags;
-  Outp->DataSize = pInp->SymSize;
+    return addrspace_from_mask(pEntry->SymWert.AddrSpaceMask);
 }
 
 typedef struct
 {
   int Width, cwidth;
   LongInt Sum, USum;
-  String Zeilenrest;
+  as_dynstr_t Zeilenrest;
   int ZeilenrestLen,
       ZeilenrestVisibleLen;
+  as_dynstr_t s1, sh;
 } TListContext;
 
 static void PrintSymbolList_AddOut(char *s, TListContext *pContext)
@@ -3042,15 +3037,15 @@ static void PrintSymbolList_AddOut(char *s, TListContext *pContext)
 
   if (AddVisibleLen + pContext->ZeilenrestVisibleLen > pContext->Width)
   {
-    pContext->Zeilenrest[pContext->ZeilenrestLen - 1] = '\0';
-    WrLstLine(pContext->Zeilenrest);
-    strmaxcpy(pContext->Zeilenrest, s, STRINGSIZE);
+    pContext->Zeilenrest.p_str[pContext->ZeilenrestLen - 1] = '\0';
+    WrLstLine(pContext->Zeilenrest.p_str);
+    as_dynstr_copy_c_str(&pContext->Zeilenrest, s);
     pContext->ZeilenrestLen = AddLen;
     pContext->ZeilenrestVisibleLen = AddVisibleLen;
   }
   else
   {
-    strmaxcat(pContext->Zeilenrest, s, STRINGSIZE);
+    as_dynstr_append_c_str(&pContext->Zeilenrest, s);
     pContext->ZeilenrestLen += AddLen;
     pContext->ZeilenrestVisibleLen += AddVisibleLen;
   }
@@ -3063,23 +3058,21 @@ static void PrintSymbolList_PNode(PTree Tree, void *pData)
   if (Node->SymWert.Typ != TempReg)
   {
     TListContext *pContext = (TListContext*) pData;
-    String s1, sh;
     int l1, nBlanks;
-    TempResult t;
+    const TempResult *pValue = &Node->SymWert;
 
-    ConvertSymbolVal(Node, &t);
-    if ((t.Typ == TempInt) && DissectBit && (Node->SymType == SegBData))
-      DissectBit(s1, sizeof(s1), t.Contents.Int);
+    if ((pValue->Typ == TempInt) && DissectBit && (pValue->AddrSpaceMask & (1 << SegBData)))
+      DissectBit(pContext->s1.p_str, pContext->s1.capacity, pValue->Contents.Int);
     else
-      StrSym(&t, False, s1, sizeof(s1), ListRadixBase);
+      StrSym(pValue, False, &pContext->s1, ListRadixBase);
 
-    as_snprintf(sh, STRINGSIZE, "%c%s : ", Node->Used ? ' ' : '*', Tree->Name);
+    as_sdprintf(&pContext->sh, "%c%s : ", Node->Used ? ' ' : '*', Tree->Name);
     if (Tree->Attribute != -1)
-      as_snprcatf(sh, STRINGSIZE, " [%s]", GetSectionName(Tree->Attribute));
-    l1 = (strlen(s1) + visible_strlen(sh) + 4);
+      as_sdprcatf(&pContext->sh, " [%s]", GetSectionName(Tree->Attribute));
+    l1 = (strlen(pContext->s1.p_str) + visible_strlen(pContext->sh.p_str) + 4);
     for (nBlanks = pContext->cwidth - 1 - l1; nBlanks < 0; nBlanks += pContext->cwidth);
-    as_snprcatf(sh, STRINGSIZE, "%s%s %c | ", Blanks(nBlanks), s1, SegShorts[Node->SymType]);
-    PrintSymbolList_AddOut(sh, pContext);
+    as_sdprcatf(&pContext->sh, "%s%s %c | ", Blanks(nBlanks), pContext->s1.p_str, SegShorts[addrspace_from_mask(pValue->AddrSpaceMask)]);
+    PrintSymbolList_AddOut(pContext->sh.p_str, pContext);
     pContext->Sum++;
     if (!Node->Used)
       pContext->USum++;
@@ -3091,41 +3084,47 @@ void PrintSymbolList(void)
   int ActPageWidth;
   TListContext Context;
 
+  as_dynstr_ini(&Context.Zeilenrest, STRINGSIZE);
+  as_dynstr_ini(&Context.s1, STRINGSIZE);
+  as_dynstr_ini(&Context.sh, STRINGSIZE);
   Context.Width = (PageWidth == 0) ? 80 : PageWidth;
   NewPage(ChapDepth, True);
   WrLstLine(getmessage(Num_ListSymListHead1));
   WrLstLine(getmessage(Num_ListSymListHead2));
   WrLstLine("");
 
-  Context.Zeilenrest[0] = '\0';
   Context.ZeilenrestLen =
   Context.ZeilenrestVisibleLen = 0;
   Context.Sum = Context.USum = 0;
   ActPageWidth = (PageWidth == 0) ? 80 : PageWidth;
   Context.cwidth = ActPageWidth >> 1;
   IterTree((PTree)FirstSymbol, PrintSymbolList_PNode, &Context);
-  if (Context.Zeilenrest[0] != '\0')
+  if (Context.Zeilenrest.p_str[0] != '\0')
   {
-    Context.Zeilenrest[strlen(Context.Zeilenrest) - 1] = '\0';
-    WrLstLine(Context.Zeilenrest);
+    Context.Zeilenrest.p_str[strlen(Context.Zeilenrest.p_str) - 1] = '\0';
+    WrLstLine(Context.Zeilenrest.p_str);
   }
   WrLstLine("");
-  as_snprintf(Context.Zeilenrest, sizeof(Context.Zeilenrest), "%7lu%s",
+  as_sdprintf(&Context.Zeilenrest, "%7lu%s",
               (unsigned long)Context.Sum,
               getmessage((Context.Sum == 1) ? Num_ListSymSumMsg : Num_ListSymSumsMsg));
-  WrLstLine(Context.Zeilenrest);
-  as_snprintf(Context.Zeilenrest, sizeof(Context.Zeilenrest), "%7lu%s",
+  WrLstLine(Context.Zeilenrest.p_str);
+  as_sdprintf(&Context.Zeilenrest, "%7lu%s",
               (unsigned long)Context.USum,
               getmessage((Context.USum == 1) ? Num_ListUSymSumMsg : Num_ListUSymSumsMsg));
-  WrLstLine(Context.Zeilenrest);
+  WrLstLine(Context.Zeilenrest.p_str);
   WrLstLine("");
+  as_dynstr_free(&Context.s1);
+  as_dynstr_free(&Context.sh);
+  as_dynstr_free(&Context.Zeilenrest);
 }
 
 typedef struct
 {
   FILE *f;
   Boolean HWritten;
-  int Space;
+  as_addrspace_t Space;
+  as_dynstr_t s;
 } TDebContext;
 
 static void PrintDebSymbols_PNode(PTree Tree, void *pData)
@@ -3133,10 +3132,8 @@ static void PrintDebSymbols_PNode(PTree Tree, void *pData)
   PSymbolEntry Node = (PSymbolEntry) Tree;
   TDebContext *DebContext = (TDebContext*) pData;
   int l1;
-  TempResult t;
-  String s;
 
-  if (Node->SymType != DebContext->Space)
+  if (!((Node->SymWert.AddrSpaceMask >> DebContext->Space) & 1))
     return;
 
   if (!DebContext->HWritten)
@@ -3150,9 +3147,9 @@ static void PrintDebSymbols_PNode(PTree Tree, void *pData)
   l1 = strlen(Node->Tree.Name);
   if (Node->Tree.Attribute != -1)
   {
-    as_snprintf(s, sizeof(s), "[%d]", (int)Node->Tree.Attribute);
-    fprintf(DebContext->f, "%s", s); ChkIO(ErrNum_FileWriteError);
-    l1 += strlen(s);
+    as_sdprintf(&DebContext->s, "[%d]", (int)Node->Tree.Attribute);
+    fprintf(DebContext->f, "%s", DebContext->s.p_str); ChkIO(ErrNum_FileWriteError);
+    l1 += strlen(DebContext->s.p_str);
   }
   fprintf(DebContext->f, "%s ", Blanks(37 - l1)); ChkIO(ErrNum_FileWriteError);
   switch (Node->SymWert.Typ)
@@ -3173,17 +3170,16 @@ static void PrintDebSymbols_PNode(PTree Tree, void *pData)
   if (Node->SymWert.Typ == TempString)
   {
     errno = 0;
-    l1 = fstrlenprint(DebContext->f, Node->SymWert.Contents.String.Contents, Node->SymWert.Contents.String.Length);
+    l1 = fstrlenprint(DebContext->f, Node->SymWert.Contents.str.p_str, Node->SymWert.Contents.str.len);
     ChkIO(ErrNum_FileWriteError);
   }
   else
   {
-    ConvertSymbolVal(Node, &t);
-    StrSym(&t, False, s, sizeof(s), 16);
-    l1 = strlen(s);
-    fprintf(DebContext->f, "%s", s); ChkIO(ErrNum_FileWriteError);
+    StrSym(&Node->SymWert, False, &DebContext->s, 16);
+    l1 = strlen(DebContext->s.p_str);
+    fprintf(DebContext->f, "%s", DebContext->s.p_str); ChkIO(ErrNum_FileWriteError);
   }
-  fprintf(DebContext->f, "%s %-3d %d %d\n", Blanks(25-l1), Node->SymSize, (int)Node->Used, (int)Node->Changeable);
+  fprintf(DebContext->f, "%s %-3d %d %d\n", Blanks(25 - l1), Node->SymWert.DataSize, (int)Node->Used, (int)Node->Changeable);
   ChkIO(ErrNum_FileWriteError);
 }
 
@@ -3191,12 +3187,14 @@ void PrintDebSymbols(FILE *f)
 {
   TDebContext DebContext;
 
+  as_dynstr_ini(&DebContext.s, 256);
   DebContext.f = f;
-  for (DebContext.Space = 0; DebContext.Space < PCMax; DebContext.Space++)
+  for (DebContext.Space = SegNone; DebContext.Space < SegCount; DebContext.Space++)
   {
     DebContext.HWritten = False;
     IterTree((PTree)FirstSymbol, PrintDebSymbols_PNode, &DebContext);
   }
+  as_dynstr_free(&DebContext.s);
 }
 
 typedef struct
@@ -3210,10 +3208,10 @@ static void PrNoISection(PTree Tree, void *pData)
   PSymbolEntry Node = (PSymbolEntry)Tree;
   TNoISymContext *pContext = (TNoISymContext*) pData;
 
-  if (((1 << Node->SymType) & NoICEMask) && (Node->Tree.Attribute == pContext->Handle) && (Node->SymWert.Typ == TempInt))
+  if ((Node->SymWert.AddrSpaceMask & NoICEMask) && (Node->Tree.Attribute == pContext->Handle) && (Node->SymWert.Typ == TempInt))
   {
     errno = 0; fprintf(pContext->f, "DEFINE %s 0x", Node->Tree.Name); ChkIO(ErrNum_FileWriteError);
-    errno = 0; fprintf(pContext->f, LargeHIntFormat, Node->SymWert.Contents.IWert); ChkIO(ErrNum_FileWriteError);
+    errno = 0; fprintf(pContext->f, LargeHIntFormat, Node->SymWert.Contents.Int); ChkIO(ErrNum_FileWriteError);
     errno = 0; fprintf(pContext->f, "\n"); ChkIO(ErrNum_FileWriteError);
   }
 }
@@ -3286,7 +3284,7 @@ Boolean PushSymbol(const tStrComp *pSymName, const tStrComp *pStackName)
     return False;
   }
 
-  if (*pStackName->Str)
+  if (*pStackName->str.p_str)
   {
     if (!ExpandStrSymbol(ExpStackName, sizeof(ExpStackName), pStackName))
       return False;
@@ -3345,7 +3343,7 @@ Boolean PopSymbol(const tStrComp *pSymName, const tStrComp *pStackName)
     return False;
   }
 
-  if (*pStackName->Str)
+  if (*pStackName->str.p_str)
   {
     if (!ExpandStrSymbol(ExpStackName, sizeof(ExpStackName), pStackName))
       return False;
@@ -3426,12 +3424,12 @@ void EnterFunction(const tStrComp *pComp, char *FDefinition, Byte NewCnt)
 
   if (!CaseSensitive)
   {
-    strmaxcpy(FName_N, pComp->Str, STRINGSIZE);
+    strmaxcpy(FName_N, pComp->str.p_str, STRINGSIZE);
     NLS_UpString(FName_N);
     pFName = FName_N;
   }
   else
-     pFName = pComp->Str;
+     pFName = pComp->str.p_str;
 
   if (!ChkSymbName(pFName))
   {
@@ -3546,8 +3544,8 @@ void SetFlag(Boolean *Flag, const char *Name, Boolean Wert)
   tStrComp TmpComp;
 
   *Flag = Wert;
-  StrCompMkTemp(&TmpComp, (char*)Name);
-  EnterIntSymbol(&TmpComp, *Flag ? 1 : 0, 0, True);
+  StrCompMkTemp(&TmpComp, (char*)Name, 0);
+  EnterIntSymbol(&TmpComp, *Flag ? 1 : 0, SegNone, True);
 }
 
 void AddDefSymbol(char *Name, TempResult *Value)
@@ -3603,18 +3601,20 @@ void CopyDefSymbols(void)
   Lauf = FirstDefSymbol;
   while (Lauf)
   {
-    StrCompMkTemp(&TmpComp, Lauf->SymName);
+    StrCompMkTemp(&TmpComp, Lauf->SymName, 0);
     switch (Lauf->Wert.Typ)
     {
       case TempInt:
-        EnterIntSymbol(&TmpComp, Lauf->Wert.Contents.Int, 0, True);
+        EnterIntSymbol(&TmpComp, Lauf->Wert.Contents.Int, SegNone, True);
         break;
       case TempFloat:
         EnterFloatSymbol(&TmpComp, Lauf->Wert.Contents.Float, True);
         break;
       case TempString:
-        EnterDynStringSymbol(&TmpComp, &Lauf->Wert.Contents.Ascii, True);
+      {
+        EnterNonZStringSymbol(&TmpComp, &Lauf->Wert.Contents.str, True);
         break;
+      }
       default:
         break;
     }
@@ -3828,18 +3828,16 @@ static void PrintCrossList_PNode(PTree Node, void *pData)
   int FileZ;
   PCrossRef pCross;
   String LineAcc;
-  String h, ValStr;
+  String h;
   char LineStr[30];
-  TempResult t;
   PSymbolEntry SymbolEntry = (PSymbolEntry) Node;
+  as_dynstr_t *p_val_str = (as_dynstr_t*)pData;
   Boolean First;
-  UNUSED(pData);
 
   if (!SymbolEntry->RefList)
     return;
 
-  ConvertSymbolVal(SymbolEntry, &t);
-  StrSym(&t, False, ValStr, sizeof(ValStr), ListRadixBase);
+  StrSym(&SymbolEntry->SymWert, False, p_val_str, ListRadixBase);
   as_snprintf(LineStr, sizeof(LineStr), LongIntFormat, SymbolEntry->LineNum);
 
   as_snprintf(h, sizeof(h), "%s%s",
@@ -3847,8 +3845,7 @@ static void PrintCrossList_PNode(PTree Node, void *pData)
   if (Node->Attribute != -1)
     as_snprcatf(h, sizeof(h), "[%s]", GetSectionName(Node->Attribute));
   as_snprcatf(h, sizeof(h), " (=%s, %s:%s):",
-              ValStr, GetFileName(SymbolEntry->FileNum), LineStr);
-
+              p_val_str->p_str, GetFileName(SymbolEntry->FileNum), LineStr);
 
   WrLstLine(h);
 
@@ -3887,12 +3884,16 @@ static void PrintCrossList_PNode(PTree Node, void *pData)
 
 void PrintCrossList(void)
 {
+  as_dynstr_t val_str;
+
+  as_dynstr_ini(&val_str, 256);
   WrLstLine("");
   WrLstLine(getmessage(Num_ListCrossListHead1));
   WrLstLine(getmessage(Num_ListCrossListHead2));
   WrLstLine("");
-  IterTree(&(FirstSymbol->Tree), PrintCrossList_PNode, NULL);
+  IterTree(&(FirstSymbol->Tree), PrintCrossList_PNode, &val_str);
   WrLstLine("");
+  as_dynstr_free(&val_str);
 }
 
 static void ClearCrossList_CNode(PTree Tree, void *pData)
@@ -3960,7 +3961,7 @@ static void PrintRegList_PNode(PTree Tree, void *pData)
     String tmp, tmp2;
 
     if (Node->SymWert.Contents.RegDescr.Dissect)
-      Node->SymWert.Contents.RegDescr.Dissect(tmp2, sizeof(tmp2), Node->SymWert.Contents.RegDescr.Reg, Node->SymSize);
+      Node->SymWert.Contents.RegDescr.Dissect(tmp2, sizeof(tmp2), Node->SymWert.Contents.RegDescr.Reg, Node->SymWert.DataSize);
     else
       *tmp2 = '\0';
     *tmp = '\0';
@@ -3969,22 +3970,21 @@ static void PrintRegList_PNode(PTree Tree, void *pData)
     as_snprcatf(tmp, sizeof(tmp), "%c%s --> %s", Node->Used ? ' ' : '*', Tree->Name, tmp2);
     if ((int)strlen(tmp) > pContext->cwidth - 3)
     {
-      if (*pContext->Zeilenrest)
-        WrLstLine(pContext->Zeilenrest);
-      *pContext->Zeilenrest = '\0';
+      if (*pContext->Zeilenrest.p_str)
+        WrLstLine(pContext->Zeilenrest.p_str);
+      *pContext->Zeilenrest.p_str = '\0';
       WrLstLine(tmp);
     }
     else
     {
       strmaxcat(tmp, Blanks(pContext->cwidth - 3 - strlen(tmp)), STRINGSIZE);
-      if (!*pContext->Zeilenrest)
-        strcpy(pContext->Zeilenrest, tmp);
+      if (!*pContext->Zeilenrest.p_str)
+        as_dynstr_copy_c_str(&pContext->Zeilenrest, tmp);
       else
       {
-        strcat(pContext->Zeilenrest, " | ");
-        strcat(pContext->Zeilenrest, tmp);
-        WrLstLine(pContext->Zeilenrest);
-        *pContext->Zeilenrest = '\0';
+        as_sdprcatf(&pContext->Zeilenrest, " | %s", tmp);
+        WrLstLine(pContext->Zeilenrest.p_str);
+        *pContext->Zeilenrest.p_str = '\0';
       }
     }
     pContext->Sum++;
@@ -4007,14 +4007,16 @@ void PrintRegDefs(void)
   WrLstLine(getmessage(Num_ListRegDefListHead2));
   WrLstLine("");
 
-  Context.Zeilenrest[0] = '\0';
+  as_dynstr_ini(&Context.Zeilenrest, STRINGSIZE);
+  as_dynstr_ini(&Context.s1, 1);
+  as_dynstr_ini(&Context.sh, 1);
   Context.Sum = Context.USum = 0;
   ActPageWidth = (PageWidth == 0) ? 80 : PageWidth;
   Context.cwidth = ActPageWidth >> 1;
   IterTree((PTree)FirstSymbol, PrintRegList_PNode, &Context);
 
-  if (*Context.Zeilenrest)
-    WrLstLine(Context.Zeilenrest);
+  if (*Context.Zeilenrest.p_str)
+    WrLstLine(Context.Zeilenrest.p_str);
   WrLstLine("");
   as_snprintf(buf, sizeof(buf), "%7ld%s",
               (long) Context.Sum,
@@ -4024,6 +4026,9 @@ void PrintRegDefs(void)
               (long)Context.USum,
               getmessage((Context.USum == 1) ? Num_ListRegDefUSumMsg : Num_ListRegDefUSumsMsg));
   WrLstLine("");
+  as_dynstr_free(&Context.Zeilenrest);
+  as_dynstr_free(&Context.s1);
+  as_dynstr_free(&Context.sh);
 }
 
 /*--------------------------------------------------------------------------*/

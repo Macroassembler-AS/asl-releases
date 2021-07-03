@@ -76,7 +76,7 @@ static void DecodeAdr(tStrComp *pArg, Word Mask)
 
   AdrType = ModNone; AdrCnt = 0;
 
-  if (!as_strcasecmp(pArg->Str, "A"))
+  if (!as_strcasecmp(pArg->str.p_str, "A"))
   {
     if (Mask & MModAccA) AdrType = ModAccA;
     else if (Mask & MModReg)
@@ -90,7 +90,7 @@ static void DecodeAdr(tStrComp *pArg, Word Mask)
     ChkAdr(Mask); return;
   }
 
-  if (!as_strcasecmp(pArg->Str, "B"))
+  if (!as_strcasecmp(pArg->str.p_str, "B"))
   {
     if (Mask & MModAccB) AdrType = ModAccB;
     else if (Mask & MModReg)
@@ -104,20 +104,20 @@ static void DecodeAdr(tStrComp *pArg, Word Mask)
     ChkAdr(Mask); return;
   }
 
-  if ((*pArg->Str == '#') || (*pArg->Str == '%'))
+  if ((*pArg->str.p_str == '#') || (*pArg->str.p_str == '%'))
   {
     tStrComp ImmComp;
 
     StrCompRefRight(&ImmComp, pArg, 1);
-    l = strlen(ImmComp.Str);
-    if ((l >= 3) & (!as_strcasecmp(ImmComp.Str + l - 3,"(B)")))
+    l = strlen(ImmComp.str.p_str);
+    if ((l >= 3) & (!as_strcasecmp(ImmComp.str.p_str + l - 3,"(B)")))
     {
       char Save;
 
-      Save = ImmComp.Str[l - 3];
-      ImmComp.Str[l - 3] = '\0'; ImmComp.Pos.Len -= 3;
+      Save = ImmComp.str.p_str[l - 3];
+      ImmComp.str.p_str[l - 3] = '\0'; ImmComp.Pos.Len -= 3;
       HVal = EvalStrIntExpression(&ImmComp, Int16, &OK);
-      ImmComp.Str[l - 3] = Save;
+      ImmComp.str.p_str[l - 3] = Save;
       if (OK)
       {
         AdrVals[0] = Hi(HVal); AdrVals[1] = Lo(HVal);
@@ -146,7 +146,7 @@ static void DecodeAdr(tStrComp *pArg, Word Mask)
     ChkAdr(Mask); return;
   }
 
-  if (*pArg->Str == '*')
+  if (*pArg->str.p_str == '*')
   {
     AdrVals[0] = EvalStrIntExpressionOffs(pArg, 1, Int8, &OK);
     if (OK)
@@ -157,13 +157,13 @@ static void DecodeAdr(tStrComp *pArg, Word Mask)
     ChkAdr(Mask); return;
   }
 
-  StrCompRefRight(&Expr, pArg, !!(*pArg->Str == '@'));
+  StrCompRefRight(&Expr, pArg, !!(*pArg->str.p_str == '@'));
 
-  l = strlen(Expr.Str);
-  if ((*Expr.Str) && (Expr.Str[l - 1] == ')'))
+  l = strlen(Expr.str.p_str);
+  if ((*Expr.str.p_str) && (Expr.str.p_str[l - 1] == ')'))
   {
-    p = Expr.Str + l - 2; Lev = 0;
-    while ((p >= Expr.Str) && (Lev != -1))
+    p = Expr.str.p_str + l - 2; Lev = 0;
+    while ((p >= Expr.str.p_str) && (Lev != -1))
     {
       switch (*p)
       {
@@ -172,7 +172,7 @@ static void DecodeAdr(tStrComp *pArg, Word Mask)
       }
       if (Lev != -1) p--;
     }
-    if (p < Expr.Str)
+    if (p < Expr.str.p_str)
     {
       WrError(ErrNum_BrackErr);
       p = NULL;
@@ -211,7 +211,7 @@ static void DecodeAdr(tStrComp *pArg, Word Mask)
     if (OK)
     {
       StrCompShorten(&Right, 1);
-      if (!as_strcasecmp(Right.Str, "B"))
+      if (!as_strcasecmp(Right.str.p_str, "B"))
       {
         AdrVals[0] = Hi(HVal); AdrVals[1] = Lo(HVal); AdrCnt = 2;
         AdrType = ModBRel;
@@ -453,7 +453,7 @@ static void DecodeJmp(Word Index)
 static void DecodeABReg(Word Index)
 {
   if (!ChkArgCnt(Memo("DJNZ") ? 2 : 1, Memo("DJNZ") ? 2 : 1));
-  else if (!as_strcasecmp(ArgStr[1].Str, "ST"))
+  else if (!as_strcasecmp(ArgStr[1].str.p_str, "ST"))
   {
     if ((Memo("PUSH")) || (Memo("POP")))
     {
@@ -974,7 +974,7 @@ static void MakeCode_TMS7(void)
 
   /* remainder */
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 
@@ -986,22 +986,23 @@ static Boolean IsDef_TMS7(void)
 static void InternSymbol_TMS7(char *pAsc, TempResult *pErg)
 {
   String h;
-  Boolean Err;
+  Boolean OK;
+  LargeInt Num;
 
-  pErg->Typ = TempNone;
+  as_tempres_set_none(pErg);
   if ((strlen(pAsc) < 2) || ((as_toupper(*pAsc) != 'R') && (as_toupper(*pAsc) != 'P')))
     return;
 
   strmaxcpy(h, pAsc + 1, STRINGSIZE);
   if ((*h == '0') && (strlen(h) > 1))
     *h = '$';
-  pErg->Contents.Int = ConstLongInt(h, &Err, 10);
-  if ((!Err) || (pErg->Contents.Int < 0) || (pErg->Contents.Int > 255))
+  Num = ConstLongInt(h, &OK, 10);
+  if (!OK || (Num < 0) || (Num > 255))
     return;
 
-  pErg->Typ = TempInt;
   if (as_toupper(*pAsc) == 'P')
-    pErg->Contents.Int += 0x100;
+    Num += 0x100;
+  as_tempres_set_int(pErg, Num);
 }
 
 static void SwitchFrom_TMS7(void)

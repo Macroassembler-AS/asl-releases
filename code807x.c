@@ -106,35 +106,35 @@ static void DecodeAdr(int Index, Byte Mask, LongInt PCDelta)
 
   /* accumulator ? */
 
-  if (!as_strcasecmp(ArgStr[Index].Str, "A"))
+  if (!as_strcasecmp(ArgStr[Index].str.p_str, "A"))
   {
     if (SetOpSize(0))
       AdrMode = ModAcc;
     goto AdrFound;
   }
 
-  if (!as_strcasecmp(ArgStr[Index].Str, "EA"))
+  if (!as_strcasecmp(ArgStr[Index].str.p_str, "EA"))
   {
     if (SetOpSize(1))
       AdrMode = ModAcc;
     goto AdrFound;
   }
 
-  if (!as_strcasecmp(ArgStr[Index].Str, "E"))
+  if (!as_strcasecmp(ArgStr[Index].str.p_str, "E"))
   {
     if (SetOpSize(0))
       AdrMode = ModE;
     goto AdrFound;
   }
 
-  if (!as_strcasecmp(ArgStr[Index].Str, "S"))
+  if (!as_strcasecmp(ArgStr[Index].str.p_str, "S"))
   {
     if (SetOpSize(0))
       AdrMode = ModS;
     goto AdrFound;
   }
 
-  if (!as_strcasecmp(ArgStr[Index].Str, "T"))
+  if (!as_strcasecmp(ArgStr[Index].str.p_str, "T"))
   {
     if (SetOpSize(1))
       AdrMode = ModT;
@@ -143,7 +143,7 @@ static void DecodeAdr(int Index, Byte Mask, LongInt PCDelta)
 
   /* register ? */
 
-  if (GetReg16(ArgStr[Index].Str, &AdrPart))
+  if (GetReg16(ArgStr[Index].str.p_str, &AdrPart))
   {
     if (SetOpSize(1))
       AdrMode = ModReg;
@@ -152,7 +152,7 @@ static void DecodeAdr(int Index, Byte Mask, LongInt PCDelta)
 
   /* immediate? */
 
-  if ((*ArgStr[Index].Str == '#') || (*ArgStr[Index].Str == '='))
+  if ((*ArgStr[Index].str.p_str == '#') || (*ArgStr[Index].str.p_str == '='))
   {
     switch (OpSize)
     {
@@ -200,10 +200,10 @@ static void DecodeAdr(int Index, Byte Mask, LongInt PCDelta)
   {
     Boolean Incr = 0;
 
-    if (*ArgStr[Index].Str == '@')
+    if (*ArgStr[Index].str.p_str == '@')
       Incr++;
 
-    OK = GetReg16(ArgStr[Index + 1].Str, &AdrPart);
+    OK = GetReg16(ArgStr[Index + 1].str.p_str, &AdrPart);
     if (!OK) WrStrErrorPos(ErrNum_InvReg, &ArgStr[Index + 1]);
     else if ((Incr) && (AdrPart < 2)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[Index + 1]);
     else
@@ -451,7 +451,7 @@ static void DecodeSSM(Word Code)
       CodeLen = 1;
       break;
     case 1:
-      if ((!GetReg16(ArgStr[1].Str, BAsmCode + 0)) || (BAsmCode[0] < 2)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
+      if ((!GetReg16(ArgStr[1].str.p_str, BAsmCode + 0)) || (BAsmCode[0] < 2)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
       else
       {
         BAsmCode[0] |= 0x2c;
@@ -647,8 +647,10 @@ static void DecodeBranch(Word Code)
 
   if (ArgCnt == 1)
   {
-    IncArgCnt();
-    strcpy(ArgStr[ArgCnt].Str, "PC");
+    const char PCArg[] = "PC";
+
+    AppendArg(strlen(PCArg));
+    strcpy(ArgStr[ArgCnt].str.p_str, PCArg);
   }
 
   if (ChkArgCnt(2, 2))
@@ -754,7 +756,7 @@ static void MakeCode_807x(void)
 
    if (DecodeIntelPseudo(False)) return;
 
-   if (!LookupInstTable(InstTable, OpPart.Str))
+   if (!LookupInstTable(InstTable, OpPart.str.p_str))
      WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

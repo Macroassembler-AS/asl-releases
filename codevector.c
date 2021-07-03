@@ -54,7 +54,7 @@ static Boolean DecodeScale(tStrComp *pArg, Word *pResult)
   KillPrefBlanksStrComp(pArg);
   KillPostBlanksStrComp(pArg);
 
-  if ((toupper(*pArg->Str) == 'S') && (Is4(pArg->Str + 1, pResult)))
+  if ((toupper(*pArg->str.p_str) == 'S') && (Is4(pArg->str.p_str + 1, pResult)))
     return True;
 
   *pResult = EvalStrIntExpression(pArg, UInt4, &OK);
@@ -68,7 +68,7 @@ static Boolean DecodeBright(tStrComp *pArg, Word *pResult)
   KillPrefBlanksStrComp(pArg);
   KillPostBlanksStrComp(pArg);
 
-  if ((toupper(*pArg->Str) == 'Z') && (Is4(pArg->Str + 1, pResult)))
+  if ((toupper(*pArg->str.p_str) == 'Z') && (Is4(pArg->str.p_str + 1, pResult)))
     return True;
 
   *pResult = EvalStrIntExpression(pArg, UInt4, &OK);
@@ -106,14 +106,14 @@ static Boolean DecodeXY(tStrComp *pArg, Word *pX, Word *pY, Boolean Signed)
   KillPrefBlanksStrComp(pArg);
   KillPostBlanksStrComp(pArg);
 
-  if (*pArg->Str != '(')
+  if (*pArg->str.p_str != '(')
   {
     WrError(ErrNum_BrackErr);
     return False;
   }
   StrCompRefRight(&Tot, pArg, 1);
 
-  pEnd = Tot.Str + strlen(Tot.Str) - 1;
+  pEnd = Tot.str.p_str + strlen(Tot.str.p_str) - 1;
   if (*pEnd != ')')
   {
     WrError(ErrNum_BrackErr);
@@ -122,7 +122,7 @@ static Boolean DecodeXY(tStrComp *pArg, Word *pX, Word *pY, Boolean Signed)
   *pEnd = '\0';
   Tot.Pos.Len--;
 
-  pPos = strchr(Tot.Str, ',');
+  pPos = strchr(Tot.str.p_str, ',');
   if (!pPos)
   {
     WrError(ErrNum_UseLessAttr);
@@ -268,7 +268,7 @@ static void MakeCode_Vector(void)
 
   if (Memo("")) return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

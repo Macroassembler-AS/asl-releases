@@ -123,15 +123,15 @@ static void DecodeImm3(Word Index)
 static void DecodePR(Word Index)
 {
   if (!ChkArgCnt(1, 1));
-  else if (!as_strcasecmp(ArgStr[1].Str, "HL-"))
+  else if (!as_strcasecmp(ArgStr[1].str.p_str, "HL-"))
     PutCode(Index | 0x10);
-  else if (!as_strcasecmp(ArgStr[1].Str, "HL+"))
+  else if (!as_strcasecmp(ArgStr[1].str.p_str, "HL+"))
     PutCode(Index | 0x11);
-  else if (!as_strcasecmp(ArgStr[1].Str, "HL"))
+  else if (!as_strcasecmp(ArgStr[1].str.p_str, "HL"))
     PutCode(Index | 0x12);
-  else if ((MomCPU == CPU7508) && (!as_strcasecmp(ArgStr[1].Str, "DL")))
+  else if ((MomCPU == CPU7508) && (!as_strcasecmp(ArgStr[1].str.p_str, "DL")))
     PutCode(Index | 0x00);
-  else if ((MomCPU == CPU7508) && (!as_strcasecmp(ArgStr[1].Str, "DE")))
+  else if ((MomCPU == CPU7508) && (!as_strcasecmp(ArgStr[1].str.p_str, "DE")))
     PutCode(Index | 0x01);
   else
     WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
@@ -480,7 +480,7 @@ static void MakeCode_75xx(void)
 
   if (DecodeIntelPseudo(True)) return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

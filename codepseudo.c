@@ -137,11 +137,10 @@ int FindDispBaseSplitWithQualifier(const char *pArg, int *pArgLen, tDispBaseSpli
  * Result:      -
  *****************************************************************************/
 
-void CodeEquate(ShortInt DestSeg, LargeInt Min, LargeInt Max)
+void CodeEquate(as_addrspace_t DestSeg, LargeInt Min, LargeInt Max)
 {
   Boolean OK;
   tSymbolFlags Flags;
-  TempResult t;
   LargeInt Erg;
 
   if (ChkArgCnt(1, 1))
@@ -153,12 +152,18 @@ void CodeEquate(ShortInt DestSeg, LargeInt Min, LargeInt Max)
       else if (Erg > Max) WrError(ErrNum_OverRange);
       else
       {
+        TempResult t;
+
         PushLocHandle(-1);
         EnterIntSymbol(&LabPart, Erg, DestSeg, False);
         PopLocHandle();
         if (MakeUseList)
           if (AddChunk(SegChunks + DestSeg, Erg, 1, False)) WrError(ErrNum_Overlap);
-        t.Typ = TempInt; t.Contents.Int = Erg; SetListLineVal(&t);
+
+        as_tempres_ini(&t);
+        as_tempres_set_int(&t, Erg);
+        SetListLineVal(&t);
+        as_tempres_free(&t);
       }
     }
   }

@@ -200,22 +200,22 @@ static Boolean Decode_rpa2(const tStrComp *pArg, Boolean *pWasIndirect, ShortInt
   ShortInt BaseReg;
   tStrComp Left, Right;
 
-  if (DecodeAdrMode(pArg->Str, AdrModes, Erg, pWasIndirect))
+  if (DecodeAdrMode(pArg->str.p_str, AdrModes, Erg, pWasIndirect))
   {
     *Disp = 0;
     return True;
   }
 
-  p = QuotMultPos(pArg->Str, "+-");
+  p = QuotMultPos(pArg->str.p_str, "+-");
   if (!p) return False;
 
   Save = StrCompSplitRef(&Left, &Right, pArg, p);
-  OK = (Decode_rp2(Left.Str, &BaseReg));
+  OK = (Decode_rp2(Left.str.p_str, &BaseReg));
   *p = Save;
   if (!OK || ((BaseReg != 2) && (BaseReg != 3)))
     return False;
   *Erg = (BaseReg == 3) ? 15 : 11;
-  *Disp = EvalStrIntExpressionOffs(pArg, p - pArg->Str, SInt8, &OK);
+  *Disp = EvalStrIntExpressionOffs(pArg, p - pArg->str.p_str, SInt8, &OK);
   return OK;
 }
 
@@ -251,7 +251,7 @@ static Boolean Decode_rpa3(const tStrComp *pArg, ShortInt *Erg, ShortInt *Disp)
   };
   Boolean WasIndirect = False;
 
-  if (DecodeAdrMode(pArg->Str, AdrModes, Erg, &WasIndirect))
+  if (DecodeAdrMode(pArg->str.p_str, AdrModes, Erg, &WasIndirect))
   {
     *Disp = 0;
     return True;
@@ -381,15 +381,15 @@ static void DecodeMOV(Word Code)
   UNUSED(Code);
 
   if (!ChkArgCnt(2, 2));
-  else if (!as_strcasecmp(ArgStr[1].Str, "A"))
+  else if (!as_strcasecmp(ArgStr[1].str.p_str, "A"))
   {
-    if (Decode_sr1(ArgStr[2].Str, &HReg))
+    if (Decode_sr1(ArgStr[2].str.p_str, &HReg))
     {
       CodeLen = 2;
       BAsmCode[0] = 0x4c;
       BAsmCode[1] = 0xc0 + HReg;
     }
-    else if (Decode_r1(ArgStr[2].Str, &HReg))
+    else if (Decode_r1(ArgStr[2].str.p_str, &HReg))
     {
       CodeLen = 1;
       BAsmCode[0] = 0x08 + HReg;
@@ -407,15 +407,15 @@ static void DecodeMOV(Word Code)
       }
     }
   }
-  else if (!as_strcasecmp(ArgStr[2].Str, "A"))
+  else if (!as_strcasecmp(ArgStr[2].str.p_str, "A"))
   {
-    if (Decode_sr(ArgStr[1].Str, &HReg))
+    if (Decode_sr(ArgStr[1].str.p_str, &HReg))
     {
       CodeLen = 2;
       BAsmCode[0] = 0x4d;
       BAsmCode[1] = 0xc0 + HReg;
     }
-    else if (Decode_r1(ArgStr[1].Str, &HReg))
+    else if (Decode_r1(ArgStr[1].str.p_str, &HReg))
     {
       CodeLen = 1;
       BAsmCode[0] = 0x18 + HReg;
@@ -433,7 +433,7 @@ static void DecodeMOV(Word Code)
       }
     }
   }
-  else if (Decode_r(ArgStr[1].Str, &HReg))
+  else if (Decode_r(ArgStr[1].str.p_str, &HReg))
   {
     AdrInt = EvalStrIntExpression(&ArgStr[2], Int16, &OK);
     if (OK)
@@ -445,7 +445,7 @@ static void DecodeMOV(Word Code)
       BAsmCode[3] = Hi(AdrInt);
     }
   }
-  else if (Decode_r(ArgStr[2].Str, &HReg))
+  else if (Decode_r(ArgStr[2].str.p_str, &HReg))
   {
     AdrInt = EvalStrIntExpression(&ArgStr[1], Int16, &OK);
     if (OK)
@@ -473,12 +473,12 @@ static void DecodeMVI(Word Code)
     BAsmCode[1] = EvalStrIntExpression(&ArgStr[2], Int8, &OK);
     if (OK)
     {
-      if (Decode_r(ArgStr[1].Str, &HReg))
+      if (Decode_r(ArgStr[1].str.p_str, &HReg))
       {
         CodeLen = 2;
         BAsmCode[0] = 0x68 + HReg;
       }
-      else if (Decode_sr2(ArgStr[1].Str, &HReg))
+      else if (Decode_sr2(ArgStr[1].str.p_str, &HReg))
       {
         CodeLen = 3;
         BAsmCode[2] = BAsmCode[1];
@@ -565,7 +565,7 @@ static void DecodeLXI(Word Code)
   UNUSED(Code);
 
   if (!ChkArgCnt(2, 2));
-  else if (!Decode_rp2(ArgStr[1].Str, &HReg)) WrError(ErrNum_InvAddrMode);
+  else if (!Decode_rp2(ArgStr[1].str.p_str, &HReg)) WrError(ErrNum_InvAddrMode);
   else
   {
     AdrInt = EvalStrIntExpression(&ArgStr[2], Int16, &OK);
@@ -584,7 +584,7 @@ static void DecodePUSH_POP(Word Code)
   ShortInt HReg;
 
   if (!ChkArgCnt(1, 1));
-  else if (!Decode_rp1(ArgStr[1].Str, &HReg)) WrError(ErrNum_InvAddrMode);
+  else if (!Decode_rp1(ArgStr[1].str.p_str, &HReg)) WrError(ErrNum_InvAddrMode);
   else
   {
     CodeLen = 1;
@@ -600,9 +600,9 @@ static void DecodeDMOV(Word Code)
 
   if (ChkArgCnt(2, 2))
   {
-    Boolean Swap = as_strcasecmp(ArgStr[1].Str, "EA") || False;
-    char *pArg1 = Swap ? ArgStr[2].Str : ArgStr[1].Str,
-         *pArg2 = Swap ? ArgStr[1].Str : ArgStr[2].Str;
+    Boolean Swap = as_strcasecmp(ArgStr[1].str.p_str, "EA") || False;
+    char *pArg1 = Swap ? ArgStr[2].str.p_str : ArgStr[1].str.p_str,
+         *pArg2 = Swap ? ArgStr[1].str.p_str : ArgStr[2].str.p_str;
 
     if (as_strcasecmp(pArg1, "EA")) WrError(ErrNum_InvAddrMode);
     else if (Decode_rp3(pArg2, &HReg))
@@ -636,20 +636,20 @@ static void DecodeALUImm(Word Code)
     HVal8 = EvalStrIntExpression(&ArgStr[2], Int8, &OK);
     if (OK)
     {
-      if (!as_strcasecmp(ArgStr[1].Str, "A"))
+      if (!as_strcasecmp(ArgStr[1].str.p_str, "A"))
       {
         CodeLen = 2;
         BAsmCode[0] = 0x06 + ((Code & 14) << 3) + (Code & 1);
         BAsmCode[1] = HVal8;
       }
-      else if (Decode_r(ArgStr[1].Str, &HReg))
+      else if (Decode_r(ArgStr[1].str.p_str, &HReg))
       {
         CodeLen = 3;
         BAsmCode[0] = 0x74;
         BAsmCode[2] = HVal8;
         BAsmCode[1] = HReg + (Code << 3);
       }
-      else if (Decode_sr2(ArgStr[1].Str, &HReg))
+      else if (Decode_sr2(ArgStr[1].str.p_str, &HReg))
       {
         CodeLen = 3;
         BAsmCode[0] = 0x64;
@@ -667,9 +667,9 @@ static void DecodeALUReg(Word Code)
 
   if (ChkArgCnt(2, 2))
   {
-    Boolean NoSwap = !as_strcasecmp(ArgStr[1].Str, "A");
-    char *pArg1 = NoSwap ? ArgStr[1].Str : ArgStr[2].Str,
-         *pArg2 = NoSwap ? ArgStr[2].Str : ArgStr[1].Str;
+    Boolean NoSwap = !as_strcasecmp(ArgStr[1].str.p_str, "A");
+    char *pArg1 = NoSwap ? ArgStr[1].str.p_str : ArgStr[2].str.p_str,
+         *pArg2 = NoSwap ? ArgStr[2].str.p_str : ArgStr[1].str.p_str;
 
     if (as_strcasecmp(pArg1, "A")) WrError(ErrNum_InvAddrMode);
     else if (!Decode_r(pArg2, &HReg)) WrError(ErrNum_InvAddrMode);
@@ -714,8 +714,8 @@ static void DecodeALUEA(Word Code)
   ShortInt HReg;
 
   if (!ChkArgCnt(2, 2));
-  else if (as_strcasecmp(ArgStr[1].Str, "EA")) WrError(ErrNum_InvAddrMode);
-  else if (!Decode_rp3(ArgStr[2].Str, &HReg)) WrError(ErrNum_InvAddrMode);
+  else if (as_strcasecmp(ArgStr[1].str.p_str, "EA")) WrError(ErrNum_InvAddrMode);
+  else if (!Decode_rp3(ArgStr[2].str.p_str, &HReg)) WrError(ErrNum_InvAddrMode);
   else
   {
     CodeLen = 2;
@@ -766,7 +766,7 @@ static void DecodeReg2(Word Code)
   ShortInt HReg;
 
   if (!ChkArgCnt(1, 1));
-  else if (!Decode_r2(ArgStr[1].Str, &HReg)) WrError(ErrNum_InvAddrMode);
+  else if (!Decode_r2(ArgStr[1].str.p_str, &HReg)) WrError(ErrNum_InvAddrMode);
   else
   {
     CodeLen = 0;
@@ -789,7 +789,7 @@ static void DecodeWork(Word Code)
 static void DecodeEA(Word Code)
 {
   if (!ChkArgCnt(1, 1));
-  else if (as_strcasecmp(ArgStr[1].Str, "EA")) WrError(ErrNum_InvAddrMode);
+  else if (as_strcasecmp(ArgStr[1].str.p_str, "EA")) WrError(ErrNum_InvAddrMode);
   else
   {
     CodeLen = 2;
@@ -804,12 +804,12 @@ static void DecodeDCX_INX(Word Code)
   ShortInt HReg;
 
   if (!ChkArgCnt(1, 1));
-  else if (!as_strcasecmp(ArgStr[1].Str, "EA"))
+  else if (!as_strcasecmp(ArgStr[1].str.p_str, "EA"))
   {
     CodeLen = 1;
     BAsmCode[0] = 0xa8 + Code;
   }
-  else if (Decode_rp(ArgStr[1].Str, &HReg))
+  else if (Decode_rp(ArgStr[1].str.p_str, &HReg))
   {
     CodeLen = 1;
     BAsmCode[0] = 0x02 + Code + (HReg << 4);
@@ -823,8 +823,8 @@ static void DecodeEADD_ESUB(Word Code)
   ShortInt HReg;
 
   if (!ChkArgCnt(2, 2));
-  else if (as_strcasecmp(ArgStr[1].Str, "EA")) WrError(ErrNum_InvAddrMode);
-  else if (!Decode_r2(ArgStr[2].Str, &HReg)) WrError(ErrNum_InvAddrMode);
+  else if (as_strcasecmp(ArgStr[1].str.p_str, "EA")) WrError(ErrNum_InvAddrMode);
+  else if (!Decode_r2(ArgStr[2].str.p_str, &HReg)) WrError(ErrNum_InvAddrMode);
   else
   {
     CodeLen = 2;
@@ -942,7 +942,7 @@ static void DecodeSK_SKN(Word Code)
   ShortInt HReg;
 
   if (!ChkArgCnt(1, 1));
-  else if (!Decode_f(ArgStr[1].Str, &HReg)) WrError(ErrNum_InvAddrMode);
+  else if (!Decode_f(ArgStr[1].str.p_str, &HReg)) WrError(ErrNum_InvAddrMode);
   else
   {
     CodeLen = 2;
@@ -956,7 +956,7 @@ static void DecodeSKIT_SKNIT(Word Code)
   ShortInt HReg;
 
   if (!ChkArgCnt(1, 1));
-  else if (!Decode_irf(ArgStr[1].Str, &HReg)) WrError(ErrNum_InvAddrMode);
+  else if (!Decode_irf(ArgStr[1].str.p_str, &HReg)) WrError(ErrNum_InvAddrMode);
   else
   {
     CodeLen = 2;
@@ -1133,7 +1133,7 @@ static void MakeCode_78C10(void)
 
   if (DecodeIntelPseudo(False)) return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

@@ -54,7 +54,7 @@ void AddLineInfo(Boolean InMacro, LongInt LineNum, char *FileName,
 
   /* do not accept line infor for pseudo segments */
 
-  if (Space > PCMax)
+  if (Space >= SegCount)
     return;
 
   /* wieviele Records schreiben ? */

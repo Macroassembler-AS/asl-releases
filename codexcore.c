@@ -110,7 +110,7 @@ static tRegEvalResult ParseArgReg(int Index, unsigned *pResult, Boolean MustBeRe
   tEvalResult EvalResult;
   tRegEvalResult RegEvalResult;
 
-  if (ParseReg(ArgStr[Index].Str, pResult))
+  if (ParseReg(ArgStr[Index].str.p_str, pResult))
     return eIsReg;
 
   RegEvalResult = EvalStrRegExpressionAsOperand(&ArgStr[Index], &RegDescr, &EvalResult, eSymbolSize8Bit, MustBeReg);
@@ -806,7 +806,7 @@ static void MakeCode_XCore(void)
 
   /* Null Instruction */
 
-  if ((*OpPart.Str == '\0') && (ArgCnt == 0))
+  if ((*OpPart.str.p_str == '\0') && (ArgCnt == 0))
     return;
 
   /* Pseudo Instructions */
@@ -820,7 +820,7 @@ static void MakeCode_XCore(void)
 
   /* everything from hash table */
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 
@@ -838,7 +838,6 @@ static void InternSymbol_XCore(char *pArg, TempResult *pResult)
   if (ParseReg(pArg, &RegNum))
   {
     pResult->Typ = TempReg;
-    pResult->DissectReg = DissectReg_XCore;
     pResult->DataSize = eSymbolSize8Bit;
     pResult->Contents.RegDescr.Reg = RegNum;
     pResult->Contents.RegDescr.Dissect = DissectReg_XCore;

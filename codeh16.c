@@ -167,7 +167,7 @@ static tFormat DecodeFormat(unsigned FormatMask)
 
   FormatMask >>= 1;
   for (Result = (tFormat)0; *Formats[Result]; Result++, FormatMask >>= 1)
-    if ((FormatMask & 1) && !as_strcasecmp(FormatPart.Str, Formats[Result]))
+    if ((FormatMask & 1) && !as_strcasecmp(FormatPart.str.p_str, Formats[Result]))
       return Result + 1;
   return eFormatNone;
 }
@@ -180,7 +180,7 @@ static tFormat DecodeFormat(unsigned FormatMask)
 
 static Boolean ChkEmptyFormat(void)
 {
-  if (*FormatPart.Str)
+  if (*FormatPart.str.p_str)
   {
     WrStrErrorPos(ErrNum_InvFormat, &FormatPart);
     return False;
@@ -306,13 +306,13 @@ static void ResetAdrComps(tAdrComps *pComps)
 static Boolean SplitOpSize(tStrComp *pArg, tSymbolSize *pSize)
 {
   static const char Suffixes[][4] = { ".B", ":8", ".W", ":16", ".L", ":32" };
-  int l = strlen(pArg->Str), l2;
+  int l = strlen(pArg->str.p_str), l2;
   unsigned z;
 
   for (z = 0; z < sizeof(Suffixes) / sizeof(*Suffixes); z++)
   {
     l2 = strlen(Suffixes[z]);
-    if ((l > l2) && !as_strcasecmp(pArg->Str + l - l2, Suffixes[z]))
+    if ((l > l2) && !as_strcasecmp(pArg->str.p_str + l - l2, Suffixes[z]))
     {
       StrCompShorten(pArg, l2);
       *pSize = (tSymbolSize)(z / 2);
@@ -334,12 +334,12 @@ static const char ScaleSuffixes[][3] = { "*1", "*2", "*4", "*8" };
 
 static char SplitScale(tStrComp *pArg, Byte *pScale)
 {
-  int l = strlen(pArg->Str);
+  int l = strlen(pArg->str.p_str);
   unsigned z;
 
   if (l >= 2)
     for (z = 0; z < sizeof(ScaleSuffixes) / sizeof(*ScaleSuffixes); z++)
-      if (!as_strcasecmp(pArg->Str + l - 2, ScaleSuffixes[z]))
+      if (!as_strcasecmp(pArg->str.p_str + l - 2, ScaleSuffixes[z]))
       {
         StrCompShorten(pArg, 2);
         *pScale = z;
@@ -357,7 +357,7 @@ static char SplitScale(tStrComp *pArg, Byte *pScale)
 
 static void AppendScale(tStrComp *pArg, Byte Scale)
 {
-  strcat(pArg->Str, ScaleSuffixes[Scale]);
+  strcat(pArg->str.p_str, ScaleSuffixes[Scale]);
   pArg->Pos.Len += 2;
 }
 
@@ -450,7 +450,7 @@ static tRegEvalResult DecodeReg(const tStrComp *pArg, Byte *pReg, Byte *pPrefix,
   tEvalResult EvalResult;
   tRegEvalResult RegEvalResult;
 
-  if (DecodeRegCore(pArg->Str, pReg, pPrefix))
+  if (DecodeRegCore(pArg->str.p_str, pReg, pPrefix))
     RegEvalResult = eIsReg;
   else
   {
@@ -490,7 +490,7 @@ static Boolean DecodeRegList(Word *pDest, int StartIdx, int StopIdx)
   *pDest = 0;
   for (Index = StartIdx; Index <= StopIdx; Index++)
   {
-    pSep = strchr(ArgStr[Index].Str, '-');
+    pSep = strchr(ArgStr[Index].str.p_str, '-');
     if (pSep)
     {
       tStrComp StartComp, StopComp;
@@ -542,7 +542,7 @@ static tRegEvalResult DecodeRegWithSize(const tStrComp *pArg, Byte *pReg, tSymbo
   String Str;
   tStrComp Copy;
 
-  StrCompMkTemp(&Copy, Str);
+  StrCompMkTemp(&Copy, Str, sizeof(Str));
   StrCompCopy(&Copy, pArg);
   if (!SplitOpSize(&Copy, pSize))
     *pSize = eSymbolSizeUnknown;
@@ -599,7 +599,7 @@ static Boolean DecodeCReg(const tStrComp *pArg, Byte *pResult)
   const tCReg *pReg;
 
   for (pReg = CRegs; pReg->pName; pReg++)
-    if (!as_strcasecmp(pArg->Str, pReg->pName))
+    if (!as_strcasecmp(pArg->str.p_str, pReg->pName))
     {
       if ((pReg->Code & 0x80) && !CheckSup(pArg))
         return False;
@@ -902,7 +902,7 @@ static Boolean ClassComp(tStrComp *pArg, tAdrComps *pComps)
   KillPrefBlanksStrCompRef(pArg);
   KillPostBlanksStrComp(pArg);
 
-  if (!as_strcasecmp(pArg->Str, "PC"))
+  if (!as_strcasecmp(pArg->str.p_str, "PC"))
   {
     if (pComps->BaseReg == NOREG)
     {
@@ -922,7 +922,7 @@ static Boolean ClassComp(tStrComp *pArg, tAdrComps *pComps)
     else
       return False;
   }
-  if (*pArg->Str == '@')
+  if (*pArg->str.p_str == '@')
   {
     tAdrComps InnerComps;
     tStrComp InnerList;
@@ -974,7 +974,7 @@ static Boolean ClassComp(tStrComp *pArg, tAdrComps *pComps)
     case eRegAbort:
       return False;
   }
-  if (*pArg->Str == '-')
+  if (*pArg->str.p_str == '-')
   {
     tStrComp RegComp;
 
@@ -998,9 +998,9 @@ static Boolean ClassComp(tStrComp *pArg, tAdrComps *pComps)
         break;
     }
   }
-  if (pArg->Str[pArg->Pos.Len - 1] == '+')
+  if (pArg->str.p_str[pArg->Pos.Len - 1] == '+')
   {
-    pArg->Str[pArg->Pos.Len - 1] = '\0';
+    pArg->str.p_str[pArg->Pos.Len - 1] = '\0';
     switch (DecodeReg(pArg, &Reg, &Prefix, True, False))
     {
       case eIsReg:
@@ -1017,7 +1017,7 @@ static Boolean ClassComp(tStrComp *pArg, tAdrComps *pComps)
       case eRegAbort:
         return False;
       case eIsNoReg:
-        pArg->Str[pArg->Pos.Len - 1] = '+';
+        pArg->str.p_str[pArg->Pos.Len - 1] = '+';
         break;
     }
   }
@@ -1085,7 +1085,7 @@ static Boolean ClassCompList(tAdrComps *pComps, tStrComp *pArg)
 {
   ResetAdrComps(pComps);
 
-  if (IsIndirect(pArg->Str))
+  if (IsIndirect(pArg->str.p_str))
   {
     char *pSplit;
     tStrComp Remainder;
@@ -1094,7 +1094,7 @@ static Boolean ClassCompList(tAdrComps *pComps, tStrComp *pArg)
     StrCompShorten(pArg, 1);
     do
     {
-      pSplit = QuotPos(pArg->Str, ',');
+      pSplit = QuotPos(pArg->str.p_str, ',');
       if (pSplit)
         StrCompSplitRef(pArg, &Remainder, pArg, pSplit);
       if (!ClassComp(pArg, pComps))
@@ -1135,13 +1135,13 @@ static Boolean DecodeAdr(const tStrComp *pArg, unsigned Mask, tAdrVals *pAdrVals
 
   ResetAdrVals(pAdrVals);
 
-  Arg = *pArg;
+  StrCompRefRight(&Arg, pArg, 0);
   while (True)
   {
-    if (!as_strncasecmp(Arg.Str, "<CRn>", 5)
-     || !as_strncasecmp(Arg.Str, "<PRn>", 5))
+    if (!as_strncasecmp(Arg.str.p_str, "<CRn>", 5)
+     || !as_strncasecmp(Arg.str.p_str, "<PRn>", 5))
     {
-      AppendAdrVals(pAdrVals, (toupper(Arg.Str[1]) == 'C') ? PREFIX_CRn : PREFIX_PRn);
+      AppendAdrVals(pAdrVals, (toupper(Arg.str.p_str[1]) == 'C') ? PREFIX_CRn : PREFIX_PRn);
       StrCompIncRefLeft(&Arg, 5);
       KillPrefBlanksStrCompRef(&Arg);
     }
@@ -1162,7 +1162,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, unsigned Mask, tAdrVals *pAdrVals
       return False;
   }
 
-  if (*Arg.Str == '#')
+  if (*Arg.str.p_str == '#')
   {
     tSymbolSize ImmOpSize;
     LongInt ArgVal;
@@ -1180,7 +1180,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, unsigned Mask, tAdrVals *pAdrVals
     goto Check;
   }
 
-  if (*Arg.Str == '@')
+  if (*Arg.str.p_str == '@')
   {
     tStrComp IndirComp;
     tAdrComps Comps;
@@ -1509,7 +1509,7 @@ static void AppendAdrValPair(tAdrVals *pSrcAdrVals, const tAdrVals *pDestAdrVals
 
 static Byte EvalBitPosition(const tStrComp *pBitArg, Boolean *pOK, tSymbolSize OpSize)
 {
-  int Offset = !!(*pBitArg->Str == '#');
+  int Offset = !!(*pBitArg->str.p_str == '#');
 
   switch (OpSize)
   {
@@ -1643,7 +1643,7 @@ static Boolean DecodeBitArg2(LongWord *pResult, const tStrComp *pRegArg, const t
   if (!OK)
     return False;
 
-  Addr = EvalStrIntExpressionOffs(pRegArg, !!(*pRegArg->Str == '@'), UInt24, &OK);
+  Addr = EvalStrIntExpressionOffs(pRegArg, !!(*pRegArg->str.p_str == '@'), UInt24, &OK);
   if (!OK)
     return False;
 
@@ -1876,7 +1876,7 @@ static void DecodeMOV_ADD_SUB_CMP(Word Code)
   {
     /* TODO: auto-convert SUB:Q n,<ea> to ADD:q -n,<ea>? */
 
-    if (!*FormatPart.Str)
+    if (!*FormatPart.str.p_str)
     {
       /* R format (all instructions) */
 
@@ -2137,7 +2137,7 @@ static void DecodeBranch(Word Code)
    || !ChkArgCnt(1, 1))
     return;
 
-  Addr = EvalStrIntExpressionOffsWithFlags(&ArgStr[1], !!(*ArgStr[1].Str == '@'), UInt24, &OK, &Flags);
+  Addr = EvalStrIntExpressionOffsWithFlags(&ArgStr[1], !!(*ArgStr[1].str.p_str == '@'), UInt24, &OK, &Flags);
   if (!OK)
     return;
 
@@ -2166,7 +2166,7 @@ static void DecodeBranchGen(Word Code)
   if (!ChkArgCnt(1, 1))
     return;
 
-  if (!*FormatPart.Str)
+  if (!*FormatPart.str.p_str)
   {
     if (Code == 7)
     {
@@ -2189,7 +2189,7 @@ static void DecodeBranchGen(Word Code)
     }
   }
 
-  Addr = EvalStrIntExpressionOffsWithFlags(&ArgStr[1], !!(*ArgStr[1].Str == '@'), UInt24, &OK, &Flags);
+  Addr = EvalStrIntExpressionOffsWithFlags(&ArgStr[1], !!(*ArgStr[1].str.p_str == '@'), UInt24, &OK, &Flags);
   if (!OK)
     return;
 
@@ -2316,7 +2316,7 @@ static void DecodeSCB(Word Code)
   if (!DecodeReg(&ArgStr[1], &Reg, &Prefix, False, True))
     return;
 
-  Addr = EvalStrIntExpressionOffsWithFlags(&ArgStr[2], !!(*ArgStr[1].Str == '@'), UInt24, &OK, &Flags);
+  Addr = EvalStrIntExpressionOffsWithFlags(&ArgStr[2], !!(*ArgStr[1].str.p_str == '@'), UInt24, &OK, &Flags);
   if (!OK)
     return;
 
@@ -2406,7 +2406,7 @@ static void DecodeLINK(Word Code)
    || !ChkArgCnt(2, 2))
     return;
   if (!DecodeReg(&ArgStr[1], &Reg, &Prefix, False, True));
-  else if (*ArgStr[2].Str != '#') WrStrErrorPos(ErrNum_OnlyImmAddr, &ArgStr[2]);
+  else if (*ArgStr[2].str.p_str != '#') WrStrErrorPos(ErrNum_OnlyImmAddr, &ArgStr[2]);
   else
   {
     Boolean OK;
@@ -2454,7 +2454,7 @@ static void DecodeTRAPA(Word Code)
   if (!ChkEmptyFormat()
    || !ChkArgCnt(1, 1))
     return;
-  if (*ArgStr[1].Str != '#') WrStrErrorPos(ErrNum_OnlyImmAddr, &ArgStr[1]);
+  if (*ArgStr[1].str.p_str != '#') WrStrErrorPos(ErrNum_OnlyImmAddr, &ArgStr[1]);
   else
   {
     Boolean OK;
@@ -2479,7 +2479,7 @@ static void DecodeRTD(Word Code)
   if (!ChkEmptyFormat()
    || !ChkArgCnt(1, 1))
     return;
-  else if (*ArgStr[1].Str != '#') WrStrErrorPos(ErrNum_OnlyImmAddr, &ArgStr[1]);
+  else if (*ArgStr[1].str.p_str != '#') WrStrErrorPos(ErrNum_OnlyImmAddr, &ArgStr[1]);
   else
   {
     Boolean OK;
@@ -2880,7 +2880,7 @@ static void DecodeBIT(Word Code)
     pElement = CreateStructElem(&LabPart);
     if (!pElement)
       return;
-    pElement->pRefElemName = as_strdup(ArgStr[2].Str);
+    pElement->pRefElemName = as_strdup(ArgStr[2].str.p_str);
     /* undefined op size -> take over from ref elem */
     pElement->OpSize = OpSize;
     pElement->BitPos = BitPos;
@@ -3094,34 +3094,34 @@ static Boolean DecodeAttrPart_H16(void)
   switch (AttrSplit)
   {
     case '.':
-      p = strchr(AttrPart.Str, ':');
+      p = strchr(AttrPart.str.p_str, ':');
       if (p)
         StrCompSplitRef(&SizePart, &FormatPart, &AttrPart, p);
       else
       {
         StrCompRefRight(&SizePart, &AttrPart, 0);
-        StrCompMkTemp(&FormatPart, EmptyStr);
+        StrCompMkTemp(&FormatPart, EmptyStr, 0);
       }
       break;
     case ':':
-      p = strchr(AttrPart.Str, '.');
+      p = strchr(AttrPart.str.p_str, '.');
       if (p)
         StrCompSplitRef(&FormatPart, &SizePart, &AttrPart, p);
       else
       {
         StrCompRefRight(&FormatPart, &AttrPart, 0);
-        StrCompMkTemp(&SizePart, EmptyStr);
+        StrCompMkTemp(&SizePart, EmptyStr, 0);
       }
       break;
     default:
-      StrCompMkTemp(&FormatPart, EmptyStr);
-      StrCompMkTemp(&SizePart, EmptyStr);
+      StrCompMkTemp(&FormatPart, EmptyStr, 0);
+      StrCompMkTemp(&SizePart, EmptyStr, 0);
       break;
   }
 
   /* process operand size part of attribute */
 
-  if (*SizePart.Str)
+  if (*SizePart.str.p_str)
   {
     if (!DecodeMoto16AttrSizeStr(&SizePart, &AttrPartOpSize, False))
       return False;
@@ -3141,19 +3141,8 @@ static void MakeCode_H16(void)
   if (DecodeMoto16Pseudo(OpSize, True))
     return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
-}
-
-/*!------------------------------------------------------------------------
- * \fn     SwitchFrom_H16(void)
- * \brief  cleanups to do after switching to other target
- * ------------------------------------------------------------------------ */
-
-static void SwitchFrom_H16(void)
-{
-  DeinitFields();
-  ClearONOFF();
 }
 
 /*!------------------------------------------------------------------------
@@ -3213,7 +3202,7 @@ static void SwitchTo_H16(void)
   DecodeAttrPart = DecodeAttrPart_H16;
   MakeCode = MakeCode_H16;
   IsDef = IsDef_H16;
-  SwitchFrom = SwitchFrom_H16;
+  SwitchFrom = DeinitFields;
   DissectBit = DissectBit_H16;
   DissectReg = DissectReg_H16;
   InternSymbol = InternSymbol_H16;

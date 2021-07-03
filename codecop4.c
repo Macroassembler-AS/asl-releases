@@ -464,7 +464,7 @@ static void MakeCode_COP4(void)
 
   /* zu ignorierendes */
 
-  if (*OpPart.Str == '\0') return;
+  if (*OpPart.str.p_str == '\0') return;
 
   /* pseudo instructions */
 
@@ -473,7 +473,7 @@ static void MakeCode_COP4(void)
 
   /* machine instructions */
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

@@ -133,7 +133,7 @@ static void SplitArg(const tStrComp *pOrig, tStrComp *pLDest, tStrComp *pRDest)
 {
   char *p;
 
-  p = QuotPos(pOrig->Str, ',');
+  p = QuotPos(pOrig->str.p_str, ',');
   if (!p)
   {
     StrCompReset(pRDest);
@@ -145,7 +145,7 @@ static void SplitArg(const tStrComp *pOrig, tStrComp *pLDest, tStrComp *pRDest)
 
 static unsigned CutSize(const tStrComp *pArg, Byte *ShortMode)
 {
-  switch (*pArg->Str)
+  switch (*pArg->str.p_str)
   {
     case '>':
       *ShortMode = 2;
@@ -412,12 +412,12 @@ static void DecodeAdr(const tStrComp *pArg, Word Erl, Byte ErlSeg, tAdrResult *p
   {
     0, 0, 4, 7, 2, 3, 5, 0, 1
   };
-#define SegCount (sizeof(SegNames) / sizeof(*SegNames))
-  static const char SegNames[] =
+#define Seg56KCount (sizeof(Seg56KNames) / sizeof(*Seg56KNames))
+  static const char Seg56KNames[] =
   {
     'P', 'X', 'Y', 'L'
   };
-  static Byte SegVals[] =
+  static Byte Seg56KVals[] =
   {
     SegCode, SegXData, SegYData, SegLData
   };
@@ -452,17 +452,17 @@ static void DecodeAdr(const tStrComp *pArg, Word Erl, Byte ErlSeg, tAdrResult *p
   /* Zielsegment vorgegeben ? */
 
   Offset = 0;
-  for (SegIndex = 0; SegIndex < SegCount; SegIndex++)
-    if ((as_toupper(*pArg->Str) == SegNames[SegIndex]) && (pArg->Str[1] == ':'))
+  for (SegIndex = 0; SegIndex < Seg56KCount; SegIndex++)
+    if ((as_toupper(*pArg->str.p_str) == Seg56KNames[SegIndex]) && (pArg->str.p_str[1] == ':'))
     {
-      pResult->Seg = SegVals[SegIndex];
+      pResult->Seg = Seg56KVals[SegIndex];
       Offset = 2;
     }
   StrCompRefRight(&Arg, pArg, Offset);
 
   /* Adressausdruecke abklopfen: dazu mit Referenzstring vergleichen */
 
-  ArgLen = strlen(Arg.Str);
+  ArgLen = strlen(Arg.str.p_str);
   for (z = ModIReg; z <= ModModInc; z++)
     if (ArgLen == (int)strlen(ModMasks[z]))
     {
@@ -470,7 +470,7 @@ static void DecodeAdr(const tStrComp *pArg, Word Erl, Byte ErlSeg, tAdrResult *p
       for (l = 0; l <= ArgLen; l++)
         if (ModMasks[z][l] == 'x')
         {
-          OrdVal = Arg.Str[l] - '0';
+          OrdVal = Arg.str.p_str[l] - '0';
           if (OrdVal > 7)
             break;
           else if (pResult->Mode == 0xffff)
@@ -481,7 +481,7 @@ static void DecodeAdr(const tStrComp *pArg, Word Erl, Byte ErlSeg, tAdrResult *p
             goto chk;
           }
         }
-        else if (ModMasks[z][l] != as_toupper(Arg.Str[l]))
+        else if (ModMasks[z][l] != as_toupper(Arg.str.p_str[l]))
           break;
       if (l > ArgLen)
       {
@@ -493,9 +493,9 @@ static void DecodeAdr(const tStrComp *pArg, Word Erl, Byte ErlSeg, tAdrResult *p
 
   /* immediate ? */
 
-  if (*Arg.Str == '#')
+  if (*Arg.str.p_str == '#')
   {
-    if (Arg.Str[1] == '>')
+    if (Arg.str.p_str[1] == '>')
     {
       pResult->ForceImmLong = TRUE;
       pResult->Val = EvalStrIntExpressionOffs(&Arg, 2, Int24, &OK);
@@ -514,25 +514,25 @@ static void DecodeAdr(const tStrComp *pArg, Word Erl, Byte ErlSeg, tAdrResult *p
 
   /* Register mit Displacement bei 56300 */
 
-  if (IsIndirect(Arg.Str))
+  if (IsIndirect(Arg.str.p_str))
   {
     tStrComp IArg;
 
-    Arg.Str[--ArgLen] = '\0'; Arg.Pos.Len--;
+    Arg.str.p_str[--ArgLen] = '\0'; Arg.Pos.Len--;
     StrCompRefRight(&IArg, &Arg, 1);
-    pp = strchr(IArg.Str, '+');
-    np = strchr(IArg.Str, '-');
+    pp = strchr(IArg.str.p_str, '+');
+    np = strchr(IArg.str.p_str, '-');
     if ((!pp) || ((np) && (np < pp)))
       pp = np;
     if (pp)
     {
       save = *pp;
       *pp = '\0';
-      if ((DecodeGeneralReg(IArg.Str, &pResult->Mode)) && (pResult->Mode >= 16) && (pResult->Mode <= 23))
+      if ((DecodeGeneralReg(IArg.str.p_str, &pResult->Mode)) && (pResult->Mode >= 16) && (pResult->Mode <= 23))
       {
         *pp = save;
         pResult->Mode -= 16;
-        pResult->Val = EvalStrIntExpressionOffsWithResult(&IArg, pp - IArg.Str, Int24, &EvalResult);
+        pResult->Val = EvalStrIntExpressionOffsWithResult(&IArg, pp - IArg.str.p_str, Int24, &EvalResult);
         if (EvalResult.OK)
         {
           if (mFirstPassUnknown(EvalResult.Flags))
@@ -579,9 +579,9 @@ static Boolean DecodeOpPair(const tStrComp *pLeft, const tStrComp *pRight, Byte 
 {
   Boolean Result = False;
 
-  if (DecodeALUReg(pLeft->Str, Reg1, WorkSeg == SegXData, WorkSeg == SegYData, True))
+  if (DecodeALUReg(pLeft->str.p_str, Reg1, WorkSeg == SegXData, WorkSeg == SegYData, True))
   {
-    if (DecodeALUReg(pRight->Str, Reg2, WorkSeg == SegXData, WorkSeg == SegYData, True))
+    if (DecodeALUReg(pRight->str.p_str, Reg2, WorkSeg == SegXData, WorkSeg == SegYData, True))
     {
       *Dir = 2;
       pResult->Type = ModNone;
@@ -599,7 +599,7 @@ static Boolean DecodeOpPair(const tStrComp *pLeft, const tStrComp *pRight, Byte 
         Result = True;
     }
   }
-  else if (DecodeALUReg(pRight->Str, Reg1, WorkSeg == SegXData, WorkSeg == SegYData, True))
+  else if (DecodeALUReg(pRight->str.p_str, Reg1, WorkSeg == SegXData, WorkSeg == SegYData, True))
   {
     *Dir = 1;
     *Reg2 = -1;
@@ -631,8 +631,8 @@ static Boolean DecodeTFR(const tStrComp *pArg, LongInt *Erg)
   LongInt Part1, Part2;
 
   SplitArg(pArg, &LeftComp, &RightComp);
-  if (!DecodeALUReg(RightComp.Str, &Part2, False, False, True)) return False;
-  if (!DecodeReg(LeftComp.Str, &Part1)) return False;
+  if (!DecodeALUReg(RightComp.str.p_str, &Part2, False, False, True)) return False;
+  if (!DecodeReg(LeftComp.str.p_str, &Part1)) return False;
   if ((Part1 < 4) || ((Part1 > 7) && (Part1 < 14)) || (Part1 > 15)) return False;
   if (Part1 > 13)
   {
@@ -651,9 +651,9 @@ static Boolean DecodeRR(const tStrComp *pArg, LongInt *Erg)
   LongInt Part1, Part2;
 
   SplitArg(pArg, &LeftComp, &RightComp);
-  if (!DecodeGeneralReg(RightComp.Str, &Part2)) return False;
+  if (!DecodeGeneralReg(RightComp.str.p_str, &Part2)) return False;
   if ((Part2 < 16) || (Part2 > 23)) return False;
-  if (!DecodeGeneralReg(LeftComp.Str, &Part1)) return False;
+  if (!DecodeGeneralReg(LeftComp.str.p_str, &Part1)) return False;
   if ((Part1 < 16) || (Part1 > 23)) return False;
   *Erg = (Part2 & 7) + ((Part1 & 7) << 8);
   return True;
@@ -688,19 +688,19 @@ static Boolean DecodeMOVE_1(int Start)
   Boolean Result = False;
   Byte SegMask;
 
-  if (!as_strncasecmp(ArgStr[Start].Str, "IF", 2))
+  if (!as_strncasecmp(ArgStr[Start].str.p_str, "IF", 2))
   {
-    l = strlen(ArgStr[Start].Str);
-    if (!as_strcasecmp(ArgStr[Start].Str + l - 2, ".U"))
+    l = strlen(ArgStr[Start].str.p_str);
+    if (!as_strcasecmp(ArgStr[Start].str.p_str + l - 2, ".U"))
     {
       RegErg = 0x1000;
       l -= 2;
     }
     else
       RegErg = 0;
-    c = ArgStr[Start].Str[l];
-    ArgStr[Start].Str[l] = '\0';
-    if (DecodeCondition(ArgStr[Start].Str + 2, &Condition))
+    c = ArgStr[Start].str.p_str[l];
+    ArgStr[Start].str.p_str[l] = '\0';
+    if (DecodeCondition(ArgStr[Start].str.p_str + 2, &Condition))
     {
       if (ChkMinCPUExt(CPU56300, ErrNum_AddrModeNotSupported))
       {
@@ -709,14 +709,14 @@ static Boolean DecodeMOVE_1(int Start)
         return True;
       }
     }
-    ArgStr[Start].Str[l] = c;
+    ArgStr[Start].str.p_str[l] = c;
   }
 
   SplitArg(&ArgStr[Start], &LeftComp, &RightComp);
 
   /* 1. Register-Update */
 
-  if (*RightComp.Str == '\0')
+  if (*RightComp.str.p_str == '\0')
   {
     tAdrResult AdrResult;
 
@@ -732,12 +732,12 @@ static Boolean DecodeMOVE_1(int Start)
 
   /* 2. Ziel ist Register */
 
-  if (DecodeReg(RightComp.Str, &RegErg))
+  if (DecodeReg(RightComp.str.p_str, &RegErg))
   {
     tAdrResult AdrResult;
 
     AdrResult.Seg = SegNone;
-    if (DecodeReg(LeftComp.Str, &RegErg2))
+    if (DecodeReg(LeftComp.str.p_str, &RegErg2))
     {
       Result = True;
       DAsmCode[0] = 0x200000 + (RegErg << 8) + (RegErg2 << 13);
@@ -797,7 +797,7 @@ static Boolean DecodeMOVE_1(int Start)
 
   /* 3. Quelle ist Register */
 
-  if (DecodeReg(LeftComp.Str, &RegErg))
+  if (DecodeReg(LeftComp.str.p_str, &RegErg))
   {
     tAdrResult RightAdrResult;
 
@@ -844,7 +844,7 @@ static Boolean DecodeMOVE_1(int Start)
 
   /* 4. Ziel ist langes Register */
 
-  if (DecodeLReg(RightComp.Str, &RegErg))
+  if (DecodeLReg(RightComp.str.p_str, &RegErg))
   {
     tAdrResult LeftAdrResult;
 
@@ -868,7 +868,7 @@ static Boolean DecodeMOVE_1(int Start)
 
   /* 5. Quelle ist langes Register */
 
-  if (DecodeLReg(LeftComp.Str, &RegErg))
+  if (DecodeLReg(LeftComp.str.p_str, &RegErg))
   {
     tAdrResult RightAdrResult;
 
@@ -905,10 +905,10 @@ static Boolean DecodeMOVE_2(int Start)
 
   /* 1. Spezialfall X auf rechter Seite ? */
 
-  if (!as_strcasecmp(Left2Comp.Str, "X0"))
+  if (!as_strcasecmp(Left2Comp.str.p_str, "X0"))
   {
-    if (!DecodeALUReg(Right2Comp.Str, &RegErg, False, False, True)) WrError(ErrNum_InvAddrMode);
-    else if (strcmp(Left1Comp.Str, Right2Comp.Str)) WrError(ErrNum_InvAddrMode);
+    if (!DecodeALUReg(Right2Comp.str.p_str, &RegErg, False, False, True)) WrError(ErrNum_InvAddrMode);
+    else if (strcmp(Left1Comp.str.p_str, Right2Comp.str.p_str)) WrError(ErrNum_InvAddrMode);
     else
     {
       DecodeAdr(&Right1Comp, MModNoImm, MSegXData, &AdrResult1);
@@ -925,10 +925,10 @@ static Boolean DecodeMOVE_2(int Start)
 
   /* 2. Spezialfall Y auf linker Seite ? */
 
-  if (!as_strcasecmp(Left1Comp.Str, "Y0"))
+  if (!as_strcasecmp(Left1Comp.str.p_str, "Y0"))
   {
-    if (!DecodeALUReg(Right1Comp.Str, &RegErg, False, False, True)) WrError(ErrNum_InvAddrMode);
-    else if (strcmp(Left2Comp.Str, Right1Comp.Str)) WrError(ErrNum_InvAddrMode);
+    if (!DecodeALUReg(Right1Comp.str.p_str, &RegErg, False, False, True)) WrError(ErrNum_InvAddrMode);
+    else if (strcmp(Left2Comp.str.p_str, Right1Comp.str.p_str)) WrError(ErrNum_InvAddrMode);
     else
     {
       DecodeAdr(&Right2Comp, MModNoImm, MSegYData, &AdrResult2);
@@ -1016,7 +1016,6 @@ static Boolean DecodePseudo(void)
   tSymbolFlags Flags;
   Word AdrWord, z, z2;
 /*   Byte Segment;*/
-  TempResult t;
   LongInt HInt;
 
 
@@ -1050,6 +1049,9 @@ static Boolean DecodePseudo(void)
 
   if (Memo("DC"))
   {
+    TempResult t;
+
+    as_tempres_ini(&t);
     if (ChkArgCnt(1, ArgCntMax))
     {
       OK = True;
@@ -1066,9 +1068,9 @@ static Boolean DecodePseudo(void)
               goto ToInt;
 
             BCount = 2; DAsmCode[CodeLen] = 0;
-            for (z2 = 0; z2 < t.Contents.Ascii.Length; z2++)
+            for (z2 = 0; z2 < t.Contents.str.len; z2++)
             {
-              HInt = t.Contents.Ascii.Contents[z2];
+              HInt = t.Contents.str.p_str[z2];
               HInt = CharTransTable[((usint) HInt) & 0xff];
               HInt <<= (BCount * 8);
               DAsmCode[CodeLen] |= HInt;
@@ -1096,6 +1098,7 @@ static Boolean DecodePseudo(void)
       }
       if (!OK) CodeLen = 0;
     }
+    as_tempres_free(&t);
     return True;
   }
 
@@ -1155,19 +1158,19 @@ static void DecodePar(Word Index)
     switch (pOrder->Typ)
     {
       case ParAB:
-        if (!DecodeALUReg(ArgStr[1].Str, &Reg1, False, False, True)) SetXError(ErrNum_InvReg, &ArgStr[1]);
+        if (!DecodeALUReg(ArgStr[1].str.p_str, &Reg1, False, False, True)) SetXError(ErrNum_InvReg, &ArgStr[1]);
         else
           h = Reg1 << 3;
         break;
       case ParFixAB:
-        if (as_strcasecmp(ArgStr[1].Str, "A,B")) SetError(ErrNum_InvRegPair);
+        if (as_strcasecmp(ArgStr[1].str.p_str, "A,B")) SetError(ErrNum_InvRegPair);
         else
           h = 0;
         break;
       case ParABShl1:
-        if (!strchr(ArgStr[1].Str, ','))
+        if (!strchr(ArgStr[1].str.p_str, ','))
         {
-          if (!DecodeALUReg(ArgStr[1].Str, &Reg1, False, False, True)) SetXError(ErrNum_InvReg, &ArgStr[1]);
+          if (!DecodeALUReg(ArgStr[1].str.p_str, &Reg1, False, False, True)) SetXError(ErrNum_InvReg, &ArgStr[1]);
           else
             h = Reg1 << 3;
         }
@@ -1176,13 +1179,13 @@ static void DecodePar(Word Index)
         else
         {
           SplitArg(&ArgStr[1], &LeftComp, &RightComp);
-          if (!strchr(RightComp.Str, ','))
+          if (!strchr(RightComp.str.p_str, ','))
             StrCompCopy(&MidComp, &RightComp);
           else
             SplitArg(&RightComp, &MidComp, &RightComp);
-          if (!DecodeALUReg(RightComp.Str, &Reg1, False, False, True)) SetXError(ErrNum_InvReg, &RightComp);
-          else if (!DecodeALUReg(MidComp.Str, &Reg2, False, False, True)) SetXError(ErrNum_InvReg, &MidComp);
-          else if (*LeftComp.Str == '#')
+          if (!DecodeALUReg(RightComp.str.p_str, &Reg1, False, False, True)) SetXError(ErrNum_InvReg, &RightComp);
+          else if (!DecodeALUReg(MidComp.str.p_str, &Reg2, False, False, True)) SetXError(ErrNum_InvReg, &MidComp);
+          else if (*LeftComp.str.p_str == '#')
           {
             AddVal = EvalStrIntExpressionOffs(&LeftComp, 1, UInt6, &OK);
             if (OK)
@@ -1193,7 +1196,7 @@ static void DecodePar(Word Index)
               DontAdd = True;
             }
           }
-          else if (!DecodeXYAB1Reg(LeftComp.Str, &Reg3)) SetXError(ErrNum_InvReg, &LeftComp);
+          else if (!DecodeXYAB1Reg(LeftComp.str.p_str, &Reg3)) SetXError(ErrNum_InvReg, &LeftComp);
           else
           {
             DAsmCode[0] = 0x0c1e60 - ((pOrder->Code & 0x10) << 2) + (Reg2 << 4)
@@ -1204,9 +1207,9 @@ static void DecodePar(Word Index)
         }
         break;
       case ParABShl2:
-        if (!strchr(ArgStr[1].Str, ','))
+        if (!strchr(ArgStr[1].str.p_str, ','))
         {
-          if (!DecodeALUReg(ArgStr[1].Str, &Reg1, False, False, True)) SetXError(ErrNum_InvReg, &ArgStr[1]);
+          if (!DecodeALUReg(ArgStr[1].str.p_str, &Reg1, False, False, True)) SetXError(ErrNum_InvReg, &ArgStr[1]);
           else
             h = Reg1 << 3;
         }
@@ -1215,8 +1218,8 @@ static void DecodePar(Word Index)
         else
         {
           SplitArg(&ArgStr[1], &LeftComp, &RightComp);
-          if (!DecodeALUReg(RightComp.Str, &Reg1, False, False, True)) SetXError(ErrNum_InvReg, &RightComp);
-          else if (*LeftComp.Str == '#')
+          if (!DecodeALUReg(RightComp.str.p_str, &Reg1, False, False, True)) SetXError(ErrNum_InvReg, &RightComp);
+          else if (*LeftComp.str.p_str == '#')
           {
             AddVal = EvalStrIntExpressionOffs(&LeftComp, 1, UInt5, &OK);
             if (OK)
@@ -1227,7 +1230,7 @@ static void DecodePar(Word Index)
               DontAdd = True;
             }
           }
-          else if (!DecodeXYAB1Reg(LeftComp.Str, &Reg3)) SetXError(ErrNum_InvReg, &LeftComp);
+          else if (!DecodeXYAB1Reg(LeftComp.str.p_str, &Reg3)) SetXError(ErrNum_InvReg, &LeftComp);
           else
           {
             DAsmCode[0] = 0x0c1e10 + ((0x33 - pOrder->Code) << 1)
@@ -1239,16 +1242,16 @@ static void DecodePar(Word Index)
         break;
       case ParXYAB:
         SplitArg(&ArgStr[1], &LeftComp, &RightComp);
-        if (!DecodeALUReg(RightComp.Str, &Reg2, False, False, True)) SetXError(ErrNum_InvReg, &RightComp);
-        else if (!DecodeLReg(LeftComp.Str, &Reg1)) SetXError(ErrNum_InvReg, &LeftComp);
+        if (!DecodeALUReg(RightComp.str.p_str, &Reg2, False, False, True)) SetXError(ErrNum_InvReg, &RightComp);
+        else if (!DecodeLReg(LeftComp.str.p_str, &Reg1)) SetXError(ErrNum_InvReg, &LeftComp);
         else if ((Reg1 < 2) || (Reg1 > 3)) SetXError(ErrNum_InvReg, &LeftComp);
         else
            h = (Reg2 << 3) + ((Reg1 - 2) << 4);
         break;
       case ParABXYnAB:
         SplitArg(&ArgStr[1], &LeftComp, &RightComp);
-        if (!DecodeALUReg(RightComp.Str, &Reg2, False, False, True)) SetXError(ErrNum_InvReg, &RightComp);
-        else if (*LeftComp.Str == '#')
+        if (!DecodeALUReg(RightComp.str.p_str, &Reg2, False, False, True)) SetXError(ErrNum_InvReg, &RightComp);
+        else if (*LeftComp.str.p_str == '#')
         {
           if (Memo("CMPM")) SetError(ErrNum_InvAddrMode);
           else if (MomCPU < CPU56300) SetError(ErrNum_InstructionNotSupported);
@@ -1271,7 +1274,7 @@ static void DecodePar(Word Index)
         }
         else
         {
-          if (!DecodeXYABReg(LeftComp.Str, &Reg1)) SetXError(ErrNum_InvReg, &LeftComp);
+          if (!DecodeXYABReg(LeftComp.str.p_str, &Reg1)) SetXError(ErrNum_InvReg, &LeftComp);
           else if ((Reg1 ^ Reg2) == 1) SetError(ErrNum_InvRegPair);
           else if ((Memo("CMPM")) && ((Reg1 &6) == 2)) SetXError(ErrNum_InvReg, &LeftComp);
           else
@@ -1283,17 +1286,17 @@ static void DecodePar(Word Index)
         }
         break;
       case ParABBA:
-        if  (!as_strcasecmp(ArgStr[1].Str, "B,A"))
+        if  (!as_strcasecmp(ArgStr[1].str.p_str, "B,A"))
           h = 0;
-        else if (!as_strcasecmp(ArgStr[1].Str, "A,B"))
+        else if (!as_strcasecmp(ArgStr[1].str.p_str, "A,B"))
           h = 8;
         else
           SetXError(ErrNum_InvRegPair, &ArgStr[1]);
         break;
       case ParXYnAB:
         SplitArg(&ArgStr[1], &LeftComp, &RightComp);
-        if (!DecodeALUReg(RightComp.Str, &Reg2, False, False, True)) SetXError(ErrNum_InvReg, &RightComp);
-        else if (*LeftComp.Str == '#')
+        if (!DecodeALUReg(RightComp.str.p_str, &Reg2, False, False, True)) SetXError(ErrNum_InvReg, &RightComp);
+        else if (*LeftComp.str.p_str == '#')
         {
           if (MomCPU < CPU56300) SetError(ErrNum_InstructionNotSupported);
           else if (ArgCnt != 1) SetError(ErrNum_ParNotPossible);
@@ -1318,7 +1321,7 @@ static void DecodePar(Word Index)
         }
         else
         {
-          if (!DecodeReg(LeftComp.Str, &Reg1)) SetXError(ErrNum_InvReg, &LeftComp);
+          if (!DecodeReg(LeftComp.str.p_str, &Reg1)) SetXError(ErrNum_InvReg, &LeftComp);
           else if ((Reg1 < 4) || (Reg1 > 7)) SetXError(ErrNum_InvReg, &LeftComp);
           else
             h = (Reg2 << 3) + (TurnXY(Reg1) << 4);
@@ -1328,19 +1331,19 @@ static void DecodePar(Word Index)
         SplitArg(&ArgStr[1], &LeftComp, &MidComp);
         SplitArg(&MidComp, &MidComp, &RightComp);
         h = 0;
-        if (*LeftComp.Str == '-')
+        if (*LeftComp.str.p_str == '-')
         {
           StrCompRefRight(&LeftRegComp, &LeftComp, 1);
           h += 4;
         }
-        else if (*LeftComp.Str == '+')
+        else if (*LeftComp.str.p_str == '+')
           StrCompRefRight(&LeftRegComp, &LeftComp, 1);
         else
           StrCompRefRight(&LeftRegComp, &LeftComp, 0);
-        if (!DecodeALUReg(RightComp.Str, &Reg3, False, False, True)) SetXError(ErrNum_InvReg, &RightComp);
-        else if (!DecodeReg(LeftRegComp.Str, &Reg1)) SetXError(ErrNum_InvReg, &LeftRegComp);
+        if (!DecodeALUReg(RightComp.str.p_str, &Reg3, False, False, True)) SetXError(ErrNum_InvReg, &RightComp);
+        else if (!DecodeReg(LeftRegComp.str.p_str, &Reg1)) SetXError(ErrNum_InvReg, &LeftRegComp);
         else if ((Reg1 < 4) || (Reg1 > 7)) SetXError(ErrNum_InvReg, &LeftRegComp);
-        else if (*MidComp.Str == '#')
+        else if (*MidComp.str.p_str == '#')
         {
           if (!ChkArgCnt(1, 1));
           else if (ChkMinCPU(CPU56300))
@@ -1359,7 +1362,7 @@ static void DecodePar(Word Index)
           }
         }
 
-        else if (!DecodeReg(MidComp.Str, &Reg2)) SetXError(ErrNum_InvReg, &MidComp);
+        else if (!DecodeReg(MidComp.str.p_str, &Reg2)) SetXError(ErrNum_InvReg, &MidComp);
         else if ((Reg2 < 4) || (Reg2 > 7)) SetXError(ErrNum_InvReg, &MidComp);
         else if (MacTable[Reg1 - 4][Reg2 - 4] == 0xff) SetError(ErrNum_InvRegPair);
         else
@@ -1389,9 +1392,9 @@ static void DecodeDIV(Word Code)
     LongInt Reg2, Reg1;
 
     SplitArg(&ArgStr[1], &LeftComp, &RightComp);
-    if ((*LeftComp.Str == '\0') || (*RightComp.Str == '\0')) WrError(ErrNum_CannotSplitArg);
-    else if (!DecodeALUReg(RightComp.Str, &Reg2, False, False, True)) WrError(ErrNum_InvAddrMode);
-    else if (!DecodeReg(LeftComp.Str, &Reg1)) WrError(ErrNum_InvAddrMode);
+    if ((*LeftComp.str.p_str == '\0') || (*RightComp.str.p_str == '\0')) WrError(ErrNum_CannotSplitArg);
+    else if (!DecodeALUReg(RightComp.str.p_str, &Reg2, False, False, True)) WrError(ErrNum_InvAddrMode);
+    else if (!DecodeReg(LeftComp.str.p_str, &Reg1)) WrError(ErrNum_InvAddrMode);
     else if ((Reg1 < 4) || (Reg1 > 7)) WrError(ErrNum_InvAddrMode);
     else
     {
@@ -1414,7 +1417,7 @@ static void DecodeImmMac(Word Code)
     SplitArg(&MidComp, &MidComp, &RightComp);
     h = 0;
     StrCompRefRight(&LeftArg, &LeftComp, 0);
-    switch (*LeftComp.Str)
+    switch (*LeftComp.str.p_str)
     {
       case '-':
         h = 4;
@@ -1422,11 +1425,11 @@ static void DecodeImmMac(Word Code)
       case '+':
         StrCompRefRight(&LeftArg, &LeftComp, 1);
     }
-    if ((*MidComp.Str == '\0') || (*RightComp.Str == '\0')) WrError(ErrNum_CannotSplitArg);
-    else if (!DecodeALUReg(RightComp.Str, &Reg1, False, False, True)) WrStrErrorPos(ErrNum_InvReg, &RightComp);
-    else if (!DecodeXYABReg(MidComp.Str, &Reg2)) WrStrErrorPos(ErrNum_InvReg, &MidComp);
+    if ((*MidComp.str.p_str == '\0') || (*RightComp.str.p_str == '\0')) WrError(ErrNum_CannotSplitArg);
+    else if (!DecodeALUReg(RightComp.str.p_str, &Reg1, False, False, True)) WrStrErrorPos(ErrNum_InvReg, &RightComp);
+    else if (!DecodeXYABReg(MidComp.str.p_str, &Reg2)) WrStrErrorPos(ErrNum_InvReg, &MidComp);
     else if ((Reg2 < 4) || (Reg2 > 7)) WrStrErrorPos(ErrNum_InvReg, &MidComp);
-    else if (*LeftArg.Str != '#') WrError(ErrNum_OnlyImmAddr);
+    else if (*LeftArg.str.p_str != '#') WrError(ErrNum_OnlyImmAddr);
     else
     {
       DAsmCode[1] = EvalStrIntExpressionOffs(&LeftArg, 1, Int24, &OK);
@@ -1449,20 +1452,20 @@ static void DecodeDMAC(Word Code)
 
     SplitArg(&ArgStr[1], &LeftComp, &MidComp);
     SplitArg(&MidComp, &MidComp, &RightComp);
-    if (*LeftComp.Str == '-')
+    if (*LeftComp.str.p_str == '-')
     {
       StrCompRefRight(&LeftReg, &LeftComp, 1);
       Code += 16;
     }
-    else if (*LeftComp.Str == '+')
+    else if (*LeftComp.str.p_str == '+')
       StrCompRefRight(&LeftReg, &LeftComp, 1);
     else
       StrCompRefRight(&LeftReg, &LeftComp, 0);
-    if ((*MidComp.Str == '\0') || (*RightComp.Str == '\0')) WrError(ErrNum_CannotSplitArg);
-    else if (!DecodeALUReg(RightComp.Str, &Reg1, False, False, True)) WrStrErrorPos(ErrNum_InvReg, &RightComp);
-    else if (!DecodeXYAB1Reg(MidComp.Str, &Reg2)) WrStrErrorPos(ErrNum_InvReg, &MidComp);
+    if ((*MidComp.str.p_str == '\0') || (*RightComp.str.p_str == '\0')) WrError(ErrNum_CannotSplitArg);
+    else if (!DecodeALUReg(RightComp.str.p_str, &Reg1, False, False, True)) WrStrErrorPos(ErrNum_InvReg, &RightComp);
+    else if (!DecodeXYAB1Reg(MidComp.str.p_str, &Reg2)) WrStrErrorPos(ErrNum_InvReg, &MidComp);
     else if (Reg2 < 4) WrStrErrorPos(ErrNum_InvReg, &MidComp);
-    else if (!DecodeXYAB1Reg(LeftReg.Str, &Reg3)) WrStrErrorPos(ErrNum_InvReg, &LeftReg);
+    else if (!DecodeXYAB1Reg(LeftReg.str.p_str, &Reg3)) WrStrErrorPos(ErrNum_InvReg, &LeftReg);
     else if (Reg3 < 4) WrStrErrorPos(ErrNum_InvReg, &LeftReg);
     else
     {
@@ -1482,20 +1485,20 @@ static void DecodeMAC_MPY(Word Code)
 
     SplitArg(&ArgStr[1], &LeftComp, &MidComp);
     SplitArg(&MidComp, &MidComp, &RightComp);
-    if (*LeftComp.Str == '-')
+    if (*LeftComp.str.p_str == '-')
     {
       StrCompRefRight(&LeftReg, &LeftComp, 1);
       Code += 16;
     }
-    else if (*LeftComp.Str == '+')
+    else if (*LeftComp.str.p_str == '+')
       StrCompRefRight(&LeftReg, &LeftComp, 1);
     else
       StrCompRefRight(&LeftReg, &LeftComp, 0);
-    if ((*MidComp.Str == '\0') || (*RightComp.Str == '\0')) WrError(ErrNum_CannotSplitArg);
-    else if (!DecodeALUReg(RightComp.Str, &Reg1, False, False, True)) WrStrErrorPos(ErrNum_InvReg, &RightComp);
-    else if (!DecodeXYAB1Reg(MidComp.Str, &Reg2)) WrStrErrorPos(ErrNum_InvReg, &MidComp);
+    if ((*MidComp.str.p_str == '\0') || (*RightComp.str.p_str == '\0')) WrError(ErrNum_CannotSplitArg);
+    else if (!DecodeALUReg(RightComp.str.p_str, &Reg1, False, False, True)) WrStrErrorPos(ErrNum_InvReg, &RightComp);
+    else if (!DecodeXYAB1Reg(MidComp.str.p_str, &Reg2)) WrStrErrorPos(ErrNum_InvReg, &MidComp);
     else if (Reg2 < 4) WrStrErrorPos(ErrNum_InvReg, &MidComp);
-    else if (!DecodeXYAB1Reg(LeftReg.Str, &Reg3)) WrStrErrorPos(ErrNum_InvReg, &LeftReg);
+    else if (!DecodeXYAB1Reg(LeftReg.str.p_str, &Reg3)) WrStrErrorPos(ErrNum_InvReg, &LeftReg);
     else if (Reg3 < 4) WrStrErrorPos(ErrNum_InvReg, &LeftReg);
     else
     {
@@ -1511,7 +1514,7 @@ static void DecodeINC_DEC(Word Code)
 
   if (!ChkArgCnt(1, 1));
   else if (!ChkMinCPU(CPU56002));
-  else if (!DecodeALUReg(ArgStr[1].Str, &Reg1, False, False, True)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
+  else if (!DecodeALUReg(ArgStr[1].str.p_str, &Reg1, False, False, True)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
   else
   {
     DAsmCode[0] = (LongWord)Code + Reg1;
@@ -1527,9 +1530,9 @@ static void DecodeANDI_ORI(Word Code)
   if (ChkArgCnt(1, 1))
   {
     SplitArg(&ArgStr[1], &LeftComp, &RightComp);
-    if ((*LeftComp.Str == '\0') || (*RightComp.Str == '\0')) WrError(ErrNum_CannotSplitArg);
-    else if (!DecodeControlReg(RightComp.Str, &Reg1)) WrStrErrorPos(ErrNum_InvAddrMode, &RightComp);
-    else if (*LeftComp.Str != '#') WrError(ErrNum_OnlyImmAddr);
+    if ((*LeftComp.str.p_str == '\0') || (*RightComp.str.p_str == '\0')) WrError(ErrNum_CannotSplitArg);
+    else if (!DecodeControlReg(RightComp.str.p_str, &Reg1)) WrStrErrorPos(ErrNum_InvAddrMode, &RightComp);
+    else if (*LeftComp.str.p_str != '#') WrError(ErrNum_OnlyImmAddr);
     else
     {
       h = EvalStrIntExpressionOffs(&LeftComp, 1, Int8, &OK);
@@ -1551,9 +1554,9 @@ static void DecodeNORM(Word Code)
   if (ChkArgCnt(1, 1))
   {
     SplitArg(&ArgStr[1], &LeftComp, &RightComp);
-    if ((*LeftComp.Str == '\0') || (*RightComp.Str == '\0')) WrError(ErrNum_CannotSplitArg);
-    else if (!DecodeALUReg(RightComp.Str, &Reg2, False, False, True)) WrError(ErrNum_InvAddrMode);
-    else if (!DecodeReg(LeftComp.Str, &Reg1)) WrError(ErrNum_InvAddrMode);
+    if ((*LeftComp.str.p_str == '\0') || (*RightComp.str.p_str == '\0')) WrError(ErrNum_CannotSplitArg);
+    else if (!DecodeALUReg(RightComp.str.p_str, &Reg2, False, False, True)) WrError(ErrNum_InvAddrMode);
+    else if (!DecodeReg(LeftComp.str.p_str, &Reg1)) WrError(ErrNum_InvAddrMode);
     else if ((Reg1 < 16) || (Reg1 > 23)) WrError(ErrNum_InvAddrMode);
     else
     {
@@ -1572,9 +1575,9 @@ static void DecodeNORMF(Word Code)
   if (ChkArgCnt(1, 1))
   {
     SplitArg(&ArgStr[1], &LeftComp, &RightComp);
-    if (*RightComp.Str == '\0') WrError(ErrNum_CannotSplitArg);
-    else if (!DecodeALUReg(RightComp.Str, &Reg2, False, False, True)) WrStrErrorPos(ErrNum_InvReg, &RightComp);
-    else if (!DecodeXYAB1Reg(LeftComp.Str, &Reg1)) WrStrErrorPos(ErrNum_InvReg, &LeftComp);
+    if (*RightComp.str.p_str == '\0') WrError(ErrNum_CannotSplitArg);
+    else if (!DecodeALUReg(RightComp.str.p_str, &Reg2, False, False, True)) WrStrErrorPos(ErrNum_InvReg, &RightComp);
+    else if (!DecodeXYAB1Reg(LeftComp.str.p_str, &Reg1)) WrStrErrorPos(ErrNum_InvReg, &LeftComp);
     else
     {
       CodeLen = 1;
@@ -1593,8 +1596,8 @@ static void DecodeBit(Word Code)
   {
     Reg2 = ((Code & 1) << 5) + (((LongInt) Code >> 1) << 16);
     SplitArg(&ArgStr[1], &LeftComp, &RightComp);
-    if ((*LeftComp.Str == '\0') || (*RightComp.Str == '\0')) WrError(ErrNum_CannotSplitArg);
-    else if (*LeftComp.Str != '#') WrError(ErrNum_OnlyImmAddr);
+    if ((*LeftComp.str.p_str == '\0') || (*RightComp.str.p_str == '\0')) WrError(ErrNum_CannotSplitArg);
+    else if (*LeftComp.str.p_str != '#') WrError(ErrNum_OnlyImmAddr);
     else
     {
       h = EvalStrIntExpressionOffsWithFlags(&LeftComp, 1, Int8, &OK, &Flags);
@@ -1602,7 +1605,7 @@ static void DecodeBit(Word Code)
       if (OK)
       {
         if ((h < 0) || (h > 23)) WrError(ErrNum_OverRange);
-        else if (DecodeGeneralReg(RightComp.Str, &Reg1))
+        else if (DecodeGeneralReg(RightComp.str.p_str, &Reg1))
         {
           CodeLen = 1;
           DAsmCode[0] = 0x0ac040 + h + (Reg1 << 8) + Reg2;
@@ -1651,10 +1654,10 @@ static void DecodeEXTRACT_EXTRACTU(Word Code)
   {
     SplitArg(&ArgStr[1], &LeftComp, &MidComp);
     SplitArg(&MidComp, &MidComp, &RightComp);
-    if ((*MidComp.Str == '\0') || (*RightComp.Str == '\0')) WrError(ErrNum_CannotSplitArg);
-    else if (!DecodeALUReg(RightComp.Str, &Reg1, False, False, True)) WrStrErrorPos(ErrNum_InvReg, &RightComp);
-    else if (!DecodeALUReg(MidComp.Str, &Reg2, False, False, True)) WrStrErrorPos(ErrNum_InvReg, &MidComp);
-    else if (*LeftComp.Str == '#')
+    if ((*MidComp.str.p_str == '\0') || (*RightComp.str.p_str == '\0')) WrError(ErrNum_CannotSplitArg);
+    else if (!DecodeALUReg(RightComp.str.p_str, &Reg1, False, False, True)) WrStrErrorPos(ErrNum_InvReg, &RightComp);
+    else if (!DecodeALUReg(MidComp.str.p_str, &Reg2, False, False, True)) WrStrErrorPos(ErrNum_InvReg, &MidComp);
+    else if (*LeftComp.str.p_str == '#')
     {
       DAsmCode[1] = EvalStrIntExpressionOffs(&LeftComp, 1, Int24, &OK);
       if (OK)
@@ -1663,7 +1666,7 @@ static void DecodeEXTRACT_EXTRACTU(Word Code)
         CodeLen = 2;
       }
     }
-    else if (!DecodeXYAB1Reg(LeftComp.Str, &Reg3)) WrStrErrorPos(ErrNum_InvReg, &LeftComp);
+    else if (!DecodeXYAB1Reg(LeftComp.str.p_str, &Reg3)) WrStrErrorPos(ErrNum_InvReg, &LeftComp);
     else
     {
       DAsmCode[0] = 0x0c1a00 + Code + Reg1 + (Reg2 << 4) + (Reg3 << 1);
@@ -1684,10 +1687,10 @@ static void DecodeINSERT(Word Code)
   {
     SplitArg(&ArgStr[1], &LeftComp, &MidComp);
     SplitArg(&MidComp, &MidComp, &RightComp);
-    if ((*MidComp.Str == '\0') || (*RightComp.Str == '\0')) WrError(ErrNum_CannotSplitArg);
-    else if (!DecodeALUReg(RightComp.Str, &Reg1, False, False, True)) WrStrErrorPos(ErrNum_InvReg, &RightComp);
-    else if (!DecodeXYAB0Reg(MidComp.Str, &Reg2)) WrStrErrorPos(ErrNum_InvReg, &MidComp);
-    else if (*LeftComp.Str == '#')
+    if ((*MidComp.str.p_str == '\0') || (*RightComp.str.p_str == '\0')) WrError(ErrNum_CannotSplitArg);
+    else if (!DecodeALUReg(RightComp.str.p_str, &Reg1, False, False, True)) WrStrErrorPos(ErrNum_InvReg, &RightComp);
+    else if (!DecodeXYAB0Reg(MidComp.str.p_str, &Reg2)) WrStrErrorPos(ErrNum_InvReg, &MidComp);
+    else if (*LeftComp.str.p_str == '#')
     {
       DAsmCode[1] = EvalStrIntExpressionOffs(&LeftComp, 1, Int24, &OK);
       if (OK)
@@ -1696,7 +1699,7 @@ static void DecodeINSERT(Word Code)
         CodeLen = 2;
       }
     }
-    else if (!DecodeXYAB1Reg(LeftComp.Str, &Reg3)) WrStrErrorPos(ErrNum_InvReg, &LeftComp);
+    else if (!DecodeXYAB1Reg(LeftComp.str.p_str, &Reg3)) WrStrErrorPos(ErrNum_InvReg, &LeftComp);
     else
     {
       DAsmCode[0] = 0x0c1b00 + Reg1 + (Reg2 << 4) + (Reg3 << 1);
@@ -1715,9 +1718,9 @@ static void DecodeMERGE(Word Code)
    && ChkMinCPU(CPU56300))
   {
     SplitArg(&ArgStr[1], &LeftComp, &RightComp);
-    if (*RightComp.Str == '\0') WrError(ErrNum_CannotSplitArg);
-    else if (!DecodeALUReg(RightComp.Str, &Reg1, False, False, True)) WrStrErrorPos(ErrNum_InvReg, &RightComp);
-    else if (!DecodeXYAB1Reg(LeftComp.Str, &Reg2)) WrStrErrorPos(ErrNum_InvReg, &LeftComp);
+    if (*RightComp.str.p_str == '\0') WrError(ErrNum_CannotSplitArg);
+    else if (!DecodeALUReg(RightComp.str.p_str, &Reg1, False, False, True)) WrStrErrorPos(ErrNum_InvReg, &RightComp);
+    else if (!DecodeXYAB1Reg(LeftComp.str.p_str, &Reg2)) WrStrErrorPos(ErrNum_InvReg, &LeftComp);
     else
     {
       DAsmCode[0] = 0x0c1b80 + Reg1 + (Reg2 << 1);
@@ -1736,9 +1739,9 @@ static void DecodeCLB(Word Code)
    && ChkMinCPU(CPU56300))
   {
     SplitArg(&ArgStr[1], &LeftComp, &RightComp);
-    if (*RightComp.Str == '\0') WrError(ErrNum_CannotSplitArg);
-    else if (!DecodeALUReg(LeftComp.Str, &Reg1, False, False, True)) WrStrErrorPos(ErrNum_InvReg, &LeftComp);
-    else if (!DecodeALUReg(RightComp.Str, &Reg2, False, False, True)) WrStrErrorPos(ErrNum_InvReg, &RightComp);
+    if (*RightComp.str.p_str == '\0') WrError(ErrNum_CannotSplitArg);
+    else if (!DecodeALUReg(LeftComp.str.p_str, &Reg1, False, False, True)) WrStrErrorPos(ErrNum_InvReg, &LeftComp);
+    else if (!DecodeALUReg(RightComp.str.p_str, &Reg2, False, False, True)) WrStrErrorPos(ErrNum_InvReg, &RightComp);
     else
     {
       DAsmCode[0] = 0x0c1e00 + Reg2 + (Reg1 << 1);
@@ -1757,9 +1760,9 @@ static void DecodeCMPU(Word Code)
    && ChkMinCPU(CPU56300))
   {
     SplitArg(&ArgStr[1], &LeftComp, &RightComp);
-    if (*RightComp.Str == '\0') WrError(ErrNum_CannotSplitArg);
-    else if (!DecodeALUReg(RightComp.Str, &Reg1, False, False, True)) WrStrErrorPos(ErrNum_InvReg, &RightComp);
-    else if (!DecodeXYABReg(LeftComp.Str, &Reg2)) WrStrErrorPos(ErrNum_InvReg, &LeftComp);
+    if (*RightComp.str.p_str == '\0') WrError(ErrNum_CannotSplitArg);
+    else if (!DecodeALUReg(RightComp.str.p_str, &Reg1, False, False, True)) WrStrErrorPos(ErrNum_InvReg, &RightComp);
+    else if (!DecodeXYABReg(LeftComp.str.p_str, &Reg2)) WrStrErrorPos(ErrNum_InvReg, &LeftComp);
     else if ((Reg1 ^ Reg2) == 1) WrError(ErrNum_InvRegPair);
     else if ((Reg2 & 6) == 2) WrStrErrorPos(ErrNum_InvReg, &LeftComp);
     else
@@ -1790,10 +1793,10 @@ static void DecodeMOVEC(Word Code)
   if (ChkArgCnt(1, 1))
   {
     SplitArg(&ArgStr[1], &LeftComp, &RightComp);
-    if (*RightComp.Str == '\0') WrError(ErrNum_CannotSplitArg);
-    else if (DecodeCtrlReg(LeftComp.Str, &Reg1))
+    if (*RightComp.str.p_str == '\0') WrError(ErrNum_CannotSplitArg);
+    else if (DecodeCtrlReg(LeftComp.str.p_str, &Reg1))
     {
-      if (DecodeGeneralReg(RightComp.Str, &Reg2))
+      if (DecodeGeneralReg(RightComp.str.p_str, &Reg2))
       {
         DAsmCode[0] = 0x0440a0 + (Reg2 << 8) + Reg1;
         CodeLen = 1;
@@ -1816,10 +1819,10 @@ static void DecodeMOVEC(Word Code)
         }
       }
     }
-    else if (!DecodeCtrlReg(RightComp.Str, &Reg1)) WrStrErrorPos(ErrNum_InvCtrlReg, &RightComp);
+    else if (!DecodeCtrlReg(RightComp.str.p_str, &Reg1)) WrStrErrorPos(ErrNum_InvCtrlReg, &RightComp);
     else
     {
-      if (DecodeGeneralReg(LeftComp.Str, &Reg2))
+      if (DecodeGeneralReg(LeftComp.str.p_str, &Reg2))
       {
         DAsmCode[0] = 0x04c0a0 + (Reg2 << 8) + Reg1;
         CodeLen = 1;
@@ -1859,8 +1862,8 @@ static void DecodeMOVEM(Word Code)
   if (ChkArgCnt(1, 1))
   {
     SplitArg(&ArgStr[1], &LeftComp, &RightComp);
-    if ((*LeftComp.Str == '\0') || (*RightComp.Str == '\0')) WrError(ErrNum_CannotSplitArg);
-    else if (DecodeGeneralReg(LeftComp.Str, &Reg1))
+    if ((*LeftComp.str.p_str == '\0') || (*RightComp.str.p_str == '\0')) WrError(ErrNum_CannotSplitArg);
+    else if (DecodeGeneralReg(LeftComp.str.p_str, &Reg1))
     {
       tAdrResult RightAdrResult;
 
@@ -1877,7 +1880,7 @@ static void DecodeMOVEM(Word Code)
         DAsmCode[0] = 0x074080 + Reg1 + (RightAdrResult.Mode << 8);
       }
     }
-    else if (!DecodeGeneralReg(RightComp.Str, &Reg2)) WrStrErrorPos(ErrNum_InvReg, &RightComp);
+    else if (!DecodeGeneralReg(RightComp.str.p_str, &Reg2)) WrStrErrorPos(ErrNum_InvReg, &RightComp);
     else
     {
       tAdrResult LeftAdrResult;
@@ -1907,8 +1910,8 @@ static void DecodeMOVEP(Word Code)
   if (ChkArgCnt(1, 1))
   {
     SplitArg(&ArgStr[1], &LeftComp, &RightComp);
-    if ((*LeftComp.Str == '\0') || (*RightComp.Str == '\0')) WrError(ErrNum_CannotSplitArg);
-    else if (DecodeGeneralReg(LeftComp.Str, &Reg1))
+    if ((*LeftComp.str.p_str == '\0') || (*RightComp.str.p_str == '\0')) WrError(ErrNum_CannotSplitArg);
+    else if (DecodeGeneralReg(LeftComp.str.p_str, &Reg1))
     {
       tAdrResult RightAdrResult;
 
@@ -1932,7 +1935,7 @@ static void DecodeMOVEP(Word Code)
           WrError(ErrNum_UnderRange);
       }
     }
-    else if (DecodeGeneralReg(RightComp.Str, &Reg2))
+    else if (DecodeGeneralReg(RightComp.str.p_str, &Reg2))
     {
       tAdrResult LeftAdrResult;
 
@@ -2130,8 +2133,8 @@ static void DecodeBitBr(Word Code)
     h2 = (((LongInt) Code) & 2) << 15;
     SplitArg(&ArgStr[1], &LeftComp, &RightComp);
     SplitArg(&RightComp, &MidComp, &RightComp);
-    if ((*LeftComp.Str == '\0') || (*RightComp.Str == '\0') || (*MidComp.Str == '\0')) WrError(ErrNum_CannotSplitArg);
-    else if (*LeftComp.Str != '#') WrError(ErrNum_OnlyImmAddr);
+    if ((*LeftComp.str.p_str == '\0') || (*RightComp.str.p_str == '\0') || (*MidComp.str.p_str == '\0')) WrError(ErrNum_CannotSplitArg);
+    else if (*LeftComp.str.p_str != '#') WrError(ErrNum_OnlyImmAddr);
     else
     {
       AddVal = EvalStrIntExpressionOffsWithFlags(&LeftComp, 1, Int8, &OK, &Flags);
@@ -2139,7 +2142,7 @@ static void DecodeBitBr(Word Code)
       if (OK)
       {
         if ((AddVal < 0) || (AddVal > 23)) WrError(ErrNum_OverRange);
-        else if (DecodeGeneralReg(MidComp.Str, &Reg1))
+        else if (DecodeGeneralReg(MidComp.str.p_str, &Reg1))
         {
           CodeLen = 1;
           DAsmCode[0] = 0x0cc080 + AddVal + (Reg1 << 8) + h + h2;
@@ -2199,7 +2202,7 @@ static void DecodeBRA_BSR(Word Code)
 
   if (ChkArgCnt(1, 1)
    && ChkMinCPU(CPU56300)
-   && DecodeReg(ArgStr[1].Str, &Reg1))
+   && DecodeReg(ArgStr[1].str.p_str, &Reg1))
   {
     if ((Reg1 < 16) || (Reg1 > 23)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
     else
@@ -2245,7 +2248,7 @@ static void DecodeBcc(Word Condition)
 
   if (ChkArgCnt(1, 1)
    && ChkMinCPU(CPU56300)
-   && DecodeReg(ArgStr[1].Str, &Reg1))
+   && DecodeReg(ArgStr[1].str.p_str, &Reg1))
   {
     if ((Reg1 < 16) || (Reg1 > 23)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
     else
@@ -2291,7 +2294,7 @@ static void DecodeBScc(Word Condition)
 
   if (ChkArgCnt(1, 1)
    && ChkMinCPU(CPU56300)
-   && DecodeReg(ArgStr[1].Str, &Reg1))
+   && DecodeReg(ArgStr[1].str.p_str, &Reg1))
   {
     if ((Reg1 < 16) || (Reg1 > 23)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
     else
@@ -2338,8 +2341,8 @@ static void DecodeLUA_LEA(Word Code)
   if (ChkArgCnt(1, 1))
   {
     SplitArg(&ArgStr[1], &LeftComp, &RightComp);
-    if ((*LeftComp.Str == '\0') || (*RightComp.Str == '\0')) WrError(ErrNum_CannotSplitArg);
-    else if (!DecodeReg(RightComp.Str, &Reg1)) WrStrErrorPos(ErrNum_InvReg, &RightComp);
+    if ((*LeftComp.str.p_str == '\0') || (*RightComp.str.p_str == '\0')) WrError(ErrNum_CannotSplitArg);
+    else if (!DecodeReg(RightComp.str.p_str, &Reg1)) WrStrErrorPos(ErrNum_InvReg, &RightComp);
     else if (Reg1 > 31) WrStrErrorPos(ErrNum_InvReg, &RightComp);
     else
     {
@@ -2377,10 +2380,10 @@ static void DecodeLRA(Word Code)
    && ChkMinCPU(CPU56300))
   {
     SplitArg(&ArgStr[1], &LeftComp, &RightComp);
-    if (*RightComp.Str == '\0') WrError(ErrNum_CannotSplitArg);
-    else if (!DecodeGeneralReg(RightComp.Str, &Reg1)) WrStrErrorPos(ErrNum_InvReg, &RightComp);
+    if (*RightComp.str.p_str == '\0') WrError(ErrNum_CannotSplitArg);
+    else if (!DecodeGeneralReg(RightComp.str.p_str, &Reg1)) WrStrErrorPos(ErrNum_InvReg, &RightComp);
     else if (Reg1 > 0x1f) WrStrErrorPos(ErrNum_InvReg, &RightComp);
-    else if (DecodeGeneralReg(LeftComp.Str, &Reg2))
+    else if (DecodeGeneralReg(LeftComp.str.p_str, &Reg2))
     {
       if ((Reg2 < 16) || (Reg2 > 23)) WrStrErrorPos(ErrNum_InvReg, &LeftComp);
       else
@@ -2533,8 +2536,8 @@ static void DecodeBitJmp(Word Code)
   {
     SplitArg(&ArgStr[1], &LeftComp, &MidComp);
     SplitArg(&MidComp, &MidComp, &RightComp);
-    if ((*LeftComp.Str == '\0') || (*MidComp.Str == '\0') || (*RightComp.Str == '\0')) WrError(ErrNum_CannotSplitArg);
-    else if (*LeftComp.Str != '#') WrError(ErrNum_OnlyImmAddr);
+    if ((*LeftComp.str.p_str == '\0') || (*MidComp.str.p_str == '\0') || (*RightComp.str.p_str == '\0')) WrError(ErrNum_CannotSplitArg);
+    else if (*LeftComp.str.p_str != '#') WrError(ErrNum_OnlyImmAddr);
     else
     {
       DAsmCode[1] = EvalStrIntExpression(&RightComp, AdrInt, &OK);
@@ -2549,7 +2552,7 @@ static void DecodeBitJmp(Word Code)
           else
           {
             Reg2 = ((Code & 1) << 5) + (((LongInt)(Code >> 1)) << 16);
-            if (DecodeGeneralReg(MidComp.Str, &Reg1))
+            if (DecodeGeneralReg(MidComp.str.p_str, &Reg1))
             {
               CodeLen = 2;
               DAsmCode[0] = 0x0ac000 + h + Reg2 + (Reg1 << 8);
@@ -2598,7 +2601,7 @@ static void DecodeDO_DOR(Word Code)
   if (ChkArgCnt(1, 1))
   {
     SplitArg(&ArgStr[1], &LeftComp, &RightComp);
-    if ((*LeftComp.Str == '\0') || (*RightComp.Str == '\0')) WrError(ErrNum_CannotSplitArg);
+    if ((*LeftComp.str.p_str == '\0') || (*RightComp.str.p_str == '\0')) WrError(ErrNum_CannotSplitArg);
     else
     {
       LongInt Reg1;
@@ -2608,7 +2611,7 @@ static void DecodeDO_DOR(Word Code)
       if (EvalResult.OK)
       {
         ChkSpace(SegCode, EvalResult.AddrSpaceMask);
-        if (!as_strcasecmp(LeftComp.Str, "FOREVER"))
+        if (!as_strcasecmp(LeftComp.str.p_str, "FOREVER"))
         {
           if (ChkMinCPU(CPU56300))
           {
@@ -2616,16 +2619,16 @@ static void DecodeDO_DOR(Word Code)
             CodeLen = 2;
           }
         }
-        else if (DecodeGeneralReg(LeftComp.Str, &Reg1))
+        else if (DecodeGeneralReg(LeftComp.str.p_str, &Reg1))
         {
-          if (Reg1 == 0x3c) WrXError(ErrNum_InvReg, LeftComp.Str); /* kein SSH!! */
+          if (Reg1 == 0x3c) WrXError(ErrNum_InvReg, LeftComp.str.p_str); /* kein SSH!! */
           else
           {
             CodeLen = 2;
             DAsmCode[0] = 0x06c000 + (Reg1 << 8) + (Code << 4);
           }
         }
-        else if (*LeftComp.Str == '#')
+        else if (*LeftComp.str.p_str == '#')
         {
           Reg1 = EvalStrIntExpressionOffsWithResult(&LeftComp, 1, UInt12, &EvalResult);
           if (EvalResult.OK)
@@ -2694,7 +2697,7 @@ static void DecodeREP(Word Code)
   UNUSED(Code);
 
   if (!ChkArgCnt(1, 1));
-  else if (DecodeGeneralReg(ArgStr[1].Str, &Reg1))
+  else if (DecodeGeneralReg(ArgStr[1].str.p_str, &Reg1))
   {
     CodeLen = 1;
     DAsmCode[0] = 0x06c020 + (Reg1 << 8);
@@ -2908,13 +2911,13 @@ static void InitFields(void)
   AddCondition("TRAP", DecodeTRAPcc);
   AddCondition("DEBUG", DecodeDEBUGcc);
 
-  StrCompAlloc(&LeftComp);
-  StrCompAlloc(&MidComp);
-  StrCompAlloc(&RightComp);
-  StrCompAlloc(&Left1Comp);
-  StrCompAlloc(&Left2Comp);
-  StrCompAlloc(&Right1Comp);
-  StrCompAlloc(&Right2Comp);
+  StrCompAlloc(&LeftComp, STRINGSIZE);
+  StrCompAlloc(&MidComp, STRINGSIZE);
+  StrCompAlloc(&RightComp, STRINGSIZE);
+  StrCompAlloc(&Left1Comp, STRINGSIZE);
+  StrCompAlloc(&Left2Comp, STRINGSIZE);
+  StrCompAlloc(&Right1Comp, STRINGSIZE);
+  StrCompAlloc(&Right2Comp, STRINGSIZE);
 }
 
 static void DeinitFields(void)
@@ -2947,7 +2950,7 @@ static void MakeCode_56K(void)
   if (DecodePseudo())
     return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

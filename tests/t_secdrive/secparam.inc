@@ -1,7 +1,7 @@
 ;*****************************************************************************
-;* SekundÑrlaufwerkstreiber, Modul SecParam                                  *
+;* Sekundaerlaufwerkstreiber, Modul SecParam                                 *
 ;* liefert Laufwerksparameter, falls fehlend im Bootsektor                   *
-;* stellt das ganze FormatiermenÅ zur VerfÅgung                              *
+;* stellt das ganze Formatiermenue zur Verfuegung                            *
 ;*****************************************************************************
 
                 section SecParam
@@ -13,11 +13,11 @@
 TrackMsg        db      "Spur (0..Spurzahl-1) : $"
 HeadMsg         db      "Kopf (0..Kopfzahl-1) : $"
 ConfirmMsg      db      "Sind Sie sicher ?$"
-InterleaveMsg   db     "Interleave (1..Sektorzahl-1) : $"
+InterleaveMsg   db      "Interleave (1..Sektorzahl-1) : $"
 
 ;*****************************************************************************
 ;* Routine BreakOnESC                                                        *
-;* schaut nach, ob ESC gedrÅckt wurde                                        *
+;* schaut nach, ob ESC gedrueckt wurde                                       *
 ;* Ausgabe:     C=1, falls ja                                                *
 ;*****************************************************************************
 
@@ -26,7 +26,7 @@ InterleaveMsg   db     "Interleave (1..Sektorzahl-1) : $"
                 push    ax              ; Register retten
                 mov     ah,1            ; Tastaturpuffer antesten
                 int     INT_Keyboard
-                clc                     ; Annahme nicht gedrÅckt
+                clc                     ; Annahme nicht gedrueckt
                 jz      Ende
                 mov     ah,0            ; Zeichen da: dies abholen
                 int     INT_Keyboard
@@ -34,7 +34,7 @@ InterleaveMsg   db     "Interleave (1..Sektorzahl-1) : $"
                 clc                     ; Annahme nein
                 jne     Ende
                 stc                     ; jawoll!
-Ende:           pop     ax              ; Register zurÅck
+Ende:           pop     ax              ; Register zurueck
                 ret
 
                 endp
@@ -59,13 +59,13 @@ QueryLoop:      mov     ah,DOS_RdChar   ; ein Zeichen lesen
                 add     al,'A'
                 sub     al,'a'
 Upper:
-                cmp     al,'J'          ; akzeptierte Zeichen fÅr Ja
+                cmp     al,'J'          ; akzeptierte Zeichen fuer Ja
                 clc
                 je      YNDone
                 cmp     al,'Y'
                 clc
                 je      YNDone
-                cmp     al,'N'          ; akzeptierte Zeichen fÅr Nein
+                cmp     al,'N'          ; akzeptierte Zeichen fuer Nein
                 stc
                 je      YNDone
 
@@ -75,7 +75,7 @@ Upper:
 YNDone:         PrChar  al              ; Zeichen als Echo ausgeben
                 PrChar  CR              ; Zeilenvorschub
                 PrChar  LF
-                pop     ax              ; Register zurÅck
+                pop     ax              ; Register zurueck
 
                 ret
 
@@ -121,27 +121,27 @@ ConvLoop:       mov     dx,10           ; bisheriges Ergebnis hochmultiplizieren
                 add     al,dl           ; dazuaddieren
                 adc     ah,0
                 loop    ConvLoop
-                jmp     ChkRange        ; fertig: weiter zur BereichsprÅfung
+                jmp     ChkRange        ; fertig: weiter zur Bereichspruefung
 InvFormat:      PrMsg   InvMsg          ; wenn fehlerhaft, meckern
                 jmp     InLoop          ; und nochmal versuchen
-ChkRange:       cmp     ax,si           ; au·erhalb Bereich ?
+ChkRange:       cmp     ax,si           ; ausserhalb Bereich ?
                 jbe     OK
                 PrMsg   OverMsg         ; ja: meckern...
                 jmp     InLoop          ; ...und auf ein neues
 
-OK:             pop     si              ; Register zurÅck
+OK:             pop     si              ; Register zurueck
                 pop     dx
                 pop     cx
                 pop     bx
 
                 ret
 
-KeyBufferLen    equ     30              ; 30 Zeichen sollten fÅr Zahlen reichen...
-KeyBuffer       db      KeyBufferLen    ; MaimallÑnge fÅr DOS
-                db      0               ; effektive LÑnge Eingabe
-                db      KeyBufferLen dup (0) ; Platz fÅr Eingabe
-InvMsg          db      "UngÅltiges Zahlenformat",CR,LF,'$'
-OverMsg         db      "BereichsÅberschreitung",CR,LF,'$'
+KeyBufferLen    equ     30              ; 30 Zeichen sollten fuer Zahlen reichen...
+KeyBuffer       db      KeyBufferLen    ; Maimallaenge fuer DOS
+                db      0               ; effektive Laenge Eingabe
+                db      KeyBufferLen dup (0) ; Platz fuer Eingabe
+InvMsg          db      "Ung",UUML,"ltiges Zahlenformat",CR,LF,'$'
+OverMsg         db      "Bereichs",UUML,"berschreitung",CR,LF,'$'
 
                 endp
 
@@ -160,7 +160,7 @@ Loop:           mov     ah,DOS_WrChar
                 int     INT_DOS
                 loop    Loop
 
-NULL:           pop     dx              ; Register zurÅck
+NULL:           pop     dx              ; Register zurueck
                 ret
 
                 endp
@@ -177,18 +177,18 @@ NULL:           pop     dx              ; Register zurÅck
                 push    cx
                 push    dx
 
-                mov     ch,0            ; CH zÑhlt effektive Zeichenzahl
+                mov     ch,0            ; CH zaehlt effektive Zeichenzahl
 InLoop:         sub     dx,dx           ; Stellendivision
-                mov     di,10           ; gewÅnschtes Zahlensystem
+                mov     di,10           ; gewuenschtes Zahlensystem
                 div     di
                 mov     di,ax           ; war es vorher 0 ?
                 or      di,dx           ; (wenn Quotient & Rest 0)
                 jnz     NZero           ; nein-->normal ausgeben
                 or      ch,ch           ; noch erste Stelle ?
                 jz      NZero           ; dann auf jeden Fall 0 ausgeben
-                mov     dl,0f0h         ; ansonsten Leerzeichen fÅr leading 0
+                mov     dl,0f0h         ; ansonsten Leerzeichen fuer leading 0
 NZero:          push    dx              ; Zeichen speichern...
-                inc     ch              ; ...und mitzÑhlen
+                inc     ch              ; ...und mitzaehlen
                 cmp     ch,cl           ; Mindestzahl ausgegeben ?
                 jb      InLoop          ; nein-->weiter
                 or      ax,ax           ; ansonsten: 0 ?
@@ -197,13 +197,13 @@ NZero:          push    dx              ; Zeichen speichern...
                 shr     cx,8            ; effektive Zahl nach CX
 OLoop:          pop     dx              ; ein Zeichen runterholen
                 add     dl,'0'          ; in ASCII konvertieren
-                mov     ah,DOS_WrChar   ; Åber DOS ausgeben
+                mov     ah,DOS_WrChar   ; ueber DOS ausgeben
                 int     INT_DOS
                 loop    OLoop
 
                 pop     dx
                 pop     cx
-                pop     di              ; Register zurÅck
+                pop     di              ; Register zurueck
                 ret
 
                 endp
@@ -220,9 +220,9 @@ OLoop:          pop     dx              ; ein Zeichen runterholen
                 push    cx
                 push    dx
 
-                mov     ch,0            ; CH zÑhlt effektive Zeichenzahl
+                mov     ch,0            ; CH zaehlt effektive Zeichenzahl
 InLoop:         sub     dx,dx           ; Stellendivision
-                mov     di,16           ; gewÅnschtes Zahlensystem
+                mov     di,16           ; gewuenschtes Zahlensystem
                 div     di
                 mov     di,ax           ; war es vorher 0 ?
                 or      di,dx           ; (wenn Quotient & Rest 0)
@@ -231,7 +231,7 @@ InLoop:         sub     dx,dx           ; Stellendivision
                 jz      NZero           ; dann auf jeden Fall 0 ausgeben
                 mov     dl,0f0h         ; ansonsten Leerzeichen fÅr leading 0
 NZero:          push    dx              ; Zeichen speichern...
-                inc     ch              ; ...und mitzÑhlen
+                inc     ch              ; ...und mitzaehlen
                 cmp     ch,cl           ; Mindestzahl ausgegeben ?
                 jb      InLoop          ; nein-->weiter
                 or      ax,ax           ; ansonsten: 0 ?
@@ -243,19 +243,19 @@ OLoop:          pop     dx              ; ein Zeichen runterholen
                 cmp     dl,'9'
                 jbe     NoHex
                 add     dl,7
-NoHex:          mov     ah,DOS_WrChar   ; Åber DOS ausgeben
+NoHex:          mov     ah,DOS_WrChar   ; ueber DOS ausgeben
                 int     INT_DOS
                 loop    OLoop
 
                 pop     dx
                 pop     cx
-                pop     di              ; Register zurÅck
+                pop     di              ; Register zurueck
                 ret
 
                 endp
 
 ;*****************************************************************************
-;* Routine GeometryDefined - stellt fest, ob Geometrie fÅr ei Laufwerk defi- *
+;* Routine GeometryDefined - stellt fest, ob Geometrie fuer ei Laufwerk defi-*
 ;* niert ist                                                                 *
 ;* Eingabe:     AL = Laufwerksnummer                                         *
 ;* Ausgabe:     C  = 0, falls OK                                             *
@@ -275,7 +275,7 @@ NoHex:          mov     ah,DOS_WrChar   ; Åber DOS ausgeben
                 stc
                 je      Fin
                 clc                     ; alles OK
-Fin:            pop     di              ; Register zurÅck
+Fin:            pop     di              ; Register zurueck
                 ret
 
                 endp
@@ -291,11 +291,11 @@ Fin:            pop     di              ; Register zurÅck
                 add     al,'1'          ; Laufwerksnummer in ASCII umrechnen
                 mov     [UndefMsg2],al  ; in Meldung einschreiben
                 PrMsg   UndefMsg
-                PrMsg   DoQueryMsg      ; nachfragen, ob Definition erwÅnscht
+                PrMsg   DoQueryMsg      ; nachfragen, ob Definition erwuenscht
                 call    YesNo
                 ret
 
-UndefMsg        db      "Geometrie fÅr Laufwerk "
+UndefMsg        db      "Geometrie f",UUML,"r Laufwerk "
 UndefMsg2       db      "  undefiniert.",CR,LF,"$"
 DoQueryMsg      db      "Geometrie neu definieren ? $"
 
@@ -330,19 +330,19 @@ DoQueryMsg      db      "Geometrie neu definieren ? $"
                 call    ReadNumber
                 mov     [si+DrPar_RedWr],ax
 
-                lea     di,[PreInpMsg]  ; PrÑkompensations-Zylinder erfragen
+                lea     di,[PreInpMsg]  ; Praekompensations-Zylinder erfragen
                 mov     ax,65535
                 call    ReadNumber
                 mov     [si+DrPar_PrComp],ax
 
-                lea     di,[ECCInpMsg]  ; ECC-LÑnge erfragen
+                lea     di,[ECCInpMsg]  ; ECC-Laenge erfragen
                 mov     ax,11
                 call    ReadNumber
                 mov     [si+DrPar_ECCLen],ax
 
                 mov     al,[si+DrPar_Heads] ; Steuerbyte Bit 3=1, falls Platte
                 dec     al
-                and     al,8            ; mehr als 8 Kîpfe hat
+                and     al,8            ; mehr als 8 Koepfe hat
                 mov     [si+DrPar_CByte],al
 
                 mov     al,0            ; Timeouts unbenutzt
@@ -359,16 +359,16 @@ DoQueryMsg      db      "Geometrie neu definieren ? $"
                 call    ReadNumber
                 mov     [si+DrPar_NSecs],al
 
-                pop     di              ; Register zurÅck
+                pop     di              ; Register zurueck
                 pop     si
                 pop     ax
                 ret
 
 CylInpMsg       db      "Anzahl Zylinder (max. 1024) : $"
-HeadInpMsg      db      "Anzahl Kîpfe (max. 16) : $"
-RWCInpMsg       db      "Startzylinder fÅr reduzierten Schreibstrom (max. 65535) : $"
-PreInpMsg       db      "Startzylinder fÅr PrÑkompensation (max. 65535) : $"
-ECCInpMsg       db      "max. ECC-FehlerburstlÑnge (5 oder 11) : $"
+HeadInpMsg      db      "Anzahl K",OUML,"pfe (max. 16) : $"
+RWCInpMsg       db      "Startzylinder f",UUML,"r reduzierten Schreibstrom (max. 65535) : $"
+PreInpMsg       db      "Startzylinder f",UUML,"r Pr",AUML,"kompensation (max. 65535) : $"
+ECCInpMsg       db      "max. ECC-Fehlerburstl",AUML,"nge (5 oder 11) : $"
 SecInpMsg       db      "Sektorzahl (max. 255) : $"
 
                 endp
@@ -407,7 +407,7 @@ SecInpMsg       db      "Sektorzahl (max. 255) : $"
                 cld
                 rep     movsw
 
-                mov     al,dl           ; jetzt den ganzen Kram zurÅckschreiben
+                mov     al,dl           ; jetzt den ganzen Kram zurueckschreiben
                 mov     ah,0
                 sub     bx,bx
                 mov     cx,0101h
@@ -415,7 +415,7 @@ SecInpMsg       db      "Sektorzahl (max. 255) : $"
                 call    WriteSectors
                 jc      GeoError
 
-Fin:            pop     es              ; Register zurÅck
+Fin:            pop     es              ; Register zurueck
                 pop     di
                 pop     si
                 pop     dx
@@ -432,7 +432,7 @@ GeoError:       mov     ah,bl           ; Fehlerausgabe
 ;*****************************************************************************
 ;* Routine QueryParams                                                       *
 ;* Eingabe:     AL = Laufwerksnummer                                         *
-;*              AH = 1, falls RÅckschreiben erlaubt                          *
+;*              AH = 1, falls Rueckschreiben erlaubt                         *
 ;* Ausgabe:     AL = 0: Laufwerk vergessen                                   *
 ;*              AL = 1: Mastersektor neu lesen                               *
 ;*              AL = 2: Tabelle nur transient eingetragen, kein Neulesen     *
@@ -448,18 +448,18 @@ GeoError:       mov     ah,bl           ; Fehlerausgabe
                 push    es
 
                 mov     bx,ax           ; Laufwerksnummer retten
-                call    QueryRedefine   ; nachfragen, ob Neudefinition erwÅnscht
+                call    QueryRedefine   ; nachfragen, ob Neudefinition erwuenscht
                 mov     al,0            ; Abbruch bei Nein
                 ljc     Terminate
 
                 mov     al,bl           ; Geometrie einlesen
                 call    ReadGeometry
 
-                shr     bh,1            ; RÅckschreiben erlaubt ?
+                shr     bh,1            ; Rueckschreiben erlaubt ?
                 cmc                     ; C=1-->verboten
                 jc      NoWriteBack
 
-                PrMsg   WriteBackMsg    ; nachfragen, ob RÅckschreiben erwÅnscht
+                PrMsg   WriteBackMsg    ; nachfragen, ob Rueckschreiben erwuenscht
                 call    YesNo
 NoWriteBack:    mov     al,2            ; Neulesen bei Nein verhindern
                 jc      Terminate
@@ -472,7 +472,7 @@ NoWriteBack:    mov     al,2            ; Neulesen bei Nein verhindern
                 jmp     Terminate
 WrError:        mov     al,0            ; Schreibfehler: Laufwerk ignorieren
 
-Terminate:      pop     es              ; Register zurÅck
+Terminate:      pop     es              ; Register zurueck
                 pop     di
                 pop     si
                 pop     dx
@@ -481,7 +481,7 @@ Terminate:      pop     es              ; Register zurÅck
 
                 ret
 
-WriteBackMsg    db      "Parametersatz zurÅckschreiben ? $"
+WriteBackMsg    db      "Parametersatz zur",UUML,"ckschreiben ? $"
 
                 endp
 
@@ -498,16 +498,16 @@ RdLoop:         PrMsg   PromptMsg       ; Anfrage ausgeben
                 mov     ah,DOS_RdChar   ; ein Zeichen holen
                 int     INT_DOS
                 mov     dl,al           ; Zeichen retten
-                PrChar  dl              ; Laufwerk als Echo zurÅckgeben
+                PrChar  dl              ; Laufwerk als Echo zurueckgeben
                 PrChar  CR
                 PrChar  LF
                 sub     dl,'1'          ; nur 1 oder 2 erlaubt
                 jc      RdLoop
                 cmp     dl,MaxPDrives
                 jae     RdLoop
-                mov     al,dl           ; Laufwerk in AL zurÅckgeben
+                mov     al,dl           ; Laufwerk in AL zurueckgeben
 
-                pop     dx              ; Register zurÅck
+                pop     dx              ; Register zurueck
                 ret
 
 PromptMsg       db      "Laufwerksnummer (1 oder 2) : $"
@@ -528,7 +528,7 @@ PromptMsg       db      "Laufwerksnummer (1 oder 2) : $"
                 push    di
                 push    es
 
-                mov     dh,ah           ; RÅckschreibeflag sichern
+                mov     dh,ah           ; Rueckschreibeflag sichern
                 call    InputDrive
                 mov     dl,al           ; Laufwerksnummer sichern
 
@@ -545,7 +545,7 @@ PromptMsg       db      "Laufwerksnummer (1 oder 2) : $"
                 lea     di,[SectorBuffer]
                 call    ReadSectors
                 jnc     CopyTable       ; kein Fehler->Tabelle auslesen
-                mov     dh,0            ; wenn Fehler, nie zurÅckschreiben
+                mov     dh,0            ; wenn Fehler, nie zurueckschreiben
                 jmp     ReadManual      ; und manuell probieren
 CopyTable:      lea     si,[SectorBuffer+DrPar_Offset]
                 mov     al,dl
@@ -557,19 +557,19 @@ CopyTable:      lea     si,[SectorBuffer+DrPar_Offset]
                 call    GeometryDefined
                 jnc     IsOK            ; falls ja, Ende
 
-ReadManual:     mov     al,dl           ; fragen, ob Redefinition erwÅnscht
+ReadManual:     mov     al,dl           ; fragen, ob Redefinition erwuenscht
                 call    QueryRedefine
                 jc      NotOK           ; falls nein, Abbruch
                 mov     al,dl           ; ansonsten einlesen
                 call    ReadGeometry
-                shr     dh,1            ; zurÅckschreiben ?
+                shr     dh,1            ; zurueckschreiben ?
                 jnc     IsOK
                 mov     al,dl           ; ja...
                 call    WriteGeoToDisk  ; Fehler ignorieren
 
 IsOK:           mov     [MomDrive],dl   ; Laufwerk akzeptiert
 
-NotOK:          pop     es              ; Register zurÅck
+NotOK:          pop     es              ; Register zurueck
                 pop     di
                 pop     si
                 pop     dx
@@ -585,7 +585,7 @@ NotOK:          pop     es              ; Register zurÅck
 
                 proc    ChangeGeometry
 
-                cmp     [MomDrive],-1   ; Laufwerk Åberhaupt schon definiert ?
+                cmp     [MomDrive],-1   ; Laufwerk ueberhaupt schon definiert ?
                 jne     DriveDefined
                 call    InputDrive      ; nein: lesen & einschreiben
                 mov     [MomDrive],al
@@ -604,17 +604,17 @@ DriveDefined:   mov     al,[MomDrive]   ; neue Geometrie einlesen
 
                 pusha                   ; restlos alles...
 
-                mov     al,[MomDrive]   ; erstmal sicherstellen, da· der
+                mov     al,[MomDrive]   ; erstmal sicherstellen, dass der
                 call    SetDriveParams  ; Kontroller die Geometrie kennt
 
                 mov     al,[MomDrive]   ; die Geometrie brauchen wir auch
                 call    GetPTabAdr
 
                 PrMsg   ESCMsg
-                sub     bp,bp           ; FehlerzÑhler
-                mov     si,bp           ; ZylinderzÑhler
-                mov     dx,bp           ; FolgefehlerzÑhler
-CylLoop:        mov     dl,0            ; KopfzÑhler
+                sub     bp,bp           ; Fehlerzaehler
+                mov     si,bp           ; Zylinderzaehler
+                mov     dx,bp           ; Folgefehlerzaehler
+CylLoop:        mov     dl,0            ; Kopfzaehler
 HeadLoop:       PrMsg   CylMsg          ; zu testende Spur ausgeben
                 mov     ax,si
                 mov     cl,4
@@ -639,7 +639,7 @@ HeadLoop:       PrMsg   CylMsg          ; zu testende Spur ausgeben
                 pop     ax
                 mov     ah,[MomDrive]
                 call    WrErrorCode
-                inc     bp              ; FehlerzÑhler rauf
+                inc     bp              ; Fehlerzaehler rauf
                 inc     dh
                 test    dh,7            ; alle 8 Fehler in Reihe nachfragen
                 jnz     NextTrack
@@ -647,13 +647,13 @@ HeadLoop:       PrMsg   CylMsg          ; zu testende Spur ausgeben
                 call    YesNo
                 jc      Terminate
                 jmp     NextTrack
-NoError:        mov     dh,0            ; eine Spur gut->FolgenzÑhler lîschen
+NoError:        mov     dh,0            ; eine Spur gut->Folgenzaehler loeschen
 NextTrack:      call    BreakONESC      ; Abbruch ?
                 jc      Terminate
-                inc     dl              ; nÑchster Kopf
+                inc     dl              ; naechster Kopf
                 cmp     dl,[di+DrPar_Heads]
                 jb      HeadLoop
-                inc     si              ; nÑchster Zylinder
+                inc     si              ; naechster Zylinder
                 cmp     si,[di+DrPar_Cyls]
                 ljb     CylLoop
 
@@ -662,7 +662,7 @@ Terminate:      mov     ax,bp           ; Fehlerzahl ausgeben
                 call    WriteDec
                 PrMsg   ErrorMsg
 
-                popa                    ; Register zurÅck
+                popa                    ; Register zurueck
 
                 ret
 
@@ -684,7 +684,7 @@ ErrorMsg:       db      " Fehler gefunden     ",CR,LF,'$'
                 push    di
                 push    es
 
-                mov     al,[MomDrive]   ; erstmal sicherstellen, da· der
+                mov     al,[MomDrive]   ; erstmal sicherstellen, dass der
                 call    SetDriveParams  ; Kontroller die Geometrie kennt
 
                 mov     al,[MomDrive]
@@ -702,7 +702,7 @@ InterLoop:      mov     al,[di+DrPar_NSecs] ; Maximum=Sektorzahl-1
                 jc      Fin
                 PrMsg   NewLine
                 PrMsg   FormatMsg
-                mov     ah,bl           ; Interleave zurÅck
+                mov     ah,bl           ; Interleave zurueck
                 mov     al,[MomDrive]
                 call    FormatUnit
                 jc      FormatError     ; Fehler beim Formatieren ?
@@ -715,7 +715,7 @@ NoFormatError:  PrMsg   WriteMsg
                 mov     es,ax
                 sub     ax,ax           ; prinzipiell erstmal alles Nullen
                 rep     stosw
-                mov     word ptr[di],0aa55h ; GÅltigkeitsflag am Ende
+                mov     word ptr[di],0aa55h ; Gueltigkeitsflag am Ende
                 mov     al,[MomDrive]   ; Geometrietabelle eintragen
                 call    GetPTabAdr
                 mov     si,di
@@ -730,7 +730,7 @@ NoFormatError:  PrMsg   WriteMsg
                 call    WriteSectors
                 jc      FormatError     ; Fehler beim Schreiben ?
 
-Fin:            pop     es              ; Register zurÅck
+Fin:            pop     es              ; Register zurueck
                 pop     di
                 pop     cx
                 pop     bx
@@ -775,7 +775,7 @@ WriteMsg         db     "MBR schreiben...",CR,LF,'$'
                 dec     ax
                 call    ReadNumber
                 mov     ah,al
-                push    ax              ; sicherheitshalber noch bestÑtigen
+                push    ax              ; sicherheitshalber noch bestaetigen
                 PrMsg   ConfirmMsg
                 call    YesNo
                 pop     ax
@@ -834,7 +834,7 @@ InterLoop:      mov     al,[si+DrPar_NSecs] ; Interleave-Maximum=Sektorzahl-1
                 call    YesNo
                 pop     ax
                 jc      NoError
-                mov     al,[MomDrive]   ; Kopf zurÅck
+                mov     al,[MomDrive]   ; Kopf zurueck
                 call    FormatTrack
                 jnc     NoError
                 push    ax              ; Fehlercode retten
@@ -975,7 +975,7 @@ WriteStart:     mov     al,01h          ; Startsektor immer 1
                 sub     ax,bx
                 pop     bx
                 sbb     dx,bx
-                add     ax,1            ; !!! LÑnge=Stop-Start+1
+                add     ax,1            ; !!! Laenge=Stop-Start+1
                 adc     dx,0
                 mov     [di+ParTab_NSecs],ax
                 mov     [di+ParTab_NSecs+2],dx
@@ -989,7 +989,7 @@ NoBigDOS:       cmp     ax,32679        ; ab 32680 Sektoren 16-Bit-FAT
                 jmp     TypeFound
 NoFAT16:        mov     bl,1            ; kleine 12-Bit-Partition
 TypeFound:      mov     [di+ParTab_Type],bl
-                add     di,ParTab_Len   ; die anderen 3 Partitionen lîschen
+                add     di,ParTab_Len   ; die anderen 3 Partitionen loeschen
                 mov     cx,3*(ParTab_Len/2)
                 sub     ax,ax
                 cld
@@ -1022,7 +1022,7 @@ PartError:      push    ax              ; Fehlercode retten
                 jmp     End
 
 ConfirmMsg:     db      "ACHTUNG! Alle bisherigen Partitionen auf der",CR,LF
-                db      "Festplatte werden gelîscht! Fortfahren? $"
+                db      "Festplatte werden gel",OUML,"scht! Fortfahren? $"
 
                 endp
 
@@ -1056,7 +1056,7 @@ ConfirmMsg:     db      "ACHTUNG! Alle bisherigen Partitionen auf der",CR,LF
 ; Schritt 2: Partitionsdaten in BPB kopieren
 
                 lea     di,[SectorBuffer+ParTab_Offset] ; auf Partitionsdaten
-                mov     al,[di+ParTab_Type] ; mu· primÑre Partition sein
+                mov     al,[di+ParTab_Type] ; muss primaere Partition sein
                 cmp     al,1            ; DOS 2.x FAT12?
                 je      ParTypeOK
                 cmp     al,4            ; DOS 3.x FAT16?
@@ -1078,7 +1078,7 @@ ParIsFAT12:     mov     byte ptr[BPB_SysID+4],ah
                 mov     word ptr[BPB_NumSecs32],ax
                 mov     word ptr[BPB_NumSecs32+2],dx
                 or      dx,dx           ; falls < 64K Sektoren,
-                jz      ParIsNotBig     ; Grî·e auch unten eintragen,
+                jz      ParIsNotBig     ; Groesse auch unten eintragen,
                 sub     ax,ax           ; ansonsten 0
 ParIsNotBig:    mov     [BPB_NumSecs16],ax
                 mov     ax,word ptr[di+ParTab_LinSec] ; Startsektor umkopieren
@@ -1087,7 +1087,7 @@ ParIsNotBig:    mov     [BPB_NumSecs16],ax
                 mov     word ptr[BPB_LinStart+2],dx
 
 ; Schritt 3: Partitionsdaten in Partitionstabelle kopieren, damit wir die
-; linearen Schreib/Lesefunktionen nutzen kînnen
+; linearen Schreib/Lesefunktionen nutzen koennen
 
                 mov     [DrCnt],1       ; nur ein Laufwerk belegt
                 mov     ah,[di+ParTab_FHead] ; Startkoordinate ablegen
@@ -1110,21 +1110,21 @@ ParIsNotBig:    mov     [BPB_NumSecs16],ax
 
 ; Schritt 4: konstante Felder in BPB eintragen
 
-                mov     [BPB_SecSize],SecSize ; Sektorgrî·e konstant 512 Byte
+                mov     [BPB_SecSize],SecSize ; Sektorgroesse konstant 512 Byte
                 mov     [BPB_ResvdSecs],1 ; nur Bootsektor reserviert
                 mov     [BPB_NumFATs],2 ; 2 FATs ist DOS-Standard
-                mov     [BPB_MediaID],0f8h ; Media-Byte fÅr Platten konstant
+                mov     [BPB_MediaID],0f8h ; Media-Byte fuer Platten konstant
                 mov     al,[MomDrive]
                 call    GetPTabAdr
                 mov     ah,0
-                mov     al,[di+DrPar_NSecs]; Plattenzylinder und -kîpfe
+                mov     al,[di+DrPar_NSecs]; Plattenzylinder und -koepfe
                 mov     [BPB_SecsPerTrk],ax
                 mov     al,[di+DrPar_Heads]
                 mov     [BPB_Heads],ax
                 mov     al,[MomDrive]   ; Plattennummer+80h
                 add     al,80h
                 mov     [BPB_PhysNo],ax
-                mov     [BPB_ExtID],29h ; Erkennung, da· erw. BPB gÅltig
+                mov     [BPB_ExtID],29h ; Erkennung, dass erw. BPB gueltig
                 mov     ah,0            ; Seriennummer=Uhrzeit
                 int     INT_Clock
                 mov     word ptr[BPB_SerialNo],cx
@@ -1151,7 +1151,7 @@ DirEntLoop:     mov     ax,1024         ; mehr ist wohl kaum sinnvoll
                 inc     ax
 DirLenEven:     mov     [DirLen],ax
 
-; Schritt 6: ClusterlÑnge berechnen
+; Schritt 6: Clusterlaenge berechnen
 
                 mov     ax,word ptr[BPB_NumSecs32]  ; # Sektoren in Datenfeld
                 mov     dx,word ptr[BPB_NumSecs32+2] ; und FATs berechnen
@@ -1159,7 +1159,7 @@ DirLenEven:     mov     [DirLen],ax
                 sbb     dx,0
                 sub     ax,[DirLen]
                 sbb     dx,0
-                mov     bl,1 ; Annahme: mîglichst wenig Sektoren pro Cluster
+                mov     bl,1 ; Annahme: moeglichst wenig Sektoren pro Cluster
 ClusterLoop:    or      dx,dx           ; wenn noch mehr als 64K Cluster,
                 jnz     ClusterNxtLoop  ; auf jeden Fall zu gro·
                 cmp     ax,4080         ; bei weniger als 4K Clustern
@@ -1174,7 +1174,7 @@ ClusterNxtLoop: shl     bl,1            ; zu viel: Cluster verdoppeln
                 rcr     ax,1
                 jmp     ClusterLoop
 ClusterEndLoop: mov     [BPB_SecsPerClust],bl ; Ergebnis einschreiben
-                add     ax,2            ; Dummy-EintrÑge in FAT
+                add     ax,2            ; Dummy-Eintraege in FAT
                 adc     dx,0
                 mov     bx,341          ; Anzahl FAT-Sektoren berechnen
                 cmp     [BPB_SysID+4],'2'
@@ -1245,13 +1245,13 @@ FATZeroLoop:    push    ax              ; Sektornummer und -zahl retten
                 pop     cx
                 pop     ax
                 ljc     LFormError
-                add     ax,1            ; nÑchster Sektor
+                add     ax,1            ; naechster Sektor
                 adc     dx,0
                 loop    FATZeroLoop
-                push    ax              ; !!! PrMsg zerstîrt AX-Register
+                push    ax              ; !!! PrMsg zerstoert AX-Register
                 PrMsg   WrDirMsg
                 pop     ax
-                mov     cx,[DirLen]     ; dito fÅr Directory
+                mov     cx,[DirLen]     ; dito fuer Directory
 DirZeroLoop:    push    ax              
                 push    cx
                 push    dx
@@ -1263,7 +1263,7 @@ DirZeroLoop:    push    ax
                 pop     cx
                 pop     ax
                 ljc     LFormError
-                add     ax,1            ; nÑchster Sektor
+                add     ax,1            ; naechster Sektor
                 adc     dx,0
                 loop    DirZeroLoop
 
@@ -1303,7 +1303,7 @@ DirZeroLoop:    push    ax
                 mov     ax,[DataPos]    ; Schleifenvorbereitung
                 mov     dx,[DataPos+2]
                 mov     cx,[ClusterCnt]
-VerifyLoop:     push    ax              ; ZÑhler retten
+VerifyLoop:     push    ax              ; Zaehler retten
                 mov     bp,cx
                 push    dx
                 mov     bl,0            ; immer Laufwerk 0
@@ -1323,11 +1323,11 @@ VerifyLoop:     push    ax              ; ZÑhler retten
                 pop     cx
                 pop     ax
 NoWriteVeri:    call    VeriSectors
-                mov     ax,0            ; Annahme OK (SUB wÅrde C lîschen...)
+                mov     ax,0            ; Annahme OK (SUB wuerde C loeschen...)
                 jnc     Verify_OK
                 mov     ax,0fff7h
 Verify_OK:      call    WriteFAT
-                pop     dx              ; ZÑhler zurÅck
+                pop     dx              ; Zaehler zurueck
                 mov     cx,bp
                 pop     ax
                 add     al,[BPB_SecsPerClust]
@@ -1374,7 +1374,7 @@ WriteFAT12:     pop     bx
 WriteFATNibble: push    bx
                 and     al,15           ; Bit 0..3 ausmaskieren
                 jz      SkipWriteNibble ; Nullen brauchen wir nicht schreiben
-                mov     [MustFlushFAT],1 ; vermerken, da· Puffer nicht genullt ist
+                mov     [MustFlushFAT],1 ; vermerken, dass Puffer nicht genullt ist
                 mov     bx,[FATBufferFill]  ; Bit 1.. enthalten Adresse
                 shr     bx,1
                 jnc     WriteFATLower   ; oben oder unten schreiben
@@ -1408,7 +1408,7 @@ FlushFATBuffer: push    bx
                 lea     si,[FATBuffer]
                 call    WriteSectors
 SkipFlushDisk:  call    ClearFATBuffer  ; Zeiger wieder auf 0
-                add     [FAT1Pos],1     ; FAT-Sektornummern weiterzÑhlen
+                add     [FAT1Pos],1     ; FAT-Sektornummern weiterzaehlen
                 adc     [FAT1Pos+2],0
                 add     [FAT2Pos],1
                 adc     [FAT2Pos+2],0
@@ -1433,8 +1433,8 @@ ClearFATBuffer: push    cx
                 ret
 
 ConfirmMsg      db      "ACHTUNG! Alle Daten gehen verloren! Fortfahren? $"
-InvParTypeMsg   db      CR,LF,"Partition 1 hat ungÅltigen Typ oder ist undefiniert!",CR,LF,'$'
-DirEntriesMsg   db      "Anzahl EintrÑge im Wurzelverzeichnis (16..1024) : $"
+InvParTypeMsg   db      CR,LF,"Partition 1 hat ung",UUML,"ltigen Typ oder ist undefiniert!",CR,LF,'$'
+DirEntriesMsg   db      "Anzahl Eintr",AUML,"ge im Wurzelverzeichnis (16..1024) : $"
 WrBootSectMsg   db      "Schreibe Boot-Sektor...",CR,LF,'$'
 WrFATMsg        db      "Initialisiere FATs...",CR,LF,'$'
 WrDirMsg        db      "Initialisiere Wurzelverzeichnis...",CR,LF,'$'
@@ -1443,21 +1443,21 @@ ClusterMsg      db      "Teste Cluster $"
 
 DirLen          dw      ?               ; # Directory-Sektoren
 ClusterCnt      dw      ?
-FAT1Pos         dw      2 dup (?)       ; speichern SektorzÑhler wÑhrend Test
+FAT1Pos         dw      2 dup (?)       ; speichern Sektorzaehler waehrend Test
 FAT2Pos         dw      2 dup (?)
 DataPos         dw      2 dup (?)
 
-BPBBuffer:                              ; Zwischenspeicher fÅr BPB
-BPB_SecSize     dw      ?               ; Sektorgrî·e in Bytes
+BPBBuffer:                              ; Zwischenspeicher fuer BPB
+BPB_SecSize     dw      ?               ; Sektorgroesse in Bytes
 BPB_SecsPerClust db     ?               ; Sektoren pro Cluster
 BPB_ResvdSecs   dw      ?               ; reservierte Sektoren (Bootsektor)
 BPB_NumFATs     db      ?               ; Anzahl FATs
-BPB_DirLen      dw      ?               ; Anzahl EintrÑge im Directory
+BPB_DirLen      dw      ?               ; Anzahl Eintraege im Directory
 BPB_NumSecs16   dw      ?               ; Anzahl Sektoren, falls <32 MByte
 BPB_MediaID     db      ?               ; Media-Erkennungsbyte
 BPB_SecsPerFAT  dw      ?               ; Sektoren pro FAT
 BPB_SecsPerTrk  dw      ?               ; Sektoren pro Spur
-BPB_Heads       dw      ?               ; Anzahl Kîpfe
+BPB_Heads       dw      ?               ; Anzahl Koepfe
 BPB_LinStart    dd      ?               ; linearer Startsektor auf Laufwerk
 BPB_NumSecs32   dd      ?               ; Anzahl Sektoren, falls >=32 MByte
 BPB_PhysNo      dw      ?               ; physikalische Laufwerks-Nummer
@@ -1465,7 +1465,7 @@ BPB_ExtID       db      ?               ; Erkennung, da· es ein erweiterter Boot
 BPB_SerialNo    dd      ?               ; Seriennummer
 BPB_Name        db      11 dup (?)      ; Name
 BPB_SysID       db      7 dup (?)       ; Systemerkennung
-BPB_Length      equ     $-BPBBuffer     ; LÑnge BPB
+BPB_Length      equ     $-BPBBuffer     ; Laenge BPB
 
 FATBuffer       db      SecSize dup (?) ; Puffer, um FATs aufzubauen
 MustFlushFAT    db      ?               ; Flag, ob FAT-Puffer geschrieben werden mu·
@@ -1521,12 +1521,12 @@ NoDrivePresent:
                 PrMsg   TwoLines
                 pop     ax
 
-                cmp     al,'0'          ; 0 = MenÅ verlassen
+                cmp     al,'0'          ; 0 = Menue verlassen
                 lje     MenuEnd
 
                 cmp     al,'1'          ; 1 = Platte wechseln
                 jne     NoSelectDisk
-                mov     ah,1            ; RÅckschreiben erlaubt
+                mov     ah,1            ; Rueckschreiben erlaubt
                 call    SelectDisk
                 jmp     MenuLoop
 NoSelectDisk:
@@ -1535,13 +1535,13 @@ NoSelectDisk:
                 call    ChangeGeometry
                 jmp     MenuLoop
 NoChangeGeometry:
-                cmp     [MomDrive],-1   ; fÅr alles weitere mu· Platte gesetzt sein
+                cmp     [MomDrive],-1   ; fuer alles weitere mu· Platte gesetzt sein
                 jne     DiskIsSelected
                 push    ax
-                shl     ax,8            ; Annahme: Geometrie nicht zurÅckschreiben
+                shl     ax,8            ; Annahme: Geometrie nicht zurueckschreiben
                 cmp     ah,'3'
                 je      NoWriteBack
-                inc     al              ; fÅr alles au·er low-level schon
+                inc     al              ; fuer alles ausser low-level schon
 NoWriteBack:    call    SelectDisk      ; implizit Laufwerk erfragen
                 PrMsg   NewLine
                 pop     ax
@@ -1558,7 +1558,7 @@ NoFormatDisk:
                 call    FormTrack
                 jmp     MenuLoop
 NoFormTrack:
-                cmp     al,'5'          ; 5 = Platte prÅflesen
+                cmp     al,'5'          ; 5 = Platte prueflesen
                 jne     NoBadTrack
                 call    BadTrack
                 jmp     MenuLoop
@@ -1579,19 +1579,19 @@ NoMakePart:
                 jmp     MenuLoop
 NoFormatPart:   PrChar  BEL             ; alle anderen Angaben anmeckern
                 jmp     MenuLoop
-MenuEnd:        mov     ss,[sssave]     ; Stack zurÅck
+MenuEnd:        mov     ss,[sssave]     ; Stack zurueck
                 mov     sp,[spsave]
 
                 pop     di
                 pop     cx
-                pop     ax              ; Register zurÅck
+                pop     ax              ; Register zurueck
 
                 ret
 
-MenuMsg         db      CR,LF,"SECDRIVE MenÅ      Platte:"
+MenuMsg         db      CR,LF,"SECDRIVE Men",UUML,"      Platte:"
 MenuMsg_Drv     db      '-',CR,LF,'$'
 CylMsg          db      " Zylinder,$"
-HeadMsg         db      " Kîpfe,$"
+HeadMsg         db      " K",OUML,"pfe,$"
 SecMsg          db      " Sektoren",CR,LF,'$'
 MenuList        db      CR,LF
                 db      "1 = Platte wechseln",CR,LF
@@ -1603,7 +1603,7 @@ MenuList        db      CR,LF
                 db      "7 = Partition erstellen",CR,LF
                 db      "8 = Partition log. formatieren",CR,LF
                 db      "------------------------",CR,LF
-                db      "0 = MenÅ verlassen",CR,LF,'$'
+                db      "0 = Men",UUML," verlassen",CR,LF,'$'
 spsave          dw      ?
 sssave          dw      ?
 

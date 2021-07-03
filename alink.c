@@ -68,7 +68,7 @@ static FILE *TargFile;
 static Byte *Buffer;
 LongInt BufferSize;
 
-static LargeWord SegStarts[PCMax + 1];
+static LargeWord SegStarts[SegCount];
 
 /****************************************************************************/
 /* increase buffer if necessary */

@@ -16,6 +16,7 @@
 
 struct sLineComp;
 struct sStrComp;
+struct as_dynstr;
 
 typedef void (*TSwitchProc)(
 #ifdef __PROTOS__
@@ -60,10 +61,10 @@ extern char *FindOpeningParenthese(const char *pStrBegin, const char *pStrEnd, c
 static inline Boolean Memo(const char *s)
 {
   NumMemo++;
-  return !strcmp(OpPart.Str, s);
+  return !strcmp(OpPart.str.p_str, s);
 }
 #else
-# define Memo(s) (!strcmp(OpPart.Str,(s)))
+# define Memo(s) (!strcmp(OpPart.str.p_str, (s)))
 #endif
 
 
@@ -78,7 +79,7 @@ extern char *PathPart(char *Name);
 
 extern void FloatString(char *pDest, size_t DestSize, Double f);
 
-extern void StrSym(TempResult *t, Boolean WithSystem, char *Dest, size_t DestLen, unsigned Radix);
+extern void StrSym(const TempResult *t, Boolean WithSystem, struct as_dynstr *p_dest, unsigned Radix);
 
 
 extern void ResetPageCounter(void);
@@ -113,9 +114,9 @@ extern void PrintUseList(void);
 extern void ClearUseList(void);
 
 
-extern int CompressLine(const char *TokNam, unsigned TokenNum, char *Line, unsigned LineSize, Boolean CaseSensitive);
+extern int CompressLine(const char *TokNam, unsigned TokenNum, struct as_dynstr *p_str, Boolean CaseSensitive);
 
-extern void ExpandLine(const char *TokNam, unsigned TokenNum, char *Line, unsigned LineSize);
+extern void ExpandLine(const char *TokNam, unsigned TokenNum, struct as_dynstr *p_str);
 
 extern void KillCtrl(char *Line);
 

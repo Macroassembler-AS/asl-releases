@@ -1,3 +1,9 @@
+2021-07-03 [1.42 Bld 205]
+
+- Bugfix      : correct encoding and allowed addressing modes of XCH(B) on MCS-96
+- Change      : huge internal rework to allow strings longer than 255 characters
+                at some (but far off from all...) places
+
 2021-05-08 [1.42 Bld 204]
 
 - Bugfix      : fix SC/MP target

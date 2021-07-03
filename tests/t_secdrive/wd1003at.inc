@@ -1,13 +1,13 @@
 ;******************************************************************************
 ;*                                                                            *
-;*  Includedatei fÅr SECMAIN.ASM                                              *
-;*  liefert low-level-Routinen fÅr SecMain                                    *
-;*  Version hier fÅr WD1003-kompatible Kontroller:                            *
+;*  Includedatei fuer SECMAIN.ASM                                             *
+;*  liefert low-level-Routinen fuer SecMain                                   *
+;*  Version hier fuer WD1003-kompatible Kontroller:                           *
 ;*  MFM, RLL, ESDI, AT-Bus                                                    *
 ;*                                                                            *
-;*  Historie: 28.12.1994 herÅberkopiert aus Hauptmodul                        *
+;*  Historie: 28.12.1994 herueberkopiert aus Hauptmodul                       *
 ;*            30.12.1994 LowLevelIdent                                        *
-;*            19. 1.1995 Workaround fÅr LCS6220                               *
+;*            19. 1.1995 Workaround fuer LCS6220                              *
 ;******************************************************************************
 
                 section wd1003at
@@ -16,7 +16,7 @@ Base1           equ     170h            ; Basisadresse Task-File
 Base2           equ     370h            ; Basisadresse Floppy-Teil
 Task_Data       equ     Base1+0         ; Datentransferregister (R/W)
 Task_Error      equ     Base1+1         ; genauerer Fehlercode (R)
-Task_PreComp    equ     Base1+1         ; erster Zylinder PrÑkomp. (/4, nur W)
+Task_PreComp    equ     Base1+1         ; erster Zylinder Praekomp. (/4, nur W)
 Task_SecCnt     equ     Base1+2         ; Zahl zu transferierender Sektoren (R/W)
 Task_SecNum     equ     Base1+3         ; Startsektor (R/W)
 Task_CylLo      equ     Base1+4         ; Startzylinder Bit 0..7 (R/W)
@@ -24,14 +24,14 @@ Task_CylHi      equ     Base1+5         ; Startzylinder Bit 8..n (R/W)
 Task_DrHead     equ     Base1+6         ; Laufwerk/Startkopf (R/W)
 Task_Status     equ     Base1+7         ; Status Laufwerk & Controller (R)
 Task_Command    equ     Base1+7         ; Kommando Controller (W)
-Task_FDiskReg   equ     Base2+6         ; Bit 3=1: >8 Kîpfe
+Task_FDiskReg   equ     Base2+6         ; Bit 3=1: >8 Koepfe
 
 Cmd_Restore     equ     10h             ; Kommando: Rekalibrieren
 Cmd_Seek        equ     70h             ; Kommando: Zylinder anfahren
 Cmd_Read        equ     20h             ; Kommando: Sektoren lesen
 Cmd_Write       equ     30h             ; Kommando: Sektoren schreiben
 Cmd_Format      equ     50h             ; Kommando: Spur formatieren
-Cmd_Verify      equ     40h             ; Kommando: Sektoren auf Lesbarkeit prÅfen
+Cmd_Verify      equ     40h             ; Kommando: Sektoren auf Lesbarkeit pruefen
 Cmd_Diagnose    equ     90h             ; Kommando: Selbsttest
 Cmd_SetParams   equ     91h             ; Kommando: Laufwerksparameter setzen
 
@@ -76,9 +76,9 @@ axsave          dw      ?
                 endp
 
 ;******************************************************************************
-;* Workaround fÅr LCS6220: Wird direkt nach dem Einschalten ein Seek ausge-   *
-;* fÅhrt, gibt der Kontroller fÑlschlicherweise Daten aus und blockiert alle  *
-;* weiteren Kommandos.  Diese Routine rÑumt einfach den Puffer leer...        *
+;* Workaround fuer LCS6220: Wird direkt nach dem Einschalten ein Seek ausge-  *
+;* fuehrt, gibt der Kontroller faelschlicherweise Daten aus und blockiert alle*
+;* weiteren Kommandos.  Diese Routine raeumt einfach den Puffer leer...       *
 ;******************************************************************************
 
                 proc    ClearBuffer
@@ -94,7 +94,7 @@ RdLoop:         mov     dx,Task_Status  ; Bit 3 noch gesetzt ?
                 in      ax,dx
                 jmp     RdLoop
 RdLoopEnd:
-                pop     ax              ; Register zurÅck
+                pop     ax              ; Register zurueck
                 pop     dx
 
                 ret
@@ -126,7 +126,7 @@ RdLoopEnd:
                 sub     di,di           ; DI=Adresse in Puffer=(phys. Sektor-1)*2
                 mov     dl,dh           ; DL = Bad-Flag
                 mov     dh,1            ; DH=log. Sektornummer
-                mov     cl,al           ; CX=SchleifenzÑhler
+                mov     cl,al           ; CX=Schleifenzaehler
                 mov     ch,0
                 mov     bl,al           ; Sektorzahl*2 nach BX
                 mov     bh,0
@@ -139,17 +139,17 @@ InterLoop:      cmp     byte ptr SectorBuffer[di],0 ; Eintrag frei ?
                 add     di,2            ; nein, linear weitersuchen
                 cmp     di,bx
                 jb      InterLoop
-                mov     di,0            ; Wrap-Around berÅcksichtigen
+                mov     di,0            ; Wrap-Around beruecksichtigen
                 jmp     InterLoop
 Inter_FreeFound:mov     word ptr SectorBuffer[di],dx ; Sektor einschreiben
                 add     di,si           ; Interleave-Sprung dazu
                 cmp     di,bx           ; Modulo Sektorzahl
                 jb      Inter_NoWrap
                 sub     di,bx
-Inter_NoWrap:   inc     dh              ; nÑchster log. Sektor
+Inter_NoWrap:   inc     dh              ; naechster log. Sektor
                 loop    InterLoop
 
-                pop     es              ; Register zurÅck
+                pop     es              ; Register zurueck
                 popa
 
                 ret
@@ -176,11 +176,11 @@ Inter_NoWrap:   inc     dh              ; nÑchster log. Sektor
                 or      al,0a0h
                 mov     dx,Task_DrHead
                 out     dx,al
-                mov     ax,[di+DrPar_PrComp] ; Startzylinder PrÑkompensation
+                mov     ax,[di+DrPar_PrComp] ; Startzylinder Praekompensation
                 shr     ax,2
                 mov     dl,Lo(Task_PreComp)
                 out     dx,al
-                mov     al,[di+DrPar_CByte] ; Wert fÅr Fixed Disk Register
+                mov     al,[di+DrPar_CByte] ; Wert fuer Fixed Disk Register
                 mov     dx,Task_FDiskReg
                 out     dx,al
                 call    WaitBusy
@@ -216,7 +216,7 @@ Inter_NoWrap:   inc     dh              ; nÑchster log. Sektor
                 mov     al,cl
                 out     dx,al
 
-                pop     dx             ; Register zurÅck
+                pop     dx             ; Register zurueck
                 ret
 
                 endp
@@ -233,7 +233,7 @@ Inter_NoWrap:   inc     dh              ; nÑchster log. Sektor
 Loop:           in      al,dx           ; Status lesen
                 btst    al,7            ; Bit 7 noch gesetzt ?
                 jnz     Loop            ; ja--> weiter pollen
-                pop     dx              ; Register zurÅck
+                pop     dx              ; Register zurueck
                 ret
 
                 endp
@@ -274,7 +274,7 @@ Loop:           in      al,dx           ; Status lesen
                 jnz     Loop
                 btst    al,3            ; Bit 3 = 1 ?
                 jz      Loop
-                pop     dx              ; Register zurÅck
+                pop     dx              ; Register zurueck
                 ret
 
                 endp
@@ -299,13 +299,13 @@ Loop:           in      al,dx           ; Status lesen
                 in      al,dx
                 stc
 
-End:            pop     dx              ; Register zurÅck
+End:            pop     dx              ; Register zurueck
                 ret
 
                 endp
 
 ;******************************************************************************
-;* BegrÅ·ungsmeldung ausgeben:                                                *
+;* Begruessungsmeldung ausgeben:                                              *
 ;******************************************************************************
 
                 globproc LowLevelIdent
@@ -318,7 +318,7 @@ End:            pop     dx              ; Register zurÅck
 
                 ret
 
-IdentMsg        db      "Low-Level-Routinen fÅr WD1003-WAH und kompatible Controller",CR,LF,'$'
+IdentMsg        db      "Low-Level-Routinen f",UUML,"r WD1003-WAH und kompatible Controller",CR,LF,'$'
 
                 endp
 
@@ -336,7 +336,7 @@ IdentMsg        db      "Low-Level-Routinen fÅr WD1003-WAH und kompatible Contro
                 sub     cx,cx
 BWait:          in      al,dx
                 btst    al,7            ; auf NOT BUSY warten
-                loopnz  BWait           ; oder bis 64K DurchlÑufe durch
+                loopnz  BWait           ; oder bis 64K Durchlaeufe durch
                 or      cx,cx           ; Timeout ?
                 jne     NTOut
                 mov     al,Diag_Timeout ; ja: Fehlercode setzen...
@@ -349,7 +349,7 @@ NTOut:          mov     al,CMD_Diagnose ; Selbsttest starten
                 mov     dl,Lo(Task_Error) ; Ergebnis laden
                 in      al,dx
 
-End:            pop     dx              ; Register zurÅck
+End:            pop     dx              ; Register zurueck
                 pop     cx
                 ret
 
@@ -369,7 +369,7 @@ End:            pop     dx              ; Register zurÅck
 
                 call    GetPTabAdr      ; Adresse Parametertabelle holen
 
-                call    WaitBusy        ; Kontroller mu· frei sein
+                call    WaitBusy        ; Kontroller muss frei sein
 
                 mov     al,dl           ; Kopfzahl/Laufwerk vorbesetzen
                 shl     al,4
@@ -383,7 +383,7 @@ End:            pop     dx              ; Register zurÅck
                 mov     al,[di+DrPar_NSecs]
                 out     dx,al
 
-                mov     dl,Lo(Task_Command) ; Parameter Åbertragen
+                mov     dl,Lo(Task_Command) ; Parameter uebertragen
                 mov     al,Cmd_SetParams
                 out     dx,al
 
@@ -418,7 +418,7 @@ End:            pop     dx              ; Register zurÅck
 
                 mov     dl,Lo(Task_Status) ; Laufwerk muss jetzt bereit sein,
                 in      al,dx           ; da sich einige Kontroller sonst im
-                and     al,50h          ; folgenden aufhÑngen, falls
+                and     al,50h          ; folgenden aufhaengen, falls
                 cmp     al,50h          ; keine Platte angeschlossen ist.
                 stc                     ; falls nicht bereit, Fehler simulieren
                 mov     al,4            ; "Aborted Command"
@@ -444,7 +444,7 @@ End:            pop     dx              ; Register zurÅck
 
 Ende:           call    BuildError      ; Status einlesen
 TotEnde:
-                pop     dx              ; Register zurÅck
+                pop     dx              ; Register zurueck
                 pop     cx
                 ret
 
@@ -473,7 +473,7 @@ TotEnde:
                  call    WriteParams
                 endif
 
-                sub     bp,bp           ; FehlerzÑhler auf 0
+                sub     bp,bp           ; Fehlerzaehler auf 0
 
 Retry:          push    ax              ; Parameter sichern
                 push    bx
@@ -496,7 +496,7 @@ Retry:          push    ax              ; Parameter sichern
                 mov     al,Cmd_Read     
                 out     dx,al
 
-                mov     dx,Task_Data    ; Vorbereitung fÅr INSW
+                mov     dx,Task_Data    ; Vorbereitung fuer INSW
                 cld
 Loop:           call    WaitBusy        ; auf gelesenen Sektor warten
                 btst    al,0            ; Fehler ?
@@ -509,7 +509,7 @@ Loop:           call    WaitBusy        ; auf gelesenen Sektor warten
                 jnz     Again
                 mov     cx,SecSize/2    ; Daten transferieren
                 rep     insw            ; bagger, schaufel
-                dec     si              ; nÑchster Sektor
+                dec     si              ; naechster Sektor
                 jnz     Loop
 
 End:            pop     di              ; Parameter nicht mehr gebraucht
@@ -527,7 +527,7 @@ Term:           if      debug
 
                 ret
 
-Again:          inc     bp              ; FehlerzÑhler rauf
+Again:          inc     bp              ; Fehlerzaehler rauf
                 cmp     bp,MaxRetry     ; zu oft aufgetreten ?
                 jae     End
 
@@ -536,7 +536,7 @@ Again:          inc     bp              ; FehlerzÑhler rauf
                 pop     bx
                 pop     ax
                 mov     si,ax           ; Laufwerk retten
-                call    Recalibrate     ; auf Spur 0 zurÅck
+                call    Recalibrate     ; auf Spur 0 zurueck
                 jc      Term            ; bei erneutem Fehler Abbruch
                 mov     ax,si
                 call    SetDriveParams  ; Parameter neu initialisieren
@@ -568,7 +568,7 @@ Again:          inc     bp              ; FehlerzÑhler rauf
                  call    WriteParams
                 endif
 
-                sub     bp,bp           ; FehlerzÑhler auf 0
+                sub     bp,bp           ; Fehlerzaehler auf 0
 
 Retry:          push    ax              ; Parameter sichern
                 push    bx
@@ -590,7 +590,7 @@ Retry:          push    ax              ; Parameter sichern
 
                 call    WaitBusy        ; auf Fertigstellung warten
                 mov     cx,16           ; einige Kontroller brauchen
-DelStat:        loop    DelStat         ; etwas fÅr das Fehlerflag
+DelStat:        loop    DelStat         ; etwas fuer das Fehlerflag
                 mov     dx,Task_Status
                 in      al,dx
                 btst    al,0            ; Fehler ?
@@ -613,7 +613,7 @@ Term:           if      debug
 
                 ret
 
-Again:          inc     bp             ; FehlerzÑhler rauf
+Again:          inc     bp             ; Fehlerzaehler rauf
                 cmp     bp,MaxRetry    ; zu oft aufgetreten ?
                 jae     Ende
 
@@ -621,7 +621,7 @@ Again:          inc     bp             ; FehlerzÑhler rauf
                 pop     bx
                 pop     ax
                 mov     si,ax           ; Laufwerk retten
-                call    Recalibrate     ; auf Spur 0 zurÅck
+                call    Recalibrate     ; auf Spur 0 zurueck
                 jc      Term            ; bei erneutem Fehler Abbruch
                 mov     ax,si
                 call    SetDriveParams  ; Parameter neu initialisieren
@@ -653,7 +653,7 @@ Again:          inc     bp             ; FehlerzÑhler rauf
                  call    WriteParams
                 endif
 
-                xor     bp,bp           ; FehlerzÑhler auf 0
+                xor     bp,bp           ; Fehlerzaehler auf 0
 
 Retry:          push    ax              ; Parameter sichern
                 push    bx
@@ -676,7 +676,7 @@ Retry:          push    ax              ; Parameter sichern
                 mov     al,Cmd_Write
                 out     dx,al
 
-                mov     dx,Task_Data    ; Vorbereitung fÅr OUTSW
+                mov     dx,Task_Data    ; Vorbereitung fuer OUTSW
                 cld
 Loop:           call    WaitBusy        ; auf Datenbereitschaft warten
                 btst    al,0            ; Fehler ?
@@ -693,7 +693,7 @@ Loop:           call    WaitBusy        ; auf Datenbereitschaft warten
                 call    WaitBusy        ; warten, bis Transfer fertig
                 btst    al,0
                 jnz     Again
-                dec     di              ; nÑchster Sektor
+                dec     di              ; naechster Sektor
                 jnz     Loop
 
 End:            pop     si              ; Parameter nicht mehr gebraucht
@@ -711,7 +711,7 @@ Term:           if      debug
 
                 ret
 
-Again:          inc     bp              ; FehlerzÑhler rauf
+Again:          inc     bp              ; Fehlerzaehler rauf
                 cmp     bp,MaxRetry     ; zu oft aufgetreten ?
                 jae     End
 
@@ -720,7 +720,7 @@ Again:          inc     bp              ; FehlerzÑhler rauf
                 pop     bx
                 pop     ax
                 mov     di,ax           ; Laufwerk retten
-                call    Recalibrate     ; auf Spur 0 zurÅck
+                call    Recalibrate     ; auf Spur 0 zurueck
                 jc      Term            ; bei erneutem Fehler Abbruch
                 mov     ax,di
                 call    SetDriveParams  ; Parameter neu initialisieren
@@ -757,7 +757,7 @@ Again:          inc     bp              ; FehlerzÑhler rauf
                 call    Recalibrate     ; Kontroller reinitialisieren
                 jc      Fin
                 mov     ax,bx
-                mov     bp,[di+DrPar_Cyls] ; ZylinderzÑhler in BP (abwÑrts)
+                mov     bp,[di+DrPar_Cyls] ; Zylinderzaehler in BP (abwaerts)
                 dec     bp
                 mov     dl,al           ; Laufwerk in DL
                 cld
@@ -786,13 +786,13 @@ HeadLoop:       call    WaitBusy        ; warten, bis WD1003 frei
                 mov     dx,bx
                 call    WriteCoords
                 PrChar  LF
-GoOn:           mov     dx,bx           ; Laufwerk und Kopf zurÅck
+GoOn:           mov     dx,bx           ; Laufwerk und Kopf zurueck
                 call    BreakOnESC      ; will der Benutzer abbrechen ?
                 jc      UserTerm        ; ja, Abbruch
-                inc     dh              ; nÑchster Kopf
+                inc     dh              ; naechster Kopf
                 cmp     dh,[di+DrPar_Heads]
                 jb      HeadLoop
-                dec     bp              ; nÑchster Zylinder
+                dec     bp              ; naechster Zylinder
                 jns     CylLoop
 TermLoop:       mov     al,dl           ; damit die Seek-Rate wieder stimmt
                 call    Recalibrate
@@ -800,7 +800,7 @@ TermLoop:       mov     al,dl           ; damit die Seek-Rate wieder stimmt
 Fin:            push    ax              ; Fehlerstatus halten
                 pushf
                 PrChar  LF
-                popf                    ; Fehlerstatus zurÅck
+                popf                    ; Fehlerstatus zurueck
                 pop     ax
                 pop     bp
                 pop     di
@@ -868,7 +868,7 @@ ErrorMsg:       db      "Formatierfehler auf $"
                 mov     ah,cl           ; Interleave vorgeben
                 mov     al,[di+DrPar_NSecs]
                 call    SetInterleaveBuffer
-                mov     ax,bp           ; Laufwerk und Kopf zurÅck
+                mov     ax,bp           ; Laufwerk und Kopf zurueck
                 call    SetDriveEnv     ; in Kontroller einprogrammieren
                 mov     cl,[di+DrPar_NSecs] ; Sektor& Zylinder einschreiben
                 mov     ch,1
@@ -921,7 +921,7 @@ Fin:            pop     bp
                 mov     ah,3    ; Interleave ist ziemlich egal...
                 mov     al,[di+DrPar_NSecs]
                 call    SetInterleaveBuffer
-                mov     ax,bp   ; Laufwerk und Kopf zurÅck
+                mov     ax,bp   ; Laufwerk und Kopf zurueck
                 call    SetDriveEnv ; in Kontroller einprogrammieren
                 mov     cl,[di+DrPar_NSecs] ; Sektor& Zylinder einschreiben
                 mov     ch,1

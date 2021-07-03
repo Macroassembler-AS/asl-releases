@@ -364,28 +364,28 @@ static void DecodeMAIN(Word Code)
   Boolean UseZS = Hi(Code) || False;
 
   if (!ChkArgCnt(15, 15));
-  else if (*ArgStr[1].Str) WrError(ErrNum_InvAddrMode);
-  else if (!DecodeXS(ArgStr[3].Str, &Xs));
-  else if (!DecodeYS(ArgStr[4].Str, &Ys));
-  else if (!DecodeZS(ArgStr[5].Str, &Zs));
-  else if (!DecodeWRF(ArgStr[6].Str, &Wrf));
-  else if (!DecodeWS(ArgStr[7].Str, &Ws));
-  else if (!DecodeCP(ArgStr[8].Str, &Cp));
-  else if (!DecodeDPS(ArgStr[9].Str, &Dps));
-  else if (!DecodeMODE(ArgStr[10].Str, &Mode));
-  else if (!DecodeDEST(ArgStr[11].Str, &Dest, True));
-  else if (!DecodeSOUR(ArgStr[12].Str, &Sour, True));
-  else if (!DecodeXCNT(ArgStr[13].Str, &Xcnt));
+  else if (*ArgStr[1].str.p_str) WrError(ErrNum_InvAddrMode);
+  else if (!DecodeXS(ArgStr[3].str.p_str, &Xs));
+  else if (!DecodeYS(ArgStr[4].str.p_str, &Ys));
+  else if (!DecodeZS(ArgStr[5].str.p_str, &Zs));
+  else if (!DecodeWRF(ArgStr[6].str.p_str, &Wrf));
+  else if (!DecodeWS(ArgStr[7].str.p_str, &Ws));
+  else if (!DecodeCP(ArgStr[8].str.p_str, &Cp));
+  else if (!DecodeDPS(ArgStr[9].str.p_str, &Dps));
+  else if (!DecodeMODE(ArgStr[10].str.p_str, &Mode));
+  else if (!DecodeDEST(ArgStr[11].str.p_str, &Dest, True));
+  else if (!DecodeSOUR(ArgStr[12].str.p_str, &Sour, True));
+  else if (!DecodeXCNT(ArgStr[13].str.p_str, &Xcnt));
   else if (Xcnt == 2) WrStrErrorPos(ErrNum_InvReg, &ArgStr[13]);
-  else if (!DecodeOFP(ArgStr[14].Str, &Ofp));
-  else if (!DecodeER(ArgStr[15].Str, &Er));
+  else if (!DecodeOFP(ArgStr[14].str.p_str, &Ofp));
+  else if (!DecodeER(ArgStr[15].str.p_str, &Er));
   else
   {
     Boolean OK = True;
     Word Shift;
     tSymbolFlags Flags = eSymbolFlag_None;
 
-    Shift = *ArgStr[2].Str ? EvalStrIntExpressionWithFlags(&ArgStr[2], UInt3, &OK, &Flags) : 0;
+    Shift = *ArgStr[2].str.p_str ? EvalStrIntExpressionWithFlags(&ArgStr[2], UInt3, &OK, &Flags) : 0;
     if (mFirstPassUnknown(Flags))
       Shift = 0;
 
@@ -423,13 +423,13 @@ static void DecodeLDA(Word Code)
   UNUSED(Code);
 
   if (!ChkArgCnt(7, 7));
-  else if (*ArgStr[1].Str) WrError(ErrNum_InvAddrMode);
-  else if (!DecodeDSTA(ArgStr[2].Str, &DstA, &IntSize));
-  else if (!DecodeWRF(ArgStr[4].Str, &Wrf));
-  else if (!DecodeDEST(ArgStr[5].Str, &Dest, False));
-  else if (!DecodeSOUR(ArgStr[6].Str, &Sour, False));
+  else if (*ArgStr[1].str.p_str) WrError(ErrNum_InvAddrMode);
+  else if (!DecodeDSTA(ArgStr[2].str.p_str, &DstA, &IntSize));
+  else if (!DecodeWRF(ArgStr[4].str.p_str, &Wrf));
+  else if (!DecodeDEST(ArgStr[5].str.p_str, &Dest, False));
+  else if (!DecodeSOUR(ArgStr[6].str.p_str, &Sour, False));
   else if (Sour > 14) WrStrErrorPos(ErrNum_InvReg, &ArgStr[6]);
-  else if (!DecodeXCNT(ArgStr[7].Str, &Xcnt));
+  else if (!DecodeXCNT(ArgStr[7].str.p_str, &Xcnt));
   else if (Xcnt == 2) WrStrErrorPos(ErrNum_InvReg, &ArgStr[7]);
   else
   {
@@ -453,9 +453,9 @@ static void DecodeLDB(Word Code)
   UNUSED(Code);
 
   if (!ChkArgCnt(4, 4));
-  else if (*ArgStr[1].Str) WrError(ErrNum_InvAddrMode);
-  else if (!DecodeDSTB(ArgStr[2].Str, &DstB));
-  else if (!DecodeFORM(ArgStr[4].Str, &Form));
+  else if (*ArgStr[1].str.p_str) WrError(ErrNum_InvAddrMode);
+  else if (!DecodeDSTB(ArgStr[2].str.p_str, &DstB));
+  else if (!DecodeFORM(ArgStr[4].str.p_str, &Form));
   else
   {
     Boolean OK;
@@ -476,14 +476,14 @@ static void DecodeBR(Word Code)
   LongWord Cp, Dps, Mode, Dest, Sour, Xcnt, Ofp;
 
   if (!ChkArgCnt(9, 9));
-  else if (*ArgStr[1].Str) WrError(ErrNum_InvAddrMode);
-  else if (!DecodeCP(ArgStr[3].Str, &Cp));
-  else if (!DecodeDPS(ArgStr[4].Str, &Dps));
-  else if (!DecodeMODE(ArgStr[5].Str, &Mode));
-  else if (!DecodeDEST(ArgStr[6].Str, &Dest, False));
-  else if (!DecodeSOUR(ArgStr[7].Str, &Sour, False));
-  else if (!DecodeXCNT(ArgStr[8].Str, &Xcnt));
-  else if (!DecodeOFP(ArgStr[9].Str, &Ofp));
+  else if (*ArgStr[1].str.p_str) WrError(ErrNum_InvAddrMode);
+  else if (!DecodeCP(ArgStr[3].str.p_str, &Cp));
+  else if (!DecodeDPS(ArgStr[4].str.p_str, &Dps));
+  else if (!DecodeMODE(ArgStr[5].str.p_str, &Mode));
+  else if (!DecodeDEST(ArgStr[6].str.p_str, &Dest, False));
+  else if (!DecodeSOUR(ArgStr[7].str.p_str, &Sour, False));
+  else if (!DecodeXCNT(ArgStr[8].str.p_str, &Xcnt));
+  else if (!DecodeOFP(ArgStr[9].str.p_str, &Ofp));
   else
   {
     Boolean OK;
@@ -508,15 +508,15 @@ static void DecodeJC(Word Code)
   LongWord F, Cp, Dps, Mode, Dest, Sour, Xcnt, Ofp;
 
   if (!ChkArgCnt(10, 10));
-  else if (*ArgStr[1].Str) WrError(ErrNum_InvAddrMode);
-  else if (!DecodeRegList(pFNames, ArgStr[3].Str, &F));
-  else if (!DecodeCP(ArgStr[4].Str, &Cp));
-  else if (!DecodeDPS(ArgStr[5].Str, &Dps));
-  else if (!DecodeMODE(ArgStr[6].Str, &Mode));
-  else if (!DecodeDEST(ArgStr[7].Str, &Dest, False));
-  else if (!DecodeSOUR(ArgStr[8].Str, &Sour, False));
-  else if (!DecodeXCNT(ArgStr[9].Str, &Xcnt));
-  else if (!DecodeOFP(ArgStr[10].Str, &Ofp));
+  else if (*ArgStr[1].str.p_str) WrError(ErrNum_InvAddrMode);
+  else if (!DecodeRegList(pFNames, ArgStr[3].str.p_str, &F));
+  else if (!DecodeCP(ArgStr[4].str.p_str, &Cp));
+  else if (!DecodeDPS(ArgStr[5].str.p_str, &Dps));
+  else if (!DecodeMODE(ArgStr[6].str.p_str, &Mode));
+  else if (!DecodeDEST(ArgStr[7].str.p_str, &Dest, False));
+  else if (!DecodeSOUR(ArgStr[8].str.p_str, &Sour, False));
+  else if (!DecodeXCNT(ArgStr[9].str.p_str, &Xcnt));
+  else if (!DecodeOFP(ArgStr[10].str.p_str, &Ofp));
   else
   {
     Boolean OK;
@@ -544,26 +544,26 @@ static void DecodeRET(Word Code)
   UNUSED(Code);
 
   if (!ChkArgCnt(13, 13));
-  else if (*ArgStr[1].Str) WrError(ErrNum_InvAddrMode);
-  else if (!DecodeXS(ArgStr[3].Str, &Xs));
-  else if (!DecodeYS(ArgStr[4].Str, &Ys));
-  else if (!DecodeWRF(ArgStr[5].Str, &Wrf));
-  else if (!DecodeWS(ArgStr[6].Str, &Ws));
-  else if (!DecodeCP(ArgStr[7].Str, &Cp));
-  else if (!DecodeDPS(ArgStr[8].Str, &Dps));
-  else if (!DecodeMODE(ArgStr[9].Str, &Mode));
-  else if (!DecodeDEST(ArgStr[10].Str, &Dest, True));
-  else if (!DecodeSOUR(ArgStr[11].Str, &Sour, True));
-  else if (!DecodeXCNT(ArgStr[12].Str, &Xcnt));
+  else if (*ArgStr[1].str.p_str) WrError(ErrNum_InvAddrMode);
+  else if (!DecodeXS(ArgStr[3].str.p_str, &Xs));
+  else if (!DecodeYS(ArgStr[4].str.p_str, &Ys));
+  else if (!DecodeWRF(ArgStr[5].str.p_str, &Wrf));
+  else if (!DecodeWS(ArgStr[6].str.p_str, &Ws));
+  else if (!DecodeCP(ArgStr[7].str.p_str, &Cp));
+  else if (!DecodeDPS(ArgStr[8].str.p_str, &Dps));
+  else if (!DecodeMODE(ArgStr[9].str.p_str, &Mode));
+  else if (!DecodeDEST(ArgStr[10].str.p_str, &Dest, True));
+  else if (!DecodeSOUR(ArgStr[11].str.p_str, &Sour, True));
+  else if (!DecodeXCNT(ArgStr[12].str.p_str, &Xcnt));
   else if (Xcnt == 2) WrStrErrorPos(ErrNum_InvReg, &ArgStr[12]);
-  else if (!DecodeOFP(ArgStr[13].Str, &Ofp));
+  else if (!DecodeOFP(ArgStr[13].str.p_str, &Ofp));
   else
   {
     Boolean OK = True;
     Word Shift;
     tSymbolFlags Flags = eSymbolFlag_None;
 
-    Shift = *ArgStr[2].Str ? EvalStrIntExpressionWithFlags(&ArgStr[2], UInt3, &OK, &Flags) : 0;
+    Shift = *ArgStr[2].str.p_str ? EvalStrIntExpressionWithFlags(&ArgStr[2], UInt3, &OK, &Flags) : 0;
     if (mFirstPassUnknown(Flags))
       Shift = 0;
 
@@ -601,19 +601,19 @@ static void DecodeGMAx(Word Code)
   LongWord Gfx, Gf, Wrf, Ws, Cp, Dps, Mode, Dest, Sour, Xcnt, Ofp;
 
   if (!ChkArgCnt(12, 12));
-  else if (*ArgStr[1].Str) WrError(ErrNum_InvAddrMode);
-  else if (!DecodeGFX(ArgStr[2].Str, &Gfx));
-  else if (!DecodeGF(ArgStr[3].Str, &Gf));
-  else if (!DecodeWRF(ArgStr[4].Str, &Wrf));
-  else if (!DecodeWS(ArgStr[5].Str, &Ws));
-  else if (!DecodeCP(ArgStr[6].Str, &Cp));
-  else if (!DecodeDPS(ArgStr[7].Str, &Dps));
-  else if (!DecodeMODE(ArgStr[8].Str, &Mode));
-  else if (!DecodeDEST(ArgStr[9].Str, &Dest, True));
-  else if (!DecodeSOUR(ArgStr[10].Str, &Sour, True));
-  else if (!DecodeXCNT(ArgStr[11].Str, &Xcnt));
+  else if (*ArgStr[1].str.p_str) WrError(ErrNum_InvAddrMode);
+  else if (!DecodeGFX(ArgStr[2].str.p_str, &Gfx));
+  else if (!DecodeGF(ArgStr[3].str.p_str, &Gf));
+  else if (!DecodeWRF(ArgStr[4].str.p_str, &Wrf));
+  else if (!DecodeWS(ArgStr[5].str.p_str, &Ws));
+  else if (!DecodeCP(ArgStr[6].str.p_str, &Cp));
+  else if (!DecodeDPS(ArgStr[7].str.p_str, &Dps));
+  else if (!DecodeMODE(ArgStr[8].str.p_str, &Mode));
+  else if (!DecodeDEST(ArgStr[9].str.p_str, &Dest, True));
+  else if (!DecodeSOUR(ArgStr[10].str.p_str, &Sour, True));
+  else if (!DecodeXCNT(ArgStr[11].str.p_str, &Xcnt));
   else if (Xcnt == 2) WrStrErrorPos(ErrNum_InvReg, &ArgStr[11]);
-  else if (!DecodeOFP(ArgStr[12].Str, &Ofp));
+  else if (!DecodeOFP(ArgStr[12].str.p_str, &Ofp));
   else
   {
     DAsmCode[0] = 0x0c000000ul | (((LongWord)Code) << 16)
@@ -692,10 +692,10 @@ static void MakeCode_9331(void)
     switch (ArgCnt)
     {
       case 12:
-        strmaxcpy(OpPart.Str, "GMA", sizeof(OpPart));
+        strmaxcpy(OpPart.str.p_str, "GMA", sizeof(OpPart));
         break;
       case 15:
-        strmaxcpy(OpPart.Str, "NOP", sizeof(OpPart));
+        strmaxcpy(OpPart.str.p_str, "NOP", sizeof(OpPart));
         break;
       case 0:
         return;
@@ -711,9 +711,9 @@ static void MakeCode_9331(void)
      of program space anyway... */
 
   for (z = 1; z < ArgCnt; z++)
-    StripComment(ArgStr[z].Str);
+    StripComment(ArgStr[z].str.p_str);
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

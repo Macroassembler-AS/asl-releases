@@ -76,45 +76,45 @@ static void DecodeAdr(const tStrComp *pArg, unsigned Mask)
 
   /* Register ? */
 
-  if (!as_strcasecmp(pArg->Str, "A"))
+  if (!as_strcasecmp(pArg->str.p_str, "A"))
    AdrMode = ModAcc;
 
-  else if (!as_strcasecmp(pArg->Str, "SP"))
+  else if (!as_strcasecmp(pArg->str.p_str, "SP"))
   {
     AdrMode = ModReg16;
     AdrPart = 1;
   }
 
-  else if (!as_strcasecmp(pArg->Str, "IX"))
+  else if (!as_strcasecmp(pArg->str.p_str, "IX"))
   {
     AdrMode = ModReg16;
     AdrPart = 2;
   }
 
-  else if (!as_strcasecmp(pArg->Str, "EP"))
+  else if (!as_strcasecmp(pArg->str.p_str, "EP"))
   {
     AdrMode = ModReg16;
     AdrPart = 3;
   }
 
-  else if (!as_strcasecmp(pArg->Str, "T"))
+  else if (!as_strcasecmp(pArg->str.p_str, "T"))
     AdrMode = ModT;
 
-  else if (!as_strcasecmp(pArg->Str, "PC"))
+  else if (!as_strcasecmp(pArg->str.p_str, "PC"))
     AdrMode = ModPC;
 
-  else if (!as_strcasecmp(pArg->Str, "PS"))
+  else if (!as_strcasecmp(pArg->str.p_str, "PS"))
     AdrMode = ModPS;
 
-  else if ((strlen(pArg->Str) == 2) && (as_toupper(*pArg->Str) == 'R') && (pArg->Str[1]>= '0') && (pArg->Str[1] <= '7'))
+  else if ((strlen(pArg->str.p_str) == 2) && (as_toupper(*pArg->str.p_str) == 'R') && (pArg->str.p_str[1]>= '0') && (pArg->str.p_str[1] <= '7'))
   {
     AdrMode = ModReg;
-    AdrPart = pArg->Str[1] - '0' + 8;
+    AdrPart = pArg->str.p_str[1] - '0' + 8;
   }
 
   /* immediate ? */
 
-  else if (*pArg->Str == '#')
+  else if (*pArg->str.p_str == '#')
   {
     if (OpSize)
     {
@@ -143,19 +143,19 @@ static void DecodeAdr(const tStrComp *pArg, unsigned Mask)
 
   /* indirekt ? */
 
-  else if (!as_strcasecmp(pArg->Str, "@EP"))
+  else if (!as_strcasecmp(pArg->str.p_str, "@EP"))
   {
     AdrMode = ModIEP;
     AdrPart = 7;
   }
 
-  else if (!as_strcasecmp(pArg->Str, "@A"))
+  else if (!as_strcasecmp(pArg->str.p_str, "@A"))
   {
     AdrMode = ModIA;
     AdrPart = 7;
   }
 
-  else if (!as_strncasecmp(pArg->Str, "@IX", 3))
+  else if (!as_strncasecmp(pArg->str.p_str, "@IX", 3))
   {
     /***Problem: Offset signed oder unsigned? */
     AdrVals[0] = EvalStrIntExpressionOffs(pArg, 3, SInt8, &OK);
@@ -208,7 +208,7 @@ static Boolean DecodeBitAdr(const tStrComp *pArg, Byte *Adr, Byte *Bit)
   tStrComp AddrArg, BitArg;
   Boolean OK;
 
-  sep = strchr(pArg->Str, ':');
+  sep = strchr(pArg->str.p_str, ':');
   if (!sep)
     return FALSE;
   StrCompSplitRef(&AddrArg, &BitArg, pArg, sep);
@@ -832,7 +832,7 @@ static void DecodeCALLV(Word Index)
   UNUSED(Index);
 
   if (!ChkArgCnt(1, 1));
-  else if (*ArgStr[1].Str != '#') WrError(ErrNum_OnlyImmAddr);
+  else if (*ArgStr[1].str.p_str != '#') WrError(ErrNum_OnlyImmAddr);
   else
   {
     BAsmCode[0] = 0xb8 + EvalStrIntExpressionOffs(&ArgStr[1], 1, UInt3, &OK);
@@ -952,7 +952,7 @@ static void MakeCode_F2MC8(void)
 
   if (DecodeIntelPseudo(False)) return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

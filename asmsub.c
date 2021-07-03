@@ -718,62 +718,66 @@ void FloatString(char *pDest, size_t DestSize, Double f)
 /****************************************************************************/
 /* Symbol in String wandeln */
 
-void StrSym(TempResult *t, Boolean WithSystem, char *Dest, size_t DestLen, unsigned Radix)
+void StrSym(const TempResult *t, Boolean WithSystem, as_dynstr_t *p_dest, unsigned Radix)
 {
-  size_t Len;
   LargeInt IntVal;
 
+  if (p_dest->capacity)
+    p_dest->p_str[0] = '\0';
   switch (t->Typ)
   {
     case TempInt:
       IntVal = t->Contents.Int;
     IsInt:
+    {
+      String Buf;
+
       if (WithSystem)
       {
         switch (IntConstMode)
         {
           case eIntConstModeMoto:
-            Len = strmaxcpy(Dest, GetIntConstMotoPrefix(Radix), DestLen);
+            as_sdprcatf(p_dest, "%s", GetIntConstMotoPrefix(Radix));
             break;
           case eIntConstModeC:
-            Len = strmaxcpy(Dest, GetIntConstCPrefix(Radix), DestLen);
+            as_sdprcatf(p_dest, "%s", GetIntConstCPrefix(Radix));
             break;
           case eIntConstModeIBM:
-            Len = strmaxcpy(Dest, GetIntConstIBMPrefix(Radix), DestLen);
+            as_sdprcatf(p_dest, "%s", GetIntConstIBMPrefix(Radix));
             break;
           default:
-            Len = 0;
+            break;
         }
-        DestLen -= Len;
-        Dest += Len;
       }
-      SysString(Dest, DestLen, IntVal, Radix,
+      SysString(Buf, sizeof(Buf), IntVal, Radix,
                 1, (16 == Radix) && (IntConstMode == eIntConstModeIntel),
                 HexStartCharacter, SplitByteCharacter);
+      as_sdprcatf(p_dest, "%s", Buf);
       if (WithSystem)
       {
         switch (IntConstMode)
         {
           case eIntConstModeIntel:
-            as_snprcatf(Dest, DestLen, GetIntConstIntelSuffix(Radix));
+            as_sdprcatf(p_dest, GetIntConstIntelSuffix(Radix));
             break;
           case eIntConstModeIBM:
-            as_snprcatf(Dest, DestLen, GetIntConstIBMSuffix(Radix));
+            as_sdprcatf(p_dest, GetIntConstIBMSuffix(Radix));
             break;
           default:
             break;
         }
       }
       break;
+    }
     case TempFloat:
-      FloatString(Dest, DestLen, t->Contents.Float);
+      FloatString(p_dest->p_str, p_dest->capacity, t->Contents.Float);
       break;
     case TempString:
-      TempResultToPlainString(Dest, t, DestLen);
+      as_tempres_append_dynstr(p_dest, t);
       break;
     case TempReg:
       if (t->Contents.RegDescr.Dissect)
-        t->Contents.RegDescr.Dissect(Dest, DestLen, t->Contents.RegDescr.Reg, t->DataSize);
+        t->Contents.RegDescr.Dissect(p_dest->p_str, p_dest->capacity, t->Contents.RegDescr.Reg, t->DataSize);
       else
       {
         IntVal = t->Contents.RegDescr.Reg;
@@ -781,7 +785,7 @@ void StrSym(TempResult *t, Boolean WithSystem, char *Dest, size_t DestLen, unsig
       }
       break;
     default:
-      strmaxcpy(Dest, "???", DestLen);
+      as_sdprintf(p_dest, "???");
   }
 }
 
@@ -961,9 +965,13 @@ void WrLstLine(const char *Line)
 
 void SetListLineVal(TempResult *t)
 {
-  *ListLine = '=';
-  StrSym(t, True, ListLine + 1, STRINGSIZE - 1, ListRadixBase);
+  as_dynstr_t str;
+
+  as_dynstr_ini(&str, STRINGSIZE);
+  StrSym(t, True, &str, ListRadixBase);
+  as_snprintf(ListLine, STRINGSIZE, "=%s", str.p_str);
   LimitListLine();
+  as_dynstr_free(&str);
 }
 
 void LimitListLine(void)
@@ -1244,7 +1252,7 @@ void PrintUseList(void)
   int z, z2, l;
   String s;
 
-  for (z = 1; z <= PCMax; z++)
+  for (z = 1; z < SegCount; z++)
     if (SegChunks[z].Chunks)
     {
       as_snprintf(s, sizeof(s), "  %s%s%s",
@@ -1268,7 +1276,7 @@ void ClearUseList(void)
 {
   int z;
 
-  for (z = 1; z <= PCMax; z++)
+  for (z = 1; z < SegCount; z++)
     ClearChunk(SegChunks + z);
 }
 
@@ -1401,12 +1409,11 @@ static Boolean CompressLine_NErl(char ch)
        || ((ch >= '0') && (ch <= '9')));
 }
 
-static char Token[3] = { 0x01, 0x00, 0x00 };
 typedef int (*tCompareFnc)(const char *s1, const char *s2, size_t n);
 
-int ReplaceLine(char *pStr, unsigned StrSize, const char *pSearch, const char *pReplace, Boolean CaseSensitive)
+int ReplaceLine(as_dynstr_t *p_str, const char *pSearch, const char *pReplace, Boolean CaseSensitive)
 {
-  int SearchLen = strlen(pSearch), ReplaceLen = strlen(pReplace), StrLen = strlen(pStr), DeltaLen = ReplaceLen - SearchLen;
+  int SearchLen = strlen(pSearch), ReplaceLen = strlen(pReplace), StrLen = strlen(p_str->p_str), DeltaLen = ReplaceLen - SearchLen;
   int NumReplace = 0, Pos, End, CmpRes, Avail, nCopy, nMove;
   tCompareFnc Compare = CaseSensitive ? strncmp : as_strncasecmp;
 
@@ -1414,18 +1421,20 @@ int ReplaceLine(char *pStr, unsigned StrSize, const char *pSearch, const char *p
   while (Pos <= StrLen - SearchLen)
   {
     End = Pos + SearchLen;
-    CmpRes = Compare(&pStr[Pos], pSearch, SearchLen);
+    CmpRes = Compare(&p_str->p_str[Pos], pSearch, SearchLen);
     if ((!CmpRes)
-     && ((Pos == 0) || (!CompressLine_NErl(pStr[Pos - 1])))
-     && ((End >= StrLen) || (!CompressLine_NErl(pStr[End]))))
+     && ((Pos == 0) || (!CompressLine_NErl(p_str->p_str[Pos - 1])))
+     && ((End >= StrLen) || (!CompressLine_NErl(p_str->p_str[End]))))
     {
-      Avail = StrSize - 1 - Pos;
+      if (StrLen + DeltaLen + 1 > (int)p_str->capacity)
+        as_dynstr_realloc(p_str, as_dynstr_roundup_len(p_str->capacity + DeltaLen));
+      Avail = p_str->capacity - 1 - Pos;
       nCopy = ReplaceLen; if (nCopy > Avail) nCopy = Avail;
       Avail -= nCopy;
       nMove = StrLen - (Pos + SearchLen); if (nMove > Avail) nMove = Avail;
-      memmove(&pStr[Pos + nCopy], &pStr[Pos + SearchLen], nMove);
-      memcpy(&pStr[Pos], pReplace, nCopy);
-      pStr[Pos + nCopy + nMove] = '\0';
+      memmove(&p_str->p_str[Pos + nCopy], &p_str->p_str[Pos + SearchLen], nMove);
+      memcpy(&p_str->p_str[Pos], pReplace, nCopy);
+      p_str->p_str[Pos + nCopy + nMove] = '\0';
       Pos += nCopy;
       StrLen += DeltaLen;
       NumReplace++;
@@ -1436,22 +1445,42 @@ int ReplaceLine(char *pStr, unsigned StrSize, const char *pSearch, const char *p
   return NumReplace;
 }
 
-static void SetToken(unsigned TokenNum)
+static void SetToken(char *Token, unsigned TokenNum)
 {
   Token[0] = (TokenNum >> 4) + 1;
   Token[1] = (TokenNum & 15) + 1;
+  Token[2] = 0;
 }
 
-int CompressLine(const char *TokNam, unsigned TokenNum, char *Line, unsigned LineSize, Boolean ThisCaseSensitive)
+/*!------------------------------------------------------------------------
+ * \fn     CompressLine(const char *TokNam, unsigned TokenNum, as_dynstr_t *p_str, Boolean ThisCaseSensitive)
+ * \brief  compress tokens in line
+ * \param  TokNam name to compress into token
+ * \param  TokenNum token #
+ * \param  p_str string to work on
+ * \param  ThisCaseSensitive operate case sensitive?
+ * ------------------------------------------------------------------------ */
+
+int CompressLine(const char *TokNam, unsigned TokenNum, as_dynstr_t *p_str, Boolean ThisCaseSensitive)
 {
-  SetToken(TokenNum);
-  return ReplaceLine(Line, LineSize, TokNam, Token, ThisCaseSensitive);
+  char Token[3];
+  SetToken(Token, TokenNum);
+  return ReplaceLine(p_str, TokNam, Token, ThisCaseSensitive);
 }
 
-void ExpandLine(const char *TokNam, unsigned TokenNum, char *Line, unsigned LineSize)
+/*!------------------------------------------------------------------------
+ * \fn     ExpandLine(const char *TokNam, unsigned TokenNum, as_dynstr_t *p_str)
+ * \brief  expand tokens in line
+ * \param  TokNam name to expand token to
+ * \param  TokenNum token #
+ * \param  p_str string to work on
+ * ------------------------------------------------------------------------ */
+
+void ExpandLine(const char *TokNam, unsigned TokenNum, as_dynstr_t *p_str)
 {
-  SetToken(TokenNum);
-  (void)ReplaceLine(Line, LineSize, Token, TokNam, True);
+  char Token[3];
+  SetToken(Token, TokenNum);
+  (void)ReplaceLine(p_str, Token, TokNam, True);
 }
 
 void KillCtrl(char *Line)

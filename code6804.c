@@ -60,20 +60,20 @@ static void DecodeAdr(const tStrComp *pArg, Boolean MayImm)
 
   AdrMode = ModNone;
 
-  if (!as_strcasecmp(pArg->Str, "(X)"))
+  if (!as_strcasecmp(pArg->str.p_str, "(X)"))
   {
     AdrMode = ModInd;
     AdrVal = 0x00;
     goto chk;
   }
-  if (!as_strcasecmp(pArg->Str, "(Y)"))
+  if (!as_strcasecmp(pArg->str.p_str, "(Y)"))
   {
     AdrMode = ModInd;
     AdrVal = 0x10;
     goto chk;
   }
 
-  if (*pArg->Str == '#')
+  if (*pArg->str.p_str == '#')
   {
     AdrVal = EvalStrIntExpressionOffs(pArg, 1, Int8, &OK);
     if (OK)
@@ -223,7 +223,7 @@ static void DecodeLDA_STA(Word Code)
 static void DecodeLDXI_LDYI(Word Code)
 {
   if (!ChkArgCnt(1, 1));
-  else if (*ArgStr[1].Str != '#') WrError(ErrNum_InvAddrMode);
+  else if (*ArgStr[1].str.p_str != '#') WrError(ErrNum_InvAddrMode);
   else
   {
     Boolean OK;
@@ -243,7 +243,7 @@ static void DecodeMVI(Word Code)
   UNUSED(Code);
 
   if (!ChkArgCnt(2, 2));
-  else if (*ArgStr[2].Str != '#') WrError(ErrNum_InvAddrMode);
+  else if (*ArgStr[2].str.p_str != '#') WrError(ErrNum_InvAddrMode);
   else
   {
     tEvalResult EvalResult;
@@ -451,7 +451,7 @@ static void MakeCode_6804(void)
   if (DecodeMotoPseudo(True))
     return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

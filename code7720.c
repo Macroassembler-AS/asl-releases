@@ -114,6 +114,8 @@ static void DecodeDATA_7720(Word Index)
   TempResult t;
   int z;
   Boolean OK;
+
+  as_tempres_ini(&t);
   UNUSED(Index);
 
   if (ActPC == SegCode)
@@ -144,9 +146,9 @@ static void DecodeDATA_7720(Word Index)
             goto ToInt;
 
           Pos = 0;
-          for (z2 = 0; z2 < t.Contents.Ascii.Length; z2++)
+          for (z2 = 0; z2 < t.Contents.str.len; z2++)
           {
-            Trans = CharTransTable[((usint) t.Contents.Ascii.Contents[z2]) & 0xff];
+            Trans = CharTransTable[((usint) t.Contents.str.p_str[z2]) & 0xff];
             if (ActPC == SegCode)
               DAsmCode[CodeLen] = (Pos == 0) ? Trans : (DAsmCode[CodeLen] << 8) | Trans;
             else
@@ -181,6 +183,7 @@ static void DecodeDATA_7720(Word Index)
       z++;
     }
   }
+  as_tempres_free(&t);
 }
 
 static void DecodeRES(Word Index)
@@ -215,12 +218,12 @@ static void DecodeALU2(Word Code)
     return;
 
   if (!ChkArgCnt(2, 2));
-  else if (!DecodeReg(ArgStr[2].Str, &Src, ALUSrcRegs, ALUSrcRegCnt)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[2]);
+  else if (!DecodeReg(ArgStr[2].str.p_str, &Src, ALUSrcRegs, ALUSrcRegCnt)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[2]);
   else
   {
-    if ((strlen(ArgStr[1].Str) == 4) && (!as_strncasecmp(ArgStr[1].Str, "ACC", 3)))
+    if ((strlen(ArgStr[1].str.p_str) == 4) && (!as_strncasecmp(ArgStr[1].str.p_str, "ACC", 3)))
     {
-      ch = as_toupper(ArgStr[1].Str[3]);
+      ch = as_toupper(ArgStr[1].str.p_str[3]);
       if ((ch>='A') && (ch<='B'))
         Acc = ch - 'A';
     }
@@ -241,9 +244,9 @@ static void DecodeALU1(Word Code)
 
   if (ChkArgCnt(1, 1))
   {
-    if ((strlen(ArgStr[1].Str) == 4) && (!as_strncasecmp(ArgStr[1].Str, "ACC", 3)))
+    if ((strlen(ArgStr[1].str.p_str) == 4) && (!as_strncasecmp(ArgStr[1].str.p_str, "ACC", 3)))
     {
-      ch = as_toupper(ArgStr[1].Str[3]);
+      ch = as_toupper(ArgStr[1].str.p_str[3]);
       if ((ch >= 'A') && (ch <= 'B'))
         Acc = ch - 'A';
     }
@@ -308,7 +311,7 @@ static void DecodeLDI(Word Index)
   UNUSED(Index);
 
   if (!ChkArgCnt(2, 2));
-  else if (!DecodeReg(ArgStr[1].Str, &Reg, DestRegs, DestRegCnt)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
+  else if (!DecodeReg(ArgStr[1].str.p_str, &Reg, DestRegs, DestRegCnt)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
   else
   {
     Value = EvalStrIntExpression(&ArgStr[2], Int16, &OK);
@@ -331,11 +334,11 @@ static void DecodeOP(Word Index)
 
   if (ArgCnt >= 1)
   {
-    p = FirstBlank(ArgStr[1].Str);
+    p = FirstBlank(ArgStr[1].str.p_str);
     if (p)
     {
       StrCompSplitLeft(&ArgStr[1], &OpPart, p);
-      NLS_UpString(OpPart.Str);
+      NLS_UpString(OpPart.str.p_str);
       KillPrefBlanksStrComp(&ArgStr[1]);
     }
     else
@@ -345,7 +348,7 @@ static void DecodeOP(Word Index)
         StrCompCopy(&ArgStr[z], &ArgStr[z + 1]);
       ArgCnt--;
     }
-    if (!LookupInstTable(OpTable, OpPart.Str))
+    if (!LookupInstTable(OpTable, OpPart.str.p_str))
       WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
   }
 
@@ -362,8 +365,8 @@ static void DecodeMOV(Word Index)
     return;
 
   if (!ChkArgCnt(2, 2));
-  else if (!DecodeReg(ArgStr[1].Str, &Dest, DestRegs, DestRegCnt)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
-  else if (!DecodeReg(ArgStr[2].Str, &Src, SrcRegs, SrcRegCnt)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[2]);
+  else if (!DecodeReg(ArgStr[1].str.p_str, &Dest, DestRegs, DestRegCnt)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
+  else if (!DecodeReg(ArgStr[2].str.p_str, &Src, SrcRegs, SrcRegCnt)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[2]);
   else
     ActCode |= Dest + (Src << 4);
 }
@@ -522,20 +525,20 @@ static void MakeCode_7720(void)
 
   /* Nullanweisung */
 
-  if (Memo("") && !*AttrPart.Str && (ArgCnt == 0))
+  if (Memo("") && !*AttrPart.str.p_str && (ArgCnt == 0))
     return;
 
   /* direkte Anweisungen */
 
   NextOp = Memo("OP");
-  if (LookupInstTable(InstTable, OpPart.Str))
+  if (LookupInstTable(InstTable, OpPart.str.p_str))
   {
     InOp = NextOp; return;
   }
 
   /* wenn eine parallele Op-Anweisung offen ist, noch deren Komponenten testen */
 
-  if ((InOp) && (LookupInstTable(OpTable, OpPart.Str)))
+  if ((InOp) && (LookupInstTable(OpTable, OpPart.str.p_str)))
   {
     RetractWords(1);
     DAsmCode[0] = ActCode;

@@ -173,7 +173,7 @@ static Boolean DecodeReg(const tStrComp *pArg, Byte *pValue)
   tEvalResult EvalResult;
   tRegEvalResult RegEvalResult;
 
-  if (DecodeRegCore(pArg->Str, pValue, strlen(pArg->Str)))
+  if (DecodeRegCore(pArg->str.p_str, pValue, strlen(pArg->str.p_str)))
     return True;
 
   RegEvalResult = EvalStrRegExpressionAsOperand(pArg, &RegDescr, &EvalResult, eSymbolSize8Bit, True);
@@ -195,7 +195,7 @@ static Boolean DecodeRReg(const tStrComp *pArg, Byte *pValue)
   tEvalResult EvalResult;
   tRegEvalResult RegEvalResult;
 
-  if (DecodeRRegCore(pArg->Str, pValue))
+  if (DecodeRRegCore(pArg->str.p_str, pValue))
     return True;
 
   RegEvalResult = EvalStrRegExpressionAsOperand(pArg, &RegDescr, &EvalResult, eSymbolSize16Bit, True);
@@ -247,7 +247,7 @@ static void DecodeAccReg(Word Code)
   Byte Erg;
 
   if (!ChkArgCnt(1, 2));
-  else if ((ArgCnt == 2) && (as_strcasecmp(ArgStr[1].Str, "A"))) WrError(ErrNum_InvAddrMode);
+  else if ((ArgCnt == 2) && (as_strcasecmp(ArgStr[1].str.p_str, "A"))) WrError(ErrNum_InvAddrMode);
   else if (DecodeReg(&ArgStr[ArgCnt], &Erg))
   {
     BAsmCode[0] = Lo(Code) + Erg;
@@ -318,7 +318,7 @@ static void DecodeJCN(Word Index)
     char *pCond;
 
     BAsmCode[0] = 0;
-    for (pCond = ArgStr[1].Str; *pCond; pCond++)
+    for (pCond = ArgStr[1].str.p_str; *pCond; pCond++)
       switch (as_toupper(*pCond))
       {
         case 'Z': BAsmCode[0] |= 4; break;
@@ -502,7 +502,7 @@ static void MakeCode_4004(void)
   if (Memo(""))
     return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

@@ -126,16 +126,24 @@ targ:
 		pop	10[cx]
 
                 xch	ax,bx
+		expect	380
                 xch	ax,[bx]
+		endexpect
                 xch	ax,10[bx]
                 xch	ax,-150[bx]
+		expect	1350
                 xch	ax,[bx]+
+		endexpect
                 xch	ax,2000h
                 xchb	bl,al
+		expect	380
                 xchb	[bx],al
+		endexpect
                 xchb	10[bx],al
                 xchb	-150[bx],al
+		expect	1350
                 xchb	[bx]+,al
+		endexpect
                 xchb	2000h,al
 
 		clr	ax

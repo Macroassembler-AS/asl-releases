@@ -18,6 +18,7 @@
 #include "intformat.h"
 #include "lstmacroexp.h"
 #include "errmsg.h"
+#include "addrspace.h"
 
 typedef enum
 {
@@ -102,6 +103,7 @@ typedef struct sEvalResult
 } tEvalResult;
 
 struct sStrComp;
+struct as_nonz_dynstr;
 struct sRelocEntry;
 struct sSymbolEntry;
 
@@ -126,10 +128,9 @@ extern IntType GetSmallestUIntType(LargeWord MaxValue);
 
 extern IntType GetUIntTypeByBits(unsigned Bits);
 
-struct sDynString;
-extern LargeInt DynString2Int(const struct sDynString *pDynString);
+extern LargeInt NonZString2Int(const struct as_nonz_dynstr *p_str);
 
-extern Boolean Int2DynString(struct sDynString *pDynString, LargeInt Src);
+extern Boolean Int2NonZString(struct as_nonz_dynstr *p_str, LargeInt Src);
 
 extern int TempResultToInt(TempResult *pResult);
 
@@ -148,23 +149,23 @@ extern Boolean ExpandStrSymbol(char *pDest, size_t DestSize, const struct sStrCo
 
 extern void ChangeSymbol(struct sSymbolEntry *pEntry, LargeInt Value);
 
-extern struct sSymbolEntry *EnterIntSymbolWithFlags(const struct sStrComp *pName, LargeInt Wert, Byte Typ, Boolean MayChange, tSymbolFlags Flags);
+extern struct sSymbolEntry *EnterIntSymbolWithFlags(const struct sStrComp *pName, LargeInt Wert, as_addrspace_t addrspace, Boolean MayChange, tSymbolFlags Flags);
 
-#define EnterIntSymbol(pName, Wert, Typ, MayChange) EnterIntSymbolWithFlags(pName, Wert, Typ, MayChange, eSymbolFlag_None)
+#define EnterIntSymbol(pName, Wert, addrspace, MayChange) EnterIntSymbolWithFlags(pName, Wert, addrspace, MayChange, eSymbolFlag_None)
 
-extern void EnterExtSymbol(const struct sStrComp *pName, LargeInt Wert, Byte Typ, Boolean MayChange);
+extern void EnterExtSymbol(const struct sStrComp *pName, LargeInt Wert, as_addrspace_t addrspace, Boolean MayChange);
 
-extern struct sSymbolEntry *EnterRelSymbol(const struct sStrComp *pName, LargeInt Wert, Byte Typ, Boolean MayChange);
+extern struct sSymbolEntry *EnterRelSymbol(const struct sStrComp *pName, LargeInt Wert, as_addrspace_t addrspace, Boolean MayChange);
 
 extern void EnterFloatSymbol(const struct sStrComp *pName, Double Wert, Boolean MayChange);
 
 extern void EnterStringSymbol(const struct sStrComp *pName, const char *pValue, Boolean MayChange);
 
-extern void EnterDynStringSymbolWithFlags(const struct sStrComp *pName, const tDynString *pValue, Boolean MayChange, tSymbolFlags Flags);
+extern void EnterNonZStringSymbolWithFlags(const struct sStrComp *pName, const struct as_nonz_dynstr *p_value, Boolean MayChange, tSymbolFlags Flags);
 
 extern void EnterRegSymbol(const struct sStrComp *pName, const tRegDescr *Value, tSymbolSize Size, Boolean MayChange, Boolean AddList);
 
-#define EnterDynStringSymbol(pName, pValue, MayChange) EnterDynStringSymbolWithFlags(pName, pValue, MayChange, eSymbolFlag_None)
+#define EnterNonZStringSymbol(pName, pValue, MayChange) EnterNonZStringSymbolWithFlags(pName, pValue, MayChange, eSymbolFlag_None)
 
 extern void LookupSymbol(const struct sStrComp *pName, TempResult *pValue, Boolean WantRelocs, TempType ReqType);
 

@@ -76,15 +76,15 @@ static Boolean DecodeAdr(const tStrComp *pArg, Boolean MayInc, Byte PCDisp, Byte
   int l, SplitPos;
   tSymbolFlags Flags;
 
-  if (((SplitPos = FindDispBaseSplit(pArg->Str, &l)) >= 0) && (l >= 4))
+  if (((SplitPos = FindDispBaseSplit(pArg->str.p_str, &l)) >= 0) && (l >= 4))
   {
     tStrComp Left, Right;
 
-    StrCompSplitRef(&Left, &Right, pArg, pArg->Str + SplitPos);
+    StrCompSplitRef(&Left, &Right, pArg, pArg->str.p_str + SplitPos);
     StrCompShorten(&Right, 1);
-    if (DecodeReg(Right.Str, Arg))
+    if (DecodeReg(Right.str.p_str, Arg))
     {
-      if (*Left.Str == '@')
+      if (*Left.str.p_str == '@')
       {
         if (!MayInc)
         {
@@ -94,7 +94,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, Boolean MayInc, Byte PCDisp, Byte
         StrCompIncRefLeft(&Left, 1);
         *Arg += 4;
       }
-      if (!as_strcasecmp(Left.Str, "E"))
+      if (!as_strcasecmp(Left.str.p_str, "E"))
         BAsmCode[1] = 0x80;
       else if (*Arg == 0)
       {
@@ -109,7 +109,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, Boolean MayInc, Byte PCDisp, Byte
       }
       return True;
     }
-    else pArg->Str[l - 1] = ')';
+    else pArg->str.p_str[l - 1] = ')';
   }
 
   /* no carry in PC from bit 11 to 12; additionally handle preincrement */
@@ -168,7 +168,7 @@ static void DecodeImm(Word Index)
 static void DecodeRegOrder(Word Index)
 {
   if (!ChkArgCnt(1, 1));
-  else if (!DecodeReg(ArgStr[1].Str, BAsmCode + 0)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
+  else if (!DecodeReg(ArgStr[1].str.p_str, BAsmCode + 0)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
   else
   {
     BAsmCode[0] |= Index; CodeLen = 1;
@@ -277,7 +277,7 @@ static void MakeCode_SCMP(void)
 
   if (DecodeIntelPseudo(TargetBigEndian)) return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 
@@ -289,12 +289,6 @@ static Boolean IsDef_SCMP(void)
 static void InitPass_SCMP(void)
 {
   SetFlag(&TargetBigEndian, BigEndianName, False);
-}
-
-static void SwitchFrom_SCMP(void)
-{
-  DeinitFields();
-  ClearONOFF();
 }
 
 static void SwitchTo_SCMP(void)
@@ -310,7 +304,7 @@ static void SwitchTo_SCMP(void)
   SegLimits[SegCode] = 0xffff;
 
   MakeCode = MakeCode_SCMP; IsDef = IsDef_SCMP;
-  SwitchFrom = SwitchFrom_SCMP; InitFields();
+  SwitchFrom = DeinitFields; InitFields();
 
   AddONOFF("BIGENDIAN", &TargetBigEndian, BigEndianName, False);
 

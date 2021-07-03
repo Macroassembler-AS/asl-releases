@@ -76,11 +76,11 @@ static CPUVar CPU32025, CPU32026, CPU32028;
 static Word EvalARExpression(const tStrComp *pArg, Boolean *OK)
 {
   *OK = True;
-  if ((as_toupper(pArg->Str[0]) == 'A')
-   && (as_toupper(pArg->Str[1]) == 'R')
-   && (pArg->Str[2] >= '0') && (pArg->Str[2] <= '7')
-   && (pArg->Str[3] == '\0'))
-    return pArg->Str[2] - '0';
+  if ((as_toupper(pArg->str.p_str[0]) == 'A')
+   && (as_toupper(pArg->str.p_str[1]) == 'R')
+   && (pArg->str.p_str[2] >= '0') && (pArg->str.p_str[2] <= '7')
+   && (pArg->str.p_str[3] == '\0'))
+    return pArg->str.p_str[2] - '0';
   return EvalStrIntExpression(pArg, UInt3, OK);
 }
 
@@ -93,7 +93,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, int MinArgCnt, int aux, Boolean M
   Boolean AdrOK = False;
   tEvalResult EvalResult;
 
-  while (pAdrMode->Name && as_strcasecmp(pAdrMode->Name, pArg->Str))
+  while (pAdrMode->Name && as_strcasecmp(pAdrMode->Name, pArg->str.p_str))
     pAdrMode++;
   if (!pAdrMode->Name)
   {
@@ -666,7 +666,7 @@ static void MakeCode_3202x(void)
   if (DecodeTIPseudo())
     return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

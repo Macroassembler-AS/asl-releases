@@ -53,22 +53,19 @@ static void DummyOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 static void OneComplOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
   UNUSED(pLVal);
-  pErg->Typ = TempInt;
-  pErg->Contents.Int = ~(pRVal->Contents.Int);
+  as_tempres_set_int(pErg, ~(pRVal->Contents.Int));
   PromoteLValFlags();
 }
 
 static void ShLeftOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
-  pErg->Typ = TempInt;
-  pErg->Contents.Int = pLVal->Contents.Int << pRVal->Contents.Int;
+  as_tempres_set_int(pErg, pLVal->Contents.Int << pRVal->Contents.Int);
   PromoteLRValFlags();
 }
 
 static void ShRightOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
-  pErg->Typ = TempInt;
-  pErg->Contents.Int = pLVal->Contents.Int >> pRVal->Contents.Int;
+  as_tempres_set_int(pErg, pLVal->Contents.Int >> pRVal->Contents.Int);
   PromoteLRValFlags();
 }
 
@@ -79,36 +76,33 @@ static void BitMirrorOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
   if ((pRVal->Contents.Int < 1) || (pRVal->Contents.Int > 32)) WrError(ErrNum_OverRange);
   else
   {
-    pErg->Typ = TempInt;
-    pErg->Contents.Int = (pLVal->Contents.Int >> pRVal->Contents.Int) << pRVal->Contents.Int;
-    pRVal->Contents.Int--;
-    for (z = 0; z <= pRVal->Contents.Int; z++)
+    LargeInt Result = (pLVal->Contents.Int >> pRVal->Contents.Int) << pRVal->Contents.Int;
+
+    for (z = 0; z < pRVal->Contents.Int; z++)
     {
-      if ((pLVal->Contents.Int & (1 << (pRVal->Contents.Int - z))) != 0)
-        pErg->Contents.Int |= (1 << z);
+      if ((pLVal->Contents.Int & (1 << (pRVal->Contents.Int - 1 - z))) != 0)
+        Result |= (1 << z);
     }
+    as_tempres_set_int(pErg, Result);
   }
   PromoteLRValFlags();
 }
 
 static void BinAndOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
-  pErg->Typ = TempInt;
-  pErg->Contents.Int = pLVal->Contents.Int & pRVal->Contents.Int;
+  as_tempres_set_int(pErg, pLVal->Contents.Int & pRVal->Contents.Int);
   PromoteLRValFlags();
 }
 
 static void BinOrOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
-  pErg->Typ = TempInt;
-  pErg->Contents.Int = pLVal->Contents.Int | pRVal->Contents.Int;
+  as_tempres_set_int(pErg, pLVal->Contents.Int | pRVal->Contents.Int);
   PromoteLRValFlags();
 }
 
 static void BinXorOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
-  pErg->Typ = TempInt;
-  pErg->Contents.Int = pLVal->Contents.Int ^ pRVal->Contents.Int;
+  as_tempres_set_int(pErg, pLVal->Contents.Int ^ pRVal->Contents.Int);
   PromoteLRValFlags();
 }
 
@@ -116,46 +110,52 @@ static void PotOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
   LargeInt HVal;
 
-  switch (pErg->Typ = pLVal->Typ)
+  switch (pLVal->Typ)
   {
     case TempInt:
-      if (pRVal->Contents.Int < 0) pErg->Contents.Int = 0;
+      if (pRVal->Contents.Int < 0) as_tempres_set_int(pErg, 0);
       else
       {
-        pErg->Contents.Int = 1;
-        while (pRVal->Contents.Int > 0)
+        LargeInt l = pLVal->Contents.Int, r = pRVal->Contents.Int;
+
+        HVal = 1;
+        while (r > 0)
         {
-          if (pRVal->Contents.Int & 1)
-            pErg->Contents.Int *= pLVal->Contents.Int;
-          pRVal->Contents.Int >>= 1;
-          if (pRVal->Contents.Int != 0)
-            pLVal->Contents.Int *= pLVal->Contents.Int;
+          if (r & 1)
+            HVal *= l;
+          r >>= 1;
+          if (r)
+            l *= l;
         }
+        as_tempres_set_int(pErg, HVal);
       }
       break;
     case TempFloat:
       if (pRVal->Contents.Float == 0.0)
-        pErg->Contents.Float = 1.0;
+        as_tempres_set_float(pErg, 1.0);
       else if (pLVal->Contents.Float == 0.0)
-        pErg->Contents.Float = 0.0;
+        as_tempres_set_float(pErg, 0.0);
       else if (pLVal->Contents.Float > 0)
-        pErg->Contents.Float = pow(pLVal->Contents.Float, pRVal->Contents.Float);
+        as_tempres_set_float(pErg, pow(pLVal->Contents.Float, pRVal->Contents.Float));
       else if ((fabs(pRVal->Contents.Float) <= ((double)MaxLongInt)) && (floor(pRVal->Contents.Float) == pRVal->Contents.Float))
       {
+        Double Base = pLVal->Contents.Float, Result;
+
         HVal = (LongInt) floor(pRVal->Contents.Float + 0.5);
         if (HVal < 0)
         {
-          pLVal->Contents.Float = 1 / pLVal->Contents.Float;
+          Base = 1 / Base;
           HVal = -HVal;
         }
-        pErg->Contents.Float = 1.0;
+        Result = 1.0;
         while (HVal > 0)
         {
-          if ((HVal & 1) == 1)
-            pErg->Contents.Float *= pLVal->Contents.Float;
-          pLVal->Contents.Float *= pLVal->Contents.Float;
+          if (HVal & 1)
+            Result *= Base;
+          Base *= Base;
           HVal >>= 1;
         }
+        as_tempres_set_float(pErg, Base);
       }
       else
       {
@@ -171,13 +171,13 @@ static void PotOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 
 static void MultOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
-  switch (pErg->Typ = pLVal->Typ)
+  switch (pLVal->Typ)
   {
     case TempInt:
-      pErg->Contents.Int = pLVal->Contents.Int * pRVal->Contents.Int;
+      as_tempres_set_int(pErg, pLVal->Contents.Int * pRVal->Contents.Int);
       break;
     case TempFloat:
-      pErg->Contents.Float = pLVal->Contents.Float * pRVal->Contents.Float;
+      as_tempres_set_float(pErg, pLVal->Contents.Float * pRVal->Contents.Float);
       break;
     default:
       break;
@@ -192,18 +192,12 @@ static void DivOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
     case TempInt:
       if (pRVal->Contents.Int == 0) WrError(ErrNum_DivByZero);
       else
-      {
-        pErg->Typ = TempInt;
-        pErg->Contents.Int = pLVal->Contents.Int / pRVal->Contents.Int;
-      }
+        as_tempres_set_int(pErg, pLVal->Contents.Int / pRVal->Contents.Int);
       break;
     case TempFloat:
       if (pRVal->Contents.Float == 0.0) WrError(ErrNum_DivByZero);
       else
-      {
-        pErg->Typ = TempFloat;
-        pErg->Contents.Float = pLVal->Contents.Float / pRVal->Contents.Float;
-      }
+        as_tempres_set_float(pErg, pLVal->Contents.Float / pRVal->Contents.Float);
     default:
       break;
   }
@@ -214,32 +208,31 @@ static void ModOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
   if (pRVal->Contents.Int == 0) WrError(ErrNum_DivByZero);
   else
-  {
-    pErg->Typ = TempInt;
-    pErg->Contents.Int = pLVal->Contents.Int % pRVal->Contents.Int;
-  }
+    as_tempres_set_int(pErg, pLVal->Contents.Int % pRVal->Contents.Int);
   PromoteLRValFlags();
 }
 
 static void AddOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
-  pErg->Typ = TempNone;
+  as_tempres_set_none(pErg);
   switch (pLVal->Typ)
   {
     case TempInt:
       switch (pRVal->Typ)
       {
         case TempInt:
-          pErg->Typ = TempInt;
-          pErg->Contents.Int = pLVal->Contents.Int + pRVal->Contents.Int;
+          as_tempres_set_int(pErg, pLVal->Contents.Int + pRVal->Contents.Int);
           pErg->Relocs = MergeRelocs(&(pLVal->Relocs), &(pRVal->Relocs), TRUE);
           break;
         case TempString:
         {
-          LargeInt RIntVal = DynString2Int(&pRVal->Contents.Ascii);
+          LargeInt RIntVal = NonZString2Int(&pRVal->Contents.str);
 
-          if ((RIntVal >= 0) && Int2DynString(&pErg->Contents.Ascii, RIntVal + pLVal->Contents.Int))
-            pErg->Typ = TempString;
+          if (RIntVal >= 0)
+          {
+            as_tempres_set_c_str(pErg, "");
+            Int2NonZString(&pErg->Contents.str, RIntVal + pLVal->Contents.Int);
+          }
           break;
         }
         default:
@@ -247,30 +240,33 @@ static void AddOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
       }
       break;
     case TempFloat:
-      pErg->Typ = TempFloat;
       if (TempFloat == pRVal->Typ)
-        pErg->Contents.Float = pLVal->Contents.Float + pRVal->Contents.Float;
+        as_tempres_set_float(pErg, pLVal->Contents.Float + pRVal->Contents.Float);
       break;
     case TempString:
+    {
       switch (pRVal->Typ)
       {
         case TempString:
-          DynString2DynString(&pErg->Contents.Ascii, &pLVal->Contents.Ascii);
-          DynStringAppendDynString(&pErg->Contents.Ascii, &pRVal->Contents.Ascii);
-          pErg->Typ = TempString;
+          as_tempres_set_str(pErg, &pLVal->Contents.str);
+          as_nonz_dynstr_append(&pErg->Contents.str, &pRVal->Contents.str);
           break;
         case TempInt:
         {
-          LargeInt LIntVal = DynString2Int(&pLVal->Contents.Ascii);
+          LargeInt LIntVal = NonZString2Int(&pLVal->Contents.str);
 
-          if ((LIntVal >= 0) && Int2DynString(&pErg->Contents.Ascii, LIntVal + pRVal->Contents.Int))
-            pErg->Typ = TempString;
+          if (LIntVal >= 0)
+          {
+            as_tempres_set_c_str(pErg, "");
+            Int2NonZString(&pErg->Contents.str, LIntVal + pRVal->Contents.Int);
+          }
           break;
         }
         default:
           break;
       }
       break;
+    }
     default:
       break;
   }
@@ -279,14 +275,13 @@ static void AddOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 
 static void SubOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
-  switch (pErg->Typ = pLVal->Typ)
+  switch (pLVal->Typ)
   {
     case TempInt:
-      pErg->Contents.Int = pLVal->Contents.Int - pRVal->Contents.Int;
-      pErg->Relocs = MergeRelocs(&(pLVal->Relocs), &(pRVal->Relocs), FALSE);
+      as_tempres_set_int(pErg, pLVal->Contents.Int - pRVal->Contents.Int);
       break;
     case TempFloat:
-      pErg->Contents.Float = pLVal->Contents.Float - pRVal->Contents.Float;
+      as_tempres_set_float(pErg, pLVal->Contents.Float - pRVal->Contents.Float);
       break;
     default:
       break;
@@ -297,45 +292,40 @@ static void SubOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 static void LogNotOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
   UNUSED(pLVal);
-  pErg->Typ = TempInt;
-  pErg->Contents.Int = (pRVal->Contents.Int == 0) ? 1 : 0;
+  as_tempres_set_int(pErg, pRVal->Contents.Int ? 0 : 1);
   PromoteLValFlags();
 }
 
 static void LogAndOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
-  pErg->Typ = TempInt;
-  pErg->Contents.Int = ((pLVal->Contents.Int != 0) && (pRVal->Contents.Int != 0)) ? 1 : 0;
+  as_tempres_set_int(pErg, (pLVal->Contents.Int && pRVal->Contents.Int) ? 1 : 0);
   PromoteLRValFlags();
 }
 
 static void LogOrOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
-  pErg->Typ = TempInt;
-  pErg->Contents.Int = ((pLVal->Contents.Int != 0) || (pRVal->Contents.Int != 0)) ? 1 : 0;
+  as_tempres_set_int(pErg, (pLVal->Contents.Int || pRVal->Contents.Int) ? 1 : 0);
   PromoteLRValFlags();
 }
 
 static void LogXorOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
-  pErg->Typ = TempInt;
-  pErg->Contents.Int = ((pLVal->Contents.Int != 0) != (pRVal->Contents.Int != 0)) ? 1 : 0;
+  as_tempres_set_int(pErg, ((pLVal->Contents.Int != 0) != (pRVal->Contents.Int != 0)) ? 1 : 0);
   PromoteLRValFlags();
 }
 
 static void EqOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
-  pErg->Typ = TempInt;
   switch (pLVal->Typ)
   {
     case TempInt:
-      pErg->Contents.Int = (pLVal->Contents.Int == pRVal->Contents.Int) ? 1 : 0;
+      as_tempres_set_int(pErg, (pLVal->Contents.Int == pRVal->Contents.Int) ? 1 : 0);
       break;
     case TempFloat:
-      pErg->Contents.Int = (pLVal->Contents.Float == pRVal->Contents.Float) ? 1 : 0;
+      as_tempres_set_int(pErg, (pLVal->Contents.Float == pRVal->Contents.Float) ? 1 : 0);
       break;
     case TempString:
-      pErg->Contents.Int = (DynStringCmp(&pLVal->Contents.Ascii, &pRVal->Contents.Ascii) == 0) ? 1 : 0;
+      as_tempres_set_int(pErg, (as_nonz_dynstr_cmp(&pLVal->Contents.str, &pRVal->Contents.str) == 0) ? 1 : 0);
       break;
     default:
       break;
@@ -345,17 +335,16 @@ static void EqOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 
 static void GtOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
-  pErg->Typ = TempInt;
   switch (pLVal->Typ)
   {
     case TempInt:
-      pErg->Contents.Int = (pLVal->Contents.Int > pRVal->Contents.Int) ? 1 : 0;
+      as_tempres_set_int(pErg, (pLVal->Contents.Int > pRVal->Contents.Int) ? 1 : 0);
       break;
     case TempFloat:
-      pErg->Contents.Int = (pLVal->Contents.Float > pRVal->Contents.Float) ? 1 : 0;
+      as_tempres_set_int(pErg, (pLVal->Contents.Float > pRVal->Contents.Float) ? 1 : 0);
       break;
     case TempString:
-      pErg->Contents.Int = (DynStringCmp(&pLVal->Contents.Ascii, &pRVal->Contents.Ascii) > 0) ? 1 : 0;
+      as_tempres_set_int(pErg, (as_nonz_dynstr_cmp(&pLVal->Contents.str, &pRVal->Contents.str) > 0) ? 1 : 0);
       break;
     default:
       break;
@@ -365,17 +354,16 @@ static void GtOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 
 static void LtOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
-  pErg->Typ = TempInt;
   switch (pLVal->Typ)
   {
     case TempInt:
-      pErg->Contents.Int = (pLVal->Contents.Int < pRVal->Contents.Int) ? 1 : 0;
+      as_tempres_set_int(pErg, (pLVal->Contents.Int < pRVal->Contents.Int) ? 1 : 0);
       break;
     case TempFloat:
-      pErg->Contents.Int = (pLVal->Contents.Float < pRVal->Contents.Float) ? 1 : 0;
+      as_tempres_set_int(pErg, (pLVal->Contents.Float < pRVal->Contents.Float) ? 1 : 0);
       break;
     case TempString:
-      pErg->Contents.Int = (DynStringCmp(&pLVal->Contents.Ascii, &pRVal->Contents.Ascii) < 0) ? 1 : 0;
+      as_tempres_set_int(pErg, (as_nonz_dynstr_cmp(&pLVal->Contents.str, &pRVal->Contents.str) < 0) ? 1 : 0);
       break;
     default:
       break;
@@ -385,17 +373,16 @@ static void LtOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 
 static void LeOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
-  pErg->Typ = TempInt;
   switch (pLVal->Typ)
   {
     case TempInt:
-      pErg->Contents.Int = (pLVal->Contents.Int <= pRVal->Contents.Int) ? 1 : 0;
+      as_tempres_set_int(pErg, (pLVal->Contents.Int <= pRVal->Contents.Int) ? 1 : 0);
       break;
     case TempFloat:
-      pErg->Contents.Int = (pLVal->Contents.Float <= pRVal->Contents.Float) ? 1 : 0;
+      as_tempres_set_int(pErg, (pLVal->Contents.Float <= pRVal->Contents.Float) ? 1 : 0);
       break;
     case TempString:
-      pErg->Contents.Int = (DynStringCmp(&pLVal->Contents.Ascii, &pRVal->Contents.Ascii) <= 0) ? 1 : 0;
+      as_tempres_set_int(pErg, (as_nonz_dynstr_cmp(&pLVal->Contents.str, &pRVal->Contents.str) <= 0) ? 1 : 0);
       break;
     default:
       break;
@@ -405,17 +392,16 @@ static void LeOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 
 static void GeOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
-  pErg->Typ = TempInt;
   switch (pLVal->Typ)
   {
     case TempInt:
-      pErg->Contents.Int = (pLVal->Contents.Int >= pRVal->Contents.Int) ? 1 : 0;
+      as_tempres_set_int(pErg, (pLVal->Contents.Int >= pRVal->Contents.Int) ? 1 : 0);
       break;
     case TempFloat:
-      pErg->Contents.Int = (pLVal->Contents.Float >= pRVal->Contents.Float) ? 1 : 0;
+      as_tempres_set_int(pErg, (pLVal->Contents.Float >= pRVal->Contents.Float) ? 1 : 0);
       break;
     case TempString:
-      pErg->Contents.Int = (DynStringCmp(&pLVal->Contents.Ascii, &pRVal->Contents.Ascii) >= 0) ? 1 : 0;
+      as_tempres_set_int(pErg, (as_nonz_dynstr_cmp(&pLVal->Contents.str, &pRVal->Contents.str) >= 0) ? 1 : 0);
       break;
     default:
       break;
@@ -425,17 +411,16 @@ static void GeOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 
 static void UneqOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
-  pErg->Typ = TempInt;
   switch (pLVal->Typ)
   {
     case TempInt:
-      pErg->Contents.Int = (pLVal->Contents.Int != pRVal->Contents.Int) ? 1 : 0;
+      as_tempres_set_int(pErg, (pLVal->Contents.Int != pRVal->Contents.Int) ? 1 : 0);
       break;
     case TempFloat:
-      pErg->Contents.Int = (pLVal->Contents.Float != pRVal->Contents.Float) ? 1 : 0;
+      as_tempres_set_int(pErg, (pLVal->Contents.Float != pRVal->Contents.Float) ? 1 : 0);
       break;
     case TempString:
-      pErg->Contents.Int = (DynStringCmp(&pLVal->Contents.Ascii, &pRVal->Contents.Ascii) != 0) ? 1 : 0;
+      as_tempres_set_int(pErg, (as_nonz_dynstr_cmp(&pLVal->Contents.str, &pRVal->Contents.str) != 0) ? 1 : 0);
       break;
     default:
       break;

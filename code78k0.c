@@ -70,7 +70,7 @@ static void DecodeAdr(const tStrComp *pArg, Word Mask)
   Word AdrWord;
   int z;
   Boolean OK, LongFlag;
-  int ArgLen = strlen(pArg->Str);
+  int ArgLen = strlen(pArg->str.p_str);
   tSymbolFlags Flags;
 
   AdrMode = ModNone;
@@ -79,25 +79,25 @@ static void DecodeAdr(const tStrComp *pArg, Word Mask)
   /* Register */
 
   for (z = 0; z < 8; z++)
-    if (!as_strcasecmp(pArg->Str, RegNames[z]))
+    if (!as_strcasecmp(pArg->str.p_str, RegNames[z]))
     {
       AdrMode = ModReg8;
       AdrPart = z;
       goto chk;
     }
 
-  if (as_toupper(*pArg->Str) == 'R')
+  if (as_toupper(*pArg->str.p_str) == 'R')
   {
-    if ((strlen(pArg->Str) == 2) && (pArg->Str[1] >= '0') && (pArg->Str[1] <= '7'))
+    if ((strlen(pArg->str.p_str) == 2) && (pArg->str.p_str[1] >= '0') && (pArg->str.p_str[1] <= '7'))
     {
       AdrMode = ModReg8;
-      AdrPart = pArg->Str[1] - '0';
+      AdrPart = pArg->str.p_str[1] - '0';
       goto chk;
     }
-    else if ((ArgLen == 3) && (as_toupper(pArg->Str[1]) == 'P') && (pArg->Str[2] >= '0') && (pArg->Str[2] <= '3'))
+    else if ((ArgLen == 3) && (as_toupper(pArg->str.p_str[1]) == 'P') && (pArg->str.p_str[2] >= '0') && (pArg->str.p_str[2] <= '3'))
     {
       AdrMode = ModReg16;
-      AdrPart = pArg->Str[2] - '0';
+      AdrPart = pArg->str.p_str[2] - '0';
       goto chk;
     }
   }
@@ -105,8 +105,8 @@ static void DecodeAdr(const tStrComp *pArg, Word Mask)
   if (ArgLen == 2)
   {
     for (z = 0; z < 4; z++)
-      if ((as_toupper(*pArg->Str) == *RegNames[(z << 1) + 1])
-       && (as_toupper(pArg->Str[1]) == *RegNames[z << 1]))
+      if ((as_toupper(*pArg->str.p_str) == *RegNames[(z << 1) + 1])
+       && (as_toupper(pArg->str.p_str[1]) == *RegNames[z << 1]))
       {
         AdrMode = ModReg16;
         AdrPart = z;
@@ -116,7 +116,7 @@ static void DecodeAdr(const tStrComp *pArg, Word Mask)
 
   /* immediate */
 
-  if (*pArg->Str == '#')
+  if (*pArg->str.p_str == '#')
   {
     switch (OpSize)
     {
@@ -142,30 +142,30 @@ static void DecodeAdr(const tStrComp *pArg, Word Mask)
 
   /* indirekt */
 
-  if ((*pArg->Str == '[') && (pArg->Str[ArgLen - 1] == ']'))
+  if ((*pArg->str.p_str == '[') && (pArg->str.p_str[ArgLen - 1] == ']'))
   {
     tStrComp Arg;
 
     StrCompRefRight(&Arg, pArg, 1);
     StrCompShorten(&Arg, 1);
 
-    if ((!as_strcasecmp(Arg.Str, "DE")) || (!as_strcasecmp(Arg.Str, "RP2")))
+    if ((!as_strcasecmp(Arg.str.p_str, "DE")) || (!as_strcasecmp(Arg.str.p_str, "RP2")))
     {
       AdrMode = ModIReg;
       AdrPart = 0;
     }
-    else if ((!as_strncasecmp(Arg.Str, "HL", 2)) && (!as_strncasecmp(Arg.Str, "RP3", 3))) WrStrErrorPos(ErrNum_InvReg, &Arg);
+    else if ((!as_strncasecmp(Arg.str.p_str, "HL", 2)) && (!as_strncasecmp(Arg.str.p_str, "RP3", 3))) WrStrErrorPos(ErrNum_InvReg, &Arg);
     else
     {
       StrCompIncRefLeft(&Arg, 2);
-      if (*Arg.Str == '3')
+      if (*Arg.str.p_str == '3')
         StrCompIncRefLeft(&Arg, 1);
-      if ((!as_strcasecmp(Arg.Str, "+B")) || (!as_strcasecmp(Arg.Str, "+R3")))
+      if ((!as_strcasecmp(Arg.str.p_str, "+B")) || (!as_strcasecmp(Arg.str.p_str, "+R3")))
       {
         AdrMode = ModIndex;
         AdrPart = 1;
       }
-      else if ((!as_strcasecmp(Arg.Str, "+C")) || (!as_strcasecmp(Arg.Str, "+R2")))
+      else if ((!as_strcasecmp(Arg.str.p_str, "+C")) || (!as_strcasecmp(Arg.str.p_str, "+R2")))
       {
         AdrMode = ModIndex;
         AdrPart = 0;
@@ -194,7 +194,7 @@ static void DecodeAdr(const tStrComp *pArg, Word Mask)
 
   /* erzwungen lang ? */
 
-  LongFlag = !!(*pArg->Str == '!');
+  LongFlag = !!(*pArg->str.p_str == '!');
 
   /* -->absolut */
 
@@ -249,7 +249,7 @@ static Boolean DecodeBitAdr(const tStrComp *pArg, Byte *Erg)
   Boolean OK;
   tStrComp Reg, Bit;
 
-  p = RQuotPos(pArg->Str, '.');
+  p = RQuotPos(pArg->str.p_str, '.');
   if (!p)
   {
     WrError(ErrNum_InvBitPos);
@@ -487,7 +487,7 @@ static void DecodeXCH(Word Index)
 
   if (ChkArgCnt(2, 2))
   {
-    Boolean Swap = (!as_strcasecmp(ArgStr[2].Str, "A")) || (!as_strcasecmp(ArgStr[2].Str, "RP1"));
+    Boolean Swap = (!as_strcasecmp(ArgStr[2].str.p_str, "A")) || (!as_strcasecmp(ArgStr[2].str.p_str, "RP1"));
     tStrComp *pArg1 = Swap ? &ArgStr[2] : &ArgStr[1],
              *pArg2 = Swap ? &ArgStr[1] : &ArgStr[2];
 
@@ -693,7 +693,7 @@ static void DecodeXCHW(Word Index)
 static void DecodeStack(Word Index)
 {
   if (!ChkArgCnt(1, 1));
-  else if (!as_strcasecmp(ArgStr[1].Str, "PSW"))
+  else if (!as_strcasecmp(ArgStr[1].str.p_str, "PSW"))
   {
     BAsmCode[0] = 0x22 + Index;
     CodeLen = 1;
@@ -938,12 +938,12 @@ static void DecodeMOV1(Word Index)
 
   if (ChkArgCnt(2, 2))
   {
-    Boolean Swap = !as_strcasecmp(ArgStr[2].Str, "CY");
+    Boolean Swap = !as_strcasecmp(ArgStr[2].str.p_str, "CY");
     tStrComp *pArg1 = Swap ? &ArgStr[2] : &ArgStr[1],
              *pArg2 = Swap ? &ArgStr[1] : &ArgStr[2];
     int z = Swap ? 1 : 4;
 
-    if (as_strcasecmp(pArg1->Str, "CY")) WrError(ErrNum_InvAddrMode);
+    if (as_strcasecmp(pArg1->str.p_str, "CY")) WrError(ErrNum_InvAddrMode);
     else if (DecodeBitAdr(pArg2, &HReg))
     {
       BAsmCode[0] = 0x61 + (Ord((HReg & 0x88) != 0x88) << 4);
@@ -959,7 +959,7 @@ static void DecodeBit2(Word Index)
   Byte HReg;
 
   if (!ChkArgCnt(2, 2));
-  else if (as_strcasecmp(ArgStr[1].Str, "CY")) WrError(ErrNum_InvAddrMode);
+  else if (as_strcasecmp(ArgStr[1].str.p_str, "CY")) WrError(ErrNum_InvAddrMode);
   else if (DecodeBitAdr(&ArgStr[2], &HReg))
   {
     BAsmCode[0] = 0x61 + (Ord((HReg & 0x88) != 0x88) << 4);
@@ -974,7 +974,7 @@ static void DecodeSETCLR1(Word Index)
   Byte HReg;
 
   if (!ChkArgCnt(1, 1));
-  else if (!as_strcasecmp(ArgStr[1].Str, "CY"))
+  else if (!as_strcasecmp(ArgStr[1].str.p_str, "CY"))
   {
     BAsmCode[0] = 0x20 + Index;
     CodeLen = 1;
@@ -1002,7 +1002,7 @@ static void DecodeNOT1(Word Index)
   UNUSED(Index);
 
   if (!ChkArgCnt(1, 1));
-  else if (as_strcasecmp(ArgStr[1].Str, "CY")) WrError(ErrNum_InvAddrMode);
+  else if (as_strcasecmp(ArgStr[1].str.p_str, "CY")) WrError(ErrNum_InvAddrMode);
   else
   {
     BAsmCode[0] = 0x01;
@@ -1037,7 +1037,7 @@ static void DecodeCALLF(Word Index)
 
   if (ChkArgCnt(1, 1))
   {
-    AdrWord = EvalStrIntExpressionOffs(&ArgStr[1], !!(*ArgStr[1].Str == '!'), UInt11, &OK);
+    AdrWord = EvalStrIntExpressionOffs(&ArgStr[1], !!(*ArgStr[1].str.p_str == '!'), UInt11, &OK);
     if (OK)
     {
       BAsmCode[0] = 0x0c | (Hi(AdrWord) << 4);
@@ -1051,17 +1051,17 @@ static void DecodeCALLT(Word Index)
 {
   Word AdrWord;
   Boolean OK;
-  int l = strlen(ArgStr[1].Str);
+  int l = strlen(ArgStr[1].str.p_str);
 
   UNUSED(Index);
 
   if (!ChkArgCnt(1, 1));
-  else if ((*ArgStr[1].Str != '[') || (ArgStr[1].Str[l - 1] != ']')) WrError(ErrNum_InvAddrMode);
+  else if ((*ArgStr[1].str.p_str != '[') || (ArgStr[1].str.p_str[l - 1] != ']')) WrError(ErrNum_InvAddrMode);
   else
   {
     tSymbolFlags Flags;
 
-    ArgStr[1].Str[l - 1] = '\0';
+    ArgStr[1].str.p_str[l - 1] = '\0';
     AdrWord = EvalStrIntExpressionOffsWithFlags(&ArgStr[1], 1, UInt6, &OK, &Flags);
     if (mFirstPassUnknown(Flags)) AdrWord &= 0xfffe;
     if (OK)
@@ -1086,7 +1086,7 @@ static void DecodeBR(Word Index)
   UNUSED(Index);
 
   if (!ChkArgCnt(1, 1));
-  else if ((!as_strcasecmp(ArgStr[1].Str, "AX")) || (!as_strcasecmp(ArgStr[1].Str, "RP0")))
+  else if ((!as_strcasecmp(ArgStr[1].str.p_str, "AX")) || (!as_strcasecmp(ArgStr[1].str.p_str, "RP0")))
   {
     BAsmCode[0] = 0x31;
     BAsmCode[1] = 0x98;
@@ -1097,12 +1097,12 @@ static void DecodeBR(Word Index)
     unsigned Offset = 0;
     tSymbolFlags Flags;
 
-    if (*ArgStr[1].Str == '!')
+    if (*ArgStr[1].str.p_str == '!')
     {
       Offset++;
       HReg = 1;
     }
-    else if (*ArgStr[1].Str == '$')
+    else if (*ArgStr[1].str.p_str == '$')
     {
       Offset++;
       HReg = 2;
@@ -1147,7 +1147,7 @@ static void DecodeRel(Word Index)
 
   if (ChkArgCnt(1, 1))
   {
-    AdrInt = EvalStrIntExpressionOffsWithFlags(&ArgStr[1], ('$' == *ArgStr[1].Str), UInt16, &OK, &Flags) - (EProgCounter() + 2);
+    AdrInt = EvalStrIntExpressionOffsWithFlags(&ArgStr[1], ('$' == *ArgStr[1].str.p_str), UInt16, &OK, &Flags) - (EProgCounter() + 2);
     if (OK)
     {
       if (((AdrInt < -128) || (AdrInt > 127)) && !mSymbolQuestionable(Flags)) WrError(ErrNum_JmpDistTooBig);
@@ -1199,7 +1199,7 @@ static void DecodeBRel(Word Index)
       BAsmCode[2] = AdrVals[0];
       HReg = 2 + AdrCnt;
     }
-    AdrInt = EvalStrIntExpressionOffsWithFlags(&ArgStr[2], !!(*ArgStr[2].Str == '$'), UInt16, &OK, &Flags) - (EProgCounter() + HReg + 1);
+    AdrInt = EvalStrIntExpressionOffsWithFlags(&ArgStr[2], !!(*ArgStr[2].str.p_str == '$'), UInt16, &OK, &Flags) - (EProgCounter() + HReg + 1);
     if (OK)
     {
       if (((AdrInt < -128) || (AdrInt > 127)) & !mSymbolQuestionable(Flags)) WrError(ErrNum_JmpDistTooBig);
@@ -1228,7 +1228,7 @@ static void DecodeDBNZ(Word Index)
     {
       BAsmCode[0] = (AdrMode == ModReg8) ? 0x88 + AdrPart : 0x04;
       BAsmCode[1] = AdrVals[0];
-      AdrInt = EvalStrIntExpressionOffsWithFlags(&ArgStr[2], !!(*ArgStr[2].Str == '$'), UInt16, &OK, &Flags) - (EProgCounter() + AdrCnt + 2);
+      AdrInt = EvalStrIntExpressionOffsWithFlags(&ArgStr[2], !!(*ArgStr[2].str.p_str == '$'), UInt16, &OK, &Flags) - (EProgCounter() + AdrCnt + 2);
       if (OK)
       {
         if (((AdrInt < -128) || (AdrInt > 127)) && !mSymbolQuestionable(Flags)) WrError(ErrNum_JmpDistTooBig);
@@ -1251,10 +1251,10 @@ static void DecodeSEL(Word Index)
   UNUSED(Index);
 
   if (ArgCnt != 1) WrError(ErrNum_InvAddrMode);
-  else if ((strlen(ArgStr[1].Str) != 3) || (as_strncasecmp(ArgStr[1].Str, "RB", 2) != 0)) WrError(ErrNum_InvAddrMode);
+  else if ((strlen(ArgStr[1].str.p_str) != 3) || (as_strncasecmp(ArgStr[1].str.p_str, "RB", 2) != 0)) WrError(ErrNum_InvAddrMode);
   else
   {
-    HReg = ArgStr[1].Str[2] - '0';
+    HReg = ArgStr[1].str.p_str[2] - '0';
     if (ChkRange(HReg, 0, 3))
     {
       BAsmCode[0] = 0x61;
@@ -1379,7 +1379,7 @@ static void MakeCode_78K0(void)
 
   if (DecodeIntelPseudo(False)) return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

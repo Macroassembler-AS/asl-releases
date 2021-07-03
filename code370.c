@@ -110,7 +110,7 @@ static void DecodeAdrRel(const tStrComp *pArg, Word Mask, Boolean AddrRel)
   AdrType = ModNone;
   AdrCnt = 0;
 
-  if (!as_strcasecmp(pArg->Str, "A"))
+  if (!as_strcasecmp(pArg->str.p_str, "A"))
   {
     if (Mask & MModAccA)
       AdrType = ModAccA;
@@ -130,7 +130,7 @@ static void DecodeAdrRel(const tStrComp *pArg, Word Mask, Boolean AddrRel)
     goto chk;
   }
 
-  if (!as_strcasecmp(pArg->Str, "B"))
+  if (!as_strcasecmp(pArg->str.p_str, "B"))
   {
     if (Mask & MModAccB)
       AdrType = ModAccB;
@@ -150,12 +150,12 @@ static void DecodeAdrRel(const tStrComp *pArg, Word Mask, Boolean AddrRel)
     goto chk;
   }
 
-  if (*pArg->Str == '#')
+  if (*pArg->str.p_str == '#')
   {
     tStrComp Arg;
 
     StrCompRefRight(&Arg, pArg, 1);
-    p = HasDisp(Arg.Str);
+    p = HasDisp(Arg.str.p_str);
     if (!p)
     {
       switch (OpSize)
@@ -212,7 +212,7 @@ static void DecodeAdrRel(const tStrComp *pArg, Word Mask, Boolean AddrRel)
     goto chk;
   }
 
-  if (*pArg->Str == '@')
+  if (*pArg->str.p_str == '@')
   {
     AdrVals[0] = EvalStrIntExpressionOffs(pArg, 1, Int8, &OK);
     if (OK)
@@ -223,7 +223,7 @@ static void DecodeAdrRel(const tStrComp *pArg, Word Mask, Boolean AddrRel)
     goto chk;
   }
 
-  p = HasDisp(pArg->Str);
+  p = HasDisp(pArg->str.p_str);
 
   if (!p)
   {
@@ -266,7 +266,7 @@ static void DecodeAdrRel(const tStrComp *pArg, Word Mask, Boolean AddrRel)
     if (OK)
     {
       StrCompShorten (&Right, 1);
-      if (!as_strcasecmp(Right.Str, "B"))
+      if (!as_strcasecmp(Right.str.p_str, "B"))
       {
         if (AddrRel)
           HVal -= EProgCounter() + 3;
@@ -275,7 +275,7 @@ static void DecodeAdrRel(const tStrComp *pArg, Word Mask, Boolean AddrRel)
         AdrCnt = 2;
         AdrType = ModBRel;
       }
-      else if (!as_strcasecmp(Right.Str, "SP"))
+      else if (!as_strcasecmp(Right.str.p_str, "SP"))
       {
         if (AddrRel)
           HVal -= EProgCounter() + 3;
@@ -375,9 +375,9 @@ static Boolean DecodeBitExpr(int Start, int Stop, LongWord *pResult)
     if (!OK)
       return OK;
 
-    if ((!as_strcasecmp(ArgStr[Stop].Str, "A")) || (!as_strcasecmp(ArgStr[Stop].Str, "B")))
+    if ((!as_strcasecmp(ArgStr[Stop].str.p_str, "A")) || (!as_strcasecmp(ArgStr[Stop].str.p_str, "B")))
     {
-      Addr = toupper(*ArgStr[Stop].Str) - 'A';
+      Addr = toupper(*ArgStr[Stop].str.p_str) - 'A';
       OK = True;
     }
     else
@@ -986,7 +986,7 @@ static void DecodeABReg(Word Code)
   Code &= 0xff;
 
   if (!ChkArgCnt(1 + IsDJNZ, 1 + IsDJNZ));
-  else if (!as_strcasecmp(ArgStr[1].Str, "ST"))
+  else if (!as_strcasecmp(ArgStr[1].str.p_str, "ST"))
   {
     if (IsStack)
     {
@@ -1286,7 +1286,7 @@ static void MakeCode_370(void)
   if (DecodeIntelPseudo(True))
     return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 
@@ -1295,25 +1295,26 @@ static Boolean IsDef_370(void)
   return (Memo("DBIT"));
 }
 
-static void InternSymbol_370(char *Asc,  TempResult*Erg)
+static void InternSymbol_370(char *Asc,  TempResult *Erg)
 {
-  Boolean err;
+  Boolean OK;
   String h;
+  LargeInt Num;
 
-  Erg->Typ = TempNone;
+  as_tempres_set_none(Erg);
   if ((strlen(Asc) < 2) || ((as_toupper(*Asc) != 'R') && (as_toupper(*Asc) != 'P')))
     return;
 
   strcpy(h, Asc + 1);
   if ((*h == '0') && (strlen(h) > 1))
     *h = '$';
-  Erg->Contents.Int = ConstLongInt(h, &err, 10);
-  if ((!err) || (Erg->Contents.Int < 0) || (Erg->Contents.Int > 255))
+  Num = ConstLongInt(h, &OK, 10);
+  if (!OK || (Num < 0) || (Num > 255))
     return;
 
-  Erg->Typ = TempInt;
   if (as_toupper(*Asc) == 'P')
-    Erg->Contents.Int += 0x1000;
+    Num += 0x1000;
+  as_tempres_set_int(Erg, Num);
 }
 
 static void SwitchFrom_370(void)

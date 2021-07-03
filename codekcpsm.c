@@ -133,7 +133,7 @@ static tRegEvalResult IsWReg(const tStrComp *pArg, Word *pResult, Boolean MustBe
   tEvalResult EvalResult;
   tRegEvalResult RegEvalResult;
 
-  if (IsWRegCore(pArg->Str, pResult))
+  if (IsWRegCore(pArg->str.p_str, pResult))
     return eIsReg;
 
   RegEvalResult = EvalStrRegExpressionAsOperand(pArg, &RegDescr, &EvalResult, eSymbolSize8Bit, MustBeReg);
@@ -151,7 +151,7 @@ static void DecodeAdr(const tStrComp *pArg, Byte Mask, int Segment)
 
   /* immediate ? */
 
-  if (*pArg->Str == '#')
+  if (*pArg->str.p_str == '#')
   {
     AdrMode = EvalStrIntExpressionOffsWithResult(pArg, 1, UInt8, &EvalResult);
     if (EvalResult.OK)
@@ -174,11 +174,11 @@ static void DecodeAdr(const tStrComp *pArg, Byte Mask, int Segment)
 
   /* indiziert ? */
 
-  ArgLen = strlen(pArg->Str);
-  if ((ArgLen >= 4) && (pArg->Str[ArgLen - 1] == ')'))
+  ArgLen = strlen(pArg->str.p_str);
+  if ((ArgLen >= 4) && (pArg->str.p_str[ArgLen - 1] == ')'))
   {
-    p = pArg->Str + ArgLen - 1;
-    while ((p >= pArg->Str) && (*p != '('))
+    p = pArg->str.p_str + ArgLen - 1;
+    while ((p >= pArg->str.p_str) && (*p != '('))
       p--;
     if (*p != '(') WrError(ErrNum_BrackErr);
     else
@@ -334,7 +334,7 @@ static void DecodeCALL(Word Code)
 
   if (ChkArgCnt(1, 2))
   {
-    int Cond = (ArgCnt == 1) ? TrueCond : DecodeCond(ArgStr[1].Str);
+    int Cond = (ArgCnt == 1) ? TrueCond : DecodeCond(ArgStr[1].str.p_str);
 
     if (Cond >= CondCnt) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
     else
@@ -358,7 +358,7 @@ static void DecodeJUMP(Word Code)
 
   if (ChkArgCnt(1, 2))
   {
-    int Cond = (ArgCnt == 1) ? TrueCond : DecodeCond(ArgStr[1].Str);
+    int Cond = (ArgCnt == 1) ? TrueCond : DecodeCond(ArgStr[1].str.p_str);
 
     if (Cond >= CondCnt) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
     else
@@ -382,7 +382,7 @@ static void DecodeRETURN(Word Code)
 
   if (ChkArgCnt(0, 1))
   {
-    int Cond = (ArgCnt == 0) ? TrueCond : DecodeCond(ArgStr[1].Str);
+    int Cond = (ArgCnt == 0) ? TrueCond : DecodeCond(ArgStr[1].str.p_str);
 
     if (Cond >= CondCnt) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
     else
@@ -428,13 +428,13 @@ static void DecodeRETURNI(Word Code)
 
   if (ChkArgCnt(1, 1))
   {
-    NLS_UpString(ArgStr[1].Str);
-    if (!strcmp(ArgStr[1].Str, "ENABLE"))
+    NLS_UpString(ArgStr[1].str.p_str);
+    if (!strcmp(ArgStr[1].str.p_str, "ENABLE"))
     {
       WAsmCode[0] = 0x80f0;
       CodeLen = 1;
     }
-    else if (!strcmp(ArgStr[1].Str, "DISABLE"))
+    else if (!strcmp(ArgStr[1].str.p_str, "DISABLE"))
     {
       WAsmCode[0] =  0x80d0;
       CodeLen = 1;
@@ -448,8 +448,8 @@ static void DecodeENABLE_DISABLE(Word Code)
 
   if (ChkArgCnt(1, 1))
   {
-    NLS_UpString(ArgStr[1].Str);
-    if (!as_strcasecmp(ArgStr[1].Str, "INTERRUPT"))
+    NLS_UpString(ArgStr[1].str.p_str);
+    if (!as_strcasecmp(ArgStr[1].str.p_str, "INTERRUPT"))
     {
       WAsmCode[0] = Code;
       CodeLen = 1;
@@ -466,15 +466,16 @@ static void DecodeCONSTANT(Word Code)
     TempResult t;
     Boolean OK;
 
-    t.Contents.Int = EvalStrIntExpressionWithFlags(&ArgStr[2], Int32, &OK, &t.Flags);
+    as_tempres_ini(&t);
+    as_tempres_set_int(&t, EvalStrIntExpressionWithFlags(&ArgStr[2], Int32, &OK, &t.Flags));
     if (OK && !mFirstPassUnknown(t.Flags))
     {
-      t.Typ = TempInt;
       SetListLineVal(&t);
       PushLocHandle(-1);
       EnterIntSymbol(&ArgStr[1], t.Contents.Int, SegNone, False);
       PopLocHandle();
     }
+    as_tempres_free(&t);
   }
 }
 
@@ -594,7 +595,7 @@ static void MakeCode_KCPSM(void)
 
   if (DecodeIntelPseudo(True)) return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

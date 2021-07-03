@@ -66,17 +66,17 @@ static Boolean DecodeReg(const tStrComp *pArg, int Offset, Word *pResult)
 
 static Boolean DecodeRegAppendix(tStrComp *pArg, const char *pAppendix, Word *pResult)
 {
-  int ArgLen = strlen(pArg->Str), AppLen = strlen(pAppendix);
+  int ArgLen = strlen(pArg->str.p_str), AppLen = strlen(pAppendix);
   Boolean Result = False;
 
-  if ((ArgLen > AppLen) && !as_strcasecmp(pArg->Str + (ArgLen - AppLen), pAppendix))
+  if ((ArgLen > AppLen) && !as_strcasecmp(pArg->str.p_str + (ArgLen - AppLen), pAppendix))
   {
-    char Save = pArg->Str[ArgLen - AppLen];
+    char Save = pArg->str.p_str[ArgLen - AppLen];
 
-    pArg->Str[ArgLen - AppLen] = '\0';
+    pArg->str.p_str[ArgLen - AppLen] = '\0';
     pArg->Pos.Len -= AppLen;
     Result = DecodeReg(pArg, 0, pResult);
-    pArg->Str[ArgLen - AppLen] = Save;
+    pArg->str.p_str[ArgLen - AppLen] = Save;
     pArg->Pos.Len += AppLen;
   }
   return Result;
@@ -126,7 +126,7 @@ static Boolean DecodeBitSymbol(const tStrComp *pArg, Word *pBitSymbol, tEvalResu
 {
   char *pSplit;
 
-  pSplit = strchr(pArg->Str, '.');
+  pSplit = strchr(pArg->str.p_str, '.');
   if (!pSplit)
   {
     *pBitSymbol = EvalStrIntExpressionWithResult(pArg, UInt11, pEvalResult);
@@ -182,7 +182,7 @@ static void DecodeNOT(Word Code)
   if (!ChkArgCnt(1, 1))
     return;
 
-  if (!as_strcasecmp(ArgStr[1].Str, "W"))
+  if (!as_strcasecmp(ArgStr[1].str.p_str, "W"))
     WAsmCode[CodeLen++] = 0xfff;
   else
     DecodeOneReg(Code);
@@ -198,40 +198,40 @@ static void DecodeMOV(Word Code)
   if (!ChkArgCnt(2, 2))
     return;
 
-  if (!as_strcasecmp(ArgStr[1].Str, "W"))
+  if (!as_strcasecmp(ArgStr[1].str.p_str, "W"))
   {
-    if (*ArgStr[2].Str == '#')
+    if (*ArgStr[2].str.p_str == '#')
     {
       Reg = EvalStrIntExpressionOffs(&ArgStr[2], 1, Int8, &OK);
       if (OK)
         WAsmCode[CodeLen++] = 0xc00 | (Reg & 0xff);
     }
-    else if (!as_strcasecmp(ArgStr[2].Str, "M"))
+    else if (!as_strcasecmp(ArgStr[2].str.p_str, "M"))
       WAsmCode[CodeLen++] = 0x042;
-    else if (!strncmp(ArgStr[2].Str, "/", 1) && DecodeReg(&ArgStr[2], 1, &Reg))
+    else if (!strncmp(ArgStr[2].str.p_str, "/", 1) && DecodeReg(&ArgStr[2], 1, &Reg))
       WAsmCode[CodeLen++] = 0x240 | Reg;
-    else if (!strncmp(ArgStr[2].Str, "--", 2) && DecodeReg(&ArgStr[2], 2, &Reg))
+    else if (!strncmp(ArgStr[2].str.p_str, "--", 2) && DecodeReg(&ArgStr[2], 2, &Reg))
       WAsmCode[CodeLen++] = 0x0c0 | Reg;
-    else if (!strncmp(ArgStr[2].Str, "++", 2) && DecodeReg(&ArgStr[2], 2, &Reg))
+    else if (!strncmp(ArgStr[2].str.p_str, "++", 2) && DecodeReg(&ArgStr[2], 2, &Reg))
       WAsmCode[CodeLen++] = 0x280 | Reg;
-    else if (!strncmp(ArgStr[2].Str, "<<", 2) && DecodeReg(&ArgStr[2], 2, &Reg))
+    else if (!strncmp(ArgStr[2].str.p_str, "<<", 2) && DecodeReg(&ArgStr[2], 2, &Reg))
       WAsmCode[CodeLen++] = 0x340 | Reg;
-    else if (!strncmp(ArgStr[2].Str, ">>", 2) && DecodeReg(&ArgStr[2], 2, &Reg))
+    else if (!strncmp(ArgStr[2].str.p_str, ">>", 2) && DecodeReg(&ArgStr[2], 2, &Reg))
       WAsmCode[CodeLen++] = 0x300 | Reg;
-    else if (!strncmp(ArgStr[2].Str, "<>", 2) && DecodeReg(&ArgStr[2], 2, &Reg))
+    else if (!strncmp(ArgStr[2].str.p_str, "<>", 2) && DecodeReg(&ArgStr[2], 2, &Reg))
       WAsmCode[CodeLen++] = 0x380 | Reg;
     else if (DecodeRegAppendix(&ArgStr[2], "-W", &Reg))
       WAsmCode[CodeLen++] = 0x080 | Reg;
     else if (DecodeReg(&ArgStr[2], 0, &Reg))
       WAsmCode[CodeLen++] = 0x200 | Reg;
   }
-  else if (!as_strcasecmp(ArgStr[2].Str, "W"))
+  else if (!as_strcasecmp(ArgStr[2].str.p_str, "W"))
   {
-    if (!as_strcasecmp(ArgStr[1].Str, "!OPTION"))
+    if (!as_strcasecmp(ArgStr[1].str.p_str, "!OPTION"))
       WAsmCode[CodeLen++] = 0x002;
-    else if (!as_strcasecmp(ArgStr[1].Str, "M"))
+    else if (!as_strcasecmp(ArgStr[1].str.p_str, "M"))
       WAsmCode[CodeLen++] = 0x003;
-    else if (!strncmp(ArgStr[1].Str, "!", 1) && DecodeReg(&ArgStr[1], 1, &Reg))
+    else if (!strncmp(ArgStr[1].str.p_str, "!", 1) && DecodeReg(&ArgStr[1], 1, &Reg))
     {
       if (ChkRange(Reg, 0, 7))
         WAsmCode[CodeLen++] = 0x000 | Reg;
@@ -239,9 +239,9 @@ static void DecodeMOV(Word Code)
     else if (DecodeReg(&ArgStr[1], 0, &Reg))
       WAsmCode[CodeLen++] = 0x020 | Reg;
   }
-  else if (!as_strcasecmp(ArgStr[1].Str, "M"))
+  else if (!as_strcasecmp(ArgStr[1].str.p_str, "M"))
   {
-    if (*ArgStr[2].Str == '#')
+    if (*ArgStr[2].str.p_str == '#')
     {
       Reg = EvalStrIntExpressionOffs(&ArgStr[2], 1, Int4, &OK);
       if (OK)
@@ -263,11 +263,11 @@ static void DecodeMOVSZ(Word Code)
   if (!ChkArgCnt(2, 2))
     return;
 
-  if (!as_strcasecmp(ArgStr[1].Str, "W"))
+  if (!as_strcasecmp(ArgStr[1].str.p_str, "W"))
   {
-    if (!strncmp(ArgStr[2].Str, "--", 2) && DecodeReg(&ArgStr[2], 2, &Reg))
+    if (!strncmp(ArgStr[2].str.p_str, "--", 2) && DecodeReg(&ArgStr[2], 2, &Reg))
       WAsmCode[CodeLen++] = 0x2c0 | Reg;
-    else if (!strncmp(ArgStr[2].Str, "++", 2) && DecodeReg(&ArgStr[2], 2, &Reg))
+    else if (!strncmp(ArgStr[2].str.p_str, "++", 2) && DecodeReg(&ArgStr[2], 2, &Reg))
       WAsmCode[CodeLen++] = 0x3c0 | Reg;
     else
       WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[2]);
@@ -283,9 +283,9 @@ static void DecodeLogic(Word Code)
   if (!ChkArgCnt(2, 2))
     return;
 
-  if (!as_strcasecmp(ArgStr[1].Str, "W"))
+  if (!as_strcasecmp(ArgStr[1].str.p_str, "W"))
   {
-    if (*ArgStr[2].Str == '#')
+    if (*ArgStr[2].str.p_str == '#')
     {
       Word ImmCode = Code & 0x0f00;
 
@@ -303,7 +303,7 @@ static void DecodeLogic(Word Code)
     else if (DecodeReg(&ArgStr[2], 0, &Arg))
       WAsmCode[CodeLen++] = (Lo(Code) << 4) | Arg;
   }
-  else if (!as_strcasecmp(ArgStr[2].Str, "W"))
+  else if (!as_strcasecmp(ArgStr[2].str.p_str, "W"))
   {
     if (DecodeReg(&ArgStr[1], 0, &Arg))
       WAsmCode[CodeLen++] = (Lo(Code) << 4) | 0x20 | Arg;
@@ -321,9 +321,9 @@ static void DecodeCLR(Word Code)
   if (!ChkArgCnt(1, 1))
     return;
 
-  if (!as_strcasecmp(ArgStr[1].Str, "W"))
+  if (!as_strcasecmp(ArgStr[1].str.p_str, "W"))
     WAsmCode[CodeLen++] = 0x040;
-  else if (!as_strcasecmp(ArgStr[1].Str, "!WDT"))
+  else if (!as_strcasecmp(ArgStr[1].str.p_str, "!WDT"))
     WAsmCode[CodeLen++] = 0x004;
   else if (DecodeReg(&ArgStr[1], 0, &Arg))
     WAsmCode[CodeLen++] = 0x060 | Arg;
@@ -336,7 +336,7 @@ static void DecodeSUB(Word Code)
   if (!ChkArgCnt(2, 2))
     return;
 
-  if (!as_strcasecmp(ArgStr[2].Str, "W"))
+  if (!as_strcasecmp(ArgStr[2].str.p_str, "W"))
   {
     if (DecodeReg(&ArgStr[1], 0, &Arg))
       WAsmCode[CodeLen++] = (Lo(Code) << 4) | 0x20 | Arg;
@@ -367,12 +367,12 @@ static void DecodeJMP_CALL(Word Code)
 
   if (!IsCall)
   {
-    if (!as_strcasecmp(ArgStr[1].Str, "W"))
+    if (!as_strcasecmp(ArgStr[1].str.p_str, "W"))
     {
       WAsmCode[CodeLen++] = 0x022;
       return;
     }
-    else if (!as_strcasecmp(ArgStr[1].Str, "PC+W"))
+    else if (!as_strcasecmp(ArgStr[1].str.p_str, "PC+W"))
     {
       WAsmCode[CodeLen++] = 0x1e2;
       return;
@@ -594,7 +594,7 @@ static void MakeCode_SX20(void)
 
   if (Memo("")) return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

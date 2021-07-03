@@ -33,16 +33,6 @@ char OBJSuffix[] = ".obj";
 const char *EnvName = "ASCMD";         /* Environment-Variable fuer Default-
                                           Parameter */
 
-const char *SegNames[PCMax + 2] =
-{
-  "NOTHING", "CODE", "DATA", "IDATA", "XDATA", "YDATA",
-  "BITDATA", "IO", "REG", "ROMDATA", "EEDATA", "STRUCT"
-};
-char SegShorts[PCMax + 2] =
-{
-  '-','C','D','I','X','Y','B','P','R','O','E','S'
-};
-
 StringPtr SourceFile;                    /* Hauptquelldatei */
 
 StringPtr CursUp;		            /*   "     "  Cursor hoch */
@@ -53,11 +43,11 @@ LargeWord StartAdr;                      /* Programmstartadresse */
 Boolean StartAdrPresent;                 /*          "           definiert? */
 LargeWord AfterBSRAddr;                  /* address right behind last BSR */
 LargeWord *Phases;                       /* Verschiebungen */
-Word Grans[StructSeg + 1];               /* Groesse der Adressierungselemente */
-Word ListGrans[StructSeg + 1];           /* Wortgroesse im Listing */
-ChunkList SegChunks[StructSeg + 1];      /* Belegungen */
+Word Grans[SegCountPlusStruct];          /* Groesse der Adressierungselemente */
+Word ListGrans[SegCountPlusStruct];      /* Wortgroesse im Listing */
+ChunkList SegChunks[SegCountPlusStruct]; /* Belegungen */
 Integer ActPC;                           /* gewaehlter Programmzaehler */
-Boolean PCsUsed[StructSeg + 1];          /* PCs bereits initialisiert ? */
+Boolean PCsUsed[SegCountPlusStruct];     /* PCs bereits initialisiert ? */
 LargeWord *SegInits;                     /* Segmentstartwerte */
 LargeWord *SegLimits;                    /* Segmentgrenzwerte */
 LongInt ValidSegs;                       /* erlaubte Segmente */
@@ -187,7 +177,7 @@ tStrComp LabPart, CommPart, ArgPart, OpPart, AttrPart;
 char AttrSplit;
 int ArgCnt;                             /* Argumentzahl */
 int AllocArgCnt;
-StringPtr OneLine;                      /* eingelesene Zeile */
+as_dynstr_t OneLine;                    /* eingelesene Zeile */
 #ifdef PROFILE_MEMO
 unsigned NumMemo;
 unsigned long NumMemoCnt, NumMemoSum;
@@ -207,7 +197,7 @@ StringPtr PrtTitleString;               /* Titelzeile */
 
 LongInt MomSectionHandle;               /* mom. Namensraum */
 PSaveSection SectionStack;              /* gespeicherte Sektionshandles */
-tSavePhase *pPhaseStacks[PCMax];	/* saves nested PHASE values */
+tSavePhase *pPhaseStacks[SegCount];	/* saves nested PHASE values */
 
 tSymbolSize AttrPartOpSize;             /* instruction operand size deduced from insn attribute */
 LongWord MaxCodeLen = 0;                /* max. length of generated code */
@@ -306,20 +296,78 @@ int SetMaxCodeLen(LongWord NewMaxCodeLen)
   return 0;
 }
 
-void IncArgCnt(void)
+/*!------------------------------------------------------------------------
+ * \fn     AppendArg(size_t ReqSize)
+ * \brief  extend list of arguments by one more at the end
+ * \param  ReqSize length of argument to store (excluding NUL at end)
+ * ------------------------------------------------------------------------ */
+
+/* NOTICE: Due to port from Pascal sources, ArgStr[] is still indexed starting at
+   one instead of zero:
+
+   - ArgStr[0] is unused.
+   - If ArgCnt == n, ArgStr[1] to ArgStr[n] are used.  */
+
+void AppendArg(size_t ReqSize)
 {
   if (ArgCnt >= ArgCntMax)
     WrXError(ErrNum_InternalError, "MaxArgCnt");
   ++ArgCnt;
+
   if (ArgCnt >= AllocArgCnt)
   {
-    unsigned NewSize = sizeof(*ArgStr) * (ArgCnt + 1); /* one more, [0] is unused */
+    size_t NewArgStrSize = sizeof(*ArgStr) * (ArgCnt + 1); /* one more, [0] is unused */
     int z;
 
-    ArgStr = ArgStr ? (tStrComp*)realloc(ArgStr, NewSize) : (tStrComp*)malloc(NewSize);
+    ArgStr = ArgStr ? (tStrComp*)realloc(ArgStr, NewArgStrSize) : (tStrComp*)malloc(NewArgStrSize);
     for (z = AllocArgCnt; z <= ArgCnt; z++)
-      StrCompAlloc(&ArgStr[z]);
+      StrCompAlloc(&ArgStr[z], STRINGSIZE);
     AllocArgCnt = ArgCnt + 1;
+  }
+
+  if (ArgStr[ArgCnt].str.capacity <= ReqSize)
+  {
+    if (as_dynstr_realloc(&ArgStr[ArgCnt].str, as_dynstr_roundup_len(ReqSize)))
+      WrXError(ErrNum_InternalError, "out of memory");
+  }
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     InsertArg(unsigned Index, size_t ReqSize)
+ * \brief  insert one more arg @ given position
+ * \param  Index insertion position
+ * \param  ReqSize requested size of new arg
+ * ------------------------------------------------------------------------ */
+
+void InsertArg(int Index, size_t ReqSize)
+{
+  int z;
+
+  /* 0 should never be passed... */
+
+  if (Index < 1)
+    Index = 1;
+
+  /* Insertion beyond end means appending */
+
+  if (Index > ArgCnt)
+  {
+    AppendArg(ReqSize);
+    return;
+  }
+
+  /* current last arg dictates length of new last arg */
+
+  AppendArg(strlen(ArgStr[ArgCnt].str.p_str));
+  for (z = ArgCnt; z > Index; z--)
+  {
+    as_dynstr_copy(&ArgStr[z].str, &ArgStr[z - 1].str);
+    ArgStr[z].Pos = ArgStr[z - 1].Pos;
+  }
+  if (ArgStr[Index].str.capacity < ReqSize + 1)
+  {
+    if (as_dynstr_realloc(&ArgStr[Index].str, as_dynstr_roundup_len(ReqSize)))
+      WrXError(ErrNum_InternalError, "out of memory");
   }
 }
 
@@ -368,21 +416,21 @@ void asmdef_init(void)
   MacroName = GetString();
   MacProName = GetString();
   ShareName = GetString();
-  StrCompAlloc(&LabPart);
-  StrCompAlloc(&OpPart);
-  StrCompAlloc(&AttrPart);
-  StrCompAlloc(&ArgPart);
-  StrCompAlloc(&CommPart);
+  StrCompAlloc(&LabPart, STRINGSIZE);
+  StrCompAlloc(&OpPart, STRINGSIZE);
+  StrCompAlloc(&AttrPart, STRINGSIZE);
+  StrCompAlloc(&ArgPart, STRINGSIZE);
+  StrCompAlloc(&CommPart, STRINGSIZE);
   pLOpPart = GetString();
-  OneLine = GetString();
+  as_dynstr_ini(&OneLine, STRINGSIZE);
   ListLine = GetString();
   PrtInitString = GetString();
   PrtExitString = GetString();
   PrtTitleString = GetString();
   MomCPUArgs = GetString();
 
-  SegInits = (LargeWord*)malloc((PCMax + 1) * sizeof(LargeWord));
-  SegLimits = (LargeWord*)malloc((PCMax + 1) * sizeof(LargeWord));
-  Phases = (LargeWord*)malloc((StructSeg + 1) * sizeof(LargeWord));
-  PCs = (LargeWord*)malloc((StructSeg + 1) * sizeof(LargeWord));
+  SegInits = (LargeWord*)calloc(SegCount, sizeof(*SegInits));
+  SegLimits = (LargeWord*)calloc(SegCount, sizeof(*SegLimits));
+  Phases = (LargeWord*)calloc(SegCountPlusStruct, sizeof(*Phases));
+  PCs = (LargeWord*)calloc(SegCountPlusStruct, sizeof(*PCs));
 }

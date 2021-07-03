@@ -97,7 +97,7 @@ static tRegEvalResult DecodeReg(const tStrComp *pArg, Word *pReg, Boolean MustBe
   tEvalResult EvalResult;
   tRegEvalResult RegEvalResult;
 
-  if (DecodeRegCore(pArg->Str, pReg))
+  if (DecodeRegCore(pArg->str.p_str, pReg))
     return eIsReg;
 
   RegEvalResult = EvalStrRegExpressionAsOperand(pArg, &RegDescr, &EvalResult, eSymbolSize16Bit, MustBeReg);
@@ -183,7 +183,7 @@ static void DecodeShift(Word Index)
 
   if (!ChkArgCnt(2, 2));
   else if (!DecodeArgReg(1, &DReg));
-  else if (*ArgStr[2].Str == '#')
+  else if (*ArgStr[2].str.p_str == '#')
   {
     SReg = EvalStrIntExpressionOffs(&ArgStr[2], 1, UInt4, &OK);
     if (OK)
@@ -208,7 +208,7 @@ static void DecodeAriImm(Word Index)
   else if (!DecodeArgReg(1, &DReg));
   else if (ArgCnt == 2)
   {
-    if (*ArgStr[2].Str == '#')
+    if (*ArgStr[2].str.p_str == '#')
     {
       SReg1 = EvalStrIntExpressionOffs(&ArgStr[2], 1, Int16, &OK);
       if (OK)
@@ -238,7 +238,7 @@ static void DecodeImm8(Word Index)
 
   if (!ChkArgCnt(2, 2));
   else if (!DecodeArgReg(1, &DReg));
-  else if (*ArgStr[2].Str != '#') WrError(ErrNum_OnlyImmAddr);
+  else if (*ArgStr[2].str.p_str != '#') WrError(ErrNum_OnlyImmAddr);
   else
   {
     Src = EvalStrIntExpressionOffs(&ArgStr[2], 1, Int8, &OK);
@@ -368,7 +368,7 @@ static void DecodeSem(Word Index)
   Boolean OK;
 
   if (!ChkArgCnt(1, 1));
-  else if (*ArgStr[1].Str == '#')
+  else if (*ArgStr[1].str.p_str == '#')
   {
     Reg = EvalStrIntExpressionOffs(&ArgStr[1], 1, UInt3, &OK);
     if (OK)
@@ -413,17 +413,17 @@ static void DecodeTFR(Word Index)
   {
     Boolean OK = True;
 
-    if (!as_strcasecmp(ArgStr[2].Str, "CCR"))
+    if (!as_strcasecmp(ArgStr[2].str.p_str, "CCR"))
     {
       WAsmCode[0] = 0x00f8;
       RegIdx = 1;
     }
-    else if (!as_strcasecmp(ArgStr[1].Str, "CCR"))
+    else if (!as_strcasecmp(ArgStr[1].str.p_str, "CCR"))
     {
       WAsmCode[0] = 0x00f9;
       RegIdx = 2;
     }
-    else if (!as_strcasecmp(ArgStr[2].Str, "PC"))
+    else if (!as_strcasecmp(ArgStr[2].str.p_str, "PC"))
     {
       WAsmCode[0] = 0x00fa;
       RegIdx = 1;
@@ -449,7 +449,7 @@ static void DecodeCmp(Word Index)
 
   if (ChkArgCnt(2, 2) && DecodeArgReg(1, &DReg))
   {
-    if (*ArgStr[2].Str == '#')
+    if (*ArgStr[2].str.p_str == '#')
     {
       Src = EvalStrIntExpressionOffs(&ArgStr[2], 1, Int16, &OK);
       if (OK)
@@ -473,7 +473,7 @@ static void DecodeMem(Word Code)
 
   if (!ChkArgCnt(2, 2));
   else if (!DecodeArgReg(1, &DReg));
-  else if (*ArgStr[2].Str == '#')
+  else if (*ArgStr[2].str.p_str == '#')
   {
     if (!Memo("LDW")) WrError(ErrNum_InvAddrMode);
     else
@@ -490,65 +490,71 @@ static void DecodeMem(Word Code)
       }
     }
   }
-  else if (!IsIndirect(ArgStr[2].Str)) WrError(ErrNum_InvAddrMode);
+  else if (!IsIndirect(ArgStr[2].str.p_str)) WrError(ErrNum_InvAddrMode);
   else
   {
-    int l = strlen(ArgStr[2].Str) - 2;
+    int l = strlen(ArgStr[2].str.p_str) - 2;
     char *pPos;
     Word Base, Index;
     Boolean OK;
+    tStrComp IndexComp, *pIndexComp;
 
     /* remove parentheses */
 
-    memmove(ArgStr[2].Str, ArgStr[2].Str + 1, l); ArgStr[2].Str[l] = '\0';
+    StrCompCutLeft(&ArgStr[2], 1);
+    StrCompShorten(&ArgStr[2], 1);
 
     /* base present? */
 
-    pPos = strchr(ArgStr[2].Str, ',');
+    pPos = strchr(ArgStr[2].str.p_str, ',');
     if (pPos)
     {
-      *pPos = '\0';
-      KillBlanks(ArgStr[2].Str);
-      OK = DecodeReg(&ArgStr[2], &Base, True);
-      strmov(ArgStr[2].Str, pPos + 1);
+      tStrComp RegComp;
+
+      StrCompSplitRef(&RegComp, &IndexComp, &ArgStr[2], pPos);
+      KillPostBlanksStrComp(&RegComp);
+      KillPrefBlanksStrCompRef(&RegComp);
+      OK = DecodeReg(&RegComp, &Base, True);
+      pIndexComp = &IndexComp;
     }
     else
     {
       Base = 0;
       OK = True;
+      pIndexComp = &ArgStr[2];
     }
 
     /* go on with index? */
 
     if (OK)
     {
-      KillPrefBlanksStrComp(&ArgStr[2]);
-      KillPostBlanksStrComp(&ArgStr[2]);
+      KillPrefBlanksStrComp(pIndexComp);
+      KillPostBlanksStrComp(pIndexComp);
 
-      if (*ArgStr[2].Str == '#')
-        Index = EvalStrIntExpressionOffs(&ArgStr[2], 1, UInt5, &OK);
-      else if (*ArgStr[2].Str == '-')
+      if (*pIndexComp->str.p_str == '#')
+        Index = EvalStrIntExpressionOffs(pIndexComp, 1, UInt5, &OK);
+      else if (*pIndexComp->str.p_str == '-')
       {
         tStrComp RegArg;
 
         Code |= 0x2000;
-        StrCompRefRight(&RegArg, &ArgStr[2], 1);
+        StrCompRefRight(&RegArg, pIndexComp, 1);
         OK = DecodeReg(&RegArg, &Index, True);
         if (OK)
           Index = (Index << 2) | 2;
       }
-      else if (((l = strlen(ArgStr[2].Str)) > 1) && (ArgStr[2].Str[l - 1] == '+'))
+      else if (((l = strlen(pIndexComp->str.p_str)) > 1) && (pIndexComp->str.p_str[l - 1] == '+'))
       {
         Code |= 0x2000;
-        StrCompShorten(&ArgStr[2], 1);
-        OK = DecodeReg(&ArgStr[2], &Index, True);
+        StrCompShorten(pIndexComp, 1);
+        OK = DecodeReg(pIndexComp, &Index, True);
         if (OK)
           Index = (Index << 2) | 1;
       }
       else
       {
         Code |= 0x2000;
-        OK = DecodeReg(&ArgStr[2], &Index, True);
+        OK = DecodeReg(pIndexComp, &Index, True);
         if (OK)
           Index = (Index << 2);
       }
@@ -697,7 +703,7 @@ static void MakeCode_XGATE(void)
 
   /* Nullanweisung */
 
-  if ((*OpPart.Str == '\0') && (ArgCnt == 0))
+  if ((*OpPart.str.p_str == '\0') && (ArgCnt == 0))
     return;
 
   /* Pseudoanweisungen */
@@ -711,7 +717,7 @@ static void MakeCode_XGATE(void)
 
   /* alles aus der Tabelle */
 
-  if (!LookupInstTable(InstTable,OpPart.Str))
+  if (!LookupInstTable(InstTable,OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

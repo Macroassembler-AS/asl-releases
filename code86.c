@@ -60,7 +60,7 @@ static const Byte SegRegPrefixes[SegRegCnt + 1] =
 };
 
 static char ArgSTStr[] = "ST";
-static const tStrComp ArgST = { { 0, 0 }, ArgSTStr };
+static const tStrComp ArgST = { { 0, 0 }, { 0, ArgSTStr, 0 } };
 
 #define TypeNone (-1)
 #define TypeReg8 0
@@ -178,7 +178,7 @@ static void ChkSingleSpace(Byte Seg, Byte EffSeg, Byte MomSegment)
     while ((z <= SegRegCnt) && (SegAssumes[z] != Seg))
       z++;
     if (z > SegRegCnt)
-      WrXError(ErrNum_InAccSegment, SegNames[Seg]);
+      WrXError(ErrNum_InAccSegment, SegRegNames[Seg]);
     else
       AddPrefix(SegRegPrefixes[z]);
   }
@@ -228,20 +228,20 @@ static void DecodeAdr(const tStrComp *pArg)
   Byte MomSegment;
   ShortInt FoundSize;
   tStrComp Arg;
-  int ArgLen = strlen(pArg->Str);
+  int ArgLen = strlen(pArg->str.p_str);
 
   AdrType = TypeNone; AdrCnt = 0;
   SegBuffer = -1; MomSegment = 0;
 
   for (RegZ = 0; RegZ < RegCnt; RegZ++)
   {
-    if (!as_strcasecmp(pArg->Str, Reg16Names[RegZ]))
+    if (!as_strcasecmp(pArg->str.p_str, Reg16Names[RegZ]))
     {
       AdrType = TypeReg16; AdrMode = RegZ;
       ChkOpSize(1);
       return;
     }
-    if (!as_strcasecmp(pArg->Str, Reg8Names[RegZ]))
+    if (!as_strcasecmp(pArg->str.p_str, Reg8Names[RegZ]))
     {
       AdrType = TypeReg8; AdrMode = RegZ;
       ChkOpSize(0);
@@ -250,7 +250,7 @@ static void DecodeAdr(const tStrComp *pArg)
   }
 
   for (RegZ = 0; RegZ <= SegRegCnt; RegZ++)
-    if (!as_strcasecmp(pArg->Str, SegRegNames[RegZ]))
+    if (!as_strcasecmp(pArg->str.p_str, SegRegNames[RegZ]))
     {
       AdrType = TypeRegSeg; AdrMode = RegZ;
       ChkOpSize(1);
@@ -259,14 +259,14 @@ static void DecodeAdr(const tStrComp *pArg)
 
   if (FPUAvail)
   {
-    if (!as_strcasecmp(pArg->Str, "ST"))
+    if (!as_strcasecmp(pArg->str.p_str, "ST"))
     {
       AdrType = TypeFReg; AdrMode = 0;
       ChkOpSize(4);
       return;
     }
 
-    if ((ArgLen > 4) && (!as_strncasecmp(pArg->Str, "ST(", 3)) && (pArg->Str[ArgLen - 1] == ')'))
+    if ((ArgLen > 4) && (!as_strncasecmp(pArg->str.p_str, "ST(", 3)) && (pArg->str.p_str[ArgLen - 1] == ')'))
     {
       tStrComp Num;
       Boolean OK;
@@ -286,36 +286,36 @@ static void DecodeAdr(const tStrComp *pArg)
   IsImm = True;
   IndexBuf = 0; BaseBuf = 0;
   DispAcc = 0; FoundSize = -1;
-  Arg = *pArg;
-  if (!as_strncasecmp(Arg.Str, "WORD PTR", 8))
+  StrCompRefRight(&Arg, pArg, 0);
+  if (!as_strncasecmp(Arg.str.p_str, "WORD PTR", 8))
   {
     StrCompIncRefLeft(&Arg, 8);
     FoundSize = 1;
     IsImm = False;
     KillPrefBlanksStrCompRef(&Arg);
   }
-  else if (!as_strncasecmp(Arg.Str, "BYTE PTR", 8))
+  else if (!as_strncasecmp(Arg.str.p_str, "BYTE PTR", 8))
   {
     StrCompIncRefLeft(&Arg, 8);
     FoundSize = 0;
     IsImm = False;
     KillPrefBlanksStrCompRef(&Arg);
   }
-  else if (!as_strncasecmp(Arg.Str, "DWORD PTR", 9))
+  else if (!as_strncasecmp(Arg.str.p_str, "DWORD PTR", 9))
   {
     StrCompIncRefLeft(&Arg, 9);
     FoundSize = 2;
     IsImm = False;
     KillPrefBlanksStrCompRef(&Arg);
   }
-  else if (!as_strncasecmp(Arg.Str, "QWORD PTR", 9))
+  else if (!as_strncasecmp(Arg.str.p_str, "QWORD PTR", 9))
   {
     StrCompIncRefLeft(&Arg, 9);
     FoundSize = 3;
     IsImm = False;
     KillPrefBlanksStrCompRef(&Arg);
   }
-  else if (!as_strncasecmp(Arg.Str, "TBYTE PTR", 9))
+  else if (!as_strncasecmp(Arg.str.p_str, "TBYTE PTR", 9))
   {
     StrCompIncRefLeft(&Arg, 9);
     FoundSize = 4;
@@ -323,13 +323,13 @@ static void DecodeAdr(const tStrComp *pArg)
     KillPrefBlanksStrCompRef(&Arg);
   }
 
-  if ((strlen(Arg.Str) > 2) && (Arg.Str[2] == ':'))
+  if ((strlen(Arg.str.p_str) > 2) && (Arg.str.p_str[2] == ':'))
   {
     tStrComp Remainder;
 
-    StrCompSplitRef(&Arg, &Remainder, &Arg, Arg.Str + 2);
+    StrCompSplitRef(&Arg, &Remainder, &Arg, Arg.str.p_str + 2);
     for (z = 0; z <= SegRegCnt; z++)
-      if (!as_strcasecmp(Arg.Str, SegRegNames[z]))
+      if (!as_strcasecmp(Arg.str.p_str, SegRegNames[z]))
       {
         SegBuffer = z;
         AddPrefix(SegRegPrefixes[SegBuffer]);
@@ -345,11 +345,11 @@ static void DecodeAdr(const tStrComp *pArg)
 
   do
   {
-    pIndirStart = QuotPos(Arg.Str, '[');
+    pIndirStart = QuotPos(Arg.str.p_str, '[');
 
     /* no address expr or outer displacement: */
 
-    if (!pIndirStart || (pIndirStart != Arg.Str))
+    if (!pIndirStart || (pIndirStart != Arg.str.p_str))
     {
       tStrComp Remainder;
       tEvalResult EvalResult;
@@ -380,7 +380,7 @@ static void DecodeAdr(const tStrComp *pArg)
 
       IsImm = False;
 
-      pIndirEnd = RQuotPos(Arg.Str, ']');
+      pIndirEnd = RQuotPos(Arg.str.p_str, ']');
       if (!pIndirEnd)
       {
         WrError(ErrNum_BrackErr);
@@ -393,34 +393,34 @@ static void DecodeAdr(const tStrComp *pArg)
       do
       {
         NegFlag = False;
-        pSep = QuotMultPos(IndirArg.Str, "+-");
+        pSep = QuotMultPos(IndirArg.str.p_str, "+-");
         NegFlag = pSep && (*pSep == '-');
 
         if (pSep)
           StrCompSplitRef(&IndirArg, &IndirArgRemainder, &IndirArg, pSep);
 
-        if (!as_strcasecmp(IndirArg.Str, "BX"))
+        if (!as_strcasecmp(IndirArg.str.p_str, "BX"))
         {
           if ((OldNegFlag) || (BaseBuf != 0))
             return;
           else
             BaseBuf = 1;
         }
-        else if (!as_strcasecmp(IndirArg.Str, "BP"))
+        else if (!as_strcasecmp(IndirArg.str.p_str, "BP"))
         {
           if ((OldNegFlag) || (BaseBuf != 0))
             return;
           else
             BaseBuf = 2;
         }
-        else if (!as_strcasecmp(IndirArg.Str, "SI"))
+        else if (!as_strcasecmp(IndirArg.str.p_str, "SI"))
         {
           if ((OldNegFlag) || (IndexBuf != 0))
             return;
           else
             IndexBuf = 1;
         }
-        else if (!as_strcasecmp(IndirArg.Str, "DI"))
+        else if (!as_strcasecmp(IndirArg.str.p_str, "DI"))
         {
           if ((OldNegFlag) || (IndexBuf !=0 ))
             return;
@@ -448,7 +448,7 @@ static void DecodeAdr(const tStrComp *pArg)
       Arg = OutRemainder;
     }
   }
-  while (*Arg.Str);
+  while (*Arg.str.p_str);
 
   SumBuf = BaseBuf * 10 + IndexBuf;
 
@@ -756,7 +756,7 @@ static void DecodeINOUT(Word Index)
       case TypeReg8:
       case TypeReg16:
         if (AdrMode != 0) WrError(ErrNum_InvAddrMode);
-        else if (!as_strcasecmp(pPortArg->Str, "DX"))
+        else if (!as_strcasecmp(pPortArg->str.p_str, "DX"))
           BAsmCode[CodeLen++] = 0xec | OpSize | Index;
         else
         {
@@ -787,7 +787,7 @@ static void DecodeCALLJMP(Word Index)
 
   if (ChkArgCnt(1, 1))
   {
-    char *pAdr = ArgStr[1].Str;
+    char *pAdr = ArgStr[1].str.p_str;
 
     if (!strncmp(pAdr, "SHORT ", 6))
     {
@@ -1123,7 +1123,7 @@ static void DecodeCALLJMPF(Word Index)
 
   if (ChkArgCnt(1, 1))
   {
-    p = QuotPos(ArgStr[1].Str, ':');
+    p = QuotPos(ArgStr[1].str.p_str, ':');
     if (!p)
     {
       DecodeAdr(&ArgStr[1]);
@@ -1325,16 +1325,16 @@ static void DecodeASSUME(void)
     z = 1 ; OK = True;
     while ((z <= ArgCnt) && (OK))
     {
-      OK = False; p = QuotPos(ArgStr[z].Str, ':');
+      OK = False; p = QuotPos(ArgStr[z].str.p_str, ':');
       if (p)
       {
         *p = '\0';
-        strmaxcpy(SegPart, ArgStr[z].Str, STRINGSIZE);
+        strmaxcpy(SegPart, ArgStr[z].str.p_str, STRINGSIZE);
         strmaxcpy(ValPart, p + 1, STRINGSIZE);
       }
       else
       {
-        strmaxcpy(SegPart, ArgStr[z].Str, STRINGSIZE);
+        strmaxcpy(SegPart, ArgStr[z].str.p_str, STRINGSIZE);
         *ValPart = '\0';
       }
       z2 = 0;
@@ -1343,10 +1343,8 @@ static void DecodeASSUME(void)
       if (z2 > SegRegCnt) WrXError(ErrNum_UnknownSegReg, SegPart);
       else
       {
-        z3 = 0;
-        while ((z3 <= PCMax) && (as_strcasecmp(ValPart, SegNames[z3])))
-          z3++;
-        if (z3 > PCMax) WrXError(ErrNum_UnknownSegment, ValPart);
+        z3 = addrspace_lookup(ValPart);
+        if (z3 >= SegCount) WrXError(ErrNum_UnknownSegment, ValPart);
         else if ((z3 != SegCode) && (z3 != SegData) && (z3 != SegXData) && (z3 != SegNone)) WrError(ErrNum_InvSegment);
         else
         {
@@ -2087,7 +2085,7 @@ static void DecodeRept(Word Index)
     int z2;
 
     for (z2 = 0; z2 < StringOrderCnt; z2++)
-      if (!as_strcasecmp(StringOrders[z2].Name,ArgStr[1].Str))
+      if (!as_strcasecmp(StringOrders[z2].Name,ArgStr[1].str.p_str))
         break;
     if (z2 >= StringOrderCnt) WrError(ErrNum_InvArg);
     else if (ChkMinCPU(StringOrders[z2].MinCPU))
@@ -2244,7 +2242,7 @@ static void DecodeShift(Word Index)
         if (AdrType != TypeMem)
           BAsmCode[CodeLen + 1] += 0xc0;
         MoveAdr(2);
-        if (!as_strcasecmp(ArgStr[2].Str, "CL"))
+        if (!as_strcasecmp(ArgStr[2].str.p_str, "CL"))
         {
           BAsmCode[CodeLen] += 0xd2;
           CodeLen += 2 + AdrCnt;
@@ -2324,7 +2322,7 @@ static void DecodeBit1(Word Index)
         BAsmCode[CodeLen + 1] = 0x10 + (Index << 1) + OpSize;
         BAsmCode[CodeLen + 2] = AdrMode;
         MoveAdr(3);
-        if (!as_strcasecmp(ArgStr[2].Str, "CL"))
+        if (!as_strcasecmp(ArgStr[2].str.p_str, "CL"))
           CodeLen += 3 + AdrCnt;
         else
         {
@@ -2809,7 +2807,7 @@ static void MakeCode_86(void)
 
   /* vermischtes */
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 
@@ -2824,12 +2822,6 @@ static void InitCode_86(void)
 static Boolean IsDef_86(void)
 {
   return (Memo("PORT"));
-}
-
-static void SwitchFrom_86(void)
-{
-  DeinitFields();
-  ClearONOFF();
 }
 
 static void SwitchTo_86(void)
@@ -2852,7 +2844,7 @@ static void SwitchTo_86(void)
   pASSUMEOverride = DecodeASSUME;
 
   MakeCode = MakeCode_86; IsDef = IsDef_86;
-  SwitchFrom = SwitchFrom_86; InitFields();
+  SwitchFrom = DeinitFields; InitFields();
   AddONOFF("FPU",&FPUAvail,FPUAvailName,False);
 }
 

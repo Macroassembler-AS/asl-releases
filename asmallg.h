@@ -18,6 +18,8 @@ extern void SetCPUByType(CPUVar NewCPU, const struct sStrComp *pCPUArgs);
 
 extern Boolean SetCPUByName(const struct sStrComp *pName);
 
+extern void UnsetCPU(void);
+
 extern Boolean CheckONOFFArg(const tStrComp *pArg, Boolean *pResult);
 
 extern void AddONOFF(const char *InstName, Boolean *Flag, const char *FlagName, Boolean Persist);

@@ -207,20 +207,20 @@ static Boolean ModeInMask(LongWord Mask, tAdrMode Mode)
 
 static tSymbolSize CutSizeSuffix(const tStrComp *pArg)
 {
-  int l = strlen(pArg->Str);
+  int l = strlen(pArg->str.p_str);
 
-  if ((l >= 3) && (pArg->Str[l - 2] == '.'))
+  if ((l >= 3) && (pArg->str.p_str[l - 2] == '.'))
   {
-    switch (as_toupper(pArg->Str[l - 1]))
+    switch (as_toupper(pArg->str.p_str[l - 1]))
     {
       case 'B':
-        pArg->Str[l - 2] = '\0';
+        pArg->str.p_str[l - 2] = '\0';
         return eSymbolSize8Bit;
       case 'W':
-        pArg->Str[l - 2] = '\0';
+        pArg->str.p_str[l - 2] = '\0';
         return eSymbolSize16Bit;
       case 'E':
-        pArg->Str[l - 2] = '\0';
+        pArg->str.p_str[l - 2] = '\0';
         return eSymbolSize24Bit;
       default:
         break;
@@ -392,7 +392,7 @@ static Boolean DecideIndirectSize(LongWord Mask, const tStrComp *pArg,
 
   /* Cut off address byte size, signified by leading '<' or '>': */
 
-  switch (*pArg->Str)
+  switch (*pArg->str.p_str)
   {
     case '>':
       Offset = 1;
@@ -541,46 +541,46 @@ static Boolean DecodeRegCore(const tStrComp *pArg, tAdrMode *pResult)
 {
   *pResult = eModNone;
 
-  if (!as_strcasecmp(pArg->Str, "A"))
+  if (!as_strcasecmp(pArg->str.p_str, "A"))
   {
     *pResult = eModA;
     return True;
   }
 
-  if (!as_strcasecmp(pArg->Str, "X"))
+  if (!as_strcasecmp(pArg->str.p_str, "X"))
   {
     *pResult = eModX;
     return True;
   }
-  if (!as_strcasecmp(pArg->Str, "XL"))
+  if (!as_strcasecmp(pArg->str.p_str, "XL"))
   {
     *pResult = eModXL;
     return True;
   }
-  if (!as_strcasecmp(pArg->Str, "XH"))
+  if (!as_strcasecmp(pArg->str.p_str, "XH"))
   {
     *pResult = eModXH;
     return True;
   }
 
-  if (!as_strcasecmp(pArg->Str, "Y"))
+  if (!as_strcasecmp(pArg->str.p_str, "Y"))
   {
     *pResult = eModY;
     return True;
   }
-  if (!as_strcasecmp(pArg->Str, "YL"))
+  if (!as_strcasecmp(pArg->str.p_str, "YL"))
   {
     *pResult = eModYL;
     return True;
   }
-  if (!as_strcasecmp(pArg->Str, "YH"))
+  if (!as_strcasecmp(pArg->str.p_str, "YH"))
   {
     *pResult = eModYH;
     return True;
   }
 
-  if ((!as_strcasecmp(pArg->Str, "S"))
-   || ((pCurrCPUProps->Core == eCoreSTM8) && !as_strcasecmp(pArg->Str, "SP")))
+  if ((!as_strcasecmp(pArg->str.p_str, "S"))
+   || ((pCurrCPUProps->Core == eCoreSTM8) && !as_strcasecmp(pArg->str.p_str, "SP")))
   {
     *pResult = eModS;
     return True;
@@ -619,7 +619,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, LongWord Mask, Boolean IsCode, tA
   Boolean OK;
   int ArgLen;
 
-  ArgLen = strlen(pArg->Str);
+  ArgLen = strlen(pArg->str.p_str);
 
   ResetAdrVals(pAdrVals);
 
@@ -642,7 +642,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, LongWord Mask, Boolean IsCode, tA
 
   /* immediate ? */
 
-  if (*pArg->Str == '#')
+  if (*pArg->str.p_str == '#')
   {
     Word Value = EvalStrIntExpressionOffs(pArg, 1, (OpSize == eSymbolSize16Bit) ? Int16 : Int8, &OK);
     if (OK)
@@ -656,15 +656,15 @@ static Boolean DecodeAdr(const tStrComp *pArg, LongWord Mask, Boolean IsCode, tA
 
   /* speicherindirekt ? */
 
-  if ((*pArg->Str == '[') && (pArg->Str[ArgLen - 1] == ']'))
+  if ((*pArg->str.p_str == '[') && (pArg->str.p_str[ArgLen - 1] == ']'))
   {
     tStrComp Comp;
     Boolean OK;
 
     StrCompRefRight(&Comp, pArg, 1);
-    Comp.Str[ArgLen - 2] = '\0'; Comp.Pos.Len--;
+    Comp.str.p_str[ArgLen - 2] = '\0'; Comp.Pos.Len--;
     OK = DecideIndirectSize(Mask, &Comp, eModIAbs8, eModIAbs16, eModI16Abs16, eModI16Abs24, 0xb, 0xc, 0xc, 0xb, pAdrVals);
-    Comp.Str[ArgLen - 2] = ']';
+    Comp.str.p_str[ArgLen - 2] = ']';
     if (OK)
       AddPrefix((pAdrVals->Mode == eModI16Abs16) ? 0x72: 0x92);
     goto chk;
@@ -672,7 +672,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, LongWord Mask, Boolean IsCode, tA
 
   /* sonstwie indirekt ? */
 
-  if (IsIndirect(pArg->Str))
+  if (IsIndirect(pArg->str.p_str))
   {
     tStrComp Comp, Left, Right;
     Boolean YReg = False, SPReg = False;
@@ -683,12 +683,12 @@ static Boolean DecodeAdr(const tStrComp *pArg, LongWord Mask, Boolean IsCode, tA
 
     /* ein oder zwei Argumente ? */
 
-    p = QuotPos(Comp.Str, ',');
+    p = QuotPos(Comp.str.p_str, ',');
     if (!p)
     {
       pAdrVals->Part = 0xf;
-      if (!as_strcasecmp(Comp.Str, "X")) pAdrVals->Mode = eModIX;
-      else if (!as_strcasecmp(Comp.Str, "Y"))
+      if (!as_strcasecmp(Comp.str.p_str, "X")) pAdrVals->Mode = eModIX;
+      else if (!as_strcasecmp(Comp.str.p_str, "Y"))
       {
         pAdrVals->Mode = eModIY;
         AddPrefix(0x90);
@@ -699,22 +699,22 @@ static Boolean DecodeAdr(const tStrComp *pArg, LongWord Mask, Boolean IsCode, tA
 
     StrCompSplitRef(&Left, &Right, &Comp, p);
 
-    if (!as_strcasecmp(Left.Str, "X"))
+    if (!as_strcasecmp(Left.str.p_str, "X"))
       Left = Right;
-    else if (!as_strcasecmp(Right.Str, "X"));
-    else if (!as_strcasecmp(Left.Str, "Y"))
+    else if (!as_strcasecmp(Right.str.p_str, "X"));
+    else if (!as_strcasecmp(Left.str.p_str, "Y"))
     {
       Left = Right;
       YReg = True;
     }
-    else if (!as_strcasecmp(Right.Str, "Y"))
+    else if (!as_strcasecmp(Right.str.p_str, "Y"))
       YReg = True;
-    else if (!as_strcasecmp(Left.Str, "SP"))
+    else if (!as_strcasecmp(Left.str.p_str, "SP"))
     {
       Left = Right;
       SPReg = True;
     }
-    else if (!as_strcasecmp(Right.Str, "SP"))
+    else if (!as_strcasecmp(Right.str.p_str, "SP"))
       SPReg = True;
     else
     {
@@ -724,8 +724,8 @@ static Boolean DecodeAdr(const tStrComp *pArg, LongWord Mask, Boolean IsCode, tA
 
     /* speicherindirekt ? */
 
-    ArgLen = strlen(Left.Str);
-    if ((*Left.Str == '[') && (Left.Str[ArgLen - 1] == ']'))
+    ArgLen = strlen(Left.str.p_str);
+    if ((*Left.str.p_str == '[') && (Left.str.p_str[ArgLen - 1] == ']'))
     {
       StrCompRefRight(&Right, &Left, 1);
       StrCompShorten(&Right, 1);
@@ -815,7 +815,7 @@ static LongWord ConstructMask(LongWord TotMask, tSymbolSize OpSize)
 
 static LongWord EvalBitPosition(const tStrComp *pArg, Boolean *pOK)
 {
-  return EvalStrIntExpressionOffs(pArg, !!(*pArg->Str == '#'), UInt3, pOK);
+  return EvalStrIntExpressionOffs(pArg, !!(*pArg->str.p_str == '#'), UInt3, pOK);
 }
 
 /*!------------------------------------------------------------------------
@@ -1071,7 +1071,7 @@ static void WriteMOV(tAdrVals *pDestAdrVals, tAdrVals *pSrcAdrVals)
 static void DecodeFixed(Word Code)
 {
   if (!ChkArgCnt(0, 0));
-  else if (*AttrPart.Str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
+  else if (*AttrPart.str.p_str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
   else if (Hi(Code) && (pCurrCPUProps->Core != eCoreSTM8)) WrStrErrorPos(ErrNum_InstructionNotSupported, &OpPart);
   else
   {
@@ -1095,7 +1095,7 @@ static void DecodeLD(Word Code)
   UNUSED(Code);
 
   if (!ChkArgCnt(2, 2));
-  else if (*AttrPart.Str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
+  else if (*AttrPart.str.p_str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
   else
   {
     /* NOTE: Set eSymbolSizeUnknown so we get X/Y/S also in STM8 mode.
@@ -1339,7 +1339,7 @@ static void DecodeLDW(Word Code)
   UNUSED(Code);
   if (!ChkArgCnt(2, 2));
   else if (pCurrCPUProps->Core != eCoreSTM8) WrStrErrorPos(ErrNum_InstructionNotSupported, &OpPart);
-  else if (*AttrPart.Str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
+  else if (*AttrPart.str.p_str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
   else
   {
     Mask = ConstructMask(MModX | MModY | MModS
@@ -1461,7 +1461,7 @@ static void DecodeLDF(Word Code)
   UNUSED(Code);
   if (!ChkArgCnt(2, 2));
   else if (pCurrCPUProps->Core != eCoreSTM8) WrStrErrorPos(ErrNum_InstructionNotSupported, &OpPart);
-  else if (*AttrPart.Str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
+  else if (*AttrPart.str.p_str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
   else if (DecodeAdr(&ArgStr[1], MModA | MModAbs24 | MModIX24 | MModIY24 | MModI16XAbs24 | MModI16YAbs24 | MModI16Abs24, False, &AdrVals))
   switch (AdrVals.Mode)
   {
@@ -1526,7 +1526,7 @@ static void DecodeMOV(Word Code)
   UNUSED(Code);
   if (!ChkArgCnt(2, 2));
   else if (pCurrCPUProps->Core != eCoreSTM8) WrStrErrorPos(ErrNum_InstructionNotSupported, &OpPart);
-  else if (*AttrPart.Str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
+  else if (*AttrPart.str.p_str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
   else if (DecodeAdr(&ArgStr[2], MModImm | MModAbs8 | MModAbs16, False, &SrcAdrVals))
   {
     if (DecodeAdr(&ArgStr[1], ((SrcAdrVals.Mode == eModAbs8) ? MModAbs8 : 0) | MModAbs16, False, &DestAdrVals))
@@ -1544,7 +1544,7 @@ static void DecodePUSH_POP(Word Code)
 {
   if (!ChkArgCnt(1, 1));
   else if (Hi(Code) && (pCurrCPUProps->Core != eCoreSTM8)) WrStrErrorPos(ErrNum_InstructionNotSupported, &OpPart);
-  else if (*AttrPart.Str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
+  else if (*AttrPart.str.p_str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
   else
   {
     LongWord Mask;
@@ -1557,7 +1557,7 @@ static void DecodePUSH_POP(Word Code)
       if (Lo(Code))
         Mask |= MModImm;
     }
-    if (!as_strcasecmp(ArgStr[1].Str, "CC"))
+    if (!as_strcasecmp(ArgStr[1].str.p_str, "CC"))
     {
       BAsmCode[PrefixCnt] = 0x86 + Lo(Code);
       CodeLen = PrefixCnt + 1;
@@ -1599,7 +1599,7 @@ static void DecodeCP(Word IsCPW)
 
   if (!ChkArgCnt(2, 2));
   else if (IsCPW && (pCurrCPUProps->Core != eCoreSTM8)) WrStrErrorPos(ErrNum_InstructionNotSupported, &OpPart);
-  else if (*AttrPart.Str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
+  else if (*AttrPart.str.p_str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
   else
   {
     tAdrVals SrcAdrVals;
@@ -1678,7 +1678,7 @@ static void DecodeAri16(Word Code)
 
   if (!ChkArgCnt(2, 2));
   else if (pCurrCPUProps->Core != eCoreSTM8) WrStrErrorPos(ErrNum_InstructionNotSupported, &OpPart);
-  else if (*AttrPart.Str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
+  else if (*AttrPart.str.p_str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
   else if (DecodeAdr(&ArgStr[1], MModX | MModY | MModS, False, &DestAdrVals))
   switch (DestAdrVals.Mode)
   {
@@ -1755,7 +1755,7 @@ static void DecodeAri(Word Code)
   Word Code16 = 0;
 
   if (!ChkArgCnt(2, 2));
-  else if (*AttrPart.Str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
+  else if (*AttrPart.str.p_str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
   else
   {
     Mask = MModA;
@@ -1812,7 +1812,7 @@ static void DecodeRMW(Word Code)
   Code = Lo(Code);
   if (!ChkArgCnt(1, 1));
   else if (IsW && (pCurrCPUProps->Core != eCoreSTM8)) WrStrErrorPos(ErrNum_InstructionNotSupported, &OpPart);
-  else if (*AttrPart.Str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
+  else if (*AttrPart.str.p_str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
   else
   {
     LongWord Mask;
@@ -1883,7 +1883,7 @@ static void DecodeMUL(Word Code)
   UNUSED(Code);
 
   if (!ChkArgCnt(2, 2));
-  else if (*AttrPart.Str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
+  else if (*AttrPart.str.p_str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
   else
   {
     tAdrMode SrcMode;
@@ -1910,7 +1910,7 @@ static void DecodeDIV(Word IsW)
 
   if (!ChkArgCnt(2, 2));
   else if (pCurrCPUProps->Core != eCoreSTM8) WrStrErrorPos(ErrNum_InstructionNotSupported, &OpPart);
-  else if (*AttrPart.Str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
+  else if (*AttrPart.str.p_str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
   else if (DecodeAdr(&ArgStr[1], MModX | (IsW ? 0 : MModY), False, &DestAdrVals)
         && DecodeAdr(&ArgStr[2], MModY | (IsW ? 0 : MModA), False, &SrcAdrVals))
   {
@@ -1931,7 +1931,7 @@ static void DecodeEXG(Word IsW)
 
   if (!ChkArgCnt(2, 2));
   else if (pCurrCPUProps->Core != eCoreSTM8) WrStrErrorPos(ErrNum_InstructionNotSupported, &OpPart);
-  else if (*AttrPart.Str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
+  else if (*AttrPart.str.p_str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
   else if (DecodeAdr(&ArgStr[1], (IsW ? 0 : (MModA | MModXL | MModYL | MModAbs16)) | MModX | MModY, False, &DestAdrVals))
   switch (DestAdrVals.Mode)
   {
@@ -2009,7 +2009,7 @@ static void DecodeBitOp(Word Code)
 
   if (!ChkArgCnt(1, 2));
   else if ((Hi(Code == 0x90)) && (pCurrCPUProps->Core != eCoreSTM8)) WrStrErrorPos(ErrNum_InstructionNotSupported, &OpPart);
-  else if (*AttrPart.Str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
+  else if (*AttrPart.str.p_str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
   else if (DecodeBitAdrWithIndir(1, ArgCnt, &BitPos, &AdrVals))
   {
     if (pCurrCPUProps->Core == eCoreSTM8)
@@ -2036,7 +2036,7 @@ static void DecodeBTJF_BTJT(Word Code)
   tAdrVals AdrVals;
 
   if (!ChkArgCnt(2, 3));
-  else if (*AttrPart.Str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
+  else if (*AttrPart.str.p_str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
   else if (DecodeBitAdrWithIndir(1, ArgCnt - 1, &BitPos, &AdrVals))
   {
     Integer AdrInt;
@@ -2072,7 +2072,7 @@ static void DecodeBTJF_BTJT(Word Code)
 static void DecodeJP_CALL(Word Code)
 {
   if (!ChkArgCnt(1, 1));
-  else if (*AttrPart.Str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
+  else if (*AttrPart.str.p_str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
   else
   {
     LongWord Mask;
@@ -2102,7 +2102,7 @@ static void DecodeJPF_CALLF(Word Code)
 
   if (!ChkArgCnt(1, 1));
   else if (pCurrCPUProps->Core != eCoreSTM8) WrStrErrorPos(ErrNum_InstructionNotSupported, &OpPart);
-  else if (*AttrPart.Str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
+  else if (*AttrPart.str.p_str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
   else if (DecodeAdr(&ArgStr[1], MModAbs24 | MModI16Abs24, True, &AdrVals))
   {
     BAsmCode[PrefixCnt] = Code;
@@ -2118,10 +2118,10 @@ static void DecodeJPF_CALLF(Word Code)
 
 static void DecodeRel(Word Code)
 {
-  if (*AttrPart.Str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
+  if (*AttrPart.str.p_str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
   else if (!Code) WrStrErrorPos(ErrNum_InstructionNotSupported, &OpPart);
   else if (!ChkArgCnt(1, 1));
-  else if (*ArgStr[1].Str == '[')
+  else if (*ArgStr[1].str.p_str == '[')
   {
     if (pCurrCPUProps->Core != eCoreST7) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
     else
@@ -2168,7 +2168,7 @@ static void DecodeRxWA(Word Code)
   tAdrMode SrcMode;
   tAdrVals DestAdrVals;
 
-  if (*AttrPart.Str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
+  if (*AttrPart.str.p_str) WrStrErrorPos(ErrNum_UseLessAttr, &AttrPart);
   else if (!ChkArgCnt(1, 2));
   else if (pCurrCPUProps->Core != eCoreSTM8) WrStrErrorPos(ErrNum_InstructionNotSupported, &OpPart);
   else if (((ArgCnt == 1) || DecodeReg(&ArgStr[2], &SrcMode, MModA)) && DecodeAdr(&ArgStr[1], MModX | MModY, False, &DestAdrVals))
@@ -2205,7 +2205,7 @@ static void DecodeBIT(Word Code)
     pElement = CreateStructElem(&LabPart);
     if (!pElement)
       return;
-    pElement->pRefElemName = as_strdup(ArgStr[1].Str);
+    pElement->pRefElemName = as_strdup(ArgStr[1].str.p_str);
     pElement->OpSize = eSymbolSize8Bit;
     pElement->BitPos = BitPos;
     pElement->ExpandFnc = ExpandST7Bit;
@@ -2358,7 +2358,7 @@ static void DeinitFields(void)
 
 static Boolean DecodeAttrPart_ST7(void)
 {
-  return DecodeMoto16AttrSize(*AttrPart.Str, &AttrPartOpSize, False);
+  return DecodeMoto16AttrSize(*AttrPart.str.p_str, &AttrPartOpSize, False);
 }
 
 static void MakeCode_ST7(void)
@@ -2377,7 +2377,7 @@ static void MakeCode_ST7(void)
   if (DecodeMotoPseudo(True)) return;
   if (DecodeMoto16Pseudo(OpSize,True)) return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 
@@ -2390,17 +2390,6 @@ static void MakeCode_ST7(void)
 static Boolean IsDef_ST7(void)
 {
   return Memo("BIT");
-}
-
-/*!------------------------------------------------------------------------
- * \fn     SwitchFrom_ST7(void)
- * \brief  cleanup after switching away from target
- * ------------------------------------------------------------------------ */
-
-static void SwitchFrom_ST7(void)
-{
-  DeinitFields();
-  ClearONOFF();
 }
 
 /*!------------------------------------------------------------------------
@@ -2425,7 +2414,7 @@ static void SwitchTo_ST7(void *pUser)
   DecodeAttrPart = DecodeAttrPart_ST7;
   MakeCode = MakeCode_ST7;
   IsDef = IsDef_ST7;
-  SwitchFrom = SwitchFrom_ST7;
+  SwitchFrom = DeinitFields;
   DissectBit = DissectBit_ST7;
   InitFields();
   AddMoto16PseudoONOFF();

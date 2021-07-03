@@ -32,10 +32,10 @@ void SetLstMacroExp(tLstMacroExp NewLstMacroExp)
 {
   tStrComp TmpComp;
   String TmpCompStr;
-  StrCompMkTemp(&TmpComp, TmpCompStr);
+  StrCompMkTemp(&TmpComp, TmpCompStr, sizeof(TmpCompStr));
 
   LstMacroExp = NewLstMacroExp;
-  strmaxcpy(TmpCompStr, LstMacroExpName, sizeof(TmpCompStr)); EnterIntSymbol(&TmpComp, NewLstMacroExp, 0, True);
+  strmaxcpy(TmpCompStr, LstMacroExpName, sizeof(TmpCompStr)); EnterIntSymbol(&TmpComp, NewLstMacroExp, SegNone, True);
   if (LstMacroExp == eLstMacroExpAll)
     strcpy(ListLine, "ALL");
   else if (LstMacroExp == eLstMacroExpNone)

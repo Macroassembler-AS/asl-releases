@@ -149,6 +149,7 @@ static void DecodeDC(Word Code)
 
   UNUSED(Code);
 
+  as_tempres_ini(&t);
   if (ChkArgCnt(1, ArgCntMax))
   {
     z = 1; OK = TRUE; Toggle = FALSE;
@@ -164,7 +165,7 @@ static void DecodeDC(Word Code)
             PutByte(t.Contents.Int);
           break;
         case TempString:
-          for (p = t.Contents.Ascii.Contents, pEnd = p + t.Contents.Ascii.Length; p < pEnd; p++)
+          for (p = t.Contents.str.p_str, pEnd = p + t.Contents.str.len; p < pEnd; p++)
             PutByte(CharTransTable[((usint) *p) & 0xff]);
           break;
         case TempFloat:
@@ -180,6 +181,7 @@ static void DecodeDC(Word Code)
     else if (Toggle)
       CodeLen++;
   }
+  as_tempres_free(&t);
 }
 
 static void DecodeDW(Word Code)
@@ -408,7 +410,7 @@ static void MakeCode_sc14xxx(void)
 
   if (Memo("")) return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

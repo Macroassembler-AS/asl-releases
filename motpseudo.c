@@ -32,6 +32,8 @@
 
 #include "motpseudo.h"
 
+#define LEAVE goto func_exit
+
 /*****************************************************************************
  * Local Variables
  *****************************************************************************/
@@ -44,12 +46,13 @@ static Boolean M16Turn = False;
 
 static Boolean CutRep(tStrComp *pDest, const tStrComp *pSrc, LongInt *pErg, tSymbolFlags *pFlags)
 {
-  tStrComp Src = *pSrc;
+  tStrComp Src;
 
   if (pFlags)
     *pFlags = eSymbolFlag_None;
+  StrCompRefRight(&Src, pSrc, 0);
   KillPrefBlanksStrCompRef(&Src);
-  if (*Src.Str != '[')
+  if (*Src.str.p_str != '[')
   {
     *pErg = 1;
     *pDest = *pSrc;
@@ -61,7 +64,7 @@ static Boolean CutRep(tStrComp *pDest, const tStrComp *pSrc, LongInt *pErg, tSym
     char *pEnd;
     Boolean OK;
 
-    pEnd = QuotPos(Src.Str + 1, ']');
+    pEnd = QuotPos(Src.str.p_str + 1, ']');
     if (!pEnd)
     {
       WrError(ErrNum_BrackErr);
@@ -101,7 +104,7 @@ void DecodeMotoBYT(Word Index)
 
     forallargs (pArg, OK)
     {
-      if (!*pArg->Str)
+      if (!*pArg->str.p_str)
       {
         OK = FALSE;
         WrError(ErrNum_EmptyArgument);
@@ -112,7 +115,7 @@ void DecodeMotoBYT(Word Index)
       if (!OK)
         break;
 
-      if (!strcmp(Arg.Str, "?"))
+      if (!strcmp(Arg.str.p_str, "?"))
       {
         if (SpaceFlag == 0)
         {
@@ -136,6 +139,7 @@ void DecodeMotoBYT(Word Index)
 
         SpaceFlag = 0;
 
+        as_tempres_ini(&t);
         EvalStrExpression(&Arg, &t);
         switch (t.Typ)
         {
@@ -172,8 +176,8 @@ void DecodeMotoBYT(Word Index)
             if (MultiCharToInt(&t, 1))
               goto ToInt;
 
-            l = t.Contents.Ascii.Length;
-            TranslateString(t.Contents.Ascii.Contents, l);
+            l = t.Contents.str.len;
+            TranslateString(t.Contents.str.p_str, l);
 
             if (SetMaxCodeLen(CodeLen + (Rep * l)))
             {
@@ -187,7 +191,7 @@ void DecodeMotoBYT(Word Index)
 
               for (z2 = 0; z2 < Rep; z2++)
                 for (z3 = 0; z3 < l; z3++)
-                  PutByte(t.Contents.Ascii.Contents[z3]);
+                  PutByte(t.Contents.str.p_str[z3]);
             }
             break;
           }
@@ -196,6 +200,7 @@ void DecodeMotoBYT(Word Index)
             OK = False;
             break;
         }
+        as_tempres_free(&t);
       }
     }
 
@@ -205,7 +210,7 @@ void DecodeMotoBYT(Word Index)
     {
       if (SpaceFlag == 1)
         DontPrint = True;
-      if (*LabPart.Str)
+      if (*LabPart.str.p_str)
         SetSymbolOrStructElemSize(&LabPart, eSymbolSize8Bit);
     }
   }
@@ -243,7 +248,7 @@ void DecodeMotoADR(Word Index)
 
     forallargs (pArg, OK)
     {
-      if (!*pArg->Str)
+      if (!*pArg->str.p_str)
       {
         OK = FALSE;
         WrError(ErrNum_EmptyArgument);
@@ -254,7 +259,7 @@ void DecodeMotoADR(Word Index)
       if (!OK)
         break;
 
-      if (!strcmp(Arg.Str, "?"))
+      if (!strcmp(Arg.str.p_str, "?"))
       {
         if (SpaceFlag == 0)
         {
@@ -278,6 +283,7 @@ void DecodeMotoADR(Word Index)
         LongInt z2, Cnt;
 
         SpaceFlag = 0;
+        as_tempres_ini(&Res);
         EvalStrExpression(&Arg, &Res);
 
         switch (Res.Typ)
@@ -296,8 +302,8 @@ void DecodeMotoADR(Word Index)
           case TempString:
             if (MultiCharToInt(&Res, 2))
               goto ToInt;
-            Cnt = Res.Contents.Ascii.Length;
-            TranslateString(Res.Contents.Ascii.Contents, Res.Contents.Ascii.Length);
+            Cnt = Res.Contents.str.len;
+            TranslateString(Res.Contents.str.p_str, Res.Contents.str.len);
             break;
           case TempFloat:
             WrStrErrorPos(ErrNum_StringOrIntButFloat, &Arg);
@@ -330,13 +336,14 @@ void DecodeMotoADR(Word Index)
             {
               unsigned z3;
 
-              for (z3 = 0; z3 < Res.Contents.Ascii.Length; z3++)
-                PutADR(Res.Contents.Ascii.Contents[z3]);
+              for (z3 = 0; z3 < Res.Contents.str.len; z3++)
+                PutADR(Res.Contents.str.p_str[z3]);
               break;
             }
             default:
               break;
           }
+        as_tempres_free(&Res);
       }
     }
 
@@ -346,7 +353,7 @@ void DecodeMotoADR(Word Index)
     {
       if (SpaceFlag)
         DontPrint = True;
-      if (*LabPart.Str)
+      if (*LabPart.str.p_str)
         SetSymbolOrStructElemSize(&LabPart, eSymbolSize16Bit);
     }
   }
@@ -367,7 +374,7 @@ static void DecodeFCC(Word Index)
 
     forallargs (pArg, OK)
     {
-      if (!*pArg->Str)
+      if (!*pArg->str.p_str)
       {
         OK = FALSE;
         WrError(ErrNum_EmptyArgument);
@@ -399,7 +406,7 @@ static void DecodeFCC(Word Index)
 
     if (!OK)
       CodeLen = 0;
-    else if (*LabPart.Str)
+    else if (*LabPart.str.p_str)
       SetSymbolOrStructElemSize(&LabPart, eSymbolSize8Bit);
   }
 }
@@ -424,7 +431,7 @@ void DecodeMotoDFS(Word Index)
       if (!HVal16)
         WrError(ErrNum_NullResMem);
       BookKeeping();
-      if (*LabPart.Str)
+      if (*LabPart.str.p_str)
         SetSymbolOrStructElemSize(&LabPart, eSymbolSize8Bit);
     }
   }
@@ -451,7 +458,7 @@ Boolean DecodeMotoPseudo(Boolean Turn)
   }
 
   M16Turn = Turn;
-  return LookupInstTable(InstTable, OpPart.Str);
+  return LookupInstTable(InstTable, OpPart.str.p_str);
 }
 
 static void DigIns(char Ch, int Pos, Byte *pDest)
@@ -822,11 +829,12 @@ void DecodeMotoDC(tSymbolSize OpSize, Boolean Turn)
 
   UNUSED(Turn);
 
-  if (*LabPart.Str)
+  as_tempres_ini(&t);
+  if (*LabPart.str.p_str)
     SetSymbolOrStructElemSize(&LabPart, OpSize);
 
   if (!ChkArgCnt(1, ArgCntMax))
-    return;
+    LEAVE;
 
   if (OpSize < 0)
     OpSize = eSymbolSize16Bit;
@@ -903,7 +911,7 @@ void DecodeMotoDC(tSymbolSize OpSize, Boolean Turn)
 
   forallargs (pArg, OK)
   {
-    if (!*pArg->Str)
+    if (!*pArg->str.p_str)
     {
       OK = FALSE;
       WrError(ErrNum_EmptyArgument);
@@ -920,7 +928,7 @@ void DecodeMotoDC(tSymbolSize OpSize, Boolean Turn)
       break;
     }
 
-    if (!strcmp(Arg.Str, "?"))
+    if (!strcmp(Arg.str.p_str, "?"))
     {
       if (SpaceFlag == 0)
       {
@@ -964,8 +972,7 @@ void DecodeMotoDC(tSymbolSize OpSize, Boolean Turn)
           {
             if (ConvertFloat && EnterFloat)
             {
-              t.Contents.Float = t.Contents.Int;
-              t.Typ = TempFloat;
+              TempResultToFloat(&t);
               goto HandleFloat;
             }
             else
@@ -1023,7 +1030,7 @@ void DecodeMotoDC(tSymbolSize OpSize, Boolean Turn)
           {
             if (ConvertFloat && EnterFloat)
             {
-              if (SetMaxCodeLen(CodeLen + (Rep * WSize * t.Contents.Ascii.Length)))
+              if (SetMaxCodeLen(CodeLen + (Rep * WSize * t.Contents.str.len)))
               {
                 WrError(ErrNum_CodeOverflow);
                 OK = False;
@@ -1031,7 +1038,7 @@ void DecodeMotoDC(tSymbolSize OpSize, Boolean Turn)
               else
               {
                 for (z2 = 0; z2 < Rep; z2++)
-                  for (zp = t.Contents.Ascii.Contents; zp < t.Contents.Ascii.Contents + t.Contents.Ascii.Length; zp++)
+                  for (zp = t.Contents.str.p_str; zp < t.Contents.str.p_str + t.Contents.str.len; zp++)
                   {
                     Word TurnField[8];
 
@@ -1048,14 +1055,14 @@ void DecodeMotoDC(tSymbolSize OpSize, Boolean Turn)
               OK = False;
             }
           }
-          else if (SetMaxCodeLen(CodeLen + Rep * t.Contents.Ascii.Length))
+          else if (SetMaxCodeLen(CodeLen + Rep * t.Contents.str.len))
           {
             WrError(ErrNum_CodeOverflow);
             OK = False;
           }
           else
             for (z2 = 0; z2 < Rep; z2++)
-              for (zp = t.Contents.Ascii.Contents; zp < t.Contents.Ascii.Contents + t.Contents.Ascii.Length; EnterInt(CharTransTable[((usint) *(zp++)) & 0xff]));
+              for (zp = t.Contents.str.p_str; zp < t.Contents.str.p_str + t.Contents.str.len; EnterInt(CharTransTable[((usint) *(zp++)) & 0xff]));
           break;
         case TempNone:
           OK = False;
@@ -1075,6 +1082,9 @@ void DecodeMotoDC(tSymbolSize OpSize, Boolean Turn)
 
   else if (SpaceFlag == 1)
     DontPrint = True;
+
+func_exit:
+  as_tempres_free(&t);
 }
 
 Boolean DecodeMoto16Pseudo(tSymbolSize OpSize, Boolean Turn)
@@ -1088,7 +1098,7 @@ Boolean DecodeMoto16Pseudo(tSymbolSize OpSize, Boolean Turn)
     OpSize = eSymbolSize16Bit;
 
   PadBeforeStart = Odd(EProgCounter()) && DoPadding && (OpSize != eSymbolSize8Bit);
-  if (*OpPart.Str != 'D')
+  if (*OpPart.str.p_str != 'D')
     return False;
 
   if (Memo("DC"))
@@ -1138,7 +1148,7 @@ Boolean DecodeMoto16Pseudo(tSymbolSize OpSize, Boolean Turn)
           BookKeeping();
       }
     }
-    if (*LabPart.Str)
+    if (*LabPart.str.p_str)
       SetSymbolOrStructElemSize(&LabPart, OpSize);
     return True;
   }
@@ -1187,8 +1197,8 @@ Boolean DecodeMoto16AttrSize(char SizeSpec, tSymbolSize *pResult, Boolean Allow2
 
 Boolean DecodeMoto16AttrSizeStr(const struct sStrComp *pSizeSpec, tSymbolSize *pResult, Boolean Allow24)
 {
-  if ((strlen(pSizeSpec->Str) > 1)
-   || !DecodeMoto16AttrSizeCore(*pSizeSpec->Str, pResult, Allow24))
+  if ((strlen(pSizeSpec->str.p_str) > 1)
+   || !DecodeMoto16AttrSizeCore(*pSizeSpec->str.p_str, pResult, Allow24))
   {
     WrStrErrorPos(ErrNum_UndefAttr, pSizeSpec);
     return False;

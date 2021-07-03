@@ -138,9 +138,9 @@ static void DecodeAdr(int Start, int Stop, Boolean LongAdr, Byte Mask)
 
   /* immediate ? */
 
-  if (*ArgStr[Start].Str == '#')
+  if (*ArgStr[Start].str.p_str == '#')
   {
-    Offset = SplitSize(ArgStr[Start].Str + 1, &Size);
+    Offset = SplitSize(ArgStr[Start].str.p_str + 1, &Size);
     switch (OpSize)
     {
       case eSymbolSizeUnknown:
@@ -198,21 +198,21 @@ static void DecodeAdr(int Start, int Stop, Boolean LongAdr, Byte Mask)
   if (Stop == 2)
   {
     AdrPart = 0xff;
-    if (!as_strcasecmp(ArgStr[Start + 1].Str, "X"))
+    if (!as_strcasecmp(ArgStr[Start + 1].str.p_str, "X"))
       AdrPart = 0x00;
-    else if (!as_strcasecmp(ArgStr[Start + 1].Str, "Y"))
+    else if (!as_strcasecmp(ArgStr[Start + 1].str.p_str, "Y"))
       AdrPart = 0x10;
-    else if (!as_strcasecmp(ArgStr[Start + 1].Str, "Z"))
+    else if (!as_strcasecmp(ArgStr[Start + 1].str.p_str, "Z"))
       AdrPart = 0x20;
     else
       WrStrErrorPos(ErrNum_InvReg, &ArgStr[Start + 1]);
     if (AdrPart != 0xff)
     {
-      if (!as_strcasecmp(ArgStr[Start].Str, "E"))
+      if (!as_strcasecmp(ArgStr[Start].str.p_str, "E"))
         AdrMode = ModDispE;
       else
       {
-        Offset = SplitSize(ArgStr[Start].Str, &Size);
+        Offset = SplitSize(ArgStr[Start].str.p_str, &Size);
         if (Size == ShortDisp)
           V32 = EvalStrIntExpressionOffs(&ArgStr[Start], Offset, UInt8, &OK);
         else if (LongAdr)
@@ -257,7 +257,7 @@ static void DecodeAdr(int Start, int Stop, Boolean LongAdr, Byte Mask)
 
   else
   {
-    Offset = SplitSize(ArgStr[Start].Str, &Size);
+    Offset = SplitSize(ArgStr[Start].str.p_str, &Size);
     V32 = EvalStrIntExpressionOffs(&ArgStr[Start], Offset, UInt20, &OK);
     if (OK)
     {
@@ -434,7 +434,7 @@ static void DecodeAux(Word Code)
   if (ChkArgCnt(1, 2))
   {
     OpSize = eSymbolSize16Bit;
-    DecodeAdr(1, ArgCnt, False, (*OpPart.Str == 'S' ? 0 : MModImm) | MModDisp8 | MModDisp16 | MModAbs);
+    DecodeAdr(1, ArgCnt, False, (*OpPart.str.p_str == 'S' ? 0 : MModImm) | MModDisp8 | MModDisp16 | MModAbs);
     switch (AdrMode)
     {
       case ModDisp8:
@@ -457,7 +457,7 @@ static void DecodeAux(Word Code)
       case ModImm:
         BAsmCode[0] = 0x37;
         BAsmCode[1] = Code + 0x30;
-        if (*OpPart.Str == 'L') BAsmCode[1] -= 0x40;
+        if (*OpPart.str.p_str == 'L') BAsmCode[1] -= 0x40;
         memcpy(BAsmCode + 2, AdrVals, AdrCnt);
         CodeLen = 2 + AdrCnt;
        break;
@@ -519,8 +519,8 @@ static void DecodeStkMult(Word Index)
       if (OK)
       {
         z2 = 0;
-        NLS_UpString(ArgStr[z].Str);
-        while ((z2 < RegCnt) && (strcmp(ArgStr[z].Str, Regs[z2])))
+        NLS_UpString(ArgStr[z].str.p_str);
+        while ((z2 < RegCnt) && (strcmp(ArgStr[z].str.p_str, Regs[z2])))
           z2++;
         if (z2 >= RegCnt)
         {
@@ -559,7 +559,7 @@ static void DecodeMov(Word Index)
     }
   }
   else if (!ChkArgCnt(3, 3));
-  else if (!as_strcasecmp(ArgStr[2].Str, "X"))
+  else if (!as_strcasecmp(ArgStr[2].str.p_str, "X"))
   {
     BAsmCode[1] = EvalStrIntExpression(&ArgStr[1], SInt8, &OK);
     if (OK)
@@ -573,7 +573,7 @@ static void DecodeMov(Word Index)
       }
     }
   }
-  else if (!as_strcasecmp(ArgStr[3].Str, "X"))
+  else if (!as_strcasecmp(ArgStr[3].str.p_str, "X"))
   {
     BAsmCode[3] = EvalStrIntExpression(&ArgStr[2], SInt8, &OK);
     if (OK)
@@ -1074,7 +1074,7 @@ static void DeinitFields(void)
 
 static Boolean DecodeAttrPart_6816(void)
 {
-  return DecodeMoto16AttrSize(*AttrPart.Str, &AttrPartOpSize, False);
+  return DecodeMoto16AttrSize(*AttrPart.str.p_str, &AttrPartOpSize, False);
 }
 
 static void MakeCode_6816(void)
@@ -1100,7 +1100,7 @@ static void MakeCode_6816(void)
   if (DecodeMoto16Pseudo(OpSize, True))
     return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

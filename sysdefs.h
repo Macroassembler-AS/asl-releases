@@ -91,6 +91,12 @@
 # endif
 #endif
 
+#ifdef __PPC64__
+# ifndef _POWER4
+#  define _POWER4
+# endif
+#endif
+
 /*---------------------------------------------------------------------------*/
 /* ditto for ARM platforms */
 
@@ -554,9 +560,41 @@ typedef unsigned long long Card64;
 #endif /* __hppa */
 
 /*===========================================================================*/
-/* POWER platforms */
+/* POWER 64 bit platforms */
 
-#ifdef _POWER
+#ifdef _POWER64
+
+#define ARCHPRNAME "ppc64"
+
+/*---------------------------------------------------------------------------*/
+/* POWER64 with Linux (Macintosh) */
+
+#ifdef __linux__
+
+#define ARCHSYSNAME "unknown-linux"
+#define DEFSMADE
+#define OPENRDMODE "r"
+#define OPENWRMODE "w"
+#define OPENUPMODE "r+"
+#define IEEEFLOAT
+typedef signed char Integ8;
+typedef unsigned char Card8;
+typedef signed short Integ16;
+typedef unsigned short Card16;
+#define HAS16
+typedef signed int Integ32;
+#define PRIInteg32 "d"
+typedef unsigned int Card32;
+typedef signed long Integ64;
+typedef unsigned long Card64;
+#define HAS64
+#define LOCALE_NLS
+#endif
+
+/*===========================================================================*/
+/* POWER(32) platforms */
+
+#elif defined _POWER
 
 #define ARCHPRNAME "ppc"
 

@@ -11436,6 +11436,12 @@ described by:
                {The start register number plus the count of registers results
                 in a last register beyond the end of the register bank.}
                {the argument holding the register count}
+\errentry{ 380}{using indexed instead of indirect addressing}
+               {warning}
+               {Indirect addressing is not allowed at this place.
+                Instead, indexed addressing with a dummy displacement of
+                zero will be used.}
+               {the argument holding the indirect addressing expression}
 \errentry{1000}{symbol double defined}
                {error}
                {A new value is assigned to a symbol, using a label or a

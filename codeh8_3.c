@@ -212,7 +212,7 @@ static tRegEvalResult DecodeReg(const tStrComp *pArg, Byte *pResult, unsigned Si
   tEvalResult EvalResult;
   tRegEvalResult RegEvalResult;
 
-  if (DecodeRegCore(pArg->Str, pResult, pSize))
+  if (DecodeRegCore(pArg->str.p_str, pResult, pSize))
   {
     RegEvalResult = eIsReg;
     *pResult &= ~REG_MARK;
@@ -236,19 +236,19 @@ static tRegEvalResult DecodeReg(const tStrComp *pArg, Byte *pResult, unsigned Si
 
 static void CutSize(tStrComp *pArg)
 {
-  int ArgLen = strlen(pArg->Str);
+  int ArgLen = strlen(pArg->str.p_str);
 
-  if ((ArgLen >= 2) && !strcmp(pArg->Str + ArgLen - 2, ":8"))
+  if ((ArgLen >= 2) && !strcmp(pArg->str.p_str + ArgLen - 2, ":8"))
   {
     StrCompShorten(pArg, 2);
     MomSize = eSymbolSize8Bit;
   }
-  else if ((ArgLen >= 3) && !strcmp(pArg->Str + ArgLen - 3, ":16"))
+  else if ((ArgLen >= 3) && !strcmp(pArg->str.p_str + ArgLen - 3, ":16"))
   {
     StrCompShorten(pArg, 3);
     MomSize = eSymbolSize16Bit;
   }
-  else if ((ArgLen >= 3) && !strcmp(pArg->Str + ArgLen - 3, ":24"))
+  else if ((ArgLen >= 3) && !strcmp(pArg->str.p_str + ArgLen - 3, ":24"))
   {
     StrCompShorten(pArg, 3);
     MomSize = eSymbolSize24Bit;
@@ -379,7 +379,7 @@ static void DecodeAdr(tStrComp *pArg, Word Mask)
 
   /* immediate ? */
 
-  if (*pArg->Str == '#')
+  if (*pArg->str.p_str == '#')
   {
     switch (OpSize)
     {
@@ -436,13 +436,13 @@ static void DecodeAdr(tStrComp *pArg, Word Mask)
 
   /* indirekt ? */
 
-  if (*pArg->Str == '@')
+  if (*pArg->str.p_str == '@')
   {
     tStrComp Arg;
 
     StrCompRefRight(&Arg, pArg, 1);
 
-    if (*Arg.Str == '@')
+    if (*Arg.str.p_str == '@')
     {
       AdrVals[0] = EvalStrIntExpressionOffs(&Arg, 1, UInt8, &OK) & 0xff;
       if (OK)
@@ -462,7 +462,7 @@ static void DecodeAdr(tStrComp *pArg, Word Mask)
         goto chk;
     }
 
-    if (*Arg.Str == '-')
+    if (*Arg.str.p_str == '-')
     {
       tStrComp Reg;
 
@@ -477,8 +477,8 @@ static void DecodeAdr(tStrComp *pArg, Word Mask)
       }
     }
 
-    ArgLen = strlen(Arg.Str);
-    if (*Arg.Str && (Arg.Str[ArgLen - 1] == '+'))
+    ArgLen = strlen(Arg.str.p_str);
+    if (*Arg.str.p_str && (Arg.str.p_str[ArgLen - 1] == '+'))
     {
       StrCompShorten(&Arg, 1);
       switch (DecodeBaseReg(&Arg, &AdrPart, True))
@@ -489,10 +489,10 @@ static void DecodeAdr(tStrComp *pArg, Word Mask)
          AdrMode = ModPostInc;
          goto chk;
       }
-      Arg.Str[ArgLen - 1] = '+'; Arg.Pos.Len++;
+      Arg.str.p_str[ArgLen - 1] = '+'; Arg.Pos.Len++;
     }
 
-    if (IsIndirect(Arg.Str))
+    if (IsIndirect(Arg.str.p_str))
     {
       tStrComp Part, Remainder;
 
@@ -503,7 +503,7 @@ static void DecodeAdr(tStrComp *pArg, Word Mask)
       DispAcc = 0;
       do
       {
-        p = QuotPos(Part.Str, ',');
+        p = QuotPos(Part.str.p_str, ',');
         if (p)
           StrCompSplitRef(&Part, &Remainder, &Part, p);
         switch (DecodeBaseReg(&Part, &HReg, False))
@@ -631,7 +631,7 @@ static LongInt ImmVal(void)
 
 static LongWord EvalBitPosition(const tStrComp *pArg, Boolean *pOK)
 {
-  return EvalStrIntExpressionOffs(pArg, !!(*pArg->Str == '#'), UInt3, pOK);
+  return EvalStrIntExpressionOffs(pArg, !!(*pArg->str.p_str == '#'), UInt3, pOK);
 }
 
 /*!------------------------------------------------------------------------
@@ -790,7 +790,7 @@ static void ExpandBit_H8_3(const tStrComp *pVarName, const struct sStructElem *p
 static void DecodeFixed(Word Code)
 {
   if (!ChkArgCnt(0, 0));
-  else if (*AttrPart.Str) WrError(ErrNum_UseLessAttr);
+  else if (*AttrPart.str.p_str) WrError(ErrNum_UseLessAttr);
   else
   {
     CodeLen = 2;
@@ -1245,7 +1245,7 @@ static void DecodeLDC_STC(Word CodeIsSTC)
     tStrComp *pRegArg = CodeIsSTC ? &ArgStr[1] : &ArgStr[2],
              *pMemArg = CodeIsSTC ? &ArgStr[2] : &ArgStr[1];
 
-    if (as_strcasecmp(pRegArg->Str, "CCR")) WrError(ErrNum_InvAddrMode);
+    if (as_strcasecmp(pRegArg->str.p_str, "CCR")) WrError(ErrNum_InvAddrMode);
     else
     {
        SetOpSize(eSymbolSize8Bit);
@@ -1496,7 +1496,7 @@ static void DecodeLogicBit(Word Code)
 {
   SetOpSize(eSymbolSize8Bit);
   if (!ChkArgCnt(2, 2));
-  else if (as_strcasecmp(ArgStr[2].Str, "CCR")) WrError(ErrNum_InvAddrMode);
+  else if (as_strcasecmp(ArgStr[2].str.p_str, "CCR")) WrError(ErrNum_InvAddrMode);
   else
   {
     DecodeAdr(&ArgStr[1], MModImm);
@@ -2051,7 +2051,7 @@ static void DecodeTRAPA(Word Code)
   {
     Boolean OK;
 
-    WAsmCode[0] = EvalStrIntExpressionOffs(&ArgStr[1], !!(*ArgStr[1].Str == '#'), UInt2, &OK) << 4;
+    WAsmCode[0] = EvalStrIntExpressionOffs(&ArgStr[1], !!(*ArgStr[1].str.p_str == '#'), UInt2, &OK) << 4;
     if (OK)
     {
       WAsmCode[0] += 0x5700;
@@ -2090,7 +2090,7 @@ static void DecodeBIT(Word Code)
     pElement = CreateStructElem(&LabPart);
     if (!pElement)
       return;
-    pElement->pRefElemName = as_strdup(ArgStr[2].Str);
+    pElement->pRefElemName = as_strdup(ArgStr[2].str.p_str);
     pElement->OpSize = eSymbolSize8Bit;
     pElement->BitPos = BitPos;
     pElement->ExpandFnc = ExpandBit_H8_3;
@@ -2255,14 +2255,14 @@ static void InternSymbol_H8_3(char *pArg, TempResult *pResult)
 
 static Boolean DecodeAttrPart_H8_3(void)
 {
-  if (*AttrPart.Str)
+  if (*AttrPart.str.p_str)
   {
-    if (strlen(AttrPart.Str) != 1)
+    if (strlen(AttrPart.str.p_str) != 1)
     {
       WrStrErrorPos(ErrNum_TooLongAttr, &AttrPart);
       return False;
     }
-    if (!DecodeMoto16AttrSize(*AttrPart.Str, &AttrPartOpSize, False))
+    if (!DecodeMoto16AttrSize(*AttrPart.str.p_str, &AttrPartOpSize, False))
       return False;
   }
   return True;
@@ -2282,7 +2282,7 @@ static void MakeCode_H8_3(void)
 
   if (DecodeMoto16Pseudo(OpSize, True)) return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 
@@ -2290,12 +2290,6 @@ static Boolean IsDef_H8_3(void)
 {
   return Memo("REG")
       || Memo("BIT");
-}
-
-static void SwitchFrom_H8_3(void)
-{
-  DeinitFields();
-  ClearONOFF();
 }
 
 static void SwitchTo_H8_3(void)
@@ -2324,7 +2318,7 @@ static void SwitchTo_H8_3(void)
   DissectBit = DissectBit_H8_3;
   QualifyQuote = QualifyQuote_SingleQuoteConstant;
   IntConstModeIBMNoTerm = True;
-  SwitchFrom = SwitchFrom_H8_3;
+  SwitchFrom = DeinitFields;
   InitFields();
   AddONOFF("MAXMODE", &Maximum   , MaximumName   , False);
   AddMoto16PseudoONOFF();

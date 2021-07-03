@@ -182,7 +182,7 @@ static Boolean DecodeReg(const tStrComp *pArg, Word *pResult)
   tEvalResult EvalResult;
   tRegEvalResult RegEvalResult;
 
-  if (DecodeRegCore(pArg->Str, pResult))
+  if (DecodeRegCore(pArg->str.p_str, pResult))
     return True;
 
   RegEvalResult = EvalStrRegExpressionAsOperand(pArg, &RegDescr, &EvalResult, eSymbolSize8Bit, True);
@@ -240,7 +240,7 @@ static Boolean DecodeBitArg(int Start, int Stop, LongWord *pResult)
 {
   if (Start == Stop)
   {
-    char *pPos = QuotPos(ArgStr[Start].Str, '.');
+    char *pPos = QuotPos(ArgStr[Start].str.p_str, '.');
     tEvalResult EvalResult;
 
     if (pPos)
@@ -441,6 +441,7 @@ static void DecodeDATA_AVR(Word Index)
 
   UNUSED(Index);
 
+  as_tempres_ini(&t);
   MaxV = ((ActPC == SegCode) && (!Packing)) ? 65535 : 255;
   MinV = (-((MaxV + 1) >> 1));
   WordAccFull = FALSE;
@@ -461,9 +462,9 @@ static void DecodeDATA_AVR(Word Index)
            if (MultiCharToInt(&t, 2))
              goto ToInt;
 
-           for (z2 = 0; z2 < (int)t.Contents.Ascii.Length; z2++)
+           for (z2 = 0; z2 < (int)t.Contents.str.len; z2++)
            {
-             Trans = CharTransTable[((usint) t.Contents.Ascii.Contents[z2]) & 0xff];
+             Trans = CharTransTable[((usint) t.Contents.str.p_str[z2]) & 0xff];
              PlaceValue(Trans, True);
            }
            break;
@@ -488,6 +489,7 @@ static void DecodeDATA_AVR(Word Index)
       AppendCode(WordAcc);
     }
   }
+  as_tempres_free(&t);
 }
 
 /* one register 0..31 */
@@ -569,7 +571,7 @@ static void DecodeLDST(Word Index)
     RegI = Index ? 2 : 1; /* ST */
     MemI = 3 - RegI;
     if (!DecodeArgReg(RegI, &Reg, AllRegMask));
-    else if (!DecodeMem(ArgStr[MemI].Str, &Mem)) WrError(ErrNum_InvAddrMode);
+    else if (!DecodeMem(ArgStr[MemI].str.p_str, &Mem)) WrError(ErrNum_InvAddrMode);
     else if ((pCurrCPUProps->Core == eCore90S1200) && (Mem != 0)) WrError(ErrNum_AddrMustBeAligned);
     else
     {
@@ -595,7 +597,7 @@ static void DecodeLDDSTD(Word Index)
 
     RegI = Index ? 2 : 1; /* STD */
     MemI = 3 - RegI;
-    RegChar = *ArgStr[MemI].Str;
+    RegChar = *ArgStr[MemI].str.p_str;
     OK = True;
     if (as_toupper(RegChar) == 'Y') Index += 8;
     else if (as_toupper(RegChar) == 'Z');
@@ -603,9 +605,9 @@ static void DecodeLDDSTD(Word Index)
     if (!OK) WrError(ErrNum_InvAddrMode);
     else if (DecodeArgReg(RegI, &Reg, AllRegMask))
     {
-      *ArgStr[MemI].Str = '0';
+      *ArgStr[MemI].str.p_str = '0';
       Disp = EvalStrIntExpression(&ArgStr[MemI], UInt6, &OK);
-      *ArgStr[MemI].Str = RegChar;
+      *ArgStr[MemI].str.p_str = RegChar;
       if (OK)
         AppendCode(0x8000 | Index | (Reg << 4) | (Disp & 7) | ((Disp & 0x18) << 7) | ((Disp & 0x20) << 8));
     }
@@ -858,7 +860,7 @@ static void DecodeLPM(Word Index)
   {
     if (!ChkMinCore(eCoreTiny));
     else if (!DecodeArgReg(1, &Reg, AllRegMask));
-    else if (!DecodeMem(ArgStr[2].Str, &Adr)) WrError(ErrNum_InvAddrMode);
+    else if (!DecodeMem(ArgStr[2].str.p_str, &Adr)) WrError(ErrNum_InvAddrMode);
     else if ((Adr != 0x00) && (Adr != 0x11)) WrError(ErrNum_InvAddrMode);
     else
     {
@@ -881,7 +883,7 @@ static void DecodeELPM(Word Index)
     AppendCode(0x95d8);
   else if (!ChkArgCnt(2, 2));
   else if (!DecodeArgReg(1, &Reg, AllRegMask));
-  else if (!DecodeMem(ArgStr[2].Str, &Adr)) WrError(ErrNum_InvAddrMode);
+  else if (!DecodeMem(ArgStr[2].str.p_str, &Adr)) WrError(ErrNum_InvAddrMode);
   else if ((Adr != 0x00) && (Adr != 0x11)) WrError(ErrNum_InvAddrMode);
   else
   {
@@ -1111,7 +1113,7 @@ static void MakeCode_AVR(void)
     }
   }
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 
@@ -1146,12 +1148,6 @@ static void InternSymbol_AVR(char *pArg, TempResult *pResult)
     pResult->Contents.RegDescr.Reg = RegValue;
     pResult->Contents.RegDescr.Dissect = DissectReg_AVR;
   }
-}
-
-static void SwitchFrom_AVR(void)
-{
-  DeinitFields();
-  ClearONOFF();
 }
 
 static Boolean ChkZeroArg(void)
@@ -1209,7 +1205,7 @@ static void SwitchTo_AVR(void *pUser)
   IsDef = IsDef_AVR;
   InternSymbol = InternSymbol_AVR;
   DissectReg = DissectReg_AVR;
-  SwitchFrom = SwitchFrom_AVR;
+  SwitchFrom = DeinitFields;
   DissectBit = DissectBit_AVR;
   InitFields();
 }

@@ -358,7 +358,7 @@ static void DecodeAdr(Word Index)
 	else
 	{
 		if (!ChkArgCnt(2,2)) return;
-		if (!DecReg(ArgStr[1].Str, &reg, True)) return;
+		if (!DecReg(ArgStr[1].str.p_str, &reg, True)) return;
 		if (reg == 6 || reg == 7)
 		{
 			WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
@@ -368,22 +368,22 @@ static void DecodeAdr(Word Index)
 	}
 
 	sc = &ArgStr[idx];
-	indirect = IsIndirect(ArgStr[idx].Str);
+	indirect = IsIndirect(ArgStr[idx].str.p_str);
 	if (indirect)
 	{
-		l = strlen(ArgStr[idx].Str);
+		l = strlen(ArgStr[idx].str.p_str);
 		StrCompCopySub(&Inner, &ArgStr[idx], 1, l - 2);
 		sc = &Inner;
 	}
 
 	index = False;
-	l = strlen(sc->Str);
-	if (l > 4 && sc->Str[l - 4] == '(' && sc->Str[l - 1] == ')')
+	l = strlen(sc->str.p_str);
+	if (l > 4 && sc->str.p_str[l - 4] == '(' && sc->str.p_str[l - 1] == ')')
 	{
-		StrCompSplitRef(&Left, &Right, sc, sc->Str + l - 4);
+		StrCompSplitRef(&Left, &Right, sc, sc->str.p_str + l - 4);
 		StrCompShorten(&Right, 1);
 
-		if (DecReg(Right.Str, &preg, False))
+		if (DecReg(Right.str.p_str, &preg, False))
 		{
 			switch (preg) {
 			case 3:
@@ -401,23 +401,23 @@ static void DecodeAdr(Word Index)
 		}
 	}
 
-	if (as_strcasecmp(ArgStr[idx].Str, "(X0)") == 0)
+	if (as_strcasecmp(ArgStr[idx].str.p_str, "(X0)") == 0)
 	{
 		mode = 4;
 		disp = 0;
 	}
-	else if (as_strcasecmp(ArgStr[idx].Str, "(X1)") == 0)
+	else if (as_strcasecmp(ArgStr[idx].str.p_str, "(X1)") == 0)
 	{
 		mode = 5;
 		disp = 0;
 	}
 	else if (index)
 	{
-		if (IsIndirect(Left.Str))
+		if (IsIndirect(Left.str.p_str))
 		{	/* (zadr)(X0) , (zadr)(X1) */
 			tEvalResult EvalResult;
 
-			l = strlen(Left.Str);
+			l = strlen(Left.str.p_str);
 			StrCompCopySub(&InnerZ, &Left, 1, l - 2);
 			disp = EvalStrIntExpressionWithResult(&InnerZ, Int16, &EvalResult);
 			if (!EvalResult.OK) return;
@@ -525,7 +525,7 @@ static void DecodeRegImm8(Word Index)
 	
 	if (ChkArgCnt(2, 2))
 	{
-		if (DecReg(ArgStr[1].Str, &reg, True))
+		if (DecReg(ArgStr[1].str.p_str, &reg, True))
 		{
 			tEvalResult EvalResult;
 
@@ -554,7 +554,7 @@ static void DecodeReg(Word Index)
 	
 	if (!ChkArgCnt(1,1)) return;
 
-	if (!DecReg(ArgStr[1].Str, &reg, True)) return;
+	if (!DecReg(ArgStr[1].str.p_str, &reg, True)) return;
 	if (reg == 7)
 	{
 		WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
@@ -574,13 +574,13 @@ static void DecodeRegRegSkip(Word Index)
 
 	if (!ChkArgCnt(2,3)) return;
 
-	if (!DecReg(ArgStr[1].Str, &reg1, True)) return;
+	if (!DecReg(ArgStr[1].str.p_str, &reg1, True)) return;
 	if (reg1 == 7)
 	{
 		WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
 		return;
 	}
-	if (!DecReg(ArgStr[2].Str, &reg2, True)) return;
+	if (!DecReg(ArgStr[2].str.p_str, &reg2, True)) return;
 	if (reg2 == 7)
 	{
 		WrStrErrorPos(ErrNum_InvRegName, &ArgStr[2]);
@@ -589,7 +589,7 @@ static void DecodeRegRegSkip(Word Index)
 	
 	if (ArgCnt == 3)
 	{
-		if (!DecSkip(ArgStr[3].Str, &skip, True)) return;
+		if (!DecSkip(ArgStr[3].str.p_str, &skip, True)) return;
 	}
 
 	WAsmCode[0] = Index | (reg1 << 8) | reg2 | (skip << 4);
@@ -604,7 +604,7 @@ static void DecodeShift(Word Index)
 
 	if (!ChkArgCnt(1,3)) return;
 
-	if (!DecReg(ArgStr[1].Str, &reg, True)) return;
+	if (!DecReg(ArgStr[1].str.p_str, &reg, True)) return;
 	if (reg == 7)
 	{
 		WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
@@ -618,11 +618,11 @@ static void DecodeShift(Word Index)
 		skip = 0;
 		break;
 	case 2:
-		if (DecEM(ArgStr[2].Str, &em, False))
+		if (DecEM(ArgStr[2].str.p_str, &em, False))
 		{
 			skip = 0;
 		}
-		else if (DecSkip(ArgStr[2].Str, &skip, False))
+		else if (DecSkip(ArgStr[2].str.p_str, &skip, False))
 		{
 			em = 0;
 		}
@@ -633,8 +633,8 @@ static void DecodeShift(Word Index)
 		}
 		break;
 	case 3:
-		if (!DecEM(ArgStr[2].Str, &em, True)) return;
-		if (!DecSkip(ArgStr[3].Str, &skip, True)) return;
+		if (!DecEM(ArgStr[2].str.p_str, &em, True)) return;
+		if (!DecSkip(ArgStr[3].str.p_str, &skip, True)) return;
 		break;
 	default:
 		return;
@@ -653,7 +653,7 @@ static void DecodeBit(Word Index)
 	
 	if (!ChkArgCnt(2,3)) return;
 
-	if (!DecReg(ArgStr[1].Str, &reg, True)) return;
+	if (!DecReg(ArgStr[1].str.p_str, &reg, True)) return;
 	if (reg == 7)
 	{
 		WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
@@ -670,7 +670,7 @@ static void DecodeBit(Word Index)
 
 	if (ArgCnt == 3)
 	{
-		if (!DecSkip(ArgStr[3].Str, &skip, True)) return;
+		if (!DecSkip(ArgStr[3].str.p_str, &skip, True)) return;
 	}
 	
 	WAsmCode[0] = Index | (reg << 8) | (skip << 4) | imm4;
@@ -704,7 +704,7 @@ static void DecodeLD(Word Index)
 
 	if (!ChkArgCnt(2,3)) return;
 
-	if (!DecReg(ArgStr[1].Str, &reg, True)) return;
+	if (!DecReg(ArgStr[1].str.p_str, &reg, True)) return;
 	if (reg == 6 || reg == 7)
 	{
 		WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
@@ -713,7 +713,7 @@ static void DecodeLD(Word Index)
 
 	if (ArgCnt == 3)
 	{
-		if (!DecBB(ArgStr[2].Str, &br)) return;
+		if (!DecBB(ArgStr[2].str.p_str, &br)) return;
 	}
 
 	exp = EvalStrIntExpressionWithResult(&ArgStr[ArgCnt], Int16, &EvalResult);
@@ -737,7 +737,7 @@ static void DecodeLR(Word Index)
 
 	if (!ChkArgCnt(2,3)) return;
 
-	if (!DecReg(ArgStr[1].Str, &reg, True)) return;
+	if (!DecReg(ArgStr[1].str.p_str, &reg, True)) return;
 	if (reg == 6 || reg == 7)
 	{
 		WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
@@ -746,10 +746,10 @@ static void DecodeLR(Word Index)
 
 	if (ArgCnt == 3)
 	{
-		if (!DecBB(ArgStr[2].Str, &br)) return;
+		if (!DecBB(ArgStr[2].str.p_str, &br)) return;
 	}
 
-	if (!DecRIndirect(ArgStr[ArgCnt].Str, &mm, &ii, True)) return;
+	if (!DecRIndirect(ArgStr[ArgCnt].str.p_str, &mm, &ii, True)) return;
 
 	WAsmCode[0] = Index | (reg << 8) | (mm << 6) | (br << 4) | ii;
 	CodeLen = 1;
@@ -767,18 +767,18 @@ static void DecodeMVWR(Word Index)
 
 	if (!ChkArgCnt(2,3)) return;
 
-	if (!DecReg(ArgStr[1].Str, &reg, True)) return;
+	if (!DecReg(ArgStr[1].str.p_str, &reg, True)) return;
 	if (reg != 0)
 	{
 		WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
 		return;
 	}
 
-	if (!DecRIndirect(ArgStr[2].Str, &mm, &ii, False)) return;
+	if (!DecRIndirect(ArgStr[2].str.p_str, &mm, &ii, False)) return;
 	
 	if (ArgCnt == 3)
 	{
-		if (!DecSkip(ArgStr[3].Str, &skip, True)) return;
+		if (!DecSkip(ArgStr[3].str.p_str, &skip, True)) return;
 	}
 
 
@@ -798,7 +798,7 @@ static void DecodeMVWI(Word Index)
 
 	if (!ChkArgCnt(2,3)) return;
 
-	if (!DecReg(ArgStr[1].Str, &reg, True)) return;
+	if (!DecReg(ArgStr[1].str.p_str, &reg, True)) return;
 	if (reg == 7)
 	{
 		WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
@@ -810,7 +810,7 @@ static void DecodeMVWI(Word Index)
 	
 	if (ArgCnt == 3)
 	{
-		if (!DecSkip(ArgStr[3].Str, &skip, True)) return;
+		if (!DecSkip(ArgStr[3].str.p_str, &skip, True)) return;
 	}
 
 
@@ -842,7 +842,7 @@ static void DecodeNEG(Word Index)
 
 	if (!ChkArgCnt(1,3)) return;
 
-	if (!DecReg(ArgStr[1].Str, &reg, True)) return;
+	if (!DecReg(ArgStr[1].str.p_str, &reg, True)) return;
 	if (reg == 7)
 	{
 		WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
@@ -851,17 +851,17 @@ static void DecodeNEG(Word Index)
 
 	if (ArgCnt == 2)
 	{
-		if (!DecC(ArgStr[2].Str, &c, False))
+		if (!DecC(ArgStr[2].str.p_str, &c, False))
 		{
-			if (!DecSkip(ArgStr[2].Str, &skip, True)) return;
+			if (!DecSkip(ArgStr[2].str.p_str, &skip, True)) return;
 		}
 	}
 
 	if (ArgCnt == 3)
 	{
-		if (!DecC(ArgStr[2].Str, &c, True)) return;
+		if (!DecC(ArgStr[2].str.p_str, &c, True)) return;
 
-		if (!DecSkip(ArgStr[3].Str, &skip, True)) return;
+		if (!DecSkip(ArgStr[3].str.p_str, &skip, True)) return;
 	}
 
 	WAsmCode[0] = Index | (skip << 4) | (c << 3) | reg;
@@ -880,23 +880,23 @@ static void DecodeAD(Word Index)
 
 	if (!ChkArgCnt(2,4)) return;
 
-	if (!DecDReg(ArgStr[1].Str, True)) return;
+	if (!DecDReg(ArgStr[1].str.p_str, True)) return;
 
-	if (!DecRIndirect(ArgStr[2].Str, &mm, &ii, False)) return;
+	if (!DecRIndirect(ArgStr[2].str.p_str, &mm, &ii, False)) return;
 	
 	if (ArgCnt == 3)
 	{
-		if (!DecC(ArgStr[3].Str, &c, False))
+		if (!DecC(ArgStr[3].str.p_str, &c, False))
 		{
-			if (!DecSkip(ArgStr[3].Str, &skip, True)) return;
+			if (!DecSkip(ArgStr[3].str.p_str, &skip, True)) return;
 		}
 	}
 
 	if (ArgCnt == 4)
 	{
-		if (!DecC(ArgStr[3].Str, &c, True)) return;
+		if (!DecC(ArgStr[3].str.p_str, &c, True)) return;
 
-		if (!DecSkip(ArgStr[4].Str, &skip, True)) return;
+		if (!DecSkip(ArgStr[4].str.p_str, &skip, True)) return;
 	}
 
 	WAsmCode[0] = Index | (skip << 4) | (c << 3) | ii;
@@ -914,13 +914,13 @@ static void DecodeM(Word Index)
 
 	if (!ChkArgCnt(2,3)) return;
 
-	if (!DecDReg(ArgStr[1].Str, True)) return;
+	if (!DecDReg(ArgStr[1].str.p_str, True)) return;
 
-	if (!DecRIndirect(ArgStr[2].Str, &mm, &ii, False)) return;
+	if (!DecRIndirect(ArgStr[2].str.p_str, &mm, &ii, False)) return;
 	
 	if (ArgCnt == 3)
 	{
-		if (!DecSkip(ArgStr[3].Str, &skip, True)) return;
+		if (!DecSkip(ArgStr[3].str.p_str, &skip, True)) return;
 	}
 
 	WAsmCode[0] = Index | (skip << 4) | ii;
@@ -940,28 +940,28 @@ static void DecodeDAA(Word Index)
 
 	if (!ChkArgCnt(2,4)) return;
 
-	if (!DecReg(ArgStr[1].Str, &reg, True)) return;
+	if (!DecReg(ArgStr[1].str.p_str, &reg, True)) return;
 	if (reg != 0)
 	{
 		WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
 		return;
 	}
 
-	if (!DecRIndirect(ArgStr[2].Str, &mm, &ii, False)) return;
+	if (!DecRIndirect(ArgStr[2].str.p_str, &mm, &ii, False)) return;
 	
 	if (ArgCnt == 3)
 	{
-		if (!DecC(ArgStr[3].Str, &c, False))
+		if (!DecC(ArgStr[3].str.p_str, &c, False))
 		{
-			if (!DecSkip(ArgStr[3].Str, &skip, True)) return;
+			if (!DecSkip(ArgStr[3].str.p_str, &skip, True)) return;
 		}
 	}
 
 	if (ArgCnt == 4)
 	{
-		if (!DecC(ArgStr[3].Str, &c, True)) return;
+		if (!DecC(ArgStr[3].str.p_str, &c, True)) return;
 
-		if (!DecSkip(ArgStr[4].Str, &skip, True)) return;
+		if (!DecSkip(ArgStr[4].str.p_str, &skip, True)) return;
 	}
 
 	WAsmCode[0] = Index | (skip << 4) | (c << 3) | ii;
@@ -978,18 +978,18 @@ static void DecodeFIX(Word Index)
 
 	if (!ChkArgCnt(2,3)) return;
 
-	if (!DecReg(ArgStr[1].Str, &reg, True)) return;
+	if (!DecReg(ArgStr[1].str.p_str, &reg, True)) return;
 	if (reg != 0)
 	{
 		WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
 		return;
 	}
 
-	if (!DecDReg(ArgStr[2].Str, True)) return;
+	if (!DecDReg(ArgStr[2].str.p_str, True)) return;
 	
 	if (ArgCnt == 3)
 	{
-		if (!DecSkip(ArgStr[3].Str, &skip, True)) return;
+		if (!DecSkip(ArgStr[3].str.p_str, &skip, True)) return;
 	}
 
 	WAsmCode[0] = Index | (skip << 4);
@@ -1006,9 +1006,9 @@ static void DecodeFLT(Word Index)
 
 	if (!ChkArgCnt(2,3)) return;
 
-	if (!DecDReg(ArgStr[1].Str, True)) return;
+	if (!DecDReg(ArgStr[1].str.p_str, True)) return;
 	
-	if (!DecReg(ArgStr[2].Str, &reg, True)) return;
+	if (!DecReg(ArgStr[2].str.p_str, &reg, True)) return;
 	if (reg != 0)
 	{
 		WrStrErrorPos(ErrNum_InvReg, &ArgStr[2]);
@@ -1017,7 +1017,7 @@ static void DecodeFLT(Word Index)
 
 	if (ArgCnt == 3)
 	{
-		if (!DecSkip(ArgStr[3].Str, &skip, True)) return;
+		if (!DecSkip(ArgStr[3].str.p_str, &skip, True)) return;
 	}
 
 	WAsmCode[0] = Index | (skip << 4);
@@ -1054,9 +1054,9 @@ static void DecodeBL(Word Index)
 
 	if (!ChkArgCnt(1,1)) return;
 
-	l = strlen(ArgStr[1].Str);
+	l = strlen(ArgStr[1].str.p_str);
 
-	if (l < 3 || ArgStr[1].Str[0] != '(' || ArgStr[1].Str[l - 1] != ')')
+	if (l < 3 || ArgStr[1].str.p_str[0] != '(' || ArgStr[1].str.p_str[l - 1] != ')')
 	{
 		WrStrErrorPos(ErrNum_InvArg, &ArgStr[1]);
 		return;
@@ -1082,7 +1082,7 @@ static void DecodeBR(Word Index)
 
 	if (!ChkArgCnt(1,1)) return;
 
-	if (!DecRIndirect(ArgStr[1].Str, &mm, &ii, False)) return;
+	if (!DecRIndirect(ArgStr[1].str.p_str, &mm, &ii, False)) return;
 
 	WAsmCode[0] = Index | ii;
 	CodeLen = 1;
@@ -1100,7 +1100,7 @@ static void DecodeTSET(Word Index)
 
 	if (!ChkArgCnt(2,3)) return;
 
-	if (!DecReg(ArgStr[1].Str, &reg, True)) return;
+	if (!DecReg(ArgStr[1].str.p_str, &reg, True)) return;
 	if (reg == 7)
 	{
 		WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
@@ -1113,7 +1113,7 @@ static void DecodeTSET(Word Index)
 
 	if (ArgCnt == 3)
 	{
-		if(!DecSkip(ArgStr[3].Str, &skip, True)) return;
+		if(!DecSkip(ArgStr[3].str.p_str, &skip, True)) return;
 	}
 
 	WAsmCode[0] = Index | (skip << 4) | reg;
@@ -1131,14 +1131,14 @@ static void DecodeSRBT(Word Index)
 
 	if (!ChkArgCnt(2,2)) return;
 
-	if (!DecReg(ArgStr[1].Str, &reg1, True)) return;
+	if (!DecReg(ArgStr[1].str.p_str, &reg1, True)) return;
 	if (reg1 == 7)
 	{
 		WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
 		return;
 	}
 
-	if (!DecReg(ArgStr[2].Str, &reg2, True)) return;
+	if (!DecReg(ArgStr[2].str.p_str, &reg2, True)) return;
 	if (reg2 == 7)
 	{
 		WrStrErrorPos(ErrNum_InvRegName, &ArgStr[2]);
@@ -1182,21 +1182,21 @@ static void DecodeBLK(Word Index)
 
 	if (!ChkArgCnt(3,3)) return;
 
-	if (!DecRIndirect(ArgStr[1].Str, &mm, &ii1, False)) return;
+	if (!DecRIndirect(ArgStr[1].str.p_str, &mm, &ii1, False)) return;
 	if (ii1 != 1)
 	{
 		WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
 		return;
 	}
 	
-	if (!DecRIndirect(ArgStr[2].Str, &mm, &ii2, False)) return;
+	if (!DecRIndirect(ArgStr[2].str.p_str, &mm, &ii2, False)) return;
 	if (ii2 != 0)
 	{
 		WrStrErrorPos(ErrNum_InvReg, &ArgStr[2]);
 		return;
 	}
 
-	if (!DecReg(ArgStr[3].Str, &reg, True)) return;
+	if (!DecReg(ArgStr[3].str.p_str, &reg, True)) return;
 	if (reg != 0)
 	{
 		WrStrErrorPos(ErrNum_InvReg, &ArgStr[3]);
@@ -1218,14 +1218,14 @@ static void DecodeRDR(Word Index)
 
 	if (!ChkArgCnt(2,2)) return;
 
-	if (!DecReg(ArgStr[1].Str, &reg, True)) return;
+	if (!DecReg(ArgStr[1].str.p_str, &reg, True)) return;
 	if (reg == 6 || reg == 7)
 	{
 		WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
 		return;
 	}
 
-	if (!DecRIndirect(ArgStr[2].Str, &mm, &ii, False)) return;
+	if (!DecRIndirect(ArgStr[2].str.p_str, &mm, &ii, False)) return;
 
 	WAsmCode[0] = Index | (reg << 8) | ii;
 	CodeLen = 1;
@@ -1244,11 +1244,11 @@ static void DecodeLB(Word Index)
 
 	if (Index & 0x0008)
 	{	/* SR */
-		if (!DecSR(ArgStr[1].Str, &reg)) return;
+		if (!DecSR(ArgStr[1].str.p_str, &reg)) return;
 	}
 	else
 	{	/* BR */
-		if (!DecBR(ArgStr[1].Str, &reg)) return;
+		if (!DecBR(ArgStr[1].str.p_str, &reg)) return;
 		if (reg == 0 && !(Index & 0x0080))
 		{
 			WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
@@ -1275,7 +1275,7 @@ static void DecodeCPYB(Word Index)
 
 	if (!ChkArgCnt(2,2)) return;
 
-	if (!DecReg(ArgStr[1].Str, &reg1, True)) return;
+	if (!DecReg(ArgStr[1].str.p_str, &reg1, True)) return;
 	if (reg1 == 7)
 	{
 		WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
@@ -1285,7 +1285,7 @@ static void DecodeCPYB(Word Index)
 	switch (Index & 0x3008)
 	{
 	case 0x0000:	/* BR */
-		if (!DecBR(ArgStr[2].Str, &reg2)) return;
+		if (!DecBR(ArgStr[2].str.p_str, &reg2)) return;
 		if (reg2 == 0 && !(Index & 0x0080))
 		{
 			WrStrErrorPos(ErrNum_InvReg, &ArgStr[2]);
@@ -1293,10 +1293,10 @@ static void DecodeCPYB(Word Index)
 		}
 		break;
 	case 0x0008:	/* SR */
-		if (!DecSR(ArgStr[2].Str, &reg2)) return;
+		if (!DecSR(ArgStr[2].str.p_str, &reg2)) return;
 		break;
 	case 0x3000:	/* HR */
-		if (!DecHR(ArgStr[2].Str, &reg2)) return;
+		if (!DecHR(ArgStr[2].str.p_str, &reg2)) return;
 		break;
 	default:
 		WrError(ErrNum_InternalError);
@@ -1315,7 +1315,7 @@ static void DecodeCLR(Word Index)
 	
 	if (!ChkArgCnt(1,1)) return;
 
-	if (!DecReg(ArgStr[1].Str, &reg, True)) return;
+	if (!DecReg(ArgStr[1].str.p_str, &reg, True)) return;
 	if (reg == 7)
 	{
 		WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
@@ -1333,14 +1333,14 @@ static void DecodeSKIP(Word Index)
 
 	if (!ChkArgCnt(2,2)) return;
 
-	if (!DecReg(ArgStr[1].Str, &reg, True)) return;
+	if (!DecReg(ArgStr[1].str.p_str, &reg, True)) return;
 	if (reg == 7)
 	{
 		WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
 		return;
 	}
 
-	if (!DecSkip(ArgStr[2].Str, &skip, True)) return;
+	if (!DecSkip(ArgStr[2].str.p_str, &skip, True)) return;
 
 	WAsmCode[0] = Index | (reg << 8) | (skip << 4) | reg;
 	CodeLen = 1;
@@ -1358,6 +1358,7 @@ static void DecodeDC(Word Index)
 	
 	UNUSED(Index);
 
+	as_tempres_ini(&t);
 	if (ChkArgCnt(1, ArgCntMax))
 	{
 		OK = True;
@@ -1384,15 +1385,15 @@ static void DecodeDC(Word Index)
 				case TempString:
 					if (MultiCharToInt(&t, 2))
 						goto ToInt;
-					for (c = 0; c < (int)t.Contents.Ascii.Length; c++)
+					for (c = 0; c < (int)t.Contents.str.len; c++)
 					{
 						if ((b++) & 1)
 						{
-							WAsmCode[CodeLen - 1] |= t.Contents.Ascii.Contents[c];
+							WAsmCode[CodeLen - 1] |= t.Contents.str.p_str[c];
 						}
 						else
 						{
-							WAsmCode[CodeLen++] = t.Contents.Ascii.Contents[c] << 8;
+							WAsmCode[CodeLen++] = t.Contents.str.p_str[c] << 8;
 						}
 					}
 					break;
@@ -1403,6 +1404,7 @@ static void DecodeDC(Word Index)
 		}
 		if (!OK) CodeLen = 0;
 	}
+  as_tempres_free(&t);
 }
 
 static void DecodeDS(Word Index)
@@ -1717,8 +1719,8 @@ static void InitFields(void)
 	AddInstTable(InstTable, "DC", 0, DecodeDC);
 	AddInstTable(InstTable, "DS", 0, DecodeDS);
 	
-	StrCompAlloc(&Inner);
-	StrCompAlloc(&InnerZ);
+	StrCompAlloc(&Inner, STRINGSIZE);
+	StrCompAlloc(&InnerZ, STRINGSIZE);
 }
 
 static void DeinitFields(void)
@@ -1741,7 +1743,7 @@ static void MakeCode_MN1610(void)
 	/* if (DecodeIntelPseudo(False)) return; */
 	/* if (DecodeMoto16Pseudo(eSymbolSize16Bit, True)) return; */
 	
-	if (!LookupInstTable(InstTable, OpPart.Str))
+	if (!LookupInstTable(InstTable, OpPart.str.p_str))
 		WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

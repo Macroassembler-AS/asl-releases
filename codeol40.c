@@ -102,13 +102,13 @@ static void DecodeAdr(const tStrComp *pArg, Word Mask)
     Mask &= ~(MModW);
 
   for (pNot = Notations; pNot->pAsc; pNot++)
-    if (!as_strcasecmp(pArg->Str, pNot->pAsc))
+    if (!as_strcasecmp(pArg->str.p_str, pNot->pAsc))
     {
       AdrMode = pNot->AdrMode;
       goto AdrFound;
     }
 
-  AdrVal = EvalStrIntExpressionOffs(pArg, !!(0[pArg->Str] == '#'), OpSizeType, &OK);
+  AdrVal = EvalStrIntExpressionOffs(pArg, !!(0[pArg->str.p_str] == '#'), OpSizeType, &OK);
   if (OK)
   {
     AdrMode = ModImm;
@@ -277,7 +277,7 @@ static void DecodeBit(Word Code)
 {
   if (ArgCnt == 1)
   {
-    if (!as_strcasecmp(ArgStr[1].Str, "C"))
+    if (!as_strcasecmp(ArgStr[1].str.p_str, "C"))
       BAsmCode[CodeLen++] = Hi(Code);
     else
       WrError(ErrNum_InvAddrMode);
@@ -575,7 +575,7 @@ static void  MakeCode_OLMS40(void)
   if (Memo(""))
     return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

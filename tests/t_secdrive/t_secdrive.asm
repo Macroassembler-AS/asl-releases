@@ -1,6 +1,6 @@
 ;******************************************************************************
 ;*                                                                            *
-;* SECDRIVE - Treiber fÅr einen 2. HD-Kontroller im PC                        *
+;* SECDRIVE - Treiber fuer einen 2. HD-Kontroller im PC                       *
 ;*                                                                            *
 ;* Historie:  12. 8.1993  Grundsteinlegung, Definitionen                      *
 ;*            16. 8.1993  Dispatcher                                          *
@@ -10,7 +10,7 @@
 ;*            19. 8.1993  Zylinder/Sektorregister setzen                      *
 ;*                        Partitiossektorbaum durchgehen                      *
 ;*            24. 8.1993  BPB aufbauen                                        *
-;*            25. 8.1993  ParameterÅbersetzung				      *
+;*            25. 8.1993  Parameteruebersetzung				      *
 ;*                        Einlesen                                            *
 ;*                        Sektoren schreiben                                  *
 ;*            26. 8.1993  Fehlerbehandlung                                    *
@@ -56,13 +56,13 @@ NSecs    	 dd     ?		; linearer Startsektor
 		endstruct
 
 DErr_WrProtect  equ     00h             ; Treiberfehlercodes: Schreibschutz
-DErr_InvUnit    equ     01h             ; unbekannte GerÑtenummer
+DErr_InvUnit    equ     01h             ; unbekannte Geraetenummer
 DErr_NotReady   equ     02h             ; Laufwerk nicht bereit
 DErr_Unknown    equ     03h             ; Unbekannes Treiberkommando
-DErr_CRCError   equ     04h             ; PrÅfsummenfehler
-DErr_InvBlock   equ     05h             ; ungÅltiger Request-Header
+DErr_CRCError   equ     04h             ; Pruefsummenfehler
+DErr_InvBlock   equ     05h             ; ungueltiger Request-Header
 DErr_TrkNotFnd  equ     06h             ; Spur nicht gefunden
-DErr_InvMedia   equ     07h             ; Unbekanntes TrÑgerformat
+DErr_InvMedia   equ     07h             ; Unbekanntes Traegerformat
 DErr_SecNotFnd  equ     08h             ; Sektor nicht gefunden
 DErr_PaperEnd   equ     09h             ; Papierende im Drucker
 DErr_WrError    equ     0ah             ; allg. Schreibfehler
@@ -72,7 +72,7 @@ DErr_InvChange  equ     0fh             ; unerlaubter Diskettenwechsel
 
 DErr_UserTerm   equ     0ffh            ; Fehlercode Abbruch durch Benutzer
 
-SecSize         equ     512             ; Sektorgrî·e in Bytes
+SecSize         equ     512             ; Sektorgroesse in Bytes
 MaxPDrives      equ     2               ; Maximalzahl physikalischer Laufwerke
 MaxDrives       equ     10              ; Maximalzahl verwaltbarer Laufwerke
 MaxParts	equ	4		; Maximalzahl Partitionen in einem Sektor
@@ -94,12 +94,16 @@ DOS_WrChar      equ     6
 DOS_RdString    equ     10
 DOS_RdChar      equ     8
 
-HD_ID           equ     0f8h            ; Media-ID fÅr Festplatten
+HD_ID           equ     0f8h            ; Media-ID fuer Festplatten
 
 CR              equ     13
 LF              equ     10
 BEL             equ     7
 ESC             equ     27
+AUML		equ	84h
+OUML		equ	94h
+UUML		equ	81h
+SZLIG		equ	0e1h
 
 ;******************************************************************************
 ; Makros                                                                      *
@@ -121,7 +125,7 @@ PrMsg           macro   Adr             ; Meldung ausgeben
                 lea     dx,[Adr]
                 mov     ah,DOS_WrString
                 int     INT_DOS
-                pop     dx              ; Register zurÅck
+                pop     dx              ; Register zurueck
                 endm
 
 PrChar          macro   Zeichen         ; Zeichen ausgeben
@@ -131,7 +135,7 @@ PrChar          macro   Zeichen         ; Zeichen ausgeben
                 mov     ah,DOS_WrChar
                 int     INT_DOS
                 pop     ax
-                pop     dx              ; Register zurÅck
+                pop     dx              ; Register zurueck
                 endm
 
 ;------------------------------------------------------------------------------
@@ -142,7 +146,7 @@ btst            macro   op,bit          ; ein einzelnes Bit testen
 
 ;------------------------------------------------------------------------------
 
-ljnz            macro   adr             ; lange SprÅnge
+ljnz            macro   adr             ; lange Spruenge
                 jz      Next
                 jmp     adr
 Next:
@@ -231,7 +235,7 @@ NrOfVols:       db      0               ; Zahl log. Laufwerke
 ;* residente Daten                                                            *
 ;******************************************************************************
 
-Rh_Ptr          dd      ?               ; Speicher fÅr Request-Header
+Rh_Ptr          dd      ?               ; Speicher fuer Request-Header
 
 JmpTable        dw      Init            ; Sprungtabelle: Initialisierung
                 dw      MediaCheck      ; Medium gewechselt ?
@@ -240,22 +244,22 @@ JmpTable        dw      Init            ; Sprungtabelle: Initialisierung
                 dw      Read            ; Daten lesen
                 dw      ND_Read         ; Lesen, ohne Pufferstatus zu Ñndern
                 dw      InputStatus     ; Daten im Eingabepuffer ?
-                dw      InputFlush      ; Eingabepuffer lîschen
+                dw      InputFlush      ; Eingabepuffer loeschen
                 dw      Write           ; Daten schreiben
-                dw      Write_Verify    ; Daten mit PrÅflesen schreiben
+                dw      Write_Verify    ; Daten mit Prueflesen schreiben
                 dw      OutputStat      ; Ausgabepuffer leer ?
-                dw      OutputFlush     ; Ausgabepuffer lîschen
+                dw      OutputFlush     ; Ausgabepuffer loeschen
                 dw      IOCTLWrite      ; Steuerdaten zum Treiber
-                dw      DeviceOpen      ; DOS hat eine Datei darauf geîffnet
+                dw      DeviceOpen      ; DOS hat eine Datei darauf geoeffnet
                 dw      DeviceClose     ; DOS hat eine Datei darauf geschlossen
-                dw      Removeable      ; Ist DatentrÑger wechselbar ?
+                dw      Removeable      ; Ist Datentraeger wechselbar ?
                 dw      OutputTillBusy  ; Ausgabe, bis Puffer voll
                 dw      GenIOCTL        ; genormtes IOCTL
                 dw      GetLogical      ; Laufwerkszuordnung lesen
                 dw      SetLogical      ; Laufwerkszuordnung setzen
-                dw      IOCTLQuery      ; Abfrage, ob GenIOCTL unterstÅtzt
+                dw      IOCTLQuery      ; Abfrage, ob GenIOCTL unterstuetzt
 
-SectorBuffer:   db      SecSize dup (?) ; Sektorpuffer fÅr Treiber selber
+SectorBuffer:   db      SecSize dup (?) ; Sektorpuffer fuer Treiber selber
 
                 db      StackSize dup (?) ; Treiberstack
 DriverStack:
@@ -280,12 +284,12 @@ DrPar		struct			; Plattenparametersatz:
 Cyls		 dw	?		;  Zylinderzahl
 Heads		 db	?		;  Kopfzahl
 RedWr		 dw	?		;  Startzylinder reduzierter Schreibstrom
-PrComp		 dw	?		;  Startzylinder PrÑkompensation
+PrComp		 dw	?		;  Startzylinder Praekompensation
 ECCLen		 db	?		;  max. korrigierbarer Fehlerburst (Bits)
-CByte		 db	?		;  Wert fÅrs Plattensteuerregister
+CByte		 db	?		;  Wert fuers Plattensteuerregister
 TOut		 db	?		;  genereller Timeout
 FTOut		 db	?		;  Timeout Formatierung
-CTOut		 db	?		;  Timeout fÅr PrÅfung
+CTOut		 db	?		;  Timeout fuer Pruefung
 LZone		 dw	?		;  Landezylinder
 NSecs		 db	?		;  Sektorzahl
 Dummy		 db	?		;  unbenutzt
@@ -306,7 +310,7 @@ StrategyProc:   mov     word ptr [Rh_Ptr],bx ; Zeiger speichern
 ;******************************************************************************
 
 Rh		struct
-Size		 db	?		; gemeinsame Headerteile: LÑnge Block
+Size		 db	?		; gemeinsame Headerteile: Laenge Block
 Unit		 db	?		; angesprochenes Laufwerk
 Func		 db	?		; Treibersubfunktion
 Status		 dw	?		; Ergebnis
@@ -330,7 +334,7 @@ InterruptProc:  pusha                   ; alle Register retten
                 assume  ds:code
 
                 les     bx,[Rh_Ptr]     ; Zeiger laden
-                mov     word ptr es:[bx+Rh_Status],0 ; Status lîschen
+                mov     word ptr es:[bx+Rh_Status],0 ; Status loeschen
 
                 mov     al,es:[bx+Rh_Func] ; Subfunktion ausrechnen
                 if      debug
@@ -357,7 +361,7 @@ StateError_N1:  btst    al,2            ; Bit 2: abgebrochenes Kommando
                 jz      StateError_N21
                 mov     al,DErr_WrError
                 jmp     StateError_End
-StateError_N21: btst    ah,4            ; Bit S4: Positionierung nicht vollstÑndig
+StateError_N21: btst    ah,4            ; Bit S4: Positionierung nicht vollstaendig
                 jnz     StateError_N22
                 mov     al,DErr_TrkNotFnd
                 jmp     StateError_End
@@ -371,7 +375,7 @@ StateError_N2:  test    al,11h          ; Bit 0/4: Sektor nicht gefunden
                 jz      StateError_N3
                 mov     al,DErr_SecNotFnd
                 jmp     StateError_End
-StateError_N3:  btst    al,6            ; Bit 6: PrÅfsummenfehler
+StateError_N3:  btst    al,6            ; Bit 6: Pruefsummenfehler
                 jz      StateError_N4
                 mov     al,DErr_CRCError
                 jmp     StateError_End
@@ -396,14 +400,14 @@ Done:           les     bx,[Rh_Ptr]
                  call   NxtLine
                 endif
 
-                cli                     ; Stack zurÅckschalten
+                cli                     ; Stack zurueckschalten
                 pop     si
                 pop     di              ; alten in SI:DI laden
                 mov     sp,di           ; einschreiben
                 mov     ss,si
                 sti
 
-                popa                    ; Register zurÅck
+                popa                    ; Register zurueck
                 retf
 
 ;******************************************************************************
@@ -433,7 +437,7 @@ PrByte:         push    es              ; Register retten
                 mov     ah,0eh
                 int     10h
 
-                pop     ax              ; Register zurÅck
+                pop     ax              ; Register zurueck
                 pop     bx
                 pop     di
                 pop     es
@@ -460,7 +464,7 @@ NxtLine:        push    ax              ; Register retten
                 mov     ax,0e0ah
                 int     10h
 
-                pop     dx              ; Register zurÅck
+                pop     dx              ; Register zurueck
                 pop     bx
                 pop     ax
 
@@ -471,7 +475,7 @@ NxtLine:        push    ax              ; Register retten
 ;******************************************************************************
 
 ;******************************************************************************
-;* eine logische Laufwerksnummer ÅberprÅfen                                   *
+;* eine logische Laufwerksnummer ueberpruefen                                 *
 ;*              In  :   AL = Laufwerk                                         *
 ;*              Out :   C  = 1, falls Fehler                                  *
 ;******************************************************************************
@@ -520,7 +524,7 @@ OK:             ret
                 endp
 
 ;******************************************************************************
-;* logische Parameter in physikalische Åbersetzen                             *
+;* logische Parameter in physikalische uebersetzen                            *
 ;*              In  :   BL = log. Laufwerk                                    *
 ;*                      DX:AX = relative Sektornummer			      *
 ;*              Out :   AL = phys. Laufwerk                                   *
@@ -552,10 +556,10 @@ OK:             ret
 		mov	bl,[di+DrPar_Heads] ; Kopfnummer herausfummeln
 		div	bx
 		mov	bx,ax		; Quotient ist Zylinder
-		pop	ax		; Laufwerk zurÅck
+		pop	ax		; Laufwerk zurueck
 		mov	ah,dl		; Rest ist Kopf
 
-		pop	di		; Register zurÅck
+		pop	di		; Register zurueck
 		ret
 
                 endp
@@ -564,14 +568,14 @@ OK:             ret
 ;* Einbindung Low-Level-Routinen                                              *
 ;******************************************************************************
 
-; definiert werden mÅssen:
+; definiert werden muessen:
 
-; LowLevelIdent:  Meldung Åber unterstÅtzte Hardware ausgeben
-; ContDiag:       Kontroller-Selbsttest durchfÅhren
+; LowLevelIdent:  Meldung ueber unterstuetzte Hardware ausgeben
+; ContDiag:       Kontroller-Selbsttest durchfuehren
 ;                 Ergebniskode in AL
 ; Recalibrate:    Laufwerk [AL] auf Zylinder 0 fahren
 ;                 Fehlerflag in C, Fehlerkode in AX
-; SetDriveParams: dem Kontroller die Geometrie fÅr Laufwerk [AL] einbleuen
+; SetDriveParams: dem Kontroller die Geometrie fuer Laufwerk [AL] einbleuen
 ;                 Fehlerflag in C
 ; ReadSectors:    von Laufwerk [AL] ab Zylinder [BX], Kopf [AH], Sektor [CH]
 ;                 [CL] Sektoren in Puffer ab ES:DI lesen
@@ -615,7 +619,7 @@ OK:             ret
                 lea     di,[SectorBuffer]
                 call    ReadSectors
 
-                pop     di              ; Register zurÅck
+                pop     di              ; Register zurueck
                 pop     cx
                 pop     bx
                 pop     es
@@ -633,7 +637,7 @@ Rh_MediaID      equ     Rh_Resvd+8      ; erwartetes Media-ID
 Rh_Return       equ     Rh_MediaID+1    ; Ergebnis-Flag
 Rh_VolName      equ     Rh_Return+1     ; Adresse alter Laufwerksname
 
-                cmp     byte ptr es:[bx+Rh_MediaID],HD_ID ; gÅltige ID ?
+                cmp     byte ptr es:[bx+Rh_MediaID],HD_ID ; gueltige ID ?
                 je      OK
                 mov     byte ptr es:[bx+Rh_Status],DErr_InvMedia ; nein...
                 jmp     Error
@@ -656,7 +660,7 @@ BPBAddress	 dd	?		; Adresse neuer BPB
 		endstruct
 
                 mov     al,es:[bx+Rh_Unit]
-		call    ChkDrive        ; Laufwerksnummer gÅltig ?
+		call    ChkDrive        ; Laufwerksnummer gueltig ?
                 ljc     Error           ; nein-->Fehler & Ende
 
                 call    ReadBootSec     ; Bootsektor lesen
@@ -693,14 +697,14 @@ Rh4		struct
 MediaID		 db	?		; Media-ID Laufwerk
 BufOfs		 dw	?		; Adresse Datenpuffer
 BufSeg		 dw	?
-NSecs		 dw	?		; Anzahl zu lesender Blîcke
-FirstSec	 dw	?		; Startsektor bzw. $FFFF fÅr 32-Bit-Nummern
+NSecs		 dw	?		; Anzahl zu lesender Bloecke
+FirstSec	 dw	?		; Startsektor bzw. $FFFF fuer 32-Bit-Nummern
 VolID		 dd	?		; Adresse Laufwerksname
 LFirstSec	 dw	?		; lange Startsektornummer
 HFirstSec	 dw	?
 		endstruct
 
-Read:           mov	al,es:[bx+Rh_Unit] ; Laufwerksnummer prÅfen
+Read:           mov	al,es:[bx+Rh_Unit] ; Laufwerksnummer pruefen
 		call	ChkDrive
 		ljc	Error
 
@@ -711,7 +715,7 @@ Read:           mov	al,es:[bx+Rh_Unit] ; Laufwerksnummer prÅfen
                 jne     Read_SmallSec
                 mov     ax,es:[bx+Rh4_LFirstSec]
                 mov     dx,es:[bx+Rh4_HFirstSec]
-Read_SmallSec:  mov     cl,es:[bx+Rh4_NSecs]    ; Sektorzahl laden (mu· <=128 sein)
+Read_SmallSec:  mov     cl,es:[bx+Rh4_NSecs]    ; Sektorzahl laden (muss <=128 sein)
                 les     di,es:[bx+Rh4_BufOfs]   ; Zieladresse laden
                 mov     bl,ch                   ; Laufwerksnummer nach BL
 
@@ -768,8 +772,8 @@ Rh8		struct
 MediaID		 db	?		; Media-ID Laufwerk
 BufOfs		 dw	?		; Adresse Datenpuffer
 BufSeg		 dw	?
-NSecs		 dw	?		; Anzahl zu lesender Blîcke
-FirstSec	 dw	?		; Startsektor bzw. $FFFF fÅr 32-Bit-Nummern
+NSecs		 dw	?		; Anzahl zu lesender Bloecke
+FirstSec	 dw	?		; Startsektor bzw. $FFFF fuer 32-Bit-Nummern
 VolID		 dd	?		; Adresse Laufwerksname
 LFirstSec	 dw	?		; lange Startsektornummer
 HFirstSec	 dw	?
@@ -798,7 +802,7 @@ DoWrite:        if      debug2
                 jne     DWrite_SmallSec
                 mov     ax,es:[bx+Rh8_LFirstSec]
                 mov     dx,es:[bx+Rh8_HFirstSec]
-DWrite_SmallSec:mov     cl,es:[bx+Rh8_NSecs]    ; Sektorzahl laden (mu· <=128 sein)
+DWrite_SmallSec:mov     cl,es:[bx+Rh8_NSecs]    ; Sektorzahl laden (muss <=128 sein)
                 les     si,es:[bx+Rh8_BufOfs]   ; Zieladresse laden
                 mov     bl,ch                   ; Laufwerksnummer nach BL
 
@@ -837,7 +841,7 @@ DWrite_SmallSec:mov     cl,es:[bx+Rh8_NSecs]    ; Sektorzahl laden (mu· <=128 se
 
                 ret
 
-Write:          mov     al,es:[bx+Rh_Unit] ; Laufwerksnummer prÅfen
+Write:          mov     al,es:[bx+Rh_Unit] ; Laufwerksnummer pruefen
 		call	ChkDrive
 		ljc	Error
 
@@ -848,7 +852,7 @@ Write:          mov     al,es:[bx+Rh_Unit] ; Laufwerksnummer prÅfen
 
 
 ;******************************************************************************
-;* Funktion 9: Sektoren schreiben mit öberprÅfung                             *
+;* Funktion 9: Sektoren schreiben mit Ueberpruefung                           *
 ;******************************************************************************
 
 Rh9		struct
@@ -856,14 +860,14 @@ Rh9		struct
 MediaID		 db     ?		; Media-ID Laufwerk
 BufOfs		 dw     ?		; Adresse Datenpuffer
 BufSeg		 dw     ?
-NSecs		 dw     ?		; Anzahl zu lesender Blîcke
-FirstSec	 dw     ?		; Startsektor bzw. $FFFF fÅr 32-Bit-Nummern
+NSecs		 dw     ?		; Anzahl zu lesender Bloecke
+FirstSec	 dw     ?		; Startsektor bzw. $FFFF fuer 32-Bit-Nummern
 VolID		 dd     ?		; Adresse Laufwerksname
 LFirstSec	 dw     ?		; lange Startsektornummer
 HFirstSec	 dw     ?
 		endstruct
 
-Write_Verify:   mov     al,es:[bx+Rh_Unit] ; Laufwerksnummer prÅfen
+Write_Verify:   mov     al,es:[bx+Rh_Unit] ; Laufwerksnummer pruefen
 		call	ChkDrive
 		ljc	Error
 
@@ -871,7 +875,7 @@ Write_Verify:   mov     al,es:[bx+Rh_Unit] ; Laufwerksnummer prÅfen
 
                 ljc     StateError      ; bei Fehlern vorher abbrechen
 
-                les     bx,[Rh_Ptr]     ; Parameter nochmal fÅr Verify laden
+                les     bx,[Rh_Ptr]     ; Parameter nochmal fuer Verify laden
                 mov     al,es:[bx+Rh_Unit]
                 mov     ch,al
                 mov     ax,es:[bx+Rh9_FirstSec]
@@ -884,7 +888,7 @@ VWrite_SmallSec:mov     cl,es:[bx+Rh9_NSecs]
                 mov     bl,ch
 
                 call    TranslateParams ; nochmal umrechen...
-                call    VeriSectors     ; und prÅflesen
+                call    VeriSectors     ; und prueflesen
 
                 jmp     Done            ; alles gut gegangen
 
@@ -897,7 +901,7 @@ OutputFlush:    jmp     Unknown
 IOCTLWrite:     jmp     Unknown
 
 ;******************************************************************************
-;* kein Device wechselbar, ôffnen/Schle·en interessiert nicht                 *
+;* kein Device wechselbar, Oeffnen/Schliessen interessiert nicht              *
 ;******************************************************************************
 
 DeviceOpen:     jmp     Done
@@ -946,12 +950,12 @@ Init:           PrMsg   HelloMsg        ; Meldung ausgeben
                 mov     ax,cs           ; ES auf gem. Segment
                 mov     es,ax
 
-; Schritt 1: Controller prÅfen
+; Schritt 1: Controller pruefen
 
                 PrMsg   DiagMsg0
-                call    ContDiag        ; Diagnose ausfÅhren
+                call    ContDiag        ; Diagnose ausfuehren
                 sub     al,Diag_NoError
-                cmp     al,6            ; au·erhalb ?
+                cmp     al,6            ; ausserhalb ?
                 jae     Diag_Over
                 add     al,al           ; Meldung ausrechnen
                 mov     ah,0
@@ -966,7 +970,7 @@ Init:           PrMsg   HelloMsg        ; Meldung ausgeben
 Diag_Over:      push    ax
                 PrMsg   UndefDiagMsg    ; undefinierter Fehlercode
                 pop     ax
-                add     al,Diag_NoError ; Meldung rÅckkorrigieren
+                add     al,Diag_NoError ; Meldung rueckkorrigieren
                 db      0d4h,10h        ; AAM 16
                 add     ax,'00'
                 push    ax
@@ -983,9 +987,9 @@ Diag_Over:      push    ax
 
 ; Schritt 2: Laufwerke testen
 
-; MenÅaufruf?
+; Menueaufruf?
 
-Init_ChkDrives: mov     ax,40h          ; CTRL gedrÅckt ?
+Init_ChkDrives: mov     ax,40h          ; CTRL gedrueckt ?
                 mov     es,ax
                 btst    byte ptr es:[17h],2
                 jz      Init_Menu
@@ -995,7 +999,7 @@ Init_ChkDrives: mov     ax,40h          ; CTRL gedrÅckt ?
 
 Init_Menu:      mov     al,[MomDrive]
                 call    Recalibrate
-                ljc     Init_NextDrive  ; Fehler: Laufwerk Åberspringen
+                ljc     Init_NextDrive  ; Fehler: Laufwerk ueberspringen
 
 ; Schritt 2b: Masterpartitionssektor lesen
 
@@ -1026,7 +1030,7 @@ ReadMaster:     mov     al,[MomDrive]
                 cmp     byte ptr[di+DrPar_NSecs],0
                 jne     NoQuery
 DoQuery:        mov     al,[MomDrive]   ; wenn ja, dann nachfragen
-                mov     ah,1            ; RÅckschreiben hier erlaubt
+                mov     ah,1            ; Rueckschreiben hier erlaubt
                 call    QueryParams
                 or      al,al           ; =0-->Laufwerk ignorieren
                 jz      Init_NextDrive
@@ -1056,7 +1060,7 @@ NoQuery:        mov     al,[MomDrive]   ; Laufwerksparameter ausgeben...
 		push	ax
 		call	ScanParts
 
-Init_NextDrive: inc     [MomDrive]      ; ZÑhler weitersetzen
+Init_NextDrive: inc     [MomDrive]      ; Zaehler weitersetzen
 		cmp	[MomDrive],MaxPDrives
                 ljb     Init_ChkDrives
 
@@ -1161,7 +1165,7 @@ ScanParts:      enter	ScParts_LocSize,0
 		mov	di,ss		; Zieladresse auf Stack
 		mov	es,di
                 lea     di,[bp+ScParts_ParTab]
-		mov	cx,MaxParts*ParTab_Len  ; LÑnge
+		mov	cx,MaxParts*ParTab_Len  ; Laenge
 		cld
 		rep	movsb
 
@@ -1187,7 +1191,7 @@ ScanParts_LAcc: inc     bx                      ; einen Eintrag weiter
 		cmp	al,5			; extended partition ?
 		jne	ScanParts_Enter
 
-		push	si			; ja: Zeiger fÅr Rekursion retten
+		push	si			; ja: Zeiger fuer Rekursion retten
 		mov	al,[bp+ScParts_DrHd]	; Laufwerk & Kopf zusammenbauen
 		mov	ah,[bp+si+ParTab_FHead]
 		push	ax
@@ -1201,7 +1205,7 @@ ScanParts_LAcc: inc     bx                      ; einen Eintrag weiter
 		push	cx
 		push	bx
 		call	ScanParts
-		pop	si			; Zeiger zurÅck
+		pop	si			; Zeiger zurueck
 		jmp	ScanParts_Next
 
 ScanParts_Enter:mov	al,[DrCnt]		; Partition in Tabelle eintragen
@@ -1230,7 +1234,7 @@ ScanParts_Enter:mov	al,[DrCnt]		; Partition in Tabelle eintragen
 		stosb
 		inc	[DrCnt]			; ein log. Laufwerk mehr
 
-ScanParts_Next:	add	si,ParTab_Len		; auf nÑchste Partition
+ScanParts_Next:	add	si,ParTab_Len		; auf naechste Partition
 		pop	cx
                 dec     cx
                 ljnz    ScanParts_Scan
@@ -1249,7 +1253,7 @@ ScanParts_End:  leave
                 push    dx
                 push    di
 
-                cbw                     ; AH lîschen
+                cbw                     ; AH loeschen
                 push    ax              ; Laufwerk ausgeben
                 PrMsg   PDriveMsg1
                 pop     ax
@@ -1267,7 +1271,7 @@ ScanParts_End:  leave
                 call    WriteDec
                 PrMsg   PDriveMsg3
 
-                mov     al,[di+DrPar_Heads] ; Kîpfe ausgeben
+                mov     al,[di+DrPar_Heads] ; Koepfe ausgeben
                 mov     ah,0
                 mov     cl,3
                 call    WriteDec
@@ -1285,7 +1289,7 @@ ScanParts_End:  leave
 		call	WriteMBytes
                 PrMsg   PDriveMsg6
 
-                pop     di              ; Register zurÅck
+                pop     di              ; Register zurueck
                 pop     dx
                 pop     cx
                 ret
@@ -1338,13 +1342,13 @@ ScanParts_End:  leave
 
                 mov     cx,2
                 call    WriteSpc
-                mov     ax,[di+DrTab_SecCnt] ; ...Grî·e
+                mov     ax,[di+DrTab_SecCnt] ; ...Groesse
                 mov     dx,[di+DrTab_SecCnt+2]
                 call    WriteMBytes
 
                 PrMsg   PDriveMsg6      ; Meldung wiederverwertet...
 
-                pop     di              ; Register zurÅck
+                pop     di              ; Register zurueck
                 pop     dx
                 pop     cx
                 ret
@@ -1376,10 +1380,10 @@ ErrLoop:        rol     ch,1            ; fagl. Bit in Carry
                 mov     dx,[bx+Pointers]
                 mov     ah,DOS_WrString
                 int     INT_DOS
-NoErrBit:       dec     cl              ; nÑchstes Bit
+NoErrBit:       dec     cl              ; naechstes Bit
                 jnz     ErrLoop
 
-                pop     dx              ; Register zurÅck
+                pop     dx              ; Register zurueck
                 pop     cx
                 pop     bx
 
@@ -1389,7 +1393,7 @@ DrvErrorMsg:    db      "Fehler auf Festplatte "
 DrvErrorMsg2:   db      "0:",CR,LF,'$'
 
 Pointers        dw      Msg0,Msg1,Msg2,Msg3,Msg4,Msg5,Msg6,Msg7
-Msg0            db      "  Adre·marke nicht gefunden",CR,LF,'$'
+Msg0            db      "  Adre",SZLIG,"marke nicht gefunden",CR,LF,'$'
 Msg1            db      "  Spur 0 nicht gefunden",CR,LF,'$'
 Msg2            db      "  Kommandoabbruch",CR,LF,'$'
 Msg3            db      "$"
@@ -1429,7 +1433,7 @@ SecsPerMByte    equ     (2^20)/SecSize
 		mov	cl,1		; ausgeben
 		call	WriteDec
 
-		pop	dx		; Register zurÅck
+		pop	dx		; Register zurueck
 		pop	cx
 		ret
 
@@ -1457,13 +1461,13 @@ WKeyMsg:        db      "Weiter mit beliebiger Taste...",CR,LF,'$'
 PDriveMsg1:     db      "Festplatte $"
 PDriveMsg2:     db      " :$"
 PDriveMsg3:     db      " Zylinder,$"
-PDriveMsg4:     db      " Kîpfe,$"
+PDriveMsg4:     db      " K",OUML,"pfe,$"
 PDriveMsg5:     db      " Sektoren,$"
 PDriveMsg6:     db      " MByte",CR,LF,'$'
 
 LDriveMsg:      db      CR,LF,"vorhandene Partitionen:",CR,LF
                 db      "Laufwerk  Platte  Zylinder  Kopf"
-                db      "  Sektor      KapazitÑt",CR,LF,'$'
+                db      "  Sektor      Kapazit",AUML,"t",CR,LF,'$'
 
 AccPartTypes	db	1		; akzeptierte Partitionstypen: DOS 2.x FAT12
                 db      4               ; DOS 3.x FAT16

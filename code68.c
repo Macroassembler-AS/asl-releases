@@ -229,7 +229,7 @@ static void DecodeAdr(int StartInd, int StopInd, Byte Erl)
   {
     /* Akkumulatoren ? */
 
-    if (DecodeAcc(pStartArg->Str, &AdrPart))
+    if (DecodeAcc(pStartArg->str.p_str, &AdrPart))
     {
       if (MModAcc & Erl)
         AdrMode = ModAcc;
@@ -237,7 +237,7 @@ static void DecodeAdr(int StartInd, int StopInd, Byte Erl)
 
     /* immediate ? */
 
-    else if ((strlen(pStartArg->Str) > 1) && (*pStartArg->Str == '#'))
+    else if ((strlen(pStartArg->str.p_str) > 1) && (*pStartArg->str.p_str == '#'))
     {
       if (MModImm & Erl)
       {
@@ -274,12 +274,12 @@ static void DecodeAdr(int StartInd, int StopInd, Byte Erl)
       unsigned Offset = 0;
 
       Bit8 = 0;
-      if (pStartArg->Str[Offset] == '<')
+      if (pStartArg->str.p_str[Offset] == '<')
       {
         Bit8 = 2;
         Offset++;
       }
-      else if (pStartArg->Str[Offset] == '>')
+      else if (pStartArg->str.p_str[Offset] == '>')
       {
         Bit8 = 1;
         Offset++;
@@ -325,8 +325,8 @@ static void DecodeAdr(int StartInd, int StopInd, Byte Erl)
 
   else if (StartInd + 1 == StopInd)
   {
-    Boolean IsX = !as_strcasecmp(ArgStr[StopInd].Str, "X"),
-            IsY = !as_strcasecmp(ArgStr[StopInd].Str, "Y");
+    Boolean IsX = !as_strcasecmp(ArgStr[StopInd].str.p_str, "X"),
+            IsY = !as_strcasecmp(ArgStr[StopInd].str.p_str, "Y");
 
     /* indiziert ? */
 
@@ -381,19 +381,18 @@ static void AddPrefix(Byte Prefix)
 
 static void Try2Split(int Src)
 {
-  Integer z;
   char *p;
+  size_t SrcLen;
 
   KillPrefBlanksStrComp(&ArgStr[Src]);
   KillPostBlanksStrComp(&ArgStr[Src]);
-  p = ArgStr[Src].Str + strlen(ArgStr[Src].Str) - 1;
-  while ((p > ArgStr[Src].Str) && !as_isspace(*p))
+  SrcLen = strlen(ArgStr[Src].str.p_str);
+  p = ArgStr[Src].str.p_str + SrcLen - 1;
+  while ((p > ArgStr[Src].str.p_str) && !as_isspace(*p))
     p--;
-  if (p > ArgStr[Src].Str)
+  if (p > ArgStr[Src].str.p_str)
   {
-    IncArgCnt();
-    for (z = ArgCnt - 1; z >= Src + 1; z--)
-      StrCompCopy(&ArgStr[z + 1], &ArgStr[z]);
+    InsertArg(Src + 1, SrcLen);
     StrCompSplitRight(&ArgStr[Src], &ArgStr[Src + 1], p);
     KillPostBlanksStrComp(&ArgStr[Src]);
     KillPrefBlanksStrComp(&ArgStr[Src + 1]);
@@ -553,7 +552,7 @@ static void DecodeBRxx(Word Index)
   if (ChkArgCnt(3, 4)
    && ChkMinCPU(CPU6811))
   {
-    Mask = EvalStrIntExpressionOffs(&ArgStr[ArgCnt - 1], !!(*ArgStr[ArgCnt - 1].Str == '#'), Int8, &OK);
+    Mask = EvalStrIntExpressionOffs(&ArgStr[ArgCnt - 1], !!(*ArgStr[ArgCnt - 1].str.p_str == '#'), Int8, &OK);
     if (OK)
     {
       DecodeAdr(1, ArgCnt - 2, MModDir | MModInd);
@@ -603,7 +602,7 @@ static void DecodeBxx(Word Index)
   if (ChkArgCnt(2, 3)
    && ChkMinCPU(CPU6301))
   {
-    Mask = EvalStrIntExpressionOffs(pMaskArg, !!(*pMaskArg->Str == '#'),
+    Mask = EvalStrIntExpressionOffs(pMaskArg, !!(*pMaskArg->str.p_str == '#'),
                                     (MomCPU == CPU6301) ? UInt3 : Int8, &OK);
     if (OK && (MomCPU == CPU6301))
     {
@@ -645,7 +644,7 @@ static void DecodeBTxx(Word Index)
   if (ChkArgCnt(2, 3)
    && ChkExactCPU(CPU6301))
   {
-    AdrByte = EvalStrIntExpressionOffs(&ArgStr[1], !!(*ArgStr[1].Str == '#'), UInt3, &OK);
+    AdrByte = EvalStrIntExpressionOffs(&ArgStr[1], !!(*ArgStr[1].str.p_str == '#'), UInt3, &OK);
     if (OK)
     {
       DecodeAdr(2, ArgCnt, MModDir | MModInd);
@@ -670,9 +669,9 @@ static void DecodeALU8(Word Code)
   /* dirty hack: LDA/STA/ORA, and first arg is not A or B, treat like LDAA/STAA/ORAA: */
 
   if ((MinArgCnt == 2)
-   && (as_toupper(OpPart.Str[2]) == 'A')
+   && (as_toupper(OpPart.str.p_str[2]) == 'A')
    && (ArgCnt >= 1)
-   && !DecodeAcc(ArgStr[1].Str, &Reg))
+   && !DecodeAcc(ArgStr[1].str.p_str, &Reg))
     MinArgCnt = 1;
 
   if (ChkArgCnt(MinArgCnt, MinArgCnt + 1))
@@ -930,7 +929,7 @@ static void DeinitFields(void)
 
 static Boolean DecodeAttrPart_68(void)
 {
-  return DecodeMoto16AttrSize(*AttrPart.Str, &AttrPartOpSize, False);
+  return DecodeMoto16AttrSize(*AttrPart.str.p_str, &AttrPartOpSize, False);
 }
 
 static void MakeCode_68(void)
@@ -946,7 +945,7 @@ static void MakeCode_68(void)
 
   /* zu ignorierendes */
 
-  if (*OpPart.Str == '\0')
+  if (*OpPart.str.p_str == '\0')
     return;
 
   /* Pseudoanweisungen */
@@ -958,7 +957,7 @@ static void MakeCode_68(void)
 
   /* gehashtes */
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 
@@ -972,13 +971,6 @@ static Boolean IsDef_68(void)
 {
   return False;
 }
-
-static void SwitchFrom_68(void)
-{
-  DeinitFields();
-  ClearONOFF();
-}
-
 
 static void SwitchTo_68(void)
 {
@@ -1007,7 +999,7 @@ static void SwitchTo_68(void)
   DecodeAttrPart = DecodeAttrPart_68;
   MakeCode = MakeCode_68;
   IsDef = IsDef_68;
-  SwitchFrom = SwitchFrom_68;
+  SwitchFrom = DeinitFields;
   InitFields();
   AddMoto16PseudoONOFF();
 

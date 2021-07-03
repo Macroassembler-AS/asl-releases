@@ -99,7 +99,7 @@ static const tCodeTable RegCodes[] =
 
 static Boolean DecodeReg(const tStrComp *pArg, Word *pResult, Byte Mask)
 {
-  Boolean Result = DecodeRegCore(pArg->Str, pResult) && (Mask & (1 << *pResult));
+  Boolean Result = DecodeRegCore(pArg->str.p_str, pResult) && (Mask & (1 << *pResult));
 
   if (!Result)
     WrStrErrorPos(ErrNum_InvReg, pArg);
@@ -116,7 +116,7 @@ static const tCodeTable DRegCodes[] =
 static Boolean DecodeDReg(const tStrComp *pArg)
 {
   Word DummyReg;
-  Boolean Result = DecodeDRegCore(pArg->Str, &DummyReg) && !DummyReg;
+  Boolean Result = DecodeDRegCore(pArg->str.p_str, &DummyReg) && !DummyReg;
 
   if (!Result)
     WrStrErrorPos(ErrNum_InvReg, pArg);
@@ -149,7 +149,7 @@ static const tCodeTable SkipCodes[] =
 
 static Boolean DecodeSkip(const tStrComp *pArg, Word *pResult)
 {
-  Boolean Result = DecodeSkipCore(pArg->Str, pResult);
+  Boolean Result = DecodeSkipCore(pArg->str.p_str, pResult);
 
   if (!Result)
     WrStrErrorPos(ErrNum_UndefCond, pArg);
@@ -177,7 +177,7 @@ static const tCodeTable EECodes[] =
 
 static Boolean DecodeEE(const tStrComp *pArg, Word *pResult)
 {
-  Boolean Result = DecodeEECore(pArg->Str, pResult);
+  Boolean Result = DecodeEECore(pArg->str.p_str, pResult);
 
   if (!Result)
     WrStrErrorPos(ErrNum_InvReg, pArg);
@@ -210,7 +210,7 @@ static const tCodeTable BRCodes[] =
 
 static Boolean DecodeBR(const tStrComp *pArg, Word *pResult)
 {
-  Boolean Result = DecodeBRCore(pArg->Str, pResult);
+  Boolean Result = DecodeBRCore(pArg->str.p_str, pResult);
 
   if (!Result)
     WrStrErrorPos(ErrNum_UnknownSegReg, pArg);
@@ -229,7 +229,7 @@ static const tCodeTable SRegCodes[] =
 
 static Boolean DecodeSOrAllBReg(const tStrComp *pArg, Word *pResult, unsigned IsS, Boolean IsWrite)
 {
-  Boolean Result = IsS ? DecodeSRegCore(pArg->Str, pResult) : DecodeAllBRCore(pArg->Str, pResult, IsWrite);
+  Boolean Result = IsS ? DecodeSRegCore(pArg->str.p_str, pResult) : DecodeAllBRCore(pArg->str.p_str, pResult, IsWrite);
 
   if (!Result)
     WrStrErrorPos(ErrNum_InvReg, pArg);
@@ -254,7 +254,7 @@ static Boolean DecodeHReg(const tStrComp *pArg, Word *pResult, Boolean IsWrite)
   Boolean Result;
 
   HRegCodes[5].pName = IsWrite ? "SOR" : "SIR";
-  Result = DecodeHRegCore(pArg->Str, pResult);
+  Result = DecodeHRegCore(pArg->str.p_str, pResult);
 
   if (!Result)
     WrStrErrorPos(ErrNum_InvReg, pArg);
@@ -290,7 +290,7 @@ static Word ChkPage(LongWord Addr, Word Base, const tStrComp *pArg)
 static Boolean DecodeMem(tStrComp *pArg, Word *pResult)
 {
   tStrComp Arg;
-  Boolean TotIndirect = IsIndirect(pArg->Str), OK;
+  Boolean TotIndirect = IsIndirect(pArg->str.p_str), OK;
   Word R;
   Integer Disp;
   int l;
@@ -306,14 +306,14 @@ static Boolean DecodeMem(tStrComp *pArg, Word *pResult)
   else
     StrCompRefRight(&Arg, pArg, 0);
 
-  l = strlen(Arg.Str);
-  if ((l >= 4) && DecodeAddrReg(Arg.Str + l - 4, &R))
+  l = strlen(Arg.str.p_str);
+  if ((l >= 4) && DecodeAddrReg(Arg.str.p_str + l - 4, &R))
   {
     Boolean DispIndirect;
 
-    Arg.Str[l - 4] = '\0';
+    StrCompShorten(&Arg, 4);
     KillPostBlanksStrComp(&Arg);
-    DispIndirect = IsIndirect(Arg.Str);
+    DispIndirect = IsIndirect(Arg.str.p_str);
     Disp = EvalStrIntExpression(&Arg, (R == 2) ? SInt8 : UInt8, &OK);
     if (!OK)
       return False;
@@ -341,7 +341,7 @@ static Boolean DecodeMem(tStrComp *pArg, Word *pResult)
       return True;
     }
   }
-  else if (TotIndirect && DecodeRegCore(Arg.Str, &R)) /* plain (ic) (x0) (x1) without displacement */
+  else if (TotIndirect && DecodeRegCore(Arg.str.p_str, &R)) /* plain (ic) (x0) (x1) without displacement */
   {
     switch (R)
     {
@@ -375,7 +375,7 @@ plaindisp:
     /* For direct addressing, either zero-page or IC-relative may be used.
        Check for explicit request: */
 
-    else switch (*Arg.Str)
+    else switch (*Arg.str.p_str)
     {
       case '>':
         ArgOffset = 1;
@@ -446,7 +446,7 @@ plaindisp:
 
 static Boolean DecodeIReg(tStrComp *pStrArg, Word *pResult, Word Mask, Word Allowed)
 {
-  char *pArg = pStrArg->Str;
+  char *pArg = pStrArg->str.p_str;
   int l = strlen(pArg);
   char *pEnd = pArg + l, Save;
   Word Reg;
@@ -590,7 +590,7 @@ static void DecodeShift(Word Code)
     else if (ArgCnt == 1)
       OK = True;
     else
-      OK = DecodeEECore(ArgStr[2].Str, &EE) || DecodeSkip(&ArgStr[2], &Skip);
+      OK = DecodeEECore(ArgStr[2].str.p_str, &EE) || DecodeSkip(&ArgStr[2], &Skip);
     if (OK)
     {
       WAsmCode[0] = Code | (R << 8) | (Skip << 4) | EE;
@@ -715,10 +715,10 @@ static Boolean ChkCarry(int StartIndex, Boolean *pHasCarryArg, Word *pCarryVal)
   {
     Boolean Result;
 
-    *pHasCarryArg = !as_strcasecmp(ArgStr[StartIndex].Str, "C")
-                 || !as_strcasecmp(ArgStr[StartIndex].Str, "0")
-                 || !as_strcasecmp(ArgStr[StartIndex].Str, "1");
-    *pCarryVal = *pHasCarryArg && (ArgStr[StartIndex].Str[0] != '0');
+    *pHasCarryArg = !as_strcasecmp(ArgStr[StartIndex].str.p_str, "C")
+                 || !as_strcasecmp(ArgStr[StartIndex].str.p_str, "0")
+                 || !as_strcasecmp(ArgStr[StartIndex].str.p_str, "1");
+    *pCarryVal = *pHasCarryArg && (ArgStr[StartIndex].str.p_str[0] != '0');
     Result = (ArgCnt == StartIndex) || *pHasCarryArg;
     if (!Result)
       WrStrErrorPos(ErrNum_InvReg, &ArgStr[StartIndex]);
@@ -812,7 +812,7 @@ static void DecodeBL_BALL(Word Code)
 {
   if (!ChkArgCnt(1, 1));
   else if (!ChkMinCPU(CPUMN1613));
-  else if (!IsIndirect(ArgStr[1].Str)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
+  else if (!IsIndirect(ArgStr[1].str.p_str)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
   else
   {
     Boolean OK;
@@ -1029,6 +1029,7 @@ static void DecodeDC(Word Code)
 
   UNUSED(Code);
 
+  as_tempres_ini(&t);
   if (ChkArgCnt(1, ArgCntMax))
   {
     OK = True;
@@ -1055,9 +1056,9 @@ static void DecodeDC(Word Code)
            if (MultiCharToInt(&t, 2))
              goto ToInt;
 
-           for (z2 = 0; z2 < (int)t.Contents.Ascii.Length; z2++)
+           for (z2 = 0; z2 < (int)t.Contents.str.len; z2++)
            {
-             Trans = CharTransTable[((usint) t.Contents.Ascii.Contents[z2]) & 0xff];
+             Trans = CharTransTable[((usint) t.Contents.str.p_str[z2]) & 0xff];
              if (HalfFilledWord)
              {
                WAsmCode[CodeLen - 1] |= Trans & 0xff;
@@ -1088,6 +1089,7 @@ static void DecodeDC(Word Code)
     if (!OK)
        CodeLen = 0;
   }
+  as_tempres_free(&t);
 }
 
 static void DecodeDS(Word Index)
@@ -1280,7 +1282,7 @@ static void DeinitFields(void)
 
 static Boolean DecodeAttrPart_MN1610_Alt(void)
 {
-  return DecodeMoto16AttrSize(*AttrPart.Str, &AttrPartOpSize, False);
+  return DecodeMoto16AttrSize(*AttrPart.str.p_str, &AttrPartOpSize, False);
 }
 
 static void MakeCode_MN1610_Alt(void)
@@ -1293,7 +1295,7 @@ static void MakeCode_MN1610_Alt(void)
 
   /* Pseudo Instructions */
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

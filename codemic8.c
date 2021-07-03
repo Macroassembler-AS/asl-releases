@@ -126,7 +126,7 @@ static tRegEvalResult IsWReg(const tStrComp *pArg, LongWord *pValue, Boolean Mus
   tEvalResult EvalResult;
   tRegEvalResult RegEvalResult;
 
-  if (IsWRegCore(pArg->Str, pValue))
+  if (IsWRegCore(pArg->str.p_str, pValue))
     return eIsReg;
 
   RegEvalResult = EvalStrRegExpressionAsOperand(pArg, &RegDescr, &EvalResult, eSymbolSize8Bit, MustBeReg);
@@ -553,7 +553,7 @@ static void MakeCode_Mico8(void)
 
    if (DecodeIntelPseudo(True)) return;
 
-   if (!LookupInstTable(InstTable, OpPart.Str))
+   if (!LookupInstTable(InstTable, OpPart.str.p_str))
      WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

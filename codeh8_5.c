@@ -172,7 +172,7 @@ static tRegEvalResult DecodeReg(const tStrComp *pArg, Byte *pResult, Boolean Mus
   tEvalResult EvalResult;
   tRegEvalResult RegEvalResult;
 
-  if (DecodeRegCore(pArg->Str, pResult))
+  if (DecodeRegCore(pArg->str.p_str, pResult))
   {
     *pResult &= ~REG_MARK;
     return eIsReg;
@@ -189,8 +189,8 @@ static Boolean DecodeRegList(tStrComp *pArg, Byte *pResult)
   Byte Reg1, Reg2, z;
   char *p, *p2;
 
-  Arg = *pArg;
-  if (IsIndirect(Arg.Str))
+  StrCompRefRight(&Arg, pArg, 0);
+  if (IsIndirect(Arg.str.p_str))
   {
     StrCompIncRefLeft(&Arg, 1);
     StrCompShorten(&Arg, 1);
@@ -201,10 +201,10 @@ static Boolean DecodeRegList(tStrComp *pArg, Byte *pResult)
   *pResult = 0;
   do
   {
-    p = QuotPos(Arg.Str, ',');
+    p = QuotPos(Arg.str.p_str, ',');
     if (p)
       StrCompSplitRef(&Arg, &Remainder, &Arg, p);
-    p2 = strchr(Arg.Str, '-');
+    p2 = strchr(Arg.str.p_str, '-');
     if (p2)
     {
       tStrComp Left, Right;
@@ -261,14 +261,14 @@ static Boolean DecodeCReg(char *Asc, Byte *pErg)
 
 static void SplitDisp(tStrComp *pArg, tSymbolSize *pSize)
 {
-  int l = strlen(pArg->Str);
+  int l = strlen(pArg->str.p_str);
 
-  if ((l > 2) && !strcmp(pArg->Str + l - 2, ":8"))
+  if ((l > 2) && !strcmp(pArg->str.p_str + l - 2, ":8"))
   {
     StrCompShorten(pArg, 2);
     *pSize = eSymbolSize8Bit;
   }
-  else if ((l > 3) && !strcmp(pArg->Str + l - 3, ":16"))
+  else if ((l > 3) && !strcmp(pArg->str.p_str + l - 3, ":16"))
   {
     StrCompShorten(pArg, 3);
     *pSize = eSymbolSize16Bit;
@@ -353,7 +353,7 @@ static void DecodeAdr(tStrComp *pArg, Word Mask)
 
   /* immediate ? */
 
-  if (*pArg->Str == '#')
+  if (*pArg->str.p_str == '#')
   {
     SplitDisp(pArg, &ImmSize);
     if (ImmSize == eSymbolSizeUnknown)
@@ -391,12 +391,12 @@ static void DecodeAdr(tStrComp *pArg, Word Mask)
 
   /* indirekt ? */
 
-  if (*pArg->Str == '@')
+  if (*pArg->str.p_str == '@')
   {
     tStrComp Arg, Remainder;
 
     StrCompRefRight(&Arg, pArg, 1);
-    if (IsIndirect(Arg.Str))
+    if (IsIndirect(Arg.str.p_str))
     {
       StrCompIncRefLeft(&Arg, 1);
       StrCompShorten(&Arg, 1);
@@ -404,7 +404,7 @@ static void DecodeAdr(tStrComp *pArg, Word Mask)
 
     /* Predekrement ? */
 
-    if (*Arg.Str == '-')
+    if (*Arg.str.p_str == '-')
     {
       tStrComp RegArg;
 
@@ -418,7 +418,7 @@ static void DecodeAdr(tStrComp *pArg, Word Mask)
 
     /* Postinkrement ? */
 
-    if ((*Arg.Str) && (Arg.Str[strlen(Arg.Str) - 1] == '+'))
+    if ((*Arg.str.p_str) && (Arg.str.p_str[strlen(Arg.str.p_str) - 1] == '+'))
     {
       StrCompShorten(&Arg, 1);
       if (DecodeReg(&Arg, &AdrByte, True) == eIsReg)
@@ -433,7 +433,7 @@ static void DecodeAdr(tStrComp *pArg, Word Mask)
     DispAcc = 0; DispSize = eSymbolSizeUnknown; RegPart = -1; OK = True; Unknown = False;
     do
     {
-      p = QuotPos(Arg.Str, ',');
+      p = QuotPos(Arg.str.p_str, ',');
       if (p)
         StrCompSplitRef(&Arg, &Remainder, &Arg, p);
       switch (DecodeReg(&Arg, &HReg, False))
@@ -448,7 +448,7 @@ static void DecodeAdr(tStrComp *pArg, Word Mask)
           break;
         case eIsNoReg:
           SplitDisp(&Arg, &DispSize);
-          DispAcc += EvalStrIntExpressionOffsWithFlags(&Arg, !!(*Arg.Str == '#'), Int32, &OK, &Flags);
+          DispAcc += EvalStrIntExpressionOffsWithFlags(&Arg, !!(*Arg.str.p_str == '#'), Int32, &OK, &Flags);
           if (mFirstPassUnknown(Flags)) Unknown = True;
           break;
         default:
@@ -647,7 +647,7 @@ static tSymbolSize DecodeOpSize(Byte SizeCode)
 
 static LongWord EvalBitPosition(const tStrComp *pArg, tSymbolSize Size, Boolean *pOK)
 {
-  return EvalStrIntExpressionOffs(pArg, !!(*pArg->Str == '#'), (Size == eSymbolSize16Bit) ? UInt4 : UInt3, pOK);
+  return EvalStrIntExpressionOffs(pArg, !!(*pArg->str.p_str == '#'), (Size == eSymbolSize16Bit) ? UInt4 : UInt3, pOK);
 }
 
 /*!------------------------------------------------------------------------
@@ -1032,7 +1032,7 @@ static void DecodeLDC_STC(Word IsSTC_16)
       CRegIdx = 1;
       AdrIdx = 2;
     }
-    if (!DecodeCReg(ArgStr[CRegIdx].Str, &HReg)) WrStrErrorPos(ErrNum_InvCtrlReg, &ArgStr[2]);
+    if (!DecodeCReg(ArgStr[CRegIdx].str.p_str, &HReg)) WrStrErrorPos(ErrNum_InvCtrlReg, &ArgStr[2]);
     else
     {
       DecodeAdr(&ArgStr[AdrIdx], IsSTC_16 ? MModNoImm : MModAll);
@@ -1331,7 +1331,7 @@ static void DecodeLog(Word Code)
   Byte HReg;
 
   if (!ChkArgCnt(2, 2));
-  else if (!DecodeCReg(ArgStr[2].Str, &HReg)) WrStrErrorPos(ErrNum_InvCtrlReg, &ArgStr[2]);
+  else if (!DecodeCReg(ArgStr[2].str.p_str, &HReg)) WrStrErrorPos(ErrNum_InvCtrlReg, &ArgStr[2]);
   else
   {
     DecodeAdr(&ArgStr[1], MModImm);
@@ -1437,7 +1437,7 @@ static void DecodeBit(Word Code)
               OK = True; BitPos += 8;
               break;
             case eIsNoReg:
-              BitPos = EvalStrIntExpressionOffs(&ArgStr[1], !!(*ArgStr[1].Str == '#'), (OpSize == eSymbolSize8Bit) ? UInt3 : UInt4, &OK);
+              BitPos = EvalStrIntExpressionOffs(&ArgStr[1], !!(*ArgStr[1].str.p_str == '#'), (OpSize == eSymbolSize8Bit) ? UInt3 : UInt4, &OK);
               if (OK) BitPos |= 0x80;
               break;
             default:
@@ -1541,13 +1541,13 @@ static void DecodeJMP_JSR(Word IsJSR_8)
 static void DecodePJMP_PJSR(Word IsPJMP)
 {
   if (!ChkArgCnt(1, 1));
-  else if (*AttrPart.Str) WrError(ErrNum_UseLessAttr);
+  else if (*AttrPart.str.p_str) WrError(ErrNum_UseLessAttr);
   else if (strcmp(Format, " ")) WrError(ErrNum_InvFormat);
   else if (!Maximum) WrError(ErrNum_OnlyInMaxmode);
   else
   {
     tStrComp *pArg = &ArgStr[1], Arg;
-    unsigned ArgOffs = !!(*pArg->Str == '@');
+    unsigned ArgOffs = !!(*pArg->str.p_str == '@');
     Byte HReg;
 
     StrCompRefRight(&Arg, pArg, ArgOffs);
@@ -1586,7 +1586,7 @@ static void DecodeSCB(Word Code)
   tSymbolFlags Flags;
 
   if (!ChkArgCnt(2, 2));
-  else if (*AttrPart.Str) WrError(ErrNum_UseLessAttr);
+  else if (*AttrPart.str.p_str) WrError(ErrNum_UseLessAttr);
   else if (strcmp(Format, " ")) WrError(ErrNum_InvFormat);
   else if (DecodeReg(&ArgStr[1], &HReg, True))
   {
@@ -1618,7 +1618,7 @@ static void DecodePRTD_RTD(Word IsPRTD)
 
   if (!ChkArgCnt(1, 1));
   else if (strcmp(Format, " ")) WrError(ErrNum_InvFormat);
-  else if (*ArgStr[1].Str != '#') WrError(ErrNum_OnlyImmAddr);
+  else if (*ArgStr[1].str.p_str != '#') WrError(ErrNum_OnlyImmAddr);
   else
   {
     tStrComp Arg;
@@ -1673,7 +1673,7 @@ static void DecodeLINK(Word Dummy)
     if (AdrMode != ModNone)
     {
       if ((AdrByte & 7) != 6) WrError(ErrNum_InvAddrMode);
-      else if (*ArgStr[2].Str != '#') WrError(ErrNum_OnlyImmAddr);
+      else if (*ArgStr[2].str.p_str != '#') WrError(ErrNum_OnlyImmAddr);
       else
       {
         tStrComp Arg;
@@ -1724,7 +1724,7 @@ static void DecodeUNLK(Word Dummy)
   UNUSED(Dummy);
 
   if (!ChkArgCnt(1, 1));
-  else if (*AttrPart.Str) WrError(ErrNum_UseLessAttr);
+  else if (*AttrPart.str.p_str) WrError(ErrNum_UseLessAttr);
   else if (strcmp(Format, " ")) WrError(ErrNum_InvFormat);
   else
   {
@@ -1745,9 +1745,9 @@ static void DecodeTRAPA(Word Dummy)
   UNUSED(Dummy);
 
   if (!ChkArgCnt(1, 1));
-  else if (*AttrPart.Str) WrError(ErrNum_UseLessAttr);
+  else if (*AttrPart.str.p_str) WrError(ErrNum_UseLessAttr);
   else if (strcmp(Format, " ")) WrError(ErrNum_InvFormat);
-  else if (*ArgStr[1].Str != '#') WrError(ErrNum_OnlyImmAddr);
+  else if (*ArgStr[1].str.p_str != '#') WrError(ErrNum_OnlyImmAddr);
   else
   {
     Boolean OK;
@@ -1792,7 +1792,7 @@ static void DecodeBIT(Word Code)
     pElement = CreateStructElem(&LabPart);
     if (!pElement)
       return;
-    pElement->pRefElemName = as_strdup(ArgStr[2].Str);
+    pElement->pRefElemName = as_strdup(ArgStr[2].str.p_str);
     pElement->OpSize = OpSize;
     pElement->BitPos = BitPos;
     pElement->ExpandFnc = ExpandBit_H8_5;
@@ -1989,10 +1989,10 @@ static Boolean DecodeAttrPart_H8_5(void)
   switch (AttrSplit)
   {
     case '.':
-      p = strchr(AttrPart.Str, ':');
+      p = strchr(AttrPart.str.p_str, ':');
       if (p)
       {
-        if (p < AttrPart.Str + strlen(AttrPart.Str) - 1)
+        if (p < AttrPart.str.p_str + strlen(AttrPart.str.p_str) - 1)
           strmaxcpy(Format, p + 1, STRINGSIZE - 1);
         else
           strcpy(Format, " ");
@@ -2002,20 +2002,20 @@ static Boolean DecodeAttrPart_H8_5(void)
         strcpy(Format, " ");
       break;
     case ':':
-      p = strchr(AttrPart.Str, '.');
+      p = strchr(AttrPart.str.p_str, '.');
       if (!p)
       {
-        strmaxcpy(Format, AttrPart.Str, STRINGSIZE - 1);
-        *AttrPart.Str = '\0';
+        strmaxcpy(Format, AttrPart.str.p_str, STRINGSIZE - 1);
+        *AttrPart.str.p_str = '\0';
       }
       else
       {
         *p = '\0';
-        if (p == AttrPart.Str)
+        if (p == AttrPart.str.p_str)
           strcpy(Format, " ");
         else
-          strmaxcpy(Format, AttrPart.Str, STRINGSIZE - 1);
-        strcpy(AttrPart.Str, p + 1);
+          strmaxcpy(Format, AttrPart.str.p_str, STRINGSIZE - 1);
+        strcpy(AttrPart.str.p_str, p + 1);
       }
       break;
     default:
@@ -2024,9 +2024,9 @@ static Boolean DecodeAttrPart_H8_5(void)
 
   NLS_UpString(Format);
 
-  if (*AttrPart.Str)
+  if (*AttrPart.str.p_str)
   {
-    if (!DecodeMoto16AttrSize(*AttrPart.Str, &AttrPartOpSize, False))
+    if (!DecodeMoto16AttrSize(*AttrPart.str.p_str, &AttrPartOpSize, False))
       return False;
   }
   return True;
@@ -2041,14 +2041,14 @@ static void MakeCode_H8_5(void)
   if (Memo("")) return;
 
   OpSize = eSymbolSizeUnknown;
-  if (*AttrPart.Str)
+  if (*AttrPart.str.p_str)
     SetOpSize(AttrPartOpSize);
 
   if (DecodeMoto16Pseudo(OpSize, True)) return;
 
   /* Sonderfaelle */
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 
@@ -2064,11 +2064,6 @@ static Boolean IsDef_H8_5(void)
 {
   return Memo("REG")
       || Memo("BIT");
-}
-
-static void SwitchFrom_H8_5(void)
-{
-  DeinitFields(); ClearONOFF();
 }
 
 static void InitCode_H8_5(void)
@@ -2094,7 +2089,7 @@ static void SwitchTo_H8_5(void)
   MakeCode = MakeCode_H8_5;
   ChkPC = ChkPC_H8_5;
   IsDef = IsDef_H8_5;
-  SwitchFrom = SwitchFrom_H8_5;
+  SwitchFrom = DeinitFields;
   InternSymbol = InternSymbol_H8_5;
   DissectReg = DissectReg_H8_5;
   DissectBit = DissectBit_H8_5;

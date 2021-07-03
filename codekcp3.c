@@ -105,7 +105,7 @@ static tRegEvalResult IsWReg(const tStrComp *pArg, LongWord *pResult, Boolean Mu
   tEvalResult EvalResult;
   tRegEvalResult RegEvalResult;
 
-  if (IsWRegCore(pArg->Str, pResult))
+  if (IsWRegCore(pArg->str.p_str, pResult))
     return eIsReg;
 
   RegEvalResult = EvalStrRegExpressionAsOperand(pArg, &RegDescr, &EvalResult, eSymbolSize8Bit, MustBeReg);
@@ -125,12 +125,12 @@ static tRegEvalResult IsIWReg(const tStrComp *pArg, LongWord *pResult)
 {
   char Tmp[10];
   tStrComp TmpComp;
-  int l = strlen(pArg->Str);
+  int l = strlen(pArg->str.p_str);
 
-  if ((l < 3) || (pArg->Str[0] != '(') || (pArg->Str[l - 1] != ')'))
+  if ((l < 3) || (pArg->str.p_str[0] != '(') || (pArg->str.p_str[l - 1] != ')'))
     return eIsNoReg;
 
-  StrCompMkTemp(&TmpComp, Tmp);
+  StrCompMkTemp(&TmpComp, Tmp, sizeof(Tmp));
   StrCompCopySub(&TmpComp, pArg, 1, l - 2);
   return IsWReg(&TmpComp, pResult, False);
 }
@@ -146,7 +146,7 @@ static Boolean IsCond(int OtherArgCnt, LongWord *pErg)
   }
 
   for (*pErg = 0; *pErg < (sizeof(Conds) / sizeof(*Conds)); (*pErg)++)
-    if (!as_strcasecmp(Conds[*pErg], ArgStr[1].Str))
+    if (!as_strcasecmp(Conds[*pErg], ArgStr[1].str.p_str))
     {
       *pErg |= 4;
       return True;
@@ -175,15 +175,16 @@ static void DecodeConstant(Word Index)
     TempResult t;
     Boolean OK;
 
-    t.Contents.Int = EvalStrIntExpressionWithFlags(&ArgStr[2], Int32, &OK, &t.Flags);
+    as_tempres_ini(&t);
+    as_tempres_set_int(&t, EvalStrIntExpressionWithFlags(&ArgStr[2], Int32, &OK, &t.Flags));
     if (OK && !mFirstPassUnknown(t.Flags))
     {
-      t.Typ = TempInt;
       SetListLineVal(&t);
       PushLocHandle(-1);
       EnterIntSymbol(&ArgStr[1], t.Contents.Int, SegNone, False);
       PopLocHandle();
     }
+    as_tempres_free(&t);
   }
 }
 
@@ -266,12 +267,12 @@ static void DecodeReti(Word Index)
 
   if (ChkArgCnt(1, 1))
   {
-    if (!as_strcasecmp(ArgStr[1].Str, "DISABLE"))
+    if (!as_strcasecmp(ArgStr[1].str.p_str, "DISABLE"))
     {
       DAsmCode[0] = 0x38000;
       CodeLen = 1;
     }
-    else if (!as_strcasecmp(ArgStr[1].Str, "ENABLE"))
+    else if (!as_strcasecmp(ArgStr[1].str.p_str, "ENABLE"))
     {
       DAsmCode[0] = 0x38001;
       CodeLen = 1;
@@ -285,7 +286,7 @@ static void DecodeInt(Word Index)
 {
   if (ChkArgCnt(1, 1))
   {
-    if (as_strcasecmp(ArgStr[1].Str, "INTERRUPT")) WrError(ErrNum_InvAddrMode);
+    if (as_strcasecmp(ArgStr[1].str.p_str, "INTERRUPT")) WrError(ErrNum_InvAddrMode);
     else
     {
       DAsmCode[0] = 0x3c000 | Index;
@@ -495,7 +496,7 @@ static void MakeCode_KCPSM3(void)
 
    if (DecodeIntelPseudo(True)) return;
 
-   if (!LookupInstTable(InstTable, OpPart.Str))
+   if (!LookupInstTable(InstTable, OpPart.str.p_str))
      WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

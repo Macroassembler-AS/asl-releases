@@ -13,6 +13,7 @@
 #include <string.h>
 #include <stdarg.h>
 
+#include "dynstr.h"
 #include "strutil.h"
 #undef strlen   /* VORSICHT, Rekursion!!! */
 
@@ -167,6 +168,13 @@ typedef struct
   int Arg[3], CurrArg, IntSize;
 } tFormatContext;
 
+typedef struct
+{
+  char *p_dest;
+  size_t dest_remlen;
+  as_dynstr_t *p_dynstr;
+} dest_format_context_t;
+
 static void ResetFormatContext(tFormatContext *pContext)
 {
   int z;
@@ -187,27 +195,68 @@ static void ResetFormatContext(tFormatContext *pContext)
   pContext->ForceUpper = False;
 }
 
-static size_t LimitMinusOne(size_t Cnt, size_t Limit)
+/*!------------------------------------------------------------------------
+ * \fn     limit_minus_one(dest_format_context_t *p_dest_ctx, size_t cnt)
+ * \brief  check if space is left to append given # of characters, plus trailing NUL
+ * \param  p_dest_ctx destination context
+ * \param  cnt requested # of characters to append
+ * \return actual # that can be appended
+ * ------------------------------------------------------------------------ */
+
+static size_t limit_minus_one(dest_format_context_t *p_dest_ctx, size_t cnt)
 {
-  if (!Limit)
+  /* anyway still enough space? */
+
+  if (p_dest_ctx->dest_remlen > cnt)
+    return cnt;
+
+  /* not enough space: try to realloc dynamic string dest */
+
+  if (p_dest_ctx->p_dynstr)
+  {
+    size_t curr_len = p_dest_ctx->p_dest - p_dest_ctx->p_dynstr->p_str;
+    size_t new_capacity = as_dynstr_roundup_len(curr_len + cnt + 1);
+
+    /* if realloc successful, pointer into string buffer must be adapted: */
+
+    if (!as_dynstr_realloc(p_dest_ctx->p_dynstr, new_capacity))
+    {
+      p_dest_ctx->p_dest = p_dest_ctx->p_dynstr->p_str + curr_len;
+      p_dest_ctx->dest_remlen = p_dest_ctx->p_dynstr->capacity - curr_len;
+    }
+  }
+
+  /* pathological case... */
+
+  if (!p_dest_ctx->dest_remlen)
     return 0;
-  else if (Cnt > Limit - 1)
-    return Limit - 1;
+
+  /* truncation */
+
   else
-    return Cnt;
+    return (cnt >= p_dest_ctx->dest_remlen) ? p_dest_ctx->dest_remlen - 1 : cnt;
 }
 
-static int AppendPad(char **ppDest, size_t *pDestSize, char Src, size_t Cnt)
-{
-  Cnt = LimitMinusOne(Cnt, *pDestSize);
+/*!------------------------------------------------------------------------
+ * \fn     append_pad(dest_format_context_t *p_dest_ctx, char src, size_t cnt)
+ * \brief  append given character n times
+ * \param  p_dest_ctx destination context
+ * \param  src character to append
+ * \param  cnt # of times to append
+ * \return actual # of characters appended
+ * ------------------------------------------------------------------------ */
 
-  if (Cnt > 0)
+static size_t append_pad(dest_format_context_t *p_dest_ctx, char src, size_t cnt)
+{
+  cnt = limit_minus_one(p_dest_ctx, cnt);
+
+  if (cnt > 0)
   {
-    memset(*ppDest, Src, Cnt);
-    *ppDest += Cnt;
-    *pDestSize -= Cnt;
+    memset(p_dest_ctx->p_dest, src, cnt);
+    p_dest_ctx->p_dest += cnt;
+    p_dest_ctx->dest_remlen -= cnt;
   }
-  return Cnt;
+  return cnt;
 }
 
 #if 0
@@ -263,50 +312,64 @@ static int FloatConvert(char *pDest, size_t DestSize, double Src, int Digits, Bo
 }
 #endif
 
-static int Append(char **ppDest, size_t *pDestSize, const char *pSrc, size_t Cnt, tFormatContext *pFormatContext)
+/*!------------------------------------------------------------------------
+ * \fn     append(dest_format_context_t *p_dest_ctx, const char *p_src, size_t cnt, tFormatContext *pFormatContext)
+ * \brief  append given data, with possible left/right padding
+ * \param  p_dest_ctx destination context
+ * \param  p_src data to append
+ * \param  cnt length of data to append
+ * \param  pFormatContext formatting context
+ * \return actual # of characters appended
+ * ------------------------------------------------------------------------ */
+
+static size_t append(dest_format_context_t *p_dest_ctx, const char *p_src, size_t cnt, tFormatContext *pFormatContext)
 {
-  int PadLen, Result = 0;
+  size_t pad_len, result = 0;
 
-  PadLen = pFormatContext->Arg[0] - Cnt;
-  if (PadLen < 0)
-    PadLen = 0;
+  pad_len = (pFormatContext->Arg[0] > (int)cnt) ? pFormatContext->Arg[0] - cnt : 0;
 
-  if ((PadLen > 0) && !pFormatContext->LeftAlign)
-    Result += AppendPad(ppDest, pDestSize, ' ', PadLen);
+  if ((pad_len > 0) && !pFormatContext->LeftAlign)
+    result += append_pad(p_dest_ctx, ' ', pad_len);
 
-  Cnt = LimitMinusOne(Cnt, *pDestSize);
-  if (Cnt > 0)
+  cnt = limit_minus_one(p_dest_ctx, cnt);
+  if (cnt > 0)
   {
-    memcpy(*ppDest, pSrc, Cnt);
-    *ppDest += Cnt;
-    *pDestSize -= Cnt;
+    memcpy(p_dest_ctx->p_dest, p_src, cnt);
+    p_dest_ctx->p_dest += cnt;
+    p_dest_ctx->dest_remlen -= cnt;
   }
 
-  if ((PadLen > 0) && pFormatContext->LeftAlign)
-    Result += AppendPad(ppDest, pDestSize, ' ', PadLen);
+  if ((pad_len > 0) && pFormatContext->LeftAlign)
+    result += append_pad(p_dest_ctx, ' ', pad_len);
 
   if (pFormatContext->InFormat)
     ResetFormatContext(pFormatContext);
 
-  return Result + Cnt;
+  return result + cnt;
 }
 
-int as_vsnprcatf(char *pDest, size_t DestSize, const char *pFormat, va_list ap)
+/*!------------------------------------------------------------------------
+ * \fn     vsprcatf_core(dest_format_context_t *p_dest_ctx, const char *pFormat, va_list ap)
+ * \brief  The actual core routine to process the format string
+ * \param  p_dest_ctx context describing destination
+ * \param  pFormat format specifier
+ * \param  ap format arguments
+ * \return # of characters appended
+ * ------------------------------------------------------------------------ */
+
+static int vsprcatf_core(dest_format_context_t *p_dest_ctx, const char *pFormat, va_list ap)
 {
   const char *pFormatStart = pFormat;
   int Result = 0;
-  size_t OrigLen = strlen(pDest);
+  size_t OrigLen = strlen(p_dest_ctx->p_dest);
   tFormatContext FormatContext;
   LargeInt IntArg;
 
-  if (DestSize == sizeof(char*))
-  {
-    fprintf(stderr, "pointer size passed to as_vsnprcatf\n");
-    exit(2);
-  }
-
-  DestSize = (DestSize > OrigLen) ? (DestSize - OrigLen) : 0;
-  pDest += OrigLen;
+  if (p_dest_ctx->dest_remlen > OrigLen)
+    p_dest_ctx->dest_remlen -= OrigLen;
+  else
+    p_dest_ctx->dest_remlen = 0;
+  p_dest_ctx->p_dest += OrigLen;
 
   ResetFormatContext(&FormatContext);
   for (; *pFormat; pFormat++)
@@ -344,11 +407,11 @@ int as_vsnprcatf(char *pDest, size_t DestSize, const char *pFormat, va_list ap)
         {
           char ch = va_arg(ap, int);
 
-          Result += Append(&pDest, &DestSize, &ch, 1, &FormatContext);
+          Result += append(p_dest_ctx, &ch, 1, &FormatContext);
           break;
         }
         case '%':
-          Result += Append(&pDest, &DestSize, "%", 1, &FormatContext);
+          Result += append(p_dest_ctx, "%", 1, &FormatContext);
           break;
         case 'l':
         {
@@ -438,7 +501,7 @@ int as_vsnprcatf(char *pDest, size_t DestSize, const char *pFormat, va_list ap)
                           SplitByteCharacter);
           if (Cnt > (int)sizeof(Str))
             Cnt = sizeof(Str);
-          Result += Append(&pDest, &DestSize, Str, Cnt, &FormatContext);
+          Result += append(p_dest_ctx, Str, Cnt, &FormatContext);
           break;
         }
         case 'e':
@@ -451,14 +514,14 @@ int as_vsnprcatf(char *pDest, size_t DestSize, const char *pFormat, va_list ap)
           Cnt = FloatConvert(Str, sizeof(Str), va_arg(ap, double), FormatContext.Arg[1], False, *pFormat);
           if (Cnt > (int)sizeof(Str))
             Cnt = sizeof(Str);
-          Result += Append(&pDest, &DestSize, Str, Cnt, &FormatContext);
+          Result += append(p_dest_ctx, Str, Cnt, &FormatContext);
           break;
         }
         case 's':
         {
           const char *pStr = va_arg(ap, char*);
 
-          Result += Append(&pDest, &DestSize, pStr, strlen(pStr), &FormatContext);
+          Result += append(p_dest_ctx, pStr, strlen(pStr), &FormatContext);
           break;
         }
         default:
@@ -468,11 +531,123 @@ int as_vsnprcatf(char *pDest, size_t DestSize, const char *pFormat, va_list ap)
     else if (*pFormat == '%')
       FormatContext.InFormat = True;
     else
-      Result += Append(&pDest, &DestSize, pFormat, 1, &FormatContext);
-  if (DestSize > 0)
-    *pDest++ = '\0';
+      Result += append(p_dest_ctx, pFormat, 1, &FormatContext);
+
+  if (p_dest_ctx->dest_remlen > 0)
+    *(p_dest_ctx->p_dest++) = '\0';
   return Result;
 }
+
+/*!------------------------------------------------------------------------
+ * \fn     as_vsdprcatf(as_dynstr_t *p_dest, const char *pFormat, va_list ap)
+ * \brief  append to dynamic string by format
+ * \param  p_dest string to be appended to
+ * \param  pFormat format specifier
+ * \param  ap format arguments
+ * \return # of characters appended
+ * ------------------------------------------------------------------------ */
+
+int as_vsdprcatf(as_dynstr_t *p_dest, const char *pFormat, va_list ap)
+{
+  dest_format_context_t ctx;
+
+  ctx.p_dest = p_dest->p_str;
+  ctx.dest_remlen = p_dest->capacity;
+  ctx.p_dynstr = p_dest;
+  return vsprcatf_core(&ctx, pFormat, ap);
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     as_vsdprintf(as_dynstr_t *p_dest, const char *pFormat, va_list ap)
+ * \brief  print to dynamic string by format
+ * \param  p_dest string to be appended to
+ * \param  pFormat format specifier
+ * \param  ap format arguments
+ * \return # of characters written
+ * ------------------------------------------------------------------------ */
+
+int as_vsdprintf(as_dynstr_t *p_dest, const char *pFormat, va_list ap)
+{
+  if (p_dest->capacity > 0)
+    p_dest->p_str[0] = '\0';
+  return as_vsdprcatf(p_dest, pFormat, ap);
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     as_sdprcatf(as_dynstr_t *p_dest, const char *pFormat, ...)
+ * \brief  append to dynamic string by format
+ * \param  p_dest string to be appended to
+ * \param  pFormat format specifier
+ * \param  ... format arguments
+ * \return # of characters written
+ * ------------------------------------------------------------------------ */
+
+int as_sdprcatf(as_dynstr_t *p_dest, const char *pFormat, ...)
+{
+  va_list ap;
+  int ret;
+
+  va_start(ap, pFormat);
+  ret = as_vsdprcatf(p_dest, pFormat, ap);
+  va_end(ap);
+  return ret;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     as_sdprintf(as_dynstr_t *p_dest, const char *pFormat, ...)
+ * \brief  print to dynamic string by format
+ * \param  p_dest string to be appended to
+ * \param  pFormat format specifier
+ * \param  ... format arguments
+ * \return # of characters written
+ * ------------------------------------------------------------------------ */
+
+int as_sdprintf(as_dynstr_t *p_dest, const char *pFormat, ...)
+{
+  va_list ap;
+  int ret;
+
+  va_start(ap, pFormat);
+  ret = as_vsdprintf(p_dest, pFormat, ap);
+  va_end(ap);
+  return ret;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     as_vsnprcatf(char *pDest, size_t DestSize, const char *pFormat, va_list ap)
+ * \brief  append to string by format
+ * \param  pDest string to be appended to
+ * \param  DestSize capacity of string
+ * \param  pFormat format specifier
+ * \param  ap format arguments
+ * \return # of characters appended
+ * ------------------------------------------------------------------------ */
+
+int as_vsnprcatf(char *pDest, size_t DestSize, const char *pFormat, va_list ap)
+{
+  dest_format_context_t ctx;
+
+  if (DestSize == sizeof(char*))
+  {
+    fprintf(stderr, "pointer size passed to as_vsnprcatf\n");
+    exit(2);
+  }
+
+  ctx.p_dest = pDest;
+  ctx.dest_remlen = DestSize;
+  ctx.p_dynstr = NULL;
+  return vsprcatf_core(&ctx, pFormat, ap);
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     as_vsnprintf(char *pDest, size_t DestSize, const char *pFormat, va_list ap)
+ * \brief  print to string by format
+ * \param  pDest string to be appended to
+ * \param  DestSize capacity of string
+ * \param  pFormat format specifier
+ * \param  ap format arguments
+ * \return # of characters written
+ * ------------------------------------------------------------------------ */
 
 int as_vsnprintf(char *pDest, size_t DestSize, const char *pFormat, va_list ap)
 {
@@ -480,6 +655,16 @@ int as_vsnprintf(char *pDest, size_t DestSize, const char *pFormat, va_list ap)
     *pDest = '\0';
   return as_vsnprcatf(pDest, DestSize, pFormat, ap);
 }
+
+/*!------------------------------------------------------------------------
+ * \fn     as_snprintf(char *pDest, size_t DestSize, const char *pFormat, ...)
+ * \brief  print to string by format
+ * \param  pDest string to be appended to
+ * \param  DestSize capacity of string
+ * \param  pFormat format specifier
+ * \param  ... format arguments
+ * \return # of characters written
+ * ------------------------------------------------------------------------ */
 
 int as_snprintf(char *pDest, size_t DestSize, const char *pFormat, ...)
 {
@@ -493,6 +678,16 @@ int as_snprintf(char *pDest, size_t DestSize, const char *pFormat, ...)
   va_end(ap);
   return Result;
 }
+
+/*!------------------------------------------------------------------------
+ * \fn     as_snprcatf(char *pDest, size_t DestSize, const char *pFormat, ...)
+ * \brief  append to string by format
+ * \param  pDest string to be appended to
+ * \param  DestSize capacity of string
+ * \param  pFormat format specifier
+ * \param  ... format arguments
+ * \return # of characters appended
+ * ------------------------------------------------------------------------ */
 
 int as_snprcatf(char *pDest, size_t DestSize, const char *pFormat, ...)
 {
@@ -681,47 +876,6 @@ unsigned fstrlenprint(FILE *pFile, const char *pStr, unsigned StrLen)
   return Result;
 }
 
-unsigned snstrlenprint(char *pDest, size_t DestLen,
-                       const char *pStr, size_t StrLen,
-                       char QuoteToEscape)
-{
-  size_t Result = 0;
-  const char *pRun, *pEnd;
-
-  for (pRun = pStr, pEnd = pStr + StrLen; pRun < pEnd; pRun++)
-    if ((*pRun == '\\') || (*pRun == QuoteToEscape))
-    {
-      if (DestLen < 3)
-        break;
-      *pDest++ = '\\';
-      *pDest++ = *pRun;
-      DestLen -= 2;
-      Result += 2;
-    }
-    else if (!isprint(*pRun))
-    {
-      int cnt;
-
-      if (DestLen < 5)
-        break;
-      cnt = as_snprintf(pDest, DestLen, "\\%03d", *pRun);
-      pDest += cnt;
-      DestLen -= cnt;
-      Result += cnt;
-    }
-    else
-    {
-      if (DestLen < 2)
-        break;
-      *pDest++ = *pRun;
-      DestLen--;
-      Result++;
-    }
-  *pDest = '\0';
-
-  return Result;
-}
-
 size_t as_strnlen(const char *pStr, size_t MaxLen)
 {
   size_t Res = 0;
@@ -845,81 +999,79 @@ static void dump(const char *pLine, unsigned Cnt)
 
 #endif
 
-int ReadLnCont(FILE *Datei, char *Zeile, int MaxLen)
+/*!------------------------------------------------------------------------
+ * \fn     ReadLnCont(FILE *Datei, as_dynstr_t *p_line)
+ * \brief  read line, regarding \ continuation characters
+ * \param  Datei where to read from
+ * \param  pLine dest buffer
+ * \return # of lines read
+ * ------------------------------------------------------------------------ */
+
+size_t ReadLnCont(FILE *Datei, as_dynstr_t *p_line)
 {
   char *ptr, *pDest;
-  int l, RemLen, Count;
-  Boolean cont, Terminated;
+  size_t l, Count, LineCount;
+  Boolean Terminated;
 
-  /* read from input until either string has reached maximum length,
-     or no continuation is present */
+  /* read from input until no continuation is present */
 
-  RemLen = MaxLen;
-  pDest = Zeile;
-  Count = 0;
-  do
+  pDest = p_line->p_str;
+  LineCount = Count = 0;
+  while (1)
   {
-    /* get a line from file */
+    /* get a line from file, possibly reallocating until everything up to \n fits */
 
-    Terminated = False;
-    *pDest = '\0';
-    ptr = fgets(pDest, RemLen, Datei);
-    if ((!ptr) && (ferror(Datei) != 0))
-      *pDest = '\0';
-
-    /* strip off trailing CR/LF */
-
-    l = strlen(pDest);
-    cont = False;
-    if ((l > 0) && (pDest[l - 1] == '\n'))
+    while (1)
     {
-      pDest[--l] = '\0';
-      Terminated = True;
+      if (p_line->capacity - Count < 128)
+        as_dynstr_realloc(p_line, p_line->capacity + 128);
+
+      pDest = p_line->p_str + Count;
+      *pDest = '\0';
+      ptr = fgets(pDest, p_line->capacity - Count, Datei);
+      if (!ptr)
+      {
+        if (ferror(Datei) != 0)
+          *pDest = '\0';
+        break;
+      }
+
+      /* If we have a trailing \n, we read up to end of line: */
+
+      l = strlen(pDest);
+      Terminated = ((l > 0) && (pDest[l - 1] == '\n'));
+
+      /* srtrip possible CR preceding LF: */
+
+      if (Terminated)
+      {
+        /* strip LF, and possible CR, and bail out: */
+
+        pDest[--l] = '\0';
+        if ((l > 0) && (pDest[l - 1] == '\r'))
+          pDest[--l] = '\0';
+      }
+
+      Count += l;
+      pDest += l;
+
+      if (Terminated)
+        break;
     }
-    if ((l > 0) && (pDest[l - 1] == '\r'))
-      pDest[--l] = '\0';
 
-    /* yes - this is necessary, when we get an old DOS textfile with
-       Ctrl-Z as EOF */
-
-    if ((l > 0) && (pDest[l - 1] == 26))
-      pDest[--l] = '\0';
+    LineCount++;
+    if ((Count > 0) && (p_line->p_str[Count - 1] == 26))
+      p_line->p_str[--Count] = '\0';
 
     /* optional line continuation */
 
-    if ((l > 0) && (pDest[l - 1] == '\\'))
-    {
-      pDest[--l] = '\0';
-      cont = True;
-    }
-
-    /* prepare for next chunk */
-
-    RemLen -= l;
-    pDest += l;
-    Count++;
-  }
-  while ((RemLen > 2) && (cont));
-
-  if (!Terminated)
-  {
-    char Tmp[100];
-
-    while (TRUE)
-    {
-      Terminated = False;
-      ptr = fgets(Tmp, sizeof(Tmp), Datei);
-      if (!ptr)
-        break;
-      l = strlen(Tmp);
-      if (!l)
-        break;
-      if ((l > 0) && (Tmp[l - 1] == '\n'))
-        break;
-    }
+    if ((Count > 0) && (p_line->p_str[Count - 1] == '\\'))
+      p_line->p_str[--Count] = '\0';
+    else
+      break;
   }
 
-  return Count;
+  return LineCount;
 }
 
 /*!------------------------------------------------------------------------

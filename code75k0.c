@@ -135,7 +135,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, Byte Mask, tAdrResult *pResult)
   static const char RegNames[] = "XAHLDEBC";
 
   const char *p;
-  int pos, ArgLen = strlen(pArg->Str);
+  int pos, ArgLen = strlen(pArg->str.p_str);
   Boolean OK;
   tEvalResult EvalResult;
   String s;
@@ -145,7 +145,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, Byte Mask, tAdrResult *pResult)
 
   /* Register ? */
 
-  memcpy(s, pArg->Str, 2);
+  memcpy(s, pArg->str.p_str, 2);
   s[2] = '\0';
   NLS_UpString(s);
   p = strstr(RegNames, s);
@@ -184,7 +184,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, Byte Mask, tAdrResult *pResult)
 
     /* 16-Bit-Schattenregister ? */
 
-    if ((ArgLen == 3) && ((pArg->Str[2] == '\'') || (pArg->Str[2] == '`')) && (!Odd(pos)))
+    if ((ArgLen == 3) && ((pArg->str.p_str[2] == '\'') || (pArg->str.p_str[2] == '`')) && (!Odd(pos)))
     {
       pResult->Part = pos + 1;
       if (SetOpSize(1))
@@ -198,7 +198,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, Byte Mask, tAdrResult *pResult)
 
   /* immediate? */
 
-  if (*pArg->Str == '#')
+  if (*pArg->str.p_str == '#')
   {
     if ((OpSize == -1) && (Mask & MModMinOneIs0))
       OpSize = 0;
@@ -222,16 +222,16 @@ static Boolean DecodeAdr(const tStrComp *pArg, Byte Mask, tAdrResult *pResult)
 
   /* indirekt ? */
 
-  if (*pArg->Str == '@')
+  if (*pArg->str.p_str == '@')
   {
     tStrComp Arg;
 
     StrCompRefRight(&Arg, pArg, 1);
-    if (!as_strcasecmp(Arg.Str, "HL")) pResult->Part = 1;
-    else if (!as_strcasecmp(Arg.Str, "HL+")) pResult->Part = 2;
-    else if (!as_strcasecmp(Arg.Str, "HL-")) pResult->Part = 3;
-    else if (!as_strcasecmp(Arg.Str, "DE")) pResult->Part = 4;
-    else if (!as_strcasecmp(Arg.Str, "DL")) pResult->Part = 5;
+    if (!as_strcasecmp(Arg.str.p_str, "HL")) pResult->Part = 1;
+    else if (!as_strcasecmp(Arg.str.p_str, "HL+")) pResult->Part = 2;
+    else if (!as_strcasecmp(Arg.str.p_str, "HL-")) pResult->Part = 3;
+    else if (!as_strcasecmp(Arg.str.p_str, "DE")) pResult->Part = 4;
+    else if (!as_strcasecmp(Arg.str.p_str, "DL")) pResult->Part = 5;
     else
       pResult->Part = 0;
     if (pResult->Part != 0)
@@ -323,7 +323,7 @@ static Boolean DecodeBitAddr(const tStrComp *pArg, Word *Erg, tEvalResult *pEval
   Word Adr;
   tStrComp AddrPart, BitPart;
 
-  p = QuotPos(pArg->Str, '.');
+  p = QuotPos(pArg->str.p_str, '.');
   if (!p)
   {
     *Erg = EvalStrIntExpressionWithResult(pArg, Int16, pEvalResult);
@@ -334,7 +334,7 @@ static Boolean DecodeBitAddr(const tStrComp *pArg, Word *Erg, tEvalResult *pEval
 
   StrCompSplitRef(&AddrPart, &BitPart, pArg, p);
 
-  if (!as_strcasecmp(BitPart.Str, "@L"))
+  if (!as_strcasecmp(BitPart.str.p_str, "@L"))
   {
     Adr = EvalStrIntExpressionWithResult(&AddrPart, UInt12, pEvalResult);
     if (mFirstPassUnknown(pEvalResult->Flags))
@@ -356,7 +356,7 @@ static Boolean DecodeBitAddr(const tStrComp *pArg, Word *Erg, tEvalResult *pEval
     Num = EvalStrIntExpression(&BitPart, UInt2, &OK);
     if (OK)
     {
-      if (!as_strncasecmp(AddrPart.Str, "@H", 2))
+      if (!as_strncasecmp(AddrPart.str.p_str, "@H", 2))
       {
         Adr = EvalStrIntExpressionOffsWithResult(&AddrPart, 2, UInt4, pEvalResult);
         if (pEvalResult->OK)
@@ -736,13 +736,13 @@ static void DecodeMOVT(Word Code)
   UNUSED(Code);
 
   if (!ChkArgCnt(2, 2));
-  else if (as_strcasecmp(ArgStr[1].Str, "XA")) WrError(ErrNum_InvAddrMode);
-  else if (!as_strcasecmp(ArgStr[2].Str, "@PCDE"))
+  else if (as_strcasecmp(ArgStr[1].str.p_str, "XA")) WrError(ErrNum_InvAddrMode);
+  else if (!as_strcasecmp(ArgStr[2].str.p_str, "@PCDE"))
   {
     PutCode(0xd4);
     CheckCore(eCore004);
   }
-  else if (!as_strcasecmp(ArgStr[2].Str, "@PCXA"))
+  else if (!as_strcasecmp(ArgStr[2].str.p_str, "@PCXA"))
     PutCode(0xd0);
   else
     WrError(ErrNum_InvAddrMode);
@@ -751,7 +751,7 @@ static void DecodeMOVT(Word Code)
 static void DecodePUSH_POP(Word Code)
 {
   if (!ChkArgCnt(1, 1));
-  else if (!as_strcasecmp(ArgStr[1].Str, "BS"))
+  else if (!as_strcasecmp(ArgStr[1].str.p_str, "BS"))
   {
     PutCode(0x0699 + (Code << 8)); CheckCore(eCore004);
   }
@@ -777,7 +777,7 @@ static void DecodeIN_OUT(Word IsIN)
     const tStrComp *pPortArg = IsIN ? &ArgStr[2] : &ArgStr[1],
                    *pRegArg = IsIN ? &ArgStr[1] : &ArgStr[2];
 
-    if (as_strncasecmp(pPortArg->Str, "PORT", 4)) WrError(ErrNum_InvAddrMode);
+    if (as_strncasecmp(pPortArg->str.p_str, "PORT", 4)) WrError(ErrNum_InvAddrMode);
     else
     {
       Boolean OK;
@@ -854,7 +854,7 @@ static void DecodeADDS(Word Code)
               break;
           }
         }
-        else if (as_strcasecmp(ArgStr[2].Str, "XA")) WrError(ErrNum_InvAddrMode);
+        else if (as_strcasecmp(ArgStr[2].str.p_str, "XA")) WrError(ErrNum_InvAddrMode);
         else
         {
           PutCode(0xc0aa + (((Word)Result.Part) << 8));
@@ -909,7 +909,7 @@ static void DecodeAri(Word Code)
               break;
           }
         }
-        else if (as_strcasecmp(ArgStr[2].Str, "XA")) WrError(ErrNum_InvAddrMode);
+        else if (as_strcasecmp(ArgStr[2].str.p_str, "XA")) WrError(ErrNum_InvAddrMode);
         else
         {
           PutCode(0xc0aa + ((Code + 1) << 12) + (((Word)Result.Part) << 8));
@@ -961,7 +961,7 @@ static void DecodeLog(Word Code)
               break;
           }
         }
-        else if (as_strcasecmp(ArgStr[2].Str, "XA")) WrError(ErrNum_InvAddrMode);
+        else if (as_strcasecmp(ArgStr[2].str.p_str, "XA")) WrError(ErrNum_InvAddrMode);
         else
         {
           PutCode(0x80aa + (((Word)Result.Part) << 8) + ((Code + 1) << 12));
@@ -978,7 +978,7 @@ static void DecodeLog1(Word Code)
   tEvalResult EvalResult;
 
   if (!ChkArgCnt(2, 2));
-  else if (as_strcasecmp(ArgStr[1].Str, "CY")) WrError(ErrNum_InvAddrMode);
+  else if (as_strcasecmp(ArgStr[1].str.p_str, "CY")) WrError(ErrNum_InvAddrMode);
   else if (DecodeBitAddr(&ArgStr[2], &BVal, &EvalResult))
   {
     if (Hi(BVal) != 0) WrError(ErrNum_InvAddrMode);
@@ -1168,7 +1168,7 @@ static void DecodeSKE(Word Code)
 static void DecodeAcc(Word Code)
 {
   if (!ChkArgCnt(1, 1));
-  else if (as_strcasecmp(ArgStr[1].Str, "A")) WrError(ErrNum_InvAddrMode);
+  else if (as_strcasecmp(ArgStr[1].str.p_str, "A")) WrError(ErrNum_InvAddrMode);
   else
     PutCode(Code);
 }
@@ -1183,9 +1183,9 @@ static void DecodeMOV1(Word Code)
     Word BVal;
     tEvalResult EvalResult;
 
-    if (!as_strcasecmp(ArgStr[1].Str, "CY"))
+    if (!as_strcasecmp(ArgStr[1].str.p_str, "CY"))
       Code = 0xbd;
-    else if (!as_strcasecmp(ArgStr[2].Str, "CY"))
+    else if (!as_strcasecmp(ArgStr[2].str.p_str, "CY"))
       Code = 0x9b;
     else OK = False;
     if (!OK) WrError(ErrNum_InvAddrMode);
@@ -1209,7 +1209,7 @@ static void DecodeSET1_CLR1(Word Code)
   tEvalResult EvalResult;
 
   if (!ChkArgCnt(1, 1));
-  else if (!as_strcasecmp(ArgStr[1].Str, "CY"))
+  else if (!as_strcasecmp(ArgStr[1].str.p_str, "CY"))
     PutCode(0xe6 + Code);
   else if (DecodeBitAddr(&ArgStr[1], &BVal, &EvalResult))
   {
@@ -1234,7 +1234,7 @@ static void DecodeSKT_SKF(Word Code)
   tEvalResult EvalResult;
 
   if (!ChkArgCnt(1, 1));
-  else if (!as_strcasecmp(ArgStr[1].Str, "CY"))
+  else if (!as_strcasecmp(ArgStr[1].str.p_str, "CY"))
   {
     if (Code)
       PutCode(0xd7);
@@ -1263,7 +1263,7 @@ static void DecodeNOT1(Word Code)
   UNUSED(Code);
 
   if (!ChkArgCnt(1, 1));
-  else if (as_strcasecmp(ArgStr[1].Str, "CY")) WrError(ErrNum_InvAddrMode);
+  else if (as_strcasecmp(ArgStr[1].str.p_str, "CY")) WrError(ErrNum_InvAddrMode);
   else
     PutCode(0xd6);
 }
@@ -1293,12 +1293,12 @@ static void DecodeBR(Word Code)
   UNUSED(Code);
 
   if (!ChkArgCnt(1, 1));
-  else if (!as_strcasecmp(ArgStr[1].Str, "PCDE"))
+  else if (!as_strcasecmp(ArgStr[1].str.p_str, "PCDE"))
   {
     PutCode(0x0499);
     CheckCore(eCore004);
   }
-  else if (!as_strcasecmp(ArgStr[1].Str, "PCXA"))
+  else if (!as_strcasecmp(ArgStr[1].str.p_str, "PCXA"))
   {
     BAsmCode[0] = 0x99;
     BAsmCode[1] = 0x00;
@@ -1314,12 +1314,12 @@ static void DecodeBR(Word Code)
 
     BrRel = False;
     BrLong = False;
-    if (ArgStr[1].Str[Offset] == '$')
+    if (ArgStr[1].str.p_str[Offset] == '$')
     {
       BrRel = True;
       Offset++;
     }
-    else if (ArgStr[1].Str[Offset] == '!')
+    else if (ArgStr[1].str.p_str[Offset] == '!')
     {
       BrLong = True;
       Offset++;
@@ -1393,7 +1393,7 @@ static void DecodeCALL(Word Code)
 
   if (ChkArgCnt(1, 1))
   {
-    unsigned BrLong = !!(*ArgStr[1].Str == '!');
+    unsigned BrLong = !!(*ArgStr[1].str.p_str == '!');
     tEvalResult EvalResult;
     Integer AdrInt = EvalStrIntExpressionOffsWithResult(&ArgStr[1], BrLong, UInt16, &EvalResult);
     if (mFirstPassUnknown(EvalResult.Flags)) AdrInt &= 0x7ff;
@@ -1425,7 +1425,7 @@ static void DecodeCALLF(Word Code)
   if (ChkArgCnt(1, 1))
   {
     tEvalResult EvalResult;
-    Integer AdrInt = EvalStrIntExpressionOffsWithResult(&ArgStr[1], !!(*ArgStr[1].Str == '!'), UInt11, &EvalResult);
+    Integer AdrInt = EvalStrIntExpressionOffsWithResult(&ArgStr[1], !!(*ArgStr[1].str.p_str == '!'), UInt11, &EvalResult);
     if (EvalResult.OK)
     {
       BAsmCode[0] = 0x40 + Hi(AdrInt);
@@ -1457,7 +1457,7 @@ static void DecodeEI_DI(Word Code)
   if (ArgCnt == 0)
     PutCode(0xb29c + Code);
   else if (!ChkArgCnt(1, 1));
-  else if (DecodeIntName(ArgStr[1].Str, &HReg))
+  else if (DecodeIntName(ArgStr[1].str.p_str, &HReg))
     PutCode(0x989c + Code + (((Word)HReg) << 8));
   else
     WrError(ErrNum_InvCtrlReg);
@@ -1471,7 +1471,7 @@ static void DecodeSEL(Word Code)
 
   BAsmCode[0] = 0x99;
   if (!ChkArgCnt(1, 1));
-  else if (!as_strncasecmp(ArgStr[1].Str, "RB", 2))
+  else if (!as_strncasecmp(ArgStr[1].str.p_str, "RB", 2))
   {
     BAsmCode[1] = 0x20 + EvalStrIntExpressionOffs(&ArgStr[1], 2, UInt2, &OK);
     if (OK)
@@ -1480,7 +1480,7 @@ static void DecodeSEL(Word Code)
       CheckCore(eCore104);
     }
   }
-  else if (!as_strncasecmp(ArgStr[1].Str, "MB", 2))
+  else if (!as_strncasecmp(ArgStr[1].str.p_str, "MB", 2))
   {
     BAsmCode[1] = 0x10 + EvalStrIntExpressionOffs(&ArgStr[1], 2, UInt4, &OK);
     if (OK)
@@ -1610,7 +1610,7 @@ static void MakeCode_75K0(void)
   if (DecodeIntelPseudo(True))
     return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

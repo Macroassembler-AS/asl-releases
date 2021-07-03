@@ -57,6 +57,7 @@ typedef enum
   ErrNum_TrapValidInstruction = 350,
   ErrNum_PaddingAdded = 360,
   ErrNum_RegNumWraparound = 370,
+  ErrNum_IndexedForIndirect = 380,
   ErrNum_DoubleDef = 1000,
   ErrNum_SymbolUndef = 1010,
   ErrNum_InvSymName = 1020,

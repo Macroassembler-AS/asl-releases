@@ -16,6 +16,8 @@
 
 #include "datatypes.h"
 
+struct as_dynstr;
+
 extern char HexStartCharacter;
 extern char SplitByteCharacter;
 
@@ -32,6 +34,11 @@ extern int as_vsnprcatf(char *pDest, size_t DestSize, const char *pFormat, va_li
 extern int as_snprcatf(char *pDest, size_t DestSize, const char *pFormat, ...);
 extern int as_vsnprintf(char *pDest, size_t DestSize, const char *pFormat, va_list ap);
 extern int as_snprintf(char *pDest, size_t DestSize, const char *pFormat, ...);
+
+extern int as_vsdprcatf(struct as_dynstr *p_dest, const char *pFormat, va_list ap);
+extern int as_sdprcatf(struct as_dynstr *p_dest, const char *pFormat, ...);
+extern int as_vsdprintf(struct as_dynstr *p_dest, const char *pFormat, va_list ap);
+extern int as_sdprintf(struct as_dynstr *p_dest, const char *pFormat, ...);
 
 extern int as_strcasecmp(const char *src1, const char *src2);
 extern int as_strncasecmp(const char *src1, const char *src2, size_t maxlen);
@@ -58,13 +65,9 @@ extern int strlencmp(const char *pStr1, unsigned Str1Len,
 
 extern unsigned fstrlenprint(FILE *pFile, const char *pStr, unsigned StrLen);
 
-extern unsigned snstrlenprint(char *pDest, size_t DestLen,
-                              const char *pStr, size_t StrLen,
-                              char QuoteToEscape);
-
 extern void ReadLn(FILE *Datei, char *Zeile);
 
-extern int ReadLnCont(FILE *Datei, char *Zeile, int MaxLen);
+extern size_t ReadLnCont(FILE *Datei, struct as_dynstr *p_line);
 
 extern int DigitVal(char ch, int Base);
 

@@ -97,12 +97,12 @@ static Word EvalARExpression(const tStrComp *pArg, Boolean *OK)
 {
   *OK = True;
 
-  if ((as_toupper(pArg->Str[0]) == 'A')
-   && (as_toupper(pArg->Str[1]) == 'R')
-   && (pArg->Str[2] >= '0')
-   && (pArg->Str[2] <= '7')
-   && (pArg->Str[3] <= '\0'))
-     return pArg->Str[2] - '0';
+  if ((as_toupper(pArg->str.p_str[0]) == 'A')
+   && (as_toupper(pArg->str.p_str[1]) == 'R')
+   && (pArg->str.p_str[2] >= '0')
+   && (pArg->str.p_str[2] <= '7')
+   && (pArg->str.p_str[3] <= '\0'))
+     return pArg->str.p_str[2] - '0';
   return EvalStrIntExpression(pArg, UInt3, OK);
 }
 
@@ -120,7 +120,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, int MinArgCnt, int aux, Boolean M
 
   /* Adressierungsmodus suchen */
 
-  while (pAdrMode->Name && as_strcasecmp(pAdrMode->Name, pArg->Str))
+  while (pAdrMode->Name && as_strcasecmp(pAdrMode->Name, pArg->str.p_str))
    pAdrMode++;
 
   /* nicht gefunden: dann absolut */
@@ -188,7 +188,7 @@ static Word DecodeCond(int argp)
 
   while (argp <= ArgCnt)
   {
-    for (pCondition = Conditions; pCondition->Name && as_strcasecmp(pCondition->Name, ArgStr[argp].Str); pCondition++);
+    for (pCondition = Conditions; pCondition->Name && as_strcasecmp(pCondition->Name, ArgStr[argp].str.p_str); pCondition++);
 
     if (!pCondition->Name)
     {
@@ -299,7 +299,7 @@ static void DecodeCmdPlu(Word Index)
   const FixedOrder *pOrder = PluOrders + Index;
 
   if (!ChkMinCPU(pOrder->MinCPU));
-  else if (*ArgStr[1].Str == '#')
+  else if (*ArgStr[1].str.p_str == '#')
   {
     if (ChkArgCnt(2, 3))
     {
@@ -311,7 +311,7 @@ static void DecodeCmdPlu(Word Index)
       }
     }
   }
-  else if (strlen(OpPart.Str) == 4) WrError(ErrNum_OnlyImmAddr);
+  else if (strlen(OpPart.str.p_str) == 4) WrError(ErrNum_OnlyImmAddr);
   else
   {
     if (ChkArgCnt(1, 2))
@@ -333,7 +333,7 @@ static void DecodeADDSUB(Word Index)
 
   if (ChkArgCnt(1, 3))
   {
-    if (*ArgStr[1].Str == '#')
+    if (*ArgStr[1].str.p_str == '#')
     {
       if (ChkArgCnt(1, 2))
       {
@@ -386,7 +386,7 @@ static void DecodeADRSBRK(Word Index)
   if (!ChkArgCnt(1, 1))
     return;
 
-  if (*ArgStr[1].Str != '#')
+  if (*ArgStr[1].str.p_str != '#')
   {
     WrError(ErrNum_OnlyImmAddr); /*invalid parameter*/
     return;
@@ -406,7 +406,7 @@ static void DecodeLogic(Word Index)
   Word Shift;
 
   if (!ChkArgCnt(1, 2));
-  else if (*ArgStr[1].Str == '#')
+  else if (*ArgStr[1].str.p_str == '#')
   {
     WAsmCode[1] = EvalStrIntExpressionOffs(&ArgStr[1], 1, UInt16, &OK);
     if (OK)
@@ -456,7 +456,7 @@ static void DecodeBLDD(Word Index)
   UNUSED(Index);
 
   if (!ChkArgCnt(2, 3));
-  else if (!as_strcasecmp(ArgStr[1].Str, "BMAR"))
+  else if (!as_strcasecmp(ArgStr[1].str.p_str, "BMAR"))
   {
     if (ChkMinCPU(CPU32050))
     {
@@ -467,7 +467,7 @@ static void DecodeBLDD(Word Index)
       }
     }
   }
-  else if (!as_strcasecmp(ArgStr[2].Str, "BMAR"))
+  else if (!as_strcasecmp(ArgStr[2].str.p_str, "BMAR"))
   {
     if (ChkMinCPU(CPU32050))
     {
@@ -478,7 +478,7 @@ static void DecodeBLDD(Word Index)
       }
     }
   }
-  else if (*ArgStr[1].Str == '#')
+  else if (*ArgStr[1].str.p_str == '#')
   {
     WAsmCode[1] = EvalStrIntExpressionOffs(&ArgStr[1], 1, Int16, &OK);
     if ((OK) && (DecodeAdr(&ArgStr[2], 2, 3, False)))
@@ -487,7 +487,7 @@ static void DecodeBLDD(Word Index)
       WAsmCode[0] = 0xa800 | AdrMode;
     }
   }
-  else if (*ArgStr[2].Str == '#')
+  else if (*ArgStr[2].str.p_str == '#')
   {
     WAsmCode[1] = EvalStrIntExpressionOffs(&ArgStr[2], 1, Int16, &OK);
     if ((OK) && (DecodeAdr(&ArgStr[1], 2, 3, False)))
@@ -506,7 +506,7 @@ static void DecodeBLPD(Word Index)
   UNUSED(Index);
 
   if (!ChkArgCnt(2, 3));
-  else if (!as_strcasecmp(ArgStr[1].Str, "BMAR"))
+  else if (!as_strcasecmp(ArgStr[1].str.p_str, "BMAR"))
   {
     if (ChkMinCPU(CPU32050)
      && DecodeAdr(&ArgStr[2], 2, 3, False))
@@ -515,7 +515,7 @@ static void DecodeBLPD(Word Index)
       WAsmCode[0] = 0xa400 | AdrMode;
     }
   }
-  else if (*ArgStr[1].Str == '#')
+  else if (*ArgStr[1].str.p_str == '#')
   {
     WAsmCode[1] = EvalStrIntExpressionOffs(&ArgStr[1], 1, Int16, &OK);
     if ((OK) && (DecodeAdr(&ArgStr[2], 2, 3, False)))
@@ -535,10 +535,10 @@ static void DecodeCLRSETC(Word Index)
   if (ChkArgCnt(1, 1))
   {
     WAsmCode[0] = Index;
-    NLS_UpString(ArgStr[1].Str);
+    NLS_UpString(ArgStr[1].str.p_str);
 
     for (pBitTable = BitTable; pBitTable->name; pBitTable++)
-      if (!strcmp(ArgStr[1].Str, pBitTable->name))
+      if (!strcmp(ArgStr[1].str.p_str, pBitTable->name))
       {
         if (ChkMinCPU(pBitTable->MinCPU))
         {
@@ -600,7 +600,7 @@ static void DecodeLACC(Word Index)
   UNUSED(Index);
 
   if (!ChkArgCnt(1, 3));
-  else if (*ArgStr[1].Str == '#')
+  else if (*ArgStr[1].str.p_str == '#')
   {
     if (ChkArgCnt(1, 2))
     {
@@ -641,7 +641,7 @@ static void DecodeLACL(Word Index)
   Boolean OK;
   UNUSED(Index);
 
-  if (*ArgStr[1].Str == '#')
+  if (*ArgStr[1].str.p_str == '#')
   {
     if (ChkArgCnt(1, 1))
     {
@@ -678,7 +678,7 @@ static void DecodeLAR(Word Index)
     Reg = EvalARExpression(&ArgStr[1], &OK);
     if (OK)
     {
-      if (*ArgStr[2].Str == '#')
+      if (*ArgStr[2].str.p_str == '#')
       {
         if (!ChkArgCnt(2, 2))
           return;
@@ -716,7 +716,7 @@ static void DecodeLDP(Word Index)
   Boolean OK;
   UNUSED(Index);
 
-  if (*ArgStr[1].Str == '#')
+  if (*ArgStr[1].str.p_str == '#')
   {
     if (ChkArgCnt(1, 1))
     {
@@ -747,7 +747,7 @@ static void DecodeLSST(Word Index)
   Boolean OK;
 
   if (!ChkArgCnt(2, 3));
-  else if (*ArgStr[1].Str != '#') WrError(ErrNum_OnlyImmAddr); /* invalid instruction */
+  else if (*ArgStr[1].str.p_str != '#') WrError(ErrNum_OnlyImmAddr); /* invalid instruction */
   else
   {
     konst = EvalStrIntExpressionOffs(&ArgStr[1], 1, UInt1, &OK);
@@ -781,7 +781,7 @@ static void DecodeMPY(Word Index)
   Boolean OK;
   tSymbolFlags Flags;
 
-  if (*ArgStr[1].Str == '#')
+  if (*ArgStr[1].str.p_str == '#')
   {
     if (ChkArgCnt(1, 1))
     {
@@ -851,7 +851,7 @@ static void DecodeRPT(Word Index)
   Boolean OK;
   UNUSED(Index);
 
-  if (*ArgStr[1].Str == '#')
+  if (*ArgStr[1].str.p_str == '#')
   {
     if (ChkArgCnt(1, 1))
     {
@@ -963,7 +963,7 @@ static void DecodeLSMMR(Word Index)
 
   if (!ChkArgCnt(2, 3));
   else if (!ChkMinCPU(CPU32050));
-  else if (ArgStr[2].Str[0] != '#') WrError(ErrNum_OnlyImmAddr);
+  else if (ArgStr[2].str.p_str[0] != '#') WrError(ErrNum_OnlyImmAddr);
   else
   {
     WAsmCode[1] = EvalStrIntExpressionOffs(&ArgStr[2], 1, Int16, &OK);
@@ -999,7 +999,7 @@ static void DecodeRPTZ(Word Index)
 
   if (!ChkArgCnt(1, 1));
   else if (!ChkMinCPU(CPU32050));
-  else if (*ArgStr[1].Str != '#') WrError(ErrNum_OnlyImmAddr);
+  else if (*ArgStr[1].str.p_str != '#') WrError(ErrNum_OnlyImmAddr);
   else
   {
     WAsmCode[1] = EvalStrIntExpressionOffs(&ArgStr[1], 1, Int16, &OK);
@@ -1277,7 +1277,7 @@ static void MakeCode_3205x(void)
 
   /* per Hash-Tabelle */
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

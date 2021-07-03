@@ -137,13 +137,13 @@ static Boolean DecodeAdr(const tStrComp *pArg, Word Mask)
 
   AdrMode = ModNone;
 
-  if (!as_strcasecmp(pArg->Str, "ACC"))
+  if (!as_strcasecmp(pArg->str.p_str, "ACC"))
   {
     AdrMode = ModACC;
     goto AdrFound;
   }
 
-  if (0[pArg->Str] == '#')
+  if (0[pArg->str.p_str] == '#')
   {
     AdrVal = EvalStrIntExpressionOffs(pArg, 1, Int4, &OK);
     if (OK)
@@ -364,7 +364,7 @@ static void DecodeJMPIO(Word Code)
 {
   if (ChkArgCnt(1, 1));
   else if (ChkExactCPUMask(M_5054 | M_5055 | M_5056 | M_6051 | M_6052, CPU5054) < 0);
-  else if (*ArgStr[1].Str != '@') WrError(ErrNum_InvAddrMode);
+  else if (*ArgStr[1].str.p_str != '@') WrError(ErrNum_InvAddrMode);
   {
     tStrComp Arg;
 
@@ -383,7 +383,7 @@ static void DecodeJMP(Word Code)
 
   if (!ChkArgCnt(1, 1));
   else if (ChkExactCPUMask(M_5054 | M_5055 | M_5056 | M_6051 | M_6052, CPU5054) < 0);
-  else if (*ArgStr[1].Str == '@')
+  else if (*ArgStr[1].str.p_str == '@')
     DecodeJMPIO(0x00d0);
   else
   {
@@ -510,7 +510,7 @@ static void DecodeDSP(Word Index)
     Boolean OK;
     Word Digit;
 
-    Digit = EvalStrIntExpressionOffs(&ArgStr[1], ImmPtr(ArgStr[1].Str), UInt4, &OK);
+    Digit = EvalStrIntExpressionOffs(&ArgStr[1], ImmPtr(ArgStr[1].str.p_str), UInt4, &OK);
     if (OK)
     {
       WAsmCode[0] = pOrder->Code | AdrVal | (Digit << 4);
@@ -552,7 +552,7 @@ static void DecodeImm(Word Index)
    && (ChkExactCPUMask(pOrder->CPUMask, CPU5054) >= 0))
   {
     Boolean OK;
-    Word Freq = EvalStrIntExpressionOffs(&ArgStr[1], ImmPtr(ArgStr[1].Str), UInt4, &OK);
+    Word Freq = EvalStrIntExpressionOffs(&ArgStr[1], ImmPtr(ArgStr[1].str.p_str), UInt4, &OK);
 
     if (OK)
     {
@@ -574,8 +574,8 @@ static void DecodeBUZZER(Word Code)
     Boolean OK = True, OK2;
     Word Freq, Sound;
 
-    Freq =  (ReqArgCnt >= 2) ? EvalStrIntExpressionOffs(&ArgStr[1], ImmPtr(ArgStr[1].Str), UInt2, &OK) : 2;
-    Sound = EvalStrIntExpressionOffs(&ArgStr[ArgCnt], ImmPtr(ArgStr[ArgCnt].Str), UInt2, &OK2);
+    Freq =  (ReqArgCnt >= 2) ? EvalStrIntExpressionOffs(&ArgStr[1], ImmPtr(ArgStr[1].str.p_str), UInt2, &OK) : 2;
+    Sound = EvalStrIntExpressionOffs(&ArgStr[ArgCnt], ImmPtr(ArgStr[ArgCnt].str.p_str), UInt2, &OK2);
     if (OK && OK2)
     {
       WAsmCode[0] = 0x04c0 | Freq | (Sound << 2);
@@ -664,9 +664,9 @@ static void DecodeMem(Word Index)
       CodeLen = 1;
     else
     {
-      if (!strcmp(ArgStr[1].Str, "-"))
+      if (!strcmp(ArgStr[1].str.p_str, "-"))
         WAsmCode[0] |= 0x0010;
-      else if (strcmp(ArgStr[1].Str, "+"))
+      else if (strcmp(ArgStr[1].str.p_str, "+"))
       {
         WrError(ErrNum_InvAddrMode);
         return;
@@ -678,11 +678,11 @@ static void DecodeMem(Word Index)
       }
       else
       {
-        if (!as_strcasecmp(ArgStr[2].Str, "Z"))
+        if (!as_strcasecmp(ArgStr[2].str.p_str, "Z"))
           WAsmCode[0] |= 0x0040;
-        else if (!as_strcasecmp(ArgStr[2].Str, "N"))
+        else if (!as_strcasecmp(ArgStr[2].str.p_str, "N"))
           WAsmCode[0] |= 0x0080;
-        else if (!as_strcasecmp(ArgStr[2].Str, "L"))
+        else if (!as_strcasecmp(ArgStr[2].str.p_str, "L"))
           WAsmCode[0] |= 0x0200;
         else
         {
@@ -691,7 +691,7 @@ static void DecodeMem(Word Index)
         }
         if (ArgCnt < 3)
           CodeLen = 1;
-        else if (as_strcasecmp(ArgStr[3].Str, "L"))
+        else if (as_strcasecmp(ArgStr[3].str.p_str, "L"))
         {
           WrError(ErrNum_InvAddrMode);
           return;
@@ -1003,7 +1003,7 @@ static void  MakeCode_OLMS50(void)
   if (Memo(""))
     return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

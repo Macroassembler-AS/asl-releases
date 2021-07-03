@@ -100,15 +100,15 @@ static void DecodeAdr(const tStrComp *pArg, Word Mask)
 
   /* Register ? */
 
-  if (!as_strcasecmp(pArg->Str, "A"))
+  if (!as_strcasecmp(pArg->str.p_str, "A"))
    AdrMode = ModAcc;
 
-  else if (!as_strcasecmp(pArg->Str, "X"))
+  else if (!as_strcasecmp(pArg->str.p_str, "X"))
    AdrMode = ModX;
 
   /* immediate ? */
 
-  else if (*pArg->Str== '#')
+  else if (*pArg->str.p_str== '#')
   {
     if (OpSize)
       WAdrVal = EvalStrIntExpressionOffs(pArg, 1, Int12, &OK);
@@ -119,10 +119,10 @@ static void DecodeAdr(const tStrComp *pArg, Word Mask)
 
   /* indirekt ? */
 
-  else if (*pArg->Str == '[')
+  else if (*pArg->str.p_str == '[')
   {
-    ArgLen = strlen(pArg->Str);
-    if (pArg->Str[ArgLen - 1] != ']') WrError(ErrNum_InvAddrMode);
+    ArgLen = strlen(pArg->str.p_str);
+    if (pArg->str.p_str[ArgLen - 1] != ']') WrError(ErrNum_InvAddrMode);
     else
     {
       tStrComp Arg, Remainder;
@@ -132,12 +132,12 @@ static void DecodeAdr(const tStrComp *pArg, Word Mask)
       DispOcc = XOcc = False;
       do
       {
-        p = QuotPos(Arg.Str, ',');
+        p = QuotPos(Arg.str.p_str, ',');
         if (p)
           StrCompSplitRef(&Arg, &Remainder, &Arg, p);
         KillPrefBlanksStrComp(&Arg);
         KillPostBlanksStrComp(&Arg);
-        if (!as_strcasecmp(Arg.Str, "X"))
+        if (!as_strcasecmp(Arg.str.p_str, "X"))
           if (XOcc)
           {
             WrError(ErrNum_InvAddrMode); break;
@@ -150,7 +150,7 @@ static void DecodeAdr(const tStrComp *pArg, Word Mask)
         }
         else
         {
-          AdrVal = EvalStrIntExpressionOffs(&Arg, !!(*Arg.Str == '#'), UInt8, &OK);
+          AdrVal = EvalStrIntExpressionOffs(&Arg, !!(*Arg.str.p_str == '#'), UInt8, &OK);
           if (!OK) break;
           DispOcc = True;
         }
@@ -715,7 +715,7 @@ static void MakeCode_ACE(void)
 
   if (DecodeIntelPseudo(BigFlag)) return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
    WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

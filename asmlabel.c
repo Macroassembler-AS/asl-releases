@@ -55,12 +55,12 @@ void LabelReset(void)
 
 Boolean LabelPresent(void)
 {
-  if (!*LabPart.Str)
+  if (!*LabPart.str.p_str)
     return False;
   if (IsDef())
     return False;
 
-  switch (*OpPart.Str)
+  switch (*OpPart.str.p_str)
   {
     case '=':
       return (!Memo("="));
@@ -118,9 +118,9 @@ void LabelHandle(const tStrComp *pName, LargeWord Value, Boolean ForceGlobal)
     if (ForceGlobal)
       PushLocHandle(-1);
     if (RelSegs)
-      pLabelEntry = EnterRelSymbol(pName, Value, ActPC, False);
+      pLabelEntry = EnterRelSymbol(pName, Value, (as_addrspace_t)ActPC, False);
     else
-      pLabelEntry = EnterIntSymbolWithFlags(pName, Value, ActPC, False,
+      pLabelEntry = EnterIntSymbolWithFlags(pName, Value, (as_addrspace_t)ActPC, False,
                               Value == AfterBSRAddr ? eSymbolFlag_NextLabelAfterBSR : eSymbolFlag_None);
     if (ForceGlobal)
       PopLocHandle();

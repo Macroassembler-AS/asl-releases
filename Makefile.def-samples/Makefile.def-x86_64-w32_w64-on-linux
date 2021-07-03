@@ -73,6 +73,15 @@ TARG_EXEXTENSION = $(HOST_EXEXTENSION)
 #TARG_EXEXTENSION =
 #TARG_RUNCMD = qemu-ppc-static
 
+#TARG_OBJDIR = ppc64-linux/
+#TARG_CC = powerpc64-linux-gnu-gcc
+#TARG_CFLAGS = $(CFLAGS)
+#TARG_OBJEXTENSION = .o
+#TARG_LD = $(TARG_CC)
+#TARG_LDFLAGS = $(LDFLAGS) -static
+#TARG_EXEXTENSION =
+#TARG_RUNCMD = qemu-ppc64-static
+
 # -------------------------------------------------------------------------
 # directories where binaries, includes, and manpages should go during
 # installation

@@ -100,7 +100,7 @@ static tAdrMode DecodeAdr(tStrComp *pArg, Word Mask, IntType MemIntType, Word *p
   int ArgLen;
   tEvalResult EvalResult;
 
-  if (!as_strcasecmp(pArg->Str, "A"))
+  if (!as_strcasecmp(pArg->str.p_str, "A"))
   {
     AdrMode = ModAcc;
     goto check;
@@ -108,8 +108,8 @@ static tAdrMode DecodeAdr(tStrComp *pArg, Word Mask, IntType MemIntType, Word *p
 
   /* explicit memory: disp[addr], [addr], addr[idx] */
 
-  ArgLen = strlen(pArg->Str);
-  if ((ArgLen >= 2) && (pArg->Str[ArgLen - 1] == ']'))
+  ArgLen = strlen(pArg->str.p_str);
+  if ((ArgLen >= 2) && (pArg->str.p_str[ArgLen - 1] == ']'))
   {
     tStrComp Part1, Part2;
     LongInt Num1, Num2;
@@ -118,7 +118,7 @@ static tAdrMode DecodeAdr(tStrComp *pArg, Word Mask, IntType MemIntType, Word *p
     tEvalResult EvalResult1, EvalResult2;
 
     StrCompShorten(pArg, 1);
-    pSep = RQuotPos(pArg->Str, '[');
+    pSep = RQuotPos(pArg->str.p_str, '[');
     if (!pSep)
     {
       WrStrErrorPos(ErrNum_BrackErr, pArg);
@@ -128,7 +128,7 @@ static tAdrMode DecodeAdr(tStrComp *pArg, Word Mask, IntType MemIntType, Word *p
     StrCompSplitRef(&Part1, &Part2, pArg, pSep);
     EitherUnknown = False;
 
-    if (*Part1.Str)
+    if (*Part1.str.p_str)
     {
       Num1 = EvalStrIntExpressionWithResult(&Part1, MemIntType, &EvalResult1);
       if (!EvalResult1.OK)
@@ -168,7 +168,7 @@ static tAdrMode DecodeAdr(tStrComp *pArg, Word Mask, IntType MemIntType, Word *p
 
   /* explicit I/O */
 
-  if (!as_strncasecmp(pArg->Str, "IO", 2) && IsIndirect(pArg->Str + 2))
+  if (!as_strncasecmp(pArg->str.p_str, "IO", 2) && IsIndirect(pArg->str.p_str + 2))
   {
     *pResult = EvalStrIntExpressionOffsWithResult(pArg, 2, IOAdrIntType, &EvalResult);
     if (EvalResult.OK)
@@ -181,7 +181,7 @@ static tAdrMode DecodeAdr(tStrComp *pArg, Word Mask, IntType MemIntType, Word *p
 
   /* explicit immediate */
 
-  if (*pArg->Str == '#')
+  if (*pArg->str.p_str == '#')
   {
     *pResult = EvalStrIntExpressionOffs(pArg, 1, Int8, &OK) & 0xff;
     if (OK)
@@ -363,7 +363,7 @@ static Boolean DecodeBitArg(LongWord *pResult, int Start, int Stop)
 
   if (Start == Stop)
   {
-    char *pSep = strchr(ArgStr[Start].Str, '.');
+    char *pSep = strchr(ArgStr[Start].str.p_str, '.');
 
     if (pSep)
     {
@@ -556,12 +556,12 @@ static void DecodeADDC_SUBC(Word Code)
       }
       break;
     case 2:
-      if (!as_strcasecmp(ArgStr[1].Str, "A"))
+      if (!as_strcasecmp(ArgStr[1].str.p_str, "A"))
       {
         if (DecodeAdr(&ArgStr[2], MModMem, DataAdrIntType, &Address))
           WAsmCode[CodeLen++] = (AMCode(0x12 + Code, True) << DataMemBits) | Address;
       }
-      else if (!as_strcasecmp(ArgStr[2].Str, "A"))
+      else if (!as_strcasecmp(ArgStr[2].str.p_str, "A"))
       {
         if (DecodeAdr(&ArgStr[1], MModMem, DataAdrIntType, &Address))
           WAsmCode[CodeLen++] = (AMCode(0x12 + Code, False) << DataMemBits) | Address;
@@ -837,9 +837,9 @@ static void DecodeIDXM(Word Code)
 {
   if (ChkArgCnt(2, 2))
   {
-    if (!as_strcasecmp(ArgStr[1].Str, "A"))
+    if (!as_strcasecmp(ArgStr[1].str.p_str, "A"))
       DecodeEvenAddr(&ArgStr[2], Code, 1);
-    else if (!as_strcasecmp(ArgStr[2].Str, "A"))
+    else if (!as_strcasecmp(ArgStr[2].str.p_str, "A"))
       DecodeEvenAddr(&ArgStr[1], Code, 0);
   }
 }
@@ -893,7 +893,7 @@ static void DecodeConstU5(Word Code)
   if (ChkArgCnt(1, 1))
   {
     Boolean OK;
-    Word Num = EvalStrIntExpressionOffs(&ArgStr[1], !!(*ArgStr[1].Str == '#'), UInt5, &OK);
+    Word Num = EvalStrIntExpressionOffs(&ArgStr[1], !!(*ArgStr[1].str.p_str == '#'), UInt5, &OK);
 
     if (OK)
       WAsmCode[CodeLen++] = Code | (Num & 0x1f);
@@ -905,7 +905,7 @@ static void DecodeConstU4(Word Code)
   if (ChkArgCnt(1, 1))
   {
     Boolean OK;
-    Word Num = EvalStrIntExpressionOffs(&ArgStr[1], !!(*ArgStr[1].Str == '#'), UInt4, &OK);
+    Word Num = EvalStrIntExpressionOffs(&ArgStr[1], !!(*ArgStr[1].str.p_str == '#'), UInt4, &OK);
 
     if (OK)
       WAsmCode[CodeLen++] = Code | (Num & 0x0f);
@@ -929,7 +929,7 @@ static void DecodeBIT(Word Code)
     {
       case 1:
       {
-        char *pSep = strchr(ArgStr[1].Str, '.');
+        char *pSep = strchr(ArgStr[1].str.p_str, '.');
         if (!pSep)
           goto fail;
         StrCompSplitRef(&AddrComp, &BitComp, &ArgStr[1], pSep);
@@ -951,7 +951,7 @@ static void DecodeBIT(Word Code)
     if (!OK)
       return;
     pElement = CreateStructElem(&LabPart);
-    pElement->pRefElemName = as_strdup(pAddrComp->Str);
+    pElement->pRefElemName = as_strdup(pAddrComp->str.p_str);
     pElement->OpSize = eSymbolSize8Bit;
     pElement->BitPos = BitPos;
     pElement->ExpandFnc = ExpandBit_Padauk;
@@ -1167,7 +1167,7 @@ static void MakeCode_Padauk(void)
 
   if (Memo("")) return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

@@ -12,6 +12,7 @@
 #include <string.h>
 #include "endian.h"
 #include "strutil.h"
+#include "dynstr.h"
 #include "asmdef.h"
 #include "asmsub.h"
 #include "asmif.h"
@@ -20,6 +21,8 @@
 
 static unsigned SystemListLen8, SystemListLen16, SystemListLen32;
 
+static as_dynstr_t list_buf;
+
 /*!------------------------------------------------------------------------
  * \fn     MakeList()
  * \brief  generate listing for one line, including generated code
@@ -27,7 +30,7 @@ static unsigned SystemListLen8, SystemListLen16, SystemListLen32;
 
 void MakeList(const char *pSrcLine)
 {
-  String h, h2, Tmp;
+  String h2, Tmp;
   Word EffLen, Gran = Granularity();
   Boolean ThisDoLst;
 
@@ -55,29 +58,27 @@ void MakeList(const char *pSrcLine)
     /* Zeilennummer / Programmzaehleradresse: */
 
     if (IncDepth == 0)
-      as_snprintf(h, sizeof(h), "   ");
+      as_sdprintf(&list_buf, "   ");
     else
     {
       as_snprintf(Tmp, sizeof(Tmp), IntegerFormat, IncDepth);
-      as_snprintf(h, sizeof(h), "(%s)", Tmp);
+      as_sdprintf(&list_buf, "(%s)", Tmp);
     }
     if (ListMask & ListMask_LineNums)
     {
       DecString(h2, sizeof(h2), CurrLine, 0);
-      as_snprcatf(h, sizeof(h), "%5s/", h2);
+      as_sdprcatf(&list_buf, "%5s/", h2);
     }
     ListPC = EProgCounter() - CodeLen;
-    as_snprcatf(h, sizeof(h), "%8.*lllu %c ",
+    as_sdprcatf(&list_buf, "%8.*lllu %c ",
                 ListRadixBase, ListPC, Retracted? 'R' : ':');
 
     /* Extrawurst in Listing ? */
 
     if (*ListLine)
     {
-      strmaxcat(h, ListLine, sizeof(h));
-      strmaxcat(h, Blanks(LISTLINESPACE - strlen(ListLine)), sizeof(h));
-      strmaxcat(h, pSrcLine, sizeof(h));
-      WrLstLine(h);
+      as_sdprcatf(&list_buf, "%s %s%s", ListLine, Blanks(LISTLINESPACE - strlen(ListLine)), pSrcLine);
+      WrLstLine(list_buf.p_str);
       *ListLine = '\0';
     }
 
@@ -122,7 +123,7 @@ void MakeList(const char *pSrcLine)
         /* If not the first code line, prepend blanks to fill up space below line number: */
 
         if (!First)
-          as_snprintf(h, sizeof(h), "%*s%8.*lllu %c ",
+          as_sdprintf(&list_buf, "%*s%8.*lllu %c ",
                       (ListMask & ListMask_LineNums) ? 9 : 3, "",
                       ListRadixBase, ListPC, Retracted? 'R' : ':');
 
@@ -146,10 +147,10 @@ void MakeList(const char *pSrcLine)
               default:
                 ThisWord = BAsmCode[Index];
             }
-            as_snprcatf(h, sizeof(h), "%0*.*lllu ", (int)SystemListLen, (int)ListRadixBase, ThisWord);
+            as_sdprcatf(&list_buf, "%0*.*lllu ", (int)SystemListLen, (int)ListRadixBase, ThisWord);
           }
           else
-            as_snprcatf(h, sizeof(h), "%*s", SystemListLen + 1, "");
+            as_sdprcatf(&list_buf, "%*s", SystemListLen + 1, "");
 
           /* advance pointers & keep track of # of characters printed */
 
@@ -170,8 +171,8 @@ void MakeList(const char *pSrcLine)
         /* If first line, pad to max length and append source line */
 
         if (First)
-          as_snprcatf(h, sizeof(h), "%*s%s", LISTLINESPACE - SumLen, "", pSrcLine);
-        WrLstLine(h);
+          as_sdprcatf(&list_buf, "%*s%s", LISTLINESPACE - SumLen, "", pSrcLine);
+        WrLstLine(list_buf.p_str);
         First = False;
       }
       while ((Index < EffLen) && !DontPrint);
@@ -190,6 +191,8 @@ void MakeList(const char *pSrcLine)
 void asmlist_init(void)
 {
   String Dummy;
+
+  as_dynstr_ini(&list_buf, STRINGSIZE);
 
   SysString(Dummy, sizeof(Dummy), 0xff, ListRadixBase, 0, False, HexStartCharacter, SplitByteCharacter);
   SystemListLen8 = strlen(Dummy);

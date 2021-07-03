@@ -4,7 +4,7 @@
 /*                                                                           */
 /* AS                                                                        */
 /*                                                                           */
-/* Commonly Used TI-Style Pseudo Instructionso-Befehle                       */
+/* Commonly Used TI-Style Pseudo Instructions-Befehle                        */
 /*                                                                           */
 /*****************************************************************************/
 
@@ -29,13 +29,15 @@
 #include "fourpseudo.h"
 #include "tipseudo.h"
 
+#define LEAVE goto func_exit
+
 /*****************************************************************************
  * Local Functions
  *****************************************************************************/
 
 static void define_untyped_label(void)
 {
-  if (LabPart.Str[0])
+  if (LabPart.str.p_str[0])
   {
     PushLocHandle(-1);
     EnterIntSymbol(&LabPart, EProgCounter(), SegNone, False);
@@ -54,7 +56,7 @@ static void pseudo_qxx(Integer num)
 
   forallargs (pArg, True)
   {
-    if (!*pArg->Str)
+    if (!*pArg->str.p_str)
     {
       ok = False;
       break;
@@ -89,7 +91,7 @@ static void pseudo_lqxx(Integer num)
 
   forallargs (pArg, True)
   {
-    if (!*pArg->Str)
+    if (!*pArg->str.p_str)
     {
       ok = False;
       break;
@@ -127,14 +129,16 @@ static void pseudo_store(tcallback callback, Word MaxMultCharLen)
   tStrComp *pArg;
   TempResult t;
 
+  as_tempres_ini(&t);
+
   if (!ChkArgCnt(1, ArgCntMax))
-    return;
+    LEAVE;
 
   define_untyped_label();
 
   forallargs (pArg, ok)
   {
-    if (!*pArg->Str)
+    if (!*pArg->str.p_str)
     {
       ok = False;
       break;
@@ -145,11 +149,11 @@ static void pseudo_store(tcallback callback, Word MaxMultCharLen)
     {
       case TempFloat:
         WrStrErrorPos(ErrNum_StringOrIntButFloat, pArg);
-        return;
+        LEAVE;
       case TempString:
       {
-        unsigned char *cp = (unsigned char *)t.Contents.Ascii.Contents,
-                    *cend = cp + t.Contents.Ascii.Length;
+        unsigned char *cp = (unsigned char *)t.Contents.str.p_str,
+                    *cend = cp + t.Contents.str.len;
 
         if (MultiCharToInt(&t, MaxMultCharLen))
           goto ToInt;
@@ -170,6 +174,9 @@ static void pseudo_store(tcallback callback, Word MaxMultCharLen)
 
   if (!ok)
     CodeLen = 0;
+
+func_exit:
+  as_tempres_free(&t);
 }
 
 static void wr_code_byte(Boolean *ok, int *adr, LongInt val, tSymbolFlags Flags)
@@ -257,7 +264,7 @@ static void DecodeFLOAT(Word Code)
     return;
   forallargs (pArg, ok)
   {
-    if (!*pArg->Str)
+    if (!*pArg->str.p_str)
     {
       ok = False;
       break;
@@ -291,7 +298,7 @@ static void DecodeDOUBLE(Word Code)
     return;
   forallargs (pArg, ok)
   {
-    if (!*pArg->Str)
+    if (!*pArg->str.p_str)
     {
       ok = False;
       break;
@@ -328,7 +335,7 @@ static void DecodeEFLOAT(Word Code)
     return;
   forallargs (pArg, ok)
   {
-    if (!*pArg->Str)
+    if (!*pArg->str.p_str)
     {
       ok = False;
       break;
@@ -365,7 +372,7 @@ static void DecodeBFLOAT(Word Code)
     return;
   forallargs (pArg, ok)
   {
-    if (!*pArg->Str)
+    if (!*pArg->str.p_str)
     {
       ok = False;
       break;
@@ -403,7 +410,7 @@ static void DecodeTFLOAT(Word Code)
     return;
   forallargs (pArg, ok)
   {
-    if (!*pArg->Str)
+    if (!*pArg->str.p_str)
     {
       ok = False;
       break;
@@ -543,8 +550,8 @@ Boolean DecodeTIPseudo(void)
 
   /* Qxx */
 
-  if (!as_strncasecmp(OpPart.Str, "Q", 1)
-   && Is99(OpPart.Str, &Num))
+  if (!as_strncasecmp(OpPart.str.p_str, "Q", 1)
+   && Is99(OpPart.str.p_str, &Num))
   {
     pseudo_qxx(Num);
     return True;
@@ -552,8 +559,8 @@ Boolean DecodeTIPseudo(void)
 
   /* LQxx */
 
-  if (!as_strncasecmp(OpPart.Str, "LQ", 2)
-   && Is99(OpPart.Str, &Num))
+  if (!as_strncasecmp(OpPart.str.p_str, "LQ", 2)
+   && Is99(OpPart.str.p_str, &Num))
   {
     pseudo_lqxx(Num);
     return True;
@@ -577,7 +584,7 @@ Boolean DecodeTIPseudo(void)
     AddInstTable(InstTable, "TFLOAT" , 0, DecodeTFLOAT);
   }
 
-  return LookupInstTable(InstTable, OpPart.Str);
+  return LookupInstTable(InstTable, OpPart.str.p_str);
 }
 
 Boolean IsTIDef(void)
@@ -751,11 +758,12 @@ static void DecodeDATA_TI34x(Word Code)
   tStrComp *pArg;
 
   UNUSED(Code);
+  as_tempres_ini(&t);
 
   if (ChkArgCnt(1, ArgCntMax))
   {
     OK = True;
-    forallargs (pArg, True)
+    forallargs (pArg, OK)
       if (OK)
       {
         EvalStrExpression(pArg, &t);
@@ -784,12 +792,12 @@ static void DecodeDATA_TI34x(Word Code)
             if (MultiCharToInt(&t, 4))
               goto ToInt;
 
-            for (z2 = 0; z2 < t.Contents.Ascii.Length; z2++)
+            for (z2 = 0; z2 < t.Contents.str.len; z2++)
             {
              if (!(z2 & 3))
                DAsmCode[CodeLen++] = 0;
              DAsmCode[CodeLen - 1] |=
-                (((LongWord)CharTransTable[((usint)t.Contents.Ascii.Contents[z2]) & 0xff])) << (8 * (3 - (z2 & 3)));
+                (((LongWord)CharTransTable[((usint)t.Contents.str.p_str[z2]) & 0xff])) << (8 * (3 - (z2 & 3)));
             }
             break;
           }
@@ -800,6 +808,7 @@ static void DecodeDATA_TI34x(Word Code)
     if (!OK)
       CodeLen = 0;
   }
+  as_tempres_free(&t);
 }
 
 static void DecodeBSS_TI34x(Word Code)

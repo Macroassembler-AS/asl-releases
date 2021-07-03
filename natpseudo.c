@@ -106,5 +106,5 @@ Boolean DecodeNatPseudo(void)
     AddInstTable(InstTable, "FW"   , 1     , DecodeFx);
   }
 
-  return LookupInstTable(InstTable, OpPart.Str);
+  return LookupInstTable(InstTable, OpPart.str.p_str);
 }

@@ -95,9 +95,9 @@ static void DecodeAri(Word Code)
         WAsmCode[0] |= DefaultDir;
         CodeLen = 1;
       }
-      else if (!as_strcasecmp(ArgStr[2].Str, "W"))
+      else if (!as_strcasecmp(ArgStr[2].str.p_str, "W"))
         CodeLen = 1;
-      else if (!as_strcasecmp(ArgStr[2].Str, "F"))
+      else if (!as_strcasecmp(ArgStr[2].str.p_str, "F"))
       {
          WAsmCode[0] |= 0x80;
         CodeLen = 1;
@@ -357,7 +357,7 @@ static void MakeCode_16c8x(void)
 
   /* seek instruction */
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

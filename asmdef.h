@@ -15,31 +15,13 @@
 
 #include "chunks.h"
 #include "fileformat.h"
-#include "dynstring.h"
+#include "dynstr.h"
 #include "intformat.h"
 #include "strcomp.h"
 #include "lstmacroexp.h"
 #include "cpulist.h"
 #include "tempresult.h"
-
-struct sRelocEntry;
-
-typedef struct
-{
-  TempType Typ;
-  struct sRelocEntry *Relocs;
-  union
-  {
-    LargeInt IWert;
-    Double FWert;
-    struct
-    {
-      char *Contents;
-      unsigned Length;
-    } String;
-    tRegDescr RegDescr;
-  } Contents;
-} SymbolVal;
+#include "addrspace.h"
 
 typedef struct _TCrossRef
 {
@@ -145,11 +127,6 @@ extern const char *EnvName;
 
 #define ChapMax 4
 
-#define StructSeg (PCMax + 1)
-
-extern const char *SegNames[PCMax + 2];
-extern char SegShorts[PCMax + 2];
-
 #define AscOfs '0'
 
 #define MaxCodeLen_Ini 256
@@ -242,11 +219,11 @@ extern LargeWord StartAdr;
 extern LargeWord AfterBSRAddr;
 extern Boolean StartAdrPresent;
 extern LargeWord *Phases;
-extern Word Grans[StructSeg+1];
-extern Word ListGrans[StructSeg+1];
-extern ChunkList SegChunks[StructSeg+1];
+extern Word Grans[SegCountPlusStruct];
+extern Word ListGrans[SegCountPlusStruct];
+extern ChunkList SegChunks[SegCountPlusStruct];
 extern Integer ActPC;
-extern Boolean PCsUsed[StructSeg+1];
+extern Boolean PCsUsed[SegCountPlusStruct];
 extern LargeWord *SegInits;
 extern LargeWord *SegLimits;
 extern LongInt ValidSegs;
@@ -284,7 +261,7 @@ extern Boolean TreatWarningsAsErrors;
 
 extern LongInt MomSectionHandle;
 extern PSaveSection SectionStack;
-extern tSavePhase *pPhaseStacks[PCMax];
+extern tSavePhase *pPhaseStacks[SegCount];
 
 extern tSymbolSize AttrPartOpSize;
 extern LongInt CodeLen;
@@ -376,7 +353,7 @@ extern StringPtr pLOpPart;
 extern tStrComp LabPart, CommPart, ArgPart, OpPart, AttrPart;
 extern char AttrSplit;
 extern int ArgCnt;
-extern StringPtr OneLine;
+extern as_dynstr_t OneLine;
 #ifdef PROFILE_MEMO
 extern unsigned NumMemo;
 extern unsigned long NumMemoSum, NumMemoCnt;
@@ -422,7 +399,8 @@ extern void Default_InternSymbol(char *Asc, TempResult *Erg);
 
 extern void Default_DissectBit(char *pDest, size_t DestSize, LargeWord BitSpec);
 
-extern void IncArgCnt(void);
+extern void AppendArg(size_t ReqSize);
+extern void InsertArg(int Index, size_t ReqSize);
 
 
 extern Boolean SetIsOccupied(void);

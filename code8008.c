@@ -140,19 +140,19 @@ static tAdrMode DecodeAdr_Z80(const tStrComp *pArg, Word Mask, tAdrVals *pVals)
 
   ResetAdrVals(pVals);
 
-  if (DecodeReg(pArg->Str, eSyntaxZ80, &pVals->Val))
+  if (DecodeReg(pArg->str.p_str, eSyntaxZ80, &pVals->Val))
   {
     pVals->Mode = eModReg8;
     goto AdrFound;
   }
 
-  if (DecodeReg16(pArg->Str, &pVals->Val))
+  if (DecodeReg16(pArg->str.p_str, &pVals->Val))
   {
     pVals->Mode = eModReg16;
     goto AdrFound;
   }
 
-  if (!as_strcasecmp(pArg->Str, "(HL)"))
+  if (!as_strcasecmp(pArg->str.p_str, "(HL)"))
   {
     pVals->Mode = eModIHL;
     goto AdrFound;
@@ -295,7 +295,7 @@ static void DecodeJP(Word Code)
   {
     Byte Cond;
 
-    if (DecodeCondition_Z80(ArgStr[1].Str, &Cond))
+    if (DecodeCondition_Z80(ArgStr[1].str.p_str, &Cond))
       DecodeJmpCore(0x40 | Cond);
   }
   else
@@ -327,7 +327,7 @@ static void DecodeCALL(Word Code)
   {
     Byte Cond;
 
-    if (DecodeCondition_Z80(ArgStr[1].Str, &Cond))
+    if (DecodeCondition_Z80(ArgStr[1].str.p_str, &Cond))
       DecodeJmpCore(0x42 | Cond);
   }
   else
@@ -349,7 +349,7 @@ static void DecodeRET(Word Code)
     {
       Byte Cond;
 
-      if (DecodeCondition_Z80(ArgStr[1].Str, &Cond))
+      if (DecodeCondition_Z80(ArgStr[1].str.p_str, &Cond))
         BAsmCode[CodeLen++] = 0x03 | Cond;
     }
     else
@@ -454,8 +454,8 @@ static void DecodeMOV(Word Index)
 
   if (!ChkArgCnt(2, 2));
   else if (!ChkZ80Syntax(eSyntax808x));
-  else if (!DecodeReg(ArgStr[1].Str, eSyntax808x, &DReg)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
-  else if (!DecodeReg(ArgStr[2].Str, eSyntax808x, &SReg)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[2]);
+  else if (!DecodeReg(ArgStr[1].str.p_str, eSyntax808x, &DReg)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
+  else if (!DecodeReg(ArgStr[2].str.p_str, eSyntax808x, &SReg)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[2]);
   else if ((DReg == 7) && (SReg == 7)) WrError(ErrNum_InvRegPair); /* MOV M,M not allowed - asame opcode as HLT */
   else
   {
@@ -477,7 +477,7 @@ static void DecodeMVI(Word Index)
 
   if (!ChkArgCnt(2, 2));
   else if (!ChkZ80Syntax(eSyntax808x));
-  else if (!DecodeReg(ArgStr[1].Str, eSyntax808x, &DReg)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
+  else if (!DecodeReg(ArgStr[1].str.p_str, eSyntax808x, &DReg)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
   else
   {
     Boolean OK;
@@ -513,7 +513,7 @@ static void DecodeLXI(Word Index)
 
   if (!ChkArgCnt(2, 2));
   else if (!ChkZ80Syntax(eSyntax808x));
-  else if (!DecodeReg(ArgStr[1].Str, eSyntax808x, &DReg)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
+  else if (!DecodeReg(ArgStr[1].str.p_str, eSyntax808x, &DReg)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
   else if ((DReg != 1) && (DReg != 3) && (DReg != 5)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
   else
   {
@@ -612,7 +612,7 @@ static void DecodeADD(Word Code)
       {
         Byte Reg;
 
-        if (!DecodeReg(ArgStr[1].Str, eSyntax808x, &Reg)) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
+        if (!DecodeReg(ArgStr[1].str.p_str, eSyntax808x, &Reg)) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
           else
         BAsmCode[CodeLen++] = Code | Reg;
       }
@@ -665,7 +665,7 @@ static void DecodeADC(Word Code)
     {
       Byte Reg;
 
-      if (!DecodeReg(ArgStr[1].Str, eSyntax808x, &Reg)) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
+      if (!DecodeReg(ArgStr[1].str.p_str, eSyntax808x, &Reg)) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
         else
       BAsmCode[CodeLen++] = Code | Reg;
       break;
@@ -739,7 +739,7 @@ static void DecodeSUB(Word Code)
   /* 8 bit register as source
      808x style incl. M, Z80 style excl. (HL) */
 
-  if (DecodeReg(ArgStr[ArgCnt].Str, CurrZ80Syntax, &Reg)) /* 808x style incl. M, Z80 style excl. (HL) */
+  if (DecodeReg(ArgStr[ArgCnt].str.p_str, CurrZ80Syntax, &Reg)) /* 808x style incl. M, Z80 style excl. (HL) */
   {
     BAsmCode[CodeLen++] = Code | Reg;
     return;
@@ -947,7 +947,7 @@ static void DecodeSingleReg(Word Index)
 
   if (!ChkArgCnt(1, 1));
   else if (!ChkZ80Syntax(eSyntax808x));
-  else if (!DecodeReg(ArgStr[1].Str, eSyntax808x, &Reg)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
+  else if (!DecodeReg(ArgStr[1].str.p_str, eSyntax808x, &Reg)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
   else if (NoAM && ((Reg == 0) || (Reg == 7))) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
   else
   {
@@ -1212,7 +1212,7 @@ static void MakeCode_8008(void)
 
   /* der Rest */
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

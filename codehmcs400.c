@@ -70,77 +70,77 @@ static void DecodeAdr(const tStrComp *pArg, Word Mask)
   tEvalResult EvalResult;
   int l;
 
-  if (!as_strcasecmp(pArg->Str, "A"))
+  if (!as_strcasecmp(pArg->str.p_str, "A"))
   {
     AdrMode = ModA;
     goto AdrFound;
   }
 
-  if (!as_strcasecmp(pArg->Str, "B"))
+  if (!as_strcasecmp(pArg->str.p_str, "B"))
   {
     AdrMode = ModB;
     goto AdrFound;
   }
 
-  if (!as_strcasecmp(pArg->Str, "X"))
+  if (!as_strcasecmp(pArg->str.p_str, "X"))
   {
     AdrMode = ModX;
     goto AdrFound;
   }
 
-  if (!as_strcasecmp(pArg->Str, "Y"))
+  if (!as_strcasecmp(pArg->str.p_str, "Y"))
   {
     AdrMode = ModY;
     goto AdrFound;
   }
 
-  if (!as_strcasecmp(pArg->Str, "W"))
+  if (!as_strcasecmp(pArg->str.p_str, "W"))
   {
     AdrMode = ModW;
     OpSizeType = UInt2;
     goto AdrFound;
   }
 
-  if (!as_strcasecmp(pArg->Str, "M"))
+  if (!as_strcasecmp(pArg->str.p_str, "M"))
   {
     AdrMode = ModM;
     goto AdrFound;
   }
 
-  if (!as_strcasecmp(pArg->Str, "M+"))
+  if (!as_strcasecmp(pArg->str.p_str, "M+"))
   {
     AdrMode = ModMInc;
     goto AdrFound;
   }
 
-  if (!as_strcasecmp(pArg->Str, "M-"))
+  if (!as_strcasecmp(pArg->str.p_str, "M-"))
   {
     AdrMode = ModMDec;
     goto AdrFound;
   }
 
-  if (!as_strcasecmp(pArg->Str, "SPX"))
+  if (!as_strcasecmp(pArg->str.p_str, "SPX"))
   {
     AdrMode = ModSPX;
     goto AdrFound;
   }
 
-  if (!as_strcasecmp(pArg->Str, "SPY"))
+  if (!as_strcasecmp(pArg->str.p_str, "SPY"))
   {
     AdrMode = ModSPY;
     goto AdrFound;
   }
 
-  l = strlen(pArg->Str);
+  l = strlen(pArg->str.p_str);
   if ((l >= 3) && (l <= 4)
-   && (as_toupper(pArg->Str[0]) == 'M')
-   && (as_toupper(pArg->Str[1]) == 'R')
-   && (isdigit(pArg->Str[2]))
-   && (isdigit(pArg->Str[l - 1])))
+   && (as_toupper(pArg->str.p_str[0]) == 'M')
+   && (as_toupper(pArg->str.p_str[1]) == 'R')
+   && (isdigit(pArg->str.p_str[2]))
+   && (isdigit(pArg->str.p_str[l - 1])))
   {
-    AdrVal = pArg->Str[2] - '0';
+    AdrVal = pArg->str.p_str[2] - '0';
     if (l == 4)
-      AdrVal = (AdrVal * 10) + (pArg->Str[3] - '0');
+      AdrVal = (AdrVal * 10) + (pArg->str.p_str[3] - '0');
     if (AdrVal < 16)
     {
       AdrMode = ModMR;
@@ -148,7 +148,7 @@ static void DecodeAdr(const tStrComp *pArg, Word Mask)
     }
   }
 
-  if (0[pArg->Str] == '#')
+  if (0[pArg->str.p_str] == '#')
   {
     AdrVal = EvalStrIntExpressionOffsWithResult(pArg, 1, OpSizeType, &EvalResult);
     if (EvalResult.OK)
@@ -655,9 +655,9 @@ static void DecodeCP(Word Code)
   if (!ChkArgCnt(3, 3))
     return;
 
-  if (!as_strcasecmp(ArgStr[1].Str, "NE"))
+  if (!as_strcasecmp(ArgStr[1].str.p_str, "NE"))
     IsLE = False;
-  else if (!as_strcasecmp(ArgStr[1].Str, "LE"))
+  else if (!as_strcasecmp(ArgStr[1].str.p_str, "LE"))
     IsLE = True;
   else
   {
@@ -755,7 +755,7 @@ static void DecodeBit(Word Code)
 {
   if (ArgCnt == 1)
   {
-    if (!as_strcasecmp(ArgStr[1].Str, "CA"))
+    if (!as_strcasecmp(ArgStr[1].str.p_str, "CA"))
       WAsmCode[CodeLen++] = Hi(Code);
     else
       WrError(ErrNum_InvAddrMode);
@@ -1080,7 +1080,7 @@ static void  MakeCode_HMCS400(void)
   if (Memo(""))
     return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

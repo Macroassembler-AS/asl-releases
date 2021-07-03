@@ -80,7 +80,7 @@ static void DecodeOneReg(Word Index)
   Byte Reg;
 
   if (!ChkArgCnt(1, 1));
-  else if (!DecodeReg(ArgStr[1].Str, &Reg)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
+  else if (!DecodeReg(ArgStr[1].str.p_str, &Reg)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
   else
   {
     BAsmCode[0] = Index | Reg; CodeLen = 1;
@@ -107,7 +107,7 @@ static void DecodeRegImm(Word Index)
   Boolean OK;
 
   if (!ChkArgCnt(2, 2));
-  else if (!DecodeReg(ArgStr[1].Str, &Reg)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
+  else if (!DecodeReg(ArgStr[1].str.p_str, &Reg)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
   else
   {
     BAsmCode[1] = EvalStrIntExpression(&ArgStr[2], Int8, &OK);
@@ -125,10 +125,10 @@ static void DecodeRegAbs(Word Index)
   Boolean OK, IndFlag;
 
   if (!ChkArgCnt(2, 4));
-  else if (!DecodeReg(ArgStr[1].Str, &DReg)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
+  else if (!DecodeReg(ArgStr[1].str.p_str, &DReg)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
   else
   {
-    IndFlag = *ArgStr[2].Str == '*';
+    IndFlag = *ArgStr[2].str.p_str == '*';
     AbsVal = EvalStrIntExpressionOffs(&ArgStr[2], IndFlag, UInt13, &OK);
     if (OK)
     {
@@ -144,7 +144,7 @@ static void DecodeRegAbs(Word Index)
       }
       else
       {
-        if (!DecodeReg(ArgStr[3].Str, &IReg)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[3]);
+        if (!DecodeReg(ArgStr[3].str.p_str, &IReg)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[3]);
         else if (DReg != 0) WrError(ErrNum_InvAddrMode);
         else
         {
@@ -154,12 +154,12 @@ static void DecodeRegAbs(Word Index)
             BAsmCode[1] |= 0x60;
             CodeLen = 3;
           }
-          else if (!strcmp(ArgStr[4].Str, "-"))
+          else if (!strcmp(ArgStr[4].str.p_str, "-"))
           {
             BAsmCode[1] |= 0x40;
             CodeLen = 3;
           }
-          else if (!strcmp(ArgStr[4].Str, "+"))
+          else if (!strcmp(ArgStr[4].str.p_str, "+"))
           {
             BAsmCode[1] |= 0x20;
             CodeLen = 3;
@@ -180,11 +180,11 @@ static void DecodeRegRel(Word Index)
   tSymbolFlags Flags;
 
   if (!ChkArgCnt(2, 2));
-  else if (!DecodeReg(ArgStr[1].Str, &Reg)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
+  else if (!DecodeReg(ArgStr[1].str.p_str, &Reg)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
   else
   {
     BAsmCode[0] = Index | Reg;
-    IndFlag = *ArgStr[2].Str == '*';
+    IndFlag = *ArgStr[2].str.p_str == '*';
     Dist = EvalStrIntExpressionOffsWithFlags(&ArgStr[2], IndFlag, UInt13, &OK, &Flags) - (EProgCounter() + 2);
     if (OK)
     {
@@ -207,10 +207,10 @@ static void DecodeCondAbs(Word Index)
   Boolean OK, IndFlag;
 
   if (!ChkArgCnt(2, 2));
-  else if (!DecodeCondition(ArgStr[1].Str, &Cond)) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
+  else if (!DecodeCondition(ArgStr[1].str.p_str, &Cond)) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
   else
   {
-    IndFlag = *ArgStr[2].Str == '*';
+    IndFlag = *ArgStr[2].str.p_str == '*';
     Address = EvalStrIntExpressionOffs(&ArgStr[2], IndFlag, UInt13, &OK);
     if (OK)
     {
@@ -232,11 +232,11 @@ static void DecodeCondRel(Word Index)
   int Dist;
 
   if (!ChkArgCnt(2, 2));
-  else if (!DecodeCondition(ArgStr[1].Str, &Cond)) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
+  else if (!DecodeCondition(ArgStr[1].str.p_str, &Cond)) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
   else
   {
     BAsmCode[0] = Index | Cond;
-    IndFlag = *ArgStr[2].Str == '*';
+    IndFlag = *ArgStr[2].str.p_str == '*';
     Dist = EvalStrIntExpressionOffsWithFlags(&ArgStr[2], IndFlag, UInt13, &OK, &Flags) - (EProgCounter() + 2);
     if (OK)
     {
@@ -259,11 +259,11 @@ static void DecodeRegAbs2(Word Index)
   Boolean IndFlag, OK;
 
   if (!ChkArgCnt(2, 2));
-  else if (!DecodeReg(ArgStr[1].Str, &Reg)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
+  else if (!DecodeReg(ArgStr[1].str.p_str, &Reg)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
   else
   {
     BAsmCode[0] = Index | Reg;
-    IndFlag = *ArgStr[2].Str == '*';
+    IndFlag = *ArgStr[2].str.p_str == '*';
     AbsVal = EvalStrIntExpressionOffs(&ArgStr[2], IndFlag, UInt13, &OK);
     if (OK)
     {
@@ -283,12 +283,12 @@ static void DecodeBrAbs(Word Index)
   Boolean IndFlag, OK;
 
   if (!ChkArgCnt(1, 2));
-  else if ((ArgCnt == 2) && (!DecodeReg(ArgStr[2].Str, &Reg))) WrStrErrorPos(ErrNum_InvReg, &ArgStr[2]);
+  else if ((ArgCnt == 2) && (!DecodeReg(ArgStr[2].str.p_str, &Reg))) WrStrErrorPos(ErrNum_InvReg, &ArgStr[2]);
   else if (Reg != 3) WrError(ErrNum_InvAddrMode);
   else
   {
     BAsmCode[0] = Index | Reg;
-    IndFlag = *ArgStr[1].Str == '*';
+    IndFlag = *ArgStr[1].str.p_str == '*';
     AbsVal = EvalStrIntExpressionOffs(&ArgStr[1], IndFlag, UInt13, &OK);
     if (OK)
     {
@@ -306,7 +306,7 @@ static void DecodeCond(Word Index)
   Byte Cond;
 
   if (!ChkArgCnt(1, 1));
-  else if (!DecodeCondition(ArgStr[1].Str, &Cond)) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
+  else if (!DecodeCondition(ArgStr[1].str.p_str, &Cond)) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
   else
   {
     BAsmCode[0] = Index | Cond;
@@ -321,7 +321,7 @@ static void DecodeZero(Word Index)
   if (ChkArgCnt(1, 1))
   {
     BAsmCode[0] = Index;
-    IndFlag = *ArgStr[1].Str == '*';
+    IndFlag = *ArgStr[1].str.p_str == '*';
     BAsmCode[1] = EvalStrIntExpressionOffs(&ArgStr[1], IndFlag, UInt7, &OK);
     if (OK)
     {
@@ -505,7 +505,7 @@ static void MakeCode_2650(void)
 
   /* Nullanweisung */
 
-  if ((*OpPart.Str == '\0') && (ArgCnt == 0))
+  if ((*OpPart.str.p_str == '\0') && (ArgCnt == 0))
     return;
 
   /* Pseudoanweisungen */
@@ -514,20 +514,16 @@ static void MakeCode_2650(void)
 
   /* try to split off first (register) operand from instruction */
 
-  pPos = strchr(OpPart.Str, ',');
+  pPos = strchr(OpPart.str.p_str, ',');
   if (pPos)
   {
-    int ArgC;
-
-    IncArgCnt();
-    for (ArgC = ArgCnt - 1; ArgC >= 1; ArgC--)
-      StrCompCopy(&ArgStr[ArgC + 1], &ArgStr[ArgC]);
+    InsertArg(1, strlen(OpPart.str.p_str));
     StrCompSplitRight(&OpPart, &ArgStr[1], pPos);
   }
 
   /* alles aus der Tabelle */
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

@@ -343,12 +343,12 @@ static Boolean ChkSFR(LongWord Addr, Byte *pShortAddr)
 
 static Boolean StripIndirect(tStrComp *pArg)
 {
-  int ArgLen = strlen(pArg->Str);
+  int ArgLen = strlen(pArg->str.p_str);
 
-  if ((ArgLen >= 2) && (*pArg->Str == '[') && (pArg->Str[ArgLen - 1] == ']'))
+  if ((ArgLen >= 2) && (*pArg->str.p_str == '[') && (pArg->str.p_str[ArgLen - 1] == ']'))
   {
-    strmov(pArg->Str, pArg->Str + 1);
-    pArg->Str[ArgLen - 2] = '\0';
+    strmov(pArg->str.p_str, pArg->str.p_str + 1);
+    pArg->str.p_str[ArgLen - 2] = '\0';
     pArg->Pos.StartCol++;
     pArg->Pos.Len -= 2;
     return True;
@@ -369,7 +369,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrModeMask AdrModeMask, tEncode
 
   /* 8 bit Register? */
 
-  if ((pAddress->AdrVal = DecodeReg8(pArg->Str)) >= 0)
+  if ((pAddress->AdrVal = DecodeReg8(pArg->str.p_str)) >= 0)
   {
     if (!SetOpSize(0))
       return False;
@@ -377,7 +377,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrModeMask AdrModeMask, tEncode
     goto AdrFound;
   }
 
-  if ((pAddress->AdrVal = DecodeReg8_U16(pArg->Str)) >= 0)
+  if ((pAddress->AdrVal = DecodeReg8_U16(pArg->str.p_str)) >= 0)
   {
     if (!SetOpSize(0))
       return False;
@@ -385,7 +385,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrModeMask AdrModeMask, tEncode
     goto AdrFound;
   }
 
-  if ((pAddress->AdrVal = DecodeReg16(pArg->Str)) >= 0)
+  if ((pAddress->AdrVal = DecodeReg16(pArg->str.p_str)) >= 0)
   {
     if (!SetOpSize(1))
       return False;
@@ -393,7 +393,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrModeMask AdrModeMask, tEncode
     goto AdrFound;
   }
 
-  if ((pAddress->AdrVal = DecodeReg24(pArg->Str)) >= 0)
+  if ((pAddress->AdrVal = DecodeReg24(pArg->str.p_str)) >= 0)
   {
     if (!SetOpSize(2))
       return False;
@@ -401,7 +401,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrModeMask AdrModeMask, tEncode
     goto AdrFound;
   }
 
-  if (!as_strcasecmp(pArg->Str, "SP"))
+  if (!as_strcasecmp(pArg->str.p_str, "SP"))
   {
     if (!SetOpSize(2))
       return False;
@@ -409,7 +409,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrModeMask AdrModeMask, tEncode
     goto AdrFound;
   }
 
-  if (!as_strcasecmp(pArg->Str, "STBC"))
+  if (!as_strcasecmp(pArg->str.p_str, "STBC"))
   {
     if (!SetOpSize(0))
       return False;
@@ -417,7 +417,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrModeMask AdrModeMask, tEncode
     goto AdrFound;
   }
 
-  if (!as_strcasecmp(pArg->Str, "WDM"))
+  if (!as_strcasecmp(pArg->str.p_str, "WDM"))
   {
     if (!SetOpSize(0))
       return False;
@@ -427,7 +427,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrModeMask AdrModeMask, tEncode
 
   /* immediate ? */
 
-  if (*pArg->Str == '#')
+  if (*pArg->str.p_str == '#')
   {
     ExecAssumeByte();
     if ((OpSize >= 0) && (OpSize < 3))
@@ -454,21 +454,21 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrModeMask AdrModeMask, tEncode
 
   /* memory-indirect addressing? */
 
-  ArgLen = strlen(pArg->Str);
-  if ((ArgLen >= 2) && (pArg->Str[ArgLen - 1] == ']'))
+  ArgLen = strlen(pArg->str.p_str);
+  if ((ArgLen >= 2) && (pArg->str.p_str[ArgLen - 1] == ']'))
   {
     String Asc;
     tStrComp Arg;
     char *pStart;
 
-    StrCompMkTemp(&Arg, Asc);
+    StrCompMkTemp(&Arg, Asc, sizeof(Asc));
     StrCompCopy(&Arg, pArg);
 
     /* remove ']' */
 
     StrCompShorten(&Arg, 1);
 
-    pStart = RQuotPos(Arg.Str, '[');
+    pStart = RQuotPos(Arg.str.p_str, '[');
     if (!pStart)
     {
       WrError(ErrNum_BrackErr);
@@ -477,7 +477,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrModeMask AdrModeMask, tEncode
 
     /* purely indirect? */
 
-    if (pStart == Arg.Str)
+    if (pStart == Arg.str.p_str)
     {
       static const char Modes[][5] = { "TDE+", "WHL+", "TDE-", "WHL-", "TDE", "WHL", "VVP", "UUP",
                                        "RG6+", "RG7+", "RG6-", "RG7-", "RG6", "RG7", "RG4", "RG5" };
@@ -487,12 +487,12 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrModeMask AdrModeMask, tEncode
 
       /* skip '[' */
 
-      StrCompIncRefLeft(&Arg, 1);
+      StrCompCutLeft(&Arg, 1);
 
       /* simple expression without displacement? */
 
       for (z = 0; z < sizeof(Modes) / sizeof(*Modes); z++)
-        if (!as_strcasecmp(Arg.Str, Modes[z]))
+        if (!as_strcasecmp(Arg.str.p_str, Modes[z]))
         {
           pAddress->AdrMode = ModMem;
           pAddress->AdrVal = 0x16;
@@ -504,20 +504,20 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrModeMask AdrModeMask, tEncode
       /* no -> extract base register. Its name ends with the first non-letter,
          which either means +/- or a blank */
 
-      for (pSep = Arg.Str; *pSep; pSep++)
+      for (pSep = Arg.str.p_str; *pSep; pSep++)
         if (!as_isalpha(*pSep))
           break;
 
       /* decode base register.  SP is not otherwise handled. */
 
       Save = StrCompSplitRef(&Base, &Remainder, &Arg, pSep);
-      if (!as_strcasecmp(Base.Str, "SP"))
+      if (!as_strcasecmp(Base.str.p_str, "SP"))
         pAddress->AdrVals[0] = 1;
       else
       {
         int tmp;
 
-        tmp = DecodeReg24(Base.Str);
+        tmp = DecodeReg24(Base.str.p_str);
         switch (tmp)
         {
           case -1: pAddress->AdrVals[0] = 0xff; break; /* no register */
@@ -536,7 +536,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrModeMask AdrModeMask, tEncode
 
       if (0xff == pAddress->AdrVals[0])
       {
-        unsigned Is24 = !!(*Arg.Str == '%');
+        unsigned Is24 = !!(*Arg.str.p_str == '%');
         tSymbolFlags Flags;
 
         Addr = EvalStrIntExpressionOffsWithFlags(&Arg, Is24, UInt24, &OK, &Flags);
@@ -638,10 +638,10 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrModeMask AdrModeMask, tEncode
 
       /* it's a number: put a fake 0 in front so displacement expression evaluates correctly! */
 
-      if (pSep > Arg.Str)
+      if (pSep > Arg.str.p_str)
         pSep--;
       *pSep = '0';
-      pAddress->AdrVals[1] = EvalStrIntExpressionOffs(&Arg, pSep - Arg.Str, Int8, &OK);
+      pAddress->AdrVals[1] = EvalStrIntExpressionOffs(&Arg, pSep - Arg.str.p_str, Int8, &OK);
       if (OK)
       {
         pAddress->AdrMode = ModMem;
@@ -664,7 +664,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrModeMask AdrModeMask, tEncode
 
        /* handle base register */
 
-      tmp = DecodeReg8(RegArg.Str);
+      tmp = DecodeReg8(RegArg.str.p_str);
       if ((tmp == AccReg8()) /* A */
        || (tmp == BReg8())) /* B */
       {
@@ -672,7 +672,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrModeMask AdrModeMask, tEncode
       }
       else if (tmp == -1)
       {
-        tmp = DecodeReg16(RegArg.Str);
+        tmp = DecodeReg16(RegArg.str.p_str);
         if (tmp >= 6) /* DE/HL */
         {
           pAddress->AdrVals[0] = (tmp - 6) << 1;
@@ -708,13 +708,13 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrModeMask AdrModeMask, tEncode
   /* absolute: */
 
   Offset = 0;
-  if (pArg->Str[Offset] == '$')
+  if (pArg->str.p_str[Offset] == '$')
   {
     pAddress->ForceRel = True;
     Offset++;
   }
   for (AddrSize = 0, z = 0; z < 2; z++)
-    if (pArg->Str[Offset] == '!')
+    if (pArg->str.p_str[Offset] == '!')
     {
       AddrSize++;
       Offset++;
@@ -934,7 +934,7 @@ static Boolean DecodeBitAdr(const tStrComp *pArg, LongWord *pResult)
   char *pSplit;
   Boolean OK;
 
-  pSplit = RQuotPos(pArg->Str, '.');
+  pSplit = RQuotPos(pArg->str.p_str, '.');
 
   if (pSplit)
   {
@@ -1020,7 +1020,7 @@ static void AppendRel8(const tStrComp *pArg)
   LongInt Dist;
   tSymbolFlags Flags;
 
-  Dist = EvalStrIntExpressionOffsWithFlags(pArg, !!(*pArg->Str == '$'), UInt20, &OK, &Flags) - (EProgCounter() + CodeLen + 1);
+  Dist = EvalStrIntExpressionOffsWithFlags(pArg, !!(*pArg->str.p_str == '$'), UInt20, &OK, &Flags) - (EProgCounter() + CodeLen + 1);
   if (!OK) CodeLen = 0;
   else if (!mSymbolQuestionable(Flags) && ((Dist < -0x80) || (Dist > 0x7f)))
   {
@@ -1097,9 +1097,9 @@ static void DecodeMOV1(Word Code)
 
   if (!ChkArgCnt(2, 2))
     return;
-  if (!as_strcasecmp(ArgStr[1].Str, "CY"))
+  if (!as_strcasecmp(ArgStr[1].str.p_str, "CY"))
     DecodeBitOpCore(&ArgStr[2], 0x00);
-  else if (!as_strcasecmp(ArgStr[2].Str, "CY"))
+  else if (!as_strcasecmp(ArgStr[2].str.p_str, "CY"))
     DecodeBitOpCore(&ArgStr[1], 0x10);
   else
   {
@@ -1112,12 +1112,12 @@ static void DecodeAND1_OR1(Word Code)
 {
   if (!ChkArgCnt(2, 2))
     return;
-  if (as_strcasecmp(ArgStr[1].Str, "CY"))
+  if (as_strcasecmp(ArgStr[1].str.p_str, "CY"))
   {
     WrError(ErrNum_InvAddrMode);
     return;
   }
-  if (*ArgStr[2].Str == '/')
+  if (*ArgStr[2].str.p_str == '/')
   {
     tStrComp BitArg;
 
@@ -1132,7 +1132,7 @@ static void DecodeXOR1(Word Code)
 {
   if (!ChkArgCnt(2, 2))
     return;
-  if (as_strcasecmp(ArgStr[1].Str, "CY"))
+  if (as_strcasecmp(ArgStr[1].str.p_str, "CY"))
   {
     WrError(ErrNum_InvAddrMode);
     return;
@@ -1144,7 +1144,7 @@ static void DecodeNOT1(Word Code)
 {
   if (!ChkArgCnt(1, 1))
     return;
-  if (!as_strcasecmp(ArgStr[1].Str, "CY"))
+  if (!as_strcasecmp(ArgStr[1].str.p_str, "CY"))
     BAsmCode[CodeLen++] = 0x42;
   else
     DecodeBitOpCore(&ArgStr[1], Code);
@@ -1154,7 +1154,7 @@ static void DecodeSET1_CLR1(Word Code)
 {
   if (!ChkArgCnt(1, 1))
     return;
-  if (!as_strcasecmp(ArgStr[1].Str, "CY"))
+  if (!as_strcasecmp(ArgStr[1].str.p_str, "CY"))
     BAsmCode[CodeLen++] = 0x41 - ((Code >> 4) & 1);
   else
   {
@@ -1192,12 +1192,12 @@ static void DecodeMOV(Word ForceOpSize)
   if (!ChkArgCnt(2, 2))
     return;
 
-  if (!as_strcasecmp(ArgStr[1].Str, "CY"))
+  if (!as_strcasecmp(ArgStr[1].str.p_str, "CY"))
   {
     DecodeBitOpCore(&ArgStr[2], 0x00);
     return;
   }
-  else if (!as_strcasecmp(ArgStr[2].Str, "CY"))
+  else if (!as_strcasecmp(ArgStr[2].str.p_str, "CY"))
   {
     DecodeBitOpCore(&ArgStr[1], 0x10);
     return;
@@ -2178,7 +2178,7 @@ static void DecodeALU(Word Code)
   if (!ChkArgCnt(2, 2))
     return;
 
-  if ((OpSize == -1) && (!as_strcasecmp(ArgStr[1].Str, "CY")))
+  if ((OpSize == -1) && (!as_strcasecmp(ArgStr[1].str.p_str, "CY")))
   {
     switch (Code)
     {
@@ -2773,7 +2773,7 @@ static void DecodeShift(Word Code)
 static void DecodeROR4_ROL4(Word Code)
 {
   if (!ChkArgCnt(1, 1));
-  else if (!DecodeMem3(ArgStr[1].Str, BAsmCode + 1)) WrError(ErrNum_InvAddrMode);
+  else if (!DecodeMem3(ArgStr[1].str.p_str, BAsmCode + 1)) WrError(ErrNum_InvAddrMode);
   else
   {
     BAsmCode[CodeLen++] = 0x05;
@@ -2792,10 +2792,11 @@ static void DecodeBIT(Word Code)
   {
     TempResult t;
 
-    t.Typ = TempInt;
-    t.Contents.Int = Result;
+    as_tempres_ini(&t);
+    as_tempres_set_int(&t, Result);
     SetListLineVal(&t);
     EnterIntSymbol(&LabPart, Result, SegNone, False);
+    as_tempres_free(&t);
   }
 }
 
@@ -2819,7 +2820,7 @@ static void DecodePUSH_POP(Word Code)
   for (z = 1; z <= ArgCnt; z++)
   {
     ClearEncodedAddress(&Address);
-    if (!as_strcasecmp(ArgStr[z].Str, "PSW"))
+    if (!as_strcasecmp(ArgStr[z].str.p_str, "PSW"))
     {
       /* PSW replaces UP in bitmask for PUSHU/POPU */
       if (IsU)
@@ -3017,7 +3018,7 @@ static void DecodeCALLF(Word Code)
     Word Addr;
     tSymbolFlags Flags;
 
-    Addr = EvalStrIntExpressionOffsWithFlags(&ArgStr[1], !!(*ArgStr[1].Str == '!'), UInt12, &OK, &Flags);
+    Addr = EvalStrIntExpressionOffsWithFlags(&ArgStr[1], !!(*ArgStr[1].str.p_str == '!'), UInt12, &OK, &Flags);
     if (mFirstPassUnknown(Flags))
       Addr |= 0x800;
     if (OK && ChkRange(Addr, 0x800, 0xfff))
@@ -3040,7 +3041,7 @@ static void DecodeCALLT(Word Code)
     Word Addr;
     tSymbolFlags Flags;
 
-    Addr = EvalStrIntExpressionOffsWithFlags(&ArgStr[1], !!(*ArgStr[1].Str == '!'), UInt7, &OK, &Flags);
+    Addr = EvalStrIntExpressionOffsWithFlags(&ArgStr[1], !!(*ArgStr[1].str.p_str == '!'), UInt7, &OK, &Flags);
     if (mFirstPassUnknown(Flags))
       Addr = (Addr | 0x40) & 0xfe;
     if (OK && (Addr & 1)) WrError(ErrNum_NotAligned);
@@ -3056,7 +3057,7 @@ static void DecodeBRKCS(Word Code)
   UNUSED(Code);
 
   if (!ChkArgCnt(1, 1));
-  else if (!DecodeRB(ArgStr[1].Str, BAsmCode + 1)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
+  else if (!DecodeRB(ArgStr[1].str.p_str, BAsmCode + 1)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
   else
   {
     BAsmCode[CodeLen++] = 0x05;
@@ -3072,7 +3073,7 @@ static void DecodeRETCS(Word Code)
     Boolean OK;
     Word Addr;
 
-    Addr = EvalStrIntExpressionOffs(&ArgStr[1], !!(*ArgStr[1].Str == '!'), UInt16, &OK);
+    Addr = EvalStrIntExpressionOffs(&ArgStr[1], !!(*ArgStr[1].str.p_str == '!'), UInt16, &OK);
     if (OK)
     {
       PutCode(Code);
@@ -3207,7 +3208,7 @@ static void DecodeSEL(Word Code)
 
   UNUSED(Code);
 
-  if ((ArgCnt == 2) && (as_strcasecmp(ArgStr[2].Str, "ALT")))
+  if ((ArgCnt == 2) && (as_strcasecmp(ArgStr[2].str.p_str, "ALT")))
   {
     WrError(ErrNum_InvAddrMode);
     return;
@@ -3215,7 +3216,7 @@ static void DecodeSEL(Word Code)
   if (!ChkArgCnt(1, 2))
     return;
 
-  if (!DecodeRB(ArgStr[1].Str, &Bank)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
+  if (!DecodeRB(ArgStr[1].str.p_str, &Bank)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
   else
   {
     BAsmCode[CodeLen++] = 0x05;
@@ -3244,7 +3245,7 @@ static void DecodeMOVTBLW(Word Code)
 
   if (ChkArgCnt(2, 2))
   {
-    Addr = EvalStrIntExpressionOffs(&ArgStr[1], !!(*ArgStr[1].Str == '!'), UInt8, &OK);
+    Addr = EvalStrIntExpressionOffs(&ArgStr[1], !!(*ArgStr[1].str.p_str == '!'), UInt8, &OK);
     if (OK)
     {
       Value = EvalStrIntExpression(&ArgStr[2], Int8, &OK);
@@ -3458,7 +3459,7 @@ static void MakeCode_78K4(void)
   if (DecodeIntelPseudo(False))
     return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 
@@ -3471,15 +3472,9 @@ static void InternSymbol_78K4(char *pAsc, TempResult *pErg)
 {
   if ((!as_strcasecmp(pAsc, "PSWL"))
    || (!as_strcasecmp(pAsc, "PSW")))
-  {
-    pErg->Typ = TempInt;
-    pErg->Contents.Int = PSWLAddr;
-  }
+    as_tempres_set_int(pErg, PSWLAddr);
   else if (!as_strcasecmp(pAsc, "PSWH"))
-  {
-    pErg->Typ = TempInt;
-    pErg->Contents.Int = PSWHAddr;
-  }
+    as_tempres_set_int(pErg, PSWHAddr);
 }
 
 static void SwitchFrom_78K4(void)

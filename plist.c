@@ -34,7 +34,7 @@ static CMDRec PListParams[] =
 };
 
 int NumFiles;
-LongWord Sums[PCMax + 1];
+LongWord Sums[SegCount];
 
 static void ParamError(Boolean InEnv, char *Arg)
 {
@@ -237,7 +237,7 @@ int main(int argc, char **argv)
   errno = 0; printf("%s%s\n", (NumFiles > 1) ? getmessage(Num_MessHeaderLine1F) : "", getmessage(Num_MessHeaderLine1)); ChkIO(OutName);
   errno = 0; printf("%s%s\n", (NumFiles > 1) ? getmessage(Num_MessHeaderLine2F) : "", getmessage(Num_MessHeaderLine2)); ChkIO(OutName);
 
-  for (z = 0; z <= PCMax; Sums[z++] = 0);
+  for (z = 0; z < SegCount; Sums[z++] = 0);
 
   if (*ProgName)
   {
@@ -256,7 +256,7 @@ int main(int argc, char **argv)
 
   errno = 0; printf("\n"); ChkIO(OutName);
   FirstSeg = True;
-  for (z = 0; z <= PCMax; z++)
+  for (z = 0; z < SegCount; z++)
     if ((z == SegCode) || Sums[z])
     {
       errno = 0;

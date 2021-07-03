@@ -132,17 +132,17 @@ static void CodeDisp(const tStrComp *pArg, LongInt Start, LongWord Mask)
   tSymbolFlags Flags;
   LongInt Adr;
   ShortInt DType;
-  int ArgLen = strlen(pArg->Str);
+  int ArgLen = strlen(pArg->str.p_str);
   unsigned Offset = 0;
 
-  if ((ArgLen > 1) && (pArg->Str[Offset] == '<'))
+  if ((ArgLen > 1) && (pArg->str.p_str[Offset] == '<'))
   {
     Offset = 1;
     DType = 0;
   }
-  else if ((ArgLen > 1) && (pArg->Str[Offset] == '>'))
+  else if ((ArgLen > 1) && (pArg->str.p_str[Offset] == '>'))
   {
-    if ((ArgLen > 2) && (pArg->Str[Offset + 1] == '>'))
+    if ((ArgLen > 2) && (pArg->str.p_str[Offset + 1] == '>'))
     {
       Offset = 2;
       DType = 2;
@@ -215,7 +215,7 @@ static Integer SplitArg(const tStrComp *pSrc, tStrComp *pDest)
 
   StrCompRefRight(&IArg, pSrc, 1);
   StrCompShorten(&IArg, 1);
-  p = QuotPos(IArg.Str, ',');
+  p = QuotPos(IArg.str.p_str, ',');
   if (!p)
   {
     StrCompCopy(&pDest[0], &IArg);
@@ -236,8 +236,8 @@ static void DecodeAdr(Integer Start, LongWord Mask)
   String HStr[2];
   tStrComp HArg[2];
 
-  StrCompMkTemp(&HArg[0], HStr[0]);
-  StrCompMkTemp(&HArg[1], HStr[1]);
+  StrCompMkTemp(&HArg[0], HStr[0], sizeof(HStr[0]));
+  StrCompMkTemp(&HArg[1], HStr[1], sizeof(HStr[1]));
   AdrType = ModNone;
   AdrCnt = 0;
 
@@ -247,7 +247,7 @@ static void DecodeAdr(Integer Start, LongWord Mask)
   {
     /* I.1. immediate */
 
-    if (*ArgStr[Start].Str == '#')
+    if (*ArgStr[Start].str.p_str == '#')
     {
       if (WordSize)
       {
@@ -267,7 +267,7 @@ static void DecodeAdr(Integer Start, LongWord Mask)
 
     /* I.2. indirekt */
 
-    if (IsIndirect(ArgStr[Start].Str))
+    if (IsIndirect(ArgStr[Start].str.p_str))
     {
       HCnt = SplitArg(&ArgStr[Start], HArg);
 
@@ -281,7 +281,7 @@ static void DecodeAdr(Integer Start, LongWord Mask)
 
       /* I.2.ii indirekt mit Vorindizierung */
 
-      else if (!as_strcasecmp(HArg[1].Str, "X"))
+      else if (!as_strcasecmp(HArg[1].str.p_str, "X"))
       {
         CodeDisp(&HArg[0], ModIndX8, Mask);
         goto chk;
@@ -309,9 +309,9 @@ static void DecodeAdr(Integer Start, LongWord Mask)
   {
     /* II.1 indirekt mit Nachindizierung */
 
-    if (IsIndirect(ArgStr[Start].Str))
+    if (IsIndirect(ArgStr[Start].str.p_str))
     {
-      if (as_strcasecmp(ArgStr[Start + 1].Str, "Y")) WrError(ErrNum_InvAddrMode);
+      if (as_strcasecmp(ArgStr[Start + 1].str.p_str, "Y")) WrError(ErrNum_InvAddrMode);
       else
       {
         HCnt = SplitArg(&ArgStr[Start], HArg);
@@ -326,7 +326,7 @@ static void DecodeAdr(Integer Start, LongWord Mask)
 
         /* II.1.ii. (d,S),Y */
 
-        else if (!as_strcasecmp(HArg[1].Str, "S"))
+        else if (!as_strcasecmp(HArg[1].str.p_str, "S"))
         {
           AdrVals[0] = EvalStrIntExpression(&HArg[0], Int8, &OK);
           if (OK)
@@ -348,7 +348,7 @@ static void DecodeAdr(Integer Start, LongWord Mask)
     {
       /* II.2.i. d,X */
 
-      if (!as_strcasecmp(ArgStr[Start + 1].Str, "X"))
+      if (!as_strcasecmp(ArgStr[Start + 1].str.p_str, "X"))
       {
         CodeDisp(&ArgStr[Start], ModIdxX8, Mask);
         goto chk;
@@ -356,7 +356,7 @@ static void DecodeAdr(Integer Start, LongWord Mask)
 
       /* II.2.ii. d,Y */
 
-      else if (!as_strcasecmp(ArgStr[Start + 1].Str, "Y"))
+      else if (!as_strcasecmp(ArgStr[Start + 1].str.p_str, "Y"))
       {
         CodeDisp(&ArgStr[Start], ModIdxY8, Mask);
         goto chk;
@@ -364,7 +364,7 @@ static void DecodeAdr(Integer Start, LongWord Mask)
 
       /* II.2.iii. d,S */
 
-      else if (!as_strcasecmp(ArgStr[Start + 1].Str, "S"))
+      else if (!as_strcasecmp(ArgStr[Start + 1].str.p_str, "S"))
       {
         AdrVals[0] = EvalStrIntExpression(&ArgStr[Start], Int8, &OK);
         if (OK)
@@ -412,7 +412,7 @@ static void DecodeBRK(Word Code)
     {
       Boolean OK;
 
-      BAsmCode[1] = EvalStrIntExpressionOffs(&ArgStr[1], !!(*ArgStr[1].Str == '#'), Int8, &OK);
+      BAsmCode[1] = EvalStrIntExpressionOffs(&ArgStr[1], !!(*ArgStr[1].str.p_str == '#'), Int8, &OK);
       if (OK)
         CodeLen = 2;
     }
@@ -460,7 +460,7 @@ static void DecodeRel(Word Index)
 
   if (ChkArgCnt(1, 1))
   {
-    AdrLong = EvalStrIntExpressionOffsWithFlags(&ArgStr[1], !!(*ArgStr[1].Str == '#'), Int32, &OK, &Flags);
+    AdrLong = EvalStrIntExpressionOffsWithFlags(&ArgStr[1], !!(*ArgStr[1].str.p_str == '#'), Int32, &OK, &Flags);
     if (OK)
     {
       OK = pOrder->Disp8 == -1;
@@ -509,9 +509,9 @@ static void DecodeAcc(Word Code)
   if (ChkArgCnt(1, 3))
   {
     WordSize = (Reg_M == 0);
-    if (!as_strcasecmp(ArgStr[1].Str, "A"))
+    if (!as_strcasecmp(ArgStr[1].str.p_str, "A"))
       Start = 2;
-    else if (!as_strcasecmp(ArgStr[1].Str, "B"))
+    else if (!as_strcasecmp(ArgStr[1].str.p_str, "B"))
     {
       Start = 2;
       BAsmCode[0] = PrefAccB;
@@ -586,8 +586,10 @@ static void DecodeEXTS_EXTZ(Word Code)
 {
   if (ArgCnt == 0)
   {
-    IncArgCnt();
-    strmaxcpy(ArgStr[ArgCnt].Str, "A", STRINGSIZE);
+    const char AccArg[] = "A";
+
+    AppendArg(strlen(AccArg));
+    strmaxcpy(ArgStr[ArgCnt].str.p_str, AccArg, STRINGSIZE);
   }
 
   if (ChkArgCnt(1, 1)
@@ -595,9 +597,9 @@ static void DecodeEXTS_EXTZ(Word Code)
   {
     BAsmCode[1] = Code;
     BAsmCode[0] = 0;
-    if (!as_strcasecmp(ArgStr[1].Str, "A"))
+    if (!as_strcasecmp(ArgStr[1].str.p_str, "A"))
       BAsmCode[0] = 0x89;
-    else if (!as_strcasecmp(ArgStr[1].Str, "B"))
+    else if (!as_strcasecmp(ArgStr[1].str.p_str, "B"))
       BAsmCode[0] = 0x42;
     else WrError(ErrNum_InvAddrMode);
     if (BAsmCode[0] != 0)
@@ -607,12 +609,12 @@ static void DecodeEXTS_EXTZ(Word Code)
 
 static void DecodeRMW(Word Code)
 {
-  if ((ArgCnt == 0) || ((ArgCnt == 1) && (!as_strcasecmp(ArgStr[1].Str, "A"))))
+  if ((ArgCnt == 0) || ((ArgCnt == 1) && (!as_strcasecmp(ArgStr[1].str.p_str, "A"))))
   {
     CodeLen = 1;
     BAsmCode[0] = Hi(Code);
   }
-  else if ((ArgCnt == 1) && (!as_strcasecmp(ArgStr[1].Str, "B")))
+  else if ((ArgCnt == 1) && (!as_strcasecmp(ArgStr[1].str.p_str, "B")))
   {
     CodeLen = 2;
     BAsmCode[0] = PrefAccB;
@@ -652,13 +654,13 @@ static void DecodeASR(Word Code)
   UNUSED(Code);
 
   if (!ChkMinCPU(CPUM7750));
-  else if ((ArgCnt == 0) || ((ArgCnt == 1) && (!as_strcasecmp(ArgStr[1].Str, "A"))))
+  else if ((ArgCnt == 0) || ((ArgCnt == 1) && (!as_strcasecmp(ArgStr[1].str.p_str, "A"))))
   {
     BAsmCode[0] = 0x89;
     BAsmCode[1] = 0x08;
     CodeLen = 2;
   }
-  else if ((ArgCnt == 1) && (!as_strcasecmp(ArgStr[1].Str, "B")))
+  else if ((ArgCnt == 1) && (!as_strcasecmp(ArgStr[1].str.p_str, "B")))
   {
     BAsmCode[0] = 0x42;
     BAsmCode[1] = 0x08;
@@ -1129,12 +1131,12 @@ static void DecodePSH_PUL(Word Code)
     {
       Boolean OK;
 
-      if (*ArgStr[z].Str == '#')
+      if (*ArgStr[z].str.p_str == '#')
         BAsmCode[1] |= EvalStrIntExpressionOffs(&ArgStr[z], 1, Int8, &OK);
       else
       {
         Start = 0;
-        while ((Start < PushRegCnt) && (as_strcasecmp(PushRegNames[Start], ArgStr[z].Str)))
+        while ((Start < PushRegCnt) && (as_strcasecmp(PushRegNames[Start], ArgStr[z].str.p_str)))
           Start++;
         OK = (Start < PushRegCnt);
         if (OK)
@@ -1187,7 +1189,7 @@ static void DecodePER(Word Code)
 
   if (ChkArgCnt(1, 1))
   {
-    Boolean OK, Rel = !(*ArgStr[1].Str == '#');
+    Boolean OK, Rel = !(*ArgStr[1].str.p_str == '#');
     tSymbolFlags Flags;
 
     BAsmCode[0] = 0x62;
@@ -1429,7 +1431,7 @@ static void MakeCode_7700(void)
   if (DecodeIntelPseudo(False))
     return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

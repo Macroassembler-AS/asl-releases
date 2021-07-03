@@ -36,8 +36,6 @@ extern Word FileID;
 
 extern const char *OutName;
 
-extern const char *SegNames[PCMax + 1];
-
 extern Boolean QuietMode;
 
 extern void WrCopyRight(const char *Msg);

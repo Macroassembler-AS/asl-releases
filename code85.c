@@ -119,37 +119,37 @@ static Boolean DecodeCondition(const char *pAsc, Byte *pResult, Boolean WithX5)
 static void DecodeAdr_Z80(tStrComp *pArg, Word Mask)
 {
   Boolean OK;
-  int ArgLen = strlen(pArg->Str);
+  int ArgLen = strlen(pArg->str.p_str);
 
   AdrMode = ModNone; AdrCnt = 0;
 
-  if (DecodeReg8(pArg->Str, eSyntaxZ80, &AdrVals[0]))
+  if (DecodeReg8(pArg->str.p_str, eSyntaxZ80, &AdrVals[0]))
   {
     AdrMode = ModReg8;
     goto AdrFound;
   }
 
-  if ((Mask & MModIM) && !as_strcasecmp(pArg->Str, "IM"))
+  if ((Mask & MModIM) && !as_strcasecmp(pArg->str.p_str, "IM"))
   {
     AdrMode = ModIM;
     goto AdrFound;
   }
 
-  if ((ArgLen == 2) && DecodeReg16(pArg->Str, eSyntaxZ80, &AdrVals[0]))
+  if ((ArgLen == 2) && DecodeReg16(pArg->str.p_str, eSyntaxZ80, &AdrVals[0]))
   {
     AdrMode = ModReg16;
     OpSize = 1;
     goto AdrFound;
   }
 
-  if (IsIndirect(pArg->Str))
+  if (IsIndirect(pArg->str.p_str))
   {
     tStrComp IArg;
 
     StrCompRefRight(&IArg, pArg, 1);
     StrCompShorten(&IArg, 1);
 
-    if (DecodeReg16(IArg.Str, eSyntaxZ80, &AdrVals[0]))
+    if (DecodeReg16(IArg.str.p_str, eSyntaxZ80, &AdrVals[0]))
     {
       AdrMode = ModIReg16;
       goto AdrFound;
@@ -252,7 +252,7 @@ static void DecodeALU(Word Code)
 
   if (!ChkArgCnt(1, 1));
   else if (!ChkZ80Syntax((tZ80Syntax)Hi(Code)));
-  else if (!DecodeReg8(ArgStr[1].Str, (tZ80Syntax)Hi(Code), &Reg)) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
+  else if (!DecodeReg8(ArgStr[1].str.p_str, (tZ80Syntax)Hi(Code), &Reg)) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
   else
   {
     CodeLen = 1;
@@ -268,8 +268,8 @@ static void DecodeMOV(Word Index)
 
   if (!ChkArgCnt(2,  2));
   else if (!ChkZ80Syntax(eSyntax808x));
-  else if (!DecodeReg8(ArgStr[1].Str, eSyntax808x, &Dest)) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
-  else if (!DecodeReg8(ArgStr[2].Str, eSyntax808x, BAsmCode + 0)) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[2]);
+  else if (!DecodeReg8(ArgStr[1].str.p_str, eSyntax808x, &Dest)) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
+  else if (!DecodeReg8(ArgStr[2].str.p_str, eSyntax808x, BAsmCode + 0)) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[2]);
   else
   {
     BAsmCode[0] += 0x40 + (Dest << 3);
@@ -293,7 +293,7 @@ static void DecodeMVI(Word Index)
     BAsmCode[1] = EvalStrIntExpression(&ArgStr[2], Int8, &OK);
     if (OK)
     {
-      if (!DecodeReg8(ArgStr[1].Str, eSyntax808x, &Reg)) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
+      if (!DecodeReg8(ArgStr[1].str.p_str, eSyntax808x, &Reg)) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
       else
       {
         BAsmCode[0] = 0x06 + (Reg << 3);
@@ -317,7 +317,7 @@ static void DecodeLXI(Word Index)
     AdrWord = EvalStrIntExpression(&ArgStr[2], Int16, &OK);
     if (OK)
     {
-      if (!DecodeReg16(ArgStr[1].Str, CurrZ80Syntax, &Reg)) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
+      if (!DecodeReg16(ArgStr[1].str.p_str, CurrZ80Syntax, &Reg)) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
       else
       {
         BAsmCode[0] = 0x01 + (Reg << 4);
@@ -335,7 +335,7 @@ static void DecodeLDAX_STAX(Word Index)
 
   if (!ChkArgCnt(1, 1));
   else if (!ChkZ80Syntax(eSyntax808x));
-  else if (!DecodeReg16(ArgStr[1].Str, CurrZ80Syntax, &Reg)) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
+  else if (!DecodeReg16(ArgStr[1].str.p_str, CurrZ80Syntax, &Reg)) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
   else
   {
     switch (Reg)
@@ -362,7 +362,7 @@ static void DecodePUSH_POP(Word Index)
 
   if (ChkArgCnt(1, 1))
   {
-    if (!as_strcasecmp(ArgStr[1].Str, "PSW"))
+    if (!as_strcasecmp(ArgStr[1].str.p_str, "PSW"))
     {
       if (ChkZ80Syntax(eSyntax808x))
       {
@@ -370,7 +370,7 @@ static void DecodePUSH_POP(Word Index)
         OK = True;
       }
     }
-    else if (!as_strcasecmp(ArgStr[1].Str, "AF"))
+    else if (!as_strcasecmp(ArgStr[1].str.p_str, "AF"))
     {
       if (ChkZ80Syntax(eSyntaxZ80))
       {
@@ -378,7 +378,7 @@ static void DecodePUSH_POP(Word Index)
         OK = True;
       }
     }
-    else if (DecodeReg16(ArgStr[1].Str, CurrZ80Syntax, &Reg))
+    else if (DecodeReg16(ArgStr[1].str.p_str, CurrZ80Syntax, &Reg))
       OK = (Reg != 3);
     else
       OK = False;
@@ -399,7 +399,7 @@ static void DecodeRST(Word Index)
   UNUSED(Index);
 
   if (!ChkArgCnt(1, 1));
-  else if ((MomCPU >= CPU8085U) && (!as_strcasecmp(ArgStr[1].Str, "V")))
+  else if ((MomCPU >= CPU8085U) && (!as_strcasecmp(ArgStr[1].str.p_str, "V")))
   {
     if (ChkZ80Syntax(eSyntaxZ80))
     {
@@ -434,7 +434,7 @@ static void DecodeINR_DCR(Word Index)
 
   if (!ChkArgCnt(1, 1));
   else if (!ChkZ80Syntax(eSyntax808x));
-  else if (!DecodeReg8(ArgStr[1].Str, eSyntax808x, &Reg)) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
+  else if (!DecodeReg8(ArgStr[1].str.p_str, eSyntax808x, &Reg)) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
   else
   {
     CodeLen = 1;
@@ -448,7 +448,7 @@ static void DecodeINX_DCX(Word Index)
 
   if (!ChkArgCnt(1, 1));
   else if (!ChkZ80Syntax(eSyntax808x));
-  else if (!DecodeReg16(ArgStr[1].Str, CurrZ80Syntax, &Reg)) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
+  else if (!DecodeReg16(ArgStr[1].str.p_str, CurrZ80Syntax, &Reg)) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
   else
   {
     CodeLen = 1;
@@ -464,7 +464,7 @@ static void DecodeDAD(Word Index)
 
   if (!ChkArgCnt(1, 1));
   else if (!ChkZ80Syntax(eSyntax808x));
-  else if (!DecodeReg16(ArgStr[1].Str, CurrZ80Syntax, &Reg)) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
+  else if (!DecodeReg16(ArgStr[1].str.p_str, CurrZ80Syntax, &Reg)) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
   else
   {
     CodeLen = 1;
@@ -481,7 +481,7 @@ static void DecodeDSUB(Word Index)
     Byte Reg;
 
     if ((ArgCnt == 1)
-     && (!DecodeReg16(ArgStr[1].Str, CurrZ80Syntax, &Reg) || (Reg != BCReg))) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
+     && (!DecodeReg16(ArgStr[1].str.p_str, CurrZ80Syntax, &Reg) || (Reg != BCReg))) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
     else
     {
       CodeLen = 1;
@@ -499,7 +499,7 @@ static void DecodeLHLX_SHLX(Word Index)
     Byte Reg;
 
     if ((ArgCnt == 1)
-     && (!DecodeReg16(ArgStr[1].Str, CurrZ80Syntax, &Reg) || (Reg != DEReg))) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
+     && (!DecodeReg16(ArgStr[1].str.p_str, CurrZ80Syntax, &Reg) || (Reg != DEReg))) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
     else
     {
       CodeLen = 1;
@@ -762,7 +762,7 @@ static void DecodeADD(Word Code)
     {
       Byte Reg;
 
-      if (!DecodeReg8(ArgStr[1].Str, eSyntax808x, &Reg)) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
+      if (!DecodeReg8(ArgStr[1].str.p_str, eSyntax808x, &Reg)) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
       else
         BAsmCode[CodeLen++] = 0x80 | Reg;
       break;
@@ -820,8 +820,8 @@ static void DecodeADD(Word Code)
     {
       Byte Reg;
 
-      if (!DecodeReg16(ArgStr[1].Str, CurrZ80Syntax, &Reg) || (Reg != DEReg)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
-      else if (!DecodeReg16(ArgStr[2].Str, CurrZ80Syntax, &Reg) || (Reg < 2)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[2]);
+      if (!DecodeReg16(ArgStr[1].str.p_str, CurrZ80Syntax, &Reg) || (Reg != DEReg)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
+      else if (!DecodeReg16(ArgStr[2].str.p_str, CurrZ80Syntax, &Reg) || (Reg < 2)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[2]);
       else
       {
         Boolean OK;
@@ -851,7 +851,7 @@ static void DecodeADC(Word Code)
     {
       Byte Reg;
 
-      if (!DecodeReg8(ArgStr[1].Str, eSyntax808x, &Reg)) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
+      if (!DecodeReg8(ArgStr[1].str.p_str, eSyntax808x, &Reg)) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
       else
         BAsmCode[CodeLen++] = 0x88 | Reg;
       break;
@@ -931,7 +931,7 @@ static void DecodeSUB(Word Code)
   else
     AdrMode = ModReg8;
 
-  if (DecodeReg8(ArgStr[ArgCnt].Str, CurrZ80Syntax, &Reg)) /* 808x style incl. M, Z80 style excl. (HL) */
+  if (DecodeReg8(ArgStr[ArgCnt].str.p_str, CurrZ80Syntax, &Reg)) /* 808x style incl. M, Z80 style excl. (HL) */
   {
     BAsmCode[CodeLen++] = 0x90 | Reg;
     return;
@@ -1110,7 +1110,7 @@ static void DecodeJP(Word Code)
 
   if (ArgCnt == 2)
   {
-    if (!DecodeCondition(ArgStr[1].Str, &Condition, True))
+    if (!DecodeCondition(ArgStr[1].str.p_str, &Condition, True))
     {
       WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
       return;
@@ -1150,7 +1150,7 @@ static void DecodeCALL(Word Code)
 
   if (ArgCnt == 2) /* Z80-style with condition */
   {
-    if (!DecodeCondition(ArgStr[1].Str, &Condition, False))
+    if (!DecodeCondition(ArgStr[1].str.p_str, &Condition, False))
     {
       WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
       return;
@@ -1182,7 +1182,7 @@ static void DecodeRET(Word Code)
 
   if (ArgCnt == 1) /* Z80-style with condition */
   {
-    if (!DecodeCondition(ArgStr[1].Str, &Condition, False)) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
+    if (!DecodeCondition(ArgStr[1].str.p_str, &Condition, False)) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
     else
       BAsmCode[CodeLen++] = 0xc0 | Condition;
   }
@@ -1224,7 +1224,7 @@ static void DecodeSRA(Word Code)
   if (!ChkArgCnt(1, 1));
   else if (!ChkMinCPU(CPU8085U));
   else if (!ChkZ80Syntax(eSyntaxZ80));
-  else if (!DecodeReg16(ArgStr[1].Str, CurrZ80Syntax, &Reg) || (Reg != HLReg)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
+  else if (!DecodeReg16(ArgStr[1].str.p_str, CurrZ80Syntax, &Reg) || (Reg != HLReg)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
   else
    BAsmCode[CodeLen++] = Lo(Code);
 }
@@ -1243,7 +1243,7 @@ static void DecodeRLC(Word Code)
     {
       Byte Reg;
 
-      if (!DecodeReg16(ArgStr[1].Str, CurrZ80Syntax, &Reg) || (Reg != DEReg)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
+      if (!DecodeReg16(ArgStr[1].str.p_str, CurrZ80Syntax, &Reg) || (Reg != DEReg)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
       else
         BAsmCode[CodeLen++] = 0x18;
       break;
@@ -1432,7 +1432,7 @@ static void MakeCode_85(void)
 
   /* suchen */
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

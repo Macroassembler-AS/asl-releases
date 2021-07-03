@@ -15,8 +15,7 @@
 /*                                                                           */
 /*****************************************************************************/
 
-#ifndef _FILEFORMATS_H
-#define _FILEFORMATS_H
+#include "addrspace.h"
 
 #define FileMagic 0x1489
 
@@ -27,22 +26,6 @@
 #define FileHeaderRelocRec  0x83   /* relokatibler Datenrecord */
 #define FileHeaderRRelocRec 0x84   /* relokatibler Datenrecord mit Symbolen */
 #define FileHeaderRelocInfo 0x85   /* Relokationsinformationen */
-
-typedef enum
-{
-  SegNone  = 0,
-  SegCode  = 1,
-  SegData  = 2,
-  SegIData = 3,
-  SegXData = 4,
-  SegYData = 5,
-  SegBData = 6,
-  SegIO    = 7,
-  SegReg   = 8,
-  SegRData = 9,
-  SegEEData = 10,
-  PCMax    = SegEEData
-} tAddrSpace;
 
 /* Definition der im Code liegenden, zu patchenden Typen:
 
@@ -84,5 +67,4 @@ typedef enum
 
 #define RelFlag_Relative 1
 
-#endif
 #endif /* _FILEFORMAT_H */

@@ -10,6 +10,8 @@
 /*                                                                           */
 /*****************************************************************************/
 
+#include "addrspace.h"
+
 struct _ASSUMERec;
 
 extern int FindInst(void *Field, int Size, int Count);
@@ -21,7 +23,7 @@ typedef int (*tDispBaseSplitQualifier)(const char *pArg, int StartPos, int Split
 extern int FindDispBaseSplitWithQualifier(const char *pArg, int *pArgLen, tDispBaseSplitQualifier Qualifier);
 #define FindDispBaseSplit(pArg, pArgLen) FindDispBaseSplitWithQualifier(pArg, pArgLen, NULL)
 
-extern void CodeEquate(ShortInt DestSeg, LargeInt Min, LargeInt Max);
+extern void CodeEquate(as_addrspace_t DestSeg, LargeInt Min, LargeInt Max);
 
 extern Boolean QualifyQuote_SingleQuoteConstant(const char *pStart, const char *pQuotePos);
 

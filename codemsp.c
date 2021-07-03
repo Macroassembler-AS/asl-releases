@@ -201,7 +201,7 @@ static Boolean DecodeReg(const tStrComp *pArg, Word *pResult, Boolean MustBeReg)
   tEvalResult EvalResult;
   tRegEvalResult RegEvalResult;
 
-  if (DecodeRegCore(pArg->Str, pResult))
+  if (DecodeRegCore(pArg->str.p_str, pResult))
   {
     *pResult &= ~REG_MARK;
     return True;
@@ -288,12 +288,12 @@ static Boolean DecodeAdr(const tStrComp *pArg, tExtMode ExtMode, Byte Mask, Bool
 
   /* immediate */
 
-  if (*pArg->Str == '#')
+  if (*pArg->str.p_str == '#')
   {
     if (!MayImm) WrError(ErrNum_InvAddrMode);
     else
     {
-      int ForceLong = (pArg->Str[1] == '>') ? 1 : 0;
+      int ForceLong = (pArg->str.p_str[1] == '>') ? 1 : 0;
 
       AdrWord = EvalStrIntExpressionOffs(pArg, 1 + ForceLong, OpSizeIntTypes[OpSize], &OK);
       if (OK)
@@ -306,7 +306,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, tExtMode ExtMode, Byte Mask, Bool
 
   /* absolut */
 
-  if (*pArg->Str == '&')
+  if (*pArg->str.p_str == '&')
   {
     pAdrParts->Val = EvalStrIntExpressionOffs(pArg, 1, ThisAdrIntType, &OK);
     if (OK)
@@ -339,13 +339,13 @@ static Boolean DecodeAdr(const tStrComp *pArg, tExtMode ExtMode, Byte Mask, Bool
 
   /* Displacement */
 
-  ArgLen = strlen(pArg->Str);
-  if ((*pArg->Str) && (pArg->Str[ArgLen - 1] == ')'))
+  ArgLen = strlen(pArg->str.p_str);
+  if ((*pArg->str.p_str) && (pArg->str.p_str[ArgLen - 1] == ')'))
   {
     tStrComp Arg = *pArg;
 
     StrCompShorten(&Arg, 1);
-    p = RQuotPos(Arg.Str, '(');
+    p = RQuotPos(Arg.str.p_str, '(');
     if (p)
     {
       tStrComp RegComp, OffsComp;
@@ -373,7 +373,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, tExtMode ExtMode, Byte Mask, Bool
       }
       *p = Save;
     }
-    pArg->Str[ArgLen - 1] = ')';
+    pArg->str.p_str[ArgLen - 1] = ')';
 
     if (pAdrParts->Mode != eModeNone)
       return ChkAdr(Mask, pAdrParts);
@@ -381,14 +381,14 @@ static Boolean DecodeAdr(const tStrComp *pArg, tExtMode ExtMode, Byte Mask, Bool
 
   /* indirekt mit/ohne Autoinkrement */
 
-  if ((*pArg->Str == '@') || (*pArg->Str == '*'))
+  if ((*pArg->str.p_str == '@') || (*pArg->str.p_str == '*'))
   {
     Boolean AutoInc = False;
     tStrComp Arg;
 
     StrCompRefRight(&Arg, pArg, 1);
-    ArgLen = strlen(Arg.Str);
-    if (Arg.Str[ArgLen - 1] == '+')
+    ArgLen = strlen(Arg.str.p_str);
+    if (Arg.str.p_str[ArgLen - 1] == '+')
     {
       AutoInc = True;
       StrCompShorten(&Arg, 1);
@@ -414,7 +414,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, tExtMode ExtMode, Byte Mask, Bool
 
   if (!PCDist)
   {
-    fprintf(stderr, "internal error: PCDist not set for '%s'\n", OpPart.Str);
+    fprintf(stderr, "internal error: PCDist not set for '%s'\n", OpPart.str.p_str);
     exit(10);
   }
   CurrPC = EProgCounter() + PCDist;
@@ -492,7 +492,7 @@ static Word GetMult(const tStrComp *pArg, Boolean *pOK)
       return 0;
   }
 
-  if (*pArg->Str == '#')
+  if (*pArg->str.p_str == '#')
   {
     tSymbolFlags Flags;
 
@@ -569,7 +569,7 @@ static void ConstructTwoOpX(Word Code, const tAdrParts *pSrcParts, const tAdrPar
 static void DecodeFixed(Word Code)
 {
   if (!ChkArgCnt(0, 0));
-  else if (*AttrPart.Str) WrError(ErrNum_UseLessAttr);
+  else if (*AttrPart.str.p_str) WrError(ErrNum_UseLessAttr);
   else if (OpSize != eOpSizeDefault) WrError(ErrNum_InvOpSize);
   else
   {
@@ -714,7 +714,7 @@ static void DecodeBR(Word Code)
 
   PCDist = 2;
   if (!ChkArgCnt(1, 1));
-  else if (*AttrPart.Str) WrError(ErrNum_UseLessAttr);
+  else if (*AttrPart.str.p_str) WrError(ErrNum_UseLessAttr);
   else if (DecodeAdr(&ArgStr[1], eExtModeNo, MModeAs, True, &SrcParts))
   {
     if (Odd(EProgCounter())) WrError(ErrNum_AddrNotAligned);
@@ -907,7 +907,7 @@ static void DecodeMOVA(Word Code)
 
   OpSize = eOpSizeA;
   if (!ChkArgCnt(2, 2));
-  else if (*AttrPart.Str) WrError(ErrNum_UseLessAttr);
+  else if (*AttrPart.str.p_str) WrError(ErrNum_UseLessAttr);
   else
   {
     PCDist = 2;
@@ -994,8 +994,10 @@ static void DecodeBRA(Word Code)
 {
   if (ChkArgCnt(1, 1))
   {
-    IncArgCnt();
-    strcpy(ArgStr[ArgCnt].Str, "PC");
+    const char PCArg[] = "PC";
+
+    AppendArg(strlen(PCArg));
+    strcpy(ArgStr[ArgCnt].str.p_str, PCArg);
     DecodeMOVA(Code);
   }
 }
@@ -1037,7 +1039,7 @@ static void DecodeADDA_SUBA_CMPA(Word Code)
   OpSize = eOpSizeA;
 
   if (!ChkArgCnt(2, 2));
-  else if (*AttrPart.Str) WrError(ErrNum_UseLessAttr);
+  else if (*AttrPart.str.p_str) WrError(ErrNum_UseLessAttr);
   else if (DecodeReg(&ArgStr[2], &WAsmCode[0], False) == eIsReg)
   {
     tAdrParts AdrParts;
@@ -1066,7 +1068,7 @@ static void DecodeRxM(Word Code)
   if (!ChkArgCnt(2, 2));
   else if (OpSize == eOpSizeB) WrError(ErrNum_InvOpSize);
   else if (DecodeReg(&ArgStr[2], &WAsmCode[0], True) != eIsReg);
-  else if (ArgStr[1].Str[0] != '#') WrError(ErrNum_OnlyImmAddr);
+  else if (ArgStr[1].str.p_str[0] != '#') WrError(ErrNum_OnlyImmAddr);
   else
   {
     Word Mult;
@@ -1097,7 +1099,7 @@ static void DecodeCALLA(Word Code)
   OpSize = eOpSizeA;
   PCDist = 2;
   if (!ChkArgCnt(1, 1));
-  else if (*AttrPart.Str) WrError(ErrNum_UseLessAttr);
+  else if (*AttrPart.str.p_str) WrError(ErrNum_UseLessAttr);
   else if (DecodeAdr(&ArgStr[1], eExtModeYes, 15, True, &AdrParts))
   {
     if (AdrParts.WasImm)
@@ -1132,7 +1134,7 @@ static void DecodePUSHM_POPM(Word Code)
   if (!ChkArgCnt(2, 2));
   else if (OpSize == 0) WrError(ErrNum_InvOpSize);
   else if (DecodeReg(&ArgStr[2], &WAsmCode[0], True) != eIsReg);
-  else if (ArgStr[1].Str[0] != '#') WrError(ErrNum_OnlyImmAddr);
+  else if (ArgStr[1].str.p_str[0] != '#') WrError(ErrNum_OnlyImmAddr);
   else
   {
     Boolean OK;
@@ -1185,12 +1187,13 @@ static void DecodeBYTE(Word Index)
 
   UNUSED(Index);
 
+  as_tempres_ini(&t);
   if (ChkArgCnt(1, ArgCntMax))
   {
     z = 1; OK = True;
     do
     {
-      KillBlanks(ArgStr[z].Str);
+      KillBlanks(ArgStr[z].str.p_str);
       EvalStrExpression(&ArgStr[z], &t);
       switch (t.Typ)
       {
@@ -1205,7 +1208,7 @@ static void DecodeBYTE(Word Index)
           break;
         case TempString:
         {
-          unsigned l = t.Contents.Ascii.Length;
+          unsigned l = t.Contents.str.len;
 
           if (SetMaxCodeLen(l + CodeLen))
           {
@@ -1213,10 +1216,10 @@ static void DecodeBYTE(Word Index)
           }
           else
           {
-            char *pEnd = t.Contents.Ascii.Contents + l, *p;
+            char *pEnd = t.Contents.str.p_str + l, *p;
 
-            TranslateString(t.Contents.Ascii.Contents, l);
-            for (p = t.Contents.Ascii.Contents; p < pEnd; PutByte(*(p++)));
+            TranslateString(t.Contents.str.p_str, l);
+            for (p = t.Contents.str.p_str; p < pEnd; PutByte(*(p++)));
           }
           break;
         }
@@ -1232,6 +1235,7 @@ static void DecodeBYTE(Word Index)
     while ((z <= ArgCnt) && (OK));
     if (!OK) CodeLen = 0;
   }
+  as_tempres_free(&t);
 }
 
 static void DecodeWORD(Word Index)
@@ -1291,7 +1295,7 @@ static void DecodeRPT(Word Code)
 
   if (!ChkArgCnt(1, ArgCntMax))
     return;
-  if (*AttrPart.Str != '\0')
+  if (*AttrPart.str.p_str != '\0')
   {
     WrError(ErrNum_UseLessAttr);
     return;
@@ -1299,7 +1303,7 @@ static void DecodeRPT(Word Code)
 
   /* multiplier argument */
 
-  pOpPart = FirstBlank(ArgStr[1].Str);
+  pOpPart = FirstBlank(ArgStr[1].str.p_str);
   if (!pOpPart)
   {
     WrError(ErrNum_CannotSplitArg);
@@ -1320,17 +1324,17 @@ static void DecodeRPT(Word Code)
     return;
   }
   *pArgPart1++ = '\0';
-  strcpy(OpPart.Str, pOpPart);
-  UpString(OpPart.Str);
+  strcpy(OpPart.str.p_str, pOpPart);
+  UpString(OpPart.str.p_str);
   KillPrefBlanks(pArgPart1);
-  strmov(ArgStr[1].Str, pArgPart1);
+  strmov(ArgStr[1].str.p_str, pArgPart1);
 
   /* split off new attribute part: */
 
-  pAttrPart = strrchr(OpPart.Str, '.');
+  pAttrPart = strrchr(OpPart.str.p_str, '.');
   if (pAttrPart)
   {
-    AttrPart.Pos.Len = strmemcpy(AttrPart.Str, STRINGSIZE, pAttrPart + 1, strlen(pAttrPart + 1));
+    AttrPart.Pos.Len = strmemcpy(AttrPart.str.p_str, STRINGSIZE, pAttrPart + 1, strlen(pAttrPart + 1));
     *pAttrPart = '\0';
   }
   else
@@ -1523,12 +1527,12 @@ static void InternSymbol_MSP(char *pArg, TempResult *pResult)
 
 static Boolean DecodeAttrPart_MSP(void)
 {
-  if (strlen(AttrPart.Str) > 1)
+  if (strlen(AttrPart.str.p_str) > 1)
   {
     WrStrErrorPos(ErrNum_UndefAttr, &AttrPart);
     return False;
   }
-  switch (as_toupper(*AttrPart.Str))
+  switch (as_toupper(*AttrPart.str.p_str))
   {
     case '\0':
       break;
@@ -1603,19 +1607,13 @@ static void MakeCode_MSP(void)
 
   /* all the rest from table */
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 
 static Boolean IsDef_MSP(void)
 {
   return Memo("REG");
-}
-
-static void SwitchFrom_MSP(void)
-{
-  DeinitFields();
-  ClearONOFF();
 }
 
 static void SwitchTo_MSP(void)
@@ -1638,7 +1636,7 @@ static void SwitchTo_MSP(void)
   IsDef = IsDef_MSP;
   InternSymbol = InternSymbol_MSP;
   DissectReg = DissectReg_MSP;
-  SwitchFrom = SwitchFrom_MSP; InitFields();
+  SwitchFrom = DeinitFields; InitFields();
 
   MultPrefix = 0x0000;
 }

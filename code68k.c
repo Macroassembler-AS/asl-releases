@@ -247,7 +247,7 @@ static Boolean CheckColdSize(void)
 
 static Boolean CheckFloatSize(void)
 {
-  if (!*AttrPart.Str)
+  if (!*AttrPart.str.p_str)
     OpSize = NativeFloatSize;
 
   switch (OpSize)
@@ -444,7 +444,7 @@ static tRegEvalResult DecodeReg(const tStrComp *pArg, Word *pResult, Boolean Mus
   tEvalResult EvalResult;
   tRegEvalResult RegEvalResult;
 
-  if (DecodeRegCore(pArg->Str, pResult))
+  if (DecodeRegCore(pArg->str.p_str, pResult))
   {
     *pResult &= ~REG_MARK;
     return eIsReg;
@@ -470,7 +470,7 @@ static tRegEvalResult DecodeFPReg(const tStrComp *pArg, Word *pResult, Boolean M
   tEvalResult EvalResult;
   tRegEvalResult RegEvalResult;
 
-  if (DecodeFPRegCore(pArg->Str, pResult))
+  if (DecodeFPRegCore(pArg->str.p_str, pResult))
   {
     *pResult &= ~REG_MARK;
     return eIsReg;
@@ -497,13 +497,13 @@ static tRegEvalResult DecodeRegOrFPReg(const tStrComp *pArg, Word *pResult, tSym
   tEvalResult EvalResult;
   tRegEvalResult RegEvalResult;
 
-  if (DecodeRegCore(pArg->Str, pResult))
+  if (DecodeRegCore(pArg->str.p_str, pResult))
   {
     *pResult &= ~REG_MARK;
     *pSize = eSymbolSize32Bit;
     return eIsReg;
   }
-  if (DecodeFPRegCore(pArg->Str, pResult))
+  if (DecodeFPRegCore(pArg->str.p_str, pResult))
   {
     *pSize = NativeFloatSize;
     return eIsReg;
@@ -517,7 +517,7 @@ static tRegEvalResult DecodeRegOrFPReg(const tStrComp *pArg, Word *pResult, tSym
 
 static Boolean DecodeRegPair(tStrComp *pArg, Word *Erg1, Word *Erg2)
 {
-  char *pSep = strchr(pArg->Str, ':');
+  char *pSep = strchr(pArg->str.p_str, ':');
   tStrComp Left, Right;
 
   if (!pSep)
@@ -531,14 +531,14 @@ static Boolean DecodeRegPair(tStrComp *pArg, Word *Erg1, Word *Erg2)
 
 static Boolean CodeIndRegPair(tStrComp *pArg, Word *Erg1, Word *Erg2)
 {
-  char *pSep = strchr(pArg->Str, ':');
+  char *pSep = strchr(pArg->str.p_str, ':');
   tStrComp Left, Right;
 
   if (!pSep)
     return False;
   StrCompSplitRef(&Left, &Right, pArg, pSep);
 
-  if (!IsIndirect(Left.Str) || !IsIndirect(Right.Str))
+  if (!IsIndirect(Left.str.p_str) || !IsIndirect(Right.str.p_str))
     return False;
   StrCompShorten(&Left, 1);
   StrCompIncRefLeft(&Left, 1);
@@ -618,15 +618,15 @@ static Boolean SplitBitField(tStrComp *pArg, Word *Erg)
   Word OfsVal;
   tStrComp FieldArg, OffsArg, WidthArg;
 
-  p = strchr(pArg->Str, '{');
+  p = strchr(pArg->str.p_str, '{');
   if (!p)
     return False;
   StrCompSplitRef(pArg, &FieldArg, pArg, p);
-  if ((!*FieldArg.Str) || (FieldArg.Str[strlen(FieldArg.Str) - 1] != '}'))
+  if ((!*FieldArg.str.p_str) || (FieldArg.str.p_str[strlen(FieldArg.str.p_str) - 1] != '}'))
     return False;
   StrCompShorten(&FieldArg, 1);
 
-  p = strchr(FieldArg.Str, ':');
+  p = strchr(FieldArg.str.p_str, ':');
   if (!p)
     return False;
   StrCompSplitRef(&OffsArg, &WidthArg, &FieldArg, p);
@@ -641,11 +641,11 @@ static Boolean SplitBitField(tStrComp *pArg, Word *Erg)
 static Boolean SplitSize(tStrComp *pArg, ShortInt *DispLen, unsigned OpSizeMask)
 {
   ShortInt NewLen = -1;
-  int ArgLen = strlen(pArg->Str);
+  int ArgLen = strlen(pArg->str.p_str);
 
-  if ((ArgLen > 2) && (pArg->Str[ArgLen - 2] == '.'))
+  if ((ArgLen > 2) && (pArg->str.p_str[ArgLen - 2] == '.'))
   {
-    switch (as_toupper(pArg->Str[ArgLen - 1]))
+    switch (as_toupper(pArg->str.p_str[ArgLen - 1]))
     {
       case 'B':
         if (OpSizeMask & 1)
@@ -684,7 +684,7 @@ static Boolean SplitSize(tStrComp *pArg, ShortInt *DispLen, unsigned OpSizeMask)
 
 static Boolean ClassComp(AdrComp *C)
 {
-  int CompLen = strlen(C->Comp.Str);
+  int CompLen = strlen(C->Comp.str.p_str);
   Boolean IsReg;
   char *pEnd, Save;
 
@@ -695,13 +695,13 @@ static Boolean ClassComp(AdrComp *C)
   C->Size = -1;
   C->Wert = 0;
 
-  if ((*C->Comp.Str == '[') && (C->Comp.Str[CompLen - 1] == ']'))
+  if ((*C->Comp.str.p_str == '[') && (C->Comp.str.p_str[CompLen - 1] == ']'))
   {
     C->Art = indir;
     return True;
   }
 
-  if (!as_strcasecmp(C->Comp.Str, "PC"))
+  if (!as_strcasecmp(C->Comp.str.p_str, "PC"))
   {
     C->Art = PC;
     return True;
@@ -709,8 +709,8 @@ static Boolean ClassComp(AdrComp *C)
 
   /* use ChkMacSymbName so . is not taken as valid character: TODO: what about _ ? */
 
-  pEnd = ChkMacSymbNameUpTo(C->Comp.Str, C->Comp.Str + CompLen);
-  IsReg = (pEnd > C->Comp.Str);
+  pEnd = ChkMacSymbNameUpTo(C->Comp.str.p_str, C->Comp.str.p_str + CompLen);
+  IsReg = (pEnd > C->Comp.str.p_str);
   if (IsReg)
   {
     tRegEvalResult RegEvalResult;
@@ -725,7 +725,7 @@ static Boolean ClassComp(AdrComp *C)
   }
   if (IsReg)
   {
-    int ScaleOffs = pEnd - C->Comp.Str;
+    int ScaleOffs = pEnd - C->Comp.str.p_str;
 
     if ((C->ANummer > 7) && (ScaleOffs == CompLen))
     {
@@ -735,9 +735,9 @@ static Boolean ClassComp(AdrComp *C)
     }
     else
     {
-      if ((CompLen >= ScaleOffs + 2) && (C->Comp.Str[ScaleOffs] == '.'))
+      if ((CompLen >= ScaleOffs + 2) && (C->Comp.str.p_str[ScaleOffs] == '.'))
       {
-        switch (as_toupper(C->Comp.Str[ScaleOffs + 1]))
+        switch (as_toupper(C->Comp.str.p_str[ScaleOffs + 1]))
         {
           case 'L':
             C->Long = True;
@@ -752,9 +752,9 @@ static Boolean ClassComp(AdrComp *C)
       }
       else
         C->Long = (pCurrCPUProps->Family == eColdfire);
-      if ((CompLen > ScaleOffs + 1) && (C->Comp.Str[ScaleOffs] == '*'))
+      if ((CompLen > ScaleOffs + 1) && (C->Comp.str.p_str[ScaleOffs] == '*'))
       {
-        switch (C->Comp.Str[ScaleOffs + 1])
+        switch (C->Comp.str.p_str[ScaleOffs + 1])
         {
           case '1':
             C->Scale = 0;
@@ -784,9 +784,9 @@ static Boolean ClassComp(AdrComp *C)
   }
 
   C->Art = Disp;
-  if ((CompLen >= 2) && (C->Comp.Str[CompLen - 2] == '.'))
+  if ((CompLen >= 2) && (C->Comp.str.p_str[CompLen - 2] == '.'))
   {
-    switch (as_toupper(C->Comp.Str[CompLen - 1]))
+    switch (as_toupper(C->Comp.str.p_str[CompLen - 1]))
     {
       case 'L':
         C->Size = 2;
@@ -948,18 +948,18 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
 
   /* some insns decode the same arg twice, so we must keep the original string intact. */
 
-  StrCompMkTemp(&Arg, ArgStr);
+  StrCompMkTemp(&Arg, ArgStr, sizeof(ArgStr));
   StrCompCopy(&Arg, pArg);
   KillPrefBlanksStrComp(&Arg);
   KillPostBlanksStrComp(&Arg);
-  ArgLen = strlen(Arg.Str);
+  ArgLen = strlen(Arg.str.p_str);
   ClrAdrVals(pResult);
 
-  StrCompMkTemp(&CRegArg, CReg);
+  StrCompMkTemp(&CRegArg, CReg, sizeof(CReg));
 
   /* immediate : */
 
-  if (*Arg.Str == '#')
+  if (*Arg.str.p_str == '#')
   {
     tStrComp ImmArg;
 
@@ -1105,7 +1105,7 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
 
   /* Adressregister indirekt mit Predekrement: */
 
-  if ((ArgLen >= 4) && (*Arg.Str == '-') && (Arg.Str[1] == '(') && (Arg.Str[ArgLen - 1] == ')'))
+  if ((ArgLen >= 4) && (*Arg.str.p_str == '-') && (Arg.str.p_str[1] == '(') && (Arg.str.p_str[ArgLen - 1] == ')'))
   {
     StrCompCopySub(&CRegArg, &Arg, 2, ArgLen - 3);
     if ((DecodeReg(&CRegArg, &rerg, False) == eIsReg) && (rerg > 7))
@@ -1119,7 +1119,7 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
 
   /* Adressregister indirekt mit Postinkrement */
 
-  if ((ArgLen >= 4) && (*Arg.Str == '(') && (Arg.Str[ArgLen - 2] == ')') && (Arg.Str[ArgLen - 1] == '+'))
+  if ((ArgLen >= 4) && (*Arg.str.p_str == '(') && (Arg.str.p_str[ArgLen - 2] == ')') && (Arg.str.p_str[ArgLen - 1] == '+'))
   {
     StrCompCopySub(&CRegArg, &Arg, 1, ArgLen - 3);
     if ((DecodeReg(&CRegArg, &rerg, False) == eIsReg) && (rerg > 7))
@@ -1137,7 +1137,7 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
   rklamm = 0;
   lastrklamm = 0;
   doklamm = True;
-  for (p = Arg.Str; *p; p++)
+  for (p = Arg.str.p_str; *p; p++)
   {
     if (*p == '[')
       doklamm = False;
@@ -1150,7 +1150,7 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
       else if (*p == ')')
       {
         rklamm++;
-        lastrklamm = p - Arg.Str;
+        lastrklamm = p - Arg.str.p_str;
       }
     }
   }
@@ -1162,7 +1162,7 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
 
     /* aeusseres Displacement abspalten, Klammern loeschen: */
 
-    p = strchr(Arg.Str, '(');
+    p = strchr(Arg.str.p_str, '(');
     *p = '\0';
     StrCompSplitRef(&OutDisp, &IndirComps, &Arg, p);
     OutDispLen = -1;
@@ -1176,7 +1176,7 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
     do
     {
       doklamm = True;
-      pCompSplit = IndirComps.Str;
+      pCompSplit = IndirComps.str.p_str;
       do
       {
         if (*pCompSplit == '[')
@@ -1200,7 +1200,7 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
 
       /* ignore empty component */
 
-      if (!AdrComps[CompCnt].Comp.Str[0])
+      if (!AdrComps[CompCnt].Comp.str.p_str[0])
         continue;
       if (!ClassComp(&AdrComps[CompCnt]))
       {
@@ -1238,7 +1238,7 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
 
       else if (AdrComps[CompCnt].Art == Disp)
       {
-        if (*OutDisp.Str)
+        if (*OutDisp.str.p_str)
         {
           WrError(ErrNum_InvAddrMode);
           return ModNone;
@@ -1284,7 +1284,7 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
       {
         /* 1.1.1. Variante (An) */
 
-        if ((*OutDisp.Str == '\0') && ((MModAdrI & Erl) != 0))
+        if ((*OutDisp.str.p_str == '\0') && ((MModAdrI & Erl) != 0))
         {
           pResult->Mode = 0x10 + AdrComps[0].ANummer;
           pResult->Num = ModAdrI;
@@ -1507,7 +1507,7 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
     {
       pResult->Vals[0] = (AdrComps[0].INummer << 12) + (Ord(AdrComps[0].Long) << 11) + (AdrComps[0].Scale << 9) + 0x180;
       pResult->Mode = 0x30;
-      if (*OutDisp.Str == '\0')
+      if (*OutDisp.str.p_str == '\0')
       {
         pResult->Vals[0] = pResult->Vals[0] + 0x0010;
         pResult->Cnt = 2;
@@ -1582,7 +1582,7 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
       {
         /* abschneiden & klassifizieren: */
 
-        pCompSplit = strchr(IndirComps.Str, ',');
+        pCompSplit = strchr(IndirComps.str.p_str, ',');
         if (!pCompSplit)
           OneComp.Comp = IndirComps;
         else
@@ -1761,7 +1761,7 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
       }
       if (OutDispLen == -1)
         OutDispLen = IsDisp16(HVal) ? 1 : 2;
-      if (*OutDisp.Str == '\0')
+      if (*OutDisp.str.p_str == '\0')
       {
         pResult->Vals[0]++;
         goto chk;
@@ -1863,16 +1863,16 @@ static Boolean DecodeRegList(const tStrComp *pArg, Word *Erg)
   String ArgStr;
   tStrComp Arg, Remainder, From, To;
 
-  StrCompMkTemp(&Arg, ArgStr);
+  StrCompMkTemp(&Arg, ArgStr, sizeof(ArgStr));
   StrCompCopy(&Arg, pArg);
 
   *Erg = 0;
   do
   {
-    p = strchr(Arg.Str, '/');
+    p = strchr(Arg.str.p_str, '/');
     if (p)
       StrCompSplitRef(&Arg, &Remainder, &Arg, p);
-    p2 = strchr(Arg.Str, '-');
+    p2 = strchr(Arg.str.p_str, '-');
     if (!p2)
     {
       if (DecodeReg(&Arg, &h, False) != eIsReg)
@@ -1882,7 +1882,7 @@ static Boolean DecodeRegList(const tStrComp *pArg, Word *Erg)
     else
     {
       StrCompSplitRef(&From, &To, &Arg, p2);
-      if (!*From.Str || !*To.Str)
+      if (!*From.str.p_str || !*To.str.p_str)
         return False;
       if ((DecodeReg(&From, &h, False) != eIsReg)
        || (DecodeReg(&To, &h2, False) != eIsReg))
@@ -1909,7 +1909,7 @@ static Boolean DecodeRegList(const tStrComp *pArg, Word *Erg)
 
 static Boolean DecodeMACScale(const tStrComp *pArg, Word *pResult)
 {
-  int l = strlen(pArg->Str);
+  int l = strlen(pArg->str.p_str);
   tStrComp ShiftArg;
   Boolean Left = False, OK;
   Word ShiftCnt;
@@ -1925,9 +1925,9 @@ static Boolean DecodeMACScale(const tStrComp *pArg, Word *pResult)
 
   if (l < 2)
     return False;
-  if (!strncmp(pArg->Str, "<<", 2))
+  if (!strncmp(pArg->str.p_str, "<<", 2))
     Left = True;
-  else if (!strncmp(pArg->Str, ">>", 2))
+  else if (!strncmp(pArg->str.p_str, ">>", 2))
     Left = False;
   else
     return False;
@@ -1936,7 +1936,7 @@ static Boolean DecodeMACScale(const tStrComp *pArg, Word *pResult)
 
   StrCompRefRight(&ShiftArg, pArg, 2);
   KillPrefBlanksStrCompRef(&ShiftArg);
-  if (!*ShiftArg.Str)
+  if (!*ShiftArg.str.p_str)
   {
     ShiftCnt = 1;
     OK = True;
@@ -1961,7 +1961,7 @@ static Boolean SplitMACUpperLower(Word *pResult, tStrComp *pArg)
   tStrComp HalfComp;
 
   *pResult = 0;
-  pSplit = strrchr(pArg->Str, '.');
+  pSplit = strrchr(pArg->str.p_str, '.');
   if (!pSplit)
   {
     WrStrErrorPos(ErrNum_InvReg, pArg);
@@ -1970,9 +1970,9 @@ static Boolean SplitMACUpperLower(Word *pResult, tStrComp *pArg)
 
   StrCompSplitRef(pArg, &HalfComp, pArg, pSplit);
   KillPostBlanksStrComp(pArg);
-  if (!as_strcasecmp(HalfComp.Str, "L"))
+  if (!as_strcasecmp(HalfComp.str.p_str, "L"))
     *pResult = 0;
-  else if (!as_strcasecmp(HalfComp.Str, "U"))
+  else if (!as_strcasecmp(HalfComp.str.p_str, "U"))
     *pResult = 1;
   else
   {
@@ -1988,7 +1988,7 @@ static Boolean SplitMACANDMASK(Word *pResult, tStrComp *pArg)
   tStrComp MaskComp, AddrComp;
 
   *pResult = 0;
-  pSplit = strrchr(pArg->Str, '&');
+  pSplit = strrchr(pArg->str.p_str, '&');
   if (!pSplit)
     return True;
 
@@ -1997,7 +1997,7 @@ static Boolean SplitMACANDMASK(Word *pResult, tStrComp *pArg)
 
   /* if no MASK argument, be sure to revert pArg to original state: */
 
-  if (!strcmp(MaskComp.Str, "") || !as_strcasecmp(MaskComp.Str, "MASK"))
+  if (!strcmp(MaskComp.str.p_str, "") || !as_strcasecmp(MaskComp.str.p_str, "MASK"))
   {
     KillPostBlanksStrComp(&AddrComp);
     *pArg = AddrComp;
@@ -2019,9 +2019,9 @@ static void DecodeMOVE(Word Index)
   unsigned Variant = Index & VariantMask;
 
   if (!ChkArgCnt(2, 2));
-  else if (!as_strcasecmp(ArgStr[1].Str, "USP"))
+  else if (!as_strcasecmp(ArgStr[1].str.p_str, "USP"))
   {
-    if (*AttrPart.Str && (OpSize != eSymbolSize32Bit)) WrError(ErrNum_InvOpSize);
+    if (*AttrPart.str.p_str && (OpSize != eSymbolSize32Bit)) WrError(ErrNum_InvOpSize);
     else if ((pCurrCPUProps->Family != eColdfire) || CheckISA((1 << eCfISA_APlus) | (1 << eCfISA_B) | (1 << eCfISA_C)))
     {
       tAdrResult AdrResult;
@@ -2034,9 +2034,9 @@ static void DecodeMOVE(Word Index)
       }
     }
   }
-  else if (!as_strcasecmp(ArgStr[2].Str, "USP"))
+  else if (!as_strcasecmp(ArgStr[2].str.p_str, "USP"))
   {
-    if (*AttrPart.Str && (OpSize != eSymbolSize32Bit)) WrError(ErrNum_InvOpSize);
+    if (*AttrPart.str.p_str && (OpSize != eSymbolSize32Bit)) WrError(ErrNum_InvOpSize);
     else if ((pCurrCPUProps->Family != eColdfire) || CheckISA((1 << eCfISA_APlus) | (1 << eCfISA_B) | (1 << eCfISA_C)))
     {
       tAdrResult AdrResult;
@@ -2049,7 +2049,7 @@ static void DecodeMOVE(Word Index)
       }
     }
   }
-  else if (!as_strcasecmp(ArgStr[1].Str, "SR"))
+  else if (!as_strcasecmp(ArgStr[1].str.p_str, "SR"))
   {
     if (OpSize != eSymbolSize16Bit) WrError(ErrNum_InvOpSize);
     else
@@ -2066,9 +2066,9 @@ static void DecodeMOVE(Word Index)
       }
     }
   }
-  else if (!as_strcasecmp(ArgStr[1].Str, "CCR"))
+  else if (!as_strcasecmp(ArgStr[1].str.p_str, "CCR"))
   {
-    if (*AttrPart.Str && (OpSize > eSymbolSize16Bit)) WrError(ErrNum_InvOpSize);
+    if (*AttrPart.str.p_str && (OpSize > eSymbolSize16Bit)) WrError(ErrNum_InvOpSize);
     else if (!CheckNoFamily(1 << e68KGen1a));
     else
     {
@@ -2083,17 +2083,17 @@ static void DecodeMOVE(Word Index)
       }
     }
   }
-  else if ((pCurrCPUProps->SuppFlags & eFlagMAC) && (DecodeMACReg(ArgStr[1].Str, &MACReg)))
+  else if ((pCurrCPUProps->SuppFlags & eFlagMAC) && (DecodeMACReg(ArgStr[1].str.p_str, &MACReg)))
   {
     Word DestMACReg;
 
-    if (*AttrPart.Str && (OpSize != eSymbolSize32Bit)) WrError(ErrNum_InvOpSize);
-    else if ((MACReg == 4) && (!as_strcasecmp(ArgStr[2].Str, "CCR")))
+    if (*AttrPart.str.p_str && (OpSize != eSymbolSize32Bit)) WrError(ErrNum_InvOpSize);
+    else if ((MACReg == 4) && (!as_strcasecmp(ArgStr[2].str.p_str, "CCR")))
     {
       WAsmCode[0] = 0xa9c0;
       CodeLen = 2;
     }
-    else if ((MACReg < 4) && DecodeMACReg(ArgStr[2].Str, &DestMACReg) && (DestMACReg < 4) && (pCurrCPUProps->SuppFlags & eFlagEMAC))
+    else if ((MACReg < 4) && DecodeMACReg(ArgStr[2].str.p_str, &DestMACReg) && (DestMACReg < 4) && (pCurrCPUProps->SuppFlags & eFlagEMAC))
     {
       WAsmCode[0] = 0xa110 | (DestMACReg << 9) | (MACReg << 0);
       CodeLen = 2;
@@ -2109,9 +2109,9 @@ static void DecodeMOVE(Word Index)
       }
     }
   }
-  else if ((pCurrCPUProps->SuppFlags & eFlagMAC) && (DecodeMACReg(ArgStr[2].Str, &MACReg)))
+  else if ((pCurrCPUProps->SuppFlags & eFlagMAC) && (DecodeMACReg(ArgStr[2].str.p_str, &MACReg)))
   {
-    if (*AttrPart.Str && (OpSize != eSymbolSize32Bit)) WrError(ErrNum_InvOpSize);
+    if (*AttrPart.str.p_str && (OpSize != eSymbolSize32Bit)) WrError(ErrNum_InvOpSize);
     else
     {
       tAdrResult AdrResult;
@@ -2124,7 +2124,7 @@ static void DecodeMOVE(Word Index)
       }
     }
   }
-  else if (!as_strcasecmp(ArgStr[2].Str, "SR"))
+  else if (!as_strcasecmp(ArgStr[2].str.p_str, "SR"))
   {
     if (OpSize != eSymbolSize16Bit) WrError(ErrNum_InvOpSize);
     else
@@ -2140,9 +2140,9 @@ static void DecodeMOVE(Word Index)
       }
     }
   }
-  else if (!as_strcasecmp(ArgStr[2].Str, "CCR"))
+  else if (!as_strcasecmp(ArgStr[2].str.p_str, "CCR"))
   {
-    if (*AttrPart.Str && (OpSize > eSymbolSize16Bit)) WrError(ErrNum_InvOpSize);
+    if (*AttrPart.str.p_str && (OpSize > eSymbolSize16Bit)) WrError(ErrNum_InvOpSize);
     else
     {
       tAdrResult AdrResult;
@@ -2244,7 +2244,7 @@ static void DecodeLEA(Word Index)
 {
   UNUSED(Index);
 
-  if (*AttrPart.Str && (OpSize != eSymbolSize32Bit)) WrError(ErrNum_InvOpSize);
+  if (*AttrPart.str.p_str && (OpSize != eSymbolSize32Bit)) WrError(ErrNum_InvOpSize);
   else if (!ChkArgCnt(2, 2));
   else
   {
@@ -2273,7 +2273,7 @@ static void DecodeShift(Word Index)
   Word LFlag = (Index >> 2), Op = Index & 3;
 
   if (!ChkArgCnt(1, 2));
-  else if ((*OpPart.Str == 'R') && (!CheckNoFamily(1 << eColdfire)));
+  else if ((*OpPart.str.p_str == 'R') && (!CheckNoFamily(1 << eColdfire)));
   else
   {
     tAdrResult AdrResult;
@@ -2312,7 +2312,7 @@ static void DecodeShift(Word Index)
           CopyAdrVals(WAsmCode + 1, &AdrResult);
           if (2 == ArgCnt)
           {
-            HVal8 = EvalStrIntExpressionOffs(&ArgStr[1], !!(*ArgStr[1].Str == '#'), Int8, &ValOK);
+            HVal8 = EvalStrIntExpressionOffs(&ArgStr[1], !!(*ArgStr[1].str.p_str == '#'), Int8, &ValOK);
           }
           else
           {
@@ -2359,7 +2359,7 @@ static void DecodeADDQSUBQ(Word Index)
 
   WAsmCode[0] = 0x5000 | AdrResult.Mode | (OpSize << 6) | (Index << 8);
   CopyAdrVals(WAsmCode + 1, &AdrResult);
-  ImmVal = EvalStrIntExpressionOffsWithFlags(&ArgStr[1], !!(*ArgStr[1].Str == '#'), UInt32, &ValOK, &Flags);
+  ImmVal = EvalStrIntExpressionOffsWithFlags(&ArgStr[1], !!(*ArgStr[1].str.p_str == '#'), UInt32, &ValOK, &Flags);
   if (mFirstPassUnknownOrQuestionable(Flags))
     ImmVal = 1;
   if (ValOK && ((ImmVal < 1) || (ImmVal > 8)))
@@ -2444,7 +2444,7 @@ static void DecodeADDSUBCMP(Word Index)
     /* Since CMP only reads operands, PC-relative addressing is also
        allowed for the second operand on 68020++ */
 
-    if ((as_toupper(*OpPart.Str) == 'C')
+    if ((as_toupper(*OpPart.str.p_str) == 'C')
      && (pCurrCPUProps->Family > e68KGen1b))
       DestMask |= MModPC | MModPCIdx;
   }
@@ -2514,7 +2514,7 @@ static void DecodeADDSUBCMP(Word Index)
                this is only needed afterwards for an immediate source operand, so we know the
                # of words ahead: */
 
-            if (*ArgStr[1].Str == '#')
+            if (*ArgStr[1].str.p_str == '#')
               RelPos += (OpSize == eSymbolSize32Bit) ? 4 : 2;
 
             if (Op == 1) Op = 8;
@@ -2559,9 +2559,9 @@ static void DecodeANDOR(Word Index)
   if (!ChkArgCnt(2, 2));
   else if (CheckColdSize())
   {
-    if (!as_strcasecmp(ArgStr[2].Str, "CCR"))     /* AND #...,CCR */
+    if (!as_strcasecmp(ArgStr[2].str.p_str, "CCR"))     /* AND #...,CCR */
     {
-      if (*AttrPart.Str && (OpSize != eSymbolSize8Bit)) WrError(ErrNum_InvOpSize);
+      if (*AttrPart.str.p_str && (OpSize != eSymbolSize8Bit)) WrError(ErrNum_InvOpSize);
       else if (!(pCurrCPUProps->SuppFlags & eFlagLogCCR)) WrError(ErrNum_InstructionNotSupported);
       {
         WAsmCode[0] = 0x003c | (Op << 9);
@@ -2573,9 +2573,9 @@ static void DecodeANDOR(Word Index)
         }
       }
     }
-    else if (!as_strcasecmp(ArgStr[2].Str, "SR")) /* AND #...,SR */
+    else if (!as_strcasecmp(ArgStr[2].str.p_str, "SR")) /* AND #...,SR */
     {
-      if (*AttrPart.Str && (OpSize != eSymbolSize16Bit)) WrError(ErrNum_InvOpSize);
+      if (*AttrPart.str.p_str && (OpSize != eSymbolSize16Bit)) WrError(ErrNum_InvOpSize);
       else if (CheckNoFamily(1 << eColdfire))
       {
         WAsmCode[0] = 0x007c | (Op << 9);
@@ -2644,9 +2644,9 @@ static void DecodeEOR(Word Index)
   tAdrResult AdrResult;
 
   if (!ChkArgCnt(2, 2));
-  else if (!as_strcasecmp(ArgStr[2].Str, "CCR"))
+  else if (!as_strcasecmp(ArgStr[2].str.p_str, "CCR"))
   {
-    if (*AttrPart.Str && (OpSize != eSymbolSize8Bit)) WrError(ErrNum_InvOpSize);
+    if (*AttrPart.str.p_str && (OpSize != eSymbolSize8Bit)) WrError(ErrNum_InvOpSize);
     else if (CheckNoFamily(1 << eColdfire))
     {
       WAsmCode[0] = 0xa3c;
@@ -2658,7 +2658,7 @@ static void DecodeEOR(Word Index)
       }
     }
   }
-  else if (!as_strcasecmp(ArgStr[2].Str, "SR"))
+  else if (!as_strcasecmp(ArgStr[2].str.p_str, "SR"))
   {
     if (OpSize != eSymbolSize16Bit) WrError(ErrNum_InvOpSize);
     else if (CheckNoFamily(1 << eColdfire))
@@ -2704,7 +2704,7 @@ static void DecodePEA(Word Index)
 {
   UNUSED(Index);
 
-  if (*AttrPart.Str && (OpSize != eSymbolSize32Bit)) WrError(ErrNum_UseLessAttr);
+  if (*AttrPart.str.p_str && (OpSize != eSymbolSize32Bit)) WrError(ErrNum_UseLessAttr);
   else if (ChkArgCnt(1, 1))
   {
     tAdrResult AdrResult;
@@ -2753,7 +2753,7 @@ static void DecodeCLRTST(Word Index)
 
 static void DecodeJSRJMP(Word Index)
 {
-  if (*AttrPart.Str) WrError(ErrNum_InvOpSize);
+  if (*AttrPart.str.p_str) WrError(ErrNum_InvOpSize);
   else if (ChkArgCnt(1, 1))
   {
     tAdrResult AdrResult;
@@ -2780,7 +2780,7 @@ static void DecodeNBCDTAS(Word Index)
   else
     Allowed = Index ? False : (pCurrCPUProps->CfISA >= eCfISA_B);
 
-  if (*AttrPart.Str && (OpSize != eSymbolSize8Bit)) WrError(ErrNum_InvOpSize);
+  if (*AttrPart.str.p_str && (OpSize != eSymbolSize8Bit)) WrError(ErrNum_InvOpSize);
   else if (!Allowed) WrError(ErrNum_InstructionNotSupported);
   else if (ChkArgCnt(1, 1))
   {
@@ -2822,7 +2822,7 @@ static void DecodeSWAP(Word Index)
 {
   UNUSED(Index);
 
-  if (*AttrPart.Str && (OpSize != eSymbolSize32Bit)) WrError(ErrNum_InvOpSize);
+  if (*AttrPart.str.p_str && (OpSize != eSymbolSize32Bit)) WrError(ErrNum_InvOpSize);
   else if (ChkArgCnt(1, 1))
   {
     tAdrResult AdrResult;
@@ -2839,7 +2839,7 @@ static void DecodeUNLK(Word Index)
 {
   UNUSED(Index);
 
-  if (*AttrPart.Str) WrError(ErrNum_InvOpSize);
+  if (*AttrPart.str.p_str) WrError(ErrNum_InvOpSize);
   else if (ChkArgCnt(1, 1))
   {
     tAdrResult AdrResult;
@@ -2915,7 +2915,7 @@ static void DecodeFixed(Word Index)
 {
   FixedOrder *FixedZ = FixedOrders + Index;
 
-  if (*AttrPart.Str) WrError(ErrNum_UseLessAttr);
+  if (*AttrPart.str.p_str) WrError(ErrNum_UseLessAttr);
   else if (ChkArgCnt(0, 0)
         && CheckFamily(FixedZ->FamilyMask))
   {
@@ -2975,8 +2975,8 @@ static void DecodeMOVEQ(Word Index)
   UNUSED(Index);
 
   if (!ChkArgCnt(2, 2));
-  else if ((*AttrPart.Str) && (OpSize != eSymbolSize32Bit)) WrError(ErrNum_InvOpSize);
-  else if (*ArgStr[1].Str != '#') WrStrErrorPos(ErrNum_OnlyImmAddr, &ArgStr[1]);
+  else if ((*AttrPart.str.p_str) && (OpSize != eSymbolSize32Bit)) WrError(ErrNum_InvOpSize);
+  else if (*ArgStr[1].str.p_str != '#') WrStrErrorPos(ErrNum_OnlyImmAddr, &ArgStr[1]);
   else
   {
     tAdrResult AdrResult;
@@ -3008,9 +3008,9 @@ static void DecodeSTOP(Word Index)
   Boolean ValOK;
   UNUSED(Index);
 
-  if (*AttrPart.Str) WrError(ErrNum_UseLessAttr);
+  if (*AttrPart.str.p_str) WrError(ErrNum_UseLessAttr);
   else if (!ChkArgCnt(1, 1));
-  else if (*ArgStr[1].Str != '#') WrError(ErrNum_OnlyImmAddr);
+  else if (*ArgStr[1].str.p_str != '#') WrError(ErrNum_OnlyImmAddr);
   else
   {
     HVal = EvalStrIntExpressionOffs(&ArgStr[1], 1, Int16, &ValOK);
@@ -3030,10 +3030,10 @@ static void DecodeLPSTOP(Word Index)
   Boolean ValOK;
   UNUSED(Index);
 
-  if (*AttrPart.Str) WrError(ErrNum_UseLessAttr);
+  if (*AttrPart.str.p_str) WrError(ErrNum_UseLessAttr);
   else if (!ChkArgCnt(1, 1));
   else if (!CheckFamily(1 << eCPU32));
-  else if (*ArgStr[1].Str != '#') WrError(ErrNum_OnlyImmAddr);
+  else if (*ArgStr[1].str.p_str != '#') WrError(ErrNum_OnlyImmAddr);
   else
   {
     HVal = EvalStrIntExpressionOffs(&ArgStr[1], 1, Int16, &ValOK);
@@ -3054,9 +3054,9 @@ static void DecodeTRAP(Word Index)
   Boolean ValOK;
   UNUSED(Index);
 
-  if (*AttrPart.Str) WrError(ErrNum_UseLessAttr);
+  if (*AttrPart.str.p_str) WrError(ErrNum_UseLessAttr);
   else if (!ChkArgCnt(1, 1));
-  else if (*ArgStr[1].Str != '#') WrError(ErrNum_OnlyImmAddr);
+  else if (*ArgStr[1].str.p_str != '#') WrError(ErrNum_OnlyImmAddr);
   else
   {
     HVal8 = EvalStrIntExpressionOffs(&ArgStr[1], 1, Int4, &ValOK);
@@ -3074,10 +3074,10 @@ static void DecodeBKPT(Word Index)
   Boolean ValOK;
   UNUSED(Index);
 
-  if (*AttrPart.Str) WrError(ErrNum_UseLessAttr);
+  if (*AttrPart.str.p_str) WrError(ErrNum_UseLessAttr);
   else if (!ChkArgCnt(1, 1));
   else if (!CheckNoFamily((1 << e68KGen1a) | (1 << eColdfire)));
-  else if (*ArgStr[1].Str != '#') WrError(ErrNum_OnlyImmAddr);
+  else if (*ArgStr[1].str.p_str != '#') WrError(ErrNum_OnlyImmAddr);
   else
   {
     HVal8 = EvalStrIntExpressionOffs(&ArgStr[1], 1, UInt3, &ValOK);
@@ -3096,10 +3096,10 @@ static void DecodeRTD(Word Index)
   Boolean ValOK;
   UNUSED(Index);
 
-  if (*AttrPart.Str) WrError(ErrNum_UseLessAttr);
+  if (*AttrPart.str.p_str) WrError(ErrNum_UseLessAttr);
   else if (!ChkArgCnt(1, 1));
   else if (!CheckNoFamily((1 << e68KGen1a) | (1 << eColdfire)));
-  else if (*ArgStr[1].Str != '#') WrError(ErrNum_OnlyImmAddr);
+  else if (*ArgStr[1].str.p_str != '#') WrError(ErrNum_OnlyImmAddr);
   else
   {
     HVal = EvalStrIntExpressionOffs(&ArgStr[1], 1, Int16, &ValOK);
@@ -3117,7 +3117,7 @@ static void DecodeEXG(Word Index)
   Word HReg;
   UNUSED(Index);
 
-  if ((*AttrPart.Str) && (OpSize != eSymbolSize32Bit)) WrError(ErrNum_InvOpSize);
+  if ((*AttrPart.str.p_str) && (OpSize != eSymbolSize32Bit)) WrError(ErrNum_InvOpSize);
   else if (ChkArgCnt(2, 2)
         && CheckNoFamily(1 << eColdfire))
   {
@@ -3160,7 +3160,7 @@ static void DecodeMOVE16(Word Index)
   Word z, z2, w1, w2;
   UNUSED(Index);
 
-  if (*AttrPart.Str) WrError(ErrNum_UseLessAttr);
+  if (*AttrPart.str.p_str) WrError(ErrNum_UseLessAttr);
   else if (ChkArgCnt(2, 2)
         && CheckFamily(1 << e68KGen3))
   {
@@ -3218,10 +3218,10 @@ static void DecodeCacheAll(Word Index)
 {
   Word w1;
 
-  if (*AttrPart.Str) WrError(ErrNum_UseLessAttr);
+  if (*AttrPart.str.p_str) WrError(ErrNum_UseLessAttr);
   else if (!ChkArgCnt(1, 1));
   else if (!CheckFamily(1 << e68KGen3));
-  else if (!CodeCache(ArgStr[1].Str, &w1)) WrStrErrorPos(ErrNum_InvCtrlReg, &ArgStr[1]);
+  else if (!CodeCache(ArgStr[1].str.p_str, &w1)) WrStrErrorPos(ErrNum_InvCtrlReg, &ArgStr[1]);
   else
   {
     WAsmCode[0] = 0xf418 + (w1 << 6) + (Index << 5);
@@ -3234,10 +3234,10 @@ static void DecodeCache(Word Index)
 {
   Word w1;
 
-  if (*AttrPart.Str) WrError(ErrNum_UseLessAttr);
+  if (*AttrPart.str.p_str) WrError(ErrNum_UseLessAttr);
   else if (!ChkArgCnt(2, 2));
   else if (!CheckFamily(1 << e68KGen3));
-  else if (!CodeCache(ArgStr[1].Str, &w1)) WrStrErrorPos(ErrNum_InvCtrlReg, &ArgStr[1]);
+  else if (!CodeCache(ArgStr[1].str.p_str, &w1)) WrStrErrorPos(ErrNum_InvCtrlReg, &ArgStr[1]);
   else
   {
     tAdrResult AdrResult;
@@ -3256,7 +3256,7 @@ static void DecodeMUL_DIV(Word Code)
   tAdrResult AdrResult;
 
   if (!ChkArgCnt(2, 2));
-  else if ((*OpPart.Str == 'D') && !CheckNoFamily(1 << eColdfire));
+  else if ((*OpPart.str.p_str == 'D') && !CheckNoFamily(1 << eColdfire));
   else if (OpSize == eSymbolSize16Bit)
   {
     if (DecodeAdr(&ArgStr[2], MModData, &AdrResult))
@@ -3276,7 +3276,7 @@ static void DecodeMUL_DIV(Word Code)
     Word w1, w2;
     Boolean OK;
 
-    if (strchr(ArgStr[2].Str, ':'))
+    if (strchr(ArgStr[2].str.p_str, ':'))
       OK = DecodeRegPair(&ArgStr[2], &w1, &w2);
     else
     {
@@ -3307,7 +3307,7 @@ static void DecodeDIVL(Word Index)
 {
   Word w1, w2;
 
-  if (!*AttrPart.Str)
+  if (!*AttrPart.str.p_str)
     OpSize = eSymbolSize32Bit;
   if (!ChkArgCnt(2, 2));
   else if (!CheckFamily((1 << e68KGen3) | (1 << e68KGen2) | (1 << eCPU32)));
@@ -3330,7 +3330,7 @@ static void DecodeDIVL(Word Index)
 
 static void DecodeASBCD(Word Index)
 {
-  if ((OpSize != eSymbolSize8Bit) && *AttrPart.Str) WrError(ErrNum_InvOpSize);
+  if ((OpSize != eSymbolSize8Bit) && *AttrPart.str.p_str) WrError(ErrNum_InvOpSize);
   else if (ChkArgCnt(2, 2)
         && CheckNoFamily(1 << eColdfire))
   {
@@ -3376,7 +3376,7 @@ static void DecodeLINK(Word Index)
 {
   UNUSED(Index);
 
-  if (!*AttrPart.Str && (pCurrCPUProps->Family == eColdfire)) OpSize = eSymbolSize16Bit;
+  if (!*AttrPart.str.p_str && (pCurrCPUProps->Family == eColdfire)) OpSize = eSymbolSize16Bit;
   if ((OpSize < 1) || (OpSize > 2)) WrError(ErrNum_InvOpSize);
   else if ((OpSize == eSymbolSize32Bit) && !CheckFamily((1 << eCPU32) | (1 << e68KGen2) | (1 << e68KGen3)));
   else if (ChkArgCnt(2, 2))
@@ -3433,12 +3433,12 @@ static void DecodeMOVEC(Word Index)
 {
   UNUSED(Index);
 
-  if (*AttrPart.Str && (OpSize != eSymbolSize32Bit)) WrError(ErrNum_InvOpSize);
+  if (*AttrPart.str.p_str && (OpSize != eSymbolSize32Bit)) WrError(ErrNum_InvOpSize);
   else if (ChkArgCnt(2, 2))
   {
     tAdrResult AdrResult;
 
-    if (DecodeCtrlReg(ArgStr[1].Str, WAsmCode + 1))
+    if (DecodeCtrlReg(ArgStr[1].str.p_str, WAsmCode + 1))
     {
       if (DecodeAdr(&ArgStr[2], MModData | MModAdr, &AdrResult))
       {
@@ -3448,7 +3448,7 @@ static void DecodeMOVEC(Word Index)
         CheckSup();
       }
     }
-    else if (DecodeCtrlReg(ArgStr[2].Str, WAsmCode + 1))
+    else if (DecodeCtrlReg(ArgStr[2].str.p_str, WAsmCode + 1))
     {
       if (DecodeAdr(&ArgStr[1], MModData | MModAdr, &AdrResult))
       {
@@ -3510,7 +3510,7 @@ static void DecodeCALLM(Word Index)
 {
   UNUSED(Index);
 
-  if (*AttrPart.Str) WrError(ErrNum_InvOpSize);
+  if (*AttrPart.str.p_str) WrError(ErrNum_InvOpSize);
   else if (!(pCurrCPUProps->SuppFlags & eFlagCALLM_RTM)) WrError(ErrNum_InstructionNotSupported);
   else if (ChkArgCnt(2, 2))
   {
@@ -3610,7 +3610,7 @@ static void DecodeEXTB(Word Index)
 {
   UNUSED(Index);
 
-  if ((OpSize != eSymbolSize32Bit) && *AttrPart.Str) WrError(ErrNum_InvOpSize);
+  if ((OpSize != eSymbolSize32Bit) && *AttrPart.str.p_str) WrError(ErrNum_InvOpSize);
   else if (!CheckFamily((1 << e68KGen3) | (1 << e68KGen2) | (1 << eCPU32)));
   else if (ChkArgCnt(1, 1))
   {
@@ -3628,7 +3628,7 @@ static void DecodePACK(Word Index)
 {
   if (!ChkArgCnt(3, 3));
   else if (!CheckFamily((1 << e68KGen3) | (1 << e68KGen2)));
-  else if (*AttrPart.Str) WrError(ErrNum_InvOpSize);
+  else if (*AttrPart.str.p_str) WrError(ErrNum_InvOpSize);
   else
   {
     tAdrResult AdrResult;
@@ -3655,7 +3655,7 @@ static void DecodeRTM(Word Index)
 {
   UNUSED(Index);
 
-  if (*AttrPart.Str) WrError(ErrNum_InvOpSize);
+  if (*AttrPart.str.p_str) WrError(ErrNum_InvOpSize);
   else if (!(pCurrCPUProps->SuppFlags & eFlagCALLM_RTM)) WrError(ErrNum_InstructionNotSupported);
   else if (ChkArgCnt(1, 1))
   {
@@ -3683,7 +3683,7 @@ static void DecodeTBL(Word Index)
     if (DecodeAdr(&ArgStr[2], MModData, &AdrResult))
     {
       Mode = AdrResult.Mode;
-      p = strchr(ArgStr[1].Str, ':');
+      p = strchr(ArgStr[1].str.p_str, ':');
       if (!p)
       {
         RelPos = 4;
@@ -3697,7 +3697,7 @@ static void DecodeTBL(Word Index)
       }
       else
       {
-        strcpy(ArgStr[3].Str, p + 1);
+        strcpy(ArgStr[3].str.p_str, p + 1);
         *p = '\0';
         if (DecodeAdr(&ArgStr[1], MModData, &AdrResult))
         {
@@ -3706,9 +3706,9 @@ static void DecodeTBL(Word Index)
           {
             WAsmCode[0] = 0xf800 | w2;
             WAsmCode[1] = 0x0000 | (OpSize << 6) | (Mode << 12) | AdrResult.Mode;
-            if (OpPart.Str[3] == 'S')
+            if (OpPart.str.p_str[3] == 'S')
               WAsmCode[1] |= 0x0800;
-            if (OpPart.Str[strlen(OpPart.Str) - 1] == 'N')
+            if (OpPart.str.p_str[strlen(OpPart.str.p_str) - 1] == 'N')
               WAsmCode[1] |= 0x0400;
             CodeLen = 4;
           }
@@ -3752,7 +3752,7 @@ static void DecodeBits(Word Index)
   }
 
   OpSize = SaveOpSize;
-  if (!*AttrPart.Str)
+  if (!*AttrPart.str.p_str)
     OpSize = eSymbolSize8Bit;
 
   Mask = MModData | MModAdrI | MModPost | MModPre | MModDAdrI | MModAIX | MModAbs;
@@ -3761,7 +3761,7 @@ static void DecodeBits(Word Index)
   RelPos = ResCodeLen << 1;
   DecodeAdr(&ArgStr[2], Mask, &AdrResult);
 
-  if (!*AttrPart.Str)
+  if (!*AttrPart.str.p_str)
     OpSize = (AdrResult.Num == ModData) ? eSymbolSize32Bit : eSymbolSize8Bit;
   if (!AdrResult.Num)
     return;
@@ -3785,7 +3785,7 @@ static void DecodeFBits(Word Index)
 {
   if (!ChkArgCnt(1, 1));
   else if (!CheckFamily((1 << e68KGen3) | (1 << e68KGen2)));
-  else if (*AttrPart.Str) WrError(ErrNum_InvOpSize);
+  else if (*AttrPart.str.p_str) WrError(ErrNum_InvOpSize);
   else if (!SplitBitField(&ArgStr[1], WAsmCode + 1)) WrError(ErrNum_InvBitMask);
   else
   {
@@ -3808,7 +3808,7 @@ static void DecodeEBits(Word Index)
 {
   if (!ChkArgCnt(2, 2));
   else if (!CheckFamily((1 << e68KGen3) | (1 << e68KGen2)));
-  else if (*AttrPart.Str) WrError(ErrNum_InvOpSize);
+  else if (*AttrPart.str.p_str) WrError(ErrNum_InvOpSize);
   else if (!SplitBitField(&ArgStr[1], WAsmCode + 1)) WrError(ErrNum_InvBitMask);
   else
   {
@@ -3836,7 +3836,7 @@ static void DecodeBFINS(Word Index)
 
   if (!ChkArgCnt(2, 2));
   else if (!CheckFamily((1 << e68KGen3) | (1 << e68KGen2)));
-  else if (*AttrPart.Str) WrError(ErrNum_InvOpSize);
+  else if (*AttrPart.str.p_str) WrError(ErrNum_InvOpSize);
   else if (!SplitBitField(&ArgStr[2], WAsmCode + 1)) WrError(ErrNum_InvBitMask);
   else
   {
@@ -3883,7 +3883,7 @@ static void DecodeBcc(Word CondCode)
 
     /* Bei Automatik Groesse festlegen */
 
-    if (!*AttrPart.Str)
+    if (!*AttrPart.str.p_str)
     {
       if (IsDisp8(HVal))
       {
@@ -3954,7 +3954,7 @@ static void DecodeBcc(Word CondCode)
           else
           {
             WAsmCode[0] = NOPCode;
-            if ((!Repass) && *AttrPart.Str)
+            if ((!Repass) && *AttrPart.str.p_str)
               WrError(ErrNum_DistNull);
           }
         }
@@ -3979,7 +3979,7 @@ static void DecodeBcc(Word CondCode)
 
 static void DecodeScc(Word CondCode)
 {
-  if (*AttrPart.Str && (OpSize != eSymbolSize8Bit)) WrError(ErrNum_InvOpSize);
+  if (*AttrPart.str.p_str && (OpSize != eSymbolSize8Bit)) WrError(ErrNum_InvOpSize);
   else if (ArgCnt != 1) WrError(ErrNum_InvOpSize);
   else
   {
@@ -4031,7 +4031,7 @@ static void DecodeTRAPcc(Word CondCode)
 {
   int ExpectArgCnt;
 
-  if (!*AttrPart.Str)
+  if (!*AttrPart.str.p_str)
     OpSize = eSymbolSize8Bit;
   ExpectArgCnt = (OpSize == eSymbolSize8Bit) ? 0 : 1;
   if (OpSize > 2) WrError(ErrNum_InvOpSize);
@@ -4073,11 +4073,11 @@ static void DecodeFRegList(const tStrComp *pArg, Byte *pTyp, Byte *pList)
   String ArgStr;
   tStrComp Arg, Remainder, From, To;
 
-  StrCompMkTemp(&Arg, ArgStr);
+  StrCompMkTemp(&Arg, ArgStr, sizeof(ArgStr));
   StrCompCopy(&Arg, pArg);
 
   *pTyp = eFMovemTypNone;
-  if (*Arg.Str == '\0')
+  if (*Arg.str.p_str == '\0')
     return;
 
   switch (DecodeReg(&Arg, &Reg, False))
@@ -4097,10 +4097,10 @@ static void DecodeFRegList(const tStrComp *pArg, Byte *pTyp, Byte *pList)
   hw = 0;
   do
   {
-    p = strchr(Arg.Str, '/');
+    p = strchr(Arg.str.p_str, '/');
     if (p)
       StrCompSplitRef(&Arg, &Remainder, &Arg, p);
-    p2 = strchr(Arg.Str, '-');
+    p2 = strchr(Arg.str.p_str, '-');
     if (p2)
     {
       StrCompSplitRef(&From, &To, &Arg, p2);
@@ -4242,7 +4242,7 @@ static void DecodeFSAVE(Word Code)
 
   if (!ChkArgCnt(1, 1));
   else if (!FPUAvail) WrError(ErrNum_FPUNotEnabled);
-  else if (*AttrPart.Str) WrError(ErrNum_InvOpSize);
+  else if (*AttrPart.str.p_str) WrError(ErrNum_InvOpSize);
   else
   {
     tAdrResult AdrResult;
@@ -4263,7 +4263,7 @@ static void DecodeFRESTORE(Word Code)
 
   if (!ChkArgCnt(1, 1));
   else if (!FPUAvail) WrError(ErrNum_FPUNotEnabled);
-  else if (*AttrPart.Str) WrError(ErrNum_InvOpSize);
+  else if (*AttrPart.str.p_str) WrError(ErrNum_InvOpSize);
   else
   {
     tAdrResult AdrResult;
@@ -4284,7 +4284,7 @@ static void DecodeFNOP(Word Code)
 
   if (!ChkArgCnt(0, 0));
   else if (!FPUAvail) WrError(ErrNum_FPUNotEnabled);
-  else if (*AttrPart.Str) WrError(ErrNum_InvOpSize);
+  else if (*AttrPart.str.p_str) WrError(ErrNum_InvOpSize);
   else
   {
     CodeLen = 4;
@@ -4310,7 +4310,7 @@ static void DecodeFMOVE(Word Code)
 
     /* k-Faktor abspalten */
 
-    pKSep = strchr(AttrPart.Str, '{');
+    pKSep = strchr(AttrPart.str.p_str, '{');
     if (pKSep)
     {
       StrCompSplitRef(&AttrPart, &KArg, &AttrPart, pKSep);
@@ -4350,7 +4350,7 @@ static void DecodeFMOVE(Word Code)
     }
     else if (AdrResult.Num == ModFPCR)                    /* FMOVE.L <ea>,FPcr ? */
     {
-      if ((OpSize != eSymbolSize32Bit) && *AttrPart.Str) WrError(ErrNum_InvOpSize);
+      if ((OpSize != eSymbolSize32Bit) && *AttrPart.str.p_str) WrError(ErrNum_InvOpSize);
       else
       {
         RelPos = 4;
@@ -4381,7 +4381,7 @@ static void DecodeFMOVE(Word Code)
           WAsmCode[1] = 0x6000 | (((Word)FSizeCodes[OpSize]) << 10) | (AdrResult.Mode << 7);
           if (OpSize == eSymbolSizeFloatDec96Bit)
           {
-            if (pKSep && (strlen(KArg.Str) > 0))
+            if (pKSep && (strlen(KArg.str.p_str) > 0))
             {
               OpSize = eSymbolSize8Bit;
               switch (DecodeAdr(&KArg, MModData | MModImm, &AdrResult))
@@ -4403,7 +4403,7 @@ static void DecodeFMOVE(Word Code)
         }
         case ModFPCR:                  /* FMOVE.L FPcr,<ea> ? */
         {
-          if (*AttrPart.Str && (OpSize != eSymbolSize32Bit))
+          if (*AttrPart.str.p_str && (OpSize != eSymbolSize32Bit))
           {
             WrError(ErrNum_InvOpSize);
             CodeLen = 0;
@@ -4433,7 +4433,7 @@ static void DecodeFMOVECR(Word Code)
   if (!ChkArgCnt(2, 2));
   else if (!FPUAvail) WrError(ErrNum_FPUNotEnabled);
   else if (!CheckNoFamily(1 << eColdfire));
-  else if (*AttrPart.Str && (OpSize != eSymbolSizeFloat96Bit)) WrError(ErrNum_InvOpSize);
+  else if (*AttrPart.str.p_str && (OpSize != eSymbolSizeFloat96Bit)) WrError(ErrNum_InvOpSize);
   else
   {
     tAdrResult AdrResult;
@@ -4493,7 +4493,7 @@ static void DecodeFSINCOS(Word Code)
 {
   UNUSED(Code);
 
-  if (!*AttrPart.Str)
+  if (!*AttrPart.str.p_str)
     OpSize = NativeFloatSize;
   if (OpSize == 3) WrError(ErrNum_InvOpSize);
   else if (!FPUAvail) WrError(ErrNum_FPUNotEnabled);
@@ -4510,7 +4510,7 @@ static void DecodeFSINCOS(Word Code)
     }
     else
     {
-      char *pKSep = strrchr(ArgStr[2].Str, ':');
+      char *pKSep = strrchr(ArgStr[2].str.p_str, ':');
 
       if (!pKSep)
       {
@@ -4565,7 +4565,7 @@ static void DecodeFDMOVE_FSMOVE(Word Code)
       WAsmCode[0] = 0xf200;
       WAsmCode[1] = Code | AdrResult.Mode << 7;
       RelPos = 4;
-      if (!*AttrPart.Str)
+      if (!*AttrPart.str.p_str)
         OpSize = NativeFloatSize;
       Mask = MModFPn | MModAdrI | MModPost | MModPre | MModDAdrI | MModPC;
       if (pCurrCPUProps->Family != eColdfire)
@@ -4604,7 +4604,7 @@ static void DecodeFMOVEM(Word Code)
     DecodeFRegList(&ArgStr[2], &Typ, &List);
     if (Typ != eFMovemTypNone)
     {
-      if (*AttrPart.Str
+      if (*AttrPart.str.p_str
       && (((Typ < eFMovemTypCtrl) && (OpSize != NativeFloatSize))
         || ((Typ == eFMovemTypCtrl) && (OpSize != eSymbolSize32Bit))))
         WrError(ErrNum_InvOpSize);
@@ -4636,7 +4636,7 @@ static void DecodeFMOVEM(Word Code)
       DecodeFRegList(&ArgStr[1], &Typ, &List);
       if (Typ != eFMovemTypNone)
       {
-        if (*AttrPart.Str && (((Typ < eFMovemTypCtrl) && (OpSize != NativeFloatSize)) || ((Typ == eFMovemTypCtrl) && (OpSize != eSymbolSize32Bit)))) WrError(ErrNum_InvOpSize);
+        if (*AttrPart.str.p_str && (((Typ < eFMovemTypCtrl) && (OpSize != NativeFloatSize)) || ((Typ == eFMovemTypCtrl) && (OpSize != eSymbolSize32Bit)))) WrError(ErrNum_InvOpSize);
         else if ((Typ != eFMovemTypStatic) && (pCurrCPUProps->Family == eColdfire)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
         else
         {
@@ -4680,7 +4680,7 @@ static void DecodeFBcc(Word CondCode)
       HVal = EvalStrIntExpressionWithFlags(&ArgStr[1], Int32, &ValOK, &Flags) - (EProgCounter() + 2);
       HVal16 = HVal;
 
-      if (!*AttrPart.Str)
+      if (!*AttrPart.str.p_str)
       {
         OpSize = (IsDisp16(HVal)) ? eSymbolSize32Bit : eSymbolSizeFloat96Bit;
       }
@@ -4701,7 +4701,7 @@ static void DecodeFBcc(Word CondCode)
         WAsmCode[0] = 0xf2c0 | CondCode;
         WAsmCode[2] = HVal & 0xffff;
         WAsmCode[1] = HVal >> 16;
-        if (IsDisp16(HVal) && (PassNo > 1) && !*AttrPart.Str)
+        if (IsDisp16(HVal) && (PassNo > 1) && !*AttrPart.str.p_str)
         {
           WrError(ErrNum_ShortJumpPossible);
           WAsmCode[0] ^= 0x40;
@@ -4719,7 +4719,7 @@ static void DecodeFDBcc(Word CondCode)
   if (!FPUAvail) WrError(ErrNum_FPUNotEnabled);
   else if (CheckNoFamily(1 << eColdfire))
   {
-    if ((OpSize != eSymbolSize16Bit) && *AttrPart.Str) WrError(ErrNum_InvOpSize);
+    if ((OpSize != eSymbolSize16Bit) && *AttrPart.str.p_str) WrError(ErrNum_InvOpSize);
     else if (ChkArgCnt(2, 2))
     {
       tAdrResult AdrResult;
@@ -4750,7 +4750,7 @@ static void DecodeFScc(Word CondCode)
 {
   if (!FPUAvail) WrError(ErrNum_FPUNotEnabled);
   else if (!CheckNoFamily(1 << eColdfire));
-  else if ((OpSize != eSymbolSize8Bit) && *AttrPart.Str) WrError(ErrNum_InvOpSize);
+  else if ((OpSize != eSymbolSize8Bit) && *AttrPart.str.p_str) WrError(ErrNum_InvOpSize);
   else if (ChkArgCnt(1, 1))
   {
     tAdrResult AdrResult;
@@ -4771,7 +4771,7 @@ static void DecodeFTRAPcc(Word CondCode)
   else if (!CheckNoFamily(1 << eColdfire));
   else
   {
-    if (!*AttrPart.Str)
+    if (!*AttrPart.str.p_str)
       OpSize = eSymbolSize8Bit;
     if (OpSize > eSymbolSize32Bit) WrError(ErrNum_InvOpSize);
     else if (ChkArgCnt(OpSize ? 1 : 0, OpSize ? 1 : 0))
@@ -4806,13 +4806,13 @@ static Boolean DecodeFC(const tStrComp *pArg, Word *erg)
   Boolean OK;
   Word Val;
 
-  if (!as_strcasecmp(pArg->Str, "SFC"))
+  if (!as_strcasecmp(pArg->str.p_str, "SFC"))
   {
     *erg = 0;
     return True;
   }
 
-  if (!as_strcasecmp(pArg->Str, "DFC"))
+  if (!as_strcasecmp(pArg->str.p_str, "DFC"))
   {
     *erg = 1;
     return True;
@@ -4833,7 +4833,7 @@ static Boolean DecodeFC(const tStrComp *pArg, Word *erg)
       return False;
   }
 
-  if (*pArg->Str == '#')
+  if (*pArg->str.p_str == '#')
   {
     Val = EvalStrIntExpressionOffs(pArg, 1, Int4, &OK);
     if (OK)
@@ -4879,7 +4879,7 @@ static void DecodePSAVE(Word Code)
   UNUSED(Code);
 
   if (!ChkArgCnt(1, 1));
-  else if (*AttrPart.Str) WrError(ErrNum_InvOpSize);
+  else if (*AttrPart.str.p_str) WrError(ErrNum_InvOpSize);
   else if (!PMMUAvail) WrError(ErrNum_PMMUNotEnabled);
   else if (!FullPMMU) WrError(ErrNum_FullPMMUNotEnabled);
   else
@@ -4901,7 +4901,7 @@ static void DecodePRESTORE(Word Code)
   UNUSED(Code);
 
   if (!ChkArgCnt(1, 1));
-  else if (*AttrPart.Str) WrError(ErrNum_InvOpSize);
+  else if (*AttrPart.str.p_str) WrError(ErrNum_InvOpSize);
   else if (!PMMUAvail) WrError(ErrNum_PMMUNotEnabled);
   else if (!FullPMMU) WrError(ErrNum_FullPMMUNotEnabled);
   else
@@ -4922,7 +4922,7 @@ static void DecodePFLUSHA(Word Code)
 {
   UNUSED(Code);
 
-  if (*AttrPart.Str) WrError(ErrNum_InvOpSize);
+  if (*AttrPart.str.p_str) WrError(ErrNum_InvOpSize);
   else if (!PMMUAvail) WrError(ErrNum_PMMUNotEnabled);
   else if (ChkArgCnt(0, 0))
   {
@@ -4946,7 +4946,7 @@ static void DecodePFLUSHAN(Word Code)
 {
   UNUSED(Code);
 
-  if (*AttrPart.Str) WrError(ErrNum_InvOpSize);
+  if (*AttrPart.str.p_str) WrError(ErrNum_InvOpSize);
   else if (!PMMUAvail) WrError(ErrNum_PMMUNotEnabled);
   else if (ChkArgCnt(0, 0)
         && CheckFamily(1 << e68KGen3))
@@ -4961,7 +4961,7 @@ static void DecodePFLUSH_PFLUSHS(Word Code)
 {
   tAdrResult AdrResult;
 
-  if (*AttrPart.Str) WrError(ErrNum_InvOpSize);
+  if (*AttrPart.str.p_str) WrError(ErrNum_InvOpSize);
   else if (!PMMUAvail) WrError(ErrNum_PMMUNotEnabled);
   else if (pCurrCPUProps->Family == e68KGen3)
   {
@@ -5012,7 +5012,7 @@ static void DecodePFLUSHN(Word Code)
 {
   UNUSED(Code);
 
-  if (*AttrPart.Str) WrError(ErrNum_UseLessAttr);
+  if (*AttrPart.str.p_str) WrError(ErrNum_UseLessAttr);
   else if (!PMMUAvail) WrError(ErrNum_PMMUNotEnabled);
   else if (ChkArgCnt(1, 1)
         && CheckFamily(1 << e68KGen3))
@@ -5032,7 +5032,7 @@ static void DecodePFLUSHR(Word Code)
 {
   UNUSED(Code);
 
-  if (*AttrPart.Str)
+  if (*AttrPart.str.p_str)
     OpSize = eSymbolSize64Bit;
   else if (!PMMUAvail) WrError(ErrNum_PMMUNotEnabled);
   if (OpSize != eSymbolSize64Bit) WrError(ErrNum_InvOpSize);
@@ -5055,7 +5055,7 @@ static void DecodePFLUSHR(Word Code)
 
 static void DecodePLOADR_PLOADW(Word Code)
 {
-  if (*AttrPart.Str) WrError(ErrNum_InvOpSize);
+  if (*AttrPart.str.p_str) WrError(ErrNum_InvOpSize);
   else if (!PMMUAvail) WrError(ErrNum_PMMUNotEnabled);
   else if (!ChkArgCnt(2, 2));
   else if (!DecodeFC(&ArgStr[1], WAsmCode + 1)) WrError(ErrNum_InvFCode);
@@ -5084,10 +5084,10 @@ static void DecodePMOVE_PMOVEFD(Word Code)
   else if (!PMMUAvail) WrError(ErrNum_PMMUNotEnabled);
   else
   {
-    if (DecodePMMUReg(ArgStr[1].Str, WAsmCode + 1, &RegSize))
+    if (DecodePMMUReg(ArgStr[1].str.p_str, WAsmCode + 1, &RegSize))
     {
       WAsmCode[1] |= 0x200;
-      if (!*AttrPart.Str)
+      if (!*AttrPart.str.p_str)
         OpSize = RegSize;
       if (OpSize != RegSize) WrError(ErrNum_InvOpSize);
       else
@@ -5108,9 +5108,9 @@ static void DecodePMOVE_PMOVEFD(Word Code)
         }
       }
     }
-    else if (DecodePMMUReg(ArgStr[2].Str, WAsmCode + 1, &RegSize))
+    else if (DecodePMMUReg(ArgStr[2].str.p_str, WAsmCode + 1, &RegSize))
     {
-      if (!*AttrPart.Str)
+      if (!*AttrPart.str.p_str)
         OpSize = RegSize;
       if (OpSize != RegSize) WrError(ErrNum_InvOpSize);
       else
@@ -5142,7 +5142,7 @@ static void DecodePTESTR_PTESTW(Word Code)
 {
   tAdrResult AdrResult;
 
-  if (*AttrPart.Str) WrError(ErrNum_InvOpSize);
+  if (*AttrPart.str.p_str) WrError(ErrNum_InvOpSize);
   else if (!PMMUAvail) WrError(ErrNum_PMMUNotEnabled);
   else if (pCurrCPUProps->Family == e68KGen3)
   {
@@ -5201,7 +5201,7 @@ static void DecodePVALID(Word Code)
   if (!ChkArgCnt(2, 2));
   else if (!PMMUAvail) WrError(ErrNum_PMMUNotEnabled);
   else if (!FullPMMU) WrError(ErrNum_FullPMMUNotEnabled);
-  else if (*AttrPart.Str && (OpSize != eSymbolSize32Bit)) WrError(ErrNum_InvOpSize);
+  else if (*AttrPart.str.p_str && (OpSize != eSymbolSize32Bit)) WrError(ErrNum_InvOpSize);
   else
   {
     tAdrResult AdrResult;
@@ -5212,7 +5212,7 @@ static void DecodePVALID(Word Code)
       WAsmCode[1] = 0x2800;
       CodeLen = 4 + AdrResult.Cnt;
       CopyAdrVals(WAsmCode + 1, &AdrResult);
-      if (!as_strcasecmp(ArgStr[1].Str, "VAL"));
+      if (!as_strcasecmp(ArgStr[1].str.p_str, "VAL"));
       else
       {
         if (DecodeAdr(&ArgStr[1], MModAdr, &AdrResult))
@@ -5242,7 +5242,7 @@ static void DecodePBcc(Word CondCode)
       HVal = EvalStrIntExpressionWithFlags(&ArgStr[1], Int32, &ValOK, &Flags) - (EProgCounter() + 2);
       HVal16 = HVal;
 
-      if (!*AttrPart.Str)
+      if (!*AttrPart.str.p_str)
         OpSize = (IsDisp16(HVal)) ? eSymbolSize32Bit : eSymbolSizeFloat96Bit;
 
       if ((OpSize == eSymbolSize32Bit) || (OpSize == eSymbolSize16Bit))
@@ -5273,7 +5273,7 @@ static void DecodePDBcc(Word CondCode)
   if (!PMMUAvail) WrError(ErrNum_PMMUNotEnabled);
   else
   {
-    if ((OpSize != eSymbolSize16Bit) && *AttrPart.Str) WrError(ErrNum_InvOpSize);
+    if ((OpSize != eSymbolSize16Bit) && *AttrPart.str.p_str) WrError(ErrNum_InvOpSize);
     else if (!ChkArgCnt(2, 2));
     else if (!FullPMMU) WrError(ErrNum_FullPMMUNotEnabled);
     else
@@ -5309,7 +5309,7 @@ static void DecodePScc(Word CondCode)
   if (!PMMUAvail) WrError(ErrNum_PMMUNotEnabled);
   else
   {
-    if ((OpSize != eSymbolSize8Bit) && *AttrPart.Str) WrError(ErrNum_InvOpSize);
+    if ((OpSize != eSymbolSize8Bit) && *AttrPart.str.p_str) WrError(ErrNum_InvOpSize);
     else if (!ChkArgCnt(1, 1));
     else if (!FullPMMU) WrError(ErrNum_FullPMMUNotEnabled);
     else
@@ -5333,7 +5333,7 @@ static void DecodePTRAPcc(Word CondCode)
   if (!PMMUAvail) WrError(ErrNum_PMMUNotEnabled);
   else
   {
-    if (!*AttrPart.Str)
+    if (!*AttrPart.str.p_str)
       OpSize = eSymbolSize8Bit;
     if (OpSize > 2) WrError(ErrNum_InvOpSize);
     else if (!ChkArgCnt(OpSize ? 1 : 0, OpSize ? 1 : 0));
@@ -5366,7 +5366,7 @@ static void DecodePTRAPcc(Word CondCode)
 
 static void DecodeColdBit(Word Code)
 {
-  if (!*AttrPart.Str)
+  if (!*AttrPart.str.p_str)
     OpSize = eSymbolSize32Bit;
   if (ChkArgCnt(1, 1)
    && CheckColdSize()
@@ -5387,7 +5387,7 @@ static void DecodeSTLDSR(Word Code)
 {
   UNUSED(Code);
 
-  if (!*AttrPart.Str)
+  if (!*AttrPart.str.p_str)
     OpSize = eSymbolSize16Bit;
   if (OpSize != eSymbolSize16Bit) WrError(ErrNum_InvOpSize);
   else if (ChkArgCnt(1, 1)
@@ -5410,7 +5410,7 @@ static void DecodeINTOUCH(Word Code)
 {
   UNUSED(Code);
 
-  if (*AttrPart.Str) WrError(ErrNum_InvOpSize);
+  if (*AttrPart.str.p_str) WrError(ErrNum_InvOpSize);
   else if (ChkArgCnt(1, 1)
         && CheckFamily(1 << eColdfire)
         && (pCurrCPUProps->CfISA >= eCfISA_B))
@@ -5444,7 +5444,7 @@ static void DecodeMOV3Q(Word Code)
   if (!DecodeAdr(&ArgStr[2], MModData | MModAdr | MModAdrI | MModPost | MModPre | MModDAdrI | MModAIX | MModAbs, &AdrResult))
     return;
 
-  if (*ArgStr[1].Str != '#')
+  if (*ArgStr[1].str.p_str != '#')
   {
     WrStrErrorPos(ErrNum_OnlyImmAddr, &ArgStr[1]);
     return;
@@ -5476,7 +5476,7 @@ static void DecodeMVS_MVZ(Word Code)
    || (pCurrCPUProps->CfISA < eCfISA_B))
     return;
 
-  if (!*AttrPart.Str)
+  if (!*AttrPart.str.p_str)
     OpSize = eSymbolSize16Bit;
   if (OpSize > eSymbolSize16Bit)
   {
@@ -5583,7 +5583,7 @@ static void DecodeMAC_MSAC(Word Code)
 
   if (Odd(RemArgCnt))
   {
-    if (!DecodeMACACC(ArgStr[ArgCnt].Str, &AccNum))
+    if (!DecodeMACACC(ArgStr[ArgCnt].str.p_str, &AccNum))
     {
       WrStrErrorPos(ErrNum_InvReg, &ArgStr[ArgCnt]);
       return;
@@ -5607,13 +5607,16 @@ static void DecodeMAC_MSAC(Word Code)
 
   if (RemArgCnt >= 2)
   {
+    tStrComp CurrArgStr;
+
     if (!DecodeAdr(&ArgStr[CurrArg + 1], MModData | MModAdr, &AdrResult))
       return;
     Rw = AdrResult.Mode & 15;
 
-    if (!SplitMACANDMASK(&Mask, &ArgStr[CurrArg]))
+    StrCompRefRight(&CurrArgStr, &ArgStr[CurrArg], 0);
+    if (!SplitMACANDMASK(&Mask, &CurrArgStr))
       return;
-    if (!DecodeAdr(&ArgStr[CurrArg], MModAdrI | MModPre | MModPost | MModDAdrI, &AdrResult))
+    if (!DecodeAdr(&CurrArgStr, MModAdrI | MModPre | MModPost | MModDAdrI, &AdrResult))
       return;
 
     WAsmCode[0] |= ((Rw & 7) << 9) | ((Rw & 8) << 3) | AdrResult.Mode;
@@ -5638,9 +5641,9 @@ static void DecodeMOVCLR(Word Code)
   UNUSED(Code);
 
   if (!ChkArgCnt(2,2));
-  else if (*AttrPart.Str && (OpSize != eSymbolSize32Bit)) WrError(ErrNum_InvOpSize);
+  else if (*AttrPart.str.p_str && (OpSize != eSymbolSize32Bit)) WrError(ErrNum_InvOpSize);
   else if (!(pCurrCPUProps->SuppFlags & eFlagEMAC)) WrError(ErrNum_InstructionNotSupported);
-  else if (!DecodeMACACC(ArgStr[1].Str, &ACCReg)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
+  else if (!DecodeMACACC(ArgStr[1].str.p_str, &ACCReg)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
   else
   {
     tAdrResult AdrResult;
@@ -5674,12 +5677,12 @@ static void DecodeMxxAC(Word Code)
   if (!ChkArgCnt(4, 5))
     return;
 
-  if (!DecodeMACACC(ArgStr[ArgCnt - 1].Str, &ACCx))
+  if (!DecodeMACACC(ArgStr[ArgCnt - 1].str.p_str, &ACCx))
   {
     WrStrErrorPos(ErrNum_InvReg, &ArgStr[ArgCnt - 1]);
     return;
   }
-  if (!DecodeMACACC(ArgStr[ArgCnt].Str, &ACCw))
+  if (!DecodeMACACC(ArgStr[ArgCnt].str.p_str, &ACCw))
   {
     WrStrErrorPos(ErrNum_InvReg, &ArgStr[ArgCnt]);
     return;
@@ -5718,7 +5721,7 @@ static void DecodeMxxAC(Word Code)
 static void DecodeCPBCBUSY(Word Code)
 {
   if (pCurrCPUProps->CfISA == eCfISA_None) WrError(ErrNum_InstructionNotSupported);
-  else if (*AttrPart.Str && (OpSize != eSymbolSize16Bit)) WrError(ErrNum_InvOpSize);
+  else if (*AttrPart.str.p_str && (OpSize != eSymbolSize16Bit)) WrError(ErrNum_InvOpSize);
   else if (ChkArgCnt(1, 1))
   {
     Boolean OK;
@@ -5753,7 +5756,7 @@ static void DecodeCPLDST(Word Code)
     /* CMD is always present and i bits 0..8 - immediate marker is optional
        since it is always a constant. */
 
-    WAsmCode[1] = EvalStrIntExpressionOffs(&ArgStr[ArgCnt], !!(*ArgStr[ArgCnt].Str == '#'), UInt16, &OK);
+    WAsmCode[1] = EvalStrIntExpressionOffs(&ArgStr[ArgCnt], !!(*ArgStr[ArgCnt].str.p_str == '#'), UInt16, &OK);
     if (!OK)
       return;
 
@@ -5852,14 +5855,14 @@ static void DecodeSTR(Word Index)
   UNUSED(Index);
 
   if (!ChkArgCnt(1, 1));
-  else if (((l = strlen(ArgStr[1].Str)) < 2)
-        || (*ArgStr[1].Str != '\'')
-        || (ArgStr[1].Str[l - 1] != '\'')) WrStrErrorPos(ErrNum_ExpectString, &ArgStr[1]);
+  else if (((l = strlen(ArgStr[1].str.p_str)) < 2)
+        || (*ArgStr[1].str.p_str != '\'')
+        || (ArgStr[1].str.p_str[l - 1] != '\'')) WrStrErrorPos(ErrNum_ExpectString, &ArgStr[1]);
   else
   {
     PutByte(l - 2);
     for (z = 1; z < l - 1; z++)
-      PutByte(CharTransTable[((usint) ArgStr[1].Str[z]) & 0xff]);
+      PutByte(CharTransTable[((usint) ArgStr[1].str.p_str[z]) & 0xff]);
   }
 }
 
@@ -6222,7 +6225,7 @@ static void InternSymbol_68K(char *pArg, TempResult *pResult)
 
 static Boolean DecodeAttrPart_68K(void)
 {
-  return DecodeMoto16AttrSize(*AttrPart.Str, &AttrPartOpSize, False);
+  return DecodeMoto16AttrSize(*AttrPart.str.p_str, &AttrPartOpSize, False);
 }
 
 static void MakeCode_68K(void)
@@ -6235,7 +6238,7 @@ static void MakeCode_68K(void)
 
   /* Nullanweisung */
 
-  if ((*OpPart.Str == '\0') && !*AttrPart.Str && (ArgCnt == 0))
+  if ((*OpPart.str.p_str == '\0') && !*AttrPart.str.p_str && (ArgCnt == 0))
     return;
 
   /* Pseudoanweisungen */
@@ -6253,7 +6256,7 @@ static void MakeCode_68K(void)
       WrError(ErrNum_AddrNotAligned);
   }
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 
@@ -6266,12 +6269,6 @@ static void InitCode_68K(void)
 static Boolean IsDef_68K(void)
 {
   return Memo("REG");
-}
-
-static void SwitchFrom_68K(void)
-{
-  DeinitFields();
-  ClearONOFF();
 }
 
 static void SwitchTo_68K(void *pUser)
@@ -6300,7 +6297,7 @@ static void SwitchTo_68K(void *pUser)
   DissectReg = DissectReg_68K;
   InternSymbol = InternSymbol_68K;
 
-  SwitchFrom = SwitchFrom_68K;
+  SwitchFrom = DeinitFields;
   InitFields();
   AddONOFF("PMMU"    , &PMMUAvail , PMMUAvailName , False);
   AddONOFF("FULLPMMU", &FullPMMU  , FullPMMUName  , False);

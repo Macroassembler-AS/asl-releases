@@ -74,9 +74,9 @@ static void DecodeAri(Word Code)
         CodeLen = 1;
         WAsmCode[0] += DefaultDir;
       }
-      else if (as_strcasecmp(ArgStr[2].Str, "W") == 0)
+      else if (as_strcasecmp(ArgStr[2].str.p_str, "W") == 0)
         CodeLen = 1;
-      else if (as_strcasecmp(ArgStr[2].Str, "F") == 0)
+      else if (as_strcasecmp(ArgStr[2].str.p_str, "F") == 0)
       {
         CodeLen = 1;
         WAsmCode[0] += 0x100;
@@ -381,7 +381,7 @@ static void MakeCode_17c4x(void)
   if (Memo(""))
     return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

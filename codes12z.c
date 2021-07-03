@@ -132,7 +132,7 @@ static Boolean DecodeAdrRegStr(const char *pArg, Byte *pRes)
 
 static Boolean DecodeRegArg(int ArgNum, Byte *pRes, Byte Mask)
 {
-  Boolean Result = DecodeRegStr(ArgStr[ArgNum].Str, pRes);
+  Boolean Result = DecodeRegStr(ArgStr[ArgNum].str.p_str, pRes);
 
   if (!Result || !((Mask >> *pRes) & 1))
     WrStrErrorPos(ErrNum_InvReg, &ArgStr[ArgNum]);
@@ -141,7 +141,7 @@ static Boolean DecodeRegArg(int ArgNum, Byte *pRes, Byte Mask)
 
 static Boolean DecodeAdrRegArg(int ArgNum, Byte *pRes, Byte Mask)
 {
-  Boolean Result = DecodeAdrRegStr(ArgStr[ArgNum].Str, pRes);
+  Boolean Result = DecodeAdrRegStr(ArgStr[ArgNum].str.p_str, pRes);
 
   if (!Result || !((Mask >> *pRes) & 1))
     WrStrErrorPos(ErrNum_InvReg, &ArgStr[ArgNum]);
@@ -150,24 +150,24 @@ static Boolean DecodeAdrRegArg(int ArgNum, Byte *pRes, Byte Mask)
 
 static Boolean DecodeGenRegArg(int ArgNum, Byte *pRes)
 {
-  if (DecodeRegStr(ArgStr[ArgNum].Str, pRes))
+  if (DecodeRegStr(ArgStr[ArgNum].str.p_str, pRes))
     return True;
-  else if (DecodeAdrRegStr(ArgStr[ArgNum].Str, pRes) && (*pRes != 3))
+  else if (DecodeAdrRegStr(ArgStr[ArgNum].str.p_str, pRes) && (*pRes != 3))
   {
     *pRes += 8;
     return True;
   }
-  else if (!as_strcasecmp(ArgStr[ArgNum].Str, "CCH"))
+  else if (!as_strcasecmp(ArgStr[ArgNum].str.p_str, "CCH"))
   {
     *pRes = 12;
     return True;
   }
-  else if (!as_strcasecmp(ArgStr[ArgNum].Str, "CCL"))
+  else if (!as_strcasecmp(ArgStr[ArgNum].str.p_str, "CCL"))
   {
     *pRes = 13;
     return True;
   }
-  else if (!as_strcasecmp(ArgStr[ArgNum].Str, "CCW"))
+  else if (!as_strcasecmp(ArgStr[ArgNum].str.p_str, "CCW"))
   {
     *pRes = 14;
     return True;
@@ -244,7 +244,7 @@ static Boolean IsIncDec(char ch, char *pRes)
 
 static void CopyIndirect(tStrComp *pDest, const tStrComp *pSrc)
 {
-  pDest->Pos.Len = strmemcpy(pDest->Str, STRINGSIZE, pSrc->Str + 1, strlen(pSrc->Str) - 2);
+  pDest->Pos.Len = strmemcpy(pDest->str.p_str, STRINGSIZE, pSrc->str.p_str + 1, strlen(pSrc->str.p_str) - 2);
   pDest->Pos.StartCol = pSrc->Pos.StartCol + 1;
 }
 
@@ -258,11 +258,11 @@ static Boolean DecodeAdr(int ArgIndex, unsigned ModeMask, tAdrVals *pVals)
   Boolean OK;
 
   ResetAdrVals(pVals);
-  StrCompMkTemp(&Comp, CompStr);
+  StrCompMkTemp(&Comp, CompStr, sizeof(CompStr));
 
   /* simple register: */
 
-  if (DecodeRegStr(ArgStr[ArgIndex].Str, &pVals->Arg))
+  if (DecodeRegStr(ArgStr[ArgIndex].str.p_str, &pVals->Arg))
   {
     if (ModeMask & MModeReg)
       pVals->Mode = AdrModeReg;
@@ -274,7 +274,7 @@ static Boolean DecodeAdr(int ArgIndex, unsigned ModeMask, tAdrVals *pVals)
     goto done;
   }
 
-  if (DecodeAdrRegStr(ArgStr[ArgIndex].Str, &pVals->Arg))
+  if (DecodeAdrRegStr(ArgStr[ArgIndex].str.p_str, &pVals->Arg))
   {
     pVals->Mode = AdrModeAReg;
     goto done;
@@ -282,7 +282,7 @@ static Boolean DecodeAdr(int ArgIndex, unsigned ModeMask, tAdrVals *pVals)
 
   /* immediate: */
 
-  if (*ArgStr[ArgIndex].Str == '#')
+  if (*ArgStr[ArgIndex].str.p_str == '#')
   {
     Boolean OK;
     LongInt Value;
@@ -342,10 +342,10 @@ static Boolean DecodeAdr(int ArgIndex, unsigned ModeMask, tAdrVals *pVals)
 
   /* indirect () []: */
 
-  l = strlen(ArgStr[ArgIndex].Str);
-  if (IsIndirect(ArgStr[ArgIndex].Str))
+  l = strlen(ArgStr[ArgIndex].str.p_str);
+  if (IsIndirect(ArgStr[ArgIndex].str.p_str))
     IndirMode = eIndirModePar;
-  else if ((l >= 2) && (ArgStr[ArgIndex].Str[0] == '[') && (ArgStr[ArgIndex].Str[l - 1] == ']'))
+  else if ((l >= 2) && (ArgStr[ArgIndex].str.p_str[0] == '[') && (ArgStr[ArgIndex].str.p_str[l - 1] == ']'))
     IndirMode = eIndirModeSquare;
   else
     IndirMode = eIndirModeNone;
@@ -357,62 +357,63 @@ static Boolean DecodeAdr(int ArgIndex, unsigned ModeMask, tAdrVals *pVals)
     Byte DataReg = 0, AdrReg = 0, AdrIncReg = 0;
     Boolean AdrRegPresent = False, DataRegPresent = False, HasDisp = False;
     tIncMode IncMode = eIncModeNone;
-    tStrComp Right;
+    tStrComp Right, RunComp;
 
     CopyIndirect(&Comp, &ArgStr[ArgIndex]);
+    StrCompRefRight(&RunComp, &Comp, 0);
 
     /* split into components */
 
     while (True)
     {
-      pSep = QuotPos(Comp.Str, ',');
+      pSep = QuotPos(RunComp.str.p_str, ',');
       if (pSep)
-        StrCompSplitRef(&Comp, &Right, &Comp, pSep);
+        StrCompSplitRef(&RunComp, &Right, &RunComp, pSep);
 
       /* remove leading/trailing spaces */
 
-      KillPrefBlanksStrCompRef(&Comp);
-      KillPostBlanksStrComp(&Comp);
-      l = strlen(Comp.Str);
+      KillPrefBlanksStrCompRef(&RunComp);
+      KillPostBlanksStrComp(&RunComp);
+      l = strlen(RunComp.str.p_str);
 
-      if (DecodeRegStr(Comp.Str, &DataReg))
+      if (DecodeRegStr(RunComp.str.p_str, &DataReg))
       {
         if (DataRegPresent)
         {
-          WrStrErrorPos(ErrNum_InvAddrMode, &Comp);
+          WrStrErrorPos(ErrNum_InvAddrMode, &RunComp);
           goto done;
         }
         DataRegPresent = True;
       }
-      else if (DecodeAdrRegStr(Comp.Str, &AdrReg))
+      else if (DecodeAdrRegStr(RunComp.str.p_str, &AdrReg))
       {
         if (AdrRegPresent)
         {
-          WrStrErrorPos(ErrNum_InvAddrMode, &Comp);
+          WrStrErrorPos(ErrNum_InvAddrMode, &RunComp);
           goto done;
         }
         AdrRegPresent = True;
       }
-      else if (IsIncDec(*Comp.Str, &IncChar) && DecodeAdrRegStr(Comp.Str + 1, &AdrIncReg))
+      else if (IsIncDec(*RunComp.str.p_str, &IncChar) && DecodeAdrRegStr(RunComp.str.p_str + 1, &AdrIncReg))
       {
         if (IncMode)
         {
-          WrStrErrorPos(ErrNum_InvAddrMode, &Comp);
+          WrStrErrorPos(ErrNum_InvAddrMode, &RunComp);
           goto done;
         }
         IncMode = (IncChar == '+') ? eIncModePreInc : eIncModePreDec;
       }
-      else if (IsIncDec(Comp.Str[l - 1], &IncChar))
+      else if (IsIncDec(Comp.str.p_str[l - 1], &IncChar))
       {
-        Comp.Str[l - 1] = '\0';
-        if (!DecodeAdrRegStr(Comp.Str, &AdrIncReg))
+        RunComp.str.p_str[l - 1] = '\0';
+        if (!DecodeAdrRegStr(RunComp.str.p_str, &AdrIncReg))
         {
-          WrStrErrorPos(ErrNum_InvReg, &Comp);
+          WrStrErrorPos(ErrNum_InvReg, &RunComp);
           goto done;
         }
         if (IncMode)
         {
-          WrStrErrorPos(ErrNum_InvAddrMode, &Comp);
+          WrStrErrorPos(ErrNum_InvAddrMode, &RunComp);
           goto done;
         }
         IncMode = (IncChar == '+') ? eIncModePostInc : eIncModePostDec;
@@ -420,7 +421,7 @@ static Boolean DecodeAdr(int ArgIndex, unsigned ModeMask, tAdrVals *pVals)
       else
       {
         Boolean OK;
-        LongInt Val = EvalStrIntExpression(&Comp, Int24, &OK);
+        LongInt Val = EvalStrIntExpression(&RunComp, Int24, &OK);
 
         if (!OK)
           goto done;
@@ -429,7 +430,7 @@ static Boolean DecodeAdr(int ArgIndex, unsigned ModeMask, tAdrVals *pVals)
       }
 
       if (pSep)
-        Comp = Right;
+        RunComp = Right;
       else
         break;
     }
@@ -710,7 +711,7 @@ static Boolean SizeCode2(ShortInt ThisOpSize, Byte *pSizeCode)
 
 static Boolean DecodeImmBitField(tStrComp *pArg, Word *pResult)
 {
-  char *pSplit = strchr(pArg->Str, ':'), Save;
+  char *pSplit = strchr(pArg->str.p_str, ':'), Save;
   tStrComp Left, Right;
   Boolean OK;
   tSymbolFlags Flags;
@@ -1096,7 +1097,7 @@ static void ExpandS12ZBitfield(const tStrComp *pVarName, const struct sStructEle
 
 static void DecodeFixed(Word Code)
 {
-  if (*AttrPart.Str) WrError(ErrNum_UseLessAttr);
+  if (*AttrPart.str.p_str) WrError(ErrNum_UseLessAttr);
   else if (ChkArgCnt(0, 0))
     PutCode(Code);
 }
@@ -1175,7 +1176,7 @@ static void DecodeTwoReg(Word Code)
   /* TODO: what is the operand order (source/dest)? The manual is
      unclear about this.  Assuming source is first argument, similar to TFR: */
 
-  if (*AttrPart.Str) WrError(ErrNum_UseLessAttr);
+  if (*AttrPart.str.p_str) WrError(ErrNum_UseLessAttr);
   else if (ChkArgCnt(2, 2)
         && DecodeRegArg(2, &DestReg, 0xff)
         && DecodeRegArg(1, &SrcReg, 0xff))
@@ -1594,7 +1595,7 @@ static void DecodeBitField(Word Code)
     Word ParamImm;
     tAdrVals SrcAdrVals, DestAdrVals;
 
-    if (*ArgStr[3].Str == '#')
+    if (*ArgStr[3].str.p_str == '#')
     {
       tStrComp Field;
 
@@ -1606,7 +1607,7 @@ static void DecodeBitField(Word Code)
 
     /* only D2...D5 allowed as parameter */
 
-    else if (!DecodeRegStr(ArgStr[3].Str, &ParamReg) || (ParamReg >= 4))
+    else if (!DecodeRegStr(ArgStr[3].str.p_str, &ParamReg) || (ParamReg >= 4))
     {
       WrStrErrorPos(ErrNum_InvReg, &ArgStr[3]);
       return;
@@ -1974,7 +1975,7 @@ static void DecodeJMP_JSR(Word Code)
 {
   tAdrVals AdrVals;
 
-  if (*AttrPart.Str) WrError(ErrNum_UseLessAttr);
+  if (*AttrPart.str.p_str) WrError(ErrNum_UseLessAttr);
   else if (ChkArgCnt(1, 1) && DecodeAdr(1, MModeMemReg, &AdrVals))
   {
     Byte Dummy;
@@ -2093,7 +2094,7 @@ static void DecodeLEA(Word Code)
 
   UNUSED(Code);
 
-  if (*AttrPart.Str) WrError(ErrNum_UseLessAttr);
+  if (*AttrPart.str.p_str) WrError(ErrNum_UseLessAttr);
   else if (ChkArgCnt(2, 2) && DecodeAdr(1, MModeReg | MModeAReg, &DestAdrVals))
   {
     switch (DestAdrVals.Mode)
@@ -2229,17 +2230,17 @@ static void DecodePSH_PUL(Word Code)
     return;
   for (z = 1; z <= ArgCnt; z++)
   {
-    if (!as_strcasecmp(ArgStr[z].Str, "ALL"))
+    if (!as_strcasecmp(ArgStr[z].str.p_str, "ALL"))
       ThisRegMask = 0x3f3f;
-    else if (!as_strcasecmp(ArgStr[z].Str, "ALL16b"))
+    else if (!as_strcasecmp(ArgStr[z].str.p_str, "ALL16b"))
       ThisRegMask = 0x3003;
-    else if (DecodeRegStr(ArgStr[z].Str, &Reg))
+    else if (DecodeRegStr(ArgStr[z].str.p_str, &Reg))
       ThisRegMask = RegMasks[Reg];
-    else if (!as_strcasecmp(ArgStr[z].Str, "CCH"))
+    else if (!as_strcasecmp(ArgStr[z].str.p_str, "CCH"))
       ThisRegMask = 0x0020;
-    else if (!as_strcasecmp(ArgStr[z].Str, "CCL"))
+    else if (!as_strcasecmp(ArgStr[z].str.p_str, "CCL"))
       ThisRegMask = 0x0010;
-    else if (DecodeAdrRegStr(ArgStr[z].Str, &Reg) && (Reg < 2))
+    else if (DecodeAdrRegStr(ArgStr[z].str.p_str, &Reg) && (Reg < 2))
       ThisRegMask = 0x0200 >> Reg;
     else
     {
@@ -2397,7 +2398,7 @@ static void DecodeDEFBIT(Word Code)
     pElement = CreateStructElem(&LabPart);
     if (!pElement)
       return;
-    pElement->pRefElemName = as_strdup(ArgStr[1].Str);
+    pElement->pRefElemName = as_strdup(ArgStr[1].str.p_str);
     pElement->OpSize = OpSize;
     pElement->BitPos = BitPos;
     pElement->ExpandFnc = ExpandS12ZBit;
@@ -2443,7 +2444,7 @@ static void DecodeDEFBITFIELD(Word Code)
     pElement = CreateStructElem(&LabPart);
     if (!pElement)
       return;
-    pElement->pRefElemName = as_strdup(ArgStr[1].Str);
+    pElement->pRefElemName = as_strdup(ArgStr[1].str.p_str);
     pElement->OpSize = OpSize;
     pElement->BitPos = BitField & 31;
     pElement->BitWidthM1 = (BitField >> 5) - 1;
@@ -2653,9 +2654,9 @@ static Boolean DecodeAttrPart_S12Z(void)
   OpSize2 = eSymbolSizeUnknown;
   for (z = 0; z < 2; z++)
   {
-    if (AttrPart.Str[z] == '\0')
+    if (AttrPart.str.p_str[z] == '\0')
       break;
-    if (!DecodeMoto16AttrSize(AttrPart.Str[z], z ? &OpSize2 : &AttrPartOpSize, True))
+    if (!DecodeMoto16AttrSize(AttrPart.str.p_str[z], z ? &OpSize2 : &AttrPartOpSize, True))
       return False;
   }
   return True;
@@ -2682,19 +2683,13 @@ static void MakeCode_S12Z(void)
   if (DecodeMotoPseudo(True)) return;
   if (DecodeMoto16Pseudo(OpSize, True)) return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 
 static Boolean IsDef_S12Z(void)
 {
   return Memo("DEFBIT") || Memo("DEFBITFIELD");
-}
-
-static void SwitchFrom_S12Z(void)
-{
-  DeinitFields();
-  ClearONOFF();
 }
 
 static void SwitchTo_S12Z(void)
@@ -2716,7 +2711,7 @@ static void SwitchTo_S12Z(void)
   DecodeAttrPart = DecodeAttrPart_S12Z;
   MakeCode = MakeCode_S12Z;
   IsDef = IsDef_S12Z;
-  SwitchFrom = SwitchFrom_S12Z;
+  SwitchFrom = DeinitFields;
   DissectBit = DissectBit_S12Z;
   InitFields();
   AddMoto16PseudoONOFF();

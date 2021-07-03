@@ -237,7 +237,7 @@ static void DissectReg_960(char *pDest, size_t DestSize, tRegInt Value, tSymbolS
 
 static tRegEvalResult DecodeIReg(const tStrComp *pArg, LongWord *pResult, Boolean MustBeReg)
 {
-  if (DecodeIRegCore(pArg->Str, pResult))
+  if (DecodeIRegCore(pArg->str.p_str, pResult))
   {
     *pResult &= ~REG_MARK;
     return eIsReg;
@@ -267,13 +267,13 @@ static tRegEvalResult DecodeIReg(const tStrComp *pArg, LongWord *pResult, Boolea
 
 static tRegEvalResult DecodeIOrFPReg(const tStrComp *pArg, LongWord *pResult, tSymbolSize *pSize, Boolean MustBeReg)
 {
-  if (DecodeIRegCore(pArg->Str, pResult))
+  if (DecodeIRegCore(pArg->str.p_str, pResult))
   {
     *pResult &= ~REG_MARK;
     *pSize = eSymbolSize32Bit;
     return eIsReg;
   }
-  else if (DecodeFPRegCore(pArg->Str, pResult))
+  else if (DecodeFPRegCore(pArg->str.p_str, pResult))
   {
     *pSize = eSymbolSizeFloat64Bit;
     return eIsReg;
@@ -385,24 +385,24 @@ static int DecodeMem(const tStrComp *pArg, LongWord *Erg, LongWord *Ext)
   Done = FALSE;
   do
   {
-    ArgLen = strlen(Arg.Str);
+    ArgLen = strlen(Arg.str.p_str);
     if (ArgLen == 0)
       Done = True;
-    else switch (Arg.Str[ArgLen - 1])
+    else switch (Arg.str.p_str[ArgLen - 1])
     {
       case ']':
         if (Index != NOREG) return AddrError(ErrNum_InvAddrMode);
-        for (p = Arg.Str + ArgLen - 1; p >= Arg.Str; p--)
+        for (p = Arg.str.p_str + ArgLen - 1; p >= Arg.str.p_str; p--)
           if (*p == '[')
             break;
-        if (p < Arg.Str) return AddrError(ErrNum_BrackErr);
+        if (p < Arg.str.p_str) return AddrError(ErrNum_BrackErr);
         StrCompShorten(&Arg, 1);
         StrCompSplitRef(&Arg, &RegArg, &Arg, p);
-        p2 = strchr(RegArg.Str, '*');
+        p2 = strchr(RegArg.str.p_str, '*');
         if (p2)
         {
           StrCompSplitRef(&RegArg, &ScaleArg, &RegArg, p2);
-          Scale2 = strtol(ScaleArg.Str, &end, 10);
+          Scale2 = strtol(ScaleArg.str.p_str, &end, 10);
           if (*end != '\0') return AddrError(ErrNum_InvAddrMode);
           for (Scale = 0; Scale < 5; Scale++, Scale2 = Scale2 >> 1)
             if (Odd(Scale2))
@@ -415,13 +415,13 @@ static int DecodeMem(const tStrComp *pArg, LongWord *Erg, LongWord *Ext)
         break;
       case ')':
         if (Base != NOREG) return AddrError(ErrNum_InvAddrMode);
-        for (p = Arg.Str + ArgLen - 1; p >= Arg.Str; p--)
+        for (p = Arg.str.p_str + ArgLen - 1; p >= Arg.str.p_str; p--)
           if (*p == '(')
             break;
-        if (p < Arg.Str) return AddrError(ErrNum_BrackErr);
+        if (p < Arg.str.p_str) return AddrError(ErrNum_BrackErr);
         StrCompShorten(&Arg, 1);
         StrCompSplitRef(&Arg, &RegArg, &Arg, p);
-        if (!as_strcasecmp(RegArg.Str, "IP"))
+        if (!as_strcasecmp(RegArg.str.p_str, "IP"))
           Base = IPREG;
         else if (DecodeIReg(&RegArg, &Base, True) != eIsReg)
           return -1;
@@ -669,7 +669,7 @@ static void MakeCode_960(void)
 
   /* CPU-Anweisungen */
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 
@@ -931,12 +931,6 @@ static void InitPass_960(void)
   SetFlag(&FPUAvail, FPUAvailName, False);
 }
 
-static void SwitchFrom_960(void)
-{
-  DeinitFields();
-  ClearONOFF();
-}
-
 /*!------------------------------------------------------------------------
  * \fn     InternSymbol_960(char *pArg, TempResult *pResult)
  * \brief  handle built-in symbols on i960
@@ -990,7 +984,7 @@ static void SwitchTo_960(void)
   IsDef = IsDef_960;
   InternSymbol = InternSymbol_960;
   DissectReg = DissectReg_960;
-  SwitchFrom=SwitchFrom_960;
+  SwitchFrom = DeinitFields;
   AddONOFF("FPU"     , &FPUAvail  , FPUAvailName  , False);
   AddONOFF(SupAllowedCmdName, &SupAllowed, SupAllowedSymName, False);
 

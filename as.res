@@ -195,6 +195,10 @@ Message ErrMsgRegNumWraparound
  "Registernummer-Umlauf"
  "register number wraparound"
 
+Message ErrMsgIndexedForIndirect
+ "verwende indizierte anstelle indirekter Adressierung"
+ "using indexed instead of indirect addressing"
+
 ;*****
 
 Message ErrMsgDoubleDef

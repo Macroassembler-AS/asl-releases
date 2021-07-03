@@ -396,7 +396,7 @@ static tRegEvalResult DecodeReg(const tStrComp *pArg, Word *pValue, tSymbolSize 
   tEvalResult EvalResult;
   tRegEvalResult RegEvalResult;
 
-  if (DecodeRegCore(pArg->Str, pValue, &EvalResult.DataSize))
+  if (DecodeRegCore(pArg->str.p_str, pValue, &EvalResult.DataSize))
     RegEvalResult = eIsReg;
   else
   {
@@ -496,7 +496,7 @@ static LongWord DecodeAddrPartNum(const tStrComp *pArg, LongInt Disp, tEvalResul
   LongWord Result, SegNum = 0;
   IntType ThisIntType;
 
-  StrCompMkTemp(&CopyComp, Copy);
+  StrCompMkTemp(&CopyComp, Copy, sizeof(Copy));
   StrCompCopy(&CopyComp, pArg);
   *pForceShort = False;
 
@@ -504,25 +504,25 @@ static LongWord DecodeAddrPartNum(const tStrComp *pArg, LongInt Disp, tEvalResul
 
   if (!IsIO && Segmented())
   {
-    int Len = strlen(CopyComp.Str);
+    int Len = strlen(CopyComp.str.p_str);
 
-    if ((Len >= 2) && (CopyComp.Str[0] == '|') && (CopyComp.Str[Len - 1] == '|'))
+    if ((Len >= 2) && (CopyComp.str.p_str[0] == '|') && (CopyComp.str.p_str[Len - 1] == '|'))
     {
       StrCompShorten(&CopyComp, 1);
-      StrCompIncRefLeft(&CopyComp, 1);
-      KillPrefBlanksStrCompRef(&CopyComp);
+      StrCompCutLeft(&CopyComp, 1);
+      KillPrefBlanksStrComp(&CopyComp);
       KillPostBlanksStrComp(&CopyComp);
       *pForceShort = True;
       IsDirect = True;
       Len -= 2;
     }
-    if (!strncmp(CopyComp.Str, "<<", 2))
+    if (!strncmp(CopyComp.str.p_str, "<<", 2))
     {
       char *pRun, *pSplitPos = NULL;
       int Nest = 0;
       Boolean InSgl = False, InDbl = False, Found = False;
 
-      for (pRun = CopyComp.Str + 2; *pRun && !Found; pRun++)
+      for (pRun = CopyComp.str.p_str + 2; *pRun && !Found; pRun++)
       {
         switch (*pRun)
         {
@@ -738,7 +738,7 @@ static tAdrMode DecodeAdr(const tStrComp *pArg, unsigned ModeMask, tAdrVals *pAd
 
   /* immediate */
 
-  if (*pArg->Str == '#')
+  if (*pArg->str.p_str == '#')
   {
     LongWord Result;
     Boolean OK;
@@ -815,7 +815,7 @@ static tAdrMode DecodeAdr(const tStrComp *pArg, unsigned ModeMask, tAdrVals *pAd
   /* control register */
 
   for (z = 0; z < CtlRegCnt; z++)
-    if (!as_strcasecmp(pArg->Str, CtlRegs[z].pName))
+    if (!as_strcasecmp(pArg->str.p_str, CtlRegs[z].pName))
     {
       if (!(CtlRegs[z].Flags & (Segmented() ? eSegMode : eNonSegMode)))
       {
@@ -833,7 +833,7 @@ static tAdrMode DecodeAdr(const tStrComp *pArg, unsigned ModeMask, tAdrVals *pAd
 
   /* Register indirect (IR): */
 
-  if (*pArg->Str == '@')
+  if (*pArg->str.p_str == '@')
   {
     tStrComp RegComp;
 
@@ -847,13 +847,13 @@ static tAdrMode DecodeAdr(const tStrComp *pArg, unsigned ModeMask, tAdrVals *pAd
     goto chk;
   }
   if (AMDSyntax
-   && ((ArgLen = strlen(pArg->Str))> 1)
-   && (pArg->Str[ArgLen - 1] == '^'))
+   && ((ArgLen = strlen(pArg->str.p_str))> 1)
+   && (pArg->str.p_str[ArgLen - 1] == '^'))
   {
     String Reg;
     tStrComp RegComp;
 
-    StrCompMkTemp(&RegComp, Reg);
+    StrCompMkTemp(&RegComp, Reg, sizeof(Reg));
     StrCompCopySub(&RegComp, pArg, 0, ArgLen - 1);
     switch (DecodeReg(&RegComp, &pAdrVals->Val, &ArgSize, ChkRegSize_Addr, False))
     {
@@ -871,7 +871,7 @@ static tAdrMode DecodeAdr(const tStrComp *pArg, unsigned ModeMask, tAdrVals *pAd
 
   /* Indexed, base... */
 
-  SplitPos = FindDispBaseSplitWithQualifier(pArg->Str, &ArgLen, ShortQualifier);
+  SplitPos = FindDispBaseSplitWithQualifier(pArg->str.p_str, &ArgLen, ShortQualifier);
   if (SplitPos > 0)
   {
     String OutStr, InStr;
@@ -879,8 +879,8 @@ static tAdrMode DecodeAdr(const tStrComp *pArg, unsigned ModeMask, tAdrVals *pAd
 
     /* copy out base + index components */
 
-    StrCompMkTemp(&OutArg, OutStr);
-    StrCompMkTemp(&InArg, InStr);
+    StrCompMkTemp(&OutArg, OutStr, sizeof(OutStr));
+    StrCompMkTemp(&InArg, InStr, sizeof(InStr));
     StrCompCopySub(&OutArg, pArg, 0, SplitPos);
     KillPostBlanksStrComp(&OutArg);
     StrCompCopySub(&InArg, pArg, SplitPos + 1, ArgLen - SplitPos - 2);
@@ -888,7 +888,7 @@ static tAdrMode DecodeAdr(const tStrComp *pArg, unsigned ModeMask, tAdrVals *pAd
     {
       case eIsReg: /* [R]Rx(...) */
         if (!pAdrVals->Val) WrStrErrorPos(ErrNum_InvAddrMode, &OutArg);
-        else if (*InArg.Str == '#')
+        else if (*InArg.str.p_str == '#')
         {
           Boolean OK;
 
@@ -1012,7 +1012,7 @@ static Byte EvalBitPosition(const tStrComp *pBitArg, Boolean *pOK, tSymbolSize O
       *pOK = False;
       return 0;
     common:
-      return EvalStrIntExpressionOffs(pBitArg, !!(*pBitArg->Str == '#'), Type, pOK);
+      return EvalStrIntExpressionOffs(pBitArg, !!(*pBitArg->str.p_str == '#'), Type, pOK);
   }
 }
 
@@ -1230,7 +1230,7 @@ static Boolean DecodeCondition(const tStrComp *pArg, Word *pCondition)
   int z;
 
   for (z = 0; z < ConditionCnt; z++)
-    if (!as_strcasecmp(pArg ? pArg->Str : "", Conditions[z].Name))
+    if (!as_strcasecmp(pArg ? pArg->str.p_str : "", Conditions[z].Name))
     {
       *pCondition = Conditions[z].Code;
       return True;
@@ -1251,7 +1251,7 @@ static Word DecodeImm1_16(const tStrComp *pArg, tEvalResult *pEvalResult)
 {
   Word Result;
 
-  Result = EvalStrIntExpressionOffsWithResult(pArg, !!(*pArg->Str == '#'), UInt5, pEvalResult);
+  Result = EvalStrIntExpressionOffsWithResult(pArg, !!(*pArg->str.p_str == '#'), UInt5, pEvalResult);
   if (pEvalResult->OK)
   {
     if (mFirstPassUnknownOrQuestionable(pEvalResult->Flags))
@@ -2343,15 +2343,15 @@ static void DecodeFLG(Word Code)
 
     for (z = 1; z <= ArgCnt; z++)
     {
-      if (!as_strcasecmp(ArgStr[z].Str, "P/V"))
+      if (!as_strcasecmp(ArgStr[z].str.p_str, "P/V"))
         Num = 1 << 0;
-      else if (!as_strcasecmp(ArgStr[z].Str, "ZR"))
+      else if (!as_strcasecmp(ArgStr[z].str.p_str, "ZR"))
         Num = 1 << 2;
-      else if (!as_strcasecmp(ArgStr[z].Str, "CY"))
+      else if (!as_strcasecmp(ArgStr[z].str.p_str, "CY"))
         Num = 1 << 3;
-      else if (1 == strlen(ArgStr[z].Str))
+      else if (1 == strlen(ArgStr[z].str.p_str))
       {
-        const char *pPos = strchr(FlagNames, as_toupper(*ArgStr[z].Str));
+        const char *pPos = strchr(FlagNames, as_toupper(*ArgStr[z].str.p_str));
         Num = pPos ? (1 << ((pPos - FlagNames) % 4)) : 0;
       }
       else
@@ -2391,9 +2391,9 @@ static void DecodeDI_EI(Word Code)
     Code |= 3;
     for (z = 1; z <= ArgCnt; z++)
     {
-      if (!as_strcasecmp(ArgStr[z].Str, "VI"))
+      if (!as_strcasecmp(ArgStr[z].str.p_str, "VI"))
         Num = 1 << 1;
-      else if (!as_strcasecmp(ArgStr[z].Str, "NVI"))
+      else if (!as_strcasecmp(ArgStr[z].str.p_str, "NVI"))
         Num = 1 << 0;
       else
         Num = 0;
@@ -2643,7 +2643,7 @@ static void DecodeLDK(Word Code)
       WrStrErrorPos(ErrNum_InvOpSize, &ArgStr[1]);
       return;
     }
-    Value = EvalStrIntExpressionOffs(&ArgStr[2], !!(*ArgStr[2].Str == '#'), UInt4, &OK);
+    Value = EvalStrIntExpressionOffs(&ArgStr[2], !!(*ArgStr[2].str.p_str == '#'), UInt4, &OK);
     if (OK)
       AppendCode(Code | (DestAdrVals.Val << 4) | Value);
   }
@@ -2873,7 +2873,7 @@ static void DecodeRotate(Word Code)
     }
     if (ArgCnt >= 2)
     {
-      Count = EvalStrIntExpressionOffsWithResult(&ArgStr[2], !!(*ArgStr[2].Str == '#'), UInt2, &EvalResult);
+      Count = EvalStrIntExpressionOffsWithResult(&ArgStr[2], !!(*ArgStr[2].str.p_str == '#'), UInt2, &EvalResult);
       if (EvalResult.OK && mFirstPassUnknownOrQuestionable(EvalResult.Flags))
         Count = 1;
     }
@@ -2910,7 +2910,7 @@ static void DecodeSC(Word Code)
   if (ChkArgCnt(1, 1))
   {
     Boolean OK;
-    Word Arg = EvalStrIntExpressionOffs(&ArgStr[1], !!(*ArgStr[1].Str == '#'), Int8, &OK);
+    Word Arg = EvalStrIntExpressionOffs(&ArgStr[1], !!(*ArgStr[1].str.p_str == '#'), Int8, &OK);
 
     if (OK)
       AppendCode(Code | (Arg & 0xff));
@@ -2977,7 +2977,7 @@ static void DecodeShift(Word Code)
     {
       tEvalResult EvalResult;
 
-      Count = EvalStrIntExpressionOffsWithResult(&ArgStr[2], !!(*ArgStr[2].Str == '#'), (OpSize == eSymbolSize32Bit) ? UInt6 : (OpSize == eSymbolSize16Bit) ? UInt5 : UInt4, &EvalResult);
+      Count = EvalStrIntExpressionOffsWithResult(&ArgStr[2], !!(*ArgStr[2].str.p_str == '#'), (OpSize == eSymbolSize32Bit) ? UInt6 : (OpSize == eSymbolSize16Bit) ? UInt5 : UInt4, &EvalResult);
       if (mFirstPassUnknownOrQuestionable(EvalResult.Flags))
         Count = 1;
       if (!ChkRange(Count, Negate ? 1 : 0, 8 << OpSize))
@@ -3062,7 +3062,7 @@ static void DecodeDEFBIT(Word Code)
     pElement = CreateStructElem(&LabPart);
     if (!pElement)
       return;
-    pElement->pRefElemName = as_strdup(ArgStr[1].Str);
+    pElement->pRefElemName = as_strdup(ArgStr[1].str.p_str);
     pElement->OpSize = OpSize;
     pElement->BitPos = BitPos;
     pElement->ExpandFnc = ExpandZ8000Bit;
@@ -3337,7 +3337,7 @@ static void MakeCode_Z8000(void)
   if (DecodeIntelPseudo(True))
     return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 
@@ -3413,17 +3413,6 @@ static const Operator PotMonadicOperator =
 };
 
 /*!------------------------------------------------------------------------
- * \fn     SwitchFrom_Z8000(void)
- * \brief  deinitialize as target
- * ------------------------------------------------------------------------ */
-
-static void SwitchFrom_Z8000(void)
-{
-  DeinitFields();
-  ClearONOFF();
-}
-
-/*!------------------------------------------------------------------------
  * \fn     SwitchTo_Z8000(void *pUser)
  * \brief  prepare to assemble code for this target
  * \param  pUser CPU properties
@@ -3459,7 +3448,7 @@ static void SwitchTo_Z8000(void *pUser)
   DissectReg = DissectReg_Z8000;
   DissectBit = DissectBit_Z8000;
   InternSymbol = InternSymbol_Z8000;
-  SwitchFrom = SwitchFrom_Z8000;
+  SwitchFrom = DeinitFields;
   InitFields();
   SetIsOccupiedFnc = TrueFnc;
   if (AMDSyntax)

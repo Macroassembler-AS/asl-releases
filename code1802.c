@@ -530,7 +530,7 @@ static void MakeCode_1802(void)
 
   /* to be ignored */
 
-  if (*OpPart.Str == '\0') return;
+  if (*OpPart.str.p_str == '\0') return;
 
   /* Pseudo Instructions */
 
@@ -538,7 +538,7 @@ static void MakeCode_1802(void)
 
   /* search */
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

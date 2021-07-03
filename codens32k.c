@@ -183,7 +183,7 @@ static void SetMomFPU(tFPU NewFPU)
       tStrComp TmpComp;
       String TmpCompStr;
 
-      StrCompMkTemp(&TmpComp, TmpCompStr);
+      StrCompMkTemp(&TmpComp, TmpCompStr, sizeof(TmpCompStr));
       strmaxcpy(TmpCompStr, MomFPUIdentName, sizeof(TmpCompStr));
       strmaxcpy(MomFPUIdent, FPUNames[MomFPU], sizeof(MomFPUIdent));
       EnterStringSymbol(&TmpComp, FPUNames[MomFPU], True);
@@ -212,7 +212,7 @@ static void SetMomPMMU(tPMMU NewPMMU)
       tStrComp TmpComp;
       String TmpCompStr;
 
-      StrCompMkTemp(&TmpComp, TmpCompStr);
+      StrCompMkTemp(&TmpComp, TmpCompStr, sizeof(TmpCompStr));
       strmaxcpy(TmpCompStr, MomPMMUIdentName, sizeof(TmpCompStr));
       strmaxcpy(MomPMMUIdent, PMMUNames[MomPMMU], sizeof(MomPMMUIdent));
       EnterStringSymbol(&TmpComp, PMMUNames[MomPMMU], True);
@@ -374,7 +374,7 @@ static tRegEvalResult DecodeReg(const tStrComp *pArg, Word *pValue, tSymbolSize 
   tEvalResult EvalResult;
   tRegEvalResult RegEvalResult;
 
-  if (DecodeRegCore(pArg->Str, pValue, &EvalResult.DataSize))
+  if (DecodeRegCore(pArg->str.p_str, pValue, &EvalResult.DataSize))
     RegEvalResult = eIsReg;
   else
   {
@@ -408,7 +408,7 @@ static Boolean DecodeCtlReg(const tStrComp *pArg, Word *pResult)
   unsigned z;
 
   for (z = 0; z < CtlRegCnt; z++)
-    if (!as_strcasecmp(pArg->Str, CtlRegs[z].pName))
+    if (!as_strcasecmp(pArg->str.p_str, CtlRegs[z].pName))
     {
       *pResult = CtlRegs[z].Code;
       return CheckSup(CtlRegs[z].Privileged, pArg);
@@ -430,7 +430,7 @@ static Boolean DecodeMMUReg(const tStrComp *pArg, Word *pResult)
   unsigned z;
 
   for (z = 0; z < MMURegCnt; z++)
-    if (!as_strcasecmp(pArg->Str, MMURegs[z].pName))
+    if (!as_strcasecmp(pArg->str.p_str, MMURegs[z].pName))
     {
       if (!((MMURegs[z].Mask >> MomPMMU) & 1))
       {
@@ -456,13 +456,13 @@ static Boolean DecodeMMUReg(const tStrComp *pArg, Word *pResult)
 static Boolean DecodeRegList(const tStrComp *pArg, Boolean BitRev, Byte *pResult)
 {
   tStrComp Part, Remainder;
-  int l = strlen(pArg->Str);
+  int l = strlen(pArg->str.p_str);
   Word Reg;
   char *pSep;
 
   if ((l < 2)
-   || (pArg->Str[0] != '[')
-   || (pArg->Str[l - 1] != ']'))
+   || (pArg->str.p_str[0] != '[')
+   || (pArg->str.p_str[l - 1] != ']'))
   {
     WrStrErrorPos(ErrNum_InvRegList, pArg);
     return False;
@@ -474,7 +474,7 @@ static Boolean DecodeRegList(const tStrComp *pArg, Boolean BitRev, Byte *pResult
   while (True)
   {
     KillPrefBlanksStrCompRef(&Part);
-    pSep = strchr(Part.Str, ',');
+    pSep = strchr(Part.str.p_str, ',');
     if (pSep)
       StrCompSplitRef(&Part, &Remainder, &Part, pSep);
     KillPostBlanksStrComp(&Part);
@@ -505,13 +505,13 @@ static Boolean DecodeRegList(const tStrComp *pArg, Boolean BitRev, Byte *pResult
 static Boolean DecodeCfgList(const tStrComp *pArg, Byte *pResult)
 {
   tStrComp Part, Remainder;
-  int l = strlen(pArg->Str);
+  int l = strlen(pArg->str.p_str);
   char *pSep;
   const char Opts[] = "IFMC", *pOpt;
 
   if ((l < 2)
-   || (pArg->Str[0] != '[')
-   || (pArg->Str[l - 1] != ']'))
+   || (pArg->str.p_str[0] != '[')
+   || (pArg->str.p_str[l - 1] != ']'))
   {
     WrStrErrorPos(ErrNum_InvCfgList, pArg);
     return False;
@@ -523,16 +523,16 @@ static Boolean DecodeCfgList(const tStrComp *pArg, Byte *pResult)
   while (True)
   {
     KillPrefBlanksStrCompRef(&Part);
-    pSep = strchr(Part.Str, ',');
+    pSep = strchr(Part.str.p_str, ',');
     if (pSep)
       StrCompSplitRef(&Part, &Remainder, &Part, pSep);
     KillPostBlanksStrComp(&Part);
-    switch (strlen(Part.Str))
+    switch (strlen(Part.str.p_str))
     {
       case 0:
         break;
       case 1:
-        pOpt = strchr(Opts, as_toupper(*Part.Str));
+        pOpt = strchr(Opts, as_toupper(*Part.str.p_str));
         if (pOpt)
         {
           *pResult |= 1 << (pOpt - Opts);
@@ -671,9 +671,9 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrVals *pDest, Boolean AddrMode
 
   /* split off scaled indexing, which is orthogonal to (almost) all other modes */
 
-  pSplit = MatchCharsRev(pArg->Str, " : ? ] ", IndexChars, &Scale);
-  pSplit2 = (pSplit && (pSplit > pArg->Str))
-          ? FindOpeningParenthese(pArg->Str, pSplit - 1, "[]")
+  pSplit = MatchCharsRev(pArg->str.p_str, " : ? ] ", IndexChars, &Scale);
+  pSplit2 = (pSplit && (pSplit > pArg->str.p_str))
+          ? FindOpeningParenthese(pArg->str.p_str, pSplit - 1, "[]")
           : NULL;
   if (pSplit && pSplit2)
   {
@@ -708,7 +708,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrVals *pDest, Boolean AddrMode
 
   /* absolute: */
 
-  if (*pArg->Str == '@')
+  if (*pArg->str.p_str == '@')
   {
     tStrComp Arg;
     LongWord Addr;
@@ -735,7 +735,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrVals *pDest, Boolean AddrMode
 
   /* TOS? */
 
-  if (!as_strcasecmp(pArg->Str, "TOS"))
+  if (!as_strcasecmp(pArg->str.p_str, "TOS"))
   {
     pDest->Code = AddrCode_TOS;
     goto chk;
@@ -773,7 +773,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrVals *pDest, Boolean AddrMode
 
   /* EXT mode */
 
-  pSplit = MatchChars(pArg->Str, " EXT (");
+  pSplit = MatchChars(pArg->str.p_str, " EXT (");
   if (pSplit)
   {
     tStrComp Left, Mid, Right;
@@ -781,7 +781,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrVals *pDest, Boolean AddrMode
     Boolean OK;
 
     StrCompSplitRef(&Left, &Mid, pArg, pSplit - 1);
-    pSplit = FindClosingParenthese(Mid.Str);
+    pSplit = FindClosingParenthese(Mid.str.p_str);
     if (!pSplit)
     {
       WrStrErrorPos(ErrNum_BrackErr, pArg);
@@ -791,8 +791,8 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrVals *pDest, Boolean AddrMode
     Disp1 = EvalStrIntExpression(&Mid, Int30, &OK);
     if (!OK)
       return False;
-    *(--Right.Str) = '0'; Right.Pos.Len++; Right.Pos.StartCol--;
-    if (*Right.Str)
+    *(--Right.str.p_str) = '0'; Right.Pos.Len++; Right.Pos.StartCol--;
+    if (*Right.str.p_str)
       Disp2 = EvalStrIntExpression(&Right, Int30, &OK);
     if (!OK)
       return False;
@@ -806,15 +806,15 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrVals *pDest, Boolean AddrMode
 
   /* PC-relative */
 
-  if (!strcmp(pArg->Str, "*")
-   || MatchChars(pArg->Str, "* ?", "+-", NULL))
+  if (!strcmp(pArg->str.p_str, "*")
+   || MatchChars(pArg->str.p_str, "* ?", "+-", NULL))
   {
     LongInt Disp;
     Boolean OK;
 
-    *pArg->Str = '0';
+    *pArg->str.p_str = '0';
     Disp = EvalStrIntExpression(pArg, Int30, &OK);
-    *pArg->Str = '*';
+    *pArg->str.p_str = '*';
     if (!OK
      || !EncodeDisplacement(Disp, pDest, ErrNum_OverRange, pArg))
       return False;
@@ -824,7 +824,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrVals *pDest, Boolean AddrMode
 
   /* disp(...)? */
 
-  SplitPos = FindDispBaseSplit(pArg->Str, &ArgLen);
+  SplitPos = FindDispBaseSplit(pArg->str.p_str, &ArgLen);
   if (SplitPos >= 0)
   {
     tStrComp OutDisp, InnerArg;
@@ -832,7 +832,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrVals *pDest, Boolean AddrMode
     tEvalResult OutEvalResult;
 
     memset(&OutEvalResult, 0, sizeof(OutEvalResult));
-    StrCompSplitRef(&OutDisp, &InnerArg, pArg, &pArg->Str[SplitPos]);
+    StrCompSplitRef(&OutDisp, &InnerArg, pArg, &pArg->str.p_str[SplitPos]);
     if (OutDisp.Pos.Len)
     {
       OutDispVal = EvalStrIntExpressionWithResult(&OutDisp, Int30, &OutEvalResult);
@@ -864,16 +864,16 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrVals *pDest, Boolean AddrMode
         tStrComp InDisp;
         LongInt InDispVal = 0;
 
-        if (!as_strcasecmp(InnerArg.Str, "PC"))
+        if (!as_strcasecmp(InnerArg.str.p_str, "PC"))
           goto IsPCRel;
 
-        SplitPos = FindDispBaseSplit(InnerArg.Str, &ArgLen);
+        SplitPos = FindDispBaseSplit(InnerArg.str.p_str, &ArgLen);
         if (SplitPos < 0)
         {
           WrStrErrorPos(ErrNum_InvAddrMode, &InnerArg);
           return False;
         }
-        StrCompSplitRef(&InDisp, &InnerArg, &InnerArg, &InnerArg.Str[SplitPos]);
+        StrCompSplitRef(&InDisp, &InnerArg, &InnerArg, &InnerArg.str.p_str[SplitPos]);
         if (InDisp.Pos.Len)
         {
           InDispVal = EvalStrIntExpression(&InDisp, Int30, &OK);
@@ -887,7 +887,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrVals *pDest, Boolean AddrMode
 
         /* disp2(disp1(ext)) is an alias for EXT(disp1)+disp2 */
 
-        if (!as_strcasecmp(InnerArg.Str, "EXT"))
+        if (!as_strcasecmp(InnerArg.str.p_str, "EXT"))
         {
           pDest->Code = AddrCode_External;
         }
@@ -1190,7 +1190,7 @@ static void PutCode(LongWord Code, unsigned Count)
 
 static Boolean ChkNoAttrPart(void)
 {
-  if (*AttrPart.Str)
+  if (*AttrPart.str.p_str)
   {
     WrError(ErrNum_UseLessAttr);
     return False;
@@ -1377,11 +1377,11 @@ static void DecodeCINV(Word Code)
     int z;
 
     for (z = 1; z < ArgCnt; z++)
-      if (!as_strcasecmp(ArgStr[z].Str, "A"))
+      if (!as_strcasecmp(ArgStr[z].str.p_str, "A"))
         ActCode |= 1ul << 17;
-      else if (!as_strcasecmp(ArgStr[z].Str, "I"))
+      else if (!as_strcasecmp(ArgStr[z].str.p_str, "I"))
         ActCode |= 1ul << 16;
-      else if (!as_strcasecmp(ArgStr[z].Str, "D"))
+      else if (!as_strcasecmp(ArgStr[z].str.p_str, "D"))
         ActCode |= 1ul << 15;
       else
       {
@@ -1584,9 +1584,9 @@ static void DecodeMOVS_CMPS_SKPS(Word Code)
 
     for (z = 1; z <= ArgCnt; z++)
     {
-      if (!as_strcasecmp(ArgStr[z].Str, "B"))
+      if (!as_strcasecmp(ArgStr[z].str.p_str, "B"))
         Options |= 1;
-      else if (!as_strcasecmp(ArgStr[z].Str, "U"))
+      else if (!as_strcasecmp(ArgStr[z].str.p_str, "U"))
       {
         if (Options & 6)
         {
@@ -1596,7 +1596,7 @@ static void DecodeMOVS_CMPS_SKPS(Word Code)
         else
           Options |= 6;
       }
-      else if (!as_strcasecmp(ArgStr[z].Str, "W"))
+      else if (!as_strcasecmp(ArgStr[z].str.p_str, "W"))
       {
         if (Options & 6)
         {
@@ -2448,12 +2448,12 @@ static void CodeFPU(Word Code)
 
   if (ChkArgCnt(1, 1))
   {
-    if (!as_strcasecmp(ArgStr[1].Str, "OFF"))
+    if (!as_strcasecmp(ArgStr[1].str.p_str, "OFF"))
     {
       SetFlag(&FPUAvail, FPUAvailName, False);
       SetMomFPU(eFPUNone);
     }
-    else if (!as_strcasecmp(ArgStr[1].Str, "ON"))
+    else if (!as_strcasecmp(ArgStr[1].str.p_str, "ON"))
     {
       SetFlag(&FPUAvail, FPUAvailName, True);
       if (!MomFPU)
@@ -2464,7 +2464,7 @@ static void CodeFPU(Word Code)
       tFPU FPU;
 
       for (FPU = (tFPU)1; FPU < eFPUCount; FPU++)
-        if (!as_strcasecmp(ArgStr[1].Str, FPUNames[FPU]))
+        if (!as_strcasecmp(ArgStr[1].str.p_str, FPUNames[FPU]))
         {
           SetFlag(&FPUAvail, FPUAvailName, True);
           SetMomFPU(FPU);
@@ -2487,12 +2487,12 @@ static void CodePMMU(Word Code)
 
   if (ChkArgCnt(1, 1))
   {
-    if (!as_strcasecmp(ArgStr[1].Str, "OFF"))
+    if (!as_strcasecmp(ArgStr[1].str.p_str, "OFF"))
     {
       SetFlag(&PMMUAvail, PMMUAvailName, False);
       SetMomPMMU(ePMMUNone);
     }
-    else if (!as_strcasecmp(ArgStr[1].Str, "ON"))
+    else if (!as_strcasecmp(ArgStr[1].str.p_str, "ON"))
     {
       SetFlag(&PMMUAvail, PMMUAvailName, True);
       if (!MomPMMU)
@@ -2503,7 +2503,7 @@ static void CodePMMU(Word Code)
       tPMMU PMMU;
 
       for (PMMU = (tPMMU)1; PMMU < ePMMUCount; PMMU++)
-        if (!as_strcasecmp(ArgStr[1].Str, PMMUNames[PMMU]))
+        if (!as_strcasecmp(ArgStr[1].str.p_str, PMMUNames[PMMU]))
         {
           SetFlag(&PMMUAvail, PMMUAvailName, True);
           SetMomPMMU(PMMU);
@@ -2551,7 +2551,7 @@ static void DecodeBB(Word Code)
     forallargs(pArg, True)
     {
       for (pOpt = BitBltOpts + ((Code & BB_NOOPT) ? 2 : 0); pOpt->Name[0]; pOpt++)
-        if (!as_strcasecmp(pArg->Str, pOpt->Name))
+        if (!as_strcasecmp(pArg->str.p_str, pOpt->Name))
         {
           LongWord ThisMask = 1ul << pOpt->Pos;
 
@@ -3028,7 +3028,7 @@ static void MakeCode_NS32K(void)
   if (DecodeIntelPseudo(True))
     return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 
@@ -3079,17 +3079,6 @@ static Boolean IsDef_NS32K(void)
 }
 
 /*!------------------------------------------------------------------------
- * \fn     SwitchFrom_NS32K(void)
- * \brief  deinitialize as target
- * ------------------------------------------------------------------------ */
-
-static void SwitchFrom_NS32K(void)
-{
-  DeinitFields();
-  ClearONOFF();
-}
-
-/*!------------------------------------------------------------------------
  * \fn     SwitchTo_NS32K(void *pUser)
  * \brief  prepare to assemble code for this target
  * \param  pUser CPU properties
@@ -3129,7 +3118,7 @@ static void SwitchTo_NS32K(void *pUser)
   IsDef = IsDef_NS32K;
   DissectReg = DissectReg_NS32K;
   InternSymbol = InternSymbol_NS32K;
-  SwitchFrom = SwitchFrom_NS32K;
+  SwitchFrom = DeinitFields;
   IntConstModeIBMNoTerm = True;
   QualifyQuote = QualifyQuote_SingleQuoteConstant;
   InitFields();

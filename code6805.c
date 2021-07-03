@@ -132,12 +132,12 @@ static void DecodeAdr(Byte Start, Byte Stop, Word Mask)
 
   if (Stop - Start == 1)
   {
-    if (!as_strcasecmp(ArgStr[Stop].Str, "X"))
+    if (!as_strcasecmp(ArgStr[Stop].str.p_str, "X"))
     {
       tmode1 = ModIx1;
       tmode2 = ModIx2;
     }
-    else if (!as_strcasecmp(ArgStr[Stop].Str,"SP"))
+    else if (!as_strcasecmp(ArgStr[Stop].str.p_str,"SP"))
     {
       tmode1 = ModSP1;
       tmode2 = ModSP2;
@@ -153,7 +153,7 @@ static void DecodeAdr(Byte Start, Byte Stop, Word Mask)
       goto chk;
     }
 
-    Offset = ChkZero(ArgStr[Start].Str, &ZeroMode);
+    Offset = ChkZero(ArgStr[Start].str.p_str, &ZeroMode);
     AdrWord = EvalStrIntExpressionOffsWithFlags(&ArgStr[Start], Offset, (ZeroMode == 2) ? Int8 : Int16, &OK, &Flags);
 
     if (OK)
@@ -188,7 +188,7 @@ static void DecodeAdr(Byte Start, Byte Stop, Word Mask)
   {
     /* Postinkrement */
 
-    if (!as_strcasecmp(ArgStr[Start].Str, "X+"))
+    if (!as_strcasecmp(ArgStr[Start].str.p_str, "X+"))
     {
       AdrMode = ModIxP;
       goto chk;
@@ -196,7 +196,7 @@ static void DecodeAdr(Byte Start, Byte Stop, Word Mask)
 
     /* X-indirekt */
 
-    if (!as_strcasecmp(ArgStr[Start].Str, "X"))
+    if (!as_strcasecmp(ArgStr[Start].str.p_str, "X"))
     {
       WrError(ErrNum_ConvIndX);
       AdrMode = ModIx;
@@ -205,7 +205,7 @@ static void DecodeAdr(Byte Start, Byte Stop, Word Mask)
 
     /* immediate */
 
-    if (*ArgStr[Start].Str == '#')
+    if (*ArgStr[Start].str.p_str == '#')
     {
       switch (OpSize)
       {
@@ -238,7 +238,7 @@ static void DecodeAdr(Byte Start, Byte Stop, Word Mask)
 
     /* absolut */
 
-    Offset = ChkZero(ArgStr[Start].Str, &ZeroMode);
+    Offset = ChkZero(ArgStr[Start].str.p_str, &ZeroMode);
     AdrWord = EvalStrIntExpressionOffsWithFlags(&ArgStr[Start], Offset, (ZeroMode == 2) ? UInt8 : AdrIntType, &OK, &Flags);
 
     if (OK)
@@ -440,8 +440,8 @@ static void DecodeCBEQ(Word Index)
   else if (ArgCnt == 3)
   {
     OK = True;
-    if (!as_strcasecmp(ArgStr[2].Str, "X+")) Disp = 3;
-    else if (!as_strcasecmp(ArgStr[2].Str,"SP"))
+    if (!as_strcasecmp(ArgStr[2].str.p_str, "X+")) Disp = 3;
+    else if (!as_strcasecmp(ArgStr[2].str.p_str,"SP"))
     {
       BAsmCode[0] = 0x9e;
       Disp = 4;
@@ -738,7 +738,7 @@ static void DecodeAIx(Word Index)
 
   if (!ChkArgCnt(1, 1));
   else if (!ChkMinCPU(CPU68HC08));
-  else if (*ArgStr[1].Str != '#') WrError(ErrNum_InvAddrMode);
+  else if (*ArgStr[1].str.p_str != '#') WrError(ErrNum_InvAddrMode);
   else
   {
     BAsmCode[1] = EvalStrIntExpressionOffs(&ArgStr[1], 1, SInt8, &OK);
@@ -991,7 +991,7 @@ static Boolean DecodeAttrPart_6805(void)
 {
   /* deduce operand size - no size is zero-length string -> '\0' */
 
-  return DecodeMoto16AttrSize(*AttrPart.Str, &AttrPartOpSize, False);
+  return DecodeMoto16AttrSize(*AttrPart.str.p_str, &AttrPartOpSize, False);
 }
 
 static void MakeCode_6805(void)
@@ -1015,24 +1015,20 @@ static void MakeCode_6805(void)
   if (DecodeMoto16Pseudo(OpSize, True))
     return;
 
-  l = strlen(OpPart.Str);
-  ch = OpPart.Str[l - 1];
+  l = strlen(OpPart.str.p_str);
+  ch = OpPart.str.p_str[l - 1];
   if ((ch >= '0') && (ch <= '7'))
   {
-    int z;
-
-    IncArgCnt();
-    for (z = ArgCnt - 1; z >= 1; z--)
-      StrCompCopy(&ArgStr[z + 1], &ArgStr[z]);
-    *ArgStr[1].Str = ch;
-    ArgStr[1].Str[1] = '\0';
+    InsertArg(1, 2);
+    ArgStr[1].str.p_str[0] = ch;
+    ArgStr[1].str.p_str[1] = '\0';
     ArgStr[1].Pos.StartCol = OpPart.Pos.StartCol + l - 1;
     ArgStr[1].Pos.Len = 1;
-    OpPart.Str[l - 1] = '\0';
+    OpPart.str.p_str[l - 1] = '\0';
     OpPart.Pos.Len--;
   }
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

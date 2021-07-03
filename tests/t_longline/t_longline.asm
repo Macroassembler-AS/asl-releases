@@ -21,3 +21,8 @@
 			  fvbkezrfgjweztgwjmhcvwnmcthwvfenctwevndwvdnwtfwnmhtcvwnhedvwjetdvfwtjdvfwt \
 			  jfbvejz,rfbejzfemfzbs,cbas,djcfzbekfzgwebrfkzgjhtwvedfwnmgedvwdetvwtedvwtew
 	nop
+
+	; something actually useful
+
+prayer	equ	"Our Father in heaven, Hallowed be your name, Your kingdom comes, Your will be done, As in heaven, even so on earth, Give us today our daily bread, And forgive us our guilt, Just as we also forgive [those who are guilty upon us], And lead us not in temptation, But save us from evil, [For yours is the kingdom, and the power, and the glory, for eternity, Amen.]"
+	dc.b	prayer

@@ -161,7 +161,7 @@ void Preprocess(void)
   String h, Cmd, Arg;
   char *p;
 
-  p = strchr(OneLine, '#') + 1;
+  p = strchr(OneLine.p_str, '#') + 1;
   strmaxcpy(h, p, STRINGSIZE);
   p = FirstBlank(h);
   if (!p)

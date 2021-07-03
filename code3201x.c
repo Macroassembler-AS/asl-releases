@@ -57,9 +57,9 @@ static ImmOrder *ImmOrders;
 static Word EvalARExpression(const tStrComp *pArg, Boolean *OK)
 {
   *OK = True;
-  if (!as_strcasecmp(pArg->Str, "AR0"))
+  if (!as_strcasecmp(pArg->str.p_str, "AR0"))
     return 0;
-  if (!as_strcasecmp(pArg->Str, "AR1"))
+  if (!as_strcasecmp(pArg->str.p_str, "AR1"))
     return 1;
   return EvalStrIntExpression(pArg, UInt1, OK);
 }
@@ -68,15 +68,15 @@ static void DecodeAdr(const tStrComp *pArg, int Aux, Boolean Must1)
 {
   Byte h;
   char *p;
-  char *Arg = pArg->Str;
+  char *Arg = pArg->str.p_str;
 
   AdrOK = False;
 
-  if ((!strcmp(pArg->Str, "*")) || (!strcmp(pArg->Str, "*-")) || (!strcmp(pArg->Str, "*+")))
+  if ((!strcmp(pArg->str.p_str, "*")) || (!strcmp(pArg->str.p_str, "*-")) || (!strcmp(pArg->str.p_str, "*+")))
   {
     AdrMode = 0x88;
     if (strlen(Arg) == 2)
-      AdrMode += (pArg->Str[1] == '+') ? 0x20 : 0x10;
+      AdrMode += (pArg->str.p_str[1] == '+') ? 0x20 : 0x10;
     if (Aux <= ArgCnt)
     {
       h = EvalARExpression(&ArgStr[Aux], &AdrOK);
@@ -94,10 +94,10 @@ static void DecodeAdr(const tStrComp *pArg, int Aux, Boolean Must1)
     tEvalResult EvalResult;
 
     h = 0;
-    if ((strlen(pArg->Str) > 3) && (!as_strncasecmp(pArg->Str, "DAT", 3)))
+    if ((strlen(pArg->str.p_str) > 3) && (!as_strncasecmp(pArg->str.p_str, "DAT", 3)))
     {
       AdrOK = True;
-      for (p = pArg->Str + 3; *p != '\0'; p++)
+      for (p = pArg->str.p_str + 3; *p != '\0'; p++)
         if ((*p > '9') || (*p < '0'))
           AdrOK = False;
       if (AdrOK)
@@ -182,11 +182,11 @@ static void DecodeAdrShift(Word Index)
 
   if (ChkArgCnt(1, 3))
   {
-    if (*ArgStr[1].Str == '*')
+    if (*ArgStr[1].str.p_str == '*')
     {
       if (ArgCnt == 2)
       {
-        if (!as_strncasecmp(ArgStr[2].Str, "AR", 2))
+        if (!as_strncasecmp(ArgStr[2].str.p_str, "AR", 2))
         {
           HasSh = False;
           Cnt = 2;
@@ -466,7 +466,7 @@ static void MakeCode_3201X(void)
   if (Memo(""))
     return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

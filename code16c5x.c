@@ -71,9 +71,9 @@ static void DecodeAri(Word Code)
         CodeLen = 1;
         WAsmCode[0] += DefaultDir << 5;
       }
-      else if (!as_strcasecmp(ArgStr[2].Str, "W"))
+      else if (!as_strcasecmp(ArgStr[2].str.p_str, "W"))
         CodeLen = 1;
-      else if (!as_strcasecmp(ArgStr[2].Str, "F"))
+      else if (!as_strcasecmp(ArgStr[2].str.p_str, "F"))
       {
         CodeLen = 1;
         WAsmCode[0] += 0x20;
@@ -299,7 +299,7 @@ static void MakeCode_16C5X(void)
   if (Memo(""))
     return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

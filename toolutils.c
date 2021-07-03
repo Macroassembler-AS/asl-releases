@@ -39,21 +39,6 @@ static TMsgCat MsgCat;
 
 Boolean QuietMode;
 
-const char *SegNames[PCMax + 1] =
-{
-  "NONE",
-  "CODE",
-  "DATA",
-  "IDATA",
-  "XDATA",
-  "YDATA",
-  "BITDATA",
-  "IO",
-  "REG",
-  "ROMDATA",
-  "EEDATA"
-};
-
 /****************************************************************************/
 
 void WrCopyRight(const char *Msg)

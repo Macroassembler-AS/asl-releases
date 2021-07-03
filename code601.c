@@ -200,7 +200,7 @@ static CPUVar CPU403, CPU403C, CPU505, CPU601, CPU821, CPU6000;
 #endif
 
 static char ZeroStr[] = "0";
-static const tStrComp ZeroComp = { { -1, 0 }, ZeroStr };
+static const tStrComp ZeroComp = { { -1, 0 }, {0, ZeroStr, 0} };
 
 /*-------------------------------------------------------------------------*/
 
@@ -272,7 +272,7 @@ static Boolean DecodeGenReg(const tStrComp *pArg, LongWord *pValue)
   tEvalResult EvalResult;
   tRegEvalResult RegEvalResult;
 
-  if (DecodeGenRegCore(pArg->Str, pValue))
+  if (DecodeGenRegCore(pArg->str.p_str, pValue))
     return True;
 
   RegEvalResult = EvalStrRegExpressionAsOperand(pArg, &RegDescr, &EvalResult, eSymbolSize32Bit, True);
@@ -318,7 +318,7 @@ static Boolean DecodeFPReg(const tStrComp *pArg, LongWord *pValue)
   tEvalResult EvalResult;
   tRegEvalResult RegEvalResult;
 
-  if (DecodeFPRegCore(pArg->Str, pValue))
+  if (DecodeFPRegCore(pArg->str.p_str, pValue))
     return True;
 
   RegEvalResult = EvalStrRegExpressionAsOperand(pArg, &RegDescr, &EvalResult, eSymbolSizeFloat64Bit, True);
@@ -351,21 +351,21 @@ static Boolean DecodeCondBit(const tStrComp *pComp, LongWord *Erg)
 static Boolean DecodeRegDisp(tStrComp *pComp, LongWord *Erg)
 {
   char *p;
-  int l = strlen(pComp->Str);
+  int l = strlen(pComp->str.p_str);
   LongInt Disp;
   Boolean OK;
   tStrComp DispArg, RegArg;
 
-  if (pComp->Str[l - 1] != ')')
+  if (pComp->str.p_str[l - 1] != ')')
   {
     WrStrErrorPos(ErrNum_InvAddrMode, pComp);
     return False;
   }
-  pComp->Str[l - 1] = '\0';  l--;
-  p = pComp->Str + l - 1;
-  while ((p >= pComp->Str) && (*p != '('))
+  pComp->str.p_str[l - 1] = '\0';  l--;
+  p = pComp->str.p_str + l - 1;
+  while ((p >= pComp->str.p_str) && (*p != '('))
     p--;
-  if (p < pComp->Str)
+  if (p < pComp->str.p_str)
   {
     WrStrErrorPos(ErrNum_InvAddrMode, pComp);
     return False;
@@ -861,16 +861,16 @@ static void DecodeMTFB_MTTB(Word Code)
   LongWord LCode = Code, Src1, Dest;
   Boolean OK;
   const tStrComp *pArg1 = &ArgStr[1], *pArg2 = &ArgStr[2];
-  tStrComp TmpComp = { { -1, 0 }, NULL };
+  tStrComp TmpComp = { { -1, 0 }, { 0, NULL, 0 } };
 
   if (ChkExactCPUList(ErrNum_InstructionNotSupported, CPU821, CPU505, CPUNone) < 0);
   else if (ArgCnt == 1)
   {
     pArg1 = &ArgStr[1];
-    if      ((Memo("MFTB")) || (Memo("MFTBL"))) TmpComp.Str = (char*)"268";
-    else if (Memo("MFTBU")) TmpComp.Str = (char*)"269";
-    else if ((Memo("MTTB")) || (Memo("MTTBL"))) TmpComp.Str = (char*)"284";
-    else if (Memo("MTTBU")) TmpComp.Str = (char*)"285";
+    if      ((Memo("MFTB")) || (Memo("MFTBL"))) TmpComp.str.p_str = (char*)"268";
+    else if (Memo("MFTBU")) TmpComp.str.p_str = (char*)"269";
+    else if ((Memo("MTTB")) || (Memo("MTTBL"))) TmpComp.str.p_str = (char*)"284";
+    else if (Memo("MTTBU")) TmpComp.str.p_str = (char*)"285";
     pArg2 = &TmpComp;
     /* already swapped */
   }
@@ -2046,7 +2046,7 @@ static void MakeCode_601(void)
 
   /* Nullanweisung */
 
-  if (Memo("") && !*AttrPart.Str && (ArgCnt == 0))
+  if (Memo("") && !*AttrPart.str.p_str && (ArgCnt == 0))
     return;
 
   /* Pseudoanweisungen */
@@ -2054,7 +2054,7 @@ static void MakeCode_601(void)
   if (DecodeIntelPseudo(TargetBigEndian))
     return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 
@@ -2085,10 +2085,7 @@ static void InternSymbol_601(char *Asc, TempResult *Erg)
    && ((as_toupper(*Asc) == 'C') && (as_toupper(Asc[1]) == 'R'))
    && ((Asc[l - 1] >= '0') && (Asc[l - 1] <= '7'))
    && ((l == 3) != ((as_toupper(Asc[2]) == 'F') || (as_toupper(Asc[3]) == 'B'))))
-  {
-    Erg->Typ = TempInt;
-    Erg->Contents.Int = Asc[l - 1] - '0';
-  }
+    as_tempres_set_int(Erg, Asc[l - 1] - '0');
   else if (DecodeGenRegCore(Asc, &RegValue))
   {
     Erg->Typ = TempReg;
@@ -2103,12 +2100,6 @@ static void InternSymbol_601(char *Asc, TempResult *Erg)
     Erg->Contents.RegDescr.Reg = RegValue;
     Erg->DataSize = eSymbolSizeFloat64Bit;
   }
-}
-
-static void SwitchFrom_601(void)
-{
-  DeinitFields();
-  ClearONOFF();
 }
 
 static void SwitchTo_601(void)
@@ -2134,7 +2125,7 @@ static void SwitchTo_601(void)
 
   MakeCode = MakeCode_601;
   IsDef = IsDef_601;
-  SwitchFrom = SwitchFrom_601;
+  SwitchFrom = DeinitFields;
   InternSymbol = InternSymbol_601;
   DissectReg = DissectReg_601;
   AddONOFF(SupAllowedCmdName, &SupAllowed, SupAllowedSymName, False);

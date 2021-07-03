@@ -70,20 +70,20 @@ static void DecodeAdr(const tStrComp *pArg, Byte Mask)
 
   ResetAdr();
 
-  if ((!as_strcasecmp(pArg->Str, "A")) && (Mask & MModAcc))
+  if ((!as_strcasecmp(pArg->str.p_str, "A")) && (Mask & MModAcc))
   {
     AdrType = ModAcc;
     goto chk;
   }
 
-  if (!as_strcasecmp(pArg->Str, "(X)"))
+  if (!as_strcasecmp(pArg->str.p_str, "(X)"))
   {
     AdrType = ModInd;
     AdrMode = 0;
     goto chk;
   }
 
-  if (!as_strcasecmp(pArg->Str, "(Y)"))
+  if (!as_strcasecmp(pArg->str.p_str, "(Y)"))
   {
     AdrType = ModInd;
     AdrMode = 1;
@@ -150,7 +150,7 @@ static Byte MirrBit(Byte inp)
 
 static LongWord EvalBitPosition(const tStrComp *pArg, Boolean *pOK)
 {
-  return EvalStrIntExpressionOffs(pArg, !!(*pArg->Str == '#'), UInt3, pOK);
+  return EvalStrIntExpressionOffs(pArg, !!(*pArg->str.p_str == '#'), UInt3, pOK);
 }
 
 /*!------------------------------------------------------------------------
@@ -690,7 +690,7 @@ static void DecodeBIT(Word Code)
     pElement = CreateStructElem(&LabPart);
     if (!pElement)
       return;
-    pElement->pRefElemName = as_strdup(ArgStr[1].Str);
+    pElement->pRefElemName = as_strdup(ArgStr[1].str.p_str);
     pElement->OpSize = eSymbolSize8Bit;
     pElement->BitPos = BitPos;
     pElement->ExpandFnc = ExpandST6Bit;
@@ -795,7 +795,7 @@ static void MakeCode_ST6(void)
 
   if (Memo("")) return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 
@@ -853,8 +853,7 @@ static void InternSymbol_ST6(char *pArg, TempResult *pErg)
   for (z = 0; z < RegCnt; z++)
     if (!as_strcasecmp(pArg, RegNames[z]))
     {
-      pErg->Typ = TempInt;
-      pErg->Contents.Int = RegCodes[z];
+      as_tempres_set_int(pErg, RegCodes[z]);
       pErg->AddrSpaceMask |= (1 << SegData);
     }
 }

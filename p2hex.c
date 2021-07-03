@@ -43,7 +43,7 @@ static FILE *TargFile;
 static String SrcName, TargName, CFormat;
 static Byte ForceSegment;
 
-static LongWord StartAdr[PCMax + 1], StopAdr[PCMax + 1], LineLen, EntryAdr;
+static LongWord StartAdr[SegCount], StopAdr[SegCount], LineLen, EntryAdr;
 static LargeInt Relocate;
 static Boolean StartAuto, StopAuto, AutoErase, EntryAdrPresent;
 static Word Seg, Ofs;
@@ -79,7 +79,7 @@ static void DefStartStopAdr(LongWord SegMask)
 {
   Byte Seg;
 
-  for (Seg = 0; Seg <= PCMax; Seg++)
+  for (Seg = 0; Seg < SegCount; Seg++)
     if (SegMask & (1 << Seg))
     {
       StartAdr[Seg] = 0;
@@ -929,12 +929,9 @@ static CMDResult CMD_DestFormat(Boolean Negate, const char *pArg)
 
 static CMDResult CMD_ForceSegment(Boolean Negate,  const char *Arg)
 {
-  int z;
+  int z = addrspace_lookup(Arg);
 
-  for (z = 0; z <= PCMax; z++)
-   if (!as_strcasecmp(Arg, SegNames[z]))
-     break;
-  if (z > PCMax)
+  if (z >= SegCount)
     return CMDErr;
 
   if (!Negate)
@@ -1212,10 +1209,10 @@ int main(int argc, char **argv)
     Byte ChkSegment = ForceSegment ? ForceSegment : (Byte)SegCode;
 
     if (StartAuto)
-      for (z = 0; z <= PCMax; z++)
+      for (z = 0; z < SegCount; z++)
         StartAdr[z] = 0xfffffffful;
     if (StopAuto)
-      for (z = 0; z <= PCMax; z++)
+      for (z = 0; z < SegCount; z++)
         StopAdr[z] = 0;
 
     if (ProcessedEmpty(ParUnprocessed))

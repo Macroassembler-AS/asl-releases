@@ -79,7 +79,7 @@ static ShortInt DecodeAdr(const tStrComp *pArg, Word Mask, tAdrResult *pResult)
    /* indirekt/Akku */
 
   for (z = ModAcc; z <= ModXDec; z++)
-    if (!as_strcasecmp(pArg->Str, ModStrings[z]))
+    if (!as_strcasecmp(pArg->str.p_str, ModStrings[z]))
     {
       pResult->Mode = z;
       goto chk;
@@ -87,7 +87,7 @@ static ShortInt DecodeAdr(const tStrComp *pArg, Word Mask, tAdrResult *pResult)
 
   /* immediate */
 
-  if (*pArg->Str == '#')
+  if (*pArg->str.p_str == '#')
   {
     pResult->Val = EvalStrIntExpressionOffsWithResult(pArg, 1, Int8, &EvalResult);
     if (EvalResult.OK)
@@ -265,7 +265,7 @@ static void DecodeX(Word Code)
     tStrComp *pAccArg, *pMemArg;
     tAdrResult DestResult;
 
-    if (as_strcasecmp(ArgStr[1].Str, "A"))
+    if (as_strcasecmp(ArgStr[1].str.p_str, "A"))
     {
       pAccArg = &ArgStr[2];
       pMemArg = &ArgStr[1];
@@ -477,7 +477,7 @@ static void DecodeIFBNE(Word Code)
   UNUSED(Code);
 
   if (!ChkArgCnt(1, 1));
-  else if (*ArgStr[1].Str != '#') WrError(ErrNum_InvAddrMode);
+  else if (*ArgStr[1].str.p_str != '#') WrError(ErrNum_InvAddrMode);
   else
   {
     Boolean OK;
@@ -680,7 +680,7 @@ static void MakeCode_COP8(void)
   if (DecodeNatPseudo()) return;
   if (DecodeIntelPseudo(False)) return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

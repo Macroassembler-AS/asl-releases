@@ -120,7 +120,7 @@ static tRegEvalResult DecodeReg(const tStrComp *pArg, Byte *pResult, Word RegMas
   tEvalResult EvalResult;
   tRegEvalResult RegEvalResult;
 
-  if (DecodeRegCore(pArg->Str, pResult))
+  if (DecodeRegCore(pArg->str.p_str, pResult))
     RegEvalResult = eIsReg;
   else
   {
@@ -202,7 +202,7 @@ static Boolean DecodeAdr(tStrComp *pArg1, tStrComp *pArg2, tAdrData *pAdrData, W
   }
   else
   {
-    if (*pArg1->Str == '#')
+    if (*pArg1->str.p_str == '#')
     {
       Boolean OK;
 
@@ -212,7 +212,7 @@ static Boolean DecodeAdr(tStrComp *pArg1, tStrComp *pArg2, tAdrData *pAdrData, W
     }
   }
 
-  if ((ModeMask & (MModIndirect | MModIndirectIndexed)) && IsIndirect(pArg1->Str))
+  if ((ModeMask & (MModIndirect | MModIndirectIndexed)) && IsIndirect(pArg1->str.p_str))
   {
     StrCompShorten(pArg1, 1);
     StrCompRefRight(&Arg, pArg1, 1);
@@ -463,7 +463,7 @@ static void CodeGen(Word Code)
 
     /* addressing mode is either given by keyword or by addressing syntax: */
 
-    if ((ArgCnt == 3) && DecodeAddrKeyword(ArgStr[1].Str, &AdrData.Mode))
+    if ((ArgCnt == 3) && DecodeAddrKeyword(ArgStr[1].str.p_str, &AdrData.Mode))
     {
       AdrData.Val = EvalStrIntExpression(&ArgStr[3], Int8, &AddrOK);
       RegArg = 2;
@@ -516,7 +516,7 @@ static void CodeJumpCommon(Word Code, const tAdrData *pAdrData)
   static const char ShortConds[5][4] = { "NZ", "Z", "N", "P", "PNZ" };
   static const char *LongConds[5] = { "Non-zero", "Zero", "Negative", "Positive", "Positive-Non-zero" };
 
-  if ((ArgCnt == 1) || !as_strcasecmp(ArgStr[1].Str, "Unconditional"))
+  if ((ArgCnt == 1) || !as_strcasecmp(ArgStr[1].str.p_str, "Unconditional"))
     Reg = 3;
   else if (!DecodeRegWithMemOpt(&ArgStr[1], &Reg, 7))
     return;
@@ -526,8 +526,8 @@ static void CodeJumpCommon(Word Code, const tAdrData *pAdrData)
   else
   {
     for (Cond = 0; Cond < 5; Cond++)
-      if (!as_strcasecmp(ArgStr[ArgCnt - 1].Str, ShortConds[Cond])
-       || !as_strcasecmp(ArgStr[ArgCnt - 1].Str, LongConds[Cond]))
+      if (!as_strcasecmp(ArgStr[ArgCnt - 1].str.p_str, ShortConds[Cond])
+       || !as_strcasecmp(ArgStr[ArgCnt - 1].str.p_str, LongConds[Cond]))
         break;
     if (Cond >= 5)
     {
@@ -696,9 +696,9 @@ static void CodeShift2(Word Code)
 {
   if (ChkArgCnt(2, 3))
   {
-    if (!as_strcasecmp(ArgStr[1].Str, "LEFT"))
+    if (!as_strcasecmp(ArgStr[1].str.p_str, "LEFT"))
       CodeShiftCore(Code | 0x80, 2);
-    else if (!as_strcasecmp(ArgStr[1].Str, "RIGHT"))
+    else if (!as_strcasecmp(ArgStr[1].str.p_str, "RIGHT"))
       CodeShiftCore(Code, 2);
     else
       WrStrErrorPos(ErrNum_InvShiftArg, &ArgStr[1]);
@@ -780,7 +780,7 @@ static void CodeBIT(Word Code)
     pElement = CreateStructElem(&LabPart);
     if (!pElement)
       return;
-    pElement->pRefElemName = as_strdup(ArgStr[2].Str);
+    pElement->pRefElemName = as_strdup(ArgStr[2].str.p_str);
     pElement->OpSize = eSymbolSize8Bit;
     pElement->BitPos = BitPos;
     pElement->ExpandFnc = ExpandBit_KENBAK;
@@ -874,7 +874,7 @@ static void MakeCode_KENBAK(void)
 
   if (DecodeIntelPseudo(False)) return;
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

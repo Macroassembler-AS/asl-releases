@@ -184,7 +184,7 @@ static Boolean ReiterateOpPart(void)
   char *p;
   int z;
 
-  if (!CheckOpt(OpPart.Str))
+  if (!CheckOpt(OpPart.str.p_str))
     return False;
 
   if (ArgCnt<1)
@@ -192,7 +192,7 @@ static Boolean ReiterateOpPart(void)
     WrError(ErrNum_WrongArgCnt);
     return False;
   }
-  p = FirstBlank(ArgStr[1].Str);
+  p = FirstBlank(ArgStr[1].str.p_str);
   if (!p)
   {
     StrCompCopy(&OpPart, &ArgStr[1]);
@@ -205,13 +205,13 @@ static Boolean ReiterateOpPart(void)
     StrCompSplitLeft(&ArgStr[1], &OpPart, p);
     KillPrefBlanksStrComp(&ArgStr[1]);
   }
-  NLS_UpString(OpPart.Str);
-  p = strchr(OpPart.Str, '.');
+  NLS_UpString(OpPart.str.p_str);
+  p = strchr(OpPart.str.p_str, '.');
   if (!p)
-    *AttrPart.Str = '\0';
+    *AttrPart.str.p_str = '\0';
   else
   {
-    strcpy(AttrPart.Str, p + 1);
+    strcpy(AttrPart.str.p_str, p + 1);
     *p = '\0';
   }
   return True;
@@ -354,11 +354,13 @@ static Boolean DecodeMem(const tStrComp *pArg, LongWord *Erg, LongWord Scale)
   char Counter;
   char *p, EmptyStr[] = "";
   Boolean OK;
-  tStrComp Arg = *pArg, DispArg, RegArg;
+  tStrComp Arg, DispArg, RegArg;
+
+  StrCompRefRight(&Arg, pArg, 0);
 
   /* das muss da sein */
 
-  if (*pArg->Str != '*')
+  if (*pArg->str.p_str != '*')
   {
     WrError(ErrNum_InvAddrMode);
     return False;
@@ -367,16 +369,16 @@ static Boolean DecodeMem(const tStrComp *pArg, LongWord *Erg, LongWord Scale)
 
   /* teilen */
 
-  p = strchr(Arg.Str, '[');
+  p = strchr(Arg.str.p_str, '[');
   Counter = ']';
   if (!p)
   {
-    p = strchr(Arg.Str, '(');
+    p = strchr(Arg.str.p_str, '(');
     Counter = ')';
   }
   if (p)
   {
-    if (Arg.Str[strlen(Arg.Str) - 1] != Counter)
+    if (Arg.str.p_str[strlen(Arg.str.p_str) - 1] != Counter)
     {
       WrError(ErrNum_InvAddrMode);
       return False;
@@ -387,36 +389,36 @@ static Boolean DecodeMem(const tStrComp *pArg, LongWord *Erg, LongWord Scale)
   else
   {
     RegArg = Arg;
-    StrCompMkTemp(&DispArg, EmptyStr);
+    StrCompMkTemp(&DispArg, EmptyStr, 0);
   }
 
   /* Registerfeld entschluesseln */
 
-  l = strlen(RegArg.Str);
+  l = strlen(RegArg.str.p_str);
   Mode = 1; /* Default ist *+R */
-  if (*RegArg.Str == '+')
+  if (*RegArg.str.p_str == '+')
   {
     StrCompIncRefLeft(&RegArg, 1);
     Mode = 1;
-    if (*RegArg.Str == '+')
+    if (*RegArg.str.p_str == '+')
     {
       StrCompIncRefLeft(&RegArg, 1);
       Mode = 9;
     }
   }
-  else if (*RegArg.Str == '-')
+  else if (*RegArg.str.p_str == '-')
   {
     StrCompIncRefLeft(&RegArg, 1);
     Mode = 0;
-    if (*RegArg.Str == '-')
+    if (*RegArg.str.p_str == '-')
     {
       StrCompIncRefLeft(&RegArg, 1);
       Mode = 8;
     }
   }
-  else if (RegArg.Str[l - 1] == '+')
+  else if (RegArg.str.p_str[l - 1] == '+')
   {
-    if (RegArg.Str[l - 2] != '+')
+    if (RegArg.str.p_str[l - 2] != '+')
     {
       WrError(ErrNum_InvAddrMode);
       return False;
@@ -424,9 +426,9 @@ static Boolean DecodeMem(const tStrComp *pArg, LongWord *Erg, LongWord Scale)
     StrCompShorten(&RegArg, 2);
     Mode = 11;
   }
-  else if (RegArg.Str[l - 1] == '-')
+  else if (RegArg.str.p_str[l - 1] == '-')
   {
-    if (RegArg.Str[l - 2] != '-')
+    if (RegArg.str.p_str[l - 2] != '-')
     {
       WrError(ErrNum_InvAddrMode);
       return False;
@@ -434,7 +436,7 @@ static Boolean DecodeMem(const tStrComp *pArg, LongWord *Erg, LongWord Scale)
     StrCompShorten(&RegArg, 2);
     Mode = 10;
   }
-  if (!DecodeSReg(RegArg.Str, &BaseReg, False))
+  if (!DecodeSReg(RegArg.str.p_str, &BaseReg, False))
   {
     WrStrErrorPos(ErrNum_InvReg, &RegArg);
     return False;
@@ -444,12 +446,12 @@ static Boolean DecodeMem(const tStrComp *pArg, LongWord *Erg, LongWord Scale)
   /* kein Offsetfeld ? --> Skalierungsgroesse bei Autoinkrement/De-
      krement, sonst 0 */
 
-  if (*DispArg.Str == '\0')
+  if (*DispArg.str.p_str == '\0')
     DispAcc = (Mode < 2) ? 0 : Scale;
 
   /* Register als Offsetfeld? Dann Bit 2 in Modus setzen */
 
-  else if (DecodeSReg(DispArg.Str, &IndReg, False))
+  else if (DecodeSReg(DispArg.str.p_str, &IndReg, False))
   {
     if ((IndReg ^ BaseReg) > 15)
     {
@@ -515,7 +517,7 @@ static Boolean DecodeAdr(const tStrComp *pArg, Byte Mask, Boolean Signed, LongWo
 
   AdrMode = ModNone;
 
-  if (DecodeReg(pArg->Str, AdrVal, &OK, False))
+  if (DecodeReg(pArg->str.p_str, AdrVal, &OK, False))
   {
     AdrMode = (OK) ? ModLReg : ModReg;
   }
@@ -633,7 +635,6 @@ static Boolean DecodePseudo(void)
 {
   Boolean OK;
   int z, cnt;
-  TempResult t;
   LongInt Size;
 
   if (Memo("SINGLE"))
@@ -643,10 +644,11 @@ static Boolean DecodePseudo(void)
       OK = True;
       for (z = 0; z < ArgCnt; z++)
       {
-        t.Contents.Float = EvalStrFloatExpression(&ArgStr[z + 1], Float32, &OK);
+        double Float = EvalStrFloatExpression(&ArgStr[z + 1], Float32, &OK);
+
         if (!OK)
           break;
-        Double_2_ieee4(t.Contents.Float, (Byte *) (DAsmCode + z), HostBigEndian);
+        Double_2_ieee4(Float, (Byte *) (DAsmCode + z), HostBigEndian);
       }
       if (OK) CodeLen = ArgCnt << 2;
     }
@@ -658,15 +660,16 @@ static Boolean DecodePseudo(void)
     if (ChkArgCnt(1, ArgCntMax))
     {
       int z2;
+      double Float;
 
       OK = True;
       for (z = 0; z < ArgCnt; z++)
       {
         z2 = z << 1;
-        t.Contents.Float = EvalStrFloatExpression(&ArgStr[z + 1], Float64, &OK);
+        Float = EvalStrFloatExpression(&ArgStr[z + 1], Float64, &OK);
         if (!OK)
           break;
-        Double_2_ieee8(t.Contents.Float, (Byte *) (DAsmCode + z2), HostBigEndian);
+        Double_2_ieee8(Float, (Byte *) (DAsmCode + z2), HostBigEndian);
         if (!HostBigEndian)
         {
           DAsmCode[z2 + 2] = DAsmCode[z2 + 0];
@@ -684,6 +687,9 @@ static Boolean DecodePseudo(void)
   {
     if (ChkArgCnt(1, ArgCntMax))
     {
+      TempResult t;
+
+      as_tempres_ini(&t);
       OK = True;
       cnt = 0;
       for (z = 1; z <= ArgCnt; z++)
@@ -699,11 +705,11 @@ static Boolean DecodePseudo(void)
             if (MultiCharToInt(&t, 4))
               goto ToInt;
 
-             for (z2 = 0; z2 < t.Contents.Ascii.Length; z2++)
+             for (z2 = 0; z2 < t.Contents.str.len; z2++)
              {
                if ((z2 & 3) == 0) DAsmCode[cnt++] = 0;
                DAsmCode[cnt - 1] +=
-                  (((LongWord)CharTransTable[((usint)t.Contents.Ascii.Contents[z2]) & 0xff])) << (8 * (3 - (z2 & 3)));
+                  (((LongWord)CharTransTable[((usint)t.Contents.str.p_str[z2]) & 0xff])) << (8 * (3 - (z2 & 3)));
              }
              break;
            }
@@ -737,6 +743,7 @@ static Boolean DecodePseudo(void)
        }
       if (OK)
         CodeLen = cnt << 2;
+      as_tempres_free(&t);
     }
     return True;
   }
@@ -889,7 +896,7 @@ static void DecodeMemO(Word Index)
   {
     const tStrComp *pArg1, *pArg2;
 
-    IsStore = (*OpPart.Str) == 'S';
+    IsStore = (*OpPart.str.p_str) == 'S';
     pArg1 = IsStore ? &ArgStr[2] : &ArgStr[1];
     pArg2 = IsStore ? &ArgStr[1] : &ArgStr[2];
     if (IsStore)
@@ -944,9 +951,9 @@ static void DecodeABS(Word Index)
   UNUSED(Index);
 
   if (ChkArgCnt(2, 2)
-   && DecodeReg(ArgStr[2].Str, &DReg, &DPFlag, True)
+   && DecodeReg(ArgStr[2].str.p_str, &DReg, &DPFlag, True)
    && ChkUnit(DReg, L1, L2)
-   && DecodeReg(ArgStr[1].Str, &S1Reg, &S1Flag, True))
+   && DecodeReg(ArgStr[1].str.p_str, &S1Reg, &S1Flag, True))
   {
     if (DPFlag != S1Flag) WrError(ErrNum_InvAddrMode);
     else if ((ThisCross) && ((S1Reg >> 4) == UnitFlag)) WrError(ErrNum_InvAddrMode);
@@ -2126,9 +2133,9 @@ static void DecodeMVC(Word Code)
     z = 0;
     ThisUnit = S2;
     UnitFlag = 1;
-    if (DecodeCtrlReg(ArgStr[1].Str, &CReg, False))
+    if (DecodeCtrlReg(ArgStr[1].str.p_str, &CReg, False))
       z = 2;
-    else if (DecodeCtrlReg(ArgStr[2].Str, &CReg, True))
+    else if (DecodeCtrlReg(ArgStr[2].str.p_str, &CReg, True))
       z = 1;
     else
       WrStrErrorPos(ErrNum_InvCtrlReg, &ArgStr[1]);
@@ -2468,17 +2475,17 @@ static void DecodeB(Word Code)
     S2Reg = 0;
     WithImm = False;
     Code1 = 0;
-    if (!as_strcasecmp(ArgStr[1].Str, "IRP"))
+    if (!as_strcasecmp(ArgStr[1].str.p_str, "IRP"))
     {
       Code1 = 0x03;
       S2Reg = 0x06;
     }
-    else if (!as_strcasecmp(ArgStr[1].Str, "NRP"))
+    else if (!as_strcasecmp(ArgStr[1].str.p_str, "NRP"))
     {
       Code1 = 0x03;
       S2Reg = 0x07;
     }
-    else if (DecodeReg(ArgStr[1].Str, &S2Reg, &OK, False))
+    else if (DecodeReg(ArgStr[1].str.p_str, &S2Reg, &OK, False))
     {
       if (OK) WrError(ErrNum_InvAddrMode);
       OK = !OK;
@@ -2529,7 +2536,7 @@ static Boolean DecodeInst(void)
 
   /* ueber Tabelle: */
 
-  if (LookupInstTable(InstTable, OpPart.Str))
+  if (LookupInstTable(InstTable, OpPart.str.p_str))
     return __erg;
 
   WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
@@ -2651,7 +2658,7 @@ static void MakeCode_3206X(void)
 
   /* zu ignorierendes */
 
-  if ((*OpPart.Str == '\0') && (*LabPart.Str == '\0'))
+  if ((*OpPart.str.p_str == '\0') && (*LabPart.str.p_str == '\0'))
     return;
 
   /* Pseudoanweisungen */
@@ -2666,17 +2673,17 @@ static void MakeCode_3206X(void)
 
   /* Optionen aus Label holen */
 
-  if (*LabPart.Str != '\0')
-    if ((!strcmp(LabPart.Str, "||")) || (*LabPart.Str == '['))
-     if (!CheckOpt(LabPart.Str))
+  if (*LabPart.str.p_str != '\0')
+    if ((!strcmp(LabPart.str.p_str, "||")) || (*LabPart.str.p_str == '['))
+     if (!CheckOpt(LabPart.str.p_str))
        return;
 
   /* eventuell falsche Mnemonics verwerten */
 
-  if (!strcmp(OpPart.Str, "||"))
+  if (!strcmp(OpPart.str.p_str, "||"))
     if (!ReiterateOpPart())
       return;
-  if (*OpPart.Str == '[')
+  if (*OpPart.str.p_str == '[')
     if (!ReiterateOpPart())
       return;
 
@@ -2687,17 +2694,17 @@ static void MakeCode_3206X(void)
 
   ThisUnit = NoUnit;
   ThisCross = False;
-  if (*AttrPart.Str)
+  if (*AttrPart.str.p_str)
   {
-    if (as_toupper(AttrPart.Str[strlen(AttrPart.Str) - 1]) == 'X')
+    if (as_toupper(AttrPart.str.p_str[strlen(AttrPart.str.p_str) - 1]) == 'X')
     {
       ThisCross = True;
-      AttrPart.Str[strlen(AttrPart.Str) - 1] = '\0';
+      AttrPart.str.p_str[strlen(AttrPart.str.p_str) - 1] = '\0';
     }
-    if (*AttrPart.Str == '\0') ThisUnit = NoUnit;
+    if (*AttrPart.str.p_str == '\0') ThisUnit = NoUnit;
     else
       for (; ThisUnit != LastUnit; ThisUnit++)
-        if (!as_strcasecmp(AttrPart.Str, UnitNames[ThisUnit]))
+        if (!as_strcasecmp(AttrPart.str.p_str, UnitNames[ThisUnit]))
           break;
     if (ThisUnit == LastUnit)
     {
@@ -2927,7 +2934,7 @@ static void DeinitFields(void)
 
 static Boolean IsDef_3206X(void)
 {
-  return (!strcmp(LabPart.Str, "||")) || (*LabPart.Str == '[');
+  return (!strcmp(LabPart.str.p_str, "||")) || (*LabPart.str.p_str == '[');
 }
 
 static void SwitchFrom_3206X(void)

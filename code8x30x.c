@@ -38,39 +38,39 @@ static Boolean DecodeReg(const tStrComp *pArg, Word *Erg, ShortInt *ErgLen)
   Word Acc;
   LongInt Adr;
   char *z;
-  int Len = strlen(pArg->Str);
+  int Len = strlen(pArg->str.p_str);
 
   *ErgLen = -1;
 
-  if (!as_strcasecmp(pArg->Str, "AUX"))
+  if (!as_strcasecmp(pArg->str.p_str, "AUX"))
   {
     *Erg = 0;
     return True;
   }
 
-  if (!as_strcasecmp(pArg->Str, "OVF"))
+  if (!as_strcasecmp(pArg->str.p_str, "OVF"))
   {
     *Erg = 8;
     return True;
   }
 
-  if (!as_strcasecmp(pArg->Str, "IVL"))
+  if (!as_strcasecmp(pArg->str.p_str, "IVL"))
   {
     *Erg = 7;
     return True;
   }
 
-  if (!as_strcasecmp(pArg->Str, "IVR"))
+  if (!as_strcasecmp(pArg->str.p_str, "IVR"))
   {
     *Erg = 15;
     return True;
   }
 
-  if ((as_toupper(*pArg->Str) == 'R') && (Len > 1) && (Len < 4))
+  if ((as_toupper(*pArg->str.p_str) == 'R') && (Len > 1) && (Len < 4))
   {
     Acc = 0;
     OK = True;
-    for (z = pArg->Str + 1; *z != '\0'; z++)
+    for (z = pArg->str.p_str + 1; *z != '\0'; z++)
       if (OK)
       {
         if ((*z < '0') || (*z > '7'))
@@ -90,16 +90,16 @@ static Boolean DecodeReg(const tStrComp *pArg, Word *Erg, ShortInt *ErgLen)
     }
   }
 
-  if ((Len == 4) && (as_strncasecmp(pArg->Str + 1, "IV", 2) == 0) && (pArg->Str[3] >= '0') && (pArg->Str[3] <= '7'))
+  if ((Len == 4) && (as_strncasecmp(pArg->str.p_str + 1, "IV", 2) == 0) && (pArg->str.p_str[3] >= '0') && (pArg->str.p_str[3] <= '7'))
   {
-    if (as_toupper(*pArg->Str) == 'L')
+    if (as_toupper(*pArg->str.p_str) == 'L')
     {
-      *Erg = pArg->Str[3]-'0' + 0x10;
+      *Erg = pArg->str.p_str[3]-'0' + 0x10;
       return True;
     }
-    else if (as_toupper(*pArg->Str) == 'R')
+    else if (as_toupper(*pArg->str.p_str) == 'R')
     {
-      *Erg = pArg->Str[3] - '0' + 0x18;
+      *Erg = pArg->str.p_str[3] - '0' + 0x18;
       return True;
     }
   }
@@ -289,7 +289,7 @@ static void DecodeAri(Word Code)
     {
       if (ArgCnt == 2)        /* wenn nur zwei Operanden und Ziel Register... */
       {
-        p = HasDisp(ArgStr[1].Str); /* kann eine Rotation dabei sein */
+        p = HasDisp(ArgStr[1].str.p_str); /* kann eine Rotation dabei sein */
         if (p)
         {                 /* jau! */
           tStrComp RegArg, RotArg;
@@ -383,7 +383,7 @@ static void DecodeXEC(Word Code)
 
   if (ChkArgCnt(1, 2))
   {
-    p = HasDisp(ArgStr[1].Str);
+    p = HasDisp(ArgStr[1].str.p_str);
     if (!p) WrError(ErrNum_InvAddrMode);
     else
     {
@@ -573,7 +573,7 @@ static void MakeCode_8x30X(void)
 
   /* Pseudoanweisungen */
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 

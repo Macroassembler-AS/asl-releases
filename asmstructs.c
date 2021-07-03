@@ -104,7 +104,7 @@ void ExpandStructStd(const tStrComp *pVarName, const struct sStructElem *pStruct
     String ExtName;
     tStrComp ExtComp;
 
-    StrCompMkTemp(&ExtComp, ExtName);
+    StrCompMkTemp(&ExtComp, ExtName, sizeof(ExtName));
     if (ExpandStrSymbol(ExtName, sizeof(ExtName), pVarName))
       SetSymbolOrStructElemSize(&ExtComp, pStructElem->OpSize);
   }
@@ -302,13 +302,11 @@ void AddStructSymbol(const char *pName, LargeWord Value)
     Value += ZStruct->SaveCurrPC;
 
   {
-    String tmp, tmp2;
+    String tmp;
     tStrComp TmpComp;
 
-    as_snprintf(tmp2, sizeof(tmp2), "%s%c", pInnermostNamedStruct->Name, pInnermostNamedStruct->StructRec->ExtChar);
-    strmaxcpy(tmp, pName, sizeof(tmp));
-    strmaxprep(tmp, tmp2, sizeof(tmp));
-    StrCompMkTemp(&TmpComp, tmp);
+    as_snprintf(tmp, sizeof(tmp), "%s%c%s", pInnermostNamedStruct->Name, pInnermostNamedStruct->StructRec->ExtChar, pName);
+    StrCompMkTemp(&TmpComp, tmp, sizeof(tmp));
     EnterIntSymbol(&TmpComp, Value, SegNone, False);
   }
 }
@@ -418,6 +416,7 @@ void ResetStructDefines(void)
 typedef struct
 {
   LongInt Sum;
+  as_dynstr_t num_str;
 } TPrintContext;
 
 static void PrintDef(PTree Tree, void *pData)
@@ -428,7 +427,9 @@ static void PrintDef(PTree Tree, void *pData)
   String s;
   char NumStr[30];
   TempResult t;
+
   UNUSED(pData);
+  as_tempres_ini(&t);
 
   WrLstLine("");
   pContext->Sum++;
@@ -440,12 +441,11 @@ static void PrintDef(PTree Tree, void *pData)
     strmaxcat(s, "]", STRINGSIZE);
   }
   WrLstLine(s);
-  t.Typ = TempInt;
   for (Elem = Node->StructRec->Elems; Elem; Elem = Elem->Next)
   {
-    t.Contents.Int = Elem->Offset;
-    StrSym(&t, False, NumStr, sizeof(NumStr), ListRadixBase);
-    as_snprintf(s, sizeof(s), "%3s", NumStr);
+    as_tempres_set_int(&t, Elem->Offset);
+    StrSym(&t, False, &pContext->num_str, ListRadixBase);
+    as_snprintf(s, sizeof(s), "%3s", pContext->num_str.p_str);
     if (Elem->BitPos >= 0)
     {
       if (Elem->BitWidthM1 >= 0)
@@ -463,6 +463,7 @@ static void PrintDef(PTree Tree, void *pData)
     as_snprcatf(s, sizeof(s), " %s", Elem->pElemName);
     WrLstLine(s);
   }
+  as_tempres_free(&t);
 }
 
 void PrintStructList(void)
@@ -478,7 +479,9 @@ void PrintStructList(void)
   WrLstLine(getmessage(Num_ListStructListHead2));
 
   Context.Sum = 0;
+  as_dynstr_ini(&Context.num_str, STRINGSIZE);
   IterTree((PTree)StructRoot, PrintDef, &Context);
+  as_dynstr_free(&Context.num_str);
   as_snprintf(s, sizeof(s), "%" PRILongInt "%s",
               Context.Sum,
               getmessage((Context.Sum == 1) ? Num_ListStructSumMsg : Num_ListStructSumsMsg));
@@ -521,7 +524,7 @@ static void ExpandStruct_One(PStructRec StructRec, char *pVarPrefix, char *pStru
     for (StructElem = StructRec->Elems; StructElem; StructElem = StructElem->Next)
     {
       strmaxcpy(pVarPrefix + VarLen + 1, StructElem->pElemName, RemVarLen);
-      StrCompMkTemp(&TmpComp, pVarPrefix);
+      StrCompMkTemp(&TmpComp, pVarPrefix, 0);
       StructElem->ExpandFnc(&TmpComp, StructElem, Base);
       if (StructElem->IsStruct)
       {
@@ -556,7 +559,7 @@ void ExpandStruct(PStructRec StructRec)
   tStrComp Arg;
   tEvalResult EvalResult;
 
-  if (!LabPart.Str[0])
+  if (!LabPart.str.p_str[0])
   {
     WrError(ErrNum_StructNameMissing);
     return;
@@ -565,7 +568,7 @@ void ExpandStruct(PStructRec StructRec)
   /* currently, we only support array dimensions as arguments */
 
   for (z = 1; z <= ArgCnt; z++)
-    if (IsIndirectGen(ArgStr[z].Str, "[]"))
+    if (IsIndirectGen(ArgStr[z].str.p_str, "[]"))
     {
       if (DimensionCnt >= DIMENSION_MAX)
       {
@@ -595,7 +598,7 @@ void ExpandStruct(PStructRec StructRec)
     }
 
   strmaxcpy(CompStructName, pLOpPart, sizeof(CompStructName));
-  strmaxcpy(CompVarName, LabPart.Str, sizeof(CompVarName));
+  strmaxcpy(CompVarName, LabPart.str.p_str, sizeof(CompVarName));
   if (!DimensionCnt)
   {
     ExpandStruct_One(StructRec, CompVarName, CompStructName, EProgCounter());
@@ -619,7 +622,7 @@ void ExpandStruct(PStructRec StructRec)
     }
     while (Indices[0] < Dimensions[0])
     {
-      StrCompMkTemp(&LabelComp, CompVarName);
+      StrCompMkTemp(&LabelComp, CompVarName, sizeof(CompVarName));
       LabelHandle(&LabelComp, EProgCounter() + CodeLen, True);
       ExpandStruct_One(StructRec, CompVarName, CompStructName, EProgCounter() + CodeLen);
       CodeLen += StructRec->TotLen;

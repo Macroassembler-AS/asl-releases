@@ -247,6 +247,8 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
       msgno = Num_ErrMsgPaddingAdded; break;
     case ErrNum_RegNumWraparound:
       msgno = Num_ErrMsgRegNumWraparound; break;
+    case ErrNum_IndexedForIndirect:
+      msgno = Num_ErrMsgIndexedForIndirect; break;
     case ErrNum_DoubleDef:
       msgno = Num_ErrMsgDoubleDef; break;
     case ErrNum_SymbolUndef:
@@ -734,7 +736,7 @@ void WrErrorString(const char *pMessage, const char *pAdd, Boolean Warning, Bool
   if ((ExtendErrors > 1) || ((ExtendErrors > 0) && pLineComp))
   {
     strcpy(ErrStr[++ErrStrCount], "");
-    GenLineForMarking(ErrStr[ErrStrCount], STRINGSIZE, OneLine, pLeadIn);
+    GenLineForMarking(ErrStr[ErrStrCount], STRINGSIZE, OneLine.p_str, pLeadIn);
     if (pLineComp)
     {
       strcpy(ErrStr[++ErrStrCount], "");
@@ -826,7 +828,7 @@ void WrXErrorPos(tErrorNum Num, const char *pExtendError, const struct sLineComp
 
 void WrStrErrorPos(tErrorNum Num, const struct sStrComp *pStrComp)
 {
-  WrXErrorPos(Num, pStrComp->Str, &pStrComp->Pos);
+  WrXErrorPos(Num, pStrComp->str.p_str, &pStrComp->Pos);
 }
 
 /*!------------------------------------------------------------------------
@@ -880,7 +882,7 @@ void ChkXIO(tErrorNum ErrNo, char *pExtError)
 {
   tStrComp TmpComp;
 
-  StrCompMkTemp(&TmpComp, pExtError);
+  StrCompMkTemp(&TmpComp, pExtError, 0);
   ChkStrIO(ErrNo, &TmpComp);
 }
 
@@ -900,7 +902,7 @@ void ChkStrIO(tErrorNum ErrNo, const struct sStrComp *pComp)
   if ((io == 0) || (io == 19) || (io == 25))
     return;
 
-  as_snprintf(s, STRINGSIZE, "%s: %s", pComp->Str, GetErrorMsg(io));
+  as_snprintf(s, STRINGSIZE, "%s: %s", pComp->str.p_str, GetErrorMsg(io));
   if ((pComp->Pos.StartCol >= 0) || pComp->Pos.Len)
     WrXErrorPos(ErrNo, s, &pComp->Pos);
   else

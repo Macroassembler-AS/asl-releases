@@ -112,7 +112,7 @@ static Boolean SplitArgs(int Count)
   {
     if (ArgCnt > 0)
     {
-      DiscPtr = ArgStr[1].Str - 1;
+      DiscPtr = ArgStr[1].str.p_str - 1;
       SplittedArg = 1;
     }
     else
@@ -126,7 +126,7 @@ static Boolean SplitArgs(int Count)
     return False;
   }
 
-  for (p = ArgStr[SplittedArg].Str; isspace(((usint)*p) & 0xff); p++);
+  for (p = ArgStr[SplittedArg].str.p_str; isspace(((usint)*p) & 0xff); p++);
   p1 = QuotPos(p, ' ');
   p2 = QuotPos(p, '\t');
   DiscPtr = ((!p1) || ((p2) && (p2 < p1))) ? p2 : p1;
@@ -150,27 +150,27 @@ static void DiscardArgs(void)
       if (*p2 == '\0') break;
     Eaten = (*p2 == '\0');
     *p2 = '\0';
-    strmov(OpPart.Str, p);
-    NLS_UpString(OpPart.Str);
+    strmov(OpPart.str.p_str, p);
+    NLS_UpString(OpPart.str.p_str);
     if (Eaten)
     {
       for (z = 1; z < ArgCnt; z++)
-        strmov(ArgStr[z].Str, ArgStr[z + 1].Str);
+        strmov(ArgStr[z].str.p_str, ArgStr[z + 1].str.p_str);
       ArgCnt--;
     }
     else
     {
       if (p2)
         for (p2++; as_isspace(*p2); p2++);
-      strmov(ArgStr[SplittedArg].Str, p2);
+      strmov(ArgStr[SplittedArg].str.p_str, p2);
     }
   }
   else
-    *OpPart.Str = '\0';
+    *OpPart.str.p_str = '\0';
   if (DiscCnt > 0)
   {
     for (z = 0; z <= ArgCnt - DiscCnt; z++)
-      strmov(ArgStr[z + 1].Str, ArgStr[z + DiscCnt].Str);
+      strmov(ArgStr[z + 1].str.p_str, ArgStr[z + DiscCnt].str.p_str);
     ArgCnt -= DiscCnt - 1;
   }
 }
@@ -234,12 +234,12 @@ static void DecodeMOV(Word Index)
 
   if (!SplitArgs(2))
     return;
-  if (!DecodeReg(ArgStr[1].Str, &DReg, DestRegs, DestRegCnt))
+  if (!DecodeReg(ArgStr[1].str.p_str, &DReg, DestRegs, DestRegCnt))
   {
     WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
     Error = True;
   }
-  else if (!DecodeReg(ArgStr[2].Str, &SReg, SrcRegs, SrcRegCnt))
+  else if (!DecodeReg(ArgStr[2].str.p_str, &SReg, SrcRegs, SrcRegCnt))
   {
     WrStrErrorPos(ErrNum_InvReg, &ArgStr[2]);
     Error = True;
@@ -256,7 +256,7 @@ static void DecodeLDI(Word Index)
 
   if (!SplitArgs(2))
     return;
-  if (!DecodeReg(ArgStr[1].Str, &DReg, DestRegs, DestRegCnt))
+  if (!DecodeReg(ArgStr[1].str.p_str, &DReg, DestRegs, DestRegCnt))
   {
     WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
     Error = True;
@@ -286,7 +286,7 @@ static void DecodeALU1(Word Index)
 
   if (!SplitArgs(1))
     return;
-  if ((!DecodeReg(ArgStr[1].Str, &DReg, DestRegs, DestRegCnt))
+  if ((!DecodeReg(ArgStr[1].str.p_str, &DReg, DestRegs, DestRegCnt))
    || (DReg < 16) || (DReg > 23))
   {
     WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
@@ -303,13 +303,13 @@ static void DecodeALU2(Word Index)
   LongWord DReg, SReg;
 
   if (!SplitArgs(2)) return;
-  if ((!DecodeReg(ArgStr[1].Str, &DReg, DestRegs, DestRegCnt))
+  if ((!DecodeReg(ArgStr[1].str.p_str, &DReg, DestRegs, DestRegCnt))
    || (DReg < 16) || (DReg > 23))
   {
     WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
     Error = True;
   }
-  else if (!DecodeReg(ArgStr[2].Str, &SReg, ALUSrcRegs, ALUSrcRegCnt))
+  else if (!DecodeReg(ArgStr[2].str.p_str, &SReg, ALUSrcRegs, ALUSrcRegCnt))
   {
     WrStrErrorPos(ErrNum_InvReg, &ArgStr[2]);
     Error = True;
@@ -593,7 +593,6 @@ static Boolean DecodePseudo(void)
 {
   int z;
   Boolean OK;
-  TempResult t;
   LongWord temp;
   LongInt sign, mant, expo, Size;
   char *cp, *cend;
@@ -602,6 +601,9 @@ static Boolean DecodePseudo(void)
   {
     if (ChkArgCnt(1, ArgCntMax))
     {
+      TempResult t;
+
+      as_tempres_ini(&t);
       z = 1; OK = True;
       while ((OK) && (z <= ArgCnt))
       {
@@ -612,7 +614,7 @@ static Boolean DecodePseudo(void)
             if (MultiCharToInt(&t, 4))
               goto ToInt;
 
-            for (z = 0, cp = t.Contents.Ascii.Contents, cend = cp + t.Contents.Ascii.Length; cp < cend; cp++, z++)
+            for (z = 0, cp = t.Contents.str.p_str, cend = cp + t.Contents.str.len; cp < cend; cp++, z++)
             {
               DAsmCode[CodeLen] = (DAsmCode[CodeLen] << 8) + CharTransTable[((usint)*cp) & 0xff];
               if ((z & 3) == 3)
@@ -673,6 +675,7 @@ static Boolean DecodePseudo(void)
       }
       if (!OK)
         CodeLen = 0;
+      as_tempres_free(&t);
     }
     return True;
   }
@@ -947,7 +950,7 @@ static void MakeCode_77230(void)
 
   /* Nullanweisung */
 
-  if (Memo("") && !*AttrPart.Str && (ArgCnt == 0))
+  if (Memo("") && !*AttrPart.str.p_str && (ArgCnt == 0))
     return;
 
   /* Pseudoanweisungen */
@@ -962,13 +965,13 @@ static void MakeCode_77230(void)
   memset(InstrComps, 0, sizeof(LongWord) * InstrCnt);
   do
   {
-    if (!LookupInstTable(InstTable, OpPart.Str))
+    if (!LookupInstTable(InstTable, OpPart.str.p_str))
     {
       WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
       Error = True;
     }
   }
-  while ((!Error) && (*OpPart.Str != '\0'));
+  while ((!Error) && (*OpPart.str.p_str != '\0'));
 
   /* passende Verknuepfung suchen */
 

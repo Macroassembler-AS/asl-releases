@@ -125,12 +125,12 @@ static Boolean DecodeAdr(const tStrComp *pArg)
 
   AdrCnt = 0;
 
-  if (*pArg->Str == '*')
+  if (*pArg->str.p_str == '*')
   {
     tStrComp IArg;
 
     StrCompRefRight(&IArg, pArg, 1);
-    if (IArg.Str[strlen(IArg.Str) - 1] == '+')
+    if (IArg.str.p_str[strlen(IArg.str.p_str) - 1] == '+')
     {
       IncFlag = True;
       StrCompShorten(&IArg, 1);
@@ -145,12 +145,12 @@ static Boolean DecodeAdr(const tStrComp *pArg)
     return False;
   }
 
-  if (*pArg->Str == '@')
+  if (*pArg->str.p_str == '@')
   {
     tStrComp IArg;
 
     StrCompRefRight(&IArg, pArg, 1);
-    p = HasDisp(IArg.Str);
+    p = HasDisp(IArg.str.p_str);
     if (!p)
     {
       tSymbolFlags Flags;
@@ -204,14 +204,14 @@ static Boolean DecodeBitField(tStrComp *pArg, Word *pResult)
   Boolean OK1, OK2;
   char *pSep;
 
-  if (!IsIndirect(pArg->Str))
+  if (!IsIndirect(pArg->str.p_str))
   {
     WrStrErrorPos(ErrNum_InvBitField, pArg);
     return False;
   }
   StrCompRefRight(&Arg, pArg, 1);
   StrCompShorten(&Arg, 1);
-  pSep = strchr(Arg.Str, ',');
+  pSep = strchr(Arg.str.p_str, ',');
   if (!pSep)
   {
     WrStrErrorPos(ErrNum_InvBitField, pArg);
@@ -243,7 +243,7 @@ static Boolean EvalDist(const tStrComp *pArg, Word *pResult, Word InstrLen)
   Integer AdrInt;
   tSymbolFlags Flags;
 
-  AdrInt = EvalStrIntExpressionOffsWithFlags(pArg, !!(*pArg->Str == '@'), UInt16, &OK, &Flags) - (EProgCounter() + InstrLen);
+  AdrInt = EvalStrIntExpressionOffsWithFlags(pArg, !!(*pArg->str.p_str == '@'), UInt16, &OK, &Flags) - (EProgCounter() + InstrLen);
   if (OK && !mSymbolQuestionable(Flags) && Odd(AdrInt))
   {
     WrStrErrorPos(ErrNum_DistIsOdd, pArg);
@@ -266,7 +266,7 @@ static Boolean DecodeCond(const tStrComp *pArg, Word *pResult)
   **pRun;
 
   for (pRun = pConds; *pRun; pRun++)
-    if (!as_strcasecmp(pArg->Str, *pRun))
+    if (!as_strcasecmp(pArg->str.p_str, *pRun))
     {
       *pResult = pRun - pConds;
       return True;
@@ -403,7 +403,7 @@ static void DecodeType12(Word Index)
   WAsmCode[1] |= AdrPart << 6;
   WAsmCode[2 + AdrCnt1] = AdrVal;
 
-  if ((ArgCnt < 3) || !*ArgStr[3].Str)
+  if ((ArgCnt < 3) || !*ArgStr[3].str.p_str)
   {
     Count = 0;
     OK = True;
@@ -414,7 +414,7 @@ static void DecodeType12(Word Index)
     return;
   WAsmCode[1] |= Count << 12;
 
-  if ((ArgCnt < 4) || !*ArgStr[4].Str)
+  if ((ArgCnt < 4) || !*ArgStr[4].str.p_str)
   {
     if (DefCkpt >= 16)
     {
@@ -548,7 +548,7 @@ static void DecodeType17(Word Index)
     Word Delta, Dist;
     Boolean OK;
 
-    if ((ArgCnt == 3) && *ArgStr[2].Str)
+    if ((ArgCnt == 3) && *ArgStr[2].str.p_str)
       Delta = EvalStrIntExpression(&ArgStr[2], UInt4, &OK);
     else
     {
@@ -866,12 +866,13 @@ static void DecodeBYTE(Word Code)
 
   UNUSED(Code);
 
+  as_tempres_ini(&t);
   if (ChkArgCnt(1, ArgCntMax))
   {
     z = 1; OK = True;
     do
     {
-      KillBlanks(ArgStr[z].Str);
+      KillBlanks(ArgStr[z].str.p_str);
       EvalStrExpression(&ArgStr[z], &t);
       switch (t.Typ)
       {
@@ -888,17 +889,17 @@ static void DecodeBYTE(Word Code)
             PutByte(t.Contents.Int);
           break;
         case TempString:
-          if (SetMaxCodeLen(t.Contents.Ascii.Length + CodeLen))
+          if (SetMaxCodeLen(t.Contents.str.len + CodeLen))
           {
             WrError(ErrNum_CodeOverflow);
             OK = False;
           }
           else
           {
-            char *p, *pEnd = t.Contents.Ascii.Contents + t.Contents.Ascii.Length;
+            char *p, *pEnd = t.Contents.str.p_str + t.Contents.str.len;
 
-            TranslateString(t.Contents.Ascii.Contents, t.Contents.Ascii.Length);
-            for (p = t.Contents.Ascii.Contents; p < pEnd; PutByte(*(p++)));
+            TranslateString(t.Contents.str.p_str, t.Contents.str.len);
+            for (p = t.Contents.str.p_str; p < pEnd; PutByte(*(p++)));
           }
           break;
         case TempFloat:
@@ -913,6 +914,7 @@ static void DecodeBYTE(Word Code)
     if (!OK)
       CodeLen = 0;
   }
+  as_tempres_free(&t);
 }
 
 static void DecodeWORD(Word Code)
@@ -1001,7 +1003,7 @@ static void DecodeCKPT(Word Code)
   {
     Word NewDefCkpt;
 
-    if (!as_strcasecmp(ArgStr[1].Str, "NOTHING"))
+    if (!as_strcasecmp(ArgStr[1].str.p_str, "NOTHING"))
       DefCkpt = CKPT_NOTHING;
     else
       if (DecodeReg(&ArgStr[1], &NewDefCkpt))
@@ -1358,7 +1360,7 @@ static void MakeCode_9900(void)
       WrError(ErrNum_AddrNotAligned);
   }
 
-  if (!LookupInstTable(InstTable, OpPart.Str))
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 
@@ -1367,28 +1369,23 @@ static Boolean IsDef_9900(void)
   return False;
 }
 
-static void SwitchFrom_9900(void)
-{
-  DeinitFields();
-  ClearONOFF();
-}
-
 static void InternSymbol_9900(char *Asc, TempResult*Erg)
 {
-  Boolean err;
+  Boolean OK;
   char *h = Asc;
+  LargeInt Num;
 
-  Erg->Typ = TempNone;
+  as_tempres_set_none(Erg);
   if ((strlen(Asc) >= 2) && (as_toupper(*Asc) == 'R'))
     h = Asc + 1;
   else if ((strlen(Asc) >= 3) && (as_toupper(*Asc) == 'W') && (as_toupper(Asc[1]) == 'R'))
     h = Asc + 2;
 
-  Erg->Contents.Int = ConstLongInt(h, &err, 10);
-  if ((!err) || (Erg->Contents.Int < 0) || (Erg->Contents.Int > 15))
+  Num = ConstLongInt(h, &OK, 10);
+  if (!OK || (Num < 0) || (Num > 15))
     return;
 
-  Erg->Typ = TempInt;
+  as_tempres_set_int(Erg, Num);
 }
 
 static void SwitchTo_9900(void *pUser)
@@ -1410,7 +1407,7 @@ static void SwitchTo_9900(void *pUser)
 
   MakeCode = MakeCode_9900;
   IsDef = IsDef_9900;
-  SwitchFrom = SwitchFrom_9900;
+  SwitchFrom = DeinitFields;
   InternSymbol = InternSymbol_9900;
   AddONOFF("PADDING", &DoPadding , DoPaddingName , False);
   AddONOFF(SupAllowedCmdName, &SupAllowed, SupAllowedSymName, False);
