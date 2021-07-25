@@ -367,7 +367,7 @@ static void ProcessFile(const char *FileName, LongWord Offset)
           case eHexFormatIntel32:
             FormatOccured |= eIntelOccured;
             IntOffset = (ErgStart * Gran);
-            IntOffset -= IntOffset & 0xff;
+            IntOffset -= IntOffset & 0xffff;
             HSeg = IntOffset >> 16;
             ChkSum = 6 + Lo(HSeg) + Hi(HSeg);
             IntOffset /= Gran;
@@ -425,7 +425,7 @@ static void ProcessFile(const char *FileName, LongWord Offset)
 
           /* Recordlaenge ausrechnen, fuer Intel32 auf 64K-Grenze begrenzen
              Bei Atmel nur 2 Byte pro Zeile!
-             Bei Mico8 nur 4 Byte (davon ei Wort=18 Bit) pro Zeile! */
+             Bei Mico8 nur 4 Byte (davon ein Wort=18 Bit) pro Zeile! */
 
           TransLen = min(LineLen, ErgLen);
           if ((ActFormat == eHexFormatIntel32) && ((ErgStart & 0xffff) + (TransLen/Gran) >= 0x10000))

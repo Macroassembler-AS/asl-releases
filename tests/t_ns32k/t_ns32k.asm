@@ -187,7 +187,10 @@ table:	db	x'0a, x'1a, x'3a, x'5a, x'7a, x'6a, x'4a
 
 	cmpmw	10(r0), 16(r1), 4; CE 45 42 0A 10 06
 
+	; Note that opposed to ADDQi and MOVQi, CMPQi allows immediate dest
+
 	cmpqb	-8,r0		; 1C 04
+	cmpqd	1,0xa1		; 9F A0 00 00 00 A1
 
 	cmpsb			; 0E 04 00
 

@@ -1,3 +1,8 @@
+2021-07-25 [1.42 Bld 206]
+
+- Bugfix      : NS32K: allow immediate destination operand for CMPQi
+- Bugfix      : correct address output for Intel32 Hex format
+
 2021-07-03 [1.42 Bld 205]
 
 - Bugfix      : correct encoding and allowed addressing modes of XCH(B) on MCS-96

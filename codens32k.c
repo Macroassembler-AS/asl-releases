@@ -1455,11 +1455,12 @@ static void DecodeScond(Word Code)
 static void DecodeMOVQ(Word Code)
 {
   tAdrVals DestAdrVals;
+  Boolean IsCMPQ = (Lo(Code) == 1);
 
   if (ChkArgCnt(2, 2)
    && ChkNoAttrPart()
    && SetOpSizeFromCode(Code)
-   && DecodeAdr(&ArgStr[2], &DestAdrVals, MAllowReg))
+   && DecodeAdr(&ArgStr[2], &DestAdrVals, MAllowReg | (IsCMPQ ? 0 : MAllowImm)))
   {
     Boolean OK;
     Integer Val = EvalStrIntExpression(&ArgStr[1], SInt4, &OK);
