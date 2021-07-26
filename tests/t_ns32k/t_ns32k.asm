@@ -428,6 +428,15 @@ table:	db	x'0a, x'1a, x'3a, x'5a, x'7a, x'6a, x'4a
 	movlf	l2,l4		; only F allwed as dest
 	endexpect
 
+	; similar to CMPi, CMPf allows immediate "dest". Plain number is not interpreted as PC-rel
+
+	cmpf	1.0,1		; BE 09 A5  3F 80 00 00  3F 80 00 00
+	cmpf	1.0,1.0		; BE 09 A5  3F 80 00 00  3F 80 00 00
+	addf	1.0,1		; BE C1 A6  3F 80 00 00  B3 CF
+	expect	1133
+	addf	1.0,1.0
+	endexpect
+
 	custom	on
 
 	catst0	h'123456	; 16 03 A0 00 12 34 56

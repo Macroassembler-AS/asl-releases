@@ -1,3 +1,7 @@
+2021-07-26 [1.42 Bld 207]
+
+- Bugfix      : NS32K: allow immediate destination operand for CMPf
+
 2021-07-25 [1.42 Bld 206]
 
 - Bugfix      : NS32K: allow immediate destination operand for CMPQi

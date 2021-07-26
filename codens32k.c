@@ -1000,8 +1000,8 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrVals *pDest, Boolean AddrMode
     else
       return False;
   }
-  else
-    (void)EncodePCRel(pArg, pDest);
+  else if (!EncodePCRel(pArg, pDest))
+    return False;
 
 chk:
   /* if we have an index code, check it's not immedate, otherwise relocate */
@@ -1452,15 +1452,18 @@ static void DecodeScond(Word Code)
  * \param  Code Machine Code & Operand Size
  * ------------------------------------------------------------------------ */
 
+#define MOVQ_DESTMAYIMM 0x80
+
 static void DecodeMOVQ(Word Code)
 {
   tAdrVals DestAdrVals;
-  Boolean IsCMPQ = (Lo(Code) == 1);
+  Boolean DestMayImm = !!(Code & MOVQ_DESTMAYIMM);
 
+  Code &= ~MOVQ_DESTMAYIMM;
   if (ChkArgCnt(2, 2)
    && ChkNoAttrPart()
    && SetOpSizeFromCode(Code)
-   && DecodeAdr(&ArgStr[2], &DestAdrVals, MAllowReg | (IsCMPQ ? 0 : MAllowImm)))
+   && DecodeAdr(&ArgStr[2], &DestAdrVals, MAllowReg | (DestMayImm ? MAllowImm : 0)))
   {
     Boolean OK;
     Integer Val = EvalStrIntExpression(&ArgStr[1], SInt4, &OK);
@@ -2107,16 +2110,20 @@ static void DecodeMOVF(Word Code)
  * \param  Code Machine Code & Operand Size
  * ------------------------------------------------------------------------ */
 
+#define FMT11_DESTMAYIMM 0x80
+
 static void DecodeFormat11(Word Code)
 {
   tAdrVals SrcAdrVals, DestAdrVals;
+  Boolean DestMayImm = !!(Code & FMT11_DESTMAYIMM);
 
+  Code &= ~FMT11_DESTMAYIMM;
   if (ChkArgCnt(2, 2)
    && ChkNoAttrPart()
    && CheckFPUAvail(eFPU16081)
    && SetOpSizeFromCode(Code)
    && DecodeAdr(&ArgStr[1], &SrcAdrVals, MAllowReg | MAllowImm)
-   && DecodeAdr(&ArgStr[2], &DestAdrVals, MAllowReg))
+   && DecodeAdr(&ArgStr[2], &DestAdrVals, MAllowReg | (DestMayImm ? MAllowImm : 0)))
   {
     PutCode((((LongWord)SrcAdrVals.Code) << 19)
           | (((LongWord)DestAdrVals.Code) << 14)
@@ -2776,7 +2783,7 @@ static void InitFields(void)
   AddSizeInstTable("SPR"  , (1 << eSymbolSize8Bit) | (1 << eSymbolSize16Bit) | (1 << eSymbolSize32Bit), 2, DecodeLPR_SPR);
   AddSizeInstTable("MOVQ" , (1 << eSymbolSize8Bit) | (1 << eSymbolSize16Bit) | (1 << eSymbolSize32Bit), 5, DecodeMOVQ);
   AddSizeInstTable("ACB"  , (1 << eSymbolSize8Bit) | (1 << eSymbolSize16Bit) | (1 << eSymbolSize32Bit), 4, DecodeACB);
-  AddSizeInstTable("CMPQ" , (1 << eSymbolSize8Bit) | (1 << eSymbolSize16Bit) | (1 << eSymbolSize32Bit), 1, DecodeMOVQ);
+  AddSizeInstTable("CMPQ" , (1 << eSymbolSize8Bit) | (1 << eSymbolSize16Bit) | (1 << eSymbolSize32Bit), 1 | MOVQ_DESTMAYIMM, DecodeMOVQ);
 
   /* Format 3 */
 
@@ -2893,7 +2900,7 @@ static void InitFields(void)
 
   AddFSizeInstTable("ABS", (1 << eSymbolSizeFloat32Bit) | (1 << eSymbolSizeFloat64Bit), 0x0d, DecodeFormat11);
   AddFSizeInstTable("ADD", (1 << eSymbolSizeFloat32Bit) | (1 << eSymbolSizeFloat64Bit), 0x00, DecodeFormat11);
-  AddFSizeInstTable("CMP", (1 << eSymbolSizeFloat32Bit) | (1 << eSymbolSizeFloat64Bit), 0x02, DecodeFormat11);
+  AddFSizeInstTable("CMP", (1 << eSymbolSizeFloat32Bit) | (1 << eSymbolSizeFloat64Bit), 0x02 | FMT11_DESTMAYIMM, DecodeFormat11);
   AddFSizeInstTable("DIV", (1 << eSymbolSizeFloat32Bit) | (1 << eSymbolSizeFloat64Bit), 0x08, DecodeFormat11);
   AddFSizeInstTable("MOV", (1 << eSymbolSizeFloat32Bit) | (1 << eSymbolSizeFloat64Bit), 0x01, DecodeFormat11);
   AddFSizeInstTable("MUL", (1 << eSymbolSizeFloat32Bit) | (1 << eSymbolSizeFloat64Bit), 0x0c, DecodeFormat11);
