@@ -188,7 +188,7 @@ int main(int argc, char **argv)
 
     if (!StringListEmpty(FileList))
     {
-      fprintf(pDestFile, "%s:", ArgsAreObj ? argv[z] : getobj(argv[z]));
+      fprintf(pDestFile, "%s: %s", ArgsAreObj ? argv[z] : getobj(argv[z]), pSrcFileName);
       while (True)
       {
         pIncFileName = GetAndCutStringList(&FileList);

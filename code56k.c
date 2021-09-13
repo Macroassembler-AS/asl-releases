@@ -101,7 +101,7 @@ enum
 #define MModNoImm (MModAbs | MModNoExt)
 #define MModAll (MModNoImm | MModImm)
 
-#define SegLData (SegYData + 1)
+#define SegLData SegBData /* SegYData + 1 */
 
 #define MSegCode (1 << SegCode)
 #define MSegXData (1 << SegXData)

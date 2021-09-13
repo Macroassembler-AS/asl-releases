@@ -1,3 +1,7 @@
+2021-09-13 [1.42 Bld 208]
+
+- Addition    : Add support for NEC uCOM87 (uPD780x)
+
 2021-07-26 [1.42 Bld 207]
 
 - Bugfix      : NS32K: allow immediate destination operand for CMPf

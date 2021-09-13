@@ -461,6 +461,10 @@ Message ErrMsgUndefRegSize
  "Registerl&auml;nge undefiniert"
  "undefined register length"
 
+Message ErrMsgInvOpOnReg
+ "ung&auml;ltige Operation auf Register"
+ "invalid operation on register"
+
 Message ErrMsgNoSaveFrame
  "RESTORE ohne SAVE"
  "RESTORE without SAVE"

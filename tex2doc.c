@@ -911,7 +911,10 @@ static void DumpTable(void)
         if (!colz)
           DoPrnt(pThisTable->Lines[rowz][colz], pThisTable->ColTypes[firsttext], l);
         else if (pThisTable->Lines[rowz][colz])
+        {
           free(pThisTable->Lines[rowz][colz]);
+          pThisTable->Lines[rowz][colz] = NULL;
+        }
         pThisTable->Lines[rowz][0] = NULL;
       }
       if (pThisTable->ColTypes[pThisTable->ColumnCount - 1] == ColBar)

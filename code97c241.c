@@ -1496,7 +1496,7 @@ static void DecodeBField(Word Code)
             case 0: Num1 = EvalStrIntExpression(&ArgStr[3], UInt3, &OK) & 7; break;
             case 1: Num1 = EvalStrIntExpression(&ArgStr[3], Int4, &OK) & 15; break;
             case 2: Num1 = EvalStrIntExpression(&ArgStr[3], Int5, &OK) & 31; break;
-            default: assert(0);
+            default: abort();
           }
           if (OK)
           {

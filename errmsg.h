@@ -129,6 +129,7 @@ typedef enum
   ErrNum_DoubleReg = 1446,
   ErrNum_RegBankMismatch = 1447,
   ErrNum_UndefRegSize = 1448,
+  ErrNum_InvOpOnReg = 1449,
   ErrNum_NoSaveFrame = 1450,
   ErrNum_NoRestoreFrame = 1460,
   ErrNum_UnknownMacArg = 1465,

@@ -109,7 +109,7 @@ static Boolean DecodeRegStr(const char *pArg, Byte *pRes)
   {
     static const Byte RegCodes[8] = { 4, 5, 0, 1, 2, 3, 6, 7 };
 
-    *pRes = RegCodes[pArg[1]- '0'];
+    *pRes = RegCodes[pArg[1] - '0'];
     return True;
   }
   else
@@ -1590,7 +1590,6 @@ static void DecodeBitField(Word Code)
   }
   else
   {
-    Boolean ImmParam;
     Byte ParamReg, SizeCode;
     Word ParamImm;
     tAdrVals SrcAdrVals, DestAdrVals;
@@ -1599,10 +1598,10 @@ static void DecodeBitField(Word Code)
     {
       tStrComp Field;
 
-      ImmParam = True;
       StrCompRefRight(&Field, &ArgStr[3], 1);
       if (!DecodeImmBitField(&Field, &ParamImm))
         return;
+      ParamReg = 16; /* immediate flag */
     }
 
     /* only D2...D5 allowed as parameter */
@@ -1612,8 +1611,6 @@ static void DecodeBitField(Word Code)
       WrStrErrorPos(ErrNum_InvReg, &ArgStr[3]);
       return;
     }
-    else
-      ImmParam = False;
 
     DecodeAdr(2, MModeReg | MModeImm | MModeMemReg, &SrcAdrVals);
     switch (SrcAdrVals.Mode)
@@ -1625,7 +1622,7 @@ static void DecodeBitField(Word Code)
           case AdrModeReg:
             BAsmCode[CodeLen++] = 0x1b;
             BAsmCode[CodeLen++] = 0x08 | DestAdrVals.Arg;
-            if (ImmParam)
+            if (16 == ParamReg)
             {
               BAsmCode[CodeLen++] = Code | 0x20 | (SrcAdrVals.Arg << 2) | Hi(ParamImm);
               BAsmCode[CodeLen++] = Lo(ParamImm);
@@ -1640,7 +1637,7 @@ static void DecodeBitField(Word Code)
             {
               BAsmCode[CodeLen++] = 0x1b;
               BAsmCode[CodeLen++] = 0x08 | SrcAdrVals.Arg;
-              if (ImmParam)
+              if (16 == ParamReg)
               {
                 BAsmCode[CodeLen++] = Code | 0x70 | (SizeCode << 2) | Hi(ParamImm);
                 BAsmCode[CodeLen++] = Lo(ParamImm);
@@ -1666,7 +1663,7 @@ static void DecodeBitField(Word Code)
             {
               BAsmCode[CodeLen++] = 0x1b;
               BAsmCode[CodeLen++] = 0x08 | DestAdrVals.Arg;
-              if (ImmParam)
+              if (16 == ParamReg)
               {
                 BAsmCode[CodeLen++] = Code | 0x60 | (SizeCode << 2) | Hi(ParamImm);
                 BAsmCode[CodeLen++] = Lo(ParamImm);

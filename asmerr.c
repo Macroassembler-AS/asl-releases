@@ -387,6 +387,8 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
       msgno = Num_ErrMsgRegBankMismatch; break;
     case ErrNum_UndefRegSize:
       msgno = Num_ErrMsgUndefRegSize; break;
+    case ErrNum_InvOpOnReg:
+      msgno = Num_ErrMsgInvOpOnReg; break;
     case ErrNum_NoSaveFrame:
       msgno = Num_ErrMsgNoSaveFrame; break;
     case ErrNum_NoRestoreFrame:

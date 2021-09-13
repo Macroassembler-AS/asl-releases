@@ -264,7 +264,7 @@ folgende Prozessorfamilien implementiert:
 \item{National Semiconductor NS32xxx}
 \item{Fairchild ACE}
 \item{Fairchild F8}
-\item{NEC $\mu$PD78(C)1x}
+\item{NEC $\mu$PD78(C)0x/$\mu$PD78(C)1x}
 \item{NEC $\mu$PD75xx}
 \item{NEC $\mu$PD75xxx (alias 75K0)}
 \item{NEC 78K0}
@@ -3038,7 +3038,7 @@ Mittel der Wahl.
 \hline
 \endhead
 \input{../doc_COM/taborg.tex}
-\hline
+\\ \hline
 \multicolumn{11}{|l|}{$^{1}$ Initialwert 80h. } \\
 \multicolumn{11}{|l|}{  Da der 8051 kein RAM jenseits 80h hat, mu"s der Initialwert f"ur den 8051} \\
 \multicolumn{11}{|l|}{  als Zielprozessor auf jeden Fall mit \tty{ORG} angepa"st werden!} \\
@@ -3839,9 +3839,17 @@ MK3875 bietet einen zweiten Betriebsspannungsanschlu"s, um den
 internen RAM-Inhalt im Standby halten zu k"onnen.
 %%-----------
 \begin{quote}
-bt) 7810 $\rightarrow$ 78C10
+bt) 7800, 7801, 7802 \\
+78C05, 78C06 \\
+7810 $\rightarrow$ 78C10, 78C11, 78C12, 78C14, 78C17, 78C18
 \end{quote}
-Die NMOS-Version besitzt keinen STOP-Modus; der entspechende Befehl sowie
+$\mu$PD7800 bis $\mu$PD7802 repr"asentieren die ''erste Generation'' der
+uCOM87-Familie von NEC.  $\mu$PD78C05 und $\mu$PD78C06 sind davon abgespeckte
+Versionen, die nur eine Untermenge des Befehlssatzes unterst"utzen.  Alle
+$\mu$PD781x-Varianten geh"oren zur uCOM87AD-Serie, die nicht nur um einen
+A/D-Wandler erg"anzt wurden, sondern auch um weitere Befehle und Register.
+\bb{ACHTUNG!} Der Befehlssatz ist nur teilweise bin"ar aufw"artskompatibel!
+Die NMOS-Version 78107810 besitzt keinen STOP-Modus; der entspechende Befehl sowie
 das ZCM-Register fehlen demzufolge.  \bb{VORSICHT!} NMOS- und CMOS-Version
 differieren zum Teil in den Reset-Werten einiger Register!
 %%-----------
@@ -10728,7 +10736,7 @@ Header & Familie & Header & Familie \\
 \hline
 \endhead
 \input{../doc_COM/tabids.tex}
-\hline
+\\ \hline
 \caption{Headerbytes f"ur die verschiedenen Prozessorfamilien}
 \label{TabHeader}
 \end{longtable}\end{center}
@@ -12026,6 +12034,11 @@ Angaben:
                {An dieser Stelle k"onnen Register verschiedener L"ange verwendet werden,
                 und die Registerl"ange ist nicht alleine aus der Adresse ableitbar.}
                {das fragliche Argument}
+\errentry{1449}{ung"ultige Operation auf Register}
+               {Fehler}
+               {Diese Operation kann auf dieses Register nicht angwendet werden, z.B.
+                weil das Register nur gelesen oder nur geschrieben werden darf.}
+               {das fragliche Register}
 \errentry{1450}{RESTORE ohne SAVE}
                {Fehler}
                {Es wurde ein \tty{RESTORE}-Befehl gefunden, obwohl
@@ -13959,7 +13972,7 @@ Pr"aprozessorsymbolen vor, die den benutzten Zielprozessor sowie das
 benutzte Betriebsystem beschreiben.  Auf einer Sun Sparc unter Solaris
 mit den GNU-Compiler sind dies z.B. die Symbole \verb!__sparc! und
 \verb!__SVR4!.  In {\tt sysdefs.h} werden diese Symbole genutzt, um f"ur
-die restlichen, systemunabh"angigen Dateien eine einheitliche Ungebung
+die restlichen, systemunabh"angigen Dateien eine einheitliche Umgebung
 bereitzustellen.  Insbesondere betrifft dies Integer-Datentypen einer
 bekannten L"ange, es kann aber auch die Nach- oder Redefinition von
 C-Funktionen betreffen, die auf einer bestimmten Plattform nicht oder

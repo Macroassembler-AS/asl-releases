@@ -270,7 +270,7 @@ following processor families have been implemented:
 \item{National Semiconductor NS32xxx}
 \item{Fairchild ACE}
 \item{Fairchild F8}
-\item{NEC $\mu$PD 78(C)1x}
+\item{NEC $\mu$PD78(C)0x/$\mu$PD 78(C)1x}
 \item{NEC $\mu$PD75xx}
 \item{NEC $\mu$PD 75xxx (alias 75K0)}
 \item{NEC 78K0}
@@ -2942,7 +2942,7 @@ desired result when used as argument for \tty{ORG}.  The
 \hline
 \endhead
 \input{../doc_COM/taborg.tex}
-\hline
+\\ \hline
 \multicolumn{11}{|l|}{$^{1}$ Initial value 80h.} \\
 \multicolumn{11}{|l|}{   As the 8051 does not have any RAM beyond 80h, this value has to be} \\
 \multicolumn{11}{|l|}{   adapted with ORG for the 8051 as target processor!}\\
@@ -3737,9 +3737,17 @@ while the MK3875 offers a second supply voltage pin to buffer the internal
 memory in standby mode.
 %%-----------
 \begin{quote}
-bt) 7810$\rightarrow$78C10
+bt) 7800, 7801, 7802 \\
+78C05, 78C06 \\
+7810$\rightarrow$78C10, 78C11, 78C12, 78C14, 78C17, 78C18
 \end{quote}
-The NMOS version has no stop-mode; the respective command and the ZCM
+$\mu$PD7800 to $\mu$PD7802 represent the ''first generation'' of the
+uCOM87 family from NEC.  $\mu$PD78C05 and $\mu$PD78C06 are reduced
+variants that implement only a subset of the instruction set. All $\mu$PD781x
+variants belong to the uCOM87AD series, which - aside from an A/D converter -
+also supports additional registers and machine instructions. \bb{NOTE:} The
+instruction set is only partially binary upward compatible!
+The NMOS version $\mu$PD7810 has no stop-mode; the respective command and the ZCM
 register are omitted.  \bb{CAUTION!}  NMOS and CMOS version partially
 differ in the reset values of some registers!
 %%-----------
@@ -10496,6 +10504,7 @@ Header  & Family & Header  & Family \\
 \hline
 \endhead
 \input{../doc_COM/tabids.tex}
+\\ \hline
 \caption{Header Bytes for the Different Processor Families}
 \label{TabHeader}
 \end{longtable}\end{center}
@@ -11757,6 +11766,11 @@ described by:
                {Registers of different size may be used at this place, and
                  the register length cannot be deduced from the address alone.}
                {the argument in question}
+\errentry{1449}{invalid operation on register}
+               {error}
+               {This operation may not be applied to this register, e.g. because
+                the register is read-only or write-only.}
+               {the register in question}
 \errentry{1450}{RESTORE without SAVE}
                {error}
                {A \tty{RESTORE} command was found, that cannot be coupled with a

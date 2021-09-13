@@ -97,7 +97,7 @@ static TFamilyDescr Descrs[] =
   { "ACE"          , 0x0067, eHexFormatIntel   },
   { "F8"           , 0x0044, eHexFormatIntel   },
   { "75xx"         , 0x005d, eHexFormatIntel   },
-  { "78(C)1x"      , 0x007a, eHexFormatIntel   },
+  { "78(C)xx"      , 0x007a, eHexFormatIntel   },
   { "75K0"         , 0x007b, eHexFormatIntel   },
   { "78K0"         , 0x007c, eHexFormatIntel   },
   { "78K2"         , 0x0060, eHexFormatIntel16 },
