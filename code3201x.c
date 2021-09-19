@@ -456,6 +456,25 @@ static void DeinitFields(void)
 
 /*----------------------------------------------------------------------------*/
 
+/*!------------------------------------------------------------------------
+ * \fn     InternSymbol_3201X(char *pArg, TempResult *pResult)
+ * \brief  parse for built-in symbols
+ * \param  pArg source argument
+ * \param  pResult possible result
+ * ------------------------------------------------------------------------ */
+
+static void InternSymbol_3201X(char *pArg, TempResult *pResult)
+{
+  if ((strlen(pArg) == 3)
+   && (as_toupper(pArg[0]) == 'P')
+   && (as_toupper(pArg[1]) == 'A')
+   && ((pArg[2] >= '0') && (pArg[2] <= '7')))
+  {
+    as_tempres_set_int(pResult, pArg[2] - '0');
+    pResult->AddrSpaceMask |= 1 << SegIO;
+  }
+}
+
 static void MakeCode_3201X(void)
 {
   CodeLen = 0;
@@ -501,6 +520,7 @@ static void SwitchTo_3201X(void)
 
   MakeCode = MakeCode_3201X;
   IsDef = IsDef_3201X;
+  InternSymbol = InternSymbol_3201X;
   SwitchFrom = SwitchFrom_3201X;
   InitFields();
 }

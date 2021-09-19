@@ -1,3 +1,7 @@
+2021-09-19 [1.42 Bld 209]
+
+- Addition    : Add built-in IN/OUT symbols PA0..PA7 for TMS3201x
+
 2021-09-13 [1.42 Bld 208]
 
 - Addition    : Add support for NEC uCOM87 (uPD780x)

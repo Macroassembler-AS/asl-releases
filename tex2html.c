@@ -2989,7 +2989,7 @@ int main(int argc, char **argv)
 
     NumPassesLeft--;
     if (DoRepass)
-      fprintf(stderr, "additional pass recommended\n");
+      fprintf(stderr, "additional pass needed\n");
   }
   while (DoRepass && NumPassesLeft);
 

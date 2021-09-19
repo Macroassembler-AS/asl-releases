@@ -60,9 +60,13 @@
                 mpyk    123h
 
                 in      *,2,ar1
+		in	*,pa2,ar1
                 in      45h,4
+		in	45h,pa4
                 out     *,2,ar1
+		out	*,pa2,ar1
                 out     45h,4
+		out	45h,pa4
 
                 larp    ar1
                 larp    1

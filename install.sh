@@ -55,8 +55,10 @@ if [ "${INCPATH}" != "" ]; then
  ${MKDIRHIER} ${INCPATH}
  chmod 755 ${INCPATH}
  for path in . avr s12z s12z/vh s12z/vc s12z/vca coldfire st6 st7 stm8 stm8/stm8s stm8/stm8l stm8/stm8af stm8/stm8al stm8/stm8t z8 pdk; do
-  mkdir ${INCPATH}/${path}
-  chmod 755 ${INCPATH}/${path}
+  if [ "$path" != "." ]; then
+   mkdir ${INCPATH}/${path}
+   chmod 755 ${INCPATH}/${path}
+  fi
   for file in include/${path}/*.inc; do
    base=`basename ${file}`
    #echo copy ${file} to ${INCPATH}/${path}/${base} ...
