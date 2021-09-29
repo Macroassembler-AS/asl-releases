@@ -49,6 +49,17 @@
                 zalh    *-,ar0
                 zals    *+,ar1
 
+		add	*
+		add	*,0
+		add	*,0,ar0
+		add	*,4,ar0
+		add	*-
+		add	*-,0
+		add	*-,0,ar0
+                add     *-,4,ar0
+		add	*+
+		add	*+,0
+		add	*+,0,ar0
                 add     *+,4,ar0
                 lac     *+,ar0
                 sach    12h,4

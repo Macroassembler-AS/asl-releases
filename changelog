@@ -1,3 +1,9 @@
+2021-09-28 [1.42 Bld 210]
+
+- Bugfix      : Regard Address-Shift instructions with single argument on TMS3201x
+- Bugfix      : Be more tolerant about leading/trailing spaces in indirect address
+                expressions on 68K
+
 2021-09-19 [1.42 Bld 209]
 
 - Addition    : Add built-in IN/OUT symbols PA0..PA7 for TMS3201x

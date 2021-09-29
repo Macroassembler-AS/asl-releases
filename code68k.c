@@ -1198,6 +1198,9 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
         IndirComps = Remainder;
       }
 
+      KillPrefBlanksStrCompRef(&AdrComps[CompCnt].Comp);
+      KillPostBlanksStrComp(&AdrComps[CompCnt].Comp);
+
       /* ignore empty component */
 
       if (!AdrComps[CompCnt].Comp.str.p_str[0])

@@ -9,7 +9,11 @@
 	move.l	(a3)+,d7
 	move.l	-(a3),d7
 	move.l	1000(a3),d7		; "68000 style"
+	move.l	1000( a3),d7
+	move.l	1000(a3 ),d7
 	move.l	(1000,a3),d7		; "68020 style"
+	move.l	( 1000, a3),d7
+	move.l	(1000 ,a3 ),d7
 	move.l	120(a3,a4.w),d7		; "68000 style"
 	move.l	(120,a3,a4.w),d7	; "68020 style"
 	move.l	120(a3,a4.l),d7		; "68000 style"

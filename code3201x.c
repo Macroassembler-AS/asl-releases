@@ -177,38 +177,42 @@ static void DecodeAdrInst(Word Code)
 static void DecodeAdrShift(Word Index)
 {
   Boolean HasSh;
-  int Cnt;
+  int AuxArgIndex;
   const AdrShiftOrder *pOrder = AdrShiftOrders + Index;
 
   if (ChkArgCnt(1, 3))
   {
     if (*ArgStr[1].str.p_str == '*')
     {
-      if (ArgCnt == 2)
+      switch (ArgCnt)
       {
-        if (!as_strncasecmp(ArgStr[2].str.p_str, "AR", 2))
-        {
+        case 1:
           HasSh = False;
-          Cnt = 2;
-        }
-        else
-        {
+          AuxArgIndex = 3;
+          break;
+        case 2:
+          if (!as_strncasecmp(ArgStr[2].str.p_str, "AR", 2))
+          {
+            HasSh = False;
+            AuxArgIndex = 2;
+          }
+          else
+          {
+            HasSh = True;
+            AuxArgIndex = 3;
+          }
+          break;
+        default: /* 3 */
           HasSh = True;
-          Cnt = 3;
-        }
-      }
-      else
-      {
-        HasSh = True;
-        Cnt = 3;
+          AuxArgIndex = 3;
       }
     }
     else
     {
-      Cnt = 3;
+      AuxArgIndex = 3;
       HasSh = (ArgCnt == 2);
     }
-    DecodeAdr(&ArgStr[1], Cnt, False);
+    DecodeAdr(&ArgStr[1], AuxArgIndex, False);
     if (AdrOK)
     {
       Boolean OK;
