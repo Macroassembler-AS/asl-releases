@@ -1,3 +1,7 @@
+2021-10-03 [1.42 Bld 211]
+
+- Bugfix      : Allow register aliases starting with period in 68K address expressions
+
 2021-09-28 [1.42 Bld 210]
 
 - Bugfix      : Regard Address-Shift instructions with single argument on TMS3201x

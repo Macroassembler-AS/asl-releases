@@ -684,9 +684,8 @@ static Boolean SplitSize(tStrComp *pArg, ShortInt *DispLen, unsigned OpSizeMask)
 
 static Boolean ClassComp(AdrComp *C)
 {
-  int CompLen = strlen(C->Comp.str.p_str);
-  Boolean IsReg;
-  char *pEnd, Save;
+  int comp_len = strlen(C->Comp.str.p_str), reg_len;
+  char save, c_scale, c_size;
 
   C->Art = None;
   C->ANummer = C->INummer = 0;
@@ -695,7 +694,7 @@ static Boolean ClassComp(AdrComp *C)
   C->Size = -1;
   C->Wert = 0;
 
-  if ((*C->Comp.str.p_str == '[') && (C->Comp.str.p_str[CompLen - 1] == ']'))
+  if ((*C->Comp.str.p_str == '[') && (C->Comp.str.p_str[comp_len - 1] == ']'))
   {
     C->Art = indir;
     return True;
@@ -707,86 +706,93 @@ static Boolean ClassComp(AdrComp *C)
     return True;
   }
 
-  /* use ChkMacSymbName so . is not taken as valid character: TODO: what about _ ? */
+  /* assume register, splitting off scale & size first: */
 
-  pEnd = ChkMacSymbNameUpTo(C->Comp.str.p_str, C->Comp.str.p_str + CompLen);
-  IsReg = (pEnd > C->Comp.str.p_str);
-  if (IsReg)
+  reg_len = comp_len;
+  c_scale = c_size = '\0';
+  if ((reg_len > 2) && (C->Comp.str.p_str[reg_len - 2] == '*'))
   {
-    tRegEvalResult RegEvalResult;
-
-    Save = *pEnd;
-    *pEnd = '\0';
-    RegEvalResult = DecodeReg(&C->Comp, &C->ANummer, False);
-    *pEnd = Save;
-    if (eRegAbort == RegEvalResult)
+    c_scale = C->Comp.str.p_str[reg_len - 1];
+    reg_len -= 2;
+  }
+  if ((reg_len > 2) && (C->Comp.str.p_str[reg_len - 2] == '.'))
+  {
+    c_size = C->Comp.str.p_str[reg_len - 1];
+    reg_len -= 2;
+  }
+  save = C->Comp.str.p_str[reg_len];
+  C->Comp.str.p_str[reg_len] = '\0';
+  switch (DecodeReg(&C->Comp, &C->ANummer, False))
+  {
+    case eRegAbort:
       return False;
-    IsReg = (RegEvalResult == eIsReg);
+    case eIsReg:
+      C->Comp.str.p_str[reg_len] = save;
+      break;
+    default: /* eIsNoReg */
+      C->Comp.str.p_str[reg_len] = save;
+      goto is_disp;
   }
-  if (IsReg)
-  {
-    int ScaleOffs = pEnd - C->Comp.str.p_str;
 
-    if ((C->ANummer > 7) && (ScaleOffs == CompLen))
+  /* OK, we know it's a register, with optional scale & size: */
+
+  if ((C->ANummer > 7) && !c_scale && !c_size)
+  {
+    C->Art = AReg;
+    C->ANummer -= 8;
+    return True;
+  }
+
+  if (c_size)
+  {
+    switch (as_toupper(c_size))
     {
-      C->Art = AReg;
-      C->ANummer -= 8;
-      return True;
+      case 'L':
+        C->Long = True;
+        break;
+      case 'W':
+        C->Long = False;
+        break;
+      default:
+        return False;
     }
-    else
+  }
+  else
+    C->Long = (pCurrCPUProps->Family == eColdfire);
+
+  if (c_scale)
+  {
+    switch (c_scale)
     {
-      if ((CompLen >= ScaleOffs + 2) && (C->Comp.str.p_str[ScaleOffs] == '.'))
-      {
-        switch (as_toupper(C->Comp.str.p_str[ScaleOffs + 1]))
-        {
-          case 'L':
-            C->Long = True;
-            break;
-          case 'W':
-            C->Long = False;
-            break;
-          default:
-            return False;
-        }
-        ScaleOffs += 2;
-      }
-      else
-        C->Long = (pCurrCPUProps->Family == eColdfire);
-      if ((CompLen > ScaleOffs + 1) && (C->Comp.str.p_str[ScaleOffs] == '*'))
-      {
-        switch (C->Comp.str.p_str[ScaleOffs + 1])
-        {
-          case '1':
-            C->Scale = 0;
-            break;
-          case '2':
-            C->Scale = 1;
-            break;
-          case '4':
-            C->Scale = 2;
-            break;
-          case '8':
-            if (pCurrCPUProps->Family == eColdfire)
-              return False;
-            C->Scale = 3;
-            break;
-          default:
-            return False;
-        }
-        ScaleOffs += 2;
-      }
-      else
+      case '1':
         C->Scale = 0;
-      C->INummer = C->ANummer;
-      C->Art = Index;
-      return True;
+        break;
+      case '2':
+        C->Scale = 1;
+        break;
+      case '4':
+        C->Scale = 2;
+        break;
+      case '8':
+        if (pCurrCPUProps->Family == eColdfire)
+          return False;
+        C->Scale = 3;
+        break;
+      default:
+        return False;
     }
   }
+  else
+    C->Scale = 0;
+  C->INummer = C->ANummer;
+  C->Art = Index;
+  return True;
 
+is_disp:
   C->Art = Disp;
-  if ((CompLen >= 2) && (C->Comp.str.p_str[CompLen - 2] == '.'))
+  if ((comp_len >= 2) && (C->Comp.str.p_str[comp_len - 2] == '.'))
   {
-    switch (as_toupper(C->Comp.str.p_str[CompLen - 1]))
+    switch (as_toupper(C->Comp.str.p_str[comp_len - 1]))
     {
       case 'L':
         C->Size = 2;
