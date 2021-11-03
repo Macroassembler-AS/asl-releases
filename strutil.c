@@ -12,6 +12,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdarg.h>
+#include <assert.h>
 
 #include "dynstr.h"
 #include "strutil.h"
@@ -810,16 +811,47 @@ void strprep(char *Dest, const char *Src)
   memmove(Dest, Src, strlen(Src));
 }
 
-void strmaxprep(char *Dest, const char *Src, size_t MaxLen)
-{
-  size_t RLen, DestLen;
+/*!------------------------------------------------------------------------
+ * \fn     strmaxprep(char *p_dest, const char *p_src, size_t max_len)
+ * \brief  prepend as much as possible from src to dest
+ * \param  p_dest string to be prepended
+ * \param  p_src string to prepend
+ * \param  max_len capacity of p_dest
+ * ------------------------------------------------------------------------ */
 
-  RLen = strlen(Src);
-  DestLen = strlen(Dest);
-  if (RLen > MaxLen - DestLen - 1)
-    RLen = MaxLen - DestLen - 1;
-  memmove(Dest + RLen, Dest, DestLen + 1);
-  memmove(Dest, Src, RLen);
+void strmaxprep(char *p_dest, const char *p_src, size_t max_len)
+{
+  size_t src_len = strlen(p_src),
+         dest_len = strlen(p_dest);
+
+  assert(dest_len + 1 <= max_len);
+  if (src_len > max_len - dest_len - 1)
+    src_len = max_len - dest_len - 1;
+  memmove(p_dest + src_len, p_dest, dest_len + 1);
+  memmove(p_dest, p_src, src_len);
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     strmaxprep2(char *p_dest, const char *p_src, size_t max_len)
+ * \brief  prepend as much as possible from src to dest, and possibly truncate dest by that
+ * \param  p_dest string to be prepended
+ * \param  p_src string to prepend
+ * \param  max_len capacity of p_dest
+ * ------------------------------------------------------------------------ */
+
+void strmaxprep2(char *p_dest, const char *p_src, size_t max_len)
+{
+  size_t src_len = strlen(p_src),
+         dest_len = strlen(p_dest);
+
+  assert(max_len > 0);
+  if (src_len >= max_len)
+    src_len = max_len - 1;
+  max_len -= src_len;
+  if (dest_len >= max_len)
+    dest_len = max_len - 1;
+  memmove(p_dest + src_len, p_dest, dest_len + 1);
+  memmove(p_dest, p_src, src_len);
 }
 
 void strins(char *Dest, const char *Src, int Pos)

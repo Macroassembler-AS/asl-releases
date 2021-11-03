@@ -87,6 +87,13 @@ typedef enum
   FloatTypeCnt
 } FloatType;
 
+typedef enum
+{
+  e_symbol_source_none,
+  e_symbol_source_label,
+  e_symbol_source_define
+} as_symbol_source_t;
+
 typedef struct _TFunction
 {
   struct _TFunction *Next;

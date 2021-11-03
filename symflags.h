@@ -31,6 +31,8 @@ typedef enum eSymbolFlags
 
   eSymbolFlag_UsesForwards = 1 << 4,
 
+  eSymbolFlag_Label = 1 << 5,
+
   eSymbolFlags_Promotable = eSymbolFlag_FirstPassUnknown | eSymbolFlag_Questionable | eSymbolFlag_UsesForwards
 } tSymbolFlags;
 

@@ -120,8 +120,11 @@ void LabelHandle(const tStrComp *pName, LargeWord Value, Boolean ForceGlobal)
     if (RelSegs)
       pLabelEntry = EnterRelSymbol(pName, Value, (as_addrspace_t)ActPC, False);
     else
+    {
       pLabelEntry = EnterIntSymbolWithFlags(pName, Value, (as_addrspace_t)ActPC, False,
-                              Value == AfterBSRAddr ? eSymbolFlag_NextLabelAfterBSR : eSymbolFlag_None);
+                              eSymbolFlag_Label |
+                              (Value == AfterBSRAddr ? eSymbolFlag_NextLabelAfterBSR : eSymbolFlag_None));
+    }
     if (ForceGlobal)
       PopLocHandle();
   }

@@ -47,7 +47,7 @@
 
 \vspace{1cm}\par
 
-{\large Stand September 2021}
+{\large Stand November 2021}
 \end{raggedright}
 
 \clearpage
@@ -104,7 +104,7 @@ Linux angefertigt und formatiert.
 \cleardoublepage
 \chapter{Allgemeines}
 
-Diese Anleitung wendet sich an Programmierer, die bereits mit Assembler-Programmierung
+Diese Anleitung wendet sich an Programmierer, die bereits mit der Programmierung in Assembler
 vertraut sind und sich dar"uber informieren m"ochten, wie man mit AS umgeht.  Sie
 hat eher die Form eines Referenz- und nicht Benutzerhandbuches.  Als solches
 macht sie weder den Versuch, die Sprache Assembler an sich zu erkl"aren, noch
@@ -284,6 +284,7 @@ folgende Prozessorfamilien implementiert:
 \item{XMOS XS1}
 \item{MIL STD 1750}
 \item{KENBAK-1}
+\item{GI CP-1600}
 \end{itemize}
 in Arbeit / Planung / "Uberlegung :
 \begin{itemize}
@@ -3989,6 +3990,9 @@ MIL STD 1750 ist ein Standard, also gibt es auch nur eine
 cm) KENBAK
 \end{quote}
 Es hat nie einen KENBAK-2 gegeben...
+\begin{quote}
+cn) CP-1600
+\end{quote}
 
 Beim CPU-Befehl mu"s der Prozessortyp als einfaches Literal
 angegeben werden, eine Berechnung \`a la
@@ -5307,7 +5311,7 @@ jedem einzelnen Parameter in eckigen Klammern vorangestellt werden.
 \subsection{BYTE}
 \ttindex{BYTE}
 
-{\em G"ultigkeit: ST6, 320C2(0)x, 320C5x, MSP, TMS9900}
+{\em G"ultigkeit: ST6, 320C2(0)x, 320C5x, MSP, TMS9900, CP-1600}
 
 Dito.  Ein im 320C2(0)x/5x-Modus vor dem Befehl stehendes Label wird
 als untypisiert gespeichert, d.h. keinem Adre"sraum zugeordnet.
@@ -5317,6 +5321,11 @@ Hinweisen erl"autert.
 Ob beim MSP bzw. TMS9900 ungerade Mengen von Bytes automatisch um
 ein Null-Byte erg"anzt werden sollen, kann mit dem PADDING-Befehl
 eingestellt werden.
+
+Auf dem CP-1600 weicht die Verhaltensweise von {\tt BYTE} etwas ab:
+die angegebenen 16-Bit-Werte werden in jeweils zwei aufeinanderfolgenden
+W"ortern aufgeteilt abgelegt (LSB zuerst).  Wenn einzelne Bytes (gepackt)
+abgelegt werden sollen, mu"s stattdessen {\tt TEXT} verwendet werden!
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -5345,7 +5354,7 @@ einzelnen Parameter in eckigen Klammern vorangestellt werden.
 \subsection{WORD}
 \ttindex{WORD}
 
-{\em G"ultigkeit: ST6, i960, 320C2(0)x, 320C3x/C4x/C5x, MSP}
+{\em G"ultigkeit: ST6, i960, 320C2(0)x, 320C3x/C4x/C5x, MSP, CP-1600}
 
 F"ur den 320C3x/C4x und i960 werden hiermit 32-Bit-Worte abgelegt, f"ur die
 alle anderen Familien 16-Bit-Worte.  Ein im 320C2(0)x/5x-Modus vor dem Befehl
@@ -5488,10 +5497,10 @@ wenn AS das Argument als Gleitkommazahl erkennt).
 \subsection{ZERO}
 \ttindex{ZERO}
 
-{\em G"ultigkeit: PIC}
+{\em G"ultigkeit: PIC, CP-1600}
 
 Dieser Befehl legt einen durch den Parameter spezifizierte
-Zahl von Nullworten (=NOPs) im Speicher ab.
+Zahl von Nullworten (=NOP bei PIC) im Speicher ab.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -5556,6 +5565,13 @@ einzelnen Parameter in eckigen Klammern vorangestellt werden.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+\subsection{TEXT}
+
+Mit diesem Befehl werden im CP-1600-Modus String-Konstanten gepackt,
+d.h. zwei Zeichen pro Wort, abgelegt.
+
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 \subsection{DFS oder RMB}
 \ttindex{DFS}\ttindex{RMB}
 
@@ -5589,7 +5605,7 @@ Dito.
 \ttindex{RES}
 
 {\em G"ultigkeit: PIC, MELPS-4500, HMCS400, 3201x, 320C2(0)x,\\
-     320C5x, AVR, $\mu$PD772x, OLMS-40/50, Padauk}
+     320C5x, AVR, $\mu$PD772x, OLMS-40/50, Padauk, CP-1600}
 
 Dieser Befehl dient zur Reservierung von Speicher.  Er reserviert
 im Codesegment immer W"orter (10/12/14/16 Bit), im Datensegment bei

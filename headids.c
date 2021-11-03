@@ -122,6 +122,7 @@ static TFamilyDescr Descrs[] =
   { "PDK15"        , 0x001c, eHexFormatIntel   },
   { "PDK16"        , 0x001d, eHexFormatIntel   },
   { "1750"         , 0x004f, eHexFormatIntel   },
+  { "CP1600"       , 0x000a, eHexFormatIntel   },
   { NULL           , 0xffff, eHexFormatDefault }
 };
 

@@ -52,7 +52,8 @@ extern char *strrmultchr(const char *haystack, const char *needles);
 extern size_t strmaxcpy(char *dest, const char *src, size_t Max);
 extern size_t strmaxcat(char *Dest, const char *Src, size_t MaxLen);
 extern void strprep(char *Dest, const char *Src);
-extern void strmaxprep(char *Dest, const char *Src, size_t MaxLen);
+extern void strmaxprep(char *p_dest, const char *p_src, size_t max_len);
+extern void strmaxprep2(char *p_dest, const char *p_src, size_t max_len);
 extern void strins(char *Dest, const char *Src, int Pos);
 extern void strmaxins(char *Dest, const char *Src, int Pos, size_t MaxLen);
 

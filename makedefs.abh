@@ -106,6 +106,7 @@ include $(TARG_OBJDIR)codevector.dep
 include $(TARG_OBJDIR)codexcore.dep
 include $(TARG_OBJDIR)code1750.dep
 include $(TARG_OBJDIR)codekenbak.dep
+include $(TARG_OBJDIR)codecp1600.dep
 include $(TARG_OBJDIR)as.dep
 include $(TARG_OBJDIR)asmdef.dep
 include $(TARG_OBJDIR)asmsub.dep

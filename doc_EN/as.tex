@@ -66,7 +66,7 @@
 
 \vspace{1cm}\par
 
-{\large Edition September 2021}
+{\large Edition November 2021}
 \end{raggedright}
 
 \clearpage
@@ -290,6 +290,7 @@ following processor families have been implemented:
 \item{XMOS XS1}
 \item{MIL STD 1750}
 \item{KENBAK-1}
+\item{GI CP-1600}
 \end{itemize}
 under work / planned / in consideration :
 \begin{itemize}
@@ -3886,6 +3887,10 @@ MIL STD 1750 is a standard, therefore there is only one
 cm) KENBAK
 \end{quote}
 Since there has never been a KENBAK-2, the target is simply KENBAK...
+%%-----------
+\begin{quote}
+cn) CP-1600
+\end{quote}
 
 The \tty{CPU} instruction needs the processor type as a simple literal, a
 calculation like:
@@ -5163,7 +5168,7 @@ in brackets ([..]) may be prepended to every single parameter.
 \subsection{BYTE}
 \ttindex{BYTE}
 
-{\em valid for: ST6, 320C2(0)x, 320C5x, MSP, TMS9900}
+{\em valid for: ST6, 320C2(0)x, 320C5x, MSP, TMS9900, CP-1600}
 
 Ditto.  Note that when in 320C2(0)x/5x mode, the assembler assumes that
 a label on the left side of this instruction has no type, i.e. it
@@ -5172,6 +5177,11 @@ processor-specific hints.
 
 The \tty{PADDING} instruction allows to set whether odd counts of bytes
 shall be padded with a zero byte in MSP/TMS9900 mode.
+
+The operation of {\tt BYTE} on CP-1600 is somewhat different: the 16-bit
+integer arguments are stored byte-wise in two consecutive words of memory
+(LSB first).  If individual 8-bit values shall be stored in memor (optionally
+packed), use the {\tt TEXT} instruction!
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -5200,7 +5210,7 @@ in brackets ([..]) may be prepended to every single parameter.
 \subsection{WORD}
 \ttindex{WORD}
 
-{\em valid for: ST6, i960, 320C2(0)x, 320C3x/C4x/C5x, MSP}
+{\em valid for: ST6, i960, 320C2(0)x, 320C3x/C4x/C5x, MSP, CP-1600}
 
 If assembling for the 320C3x/C4x or i960, this command stores 32-bit words,
 16-bit words for the other families.  Note that when in 320C2(0)x/5x mode,
@@ -5340,12 +5350,13 @@ recognizes the operand as a floating-point constant).
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-\subsection{ZERO}
+\subsection{ZERO, CP-1600}
 \ttindex{ZERO}
 
 {\em valid for: PIC}
 
-Generates a continuous string of zero words in memory.
+Generates a continuous string of zero words in memory (which equals a NOP
+on PIC).
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -5402,6 +5413,13 @@ enclosed in brackets ([..]) may be prepended to every single parameter.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+\subsection{TEXT}
+
+In CP-1600 mode, This instruction is used to store string constants in
+packed format, i.e. two characters per word.
+
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 \subsection{DFS or RMB}
 \ttindex{DFS}\ttindex{RMB}
 
@@ -5434,7 +5452,7 @@ Ditto.
 \ttindex{RES}
 
 {\em valid for: PIC, MELPS-4500, HMCS400, 3201x, 320C2(0)x, 320C5x, AVR,
- $\mu$PD772x, OLMS-40/50, Padauk}
+ $\mu$PD772x, OLMS-40/50, Padauk, CP-1600}
 
 This command allocates memory.  When used in code segments the
 argument counts words (10/12/14/16 bit).  In data segments it counts

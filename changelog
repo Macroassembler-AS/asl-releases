@@ -1,3 +1,8 @@
+2021-11-03 [1.42 Bld 212]
+
+- Bugfix      : Do not print enpty file name () on listing pages with symbol tables
+- Addition    : Add CP-1600 target (contribution by Haruo Asano)
+
 2021-10-03 [1.42 Bld 211]
 
 - Bugfix      : Allow register aliases starting with period in 68K address expressions
@@ -372,7 +377,7 @@
 
 2019-12-07 [1.42 Bld 151]
 
-- Addition    : Add MN161x as target
+- Addition    : Add MN161x as target (contribution by Haruo Asano)
 - Addition    : allow explicit address size specification on BBC/BBR/RMB/SMB for 65C02++
 - Bugfix      : LDA (nn) was accidentally allowed for 6502
 - Bugfix      : Change addressing mode from (nnnn) to (nn) for HuC6280

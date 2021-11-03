@@ -836,8 +836,9 @@ void NewPage(ShortInt Level, Boolean WithFF)
               Version,
               getmessage(Num_HeadingFileNameLab),
               NamePart(SourceFile));
-  if ((strcmp(CurrFileName, "INTERNAL"))
-   && (strcmp(NamePart(CurrFileName), NamePart(SourceFile))))
+  if (strcmp(CurrFileName, "INTERNAL")
+   && *CurrFileName
+   && strcmp(NamePart(CurrFileName), NamePart(SourceFile)))
   {
     strmaxcat(Header, "(", STRINGSIZE);
     strmaxcat(Header, NamePart(CurrFileName), STRINGSIZE);

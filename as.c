@@ -148,6 +148,7 @@
 #include "codexcore.h"
 #include "code1750.h"
 #include "codekenbak.h"
+#include "codecp1600.h"
 /**          Code21xx};**/
 
 static long StartTime, StopTime;
@@ -4357,6 +4358,7 @@ int main(int argc, char **argv)
     codexcore_init();
     code1750_init();
     codekenbak_init();
+    codecp1600_init();
     First = FALSE;
   }
 
