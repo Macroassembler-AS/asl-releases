@@ -1,0 +1,11 @@
++-------------------------- Test Application GBZ80 --------------------------+
+|                                                                            |
+| This is a (synthetic) test of the Gameboy-Z80 instruction set.  It         |
+| iterates once over the base, DD/FD and ED pages, of the Z80 instruction    |
+| set and checks for instructions that are NOT implemented.  Note that some  |
+| features left out on the GB Z80 (like the missing index registers) express |
+| themselves as unallowed addressing modes and/or unknown symbols, since     |
+| (IX+d) now get sinterpreted as some sort of absolute addressing.           |
+| See also: https://gbdev.gg8.se/wiki/articles/CPU_Comparision_with_Z80      |
+|                                                                            |
++----------------------------------------------------------------------------+

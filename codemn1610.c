@@ -169,6 +169,8 @@ static Boolean DecRIndirect(const char *pAsc, Word *mm, Word *ii, Boolean bAuto)
 {
 	int l = strlen(pAsc);
 	int rp;
+	char MinReg, MaxReg;
+	Word RegOffs;
 
 	if (l == 4 && pAsc[0] == '(' && pAsc[3] == ')')
 	{
@@ -197,19 +199,28 @@ static Boolean DecRIndirect(const char *pAsc, Word *mm, Word *ii, Boolean bAuto)
 		return False;
 	}
 
-	if (pAsc[rp] != 'R' )
+	switch (toupper(pAsc[rp]))
+	{
+		case 'R':
+			MinReg = '1'; MaxReg = '4';
+			RegOffs = 0;
+			break;
+		case 'X':
+			MinReg = '0'; MaxReg = '1';
+			RegOffs = 2;
+			break;
+		default:
+			WrError(ErrNum_InvReg);
+			return False;
+	}
+
+	if (pAsc[rp + 1] < MinReg || pAsc[rp + 1] > MaxReg)
 	{
 		WrError(ErrNum_InvReg);
 		return False;
 	}
 
-	if (pAsc[rp + 1] < '1' || pAsc[rp + 1] > '4')
-	{
-		WrError(ErrNum_InvReg);
-		return False;
-	}
-
-	*ii = pAsc[rp + 1] - '1';
+	*ii = pAsc[rp + 1] - MinReg + RegOffs;
 
 	return True;
 }
@@ -1613,6 +1624,7 @@ static void InitFields(void)
 	
 	AddRegImm8("RD",  0x1800);
 	AddRegImm8("WR",  0x1000);
+	AddRegImm8("WT",  0x1000);
 	AddRegImm8("MVI", 0x0800);
 
 	AddLevel("LPSW", 0x2004);

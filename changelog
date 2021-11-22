@@ -1,3 +1,10 @@
+2021-11-22 [1.42 Bld 213]
+
+- Bugfix      : Correct TMS1100 XMA instruction
+- Addition    : Add Sharp LR35902 ('Gameboy Z80') as target
+- Bugfix      : Allow (X0)/(X1) as argument on MN1613 LR
+- Bugfix      : Allow lowercase register names  on MN1613 LR
+
 2021-11-03 [1.42 Bld 212]
 
 - Bugfix      : Do not print enpty file name () on listing pages with symbol tables

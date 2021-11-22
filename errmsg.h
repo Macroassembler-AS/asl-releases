@@ -269,6 +269,7 @@ typedef enum
 } tErrorNum;
 
 struct sLineComp;
+struct sStrComp;
 
 extern Boolean ChkRange(LargeInt Value, LargeInt Min, LargeInt Max);
 
@@ -279,6 +280,9 @@ extern Boolean ChkArgCntExtEitherOr(int ThisCnt, int EitherCnt, int OrCnt);
 
 extern Boolean ChkMinCPUExt(CPUVar MinCPU, tErrorNum ErrorNum);
 #define ChkMinCPU(MinCPU) ChkMinCPUExt(MinCPU, ErrNum_InstructionNotSupported)
+
+extern Boolean AChkMinCPUExtPos(CPUVar MinCPU, tErrorNum ErrorNum, const struct sStrComp *pComp);
+#define AChkMinCPUPos(MinCPU, pComp) AChkMinCPUExtPos(MinCPU, ErrNum_AddrModeNotSupported, pComp)
 
 extern Boolean ChkMaxCPUExt(CPUVar MaxCPU, tErrorNum ErrorNum);
 #define ChkMaxCPU(MaxCPU) ChkMaxCPUExt(MaxCPU, ErrNum_InstructionNotSupported)

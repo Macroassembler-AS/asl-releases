@@ -149,7 +149,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "TAMZA", Is1100 ? 0x26 : 0x04, DecodeFixed);
   AddInstTable(InstTable, "TMY", 0x22, DecodeFixed);
   AddInstTable(InstTable, "TMA", 0x21, DecodeFixed);
-  AddInstTable(InstTable, "XMA", Is1100 ? 0x02 : 0x2e, DecodeFixed);
+  AddInstTable(InstTable, "XMA", Is1100 ? 0x03 : 0x2e, DecodeFixed);
 
   AddInstTable(InstTable, "AMAAC", Is1100 ? 0x06 : 0x25, DecodeFixed);
   AddInstTable(InstTable, "SAMAN", Is1100 ? 0x3c : 0x27, DecodeFixed);

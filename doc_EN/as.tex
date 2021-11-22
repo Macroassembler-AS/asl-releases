@@ -232,7 +232,8 @@ following processor families have been implemented:
 \item{Atmel (Mega-)AVR}
 \item{AMD 29K}
 \item{Siemens 80C166/167}
-\item{Zilog Z80, Z180, Z380}
+\item{Zilog Z80 (including undocumented instructions), Z180, Z380}
+\item{Sharp LR35902 (,,Gameboy Z80'')}
 \item{Zilog Z8, Super8, Z8 Encore}
 \item{Zilog Z8000}
 \item{Xilinx KCPSM/KCPSM3 ('PicoBlaze')}
@@ -3379,7 +3380,8 @@ extended addressing modes and atomic instruction sequences.  They are
 amount of on-chip peripherals.
 %%-----------
 \begin{quote}
-ah) Z80 $\rightarrow$ Z80UNDOC $\rightarrow$ Z180 $\rightarrow$ Z380
+ah) LR35902/GBZ80 $\rightarrow$ Z80 $\rightarrow$ Z80UNDOC \\
+    $\rightarrow$ Z180 $\rightarrow$ Z380
 \end{quote}
 While there are only a few additional instructions for the Z180, the
 Z380 owns 32-bit registers, a linear address space of 4 Gbytes, a
@@ -3390,6 +3392,11 @@ extensions partially already exist on the Z80 as undocumented
 extensions and may be switched on via the Z80UNDOC variant.  A list
 with the additional instructions can be found in the chapter
 with processor specific hints.
+
+The processor built into the Gameboy (official designation LR35092,
+commonly referred to as ''Gameboy Z80'') is a mixture of an 8080
+and Z80.  It lacks the IX/IY registers, the I/O address space,
+the second register bank and a couple of 16 bit instructions.
 %%-----------
 \begin{quote}
 ai) Z8601, Z8603, z86C03, z86E03, Z86C06, Z86E06, \\

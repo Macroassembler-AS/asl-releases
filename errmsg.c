@@ -149,6 +149,25 @@ extern Boolean ChkMinCPUExt(CPUVar MinCPU, tErrorNum ErrorNum)
 }
 
 /*!------------------------------------------------------------------------
+ * \fn     AChkMinCPUExtPos(CPUVar MinCPU, tErrorNum ErrorNum, const struct sStrComp *pComp)
+ * \brief  check for minimum CPU of this addressing mode
+ * \param  MinCPU min. CPU required
+ * \param  ErrorNum error message to print
+ * \param  pComp argument to complain about
+ * \return True if CPU is OK
+ * ------------------------------------------------------------------------ */
+
+Boolean AChkMinCPUExtPos(CPUVar MinCPU, tErrorNum ErrorNum, const struct sStrComp *pComp)
+{
+  if (MomCPU < MinCPU)
+  {
+    WrStrErrorPos(ErrorNum, pComp);
+    return False;
+  }
+  return True;
+}
+
+/*!------------------------------------------------------------------------
  * \fn     ChkMaxCPUExt(CPUVar MaxCPU, tErrorNum ErrorNum)
  * \brief  check whether currently selected CPU is at most given one and issue error if not
  * \param  MaxCPU maximum required CPU

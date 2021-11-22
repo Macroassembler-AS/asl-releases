@@ -11,6 +11,7 @@
 #include "stdinc.h"
 
 #include <errno.h>
+#include <string.h>
 
 #include "strutil.h"
 #include "stringlists.h"

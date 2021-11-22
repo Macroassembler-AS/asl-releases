@@ -1,0 +1,8 @@
++--------------------------- Test Application Z80 ---------------------------+
+|                                                                            |
+| This is a (synthetic) test of the Z80 instruction set.  It iterates once   |
+| over the base, DD/FD and ED pages.  Undocumented Z80 instructions are      |
+| commented/left out.  This was written based on the tables found at:        |
+| https://clrhome.org/table/                                                 |
+|                                                                            |
++----------------------------------------------------------------------------+

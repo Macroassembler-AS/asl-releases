@@ -226,7 +226,8 @@ folgende Prozessorfamilien implementiert:
 \item{Atmel (Mega-)AVR}
 \item{AMD 29K}
 \item{Siemens 80C166/167}
-\item{Zilog Z80, Z180, Z380}
+\item{Zilog Z80 (einschlie"slich undokumentierter Befehle), Z180, Z380}
+\item{Sharp LR35902 (,,Gameboy-Z80'')}
 \item{Zilog Z8, Super8, Z8 Encore}
 \item{Zilog Z8000}
 \item{Xilinx KCPSM/KCPSM3 ('PicoBlaze')}
@@ -3467,7 +3468,8 @@ unterscheiden sich diese Prozessoren der ,,zweiten Generation'' nur in der
 eingebauten Peripherie.
 %%-----------
 \begin{quote}
-ah) Z80 $\rightarrow$ Z80UNDOC $\rightarrow$ Z180 $\rightarrow$ Z380
+ah) LR35902/GBZ80 $\rightarrow$ Z80 $\rightarrow$ Z80UNDOC \\
+    $\rightarrow$ Z180 $\rightarrow$ Z380
 \end{quote}
 W"ahrend f"ur den Z180 nur die zus"atzlichen Befehle definiert sind
 (d.h. die Z180-MMU findet noch keine Ber"ucksichtigung), besitzt der
@@ -3479,6 +3481,12 @@ diese Erweiterungen aber auch schon beim Z80 als undokumentierte
 Befehle, die mit der Variante \tty{Z80UNDOC} zugeschaltet werden
 k"onnen.  Eine Liste mit den zus"atzlichen Befehlen findet sich im
 Kapitel mit den prozessorspezifischen Hinweisen.
+
+Der im Gameboy verbaute Prozessor (offizielle Bezeichnung LR35902,
+umgangssprachlich auch als ,,Gameboy-Z80'' bezeichnet) ist eine
+Mischung aus Z80 und 8080.  Ihm fehlen die IX/IY-Register, der
+I/O-Adre"sraum, die zweite Registerbank sowie eine Reihe von
+16-Bit-Befehlen.
 %%-----------
 \begin{quote}
 ai) Z8601, Z8603, Z86C03, Z86E03, Z86C06, Z86E06, \\
