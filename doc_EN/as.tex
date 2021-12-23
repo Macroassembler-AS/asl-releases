@@ -66,7 +66,7 @@
 
 \vspace{1cm}\par
 
-{\large Edition November 2021}
+{\large Edition December 2021}
 \end{raggedright}
 
 \clearpage
@@ -8949,12 +8949,20 @@ Keep however in mind that in the case of \tty{LD  Rx,Ry}, both registers
 must be part of the same index register.
 
 The coding of shift instructions leaves an undefined bit combination which
-is now accessible as the \tty{SLIA} or \tty{SLS} instruction.  \tty{SLIA/SLS}
-works like \tty{SLA} with the difference of entering a 1 into bit position 0.
-Like all other shift instructions, \tty{SLIA} also allows another undocumented
-variant:
+is now accessible as the tty{SL1}, \tty{SLI}, \tty{SLIA}, or \tty{SLS}
+instruction.  It works like \tty{SLA} with the difference of entering a 1
+into bit position 0.  \bb{CAUTION!} Some sources also name this operation
+\tty{SLL}.  It decided to not offer this, since it is misleading: \tty{SLL}
+translates into "shift left logically", and the operation performed by this
+instruction is no logical left shift.  If one should define \tty{SLL} at
+all, then as an alias for \tty{SLA}.  If you have existing code that uses
+\tty{SLL} in the meaning of \tty{SL1/SLI}, define it via a macro.
+
+Like all other (docummented) shift instructions, this also works in
+another undocumented variant:
 \begin{verbatim}
         SLIA    R,(XY+d)
+        SLIA    (XY+d),R
 \end{verbatim}
 In this case, \tty{R} is an arbitrary 8-bit register (excluding index
 register halves...), and \tty{(XY+d)} is a normal indexed address.  This
@@ -8962,6 +8970,7 @@ operation has the additional effect of copying the result into the
 register.  This also works for the \tty{RES} and \tty{SET} instructions:
 \begin{verbatim}
         SET/RES R,n,(XY+d)
+        SET/RES n,(XY+d),R
 \end{verbatim}
 Furthermore, two hidden I/O instructions exist:
 \begin{verbatim}
@@ -8973,6 +8982,56 @@ guarantee that all mask revisions of the Z80 execute these
 instructions, and the Z80's successors will react with traps if they
 find one of these instructions.  Use them on your own risk...
 
+%%---------------------------------------------------------------------------
+
+\section{GB\_Z80 resp. LR35902}
+
+The LR35902 SoC used in the original Gameboy  was developed by Sharp,
+and the CPU core is (probably) the same as in the SM83
+microcontrollers.  Regarding its instruction set, it is somewhere
+''half way'' between 8080 and Z80, however with its own omissions and
+extensions.  Sharp of course defined an assembler syntax for the new
+instructions.  However, variations have established itself in the
+''Gameboy scene''.  I tried to regard those as well (as far as I am
+aware of them):
+
+\begin{center}\begin{tabular}{|l|l|l|}
+\hline
+Sharp & Alternate & Function \\
+\hline
+\hline
+LD A,(HLD)    & LD A,(HL-)  & A $\longleftarrow$ (HL), \\
+              & LDD A,(HL)  & HL $\longleftarrow$ HL-1 \\
+\hline
+LD A,(HLI)    & LD A,(HL+)  & A $\longleftarrow$ (HL), \\
+              & LDI A,(HL)  & HL $\longleftarrow$ HL+1 \\
+\hline
+LD (HLD),A    & LD (HL-),A  & (HL) $\longleftarrow$ A, \\
+              & LDD (HL),A  & HL $\longleftarrow$ HL-1 \\
+\hline
+LD (HLI),A    & LD (HL+),A  & (HL) $\longleftarrow$ A, \\
+              & LDI (HL),A  & HL $\longleftarrow$ HL+1 \\
+\hline
+LD A,(C)      & LD A,(FF00+C) & A $\longleftarrow$ (0ff00h+C) \\
+              & LDH A,(C)     & \\
+\hline
+LD (C),A      & LD (FF00+C),A & (0ff00h+C) $\longleftarrow$ A \\
+              & LDH (C),A     & \\
+\hline
+LD (FF00+n),A & LDH (n),A     & (0ff00h+n) $\longleftarrow$ A \\
+\hline
+LD A,(FF00+n) & LDH A,(n)     & A $\longleftarrow$ (0ff00h+n) \\
+\hline
+LDHL SP,d     & LD HL,SP+d    & HL $\longleftarrow$ SP + d \\
+\hline
+LDX A,(nn)    & LD A,(nn)     & A $\longleftarrow$ (nn) $^{1}$ \\
+\hline
+LDX (nn),A    & LD (nn),A     & (nn) $\longleftarrow$ A $^{1}$ \\
+\hline
+\multicolumn{3}{|l|}{$^{1}$ enforces 16 bit addressing } \\
+\hline
+\end{tabular}\end{center}
+ 
 %%---------------------------------------------------------------------------
 
 \section{Z380}

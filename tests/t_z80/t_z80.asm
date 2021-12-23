@@ -10,6 +10,7 @@
 	ld	b,12h		; 06 12
 	rlca			; 07
 	ex	af,af'		; 08
+	exa			; 08
 	add	hl,bc		; 09
 	ld	a,(bc)		; 0a
 	dec	bc		; 0b
@@ -237,6 +238,7 @@
 	jp	(hl)		; e9
 	jp	pe,1234h	; ea 34 12
 	ex	de,hl		; eb
+	exd			; eb
 	call	pe,1234h	; ec 34 12
 	;EXTD			; ed
 	xor	12h		; ee 12

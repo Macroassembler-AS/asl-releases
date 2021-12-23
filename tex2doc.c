@@ -1610,6 +1610,13 @@ static void TeXAddLongRightArrow(Word Index)
   DoAddNormal("-->", BackSepString);
 }
 
+static void TeXAddLongLeftArrow(Word Index)
+{
+  UNUSED(Index);
+
+  DoAddNormal("<--", BackSepString);
+}
+
 static void TeXAddLeftArrow(Word Index)
 {
   UNUSED(Index);
@@ -2601,6 +2608,7 @@ int main(int argc, char **argv)
   AddInstTable(TeXTable, "rightarrow", 0, TeXAddRightArrow);
   AddInstTable(TeXTable, "longrightarrow", 0, TeXAddLongRightArrow);
   AddInstTable(TeXTable, "leftarrow", 0, TeXAddLeftArrow);
+  AddInstTable(TeXTable, "longleftarrow", 0, TeXAddLongLeftArrow);
   AddInstTable(TeXTable, "leftrightarrow", 0, TeXAddLeftRightArrow);
   AddInstTable(TeXTable, "marginpar", 0, TeXAddMarginPar);
   AddInstTable(TeXTable, "caption", 0, TeXAddCaption);

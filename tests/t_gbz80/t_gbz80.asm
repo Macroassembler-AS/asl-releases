@@ -45,6 +45,8 @@
 	ld	(1234h),hl	; 22 34 12
 	endexpect
 	ldi	(hl),a		; 22
+	ld	(hl+),a		; 22
+	ld	(hli),a		; 22
 	inc	hl		; 23
 	inc	h		; 24
 	dec	h		; 25
@@ -56,6 +58,8 @@
 	ld	hl,(1234h)	; 2a 34 12
 	endexpect
 	ldi	a,(hl)		; 2a
+	ld	a,(hl+)		; 2a
+	ld	a,(hli)		; 2a
 	dec	hl		; 2b
 	inc	l		; 2c
 	dec	l		; 2d
@@ -64,6 +68,8 @@
 	jr	nc,$		; 30 fe
 	ld	sp,1234h	; 31 34 12
 	ldd	(hl),a		; 32
+	ld	(hl-),a		; 32
+	ld	(hld),a		; 32
 	inc	sp		; 33
 	inc	(hl)		; 34
 	dec	(hl)		; 35
@@ -72,6 +78,8 @@
 	jr	c,$		; 38 12
 	add	hl,sp		; 39
 	ldd	a,(hl)		; 3a
+	ld	a,(hl-)		; 3a
+	ld	a,(hld)		; 3a
 	dec	sp		; 3b
 	inc	a		; 3c
 	dec	a		; 3d
@@ -245,12 +253,15 @@
 	expect	1360
 	ret	po		; e0
 	ld	(0ff34h),a	; e0 34
+	ldh	(34h),a		; e0 34
 	endexpect
 	pop	hl		; e1
 	expect	1360
 	jp	po,1234h	; e2 34 12
 	endexpect
 	ld	(0ff00h+c),a	; e2
+	ld	(c),a		; e2
+	ldh	(c),a		; e2
 	expect	1500
 	ex	(sp),hl		; e3
 	endexpect
@@ -269,6 +280,7 @@
 	jp	pe,1234h	; ea 34 12
 	endexpect
 	ld	(1234h),a	; ea 34 12
+	ldx	(0ff34h),a	; ea 34 ff
 	expect	1500
 	ex	de,hl		; eb
 	endexpect
@@ -281,11 +293,14 @@
 	ret	p		; f0
 	endexpect
 	ld	a,(0ff34h)	; f0 34
+	ldh	a,(34h)		; f0 34
 	pop	af		; f1
 	expect	1360
 	jp	p,1234h		; f2 34 12
 	endexpect
 	ld	a,(ff00+c)	; f2
+	ld	a,(c)		; f2
+	ldh	a,(c)		; f2
 	di			; f3
 	expect	1360
 	call	p,1234h		; f4 34 12
@@ -297,11 +312,13 @@
 	ret	m		; f8
 	endexpect
 	ld	hl,sp-15	; f8 f1
+	ldhl	sp,-15		; f8 f1
 	ld	sp,hl		; f9
 	expect	1360
 	jp	m,1234h		; fa 34 12
 	endexpect
 	ld	a,(1234h)	; fa 34 12
+	ldx	a,(0ff34h)	; fa 34 ff
 	ei			; fb
 	expect	1360
 	call	m,1234h		; fc 34 12
@@ -636,7 +653,11 @@
 	; ordinary symbol, so expressions like (IX+d) will instead be treated
         ; as a computed absolute address, and trigger an invalid address mode error:
 
+	if	mompass=1
 	expect	1350,1350,1350,1350,1350,1350,1350,1350,1350,1350
+	elseif
+	expect	1350,1350,1350,1350,1350,1350,1350,1350,1010,1010
+	endif
 	add	ix,bc		; dd 09
 	add	ix,de		; dd 19
 	ld	ix,1234h	; dd 21 34 12
@@ -658,7 +679,11 @@
 	expect	1350
 	add	ix,sp		; dd 39
 	endexpect
+	if	mompass=1
 	expect	1350,1350,1350,1350,1350,1350
+	elseif
+	expect	1010,1010,1010,1010,1010,1010
+	endif
 	ld	b,(ix+12h)	; dd 46 12
 	ld	c,(ix+12h)	; dd 4e 12
 	ld	d,(ix+12h)	; dd 56 12
@@ -682,7 +707,7 @@
 	if	mompass=1
 	expect	1350,1350,1350,1350,1350,1350
 	elseif
-	expect	1010,1350,1350,1350,1350,1350,1350
+	expect	1010,1010,1010,1010,1010,1010,1010
 	endif
 	ld	a,(ix+12h)	; dd 7e 12
 	add	a,(ix+12h)	; dd 86 12
@@ -692,7 +717,11 @@
 	and	a,(ix+12h)	; dd a6 12
 	xor	a,(ix+12h)	; dd ae 12
 	endexpect
+	if	mompass=1
 	expect	1350,1350,1350,1500,1350
+	elseif
+	expect	1010,1010,1350,1500,1350
+	endif
 	or	(ix+12h)	; dd b6 12
 	cp	(ix+12h)	; dd be 12
 	pop	ix		; dd e1
@@ -708,7 +737,11 @@
 	endexpect
 	endif
 
+	if	mompass=1
 	expect	1350,1350,1350,1350,1350,1350,1350
+	elseif
+	expect	1010,1010,1010,1010,1010,1010,1010
+	endif
 	rlc	(ix+12h)	; dd cb 12 06
 	rrc	(ix+12h)	; dd cb 12 0e
 	rl	(ix+12h)	; dd cb 12 16
@@ -717,7 +750,11 @@
 	sra	(ix+12h)	; dd cb 12 2e
 	srl	(ix+12h)	; dd cb 12 3e
 	endexpect
+	if	mompass=1
 	expect	1350,1350,1350,1350,1350,1350,1350,1350
+	elseif
+	expect	1010,1010,1010,1010,1010,1010,1010,1010
+	endif
 	bit	0,(ix+12h)	; dd cb 12 46
 	bit	1,(ix+12h)	; dd cb 12 4e
 	bit	2,(ix+12h)	; dd cb 12 56
@@ -727,7 +764,11 @@
 	bit	6,(ix+12h)	; dd cb 12 76
 	bit	7,(ix+12h)	; dd cb 12 7e
 	endexpect
+	if	mompass=1
 	expect	1350,1350,1350,1350,1350,1350,1350,1350
+	elseif
+	expect	1010,1010,1010,1010,1010,1010,1010,1010
+	endif
 	res	0,(ix+12h)	; dd cb 12 86
 	res	1,(ix+12h)	; dd cb 12 8e
 	res	2,(ix+12h)	; dd cb 12 96
@@ -737,7 +778,11 @@
 	res	6,(ix+12h)	; dd cb 12 b6
 	res	7,(ix+12h)	; dd cb 12 be
 	endexpect
+	if	mompass=1
 	expect	1350,1350,1350,1350,1350,1350,1350,1350
+	elseif
+	expect	1010,1010,1010,1010,1010,1010,1010,1010
+	endif
 	set	0,(ix+12h)	; dd cb 12 c6
 	set	1,(ix+12h)	; dd cb 12 ce
 	set	2,(ix+12h)	; dd cb 12 d6
@@ -752,7 +797,11 @@
 	; ordinary symbol, so expressions like (IY+d) will instead be treated
         ; as a computed absolute address, and trigger an invalid address mode error:
 
+	if	mompass=1
 	expect	1350,1350,1350,1350,1350,1350,1350,1350,1350,1350
+	elseif
+	expect	1350,1350,1350,1350,1350,1350,1350,1350,1010,1010
+	endif
 	add	iy,bc		; fd 09
 	add	iy,de		; fd 19
 	ld	iy,1234h	; fd 21 34 12
@@ -774,7 +823,11 @@
 	expect	1350
 	add	iy,sp		; fd 39
 	endexpect
+	if	mompass=1
 	expect	1350,1350,1350,1350,1350,1350
+	elseif
+	expect	1010,1010,1010,1010,1010,1010
+	endif
 	ld	b,(iy+12h)	; fd 46 12
 	ld	c,(iy+12h)	; fd 4e 12
 	ld	d,(iy+12h)	; fd 56 12
@@ -798,7 +851,7 @@
 	if	mompass=1
 	expect	1350,1350,1350,1350,1350,1350
 	elseif
-	expect	1010,1350,1350,1350,1350,1350,1350
+	expect	1010,1010,1010,1010,1010,1010,1010
 	endif
 	ld	a,(iy+12h)	; fd 7e 12
 	add	a,(iy+12h)	; fd 86 12
@@ -808,7 +861,11 @@
 	and	a,(iy+12h)	; fd a6 12
 	xor	a,(iy+12h)	; fd ae 12
 	endexpect
+	if	mompass=1
         expect  1350,1350,1350,1500,1350
+	elseif
+	expect	1010,1010,1350,1500,1350
+	endif
 	or	(iy+12h)	; fd b6 12
 	cp	(iy+12h)	; fd be 12
 	pop	iy		; fd e1
@@ -824,7 +881,11 @@
 	endexpect
 	endif
 
+	if	mompass=1
 	expect	1350,1350,1350,1350,1350,1350,1350
+	elseif
+	expect	1010,1010,1010,1010,1010,1010,1010
+	endif
 	rlc	(iy+12h)	; fd cb 12 06
 	rrc	(iy+12h)	; fd cb 12 0e
 	rl	(iy+12h)	; fd cb 12 16
@@ -833,7 +894,11 @@
 	sra	(iy+12h)	; fd cb 12 2e
 	srl	(iy+12h)	; fd cb 12 3e
 	endexpect
+	if	mompass=1
 	expect	1350,1350,1350,1350,1350,1350,1350,1350
+	elseif
+	expect	1010,1010,1010,1010,1010,1010,1010,1010
+	endif
 	bit	0,(iy+12h)	; fd cb 12 46
 	bit	1,(iy+12h)	; fd cb 12 4e
 	bit	2,(iy+12h)	; fd cb 12 56
@@ -843,7 +908,11 @@
 	bit	6,(iy+12h)	; fd cb 12 76
 	bit	7,(iy+12h)	; fd cb 12 7e
 	endexpect
+	if	mompass=1
 	expect	1350,1350,1350,1350,1350,1350,1350,1350
+	elseif
+	expect	1010,1010,1010,1010,1010,1010,1010,1010
+	endif
 	res	0,(iy+12h)	; fd cb 12 86
 	res	1,(iy+12h)	; fd cb 12 8e
 	res	2,(iy+12h)	; fd cb 12 96
@@ -853,7 +922,11 @@
 	res	6,(iy+12h)	; fd cb 12 b6
 	res	7,(iy+12h)	; fd cb 12 be
 	endexpect
+	if	mompass=1
 	expect	1350,1350,1350,1350,1350,1350,1350,1350
+	elseif
+	expect	1010,1010,1010,1010,1010,1010,1010,1010
+	endif
 	set	0,(iy+12h)	; fd cb 12 c6
 	set	1,(iy+12h)	; fd cb 12 ce
 	set	2,(iy+12h)	; fd cb 12 d6

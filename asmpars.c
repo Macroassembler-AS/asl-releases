@@ -790,7 +790,7 @@ static Boolean GetSymSection(char *Name, LongInt *Erg, const tStrComp *pUnexpCom
   char *q;
   int l = strlen(Name);
 
-  if (Name[l - 1] != ']')
+  if (!l || (Name[l - 1] != ']'))
   {
     *Erg = -2;
     return True;

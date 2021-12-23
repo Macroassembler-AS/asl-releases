@@ -4113,7 +4113,8 @@ static void DecodeFRegList(const tStrComp *pArg, Byte *pTyp, Byte *pList)
     if (p2)
     {
       StrCompSplitRef(&From, &To, &Arg, p2);
-      if ((DecodeFPReg(&From, &RegFrom, False) != eIsReg)
+      if (!strlen(To.str.p_str)
+       || (DecodeFPReg(&From, &RegFrom, False) != eIsReg)
        || (RegFrom & REG_FPCTRL)
        || (DecodeFPReg(&To, &RegTo, False) != eIsReg)
        || (RegTo & REG_FPCTRL))

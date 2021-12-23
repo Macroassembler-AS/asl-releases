@@ -47,7 +47,7 @@
 
 \vspace{1cm}\par
 
-{\large Stand November 2021}
+{\large Stand Dezember 2021}
 \end{raggedright}
 
 \clearpage
@@ -9125,13 +9125,24 @@ Dabei stehen \tty{Rx} bzw. \tty{Ry} f"ur \tty{IXL, IXU, IYL} oder
 beide Register aus dem gleichen Indexregister stammen m"ussen.
 \par
 Die Kodierung von Schiebebefehlen besitzt noch eine undefinierte
-Bitkombination, die als \tty{SLIA}- oder \tty{SLS}-Befehl zug"anglich ist.
-\tty{SLIA/SLS} funktioniert wie \tty{SLA}, es wird jedoch eine Eins und
-nicht eine Null in Bit 0 eingeschoben.  Dieser Befehl kann, wie alle anderen
-Schiebebefehle auch, noch in einer weiteren Variante geschrieben
+Bitkombination, die als \tty{SL1}-, \tty{SLI}-, \tty{SLIA}- oder
+\tty{SLS}-Befehl zug"anglich ist.  Er funktioniert wie \tty{SLA},
+es wird jedoch eine Eins und nicht eine Null in Bit 0 eingeschoben.
+\bb{ACHTUNG}: In Internet findet man f"ur diesen Befehl auch den
+Namen \tty{SLL}, ich habe mich aber entschieden, dies nicht zu
+implementieren.  \tty{SLL} steht f"ur ,,Shift Logically Left'' und
+die von diesem Befehl ausgef"uhrte Operation ist kein logischer
+Linksshift - wenn \tty{SLL} "uberhaupt definiert werden solle, dann
+als Alias zu \tty{SLA}.  Wer f"ur existierenden Code \tty{SLL} mit
+der Funktion von \tty{SL1/SLI} braucht, definiere sich daf"ur ein
+Makro.
+
+Dieser undokumentierte Schiebebefehl kann, wie alle anderen
+Schiebebefehle auch, noch in zwei weiteren Varianten benutzt
 werden:
 \begin{verbatim}
         SLIA    R,(XY+d)
+        SLIA    (XY+d),R
 \end{verbatim}
 Dabei steht \tty{R} f"ur ein beliebiges 8-Bit-Register (aber nicht eine
 Indexregisterh"alfte...), und \tty{(XY+d)} f"ur eine normale
@@ -9140,6 +9151,7 @@ ist, da"s das Schiebeergebnis zus"atzlich ins Register geladen wird.
 Dies funktioniert auch bei den \tty{RES-} und \tty{SET-}Befehlen:
 \begin{verbatim}
         SET/RES R,n,(XY+d)
+        SET/RES n,(XY+d),R
 \end{verbatim}
 Des weiteren gibt es noch zwei versteckte I/O-Befehle:
 \begin{verbatim}
@@ -9151,6 +9163,57 @@ Garantie daf"ur, da"s alle Z80-Masken alle diese Befehle beherrschen,
 und die Z80-Nachfolger l"osen zuverl"assig Traps aus.  Anwendung
 daher auf eigene Gefahr...
 
+%%---------------------------------------------------------------------------
+
+\section{GB\_Z80 bzw. LR35902}
+
+Das im originalen Gameboy verbaute SoC namens LR35092 wurde von Sharp
+entwickelt, und der darin verbaute Prozessorkern ist (vermutlich) der gleiche
+wie in den SM83-Mikrokontrollern.  Dieser ist vom Befehlssatz auf dem
+,,halben Weg'' zwischen 8080 und Z80, allerdings auch mit seinen
+eigenen Auslassungen und Erweiterungen.  F"ur die neuen Befehle hat
+Sharp nat"urlich eine Assembler-Syntax definiert, in der
+,,Gameboy-Szene'' haben sich aber auch einige alternative
+Schreibweisen eingeb"urgert.  Ich habe mich bem"uht, diese (so weit
+bekannt) zu ber"ucksichtigen:
+
+\begin{center}\begin{tabular}{|l|l|l|}
+\hline
+Sharp & alternativ & Funktion \\
+\hline
+\hline
+LD A,(HLD)    & LD A,(HL-)  & A $\longleftarrow$ (HL), \\
+              & LDD A,(HL)  & HL $\longleftarrow$ HL-1 \\
+\hline
+LD A,(HLI)    & LD A,(HL+)  & A $\longleftarrow$ (HL), \\
+              & LDI A,(HL)  & HL $\longleftarrow$ HL+1 \\
+\hline
+LD (HLD),A    & LD (HL-),A  & (HL) $\longleftarrow$ A, \\
+              & LDD (HL),A  & HL $\longleftarrow$ HL-1 \\
+\hline
+LD (HLI),A    & LD (HL+),A  & (HL) $\longleftarrow$ A, \\
+              & LDI (HL),A  & HL $\longleftarrow$ HL+1 \\
+\hline
+LD A,(C)      & LD A,(FF00+C) & A $\longleftarrow$ (0ff00h+C) \\
+              & LDH A,(C)     & \\
+\hline
+LD (C),A      & LD (FF00+C),A & (0ff00h+C) $\longleftarrow$ A \\
+              & LDH (C),A     & \\
+\hline
+LD (FF00+n),A & LDH (n),A     & (0ff00h+n) $\longleftarrow$ A \\
+\hline
+LD A,(FF00+n) & LDH A,(n)     & A $\longleftarrow$ (0ff00h+n) \\
+\hline
+LDHL SP,d     & LD HL,SP+d    & HL $\longleftarrow$ SP + d \\
+\hline
+LDX A,(nn)    & LD A,(nn)     & A $\longleftarrow$ (nn) $^{1}$ \\
+\hline
+LDX (nn),A    & LD (nn),A     & (nn) $\longleftarrow$ A $^{1}$ \\
+\hline
+\multicolumn{3}{|l|}{$^{1}$ erzwingt 16-Bit-Adressierung. } \\
+\hline
+\end{tabular}\end{center}
+ 
 %%---------------------------------------------------------------------------
 
 \section{Z380}

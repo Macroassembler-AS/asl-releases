@@ -1,0 +1,7 @@
++------------------------- Test Application Z80REG --------------------------+
+|                                                                            |
+| This is a test of register symbols on the Z80/Z380.  The Z80's register    |
+| set is not as orthogonal as e.g. on a 68K, so the main use is to define    |
+| not as common register name aliases, like XH/XL for the halves of IX.      |
+|                                                                            |
++----------------------------------------------------------------------------+

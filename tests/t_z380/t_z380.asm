@@ -671,13 +671,19 @@
         or      a,iyl
         cp      a,iyu
         rlc     (ix+3)
-        rrc     b,(iy-3)
-        slia    a,(ix-100)
+        rrc     b,(iy-3)	; extra dest reg may be first or last arg
+	rrc	(iy-3),b
+        slia    a,(ix-100)	; several namings in use (no standard from Zilog!)
+	sli	a,(ix-100)
+	sl1	a,(ix-100)
+	sls	a,(ix-100)
         res     5,h
         set     6,(ix+6)
         bit     3,(hl)
-        res     c,4,(ix-1)
+        res     c,4,(ix-1)	; extra dest reg may be first or last arg
+	res	4,(ix-1),c
         set     l,6,(iy+17)
+	set	6,(iy+17),l
         out     (c),0
         in      (c)
         tsti

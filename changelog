@@ -1,3 +1,14 @@
+2021-12-23 [1.42 Bld 214]
+
+- Addition    : Add some syntax variants for Sharp SM83
+- Addition    : Allow SLI/SL1 as alias for SLIA/SLS on Z80UNDOC
+- Addition    : Allow EXA as alias for EX AF,AF' on Z80
+- Addition    : Allow EXD as alias for EX DE,HL on Z80
+- Addition    : For undocumented Z80 instructions with extra
+                destination reg, allow dest reg to be last arg
+                instead of first
+- Addition    : Allow register symbols for Z80
+
 2021-11-22 [1.42 Bld 213]
 
 - Bugfix      : Correct TMS1100 XMA instruction
