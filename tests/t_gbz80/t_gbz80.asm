@@ -728,10 +728,10 @@
 	ex	(sp),ix		; dd e3
 	push	ix		; dd e5
 	endexpect
-	jp	(ix)		; dd e9
 	if	mompass>1
-	expect	1010
+	expect	1010,1010
 	endif
+	jp	(ix)		; dd e9
 	ld	sp,ix		; dd f9
 	if	mompass>1
 	endexpect
@@ -872,10 +872,10 @@
 	ex	(sp),iy		; fd e3
 	push	iy		; fd e5
 	endexpect
-	jp	(iy)		; fd e9
 	if	mompass>1
-	expect	1010
+	expect	1010,1010
 	endif
+	jp	(iy)		; fd e9
 	ld	sp,iy		; fd f9
 	if	mompass>1
 	endexpect

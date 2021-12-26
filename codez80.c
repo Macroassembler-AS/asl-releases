@@ -83,6 +83,7 @@ typedef enum
 #define ModHLInc 11
 #define ModHLDec 12
 #define ModIOAbs 13
+#define ModImmIsAbs 14
 
 #define MModReg8 (1 << ModReg8)
 #define MModReg16 (1 << ModReg16)
@@ -97,6 +98,7 @@ typedef enum
 #define MModHLInc (1 << ModHLInc)
 #define MModHLDec (1 << ModHLDec)
 #define MModIOAbs (1 << ModIOAbs)
+#define MModImmIsAbs (1 << ModImmIsAbs)
 
 /* These masks deliberately omit the (special) 
    Sharp/Gameboy addressing modes: */
@@ -464,7 +466,7 @@ static ShortInt DecodeAdr(const tStrComp *pArg, unsigned ModeMask)
   int z, l;
   LongInt AdrLong;
 #endif
-  Boolean OK;
+  Boolean OK, is_indirect;
   tEvalResult EvalResult;
 
   AdrMode = ModNone;
@@ -519,7 +521,8 @@ static ShortInt DecodeAdr(const tStrComp *pArg, unsigned ModeMask)
 
   /* all types of indirect expressions (...): */
 
-  if (IsIndirect(pArg->str.p_str))
+  is_indirect = IsIndirect(pArg->str.p_str);
+  if (is_indirect || (ModeMask &MModImmIsAbs))
   {
     tStrComp arg, remainder;
     char *p_split_pos;
@@ -531,8 +534,8 @@ static ShortInt DecodeAdr(const tStrComp *pArg, unsigned ModeMask)
 
     /* strip outer braces and spaces */
  
-    StrCompRefRight(&arg, pArg, 1);
-    StrCompShorten(&arg, 1);
+    StrCompRefRight(&arg, pArg, !!is_indirect);
+    StrCompShorten(&arg, !!is_indirect);
     KillPrefBlanksStrCompRef(&arg);
     KillPostBlanksStrComp(&arg);
 
@@ -556,6 +559,7 @@ static ShortInt DecodeAdr(const tStrComp *pArg, unsigned ModeMask)
     disp_acc = 0;
     neg_flag = False;
     addr_reg = 0xff;
+    addr_reg_size = eSymbolSizeUnknown;
     do
     {
       /* split off one component */
@@ -860,23 +864,28 @@ static Boolean DecodeAdr_HL(const tStrComp *p_arg)
 
 static void DecodeAdrWithF(const tStrComp *pArg, Boolean AllowF)
 {
-  if ((MomCPU == CPUZ80U) || (MomCPU == CPUZ180) || (MomCPU == CPUZ380))
+  Boolean applies_to_cpu = (MomCPU == CPUZ80U) || (MomCPU == CPUZ180) || (MomCPU == CPUZ380);
+
+  if (applies_to_cpu
+   && AllowF
+   && !as_strcasecmp(pArg->str.p_str, "F"))
   {
-    /* if 110 denotes F, it cannot denote (HL) */
-    if (!as_strcasecmp(pArg->str.p_str, "(HL)"))
-    {
-      AdrMode = ModNone;
-      WrStrErrorPos(ErrNum_InvAddrMode, pArg);
-      return;
-    }
-    if (AllowF && !as_strcasecmp(pArg->str.p_str, "F"))
-    {
-      AdrMode = ModReg8;
-      AdrPart = 6;
-      return;
-    }
+    AdrMode = ModReg8;
+    AdrPart = 6;
+    return;
   }
+
   DecodeAdr(pArg, MModAll);
+
+  /* if 110 denotes F, it cannot denote (HL) */
+
+  if (applies_to_cpu
+   && (AdrMode == ModReg8)
+   && (AdrPart == 6))
+  {
+    AdrMode = ModNone;
+    WrStrErrorPos(ErrNum_InvAddrMode, pArg);
+  }
 }
 
 static Boolean ImmIs8(void)
@@ -3143,85 +3152,43 @@ static void DecodeRET(Word Code)
 static void DecodeJP(Word Code)
 {
   int Cond;
-  Boolean OK;
 
   UNUSED(Code);
 
-  if (ArgCnt == 1)
+  switch (ArgCnt)
   {
-    if (!as_strcasecmp(ArgStr[1].str.p_str, "(HL)"))
-    {
-      CodeLen = 1;
-      BAsmCode[0] = 0xe9;
-      return;
-    }
-    else if (!as_strcasecmp(ArgStr[1].str.p_str, "(IX)"))
-    {
-      CodeLen = 2;
-      BAsmCode[0] = IXPrefix;
-      BAsmCode[1] = 0xe9;
-      return;
-    }
-    else if (!as_strcasecmp(ArgStr[1].str.p_str, "(IY)"))
-    {
-      CodeLen = 2;
-      BAsmCode[0] = IYPrefix;
-      BAsmCode[1] = 0xe9;
-      return;
-    }
-    else
-    {
+    case 1:
       Cond = 1;
-      OK = True;
-    }
-  }
-  else if (ArgCnt == 2)
-  {
-    OK = DecodeCondition(ArgStr[1].str.p_str, &Cond);
-    if (OK)
+      break;
+    case 2:
+      if (!DecodeCondition(ArgStr[1].str.p_str, &Cond))
+      {
+        WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
+        return;
+      }
       Cond <<= 3;
-    else
-      WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
+      break;
+    default:
+      (void)ChkArgCnt(1, 2);
+      return;
   }
-  else
-  {
-    (void)ChkArgCnt(1, 2);
-    OK = False;
-  }
-  if (OK)
-  {
-    LongWord AdrLong;
-    tEvalResult EvalResult;
 
-    AdrLong = EvalAbsAdrExpression(&ArgStr[ArgCnt], &EvalResult);
-    if (EvalResult.OK)
-    {
-      if (AdrLong <= 0xfffful)
-      {
-        BAsmCode[0] = 0xc2 + Cond;
-        BAsmCode[1] = Lo(AdrLong);
-        BAsmCode[2] = Hi(AdrLong);
-        CodeLen = 3;
-      }
-      else if (AdrLong <= 0xfffffful)
-      {
-        ChangeDDPrefix(ePrefixIB);
-        CodeLen = 4 + PrefixCnt;
-        BAsmCode[PrefixCnt] = 0xc2 + Cond;
-        BAsmCode[PrefixCnt + 1] = Lo(AdrLong);
-        BAsmCode[PrefixCnt + 2] = Hi(AdrLong);
-        BAsmCode[PrefixCnt + 3] = Hi(AdrLong >> 8);
-      }
+  switch (DecodeAdr(&ArgStr[ArgCnt], MModImmIsAbs | MModAbs | ((Cond == 1) ? MModReg8 : 0)))
+  {
+    case ModReg8:
+      if ((AdrPart != 6) || ((AdrCnt > 0) && AdrVals[0])) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[ArgCnt]);
       else
       {
-        ChangeDDPrefix(ePrefixIW);
-        CodeLen = 5 + PrefixCnt;
-        BAsmCode[PrefixCnt] = 0xc2 + Cond;
-        BAsmCode[PrefixCnt + 1] = Lo(AdrLong);
-        BAsmCode[PrefixCnt + 2] = Hi(AdrLong);
-        BAsmCode[PrefixCnt + 3] = Hi(AdrLong >> 8);
-        BAsmCode[PrefixCnt + 4] = Hi(AdrLong >> 16);
+        BAsmCode[PrefixCnt] = 0xe9;
+        CodeLen = PrefixCnt + 1;
       }
+      break;
+    case ModAbs:
+    {
+      BAsmCode[PrefixCnt] = 0xc2 + Cond;
+      CodeLen = PrefixCnt + 1;
+      AppendAdrVals();
+      break;
     }
   }
 }

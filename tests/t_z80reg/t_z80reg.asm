@@ -72,6 +72,14 @@ yl	reg	iyl
 	ex	reg,(sp)
 	endm
 
+	jp	(hl)
+	jp	(dst)
+	jp	(ix)
+	jp	(isrc)
+	jp	(iy)
+	jp	(idst)
+	jp	(isrc+0)
+
 	cpu	z380
 
 	exts	a

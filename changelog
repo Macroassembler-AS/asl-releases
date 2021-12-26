@@ -1,3 +1,8 @@
+2021-12-26 [1.42 Bld 215]
+
+- Bugfix      : Z80: Allow register symbols for JP (IX/IY), forbid
+                on Gameboy Z80
+
 2021-12-23 [1.42 Bld 214]
 
 - Addition    : Add some syntax variants for Sharp SM83
