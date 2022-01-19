@@ -853,7 +853,7 @@ static void SwitchFrom_CP1600(void)
 
 static void SwitchTo_CP1600(void)
 {
-	PFamilyDescr pDescr;
+	const TFamilyDescr *pDescr;
 
 	TurnWords = True;
 	/* SetIntConstMode(eIntConstModeIBM); */

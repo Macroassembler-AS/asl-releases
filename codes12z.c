@@ -2691,7 +2691,7 @@ static Boolean IsDef_S12Z(void)
 
 static void SwitchTo_S12Z(void)
 {
-  const PFamilyDescr pDescr = FindFamilyByName("S12Z");
+  const TFamilyDescr *pDescr = FindFamilyByName("S12Z");
   TurnWords = False;
   SetIntConstMode(eIntConstModeMoto);
 

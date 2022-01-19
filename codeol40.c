@@ -592,7 +592,7 @@ static void SwitchFrom_OLMS40(void)
 
 static void SwitchTo_OLMS40(void)
 {
-  PFamilyDescr pDescr;
+  const TFamilyDescr *pDescr;
 
   pDescr = FindFamilyByName("OLMS-40");
 

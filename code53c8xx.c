@@ -1110,7 +1110,7 @@ static void SwitchFrom_53c8xx(void)
 
 static void SwitchTo_53c8xx(void)
 {
-  PFamilyDescr FoundDescr;
+  const TFamilyDescr *FoundDescr;
 
   FoundDescr = FindFamilyByName("SYM53C8xx");
 

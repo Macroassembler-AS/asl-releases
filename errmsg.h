@@ -45,6 +45,7 @@ typedef enum
   ErrNum_StackNotEmpty = 230,
   ErrNum_NULCharacter = 240,
   ErrNum_PageCrossing = 250,
+  ErrNum_WUnderRange = 255,
   ErrNum_WOverRange = 260,
   ErrNum_NegDUP = 270,
   ErrNum_ConvIndX = 280,
@@ -271,7 +272,10 @@ typedef enum
 struct sLineComp;
 struct sStrComp;
 
-extern Boolean ChkRange(LargeInt Value, LargeInt Min, LargeInt Max);
+extern Boolean ChkRangePos(LargeInt Value, LargeInt Min, LargeInt Max, const struct sStrComp *p_comp);
+#define ChkRange(Value, Min, Max) ChkRangePos(Value, Min, Max, NULL)
+extern Boolean ChkRangeWarnPos(LargeInt Value, LargeInt Min, LargeInt Max, const struct sStrComp *p_comp);
+#define ChkRangeWarn(Value, Min, Max) ChkRangeWarnPos(Value, Min, Max, NULL)
 
 extern Boolean ChkArgCntExtPos(int ThisCnt, int MinCnt, int MaxCnt, const struct sLineComp *pComp);
 #define ChkArgCnt(MinCnt, MaxCnt) ChkArgCntExtPos(ArgCnt, MinCnt, MaxCnt, NULL)

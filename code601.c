@@ -2104,7 +2104,7 @@ static void InternSymbol_601(char *Asc, TempResult *Erg)
 
 static void SwitchTo_601(void)
 {
-  PFamilyDescr FoundDscr;
+  const TFamilyDescr *FoundDscr;
 
   TurnWords = True;
   SetIntConstMode(eIntConstModeC);

@@ -36,9 +36,9 @@ typedef struct
   tHexFormat HexFormat;
 } TFamilyDescr, *PFamilyDescr;
 
-extern PFamilyDescr FindFamilyByName(const char *Name);
+extern const TFamilyDescr *FindFamilyByName(const char *Name);
 
-extern PFamilyDescr FindFamilyById(Word Id);
+extern const TFamilyDescr *FindFamilyById(Word Id);
 
 extern void headids_init(void);
 #endif /* _HEADIDS_H */

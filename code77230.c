@@ -1120,7 +1120,7 @@ static void SwitchFrom_77230(void)
 
 static void SwitchTo_77230(void)
 {
-  PFamilyDescr FoundDescr;
+  const TFamilyDescr *FoundDescr;
 
   FoundDescr = FindFamilyByName("77230");
 

@@ -1500,7 +1500,8 @@ static void SwitchFrom_78C10(void)
 
 static void SwitchTo_78C10(void *pUser)
 {
-  PFamilyDescr pDescr = FindFamilyByName("78(C)xx");
+  const TFamilyDescr *pDescr = FindFamilyByName("78(C)xx");
+
   pCurrCPUProps = (const tCPUProps*)pUser;
   TurnWords = False;
   SetIntConstMode(eIntConstModeIntel);

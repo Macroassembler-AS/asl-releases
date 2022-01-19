@@ -611,7 +611,7 @@ static void SwitchFrom_KCPSM(void)
 
 static void SwitchTo_KCPSM(void)
 {
-  PFamilyDescr FoundDescr;
+  const TFamilyDescr *FoundDescr;
 
   FoundDescr = FindFamilyByName("KCPSM");
 

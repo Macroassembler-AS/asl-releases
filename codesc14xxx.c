@@ -426,7 +426,7 @@ static void SwitchFrom_sc14xxx(void)
 
 static void SwitchTo_sc14xxx(void)
 {
-  PFamilyDescr FoundDescr;
+  const TFamilyDescr *FoundDescr;
 
   FoundDescr = FindFamilyByName("SC14XXX");
 

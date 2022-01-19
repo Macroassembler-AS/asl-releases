@@ -489,7 +489,7 @@ static Boolean IsDef_COP4(void)
 
 static void SwitchTo_COP4(void)
 {
-  PFamilyDescr pDescr;
+  const TFamilyDescr *pDescr;
 
   pDescr = FindFamilyByName("COP4");
 

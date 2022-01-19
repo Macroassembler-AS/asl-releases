@@ -733,7 +733,7 @@ static void SwitchFrom_XGATE(void)
 
 static void SwitchTo_XGATE(void)
 {
-  PFamilyDescr pDescr;
+  const TFamilyDescr *pDescr;
 
   TurnWords = True;
   SetIntConstMode(eIntConstModeMoto);

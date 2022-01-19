@@ -381,7 +381,7 @@ static void SwitchFrom_16c8x(void)
 
 static void SwitchTo_16c8x(void)
 {
-  PFamilyDescr pDescr;
+  const TFamilyDescr *pDescr;
 
   TurnWords = False;
   SetIntConstMode(eIntConstModeMoto);

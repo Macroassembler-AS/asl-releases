@@ -41,7 +41,7 @@
 #define LEAVE  goto func_exit
 #define LEAVE2 goto func_exit2
 
-/* Mask, Min 6 Max are computed at initialization */
+/* Mask, Min & Max are computed at initialization */
 
 tIntTypeDef IntTypeDefs[IntTypeCnt] =
 {
@@ -202,18 +202,61 @@ void AsmParsInit(void)
   RegistersDefined = False;
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     range_not_checkable(IntType type)
+ * \brief  can integer type's range not be checked on host system?
+ * \param  type integer type
+ * \return true if range can NOT be checked
+ * ------------------------------------------------------------------------ */
+
+static Boolean range_not_checkable(IntType type)
+{
+#ifndef HAS64
+  return (((int)type) >= ((int)SInt32));
+#else
+  return (((int)type) >= ((int)SInt64));
+#endif
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     RangeCheck(LargeInt Wert, IntType Typ)
+ * \brief  check whether value is within integer type's ranges
+ * \param  Wert value to check
+ * \param  Typ integer type giving range
+ * \return true if within range
+ * ------------------------------------------------------------------------ */
 
 Boolean RangeCheck(LargeInt Wert, IntType Typ)
 {
-#ifndef HAS64
-  if (((int)Typ) >= ((int)SInt32))
-    return True;
-#else
-  if (((int)Typ) >= ((int)SInt64))
-    return True;
-#endif
-  else
-    return ((Wert >= IntTypeDefs[(int)Typ].Min) && (Wert <= IntTypeDefs[(int)Typ].Max));
+  return range_not_checkable(Typ) || ((Wert >= IntTypeDefs[(int)Typ].Min) && (Wert <= IntTypeDefs[(int)Typ].Max));
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     ChkRangeByType(LargeInt value, IntType type, const struct sStrComp *p_comp)
+ * \brief  check whether value is within integer type's ranges, and throw error if not
+ * \param  value value to check
+ * \param  type integer type giving range
+ * \param  p_comp corresponding source argument
+ * \return true if within range
+ * ------------------------------------------------------------------------ */
+
+Boolean ChkRangeByType(LargeInt value, IntType type, const struct sStrComp *p_comp)
+{
+  return range_not_checkable(type) || ChkRangePos(value, IntTypeDefs[(int)type].Min, IntTypeDefs[(int)type].Max, p_comp);
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     ChkRangeWarnByType(LargeInt value, IntType type, const struct sStrComp *p_comp)
+ * \brief  check whether value is within integer type's ranges, and throw warning if not
+ * \param  value value to check
+ * \param  type integer type giving range
+ * \param  p_comp corresponding source argument
+ * \return true if within range
+ * ------------------------------------------------------------------------ */
+
+Boolean ChkRangeWarnByType(LargeInt value, IntType type, const struct sStrComp *p_comp)
+{
+  return range_not_checkable(type) || ChkRangeWarnPos(value, IntTypeDefs[(int)type].Min, IntTypeDefs[(int)type].Max, p_comp);
 }
 
 Boolean FloatRangeCheck(Double Wert, FloatType Typ)
@@ -1832,24 +1875,21 @@ LargeInt EvalStrIntExpressionWithResult(const tStrComp *pComp, IntType Type, tEv
   if (mFirstPassUnknown(t.Flags))
     Result &= IntTypeDefs[(int)Type].Mask;
 
-  if (!RangeCheck(Result, Type))
+  pResult->OK = HardRanges ? ChkRangeByType(Result, Type, pComp) : ChkRangeWarnByType(Result, Type, pComp);
+  if (!pResult->OK)
   {
     if (HardRanges)
     {
       FreeRelocs(&LastRelocs);
-      WrStrErrorPos(ErrNum_OverRange, pComp);
       Result = -1;
       LEAVE;
     }
     else
     {
-      WrStrErrorPos(ErrNum_WOverRange, pComp);
       pResult->OK = True;
       Result &= IntTypeDefs[(int)Type].Mask;
     }
   }
-  else
-    pResult->OK = True;
 
 func_exit:
   as_tempres_free(&t);

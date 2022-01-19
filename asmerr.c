@@ -223,6 +223,8 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
       msgno = Num_ErrMsgNULCharacter; break;
     case ErrNum_PageCrossing:
       msgno = Num_ErrMsgPageCrossing; break;
+    case ErrNum_WUnderRange:
+      msgno = Num_ErrMsgWUnderRange; break;
     case ErrNum_WOverRange:
       msgno = Num_ErrMsgWOverRange; break;
     case ErrNum_NegDUP:

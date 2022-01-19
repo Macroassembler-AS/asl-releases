@@ -1,0 +1,10 @@
++------------------------- Test Application Z80UNDOC ------------------------+
+|                                                                            |
+| This is a (synthetic) test of the Z80 instruction set, this time including |
+| the undocumented instructions.  Note the name 'SLL' for the 8th shift/     |
+| rotate instruction is not built- in, but has to be defined via a macro,    |
+| since there are different opinions about what 'SLL' should mean.  Again,   |
+| this was written based on the tables found at:                             |
+| https://clrhome.org/table/                                                 |
+|                                                                            |
++----------------------------------------------------------------------------+

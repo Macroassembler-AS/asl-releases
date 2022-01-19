@@ -2058,7 +2058,7 @@ static void SwitchTo_78K3(void)
     {"RSS" , &Reg_RSS , 0,  0x1,  0x0, NULL},
   };
 
-  PFamilyDescr pDescr;
+  const TFamilyDescr *pDescr;
 
   pDescr = FindFamilyByName("78K3");
 

@@ -28,30 +28,64 @@ static tErrorNum GetDefaultCPUErrorNum(tErrorNum ThisNum)
 }
 
 /*!------------------------------------------------------------------------
- * \fn     ChkRange(LargeInt Value, LargeInt Min, LargeInt Max)
+ * \fn     report_error_range(LargeInt value, LargeInt ref, char comp_op, tErrorNum error_num, const tStrComp *p_comp)
+ * \brief  core routine to emit range error message
+ * \param  value offending value
+ * \param  ref reference value was checked against
+ * \param  comp_op comparison op that failed
+ * \param  error_num error message to emit
+ * \param  p_comp source argument (may be NULL)
+ * \return constant False
+ * ------------------------------------------------------------------------ */
+
+static Boolean report_error_range(LargeInt value, LargeInt ref, char comp_op, tErrorNum error_num, const tStrComp *p_comp)
+{
+  char s[100];
+
+  as_snprintf(s, sizeof(s), "%llld %c %llld", value, comp_op, ref);
+  if (p_comp)
+    WrXErrorPos(error_num, s, &p_comp->Pos);
+  else
+    WrXError(error_num, s);
+  return False;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     ChkRangePos(LargeInt Value, LargeInt Min, LargeInt Max, const tStrComp *p_comp)
  * \brief  check whether integer is in range and issue error if not
  * \param  Value value to check
  * \param  Min minimum of range
  * \param  Max maximum of range
+ * \param  p_comp corresponding source argument (may be NULL)
  * \return TRUE if in-range and no error
  * ------------------------------------------------------------------------ */
 
-Boolean ChkRange(LargeInt Value, LargeInt Min, LargeInt Max)
+Boolean ChkRangePos(LargeInt Value, LargeInt Min, LargeInt Max, const tStrComp *p_comp)
 {
-  char s[100];
-
   if (Value < Min)
-  {
-    as_snprintf(s, sizeof(s), "%llld<%llld", Value, Min);
-    WrXError(ErrNum_UnderRange, s);
-    return False;
-  }
+    return report_error_range(Value, Min, '<', ErrNum_UnderRange, p_comp);
   else if (Value > Max)
-  {
-    as_snprintf(s, sizeof(s), "%llld>%llld", Value, Max);
-    WrXError(ErrNum_OverRange, s);
-    return False;
-  }
+    return report_error_range(Value, Max, '>', ErrNum_OverRange, p_comp);
+  else
+    return True;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     ChkRangeWarnPos(LargeInt Value, LargeInt Min, LargeInt Max, const tStrComp *p_comp)
+ * \brief  check whether integer is in range and issue error if not
+ * \param  Value value to check
+ * \param  Min minimum of range
+ * \param  Max maximum of range
+ * \param  p_comp corresponding source argument (may be NULL)
+ * \return TRUE if in-range and no error
+ * ------------------------------------------------------------------------ */
+
+Boolean ChkRangeWarnPos(LargeInt Value, LargeInt Min, LargeInt Max, const tStrComp *p_comp)
+{
+  if (Value < Min)
+    return report_error_range(Value, Min, '<', ErrNum_WUnderRange, p_comp);
+  else if (Value > Max)
+    return report_error_range(Value, Max, '>', ErrNum_WOverRange, p_comp);
   else
     return True;
 }

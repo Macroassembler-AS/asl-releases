@@ -1,3 +1,8 @@
+2022-01-19 [1.42 Bld 216]
+
+- Bugfix      : Z80: add error messages about address/displacement
+                overflow that got lost during address parser rework
+
 2021-12-26 [1.42 Bld 215]
 
 - Bugfix      : Z80: Allow register symbols for JP (IX/IY), forbid

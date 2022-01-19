@@ -143,6 +143,10 @@ Message ErrMsgPageCrossing
  "Befehl &uuml;berschreitet Seitengrenze"
  "instruction crosses page boundary" 
 
+Message ErrMsgWUnderRange
+ "Bereichsunterschreitung"
+ "range underflow"
+
 Message ErrMsgWOverRange
  "Bereichs&uuml;berschreitung"
  "range overflow"

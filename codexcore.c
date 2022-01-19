@@ -856,7 +856,7 @@ static void SwitchFrom_XCore(void)
 
 static void SwitchTo_XCore(void)
 {
-  PFamilyDescr pDescr;
+  const TFamilyDescr *pDescr;
 
   TurnWords = False;
   SetIntConstMode(eIntConstModeMoto);

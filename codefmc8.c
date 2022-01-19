@@ -968,7 +968,7 @@ static void SwitchFrom_F2MC8(void)
 
 static void SwitchTo_F2MC8(void)
 {
-  PFamilyDescr FoundDescr;
+  const TFamilyDescr *FoundDescr;
 
   FoundDescr = FindFamilyByName("F2MC8");
 

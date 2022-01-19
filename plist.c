@@ -47,7 +47,7 @@ static void ProcessSingle(const char *pFileName)
 {
   FILE *ProgFile;
   Byte Header, Segment, Gran, CPU;
-  PFamilyDescr FoundId;
+  const TFamilyDescr *FoundId;
   int Ch;
   Word Len, ID;
   LongWord StartAdr;

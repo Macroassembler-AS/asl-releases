@@ -914,7 +914,7 @@ static Boolean TrueFnc(void)
 
 static void SwitchTo_KENBAK(void)
 {
-  PFamilyDescr Descr;
+  const TFamilyDescr *Descr;
 
   TurnWords = False;
   SetIntConstMode(eIntConstModeIntel);

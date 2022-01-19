@@ -1,5 +1,9 @@
-	cpu	z80
+	cpu	z80undoc
 	page	0
+
+sll	macro	args
+	sl1	ALLARGS
+	endm
 
 	nop			; 00
 	ld	bc,1234h	; 01 34 12
@@ -387,14 +391,14 @@
 	sra	l		; cb 2d
 	sra	(hl)		; cb 2e
 	sra	a		; cb 2f
-	;sll	b		; cb 30
-	;sll	c		; cb 31
-	;sll	d		; cb 32
-	;sll	e		; cb 33
-	;sll	h		; cb 34
-	;sll	l		; cb 35
-	;sll	(hl)		; cb 36
-	;sll	a		; cb 37
+	sll	b		; cb 30 (U)
+	sll	c		; cb 31 (U)
+	sll	d		; cb 32 (U)
+	sll	e		; cb 33 (U)
+	sll	h		; cb 34 (U)
+	sll	l		; cb 35 (U)
+	sll	(hl)		; cb 36 (U)
+	sll	a		; cb 37 (U)
 	srl	b		; cb 38
 	srl	c		; cb 39
 	srl	d		; cb 3a
@@ -601,47 +605,47 @@
 	ld	ix,1234h	; dd 21 34 12
 	ld	(1234h),ix	; dd 22 34 12
 	inc	ix		; dd 23
-	;inc	ixh		; dd 24
-	;dec	ixh		; dd 25
-	;ld	ixh,12h		; dd 26 12
+	inc	ixh		; dd 24 (U)
+	dec	ixh		; dd 25 (U)
+	ld	ixh,12h		; dd 26 12 (U)
 	add	ix,ix		; dd 29
 	ld	ix,(1234h)	; dd 2a 34 12
 	dec	ix		; dd 2b
-	;inc	ixl		; dd 2c
-	;dec	ixl		; dd 2d
-	;ld	ixl,12h		; dd 2e 12
+	inc	ixl		; dd 2c (U)
+	dec	ixl		; dd 2d (U)
+	ld	ixl,12h		; dd 2e 12 (U)
 	inc	(ix+12h)	; dd 34 12
 	dec	(ix+12h)	; dd 35 12
 	ld	(ix+12h),34h	; dd 36 12 34
 	add	ix,sp		; dd 39
-	;ld	b,ixh		; dd 44
-	;ld	b,ixl		; dd 45
+	ld	b,ixh		; dd 44 (U)
+	ld	b,ixl		; dd 45 (U)
 	ld	b,(ix+12h)	; dd 46 12
-	;ld	c,ixh		; dd 4c
-	;ld	c,ixl		; dd 4d
+	ld	c,ixh		; dd 4c (U)
+	ld	c,ixl		; dd 4d (U)
 	ld	c,(ix+12h)	; dd 4e 12
-	;ld	d,ixh		; dd 54
-	;ld	d,ixl		; dd 55
+	ld	d,ixh		; dd 54 (U)
+	ld	d,ixl		; dd 55 (U)
 	ld	d,(ix+12h)	; dd 56 12
-	;ld	e,ixh		; dd 5c
-	;ld	e,ixl		; dd 5d
+	ld	e,ixh		; dd 5c (U)
+	ld	e,ixl		; dd 5d (U)
 	ld	e,(ix+12h)	; dd 5e 12
-	;ld	ixh,b		; dd 60
-	;ld	ixh,c		; dd 61
-	;ld	ixh,d		; dd 62
-	;ld	ixh,e		; dd 63
-	;ld	ixh,ixh		; dd 64
-	;ld	ixh,ixl		; dd 65
+	ld	ixh,b		; dd 60 (U)
+	ld	ixh,c		; dd 61 (U)
+	ld	ixh,d		; dd 62 (U)
+	ld	ixh,e		; dd 63 (U)
+	ld	ixh,ixh		; dd 64 (U)
+	ld	ixh,ixl		; dd 65 (U)
 	ld	h,(ix+12h)	; dd 66 12
-	;ld	ixh,a		; dd 67
-	;ld	ixl,b		; dd 68
-	;ld	ixl,c		; dd 69
-	;ld	ixl,d		; dd 6a
-	;ld	ixl,e		; dd 6b
-	;ld	ixl,ixh		; dd 6c
-	;ld	ixl,ixl		; dd 6d
+	ld	ixh,a		; dd 67 (U)
+	ld	ixl,b		; dd 68 (U)
+	ld	ixl,c		; dd 69 (U)
+	ld	ixl,d		; dd 6a (U)
+	ld	ixl,e		; dd 6b (U)
+	ld	ixl,ixh		; dd 6c (U)
+	ld	ixl,ixl		; dd 6d (U)
 	ld	l,(ix+12h)	; dd 6e 12
-	;ld	ixl,a		; dd 6f
+	ld	ixl,a		; dd 6f (U)
 	ld	(ix+12h),b	; dd 70 12
 	ld	(ix+12h),c	; dd 71 12
 	ld	(ix+12h),d	; dd 72 12
@@ -649,32 +653,32 @@
 	ld	(ix+12h),h	; dd 74 12
 	ld	(ix+12h),l	; dd 75 12
 	ld	(ix+12h),a	; dd 77 12
-	;ld	a,ixh		; dd 7c
-	;ld	a,ixl		; dd 7d
+	ld	a,ixh		; dd 7c (U)
+	ld	a,ixl		; dd 7d (U)
 	ld	a,(ix+12h)	; dd 7e 12
-	;add	a,ixh		; dd 84
-	;add	a,ixl		; dd 85
+	add	a,ixh		; dd 84 (U)
+	add	a,ixl		; dd 85 (U)
 	add	a,(ix+12h)	; dd 86 12
-	;adc	a,ixh		; dd 8c
-	;adc	a,ixl		; dd 8d
+	adc	a,ixh		; dd 8c (U)
+	adc	a,ixl		; dd 8d (U)
 	adc	a,(ix+12h)	; dd 8e 12
-	;sub	a,ixh		; dd 94
-	;sub	a,ixl		; dd 95
+	sub	a,ixh		; dd 94 (U)
+	sub	a,ixl		; dd 95 (U)
 	sub	a,(ix+12h)	; dd 96 12
-	;sbc	a,ixh		; dd 9c
-	;sbc	a,ixl		; dd 9d
+	sbc	a,ixh		; dd 9c (U)
+	sbc	a,ixl		; dd 9d (U)
 	sbc	a,(ix+12h)	; dd 9e 12
-	;and	a,ixh		; dd a4
-	;and	a,ixl		; dd a5
+	and	a,ixh		; dd a4 (U)
+	and	a,ixl		; dd a5 (U)
 	and	a,(ix+12h)	; dd a6 12
-	;xor	a,ixh		; dd ac
-	;xor	a,ixl		; dd ad
+	xor	a,ixh		; dd ac (U)
+	xor	a,ixl		; dd ad (U)
 	xor	a,(ix+12h)	; dd ae 12
-	;or	ixh		; dd b4
-	;or	ixl		; dd b5
+	or	ixh		; dd b4 (U)
+	or	ixl		; dd b5 (U)
 	or	(ix+12h)	; dd b6 12
-	;cp	ixh		; dd bc
-	;cp	ixl		; dd bd
+	cp	ixh		; dd bc (U)
+	cp	ixl		; dd bd (U)
 	cp	(ix+12h)	; dd be 12
 	pop	ix		; dd e1
 	ex	(sp),ix		; dd e3
@@ -682,70 +686,70 @@
 	jp	(ix)		; dd e9
 	ld	sp,ix		; dd f9
 
-	;rlc	(ix+12h),b	; dd cb 12 00
-	;rlc	(ix+12h),c	; dd cb 12 01
-	;rlc	(ix+12h),d	; dd cb 12 02
-	;rlc	(ix+12h),e	; dd cb 12 03
-	;rlc	(ix+12h),h	; dd cb 12 04
-	;rlc	(ix+12h),l	; dd cb 12 05
+	rlc	(ix+12h),b	; dd cb 12 00 (U)
+	rlc	(ix+12h),c	; dd cb 12 01 (U)
+	rlc	(ix+12h),d	; dd cb 12 02 (U)
+	rlc	(ix+12h),e	; dd cb 12 03 (U)
+	rlc	(ix+12h),h	; dd cb 12 04 (U)
+	rlc	(ix+12h),l	; dd cb 12 05 (U)
 	rlc	(ix+12h)	; dd cb 12 06
-	;rlc	(ix+12h),a	; dd cb 12 07
-	;rrc	(ix+12h),b	; dd cb 12 08
-	;rrc	(ix+12h),c	; dd cb 12 09
-	;rrc	(ix+12h),d	; dd cb 12 0a
-	;rrc	(ix+12h),e	; dd cb 12 0b
-	;rrc	(ix+12h),h	; dd cb 12 0c
-	;rrc	(ix+12h),l	; dd cb 12 0d
+	rlc	(ix+12h),a	; dd cb 12 07 (U)
+	rrc	(ix+12h),b	; dd cb 12 08 (U)
+	rrc	(ix+12h),c	; dd cb 12 09 (U)
+	rrc	(ix+12h),d	; dd cb 12 0a
+	rrc	(ix+12h),e	; dd cb 12 0b (U)
+	rrc	(ix+12h),h	; dd cb 12 0c (U)
+	rrc	(ix+12h),l	; dd cb 12 0d (U)
 	rrc	(ix+12h)	; dd cb 12 0e
-	;rrc	(ix+12h),a	; dd cb 12 0f
-	;rl	(ix+12h),b	; dd cb 12 10
-	;rl	(ix+12h),c	; dd cb 12 11
-	;rl	(ix+12h),d	; dd cb 12 12
-	;rl	(ix+12h),e	; dd cb 12 13
-	;rl	(ix+12h),h	; dd cb 12 14
-	;rl	(ix+12h),l	; dd cb 12 15
+	rrc	(ix+12h),a	; dd cb 12 0f (U)
+	rl	(ix+12h),b	; dd cb 12 10 (U)
+	rl	(ix+12h),c	; dd cb 12 11 (U)
+	rl	(ix+12h),d	; dd cb 12 12 (U)
+	rl	(ix+12h),e	; dd cb 12 13 (U)
+	rl	(ix+12h),h	; dd cb 12 14 (U)
+	rl	(ix+12h),l	; dd cb 12 15 (U)
 	rl	(ix+12h)	; dd cb 12 16
-	;rl	(ix+12h),a	; dd cb 12 17
-	;rr	(ix+12h),b	; dd cb 12 18
-	;rr	(ix+12h),c	; dd cb 12 19
-	;rr	(ix+12h),d	; dd cb 12 1a
-	;rr	(ix+12h),e	; dd cb 12 1b
-	;rr	(ix+12h),h	; dd cb 12 1c
-	;rr	(ix+12h),l	; dd cb 12 1d
+	rl	(ix+12h),a	; dd cb 12 17 (U)
+	rr	(ix+12h),b	; dd cb 12 18 (U)
+	rr	(ix+12h),c	; dd cb 12 19 (U)
+	rr	(ix+12h),d	; dd cb 12 1a (U)
+	rr	(ix+12h),e	; dd cb 12 1b (U)
+	rr	(ix+12h),h	; dd cb 12 1c (U)
+	rr	(ix+12h),l	; dd cb 12 1d (U)
 	rr	(ix+12h)	; dd cb 12 1e
-	;rr	(ix+12h),a	; dd cb 12 1f
-	;sla	(ix+12h),b	; dd cb 12 20
-	;sla	(ix+12h),c	; dd cb 12 21
-	;sla	(ix+12h),d	; dd cb 12 22
-	;sla	(ix+12h),e	; dd cb 12 23
-	;sla	(ix+12h),h	; dd cb 12 24
-	;sla	(ix+12h),l	; dd cb 12 25
+	rr	(ix+12h),a	; dd cb 12 1f (U)
+	sla	(ix+12h),b	; dd cb 12 20 (U)
+	sla	(ix+12h),c	; dd cb 12 21 (U)
+	sla	(ix+12h),d	; dd cb 12 22 (U)
+	sla	(ix+12h),e	; dd cb 12 23 (U)
+	sla	(ix+12h),h	; dd cb 12 24 (U)
+	sla	(ix+12h),l	; dd cb 12 25 (U)
 	sla	(ix+12h)	; dd cb 12 26
-	;sla	(ix+12h),a	; dd cb 12 27
-	;sra	(ix+12h),b	; dd cb 12 28
-	;sra	(ix+12h),c	; dd cb 12 29
-	;sra	(ix+12h),d	; dd cb 12 2a
-	;sra	(ix+12h),e	; dd cb 12 2b
-	;sra	(ix+12h),h	; dd cb 12 2c
-	;sra	(ix+12h),l	; dd cb 12 2d
+	sla	(ix+12h),a	; dd cb 12 27 (U)
+	sra	(ix+12h),b	; dd cb 12 28 (U)
+	sra	(ix+12h),c	; dd cb 12 29 (U)
+	sra	(ix+12h),d	; dd cb 12 2a (U)
+	sra	(ix+12h),e	; dd cb 12 2b (U)
+	sra	(ix+12h),h	; dd cb 12 2c (U)
+	sra	(ix+12h),l	; dd cb 12 2d (U)
 	sra	(ix+12h)	; dd cb 12 2e
-	;sra	(ix+12h),a	; dd cb 12 2f
-	;sll	(ix+12h),b	; dd cb 12 30
-	;sll	(ix+12h),c	; dd cb 12 31
-	;sll	(ix+12h),d	; dd cb 12 32
-	;sll	(ix+12h),e	; dd cb 12 33
-	;sll	(ix+12h),h	; dd cb 12 34
-	;sll	(ix+12h),l	; dd cb 12 35
-	;sll	(ix+12h)	; dd cb 12 36
-	;sll	(ix+12h),a	; dd cb 12 37
-	;srl	(ix+12h),b	; dd cb 12 38
-	;srl	(ix+12h),c	; dd cb 12 39
-	;srl	(ix+12h),d	; dd cb 12 3a
-	;srl	(ix+12h),e	; dd cb 12 3b
-	;srl	(ix+12h),h	; dd cb 12 3c
-	;srl	(ix+12h),l	; dd cb 12 3d
+	sra	(ix+12h),a	; dd cb 12 2f (U)
+	sll	(ix+12h),b	; dd cb 12 30 (U)
+	sll	(ix+12h),c	; dd cb 12 31 (U)
+	sll	(ix+12h),d	; dd cb 12 32 (U)
+	sll	(ix+12h),e	; dd cb 12 33 (U)
+	sll	(ix+12h),h	; dd cb 12 34 (U)
+	sll	(ix+12h),l	; dd cb 12 35 (U)
+	sll	(ix+12h)	; dd cb 12 36 (U)
+	sll	(ix+12h),a	; dd cb 12 37 (U)
+	srl	(ix+12h),b	; dd cb 12 38 (U)
+	srl	(ix+12h),c	; dd cb 12 39 (U)
+	srl	(ix+12h),d	; dd cb 12 3a (U)
+	srl	(ix+12h),e	; dd cb 12 3b (U)
+	srl	(ix+12h),h	; dd cb 12 3c (U)
+	srl	(ix+12h),l	; dd cb 12 3d (U)
 	srl	(ix+12h)	; dd cb 12 3e
-	;srl	(ix+12h),a	; dd cb 12 3f
+	srl	(ix+12h),a	; dd cb 12 3f (U)
 	;bit	0,(ix+12h)	; dd cb 12 40
 	;bit	0,(ix+12h)	; dd cb 12 41
 	;bit	0,(ix+12h)	; dd cb 12 42
@@ -810,181 +814,181 @@
 	;bit	7,(ix+12h)	; dd cb 12 7d
 	bit	7,(ix+12h)	; dd cb 12 7e
 	;bit	7,(ix+12h)	; dd cb 12 7f
-	;res	0,(ix+12h),b	; dd cb 12 80
-	;res	0,(ix+12h),c	; dd cb 12 81
-	;res	0,(ix+12h),d	; dd cb 12 82
-	;res	0,(ix+12h),e	; dd cb 12 83
-	;res	0,(ix+12h),h	; dd cb 12 84
-	;res	0,(ix+12h),l	; dd cb 12 85
+	res	0,(ix+12h),b	; dd cb 12 80 (U)
+	res	0,(ix+12h),c	; dd cb 12 81 (U)
+	res	0,(ix+12h),d	; dd cb 12 82 (U)
+	res	0,(ix+12h),e	; dd cb 12 83 (U)
+	res	0,(ix+12h),h	; dd cb 12 84 (U)
+	res	0,(ix+12h),l	; dd cb 12 85 (U)
 	res	0,(ix+12h)  	; dd cb 12 86
-	;res	0,(ix+12h),a	; dd cb 12 87
-	;res	1,(ix+12h),b	; dd cb 12 88
-	;res	1,(ix+12h),c	; dd cb 12 89
-	;res	1,(ix+12h),d	; dd cb 12 8a
-	;res	1,(ix+12h),e	; dd cb 12 8b
-	;res	1,(ix+12h),h	; dd cb 12 8c
-	;res	1,(ix+12h),l	; dd cb 12 8d
+	res	0,(ix+12h),a	; dd cb 12 87 (U)
+	res	1,(ix+12h),b	; dd cb 12 88 (U)
+	res	1,(ix+12h),c	; dd cb 12 89 (U)
+	res	1,(ix+12h),d	; dd cb 12 8a (U)
+	res	1,(ix+12h),e	; dd cb 12 8b (U)
+	res	1,(ix+12h),h	; dd cb 12 8c (U)
+	res	1,(ix+12h),l	; dd cb 12 8d (U)
 	res	1,(ix+12h)  	; dd cb 12 8e
-	;res	1,(ix+12h),a	; dd cb 12 8f
-	;res	2,(ix+12h),b	; dd cb 12 90
-	;res	2,(ix+12h),c	; dd cb 12 91
-	;res	2,(ix+12h),d	; dd cb 12 92
-	;res	2,(ix+12h),e	; dd cb 12 93
-	;res	2,(ix+12h),h	; dd cb 12 94
-	;res	2,(ix+12h),l	; dd cb 12 95
+	res	1,(ix+12h),a	; dd cb 12 8f (U)
+	res	2,(ix+12h),b	; dd cb 12 90 (U)
+	res	2,(ix+12h),c	; dd cb 12 91 (U)
+	res	2,(ix+12h),d	; dd cb 12 92 (U)
+	res	2,(ix+12h),e	; dd cb 12 93 (U)
+	res	2,(ix+12h),h	; dd cb 12 94 (U)
+	res	2,(ix+12h),l	; dd cb 12 95 (U)
 	res	2,(ix+12h)  	; dd cb 12 96
-	;res	2,(ix+12h),a	; dd cb 12 97
-	;res	3,(ix+12h),b	; dd cb 12 98
-	;res	3,(ix+12h),c	; dd cb 12 99
-	;res	3,(ix+12h),d	; dd cb 12 9a
-	;res	3,(ix+12h),e	; dd cb 12 9b
-	;res	3,(ix+12h),h	; dd cb 12 9c
-	;res	3,(ix+12h),l	; dd cb 12 9d
+	res	2,(ix+12h),a	; dd cb 12 97 (U)
+	res	3,(ix+12h),b	; dd cb 12 98 (U)
+	res	3,(ix+12h),c	; dd cb 12 99 (U)
+	res	3,(ix+12h),d	; dd cb 12 9a (U)
+	res	3,(ix+12h),e	; dd cb 12 9b (U)
+	res	3,(ix+12h),h	; dd cb 12 9c (U)
+	res	3,(ix+12h),l	; dd cb 12 9d (U)
 	res	3,(ix+12h)  	; dd cb 12 9e
-	;res	3,(ix+12h),a	; dd cb 12 9f
-	;res	4,(ix+12h),b	; dd cb 12 a0
-	;res	4,(ix+12h),c	; dd cb 12 a1
-	;res	4,(ix+12h),d	; dd cb 12 a2
-	;res	4,(ix+12h),e	; dd cb 12 a3
-	;res	4,(ix+12h),h	; dd cb 12 a4
-	;res	4,(ix+12h),l	; dd cb 12 a5
+	res	3,(ix+12h),a	; dd cb 12 9f (U)
+	res	4,(ix+12h),b	; dd cb 12 a0 (U)
+	res	4,(ix+12h),c	; dd cb 12 a1 (U)
+	res	4,(ix+12h),d	; dd cb 12 a2 (U)
+	res	4,(ix+12h),e	; dd cb 12 a3 (U)
+	res	4,(ix+12h),h	; dd cb 12 a4 (U)
+	res	4,(ix+12h),l	; dd cb 12 a5 (U)
 	res	4,(ix+12h)  	; dd cb 12 a6
-	;res	4,(ix+12h),a	; dd cb 12 a7
-	;res	5,(ix+12h),b	; dd cb 12 a8
-	;res	5,(ix+12h),c	; dd cb 12 a9
-	;res	5,(ix+12h),d	; dd cb 12 aa
-	;res	5,(ix+12h),e	; dd cb 12 ab
-	;res	5,(ix+12h),h	; dd cb 12 ac
-	;res	5,(ix+12h),l	; dd cb 12 ad
+	res	4,(ix+12h),a	; dd cb 12 a7 (U)
+	res	5,(ix+12h),b	; dd cb 12 a8 (U)
+	res	5,(ix+12h),c	; dd cb 12 a9 (U)
+	res	5,(ix+12h),d	; dd cb 12 aa (U)
+	res	5,(ix+12h),e	; dd cb 12 ab (U)
+	res	5,(ix+12h),h	; dd cb 12 ac (U)
+	res	5,(ix+12h),l	; dd cb 12 ad (U)
 	res	5,(ix+12h)  	; dd cb 12 ae
-	;res	5,(ix+12h),a	; dd cb 12 af
-	;res	6,(ix+12h),b	; dd cb 12 b0
-	;res	6,(ix+12h),c	; dd cb 12 b1
-	;res	6,(ix+12h),d	; dd cb 12 b2
-	;res	6,(ix+12h),e	; dd cb 12 b3
-	;res	6,(ix+12h),h	; dd cb 12 b4
-	;res	6,(ix+12h),l	; dd cb 12 b5
+	res	5,(ix+12h),a	; dd cb 12 af (U)
+	res	6,(ix+12h),b	; dd cb 12 b0 (U)
+	res	6,(ix+12h),c	; dd cb 12 b1 (U)
+	res	6,(ix+12h),d	; dd cb 12 b2 (U)
+	res	6,(ix+12h),e	; dd cb 12 b3 (U)
+	res	6,(ix+12h),h	; dd cb 12 b4 (U)
+	res	6,(ix+12h),l	; dd cb 12 b5 (U)
 	res	6,(ix+12h)  	; dd cb 12 b6
-	;res	6,(ix+12h),a	; dd cb 12 b7
-	;res	7,(ix+12h),b	; dd cb 12 b8
-	;res	7,(ix+12h),c	; dd cb 12 b9
-	;res	7,(ix+12h),d	; dd cb 12 ba
-	;res	7,(ix+12h),e	; dd cb 12 bb
-	;res	7,(ix+12h),h	; dd cb 12 bc
-	;res	7,(ix+12h),l	; dd cb 12 bd
+	res	6,(ix+12h),a	; dd cb 12 b7 (U)
+	res	7,(ix+12h),b	; dd cb 12 b8 (U)
+	res	7,(ix+12h),c	; dd cb 12 b9 (U)
+	res	7,(ix+12h),d	; dd cb 12 ba (U)
+	res	7,(ix+12h),e	; dd cb 12 bb (U)
+	res	7,(ix+12h),h	; dd cb 12 bc (U)
+	res	7,(ix+12h),l	; dd cb 12 bd (U)
 	res	7,(ix+12h)  	; dd cb 12 be
-	;res	7,(ix+12h),a	; dd cb 12 bf
-	;set	0,(ix+12h),b	; dd cb 12 c0
-	;set	0,(ix+12h),c	; dd cb 12 c1
-	;set	0,(ix+12h),d	; dd cb 12 c2
-	;set	0,(ix+12h),e	; dd cb 12 c3
-	;set	0,(ix+12h),h	; dd cb 12 c4
-	;set	0,(ix+12h),l	; dd cb 12 c5
+	res	7,(ix+12h),a	; dd cb 12 bf (U)
+	set	0,(ix+12h),b	; dd cb 12 c0 (U)
+	set	0,(ix+12h),c	; dd cb 12 c1 (U)
+	set	0,(ix+12h),d	; dd cb 12 c2 (U)
+	set	0,(ix+12h),e	; dd cb 12 c3 (U)
+	set	0,(ix+12h),h	; dd cb 12 c4 (U)
+	set	0,(ix+12h),l	; dd cb 12 c5 (U)
 	set	0,(ix+12h)  	; dd cb 12 c6
-	;set	0,(ix+12h),a	; dd cb 12 c7
-	;set	1,(ix+12h),b	; dd cb 12 c8
-	;set	1,(ix+12h),c	; dd cb 12 c9
-	;set	1,(ix+12h),d	; dd cb 12 ca
-	;set	1,(ix+12h),e	; dd cb 12 cb
-	;set	1,(ix+12h),h	; dd cb 12 cc
-	;set	1,(ix+12h),l	; dd cb 12 cd
+	set	0,(ix+12h),a	; dd cb 12 c7 (U)
+	set	1,(ix+12h),b	; dd cb 12 c8 (U)
+	set	1,(ix+12h),c	; dd cb 12 c9 (U)
+	set	1,(ix+12h),d	; dd cb 12 ca (U)
+	set	1,(ix+12h),e	; dd cb 12 cb (U)
+	set	1,(ix+12h),h	; dd cb 12 cc (U)
+	set	1,(ix+12h),l	; dd cb 12 cd (U)
 	set	1,(ix+12h)  	; dd cb 12 ce
-	;set	1,(ix+12h),a	; dd cb 12 cf
-	;set	2,(ix+12h),b	; dd cb 12 d0
-	;set	2,(ix+12h),c	; dd cb 12 d1
-	;set	2,(ix+12h),d	; dd cb 12 d2
-	;set	2,(ix+12h),e	; dd cb 12 d3
-	;set	2,(ix+12h),h	; dd cb 12 d4
-	;set	2,(ix+12h),l	; dd cb 12 d5
+	set	1,(ix+12h),a	; dd cb 12 cf (U)
+	set	2,(ix+12h),b	; dd cb 12 d0 (U)
+	set	2,(ix+12h),c	; dd cb 12 d1 (U)
+	set	2,(ix+12h),d	; dd cb 12 d2 (U)
+	set	2,(ix+12h),e	; dd cb 12 d3 (U)
+	set	2,(ix+12h),h	; dd cb 12 d4 (U)
+	set	2,(ix+12h),l	; dd cb 12 d5 (U)
 	set	2,(ix+12h)  	; dd cb 12 d6
-	;set	2,(ix+12h),a	; dd cb 12 d7
-	;set	3,(ix+12h),b	; dd cb 12 d8
-	;set	3,(ix+12h),c	; dd cb 12 d9
-	;set	3,(ix+12h),d	; dd cb 12 da
-	;set	3,(ix+12h),e	; dd cb 12 db
-	;set	3,(ix+12h),h	; dd cb 12 dc
-	;set	3,(ix+12h),l	; dd cb 12 dd
+	set	2,(ix+12h),a	; dd cb 12 d7 (U)
+	set	3,(ix+12h),b	; dd cb 12 d8 (U)
+	set	3,(ix+12h),c	; dd cb 12 d9 (U)
+	set	3,(ix+12h),d	; dd cb 12 da (U)
+	set	3,(ix+12h),e	; dd cb 12 db (U)
+	set	3,(ix+12h),h	; dd cb 12 dc (U)
+	set	3,(ix+12h),l	; dd cb 12 dd (U)
 	set	3,(ix+12h)  	; dd cb 12 de
-	;set	3,(ix+12h),a	; dd cb 12 df
-	;set	4,(ix+12h),b	; dd cb 12 e0
-	;set	4,(ix+12h),c	; dd cb 12 e1
-	;set	4,(ix+12h),d	; dd cb 12 e2
-	;set	4,(ix+12h),e	; dd cb 12 e3
-	;set	4,(ix+12h),h	; dd cb 12 e4
-	;set	4,(ix+12h),l	; dd cb 12 e5
+	set	3,(ix+12h),a	; dd cb 12 df (U)
+	set	4,(ix+12h),b	; dd cb 12 e0 (U)
+	set	4,(ix+12h),c	; dd cb 12 e1 (U)
+	set	4,(ix+12h),d	; dd cb 12 e2 (U)
+	set	4,(ix+12h),e	; dd cb 12 e3 (U)
+	set	4,(ix+12h),h	; dd cb 12 e4 (U)
+	set	4,(ix+12h),l	; dd cb 12 e5 (U)
 	set	4,(ix+12h)  	; dd cb 12 e6
-	;set	4,(ix+12h),a	; dd cb 12 e7
-	;set	5,(ix+12h),b	; dd cb 12 e8
-	;set	5,(ix+12h),c	; dd cb 12 e9
-	;set	5,(ix+12h),d	; dd cb 12 ea
-	;set	5,(ix+12h),e	; dd cb 12 eb
-	;set	5,(ix+12h),h	; dd cb 12 ec
-	;set	5,(ix+12h),l	; dd cb 12 ed
+	set	4,(ix+12h),a	; dd cb 12 e7 (U)
+	set	5,(ix+12h),b	; dd cb 12 e8 (U)
+	set	5,(ix+12h),c	; dd cb 12 e9 (U)
+	set	5,(ix+12h),d	; dd cb 12 ea (U)
+	set	5,(ix+12h),e	; dd cb 12 eb (U)
+	set	5,(ix+12h),h	; dd cb 12 ec (U)
+	set	5,(ix+12h),l	; dd cb 12 ed (U)
 	set	5,(ix+12h)  	; dd cb 12 ee
-	;set	5,(ix+12h),a	; dd cb 12 ef
-	;set	6,(ix+12h),b	; dd cb 12 f0
-	;set	6,(ix+12h),c	; dd cb 12 f1
-	;set	6,(ix+12h),d	; dd cb 12 f2
-	;set	6,(ix+12h),e	; dd cb 12 f3
-	;set	6,(ix+12h),h	; dd cb 12 f4
-	;set	6,(ix+12h),l	; dd cb 12 f5
+	set	5,(ix+12h),a	; dd cb 12 ef (U)
+	set	6,(ix+12h),b	; dd cb 12 f0 (U)
+	set	6,(ix+12h),c	; dd cb 12 f1 (U)
+	set	6,(ix+12h),d	; dd cb 12 f2 (U)
+	set	6,(ix+12h),e	; dd cb 12 f3 (U)
+	set	6,(ix+12h),h	; dd cb 12 f4 (U)
+	set	6,(ix+12h),l	; dd cb 12 f5 (U)
 	set	6,(ix+12h)  	; dd cb 12 f6
-	;set	6,(ix+12h),a	; dd cb 12 f7
-	;set	7,(ix+12h),b	; dd cb 12 f8
-	;set	7,(ix+12h),c	; dd cb 12 f9
-	;set	7,(ix+12h),d	; dd cb 12 fa
-	;set	7,(ix+12h),e	; dd cb 12 fb
-	;set	7,(ix+12h),h	; dd cb 12 fc
-	;set	7,(ix+12h),l	; dd cb 12 fd
+	set	6,(ix+12h),a	; dd cb 12 f7 (U)
+	set	7,(ix+12h),b	; dd cb 12 f8 (U)
+	set	7,(ix+12h),c	; dd cb 12 f9 (U)
+	set	7,(ix+12h),d	; dd cb 12 fa (U)
+	set	7,(ix+12h),e	; dd cb 12 fb (U)
+	set	7,(ix+12h),h	; dd cb 12 fc (U)
+	set	7,(ix+12h),l	; dd cb 12 fd (U)
 	set	7,(ix+12h)  	; dd cb 12 fe
-	;set	7,(ix+12h),a	; dd cb 12 ff
+	set	7,(ix+12h),a	; dd cb 12 ff (U)
 
 	add	iy,bc		; fd 09
 	add	iy,de		; fd 19
 	ld	iy,1234h	; fd 21 34 12
 	ld	(1234h),iy	; fd 22 34 12
 	inc	iy		; fd 23
-	;inc	iyh		; fd 24
-	;dec	iyh		; fd 25
-	;ld	iyh,12h		; fd 26 12
+	inc	iyh		; fd 24 (U)
+	dec	iyh		; fd 25 (U)
+	ld	iyh,12h		; fd 26 12 (U)
 	add	iy,iy		; fd 29
 	ld	iy,(1234h)	; fd 2a 34 12
 	dec	iy		; fd 2b
-	;inc	iyl		; fd 2c
-	;dec	iyl		; fd 2d
-	;ld	iyl,12h		; fd 2e 12
+	inc	iyl		; fd 2c (U)
+	dec	iyl		; fd 2d (U)
+	ld	iyl,12h		; fd 2e 12 (U)
 	inc	(iy+12h)	; fd 34 12
 	dec	(iy+12h)	; fd 35 12
 	ld	(iy+12h),34h	; fd 36 12 34
 	add	iy,sp		; fd 39
-	;ld	b,iyh		; fd 44
-	;ld	b,iyl		; fd 45
+	ld	b,iyh		; fd 44 (U)
+	ld	b,iyl		; fd 45 (U)
 	ld	b,(iy+12h)	; fd 46 12
-	;ld	c,iyh		; fd 4c
-	;ld	c,iyl		; fd 4d
+	ld	c,iyh		; fd 4c (U)
+	ld	c,iyl		; fd 4d (U)
 	ld	c,(iy+12h)	; fd 4e 12
-	;ld	d,iyh		; fd 54
-	;ld	d,iyl		; fd 55
+	ld	d,iyh		; fd 54 (U)
+	ld	d,iyl		; fd 55 (U)
 	ld	d,(iy+12h)	; fd 56 12
-	;ld	e,iyh		; fd 5c
-	;ld	e,iyl		; fd 5d
+	ld	e,iyh		; fd 5c (U)
+	ld	e,iyl		; fd 5d (U)
 	ld	e,(iy+12h)	; fd 5e 12
-	;ld	iyh,b		; fd 60
-	;ld	iyh,c		; fd 61
-	;ld	iyh,d		; fd 62
-	;ld	iyh,e		; fd 63
-	;ld	iyh,iyh		; fd 64
-	;ld	iyh,iyl		; fd 65
+	ld	iyh,b		; fd 60 (U)
+	ld	iyh,c		; fd 61 (U)
+	ld	iyh,d		; fd 62 (U)
+	ld	iyh,e		; fd 63 (U)
+	ld	iyh,iyh		; fd 64 (U)
+	ld	iyh,iyl		; fd 65 (U)
 	ld	h,(iy+12h)	; fd 66 12
-	;ld	iyh,a		; fd 67
-	;ld	iyl,b		; fd 68
-	;ld	iyl,c		; fd 69
-	;ld	iyl,d		; fd 6a
-	;ld	iyl,e		; fd 6b
-	;ld	iyl,iyh		; fd 6c
-	;ld	iyl,iyl		; fd 6d
+	ld	iyh,a		; fd 67 (U)
+	ld	iyl,b		; fd 68 (U)
+	ld	iyl,c		; fd 69 (U)
+	ld	iyl,d		; fd 6a (U)
+	ld	iyl,e		; fd 6b (U)
+	ld	iyl,iyh		; fd 6c (U)
+	ld	iyl,iyl		; fd 6d (U)
 	ld	l,(iy+12h)	; fd 6e 12
-	;ld	iyl,a		; fd 6f
+	ld	iyl,a		; fd 6f (U)
 	ld	(iy+12h),b	; fd 70 12
 	ld	(iy+12h),c	; fd 71 12
 	ld	(iy+12h),d	; fd 72 12
@@ -992,103 +996,102 @@
 	ld	(iy+12h),h	; fd 74 12
 	ld	(iy+12h),l	; fd 75 12
 	ld	(iy+12h),a	; fd 77 12
-	;ld	a,iyh		; fd 7c
-	;ld	a,iyl		; fd 7d
+	ld	a,iyh		; fd 7c (U)
+	ld	a,iyl		; fd 7d (U)
 	ld	a,(iy+12h)	; fd 7e 12
-	;add	a,iyh		; fd 84
-	;add	a,iyl		; fd 85
+	add	a,iyh		; fd 84 (U)
+	add	a,iyl		; fd 85 (U)
 	add	a,(iy+12h)	; fd 86 12
-	;adc	a,iyh		; fd 8c
-	;adc	a,iyl		; fd 8d
+	adc	a,iyh		; fd 8c (U)
+	adc	a,iyl		; fd 8d (U)
 	adc	a,(iy+12h)	; fd 8e 12
-	;sub	a,iyh		; fd 94
-	;sub	a,iyl		; fd 95
+	sub	a,iyh		; fd 94 (U)
+	sub	a,iyl		; fd 95 (U)
 	sub	a,(iy+12h)	; fd 96 12
-	;sbc	a,iyh		; fd 9c
-	;sbc	a,iyl		; fd 9d
+	sbc	a,iyh		; fd 9c (U)
+	sbc	a,iyl		; fd 9d (U)
 	sbc	a,(iy+12h)	; fd 9e 12
-	;and	a,iyh		; fd a4
-	;and	a,iyl		; fd a5
+	and	a,iyh		; fd a4 (U)
+	and	a,iyl		; fd a5 (U)
 	and	a,(iy+12h)	; fd a6 12
-	;xor	a,iyh		; fd ac
-	;xor	a,iyl		; fd ad
+	xor	a,iyh		; fd ac (U)
+	xor	a,iyl		; fd ad (U)
 	xor	a,(iy+12h)	; fd ae 12
-	;or	iyh		; fd b4
-	;or	iyl		; fd b5
+	or	iyh		; fd b4 (U)
+	or	iyl		; fd b5 (U)
 	or	(iy+12h)	; fd b6 12
-	;cp	iyh		; fd bc
-	;cp	iyl		; fd bd
+	cp	iyh		; fd bc (U)
+	cp	iyl		; fd bd (U)
 	cp	(iy+12h)	; fd be 12
 	pop	iy		; fd e1
 	ex	(sp),iy		; fd e3
 	push	iy		; fd e5
 	jp	(iy)		; fd e9
 	ld	sp,iy		; fd f9
-
-	;rlc	(iy+12h),b	; fd cb 12 00
-	;rlc	(iy+12h),c	; fd cb 12 01
-	;rlc	(iy+12h),d	; fd cb 12 02
-	;rlc	(iy+12h),e	; fd cb 12 03
-	;rlc	(iy+12h),h	; fd cb 12 04
-	;rlc	(iy+12h),l	; fd cb 12 05
+	rlc	(iy+12h),b	; fd cb 12 00 (U)
+	rlc	(iy+12h),c	; fd cb 12 01 (U)
+	rlc	(iy+12h),d	; fd cb 12 02 (U)
+	rlc	(iy+12h),e	; fd cb 12 03 (U)
+	rlc	(iy+12h),h	; fd cb 12 04 (U)
+	rlc	(iy+12h),l	; fd cb 12 05 (U)
 	rlc	(iy+12h)	; fd cb 12 06
-	;rlc	(iy+12h),a	; fd cb 12 07
-	;rrc	(iy+12h),b	; fd cb 12 08
-	;rrc	(iy+12h),c	; fd cb 12 09
-	;rrc	(iy+12h),d	; fd cb 12 0a
-	;rrc	(iy+12h),e	; fd cb 12 0b
-	;rrc	(iy+12h),h	; fd cb 12 0c
-	;rrc	(iy+12h),l	; fd cb 12 0d
+	rlc	(iy+12h),a	; fd cb 12 07 (U)
+	rrc	(iy+12h),b	; fd cb 12 08 (U)
+	rrc	(iy+12h),c	; fd cb 12 09 (U)
+	rrc	(iy+12h),d	; fd cb 12 0a (U)
+	rrc	(iy+12h),e	; fd cb 12 0b (U)
+	rrc	(iy+12h),h	; fd cb 12 0c (U)
+	rrc	(iy+12h),l	; fd cb 12 0d (U)
 	rrc	(iy+12h)	; fd cb 12 0e
-	;rrc	(iy+12h),a	; fd cb 12 0f
-	;rl	(iy+12h),b	; fd cb 12 10
-	;rl	(iy+12h),c	; fd cb 12 11
-	;rl	(iy+12h),d	; fd cb 12 12
-	;rl	(iy+12h),e	; fd cb 12 13
-	;rl	(iy+12h),h	; fd cb 12 14
-	;rl	(iy+12h),l	; fd cb 12 15
+	rrc	(iy+12h),a	; fd cb 12 0f (U)
+	rl	(iy+12h),b	; fd cb 12 10 (U)
+	rl	(iy+12h),c	; fd cb 12 11 (U)
+	rl	(iy+12h),d	; fd cb 12 12 (U)
+	rl	(iy+12h),e	; fd cb 12 13 (U)
+	rl	(iy+12h),h	; fd cb 12 14 (U)
+	rl	(iy+12h),l	; fd cb 12 15 (U)
 	rl	(iy+12h)	; fd cb 12 16
-	;rl	(iy+12h),a	; fd cb 12 17
-	;rr	(iy+12h),b	; fd cb 12 18
-	;rr	(iy+12h),c	; fd cb 12 19
-	;rr	(iy+12h),d	; fd cb 12 1a
-	;rr	(iy+12h),e	; fd cb 12 1b
-	;rr	(iy+12h),h	; fd cb 12 1c
-	;rr	(iy+12h),l	; fd cb 12 1d
+	rl	(iy+12h),a	; fd cb 12 17 (U)
+	rr	(iy+12h),b	; fd cb 12 18 (U)
+	rr	(iy+12h),c	; fd cb 12 19 (U)
+	rr	(iy+12h),d	; fd cb 12 1a (U)
+	rr	(iy+12h),e	; fd cb 12 1b (U)
+	rr	(iy+12h),h	; fd cb 12 1c (U)
+	rr	(iy+12h),l	; fd cb 12 1d (U)
 	rr	(iy+12h)	; fd cb 12 1e
-	;rr	(iy+12h),a	; fd cb 12 1f
-	;sla	(iy+12h),b	; fd cb 12 20
-	;sla	(iy+12h),c	; fd cb 12 21
-	;sla	(iy+12h),d	; fd cb 12 22
-	;sla	(iy+12h),e	; fd cb 12 23
-	;sla	(iy+12h),h	; fd cb 12 24
-	;sla	(iy+12h),l	; fd cb 12 25
+	rr	(iy+12h),a	; fd cb 12 1f (U)
+	sla	(iy+12h),b	; fd cb 12 20 (U)
+	sla	(iy+12h),c	; fd cb 12 21 (U)
+	sla	(iy+12h),d	; fd cb 12 22 (U)
+	sla	(iy+12h),e	; fd cb 12 23 (U)
+	sla	(iy+12h),h	; fd cb 12 24 (U)
+	sla	(iy+12h),l	; fd cb 12 25 (U)
 	sla	(iy+12h)	; fd cb 12 26
-	;sla	(iy+12h),a	; fd cb 12 27
-	;sra	(iy+12h),b	; fd cb 12 28
-	;sra	(iy+12h),c	; fd cb 12 29
-	;sra	(iy+12h),d	; fd cb 12 2a
-	;sra	(iy+12h),e	; fd cb 12 2b
-	;sra	(iy+12h),h	; fd cb 12 2c
-	;sra	(iy+12h),l	; fd cb 12 2d
+	sla	(iy+12h),a	; fd cb 12 27 (U)
+	sra	(iy+12h),b	; fd cb 12 28 (U)
+	sra	(iy+12h),c	; fd cb 12 29 (U)
+	sra	(iy+12h),d	; fd cb 12 2a (U)
+	sra	(iy+12h),e	; fd cb 12 2b (U)
+	sra	(iy+12h),h	; fd cb 12 2c (U)
+	sra	(iy+12h),l	; fd cb 12 2d (U)
 	sra	(iy+12h)	; fd cb 12 2e
-	;sra	(iy+12h),a	; fd cb 12 2f
-	;sll	(iy+12h),b	; fd cb 12 30
-	;sll	(iy+12h),c	; fd cb 12 31
-	;sll	(iy+12h),d	; fd cb 12 32
-	;sll	(iy+12h),e	; fd cb 12 33
-	;sll	(iy+12h),h	; fd cb 12 34
-	;sll	(iy+12h),l	; fd cb 12 35
-	;sll	(iy+12h)	; fd cb 12 36
-	;sll	(iy+12h),a	; fd cb 12 37
-	;srl	(iy+12h),b	; fd cb 12 38
-	;srl	(iy+12h),c	; fd cb 12 39
-	;srl	(iy+12h),d	; fd cb 12 3a
-	;srl	(iy+12h),e	; fd cb 12 3b
-	;srl	(iy+12h),h	; fd cb 12 3c
-	;srl	(iy+12h),l	; fd cb 12 3d
+	sra	(iy+12h),a	; fd cb 12 2f (U)
+	sll	(iy+12h),b	; fd cb 12 30 (U)
+	sll	(iy+12h),c	; fd cb 12 31 (U)
+	sll	(iy+12h),d	; fd cb 12 32 (U)
+	sll	(iy+12h),e	; fd cb 12 33 (U)
+	sll	(iy+12h),h	; fd cb 12 34 (U)
+	sll	(iy+12h),l	; fd cb 12 35 (U)
+	sll	(iy+12h)	; fd cb 12 36 (U)
+	sll	(iy+12h),a	; fd cb 12 37 (U)
+	srl	(iy+12h),b	; fd cb 12 38 (U)
+	srl	(iy+12h),c	; fd cb 12 39 (U)
+	srl	(iy+12h),d	; fd cb 12 3a (U)
+	srl	(iy+12h),e	; fd cb 12 3b (U)
+	srl	(iy+12h),h	; fd cb 12 3c (U)
+	srl	(iy+12h),l	; fd cb 12 3d (U)
 	srl	(iy+12h)	; fd cb 12 3e
-	;srl	(iy+12h),a	; fd cb 12 3f
+	srl	(iy+12h),a	; fd cb 12 3f (U)
 	;bit	0,(iy+12h)	; fd cb 12 40
 	;bit	0,(iy+12h)	; fd cb 12 41
 	;bit	0,(iy+12h)	; fd cb 12 42
@@ -1153,131 +1156,131 @@
 	;bit	7,(iy+12h)	; fd cb 12 7d
 	bit	7,(iy+12h)	; fd cb 12 7e
 	;bit	7,(iy+12h)	; fd cb 12 7f
-	;res	0,(iy+12h),b	; fd cb 12 80
-	;res	0,(iy+12h),c	; fd cb 12 81
-	;res	0,(iy+12h),d	; fd cb 12 82
-	;res	0,(iy+12h),e	; fd cb 12 83
-	;res	0,(iy+12h),h	; fd cb 12 84
-	;res	0,(iy+12h),l	; fd cb 12 85
+	res	0,(iy+12h),b	; fd cb 12 80 (U)
+	res	0,(iy+12h),c	; fd cb 12 81 (U)
+	res	0,(iy+12h),d	; fd cb 12 82 (U)
+	res	0,(iy+12h),e	; fd cb 12 83 (U)
+	res	0,(iy+12h),h	; fd cb 12 84 (U)
+	res	0,(iy+12h),l	; fd cb 12 85 (U)
 	res	0,(iy+12h)  	; fd cb 12 86
-	;res	0,(iy+12h),a	; fd cb 12 87
-	;res	1,(iy+12h),b	; fd cb 12 88
-	;res	1,(iy+12h),c	; fd cb 12 89
-	;res	1,(iy+12h),d	; fd cb 12 8a
-	;res	1,(iy+12h),e	; fd cb 12 8b
-	;res	1,(iy+12h),h	; fd cb 12 8c
-	;res	1,(iy+12h),l	; fd cb 12 8d
+	res	0,(iy+12h),a	; fd cb 12 87 (U)
+	res	1,(iy+12h),b	; fd cb 12 88 (U)
+	res	1,(iy+12h),c	; fd cb 12 89 (U)
+	res	1,(iy+12h),d	; fd cb 12 8a (U)
+	res	1,(iy+12h),e	; fd cb 12 8b (U)
+	res	1,(iy+12h),h	; fd cb 12 8c (U)
+	res	1,(iy+12h),l	; fd cb 12 8d (U)
 	res	1,(iy+12h)  	; fd cb 12 8e
-	;res	1,(iy+12h),a	; fd cb 12 8f
-	;res	2,(iy+12h),b	; fd cb 12 90
-	;res	2,(iy+12h),c	; fd cb 12 91
-	;res	2,(iy+12h),d	; fd cb 12 92
-	;res	2,(iy+12h),e	; fd cb 12 93
-	;res	2,(iy+12h),h	; fd cb 12 94
-	;res	2,(iy+12h),l	; fd cb 12 95
+	res	1,(iy+12h),a	; fd cb 12 8f (U)
+	res	2,(iy+12h),b	; fd cb 12 90 (U)
+	res	2,(iy+12h),c	; fd cb 12 91 (U)
+	res	2,(iy+12h),d	; fd cb 12 92 (U)
+	res	2,(iy+12h),e	; fd cb 12 93 (U)
+	res	2,(iy+12h),h	; fd cb 12 94 (U)
+	res	2,(iy+12h),l	; fd cb 12 95 (U)
 	res	2,(iy+12h)  	; fd cb 12 96
-	;res	2,(iy+12h),a	; fd cb 12 97
-	;res	3,(iy+12h),b	; fd cb 12 98
-	;res	3,(iy+12h),c	; fd cb 12 99
-	;res	3,(iy+12h),d	; fd cb 12 9a
-	;res	3,(iy+12h),e	; fd cb 12 9b
-	;res	3,(iy+12h),h	; fd cb 12 9c
-	;res	3,(iy+12h),l	; fd cb 12 9d
+	res	2,(iy+12h),a	; fd cb 12 97 (U)
+	res	3,(iy+12h),b	; fd cb 12 98 (U)
+	res	3,(iy+12h),c	; fd cb 12 99 (U)
+	res	3,(iy+12h),d	; fd cb 12 9a (U)
+	res	3,(iy+12h),e	; fd cb 12 9b (U)
+	res	3,(iy+12h),h	; fd cb 12 9c (U)
+	res	3,(iy+12h),l	; fd cb 12 9d (U)
 	res	3,(iy+12h)  	; fd cb 12 9e
-	;res	3,(iy+12h),a	; fd cb 12 9f
-	;res	4,(iy+12h),b	; fd cb 12 a0
-	;res	4,(iy+12h),c	; fd cb 12 a1
-	;res	4,(iy+12h),d	; fd cb 12 a2
-	;res	4,(iy+12h),e	; fd cb 12 a3
-	;res	4,(iy+12h),h	; fd cb 12 a4
-	;res	4,(iy+12h),l	; fd cb 12 a5
+	res	3,(iy+12h),a	; fd cb 12 9f (U)
+	res	4,(iy+12h),b	; fd cb 12 a0 (U)
+	res	4,(iy+12h),c	; fd cb 12 a1 (U)
+	res	4,(iy+12h),d	; fd cb 12 a2 (U)
+	res	4,(iy+12h),e	; fd cb 12 a3 (U)
+	res	4,(iy+12h),h	; fd cb 12 a4 (U)
+	res	4,(iy+12h),l	; fd cb 12 a5 (U)
 	res	4,(iy+12h)  	; fd cb 12 a6
-	;res	4,(iy+12h),a	; fd cb 12 a7
-	;res	5,(iy+12h),b	; fd cb 12 a8
-	;res	5,(iy+12h),c	; fd cb 12 a9
-	;res	5,(iy+12h),d	; fd cb 12 aa
-	;res	5,(iy+12h),e	; fd cb 12 ab
-	;res	5,(iy+12h),h	; fd cb 12 ac
-	;res	5,(iy+12h),l	; fd cb 12 ad
+	res	4,(iy+12h),a	; fd cb 12 a7 (U)
+	res	5,(iy+12h),b	; fd cb 12 a8 (U)
+	res	5,(iy+12h),c	; fd cb 12 a9 (U)
+	res	5,(iy+12h),d	; fd cb 12 aa (U)
+	res	5,(iy+12h),e	; fd cb 12 ab (U)
+	res	5,(iy+12h),h	; fd cb 12 ac (U)
+	res	5,(iy+12h),l	; fd cb 12 ad (U)
 	res	5,(iy+12h)  	; fd cb 12 ae
-	;res	5,(iy+12h),a	; fd cb 12 af
-	;res	6,(iy+12h),b	; fd cb 12 b0
-	;res	6,(iy+12h),c	; fd cb 12 b1
-	;res	6,(iy+12h),d	; fd cb 12 b2
-	;res	6,(iy+12h),e	; fd cb 12 b3
-	;res	6,(iy+12h),h	; fd cb 12 b4
-	;res	6,(iy+12h),l	; fd cb 12 b5
+	res	5,(iy+12h),a	; fd cb 12 af (U)
+	res	6,(iy+12h),b	; fd cb 12 b0 (U)
+	res	6,(iy+12h),c	; fd cb 12 b1 (U)
+	res	6,(iy+12h),d	; fd cb 12 b2 (U)
+	res	6,(iy+12h),e	; fd cb 12 b3 (U)
+	res	6,(iy+12h),h	; fd cb 12 b4 (U)
+	res	6,(iy+12h),l	; fd cb 12 b5 (U)
 	res	6,(iy+12h)  	; fd cb 12 b6
-	;res	6,(iy+12h),a	; fd cb 12 b7
-	;res	7,(iy+12h),b	; fd cb 12 b8
-	;res	7,(iy+12h),c	; fd cb 12 b9
-	;res	7,(iy+12h),d	; fd cb 12 ba
-	;res	7,(iy+12h),e	; fd cb 12 bb
-	;res	7,(iy+12h),h	; fd cb 12 bc
-	;res	7,(iy+12h),l	; fd cb 12 bd
+	res	6,(iy+12h),a	; fd cb 12 b7 (U)
+	res	7,(iy+12h),b	; fd cb 12 b8 (U)
+	res	7,(iy+12h),c	; fd cb 12 b9 (U)
+	res	7,(iy+12h),d	; fd cb 12 ba (U)
+	res	7,(iy+12h),e	; fd cb 12 bb (U)
+	res	7,(iy+12h),h	; fd cb 12 bc (U)
+	res	7,(iy+12h),l	; fd cb 12 bd (U)
 	res	7,(iy+12h)  	; fd cb 12 be
-	;res	7,(iy+12h),a	; fd cb 12 bf
-	;set	0,(iy+12h),b	; fd cb 12 c0
-	;set	0,(iy+12h),c	; fd cb 12 c1
-	;set	0,(iy+12h),d	; fd cb 12 c2
-	;set	0,(iy+12h),e	; fd cb 12 c3
-	;set	0,(iy+12h),h	; fd cb 12 c4
-	;set	0,(iy+12h),l	; fd cb 12 c5
+	res	7,(iy+12h),a	; fd cb 12 bf (U)
+	set	0,(iy+12h),b	; fd cb 12 c0 (U)
+	set	0,(iy+12h),c	; fd cb 12 c1 (U)
+	set	0,(iy+12h),d	; fd cb 12 c2 (U)
+	set	0,(iy+12h),e	; fd cb 12 c3 (U)
+	set	0,(iy+12h),h	; fd cb 12 c4 (U)
+	set	0,(iy+12h),l	; fd cb 12 c5 (U)
 	set	0,(iy+12h)  	; fd cb 12 c6
-	;set	0,(iy+12h),a	; fd cb 12 c7
-	;set	1,(iy+12h),b	; fd cb 12 c8
-	;set	1,(iy+12h),c	; fd cb 12 c9
-	;set	1,(iy+12h),d	; fd cb 12 ca
-	;set	1,(iy+12h),e	; fd cb 12 cb
-	;set	1,(iy+12h),h	; fd cb 12 cc
-	;set	1,(iy+12h),l	; fd cb 12 cd
+	set	0,(iy+12h),a	; fd cb 12 c7 (U)
+	set	1,(iy+12h),b	; fd cb 12 c8 (U)
+	set	1,(iy+12h),c	; fd cb 12 c9 (U)
+	set	1,(iy+12h),d	; fd cb 12 ca (U)
+	set	1,(iy+12h),e	; fd cb 12 cb (U)
+	set	1,(iy+12h),h	; fd cb 12 cc (U)
+	set	1,(iy+12h),l	; fd cb 12 cd (U)
 	set	1,(iy+12h)  	; fd cb 12 ce
-	;set	1,(iy+12h),a	; fd cb 12 cf
-	;set	2,(iy+12h),b	; fd cb 12 d0
-	;set	2,(iy+12h),c	; fd cb 12 d1
-	;set	2,(iy+12h),d	; fd cb 12 d2
-	;set	2,(iy+12h),e	; fd cb 12 d3
-	;set	2,(iy+12h),h	; fd cb 12 d4
-	;set	2,(iy+12h),l	; fd cb 12 d5
+	set	1,(iy+12h),a	; fd cb 12 cf (U)
+	set	2,(iy+12h),b	; fd cb 12 d0 (U)
+	set	2,(iy+12h),c	; fd cb 12 d1 (U)
+	set	2,(iy+12h),d	; fd cb 12 d2 (U)
+	set	2,(iy+12h),e	; fd cb 12 d3 (U)
+	set	2,(iy+12h),h	; fd cb 12 d4 (U)
+	set	2,(iy+12h),l	; fd cb 12 d5 (U)
 	set	2,(iy+12h)  	; fd cb 12 d6
-	;set	2,(iy+12h),a	; fd cb 12 d7
-	;set	3,(iy+12h),b	; fd cb 12 d8
-	;set	3,(iy+12h),c	; fd cb 12 d9
-	;set	3,(iy+12h),d	; fd cb 12 da
-	;set	3,(iy+12h),e	; fd cb 12 db
-	;set	3,(iy+12h),h	; fd cb 12 dc
-	;set	3,(iy+12h),l	; fd cb 12 dd
+	set	2,(iy+12h),a	; fd cb 12 d7 (U)
+	set	3,(iy+12h),b	; fd cb 12 d8 (U)
+	set	3,(iy+12h),c	; fd cb 12 d9 (U)
+	set	3,(iy+12h),d	; fd cb 12 da (U)
+	set	3,(iy+12h),e	; fd cb 12 db (U)
+	set	3,(iy+12h),h	; fd cb 12 dc (U)
+	set	3,(iy+12h),l	; fd cb 12 dd (U)
 	set	3,(iy+12h)  	; fd cb 12 de
-	;set	3,(iy+12h),a	; fd cb 12 df
-	;set	4,(iy+12h),b	; fd cb 12 e0
-	;set	4,(iy+12h),c	; fd cb 12 e1
-	;set	4,(iy+12h),d	; fd cb 12 e2
-	;set	4,(iy+12h),e	; fd cb 12 e3
-	;set	4,(iy+12h),h	; fd cb 12 e4
-	;set	4,(iy+12h),l	; fd cb 12 e5
+	set	3,(iy+12h),a	; fd cb 12 df (U)
+	set	4,(iy+12h),b	; fd cb 12 e0 (U)
+	set	4,(iy+12h),c	; fd cb 12 e1 (U)
+	set	4,(iy+12h),d	; fd cb 12 e2 (U)
+	set	4,(iy+12h),e	; fd cb 12 e3 (U)
+	set	4,(iy+12h),h	; fd cb 12 e4 (U)
+	set	4,(iy+12h),l	; fd cb 12 e5 (U)
 	set	4,(iy+12h)  	; fd cb 12 e6
-	;set	4,(iy+12h),a	; fd cb 12 e7
-	;set	5,(iy+12h),b	; fd cb 12 e8
-	;set	5,(iy+12h),c	; fd cb 12 e9
-	;set	5,(iy+12h),d	; fd cb 12 ea
-	;set	5,(iy+12h),e	; fd cb 12 eb
-	;set	5,(iy+12h),h	; fd cb 12 ec
-	;set	5,(iy+12h),l	; fd cb 12 ed
+	set	4,(iy+12h),a	; fd cb 12 e7 (U)
+	set	5,(iy+12h),b	; fd cb 12 e8 (U)
+	set	5,(iy+12h),c	; fd cb 12 e9 (U)
+	set	5,(iy+12h),d	; fd cb 12 ea (U)
+	set	5,(iy+12h),e	; fd cb 12 eb (U)
+	set	5,(iy+12h),h	; fd cb 12 ec (U)
+	set	5,(iy+12h),l	; fd cb 12 ed (U)
 	set	5,(iy+12h)  	; fd cb 12 ee
-	;set	5,(iy+12h),a	; fd cb 12 ef
-	;set	6,(iy+12h),b	; fd cb 12 f0
-	;set	6,(iy+12h),c	; fd cb 12 f1
-	;set	6,(iy+12h),d	; fd cb 12 f2
-	;set	6,(iy+12h),e	; fd cb 12 f3
-	;set	6,(iy+12h),h	; fd cb 12 f4
-	;set	6,(iy+12h),l	; fd cb 12 f5
+	set	5,(iy+12h),a	; fd cb 12 ef (U)
+	set	6,(iy+12h),b	; fd cb 12 f0 (U)
+	set	6,(iy+12h),c	; fd cb 12 f1 (U)
+	set	6,(iy+12h),d	; fd cb 12 f2 (U)
+	set	6,(iy+12h),e	; fd cb 12 f3 (U)
+	set	6,(iy+12h),h	; fd cb 12 f4 (U)
+	set	6,(iy+12h),l	; fd cb 12 f5 (U)
 	set	6,(iy+12h)  	; fd cb 12 f6
-	;set	6,(iy+12h),a	; fd cb 12 f7
-	;set	7,(iy+12h),b	; fd cb 12 f8
-	;set	7,(iy+12h),c	; fd cb 12 f9
-	;set	7,(iy+12h),d	; fd cb 12 fa
-	;set	7,(iy+12h),e	; fd cb 12 fb
-	;set	7,(iy+12h),h	; fd cb 12 fc
-	;set	7,(iy+12h),l	; fd cb 12 fd
-	set	7,(iy+12h)  	; fd cb 12 fe
-	;set	7,(iy+12h),a	; fd cb 12 ff
+	set	6,(iy+12h),a	; fd cb 12 f7 (U)
+	set	7,(iy+12h),b	; fd cb 12 f8 (U)
+	set	7,(iy+12h),c	; fd cb 12 f9 (U)
+	set	7,(iy+12h),d	; fd cb 12 fa (U)
+	set	7,(iy+12h),e	; fd cb 12 fb (U)
+	set	7,(iy+12h),h	; fd cb 12 fc (U)
+	set	7,(iy+12h),l	; fd cb 12 fd (U)
+	set	7,(iy+12h)	; fd cb 12 fe
+	set	7,(iy+12h),a	; fd cb 12 ff (U)

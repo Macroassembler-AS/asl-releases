@@ -539,7 +539,7 @@ static void SwitchFrom_2650(void)
 
 static void SwitchTo_2650(void)
 {
-  PFamilyDescr pDescr;
+  const TFamilyDescr *pDescr;
 
   TurnWords = False;
   SetIntConstMode(eIntConstModeMoto);

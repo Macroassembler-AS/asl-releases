@@ -11,13 +11,13 @@
 #include "stdinc.h"
 #include <string.h>
 
-const char *Version = "1.42 Beta [Bld 215]";
-const char *DebVersion = "1.42bld215-1";
+const char *Version = "1.42 Beta [Bld 216]";
+const char *DebVersion = "1.42bld216-1";
 LongInt VerNo = 0x142f;
 
-const char *InfoMessCopyright = "(C) 1992,2021 Alfred Arnold";
+const char *InfoMessCopyright = "(C) 1992,2022 Alfred Arnold";
 
-LongInt Magic = 0x12372d46;
+LongInt Magic = 0x12372e46;
 
 void version_init(void)
 {

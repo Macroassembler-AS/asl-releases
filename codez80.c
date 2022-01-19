@@ -626,7 +626,7 @@ static ShortInt DecodeAdr(const tStrComp *pArg, unsigned ModeMask)
     }
     while (p_split_pos);
 
-    /* now we have parsed the expression, see what wee can do with it: */
+    /* now we have parsed the expression, see what we can do with it: */
 
     switch (addr_reg)
     {
@@ -637,7 +637,11 @@ static ShortInt DecodeAdr(const tStrComp *pArg, unsigned ModeMask)
 
         if (ModeMask & MModAbs)
         {
-          if (!mFirstPassUnknownOrQuestionable(disp_eval_result.Flags) && !RangeCheck(address, ExtFlag ? UInt32 : UInt16))
+          /* no range checking if address range is 32 bits - disp_acc is only a 32 bit value */
+
+          if (!mFirstPassUnknownOrQuestionable(disp_eval_result.Flags)
+           && !ExtFlag
+           && !ChkRangeByType(disp_acc, UInt16, pArg))
             return AdrMode;
           ChkSpace(SegCode, disp_eval_result.AddrSpaceMask);
           AdrVals[0] = address & 0xff;
@@ -659,7 +663,7 @@ static ShortInt DecodeAdr(const tStrComp *pArg, unsigned ModeMask)
         }
         else if (ModeMask & MModIOAbs)
         {
-          if (!mFirstPassUnknownOrQuestionable(disp_eval_result.Flags) && !RangeCheck(address, UInt8))
+          if (!mFirstPassUnknownOrQuestionable(disp_eval_result.Flags) && !ChkRangeByType(disp_acc, UInt8, pArg))
             return AdrMode;
           ChkSpace(SegIO, disp_eval_result.AddrSpaceMask);
           AdrVals[0] = address & 0xff;
@@ -714,7 +718,7 @@ static ShortInt DecodeAdr(const tStrComp *pArg, unsigned ModeMask)
       case (IXPrefix & 0xf0) | 2: /* (IX+d) */
       case (IYPrefix & 0xf0) | 2: /* (IY+d) */
       case 3: /* (SP+d) */
-        if (!mFirstPassUnknownOrQuestionable(disp_eval_result.Flags) && !RangeCheck(disp_acc, (MomCPU >= CPUZ380) ? SInt24 : SInt8))
+        if (!mFirstPassUnknownOrQuestionable(disp_eval_result.Flags) && !ChkRangeByType(disp_acc, (MomCPU >= CPUZ380) ? SInt24 : SInt8, pArg))
           return AdrMode;
         if (addr_reg == 3)
           AdrMode = ModSPRel;

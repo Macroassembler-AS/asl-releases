@@ -1097,7 +1097,7 @@ static void SwitchFrom_HMCS400(void)
 
 static void SwitchTo_HMCS400(void)
 {
-  PFamilyDescr pDescr;
+  const TFamilyDescr *pDescr;
 
   pDescr = FindFamilyByName("HMCS400");
 

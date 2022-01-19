@@ -1703,7 +1703,7 @@ static void SwitchTo_78K2(void)
     {"P6"  , &Reg_P6  , 0,  0xf,  0x10, NULL},
     {"PM6" , &Reg_PM6 , 0,  0xf,  0x10, NULL}
   };
-  PFamilyDescr pDescr;
+  const TFamilyDescr *pDescr;
 
   pDescr = FindFamilyByName("78K2");
 

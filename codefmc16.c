@@ -2320,7 +2320,7 @@ static void InitCode_F2MC16(void)
 
 static void SwitchTo_F2MC16(void)
 {
-  PFamilyDescr FoundDescr;
+  const TFamilyDescr *FoundDescr;
 
   FoundDescr = FindFamilyByName("F2MC16");
 

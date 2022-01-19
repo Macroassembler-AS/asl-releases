@@ -183,13 +183,13 @@
 	expect	1320		; displacement under/overflow
 	l	r4,130(ic)
 	endexpect
-	expect	1320		; should be 1315 ideally
+	expect	1315
 	l	r4,-129(ic)
 	endexpect
 	expect	1320
 	l	r4,(130(ic))
 	endexpect
-	expect	1320		; should be 1315 ideally
+	expect	1315
 	l	r4,(-129(ic))
 	endexpect
 

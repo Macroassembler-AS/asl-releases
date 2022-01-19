@@ -1228,7 +1228,7 @@ static void SwitchFrom_8008(void)
 
 static void SwitchTo_8008(void)
 {
-  PFamilyDescr FoundDescr;
+  const TFamilyDescr *FoundDescr;
 
   FoundDescr = FindFamilyByName("8008");
 

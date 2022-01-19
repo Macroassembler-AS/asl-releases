@@ -2740,7 +2740,7 @@ static void SwitchTo_32054x(void)
     {"SP" , &Reg_SP , 0, 0xffff, 0x10000, NULL}
   };
 
-  PFamilyDescr FoundDescr;
+  const TFamilyDescr *FoundDescr;
 
   FoundDescr = FindFamilyByName("TMS320C54x");
 

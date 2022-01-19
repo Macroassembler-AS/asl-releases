@@ -1025,7 +1025,7 @@ static void SwitchTo_OLMS50(void)
   { "P", &PRegAssume, 0, 0x3, 0x8, NULL }
 };
 
-  PFamilyDescr pDescr;
+  const TFamilyDescr *pDescr;
 
   pDescr = FindFamilyByName("OLMS-50");
 

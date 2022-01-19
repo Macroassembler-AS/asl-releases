@@ -563,7 +563,7 @@ static void SwitchFrom_7720(void)
 
 static void SwitchTo_7720(void)
 {
-  PFamilyDescr FoundDescr;
+  const TFamilyDescr *FoundDescr;
 
   TurnWords = False;
   SetIntConstMode(eIntConstModeIntel);

@@ -610,7 +610,7 @@ static Boolean IsDef_SX20(void)
 
 static void SwitchTo_SX20(void)
 {
-  const PFamilyDescr pDescr = FindFamilyByName("SX20");
+  const TFamilyDescr *pDescr = FindFamilyByName("SX20");
 #define ASSUMESX20Count (sizeof(ASSUMESX20s) / sizeof(*ASSUMESX20s))
   static const ASSUMERec ASSUMESX20s[] =
   {

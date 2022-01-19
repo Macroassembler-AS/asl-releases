@@ -731,7 +731,7 @@ static void SwitchFrom_ACE(void)
 
 static void SwitchTo_ACE(void)
 {
-  PFamilyDescr Descr;
+  const TFamilyDescr *Descr;
 
   TurnWords = False;
   SetIntConstMode(eIntConstModeIntel);

@@ -3484,7 +3484,7 @@ static void SwitchFrom_78K4(void)
 
 static void SwitchTo_78K4(void)
 {
-  PFamilyDescr pDescr;
+  const TFamilyDescr *pDescr;
 
   pDescr = FindFamilyByName("78K4");
 
