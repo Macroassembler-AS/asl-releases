@@ -1067,6 +1067,8 @@ static void SwitchTo_6805(void)
   SwitchFrom = SwitchFrom_6805;
   InitFields();
   AddMoto16PseudoONOFF();
+
+  SetFlag(&DoPadding, DoPaddingName, False);
 }
 
 void code6805_init(void)

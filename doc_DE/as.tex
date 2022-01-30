@@ -3850,16 +3850,19 @@ internen RAM-Inhalt im Standby halten zu k"onnen.
 \begin{quote}
 bt) 7800, 7801, 7802 \\
 78C05, 78C06 \\
+7807, 7808, 7809 \\
 7810 $\rightarrow$ 78C10, 78C11, 78C12, 78C14, 78C17, 78C18
 \end{quote}
 $\mu$PD7800 bis $\mu$PD7802 repr"asentieren die ''erste Generation'' der
 uCOM87-Familie von NEC.  $\mu$PD78C05 und $\mu$PD78C06 sind davon abgespeckte
-Versionen, die nur eine Untermenge des Befehlssatzes unterst"utzen.  Alle
-$\mu$PD781x-Varianten geh"oren zur uCOM87AD-Serie, die nicht nur um einen
-A/D-Wandler erg"anzt wurden, sondern auch um weitere Befehle und Register.
-\bb{ACHTUNG!} Der Befehlssatz ist nur teilweise bin"ar aufw"artskompatibel!
-Die NMOS-Version 78107810 besitzt keinen STOP-Modus; der entspechende Befehl sowie
-das ZCM-Register fehlen demzufolge.  \bb{VORSICHT!} NMOS- und CMOS-Version
+Versionen, die nur eine Untermenge des Befehlssatzes unterst"utzen.  7807
+bis 7809 stellen die uCOM87-Serie dar, die um weitere Befehle und erg"anzt
+wurde.  Alle $\mu$PD781x-Varianten geh"oren zur uCOM87AD-Serie, die dar"uber
+hinaus um einen A/D-Wandler erg"anzt wurde, daf"ur wurden die Befehle zur
+Verarbeitung von Bits wieder entfernt.  \bb{ACHTUNG!} Der Befehlssatz ist
+generell nur teilweise bin"ar aufw"artskompatibel!  Die NMOS-Version
+$\mu$PD7810 besitzt keinen STOP-Modus; der entspechende Befehl sowie das
+ZCM-Register fehlen demzufolge.  \bb{VORSICHT!} NMOS- und CMOS-Version
 differieren zum Teil in den Reset-Werten einiger Register!
 %%-----------
 \begin{quote}
@@ -7387,12 +7390,17 @@ die "uber die drei Befehle auch dem Programmierer zug"anglich sind:
       ist aber unvollst"andig.}
 \end{itemize}
 Allen drei Befehlen ist das Format gemeinsam, in dem die Fehlermeldung
-angegeben werden mu"s: Ein beliebig (berechneter?!) Stringausdruck, der
-damit sowohl eine Konstante als auch variabel sein darf.
-\par
-Diese Anweisungen ergeben nur in Zusammenhang mit bedingter Assemblierung
-Sinn.  Ist f"ur ein Programm z.B. nur ein begrenzter Adre"sraum vorhanden,
-so kann man den "Uberlauf folgenderma"sen testen:
+angegeben werden mu"s: Ein beliebiger String-Ausdruck, der sowohl eine einfache
+Konstante als auch eine komplizierte Formel sein darf, die zu einem String
+evaluiert.  Dies schlie"st auch die in \ref{SectSymConv} beschriebene
+Funktion ein, um Zahlenwerte mit auszugeben:
+\begin{verbatim}
+       message "Startadresse ist \{start_address}"
+\end{verbatim}
+Diejenigen Anweisungen, die Warnungen oder Fehlermeldungen erzeugen, ergeben
+nur in Zusammenhang mit bedingter Assemblierung Sinn.  Ist f"ur ein Programm
+z.B. nur ein begrenzter Adre"sraum vorhanden, so kann man den "Uberlauf
+folgenderma"sen testen:
 \begin{verbatim}
 ROMSize equ     8000h   ; 27256-EPROM
 

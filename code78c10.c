@@ -4,7 +4,7 @@
 /*                                                                           */
 /* AS-Portierung                                                             */
 /*                                                                           */
-/* Codegenerator NEC uPD78(C)1x                                              */
+/* Codegenerator NEC uPD78(C)(0|1)x                                          */
 /*                                                                           */
 /*****************************************************************************/
 
@@ -52,13 +52,15 @@ typedef enum
   eCoreNone,
   eCore7800Low,
   eCore7800High,
+  eCore7807,
   eCore7810
 } tCore;
 
-#define core_mask_no_low ((1 << eCore7800High) | (1 << eCore7810))
+#define core_mask_no_low ((1 << eCore7800High) | (1 << eCore7807) | (1 << eCore7810))
 #define core_mask_7800 ((1 << eCore7800Low) | (1 << eCore7800High))
-#define core_mask_7810 (1 << eCore7810)
-#define core_mask_all ((1 << eCore7800Low) | (1 << eCore7800High) | (1 << eCore7810))
+#define core_mask_7807 (1 << eCore7807)
+#define core_mask_7807_7810 ((1 << eCore7807) | (1 << eCore7810))
+#define core_mask_all ((1 << eCore7800Low) | (1 << eCore7800High) | (1 << eCore7807) | (1 << eCore7810))
 
 enum
 {
@@ -84,10 +86,12 @@ typedef struct
   unsigned core_mask;
 } order_t;
 
-#define FixedOrderCnt 38
+#define FixedOrderCnt 39
 #define Reg2OrderCnt 10
 #define SRegCnt 28
 #define IntFlagCnt 18
+
+static Boolean is_7807_781x;
 
 static LongInt WorkArea;
 
@@ -138,8 +142,8 @@ static decode_reg_res_t decode_r(const tStrComp *p_arg, ShortInt *p_res)
 
 static decode_reg_res_t decode_r1(const tStrComp *p_arg, ShortInt *p_res)
 {
-  if ((pCurrCPUProps->Core == eCore7810) && !as_strcasecmp(p_arg->str.p_str, "EAL")) *p_res = 1;
-  else if ((pCurrCPUProps->Core == eCore7810) && !as_strcasecmp(p_arg->str.p_str, "EAH")) *p_res = 0;
+  if (is_7807_781x && !as_strcasecmp(p_arg->str.p_str, "EAL")) *p_res = 1;
+  else if (is_7807_781x && !as_strcasecmp(p_arg->str.p_str, "EAH")) *p_res = 0;
   else
   {
     decode_reg_res_t ret = decode_r(p_arg, p_res);
@@ -402,7 +406,9 @@ static Boolean Decode_sr3(const tStrComp *p_arg, ShortInt *p_res)
 static Boolean Decode_sr4(const tStrComp *p_arg, ShortInt *p_res)
 {
   if (!as_strcasecmp(p_arg->str.p_str, "ECNT")) *p_res = 0;
-  else if (!as_strcasecmp(p_arg->str.p_str, "ECPT")) *p_res = 1;
+  else if ((pCurrCPUProps->Core == eCore7810) && !as_strcasecmp(p_arg->str.p_str, "ECPT")) *p_res = 1;
+  else if ((pCurrCPUProps->Core == eCore7807) && !as_strcasecmp(p_arg->str.p_str, "ECPT0")) *p_res = 1;
+  else if ((pCurrCPUProps->Core == eCore7807) && !as_strcasecmp(p_arg->str.p_str, "ECPT1")) *p_res = 2;
   else
   {
     WrStrErrorPos(ErrNum_InvCtrlReg, p_arg);
@@ -423,17 +429,23 @@ static Boolean Decode_irf(const tStrComp *p_arg, ShortInt *p_res)
   return False;
 }
 
-static Boolean Decode_wa(const tStrComp *pArg, Byte *Erg)
+static Boolean Decode_wa(const tStrComp *pArg, Byte *Erg, Byte max_address)
 {
   Word Adr;
   Boolean OK;
   tSymbolFlags Flags;
 
   Adr = EvalStrIntExpressionWithFlags(pArg, Int16, &OK, &Flags);
-  if (!OK) return False;
-  if (!mFirstPassUnknown(Flags) && (Hi(Adr) != WorkArea)) WrError(ErrNum_InAccPage);
+  if (!OK)
+    return False;
+
+  if (!mFirstPassUnknown(Flags) && (Hi(Adr) != WorkArea)) WrStrErrorPos(ErrNum_InAccPage, pArg);
   *Erg = Lo(Adr);
-  return True;
+
+  if (mFirstPassUnknownOrQuestionable(Flags))
+    *Erg &= max_address;
+
+  return ChkRangePos(*Erg, 0, max_address, pArg);
 }
 
 static Boolean HasDisp(ShortInt Mode)
@@ -456,6 +468,71 @@ static void PutCode(Word Code)
   if (Hi(Code) != 0)
     BAsmCode[CodeLen++] = Hi(Code);
   BAsmCode[CodeLen++] = Lo(Code);
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     decode_bit_7807_core(const tStrComp *p_arg, Byte code)
+ * \brief  core routine for uPD7807 bit-oriented instructions
+ * \param  p_arg source bit argument
+ * \param  code machine code of instruction
+ * ------------------------------------------------------------------------ */
+
+static void decode_bit_7807_core(const tStrComp *p_arg, Byte code)
+{
+  Boolean OK;
+  char *p_sep;
+
+  /* specified as register + bit position? */
+
+  p_sep = RQuotPos(p_arg->str.p_str, '.');
+  if (p_sep)
+  {
+    tStrComp reg_comp, bit_comp;
+    Boolean OK;
+    ShortInt s_reg;
+
+    StrCompSplitRef(&reg_comp, &bit_comp, p_arg, p_sep);
+    BAsmCode[1] = EvalStrIntExpression(&bit_comp, UInt3, &OK);
+    if (!OK)
+      return;
+
+    /* Special registers 0...15 bit addressable as bits 80h...0ffh: */
+
+    if (decode_sr_flag(&reg_comp, &s_reg, eFlagSR2) == e_decode_reg_ok)
+    {
+      if ((s_reg > 0x0f) || (s_reg < 0))
+      {
+        WrStrErrorPos(ErrNum_InvReg, &reg_comp);
+        return;
+      }
+      BAsmCode[1] |= 0x80 | (s_reg << 3);
+    }
+
+    /* Bit addressable memory: first 16 bytes in working page: */
+
+    else
+    {
+      Byte address;
+
+      if (!Decode_wa(&reg_comp, &address, 15))
+        return;
+      BAsmCode[1] |= address << 3;
+      if (!OK)
+        return;
+    }
+  }
+
+  /* linear value ? */
+
+  else
+  {
+    BAsmCode[1] = EvalStrIntExpression(p_arg, UInt8, &OK);
+    if (!OK)
+      return;
+  }
+
+  BAsmCode[0] = code;
+  CodeLen = 2;
 }
 
 static void DecodeFixed(Word index)
@@ -544,6 +621,10 @@ static void DecodeMOV(Word Code)
       }
     }
   }
+  else if ((pCurrCPUProps->Core == eCore7807) && !as_strcasecmp(ArgStr[1].str.p_str, "CY"))
+    decode_bit_7807_core(&ArgStr[2], 0x5f);
+  else if ((pCurrCPUProps->Core == eCore7807) && !as_strcasecmp(ArgStr[2].str.p_str, "CY"))
+    decode_bit_7807_core(&ArgStr[1], 0x5a);
   else if ((res1 = decode_r(&ArgStr[1], &HReg)) != e_decode_reg_unknown)
   {
     if (res1 == e_decode_reg_ok)
@@ -604,7 +685,7 @@ static void DecodeMVI(Word Code)
       {
         if (res == e_decode_reg_ok)
         {
-          if (pCurrCPUProps->Core != eCore7810) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
+          if (!is_7807_781x) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
           else
           {
             CodeLen = 3;
@@ -614,7 +695,7 @@ static void DecodeMVI(Word Code)
           }
         }
       }
-      else WrError(ErrNum_InvAddrMode);
+      else WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
     }
   }
 }
@@ -626,7 +707,7 @@ static void DecodeMVIW(Word Code)
   UNUSED(Code);
 
   if (!ChkArgCnt(2, 2) || !check_core(core_mask_no_low));
-  else if (Decode_wa(&ArgStr[1], BAsmCode + 1))
+  else if (Decode_wa(&ArgStr[1], BAsmCode + 1, 0xff))
   {
     BAsmCode[2] = EvalStrIntExpression(&ArgStr[2], Int8, &OK);
     if (OK)
@@ -645,7 +726,7 @@ static void DecodeMVIX(Word Code)
   UNUSED(Code);
 
   if (!ChkArgCnt(2, 2) || !check_core(core_mask_no_low));
-  else if (!Decode_rpa1(&ArgStr[1], &HReg)) WrError(ErrNum_InvAddrMode);
+  else if (!Decode_rpa1(&ArgStr[1], &HReg)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
   else
   {
     BAsmCode[1] = EvalStrIntExpression(&ArgStr[2], Int8, &OK);
@@ -662,12 +743,18 @@ static void DecodeLDAX_STAX(Word Code)
   ShortInt HReg;
   Boolean WasIndirect = False;
 
-  if (!ChkArgCnt(1, 1));
-  else if (!Decode_rpa2(&ArgStr[1], &WasIndirect, &HReg, (ShortInt *) BAsmCode + 1)) WrError(ErrNum_InvAddrMode);
-  else
+  if (ChkArgCnt(1, 1))
   {
-    CodeLen = 1 + Ord(HasDisp(HReg));
-    BAsmCode[0] = Code + ((HReg & 8) << 4) + (HReg & 7);
+    Boolean ok = is_7807_781x
+               ? Decode_rpa2(&ArgStr[1], &WasIndirect, &HReg, (ShortInt *) &BAsmCode[1])
+               : Decode_rpa(&ArgStr[1], &HReg);
+
+    if (!ok) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
+    else
+    {
+      CodeLen = 1 + Ord(HasDisp(HReg));
+      BAsmCode[0] = Code + ((HReg & 8) << 4) + (HReg & 7);
+    }
   }
 }
 
@@ -675,8 +762,8 @@ static void DecodeLDEAX_STEAX(Word Code)
 {
   ShortInt HReg;
 
-  if (!ChkArgCnt(1, 1) || !check_core(core_mask_7810));
-  else if (!Decode_rpa3(&ArgStr[1], &HReg, (ShortInt *) BAsmCode + 2)) WrError(ErrNum_InvAddrMode);
+  if (!ChkArgCnt(1, 1) || !check_core(core_mask_7807_7810));
+  else if (!Decode_rpa3(&ArgStr[1], &HReg, (ShortInt *) &BAsmCode[2])) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
   else
   {
     CodeLen = 2 + Ord(HasDisp(HReg));
@@ -694,7 +781,7 @@ static void DecodeLXI(Word Code)
   UNUSED(Code);
 
   if (!ChkArgCnt(2, 2));
-  else if (!Decode_rp2(ArgStr[1].str.p_str, &HReg)) WrError(ErrNum_InvAddrMode);
+  else if (!Decode_rp2(ArgStr[1].str.p_str, &HReg)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
   else
   {
     AdrInt = EvalStrIntExpression(&ArgStr[2], Int16, &OK);
@@ -713,7 +800,7 @@ static void DecodePUSH_POP(Word Code)
   ShortInt HReg;
 
   if (!ChkArgCnt(1, 1));
-  else if (!Decode_rp1(ArgStr[1].str.p_str, &HReg)) WrError(ErrNum_InvAddrMode);
+  else if (!Decode_rp1(ArgStr[1].str.p_str, &HReg)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
   else
     PutCode(Code | (HReg << (Hi(Code) ? 4 : 0)));
 }
@@ -724,13 +811,13 @@ static void DecodeDMOV(Word Code)
 
   UNUSED(Code);
 
-  if (ChkArgCnt(2, 2) && check_core(core_mask_7810))
+  if (ChkArgCnt(2, 2) && check_core(core_mask_7807_7810))
   {
     Boolean Swap = as_strcasecmp(ArgStr[1].str.p_str, "EA") || False;
     const tStrComp *pArg1 = Swap ? &ArgStr[2] : &ArgStr[1],
                    *pArg2 = Swap ? &ArgStr[1] : &ArgStr[2];
 
-    if (as_strcasecmp(pArg1->str.p_str, "EA")) WrError(ErrNum_InvAddrMode);
+    if (as_strcasecmp(pArg1->str.p_str, "EA")) WrStrErrorPos(ErrNum_InvAddrMode, pArg1);
     else if (Decode_rp3(pArg2->str.p_str, &HReg))
     {
       CodeLen = 1;
@@ -748,7 +835,7 @@ static void DecodeDMOV(Word Code)
         BAsmCode[1] += 0x12;
     }
     else
-      WrError(ErrNum_InvAddrMode);
+      WrStrErrorPos(ErrNum_InvAddrMode, pArg2);
   }
 }
 
@@ -789,7 +876,7 @@ static void DecodeALUImm(Word Code)
         else
         {
           CodeLen = 3;
-          BAsmCode[0] = (pCurrCPUProps->Core == eCore7810) ? 0x74 : 0x64;
+          BAsmCode[0] = is_7807_781x ? 0x74 : 0x64;
           BAsmCode[2] = HVal8;
           BAsmCode[1] = HReg + (Code << 3);
         }
@@ -803,7 +890,7 @@ static void DecodeALUImm(Word Code)
           CodeLen = 3;
           BAsmCode[0] = 0x64;
           BAsmCode[1] = (HReg & 7) | (Code << 3)
-                      | ((pCurrCPUProps->Core == eCore7810) ? ((HReg & 8) << 4) : 0x80);
+                      | (is_7807_781x ? ((HReg & 8) << 4) : 0x80);
           BAsmCode[2] = HVal8;
         }
       }
@@ -849,7 +936,7 @@ static void DecodeALURegW(Word Code)
 {
   if (ChkArgCnt(1, 1)
    && check_core(core_mask_no_low)
-   && Decode_wa(&ArgStr[1], BAsmCode + 2))
+   && Decode_wa(&ArgStr[1], BAsmCode + 2, 0xff))
   {
     CodeLen = 3;
     BAsmCode[0] = 0x74;
@@ -862,7 +949,7 @@ static void DecodeALURegX(Word Code)
   ShortInt HReg;
 
   if (!ChkArgCnt(1, 1));
-  else if (!Decode_rpa(&ArgStr[1], &HReg)) WrError(ErrNum_InvAddrMode);
+  else if (!Decode_rpa(&ArgStr[1], &HReg)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
   else
   {
     CodeLen = 2;
@@ -876,8 +963,8 @@ static void DecodeALUEA(Word Code)
   ShortInt HReg;
 
   if (!ChkArgCnt(2, 2));
-  else if (as_strcasecmp(ArgStr[1].str.p_str, "EA")) WrError(ErrNum_InvAddrMode);
-  else if (!Decode_rp3(ArgStr[2].str.p_str, &HReg)) WrError(ErrNum_InvAddrMode);
+  else if (as_strcasecmp(ArgStr[1].str.p_str, "EA")) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
+  else if (!Decode_rp3(ArgStr[2].str.p_str, &HReg)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[2]);
   else
   {
     CodeLen = 2;
@@ -891,7 +978,7 @@ static void DecodeALUImmW(Word Code)
   Boolean OK;
 
   if (!ChkArgCnt(2, 2));
-  else if (Decode_wa(&ArgStr[1], BAsmCode + 1))
+  else if (Decode_wa(&ArgStr[1], BAsmCode + 1, 0xff))
   {
     BAsmCode[2] = EvalStrIntExpression(&ArgStr[2], Int8, &OK);
     if (OK)
@@ -935,7 +1022,7 @@ static void DecodeReg2(Word index)
 static void DecodeWork(Word Code)
 {
   if (ChkArgCnt(1, 1)
-   && Decode_wa(&ArgStr[1], BAsmCode + 1))
+   && Decode_wa(&ArgStr[1], BAsmCode + 1, 0xff))
   {
     CodeLen = 2;
     BAsmCode[0] = Code;
@@ -952,8 +1039,8 @@ static void DecodeA(Word Code)
 
 static void DecodeEA(Word Code)
 {
-  if (!ChkArgCnt(1, 1) || !check_core(core_mask_7810));
-  else if (as_strcasecmp(ArgStr[1].str.p_str, "EA")) WrError(ErrNum_InvAddrMode);
+  if (!ChkArgCnt(1, 1) || !check_core(core_mask_7807_7810));
+  else if (as_strcasecmp(ArgStr[1].str.p_str, "EA")) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
   else
   {
     CodeLen = 2;
@@ -978,7 +1065,7 @@ static void DecodeDCX_INX(Word Code)
     BAsmCode[0] = 0x02 + Code + (HReg << 4);
   }
   else
-    WrError(ErrNum_InvAddrMode);
+    WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
 }
 
 static void DecodeEADD_ESUB(Word Code)
@@ -986,7 +1073,7 @@ static void DecodeEADD_ESUB(Word Code)
   ShortInt HReg;
   decode_reg_res_t res;
 
-  if (!ChkArgCnt(2, 2) || !check_core(core_mask_7810));
+  if (!ChkArgCnt(2, 2) || !check_core(core_mask_7807_7810));
   else if (as_strcasecmp(ArgStr[1].str.p_str, "EA")) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
   else if ((res = decode_r2(&ArgStr[2], &HReg)) == e_decode_reg_unknown) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[2]);
   else if (res == e_decode_reg_ok)
@@ -1016,7 +1103,7 @@ static void DecodeJ_JR_JRE(Word Type)
   switch (Type)
   {
     case 1: /* JR */
-      if (!mSymbolQuestionable(Flags) && !RangeCheck(AdrInt, SInt6)) WrError(ErrNum_JmpDistTooBig);
+      if (!mSymbolQuestionable(Flags) && !RangeCheck(AdrInt, SInt6)) WrStrErrorPos(ErrNum_JmpDistTooBig, &ArgStr[1]);
       else
       {
         CodeLen = 1;
@@ -1025,7 +1112,7 @@ static void DecodeJ_JR_JRE(Word Type)
       break;
     case 2:
       AdrInt--; /* JRE is 2 bytes long */
-      if (!mSymbolQuestionable(Flags) && !RangeCheck(AdrInt, SInt9)) WrError(ErrNum_JmpDistTooBig);
+      if (!mSymbolQuestionable(Flags) && !RangeCheck(AdrInt, SInt9)) WrStrErrorPos(ErrNum_JmpDistTooBig, &ArgStr[1]);
       else
       {
         CodeLen = 2;
@@ -1049,7 +1136,7 @@ static void DecodeCALF(Word Code)
     AdrInt = EvalStrIntExpressionWithFlags(&ArgStr[1], Int16, &OK, &Flags);
     if (OK)
     {
-      if (!mFirstPassUnknown(Flags) && ((AdrInt >> 11) != 1)) WrError(ErrNum_NotFromThisAddress);
+      if (!mFirstPassUnknown(Flags) && ((AdrInt >> 11) != 1)) WrStrErrorPos(ErrNum_NotFromThisAddress, &ArgStr[1]);
       else
       {
         CodeLen = 2;
@@ -1073,9 +1160,9 @@ static void DecodeCALT(Word Code)
     AdrInt = EvalStrIntExpressionWithFlags(&ArgStr[1], Int16, &OK, &Flags);
     if (OK)
     {
-      Word AdrMask = (pCurrCPUProps->Core == eCore7810) ? 0xffc1 : 0xff81;
+      Word AdrMask = is_7807_781x ? 0xffc1 : 0xff81;
 
-      if (!mFirstPassUnknown(Flags) && ((AdrInt & AdrMask) != 0x80)) WrError(ErrNum_NotFromThisAddress);
+      if (!mFirstPassUnknown(Flags) && ((AdrInt & AdrMask) != 0x80)) WrStrErrorPos(ErrNum_NotFromThisAddress, &ArgStr[1]);
       else
       {
         CodeLen = 1;
@@ -1096,7 +1183,7 @@ static void DecodeBIT(Word Code)
 
     HReg = EvalStrIntExpression(&ArgStr[1], UInt3, &OK);
     if (OK)
-     if (Decode_wa(&ArgStr[2], BAsmCode + 1))
+     if (Decode_wa(&ArgStr[2], BAsmCode + 1, 0xff))
      {
        CodeLen = 2; BAsmCode[0] = 0x58 + HReg;
      }
@@ -1108,13 +1195,16 @@ static void DecodeSK_SKN(Word Code)
   ShortInt HReg;
 
   if (!ChkArgCnt(1, 1) || !check_core(Hi(Code)));
-  else if (!Decode_f(ArgStr[1].str.p_str, &HReg)) WrError(ErrNum_InvAddrMode);
-  else
+  else if (Decode_f(ArgStr[1].str.p_str, &HReg))
   {
     CodeLen = 2;
     BAsmCode[0] = 0x48;
     BAsmCode[1] = Lo(Code) + HReg;
   }
+  else if (pCurrCPUProps->Core == eCore7807)
+    decode_bit_7807_core(&ArgStr[1], (Code & 0x10) ? 0x50 :0x5d);
+  else
+    WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
 }
 
 static void DecodeSKIT_SKNIT(Word Code)
@@ -1167,6 +1257,38 @@ static void DecodeIN_OUT(Word Code)
     default:
       (void)ChkArgCnt(1, 2);
   }
+}
+
+static void DecodeBLOCK_7807(Word code)
+{
+  if (ChkArgCnt(1, 1))
+  {
+    ShortInt mode;
+
+    if (!Decode_rpa(&ArgStr[1], &mode) || ((mode != 4) && (mode != 6))) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
+    else
+    {
+      BAsmCode[0] = code | ((mode >> 1) & 1);
+      CodeLen = 1;
+    }
+  }
+}
+
+static void DecodeBit1_7807(Word code)
+{
+  if (!ChkArgCnt(1, 1));
+  else if (!check_core(core_mask_7807));
+  else
+    decode_bit_7807_core(&ArgStr[1], code);
+}
+
+static void DecodeBit2_7807(Word code)
+{
+  if (!ChkArgCnt(2, 2));
+  else if (!check_core(core_mask_7807));
+  else if (as_strcasecmp(ArgStr[1].str.p_str, "CY")) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
+  else
+    decode_bit_7807_core(&ArgStr[2], code);
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -1241,6 +1363,7 @@ static void InitFields(void)
 {
   Boolean IsLow = pCurrCPUProps->Core == eCore7800Low,
           IsHigh = pCurrCPUProps->Core == eCore7800High,
+          Is7807 = pCurrCPUProps->Core == eCore7807,
           Is781x = pCurrCPUProps->Core == eCore7810;
 
   InstTable = CreateInstTable(301);
@@ -1255,8 +1378,8 @@ static void InitFields(void)
   AddInstTable(InstTable, "LDEAX", 0x80, DecodeLDEAX_STEAX);
   AddInstTable(InstTable, "STEAX", 0x90, DecodeLDEAX_STEAX);
   AddInstTable(InstTable, "LXI", 0, DecodeLXI);
-  AddInstTable(InstTable, "PUSH", Is781x ? 0xb0 : 0x480e, DecodePUSH_POP);
-  AddInstTable(InstTable, "POP", Is781x ? 0xa0 : 0x480f, DecodePUSH_POP);
+  AddInstTable(InstTable, "PUSH", is_7807_781x ? 0xb0 : 0x480e, DecodePUSH_POP);
+  AddInstTable(InstTable, "POP", is_7807_781x ? 0xa0 : 0x480f, DecodePUSH_POP);
   AddInstTable(InstTable, "DMOV", 0, DecodeDMOV);
   AddInstTable(InstTable, "DCX", 1, DecodeDCX_INX);
   AddInstTable(InstTable, "INX", 0, DecodeDCX_INX);
@@ -1270,8 +1393,8 @@ static void InitFields(void)
   AddInstTable(InstTable, "BIT", 0, DecodeBIT);
   AddInstTable(InstTable, "SK" , (core_mask_no_low << 8) | 0x08, DecodeSK_SKN);
   AddInstTable(InstTable, "SKN", (core_mask_all    << 8) | 0x18, DecodeSK_SKN);
-  AddInstTable(InstTable, "SKIT" , (core_mask_no_low << 8) | (Is781x ? 0x40 : 0x00), DecodeSKIT_SKNIT);
-  AddInstTable(InstTable, "SKNIT", (core_mask_all    << 8) | (Is781x ? 0x60 : 0x10), DecodeSKIT_SKNIT);
+  AddInstTable(InstTable, "SKIT" , (core_mask_no_low << 8) | (is_7807_781x ? 0x40 : 0x00), DecodeSKIT_SKNIT);
+  AddInstTable(InstTable, "SKNIT", (core_mask_all    << 8) | (is_7807_781x ? 0x60 : 0x10), DecodeSKIT_SKNIT);
 
   fixed_orders = (order_t*) calloc(sizeof(*fixed_orders), FixedOrderCnt); InstrZ = 0;
   AddFixed("EX"   , 0x0010                   , (1 << eCore7800High));
@@ -1282,32 +1405,37 @@ static void InitFields(void)
   AddFixed("SHAR" , 0x4835                   , (1 << eCore7800High));
   AddFixed("SHCL" , 0x4836                   , (1 << eCore7800High));
   AddFixed("SHCR" , 0x4837                   , (1 << eCore7800High));
-  AddFixed("EXX"  , 0x0011                   , core_mask_no_low);
-  AddFixed("EXA"  , 0x0010                   , core_mask_all);
-  AddFixed("EXH"  , 0x0050                   , core_mask_all);
-  AddFixed("BLOCK", 0x0031                   , core_mask_no_low);
-  AddFixed("TABLE", Is781x ? 0x48a8 : 0x0021 , core_mask_no_low);
+  AddFixed("EXX"  , Is7807 ? 0x48af : 0x0011 , core_mask_no_low);
+  AddFixed("EXA"  , Is7807 ? 0x48ac : 0x0010 , core_mask_all);
+  AddFixed("EXH"  , Is7807 ? 0x48ae : 0x0050 , core_mask_all);
+  AddFixed("EXR"  , 0x48ad                   , core_mask_7807);
+  if (Is7807)
+    AddInstTable(InstTable, "BLOCK", 0x0010, DecodeBLOCK_7807);
+  else
+    AddFixed("BLOCK", 0x0031                   , core_mask_no_low);
+  AddFixed("TABLE", is_7807_781x ? 0x48a8 : 0x0021 , core_mask_no_low);
   AddFixed("DAA"  , 0x0061                   , core_mask_all);
   AddFixed("STC"  , 0x482b                   , core_mask_all);
   AddFixed("CLC"  , 0x482a                   , core_mask_all);
+  AddFixed("CMC"  , 0x48aa                   , core_mask_7807);
   AddFixed("NEGA" , 0x483a                   , core_mask_all);
   AddFixed("RLD"  , 0x4838                   , core_mask_all);
   AddFixed("RRD"  , 0x4839                   , core_mask_all);
-  AddFixed("JB"   , Is781x ? 0x0021 : 0x0073 , core_mask_all);
+  AddFixed("JB"   , is_7807_781x ? 0x0021 : 0x0073 , core_mask_all);
   AddFixed("JEA"  , 0x4828                   , core_mask_all);
-  AddFixed("CALB" , Is781x ? 0x4829 : 0x0063 , core_mask_no_low);
+  AddFixed("CALB" , is_7807_781x ? 0x4829 : 0x0063 , core_mask_no_low);
   AddFixed("SOFTI", 0x0072                   , core_mask_no_low);
-  AddFixed("RET"  , Is781x ? 0x00b8 : 0x0008 , core_mask_all);
-  AddFixed("RETS" , Is781x ? 0x00b9 : 0x0018 , core_mask_all);
+  AddFixed("RET"  , is_7807_781x ? 0x00b8 : 0x0008 , core_mask_all);
+  AddFixed("RETS" , is_7807_781x ? 0x00b9 : 0x0018 , core_mask_all);
   AddFixed("RETI" , 0x0062                   , core_mask_all);
   AddFixed("NOP"  , 0x0000                   , core_mask_all);
-  AddFixed("EI"   , Is781x ? 0x00aa : 0x4820 , core_mask_all);
-  AddFixed("DI"   , Is781x ? 0x00ba : 0x4824 , core_mask_all);
-  AddFixed("HLT"  , Is781x ? 0x483b : 0x0001 , core_mask_no_low);
+  AddFixed("EI"   , is_7807_781x ? 0x00aa : 0x4820 , core_mask_all);
+  AddFixed("DI"   , is_7807_781x ? 0x00ba : 0x4824 , core_mask_all);
+  AddFixed("HLT"  , is_7807_781x ? 0x483b : 0x0001 , core_mask_no_low);
   AddFixed("SIO"  , 0x0009                   , core_mask_7800);
   AddFixed("STM"  , 0x0019                   , core_mask_7800);
   AddFixed("PEX"  , 0x482d                   , core_mask_7800);
-  AddFixed("RAL"  , Is781x ? 0x4835 : 0x4830 , core_mask_all);
+  AddFixed("RAL"  , is_7807_781x ? 0x4835 : 0x4830 , core_mask_all);
   AddFixed("RAR"  , 0x4831                   , core_mask_all);
   AddFixed("PER"  , 0x483c                   , core_mask_7800);
   if (pCurrCPUProps->Flags & eFlagCMOS)
@@ -1316,14 +1444,13 @@ static void InitFields(void)
   s_regs = (sreg_t*) calloc(SRegCnt, sizeof(*s_regs)); InstrZ = 0;
   AddSReg("PA"  , 0x00, eFlagSR | eFlagSR1 | eFlagSR2);
   AddSReg("PB"  , 0x01, eFlagSR | eFlagSR1 | eFlagSR2);
-  if (Is781x)
+  if (is_7807_781x)
   {
     AddSReg("PC"  , 0x02, eFlagSR | eFlagSR1 | eFlagSR2);
     AddSReg("PD"  , 0x03, eFlagSR | eFlagSR1 | eFlagSR2);
     AddSReg("PF"  , 0x05, eFlagSR | eFlagSR1 | eFlagSR2);
     AddSReg("MKH" , 0x06, eFlagSR | eFlagSR1 | eFlagSR2);
     AddSReg("MKL" , 0x07, eFlagSR | eFlagSR1 | eFlagSR2);
-    AddSReg("ANM" , 0x08, eFlagSR | eFlagSR1 | eFlagSR2);
     AddSReg("SMH" , 0x09, eFlagSR | eFlagSR1 | eFlagSR2);
     AddSReg("SML" , 0x0a, eFlagSR);
     AddSReg("EOM" , 0x0b, eFlagSR | eFlagSR1 | eFlagSR2);
@@ -1339,11 +1466,21 @@ static void InitFields(void)
     AddSReg("RXB" , 0x19, eFlagSR1);
     AddSReg("TM0" , 0x1a, eFlagSR);
     AddSReg("TM1" , 0x1b, eFlagSR);
-    AddSReg("CR0" , 0x20, eFlagSR1);
-    AddSReg("CR1" , 0x21, eFlagSR1);
-    AddSReg("CR2" , 0x22, eFlagSR1);
-    AddSReg("CR3" , 0x23, eFlagSR1);
     AddSReg("ZCM" , 0x28, (pCurrCPUProps->Flags & eFlagCMOS) ? eFlagSR : 0);
+    if (Is781x)
+    {
+      AddSReg("ANM" , 0x08, eFlagSR | eFlagSR1 | eFlagSR2);
+      AddSReg("CR0" , 0x20, eFlagSR1);
+      AddSReg("CR1" , 0x21, eFlagSR1);
+      AddSReg("CR2" , 0x22, eFlagSR1);
+      AddSReg("CR3" , 0x23, eFlagSR1);
+    }
+    else
+    {
+      AddSReg("PT"  , 0x0e, eFlagSR | eFlagSR1 | eFlagSR2);
+      AddSReg("WDM" , 0x20, eFlagSR | eFlagSR1);
+      AddSReg("MT"  , 0x21, eFlagSR | eFlagSR1);
+    }
     /* 0x28 eFlagSR ? */
   }
   else
@@ -1362,7 +1499,7 @@ static void InitFields(void)
   }
 
   int_flags = (intflag_t*) calloc(IntFlagCnt, sizeof(*int_flags)); InstrZ = 0;
-  if (Is781x)
+  if (is_7807_781x)
   {
     AddIntFlag("NMI" , 0);
     AddIntFlag("FT0" , 1);
@@ -1372,16 +1509,24 @@ static void InitFields(void)
     AddIntFlag("FE0" , 5);
     AddIntFlag("FE1" , 6);
     AddIntFlag("FEIN", 7);
-    AddIntFlag("FAD" , 8);
     AddIntFlag("FSR" , 9);
     AddIntFlag("FST" ,10);
     AddIntFlag("ER"  ,11);
     AddIntFlag("OV"  ,12);
-    AddIntFlag("AN4" ,16);
-    AddIntFlag("AN5" ,17);
-    AddIntFlag("AN6" ,18);
-    AddIntFlag("AN7" ,19);
     AddIntFlag("SB"  ,20);
+    if (Is781x)
+    {
+      AddIntFlag("FAD" , 8);
+      AddIntFlag("AN4" ,16);
+      AddIntFlag("AN5" ,17);
+      AddIntFlag("AN6" ,18);
+      AddIntFlag("AN7" ,19);
+    }
+    else
+    {
+      /* value yet unknown */
+      /* AddIntFlag("IFE2", ...); */
+    }
   }
   else
   {
@@ -1409,7 +1554,7 @@ static void InitFields(void)
   AddALU(12, IsLow ?             ALUReg_Src : ALUImm_SR | ALUReg_Src | ALUReg_Dest, "SUI"  , "SUB"  , "DSUB"  );
   AddALU( 2, IsLow ?             ALUReg_Src : ALUImm_SR | ALUReg_Src | ALUReg_Dest, "XRI"  , "XRA"  , "DXR"   );
 
-  AddAbs("CALL", Is781x ? 0x0040 : 0x0044);
+  AddAbs("CALL", is_7807_781x ? 0x0040 : 0x0044);
   AddAbs("JMP" , 0x0054);
   AddAbs("LBCD", 0x701f);
   AddAbs("LDED", 0x702f);
@@ -1422,37 +1567,44 @@ static void InitFields(void)
 
   reg2_orders = (order_t*) calloc(sizeof(*reg2_orders), Reg2OrderCnt); InstrZ = 0;
   AddReg2("DCR" , 0x0050, core_mask_all);
-  AddReg2("DIV" , 0x483c, core_mask_7810);
+  AddReg2("DIV" , 0x483c, core_mask_7807_7810);
   AddReg2("INR" , 0x0040, core_mask_all);
-  AddReg2("MUL" , 0x482c, core_mask_7810);
-  if (Is781x)
+  AddReg2("MUL" , 0x482c, core_mask_7807_7810);
+  if (is_7807_781x)
   {
-    AddReg2("RLL" , 0x4834, core_mask_7810);
-    AddReg2("RLR" , 0x4830, core_mask_7810);
+    AddReg2("RLL" , 0x4834, core_mask_7807_7810);
+    AddReg2("RLR" , 0x4830, core_mask_7807_7810);
   }
   else
   {
     AddA("RLL", 0x4830);
     AddA("RLR", 0x4831);
   }
-  AddReg2("SLL" , 0x4824, core_mask_7810);
-  AddReg2("SLR" , 0x4820, core_mask_7810);
-  AddReg2("SLLC", 0x4804, core_mask_7810);
-  AddReg2("SLRC", 0x4800, core_mask_7810);
+  AddReg2("SLL" , 0x4824, core_mask_7807_7810);
+  AddReg2("SLR" , 0x4820, core_mask_7807_7810);
+  AddReg2("SLLC", 0x4804, core_mask_7807_7810);
+  AddReg2("SLRC", 0x4800, core_mask_7807_7810);
 
   AddWork("DCRW", 0x30);
   AddWork("INRW", 0x20);
-  AddWork("LDAW", Is781x ? 0x01 : 0x28);
-  AddWork("STAW", Is781x ? 0x63 : 0x38);
+  AddWork("LDAW", is_7807_781x ? 0x01 : 0x28);
+  AddWork("STAW", is_7807_781x ? 0x63 : 0x38);
 
   AddEA("DRLL", 0x48b4); AddEA("DRLR", 0x48b0);
   AddEA("DSLL", 0x48a4); AddEA("DSLR", 0x48a0);
 
-  if (!Is781x)
+  if (!is_7807_781x)
   {
     AddInstTable(InstTable, "IN" , 0x4c, DecodeIN_OUT);
     AddInstTable(InstTable, "OUT", 0x4d, DecodeIN_OUT);
   }
+
+  AddInstTable(InstTable, "AND" , 0x31, DecodeBit2_7807);
+  AddInstTable(InstTable, "OR"  , 0x5c, DecodeBit2_7807);
+  AddInstTable(InstTable, "XOR" , 0x5e, DecodeBit2_7807);
+  AddInstTable(InstTable, "SETB", 0x58, DecodeBit1_7807);
+  AddInstTable(InstTable, "CLR" , 0x5b, DecodeBit1_7807);
+  AddInstTable(InstTable, "NOT" , 0x59, DecodeBit1_7807);
 }
 
 static void DeinitFields(void)
@@ -1525,6 +1677,7 @@ static void SwitchTo_78C10(void *pUser)
   }
   else
     WorkArea = 0xff;
+  is_7807_781x = (pCurrCPUProps->Core == eCore7807) || (pCurrCPUProps->Core == eCore7810);
 
   MakeCode = MakeCode_78C10; IsDef = IsDef_78C10;
   SwitchFrom = SwitchFrom_78C10;
@@ -1538,6 +1691,9 @@ static const tCPUProps CPUProps[] =
   { "7802" , eCore7800High, eFlagHasV             }, /* 6KB ROM , 128B RAM */
   { "78C05", eCore7800Low,  0                     }, /* ROMless , 128B RAM */
   { "78C06", eCore7800Low,  0                     }, /* 4KB ROM , 128B RAM */
+  { "7807" , eCore7807,     eFlagHasV             }, /* ROMless , 256B RAM */
+  { "7808" , eCore7807,     eFlagHasV             }, /* 4KB ROM , 256B RAM */
+  { "7809" , eCore7807,     eFlagHasV             }, /* 8KB ROM , 256B RAM */
   { "7810" , eCore7810,     eFlagHasV             }, /* ROMless , 256B RAM */
   { "78C10", eCore7810,     eFlagHasV | eFlagCMOS }, /* ROMless , 256B RAM */
   { "78C11", eCore7810,     eFlagHasV | eFlagCMOS }, /* 4KB ROM , 256B RAM */

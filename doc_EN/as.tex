@@ -3747,17 +3747,20 @@ memory in standby mode.
 \begin{quote}
 bt) 7800, 7801, 7802 \\
 78C05, 78C06 \\
+7807, 7808, 7809 \\
 7810$\rightarrow$78C10, 78C11, 78C12, 78C14, 78C17, 78C18
 \end{quote}
 $\mu$PD7800 to $\mu$PD7802 represent the ''first generation'' of the
 uCOM87 family from NEC.  $\mu$PD78C05 and $\mu$PD78C06 are reduced
-variants that implement only a subset of the instruction set. All $\mu$PD781x
-variants belong to the uCOM87AD series, which - aside from an A/D converter -
-also supports additional registers and machine instructions. \bb{NOTE:} The
-instruction set is only partially binary upward compatible!
-The NMOS version $\mu$PD7810 has no stop-mode; the respective command and the ZCM
-register are omitted.  \bb{CAUTION!}  NMOS and CMOS version partially
-differ in the reset values of some registers!
+variants that implement only a subset of the instruction set. 7807 to
+7809 represent the uCOM87 series, whose instruction set was vastly
+extended.  All $\mu$PD781x variants belong to the uCOM87AD series, which
+adds an A/D converter - however, instructions for bit processing were
+again removed.  \bb{NOTE:} The instruction set is in general only
+partially binary upward compatible! The NMOS version $\mu$PD7810 has
+no stop-mode; the respective command and the ZCM register are omitted.
+\bb{CAUTION!}  NMOS and CMOS version partially differ in the reset
+values of some registers!
 %%-----------
 \begin{quote}
 bu) 7500 $\leftrightarrow$ 7508
@@ -7214,13 +7217,17 @@ the programmer via the following three instructions:
       of assembly.  A code file may be generated but will be incomplete.}
 \end{itemize}
 All three instructions have the same format for the message that shall
-be issued: an arbitrary (possibly computed?!) string expression which
-may therefore be either a constant or variable.
-
-These instructions generally only make sense in conjunction wit
-conditional assembly.  For example, if there is only a limited
-address space for a program, one can test for overflow in the
-following way:
+be issued: an arbitrary string expression, which may be a simple string
+constant, but as well a complex expression that evaluates to a string.
+It also includes the feature to embed symbol values in strings, which
+is described in \ref{SectSymConv}:
+\begin{verbatim}
+       message "Start Address is \{start_address}"
+\end{verbatim}
+Instructions generating warnings or errors typically only make sense
+in conjunction wit conditional assembly.  For example, if there is
+only a limited address space for a program, one can test for overflow
+in the following way:
 \begin{verbatim}
 ROMSize equ     8000h   ; 27256 EPROM
 
@@ -7288,17 +7295,17 @@ symbol's name if it is omitted.
 
 This instruction allows to modify the set of notations for integer constants
 in various number systems. - After selection of a CPU target, a certain default
-set is instelled (see section \ref{SectPseudoInst}).  This set may be augmented
-with other notations, or notations may be removeved from it.  \tty{INTSYNTAX}
-takes an arbitrary list of arguments which either begin with aplus or minus
+set is installed (see section \ref{SectPseudoInst}).  This set may be augmented
+with other notations, or notations may be removed from it.  \tty{INTSYNTAX}
+takes an arbitrary list of arguments which either begin with a plus or minus
 character, followed by the notation's identifier.  For instance, the following
 statement
 \begin{verbatim}
-       intsyntax    -0oct,+0hex
+       INTSYNTAX    -0oct,+0hex
 \end{verbatim}
 has the result that a leading zero marks a hexadecimal instead of an octal
-constant, a common usage on some assemblers for the SC/MP.  The notations'
-identifiers can be found in table \ref{TabSystems}.  There is no limit on
+constant, a common usage on some assemblers for the SC/MP.  The identifiers
+for all notations can be found in table \ref{TabSystems}.  There is no limit on
 combining notations, except when they contradict each other.  For instance, it
 would not be allowed to enable \tty{0oct} and \tty{0hex} at the same time.
 

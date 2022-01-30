@@ -56,6 +56,13 @@ wa		equ	0ffdah
 		LDAX	H+		; (HL) 2D
 		LDAX	D-		; (DE) 2E
 		LDAX	H-		; (HL) 2F
+		expect	1350,1350,1350,1350,1350
+		LDAX	(DE+2)
+		LDAX	(HL+A)
+		LDAX	(HL+B)
+		LDAX	(HL+EA)
+		LDAX	(HL-3)
+		endexpect
 
 		DCRW	wa		; 30 wa
 		BLOCK			; 31 (not on 78C06)
@@ -73,6 +80,13 @@ wa		equ	0ffdah
 		STAX	H+		; (HL) 3D
 		STAX	D-		; (DE) 3E
 		STAX	H-		; (HL) 3F
+		expect	1350,1350,1350,1350,1350
+		STAX	(DE+2)
+		STAX	(HL+A)
+		STAX	(HL+B)
+		STAX	(HL+EA)
+		STAX	(HL-3)
+		endexpect
 
 		;---			; 40
 		INR	A		; 41

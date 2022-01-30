@@ -2712,6 +2712,8 @@ static void SwitchTo_S12Z(void)
   DissectBit = DissectBit_S12Z;
   InitFields();
   AddMoto16PseudoONOFF();
+
+  SetFlag(&DoPadding, DoPaddingName, False);
 }
 
 void codes12z_init(void)

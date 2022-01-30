@@ -96,6 +96,9 @@ immed		equ	$a5
 	andr,r2   *$-23h
 	andr,r3   $-23h
 	andr,r3   *$-23h
+	expect    1445
+	andz  r0
+	endexpect
 	andz  r1
 	andz  r2
 	andz  r3

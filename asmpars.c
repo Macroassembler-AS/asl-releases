@@ -120,8 +120,9 @@ LongInt LocHandleCnt;          /* mom. verwendeter lokaler Handle            */
 typedef struct sSymbolEntry
 {
   TTree Tree;
-  Boolean Defined, Used, Changeable;
+  Boolean Defined, Used, Changeable, changed;
   TempResult SymWert;
+  LargeInt unchanged_value;
   PCrossRef RefList;
   Byte FileNum;
   LongInt LineNum;
@@ -538,7 +539,7 @@ Boolean ExpandStrSymbol(char *pDest, size_t DestSize, const tStrComp *pSrc)
   *pDest = '\0'; StrCompRefRight(&SrcComp, pSrc, 0);
   while (True)
   {
-    pStart = strchr(SrcComp.str.p_str, '{');
+    pStart = QuotPos(SrcComp.str.p_str, '{');
     if (pStart)
     {
       unsigned ls = pStart - SrcComp.str.p_str, ld = strlen(pDest);
@@ -2242,42 +2243,66 @@ static Boolean SymbolAdder(PTree *PDest, PTree Neu, void *pData)
   {
     if (!EnterStruct->MayChange)
     {
-      /* TODO TempResult */
-      if ((NewEntry->SymWert.Typ != (*Node)->SymWert.Typ)
-       || ((NewEntry->SymWert.Typ == TempString) && (as_nonz_dynstr_cmp(&NewEntry->SymWert.Contents.str, &(*Node)->SymWert.Contents.str)))
-       || ((NewEntry->SymWert.Typ == TempFloat ) && (NewEntry->SymWert.Contents.Float != (*Node)->SymWert.Contents.Float))
-       || ((NewEntry->SymWert.Typ == TempInt   ) && (NewEntry->SymWert.Contents.Int   != (*Node)->SymWert.Contents.Int  )))
-       {
-         if ((!Repass) && (JmpErrors>0))
-         {
-           if (ThrowErrors)
-             ErrorCount -= JmpErrors;
-           JmpErrors = 0;
-         }
-         Repass = True;
-         if ((MsgIfRepass) && (PassNo >= PassNoForMessage))
-         {
-           strmaxcpy(serr, Neu->Name, STRINGSIZE);
-           if (Neu->Attribute != -1)
-           {
-             strmaxcat(serr, "[", STRINGSIZE);
-             strmaxcat(serr, GetSectionName(Neu->Attribute), STRINGSIZE);
-             strmaxcat(serr, "]", STRINGSIZE);
-           }
-           WrXError(ErrNum_PhaseErr, serr);
-         }
-       }
+      Boolean value_changed;
+
+#if 0
+      if (NewEntry->SymWert.Typ == TempInt)
+        fprintf(stderr, "NewEntry 0x%lx Node 0x%lx Node changed %d\n",
+                NewEntry->SymWert.Contents.Int, (*Node)->SymWert.Contents.Int, (*Node)->changed);
+#endif
+
+      /* If the symbol value was changed after entry (padding of label),
+         compare to the originally set value, because this is what we get
+         here as initial value to set (before padding) in the next pass: */
+
+      if (NewEntry->SymWert.Typ != (*Node)->SymWert.Typ)
+        value_changed = True;
+      else switch (NewEntry->SymWert.Typ)
+      {
+        case TempInt:
+          value_changed = NewEntry->SymWert.Contents.Int != ((*Node)->changed ? (*Node)->unchanged_value : (*Node)->SymWert.Contents.Int);
+          break;
+        default:
+          value_changed = !!as_tempres_cmp(&NewEntry->SymWert, &(*Node)->SymWert);
+      }
+      if (value_changed)
+      {
+        if (!Repass && (JmpErrors > 0))
+        {
+          if (ThrowErrors)
+            ErrorCount -= JmpErrors;
+          JmpErrors = 0;
+        }
+        Repass = True;
+        if (MsgIfRepass && (PassNo >= PassNoForMessage))
+        {
+          strmaxcpy(serr, Neu->Name, STRINGSIZE);
+          if (Neu->Attribute != -1)
+          {
+            strmaxcat(serr, "[", STRINGSIZE);
+            strmaxcat(serr, GetSectionName(Neu->Attribute), STRINGSIZE);
+            strmaxcat(serr, "]", STRINGSIZE);
+          }
+          WrXError(ErrNum_PhaseErr, serr);
+        }
+      }
     }
     if (EnterStruct->DoCross)
     {
       NewEntry->LineNum = (*Node)->LineNum;
       NewEntry->FileNum = (*Node)->FileNum;
     }
+
+    /* take over values from existing node that shall be kept */
+
     NewEntry->RefList = (*Node)->RefList;
     (*Node)->RefList = NULL;
     NewEntry->Defined = True;
     NewEntry->Used = (*Node)->Used;
     NewEntry->Changeable = EnterStruct->MayChange;
+
+    /* since NewEntry will be copied over Node, free the latter's dynamic data: */
+
     FreeSymbolEntry(Node, False);
     return True;
   }
@@ -2402,6 +2427,11 @@ void PrintSymTree(char *Name)
 
 void ChangeSymbol(PSymbolEntry pEntry, LargeInt Value)
 {
+  if (!pEntry->changed)
+  {
+    pEntry->unchanged_value = (pEntry->SymWert.Typ == TempInt) ? pEntry->SymWert.Contents.Int : 0;
+    pEntry->changed = True;
+  }
   as_tempres_set_int(&pEntry->SymWert, Value);
 }
 

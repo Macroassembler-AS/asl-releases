@@ -1,3 +1,14 @@
+2022-01-30 [1.42 Bld 217]
+
+- Bugfix      : 2650: do not allow ANDZ R0 (decodes as HALT)
+- Bugfix      : uPD780x: disallow some uPD781x-specific addressing modes
+                for LDAX and STAX
+- Addition    : support NEC uPD7807...7809
+- Bugfix      : Do not attempt to expand string expansion for symbol
+                names in quoted regions
+- Bugfix      : The default for PADDING for 6805, 6809, 6816, 68RS08,
+                and S12Z should be OFF
+
 2022-01-19 [1.42 Bld 216]
 
 - Bugfix      : Z80: add error messages about address/displacement
