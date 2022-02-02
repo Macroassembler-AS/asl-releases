@@ -919,9 +919,7 @@ static void SwitchTo_68rs08(void)
   IsDef = IsDef_68rs08;
   SwitchFrom = SwitchFrom_68rs08;
   InitFields();
-  AddMoto16PseudoONOFF();
-
-  SetFlag(&DoPadding, DoPaddingName, False);
+  AddMoto16PseudoONOFF(False);
 }
 
 void code68rs08_init(void)

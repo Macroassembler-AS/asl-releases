@@ -159,14 +159,7 @@ char MomCPUIdent[20],                   /* dessen Name in ASCII */
      MomFPUIdent[20],                   /* ditto FPU */
      MomPMMUIdent[20];                  /* ditto PMMU */
 
-Boolean FPUAvail,                       /* Koprozessor erlaubt ? */
-        PMMUAvail;                      /* MMU-Befehle erlaubt? */
-Boolean DoPadding,                      /* auf gerade Byte-Zahl ausrichten ? */
-        TargetBigEndian;                /* Datenablage Big Endian? */
-Boolean Packing;                        /* gepackte Ablage ? */
-Boolean DefSupAllowed, SupAllowed;      /* Supervisormode freigegeben */
-Boolean Maximum;                        /* CPU nicht kastriert */
-Boolean DoBranchExt;                    /* Spruenge automatisch verlaengern */
+Boolean DefSupAllowed;                  /* Supervisormode freigegeben */
 
 int OutRadixBase;                       /* dito fuer Ausgabe */
 int ListRadixBase;                      /* ditto for listing */

@@ -21,6 +21,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmallg.h"
+#include "onoff_common.h"
 #include "asmcode.h"
 #include "motpseudo.h"
 #include "asmitree.h"
@@ -122,7 +123,6 @@ typedef struct
 #define PMMURegCnt 13
 
 #define EMACAvailName  "HASEMAC"
-#define FullPMMUName   "FULLPMMU"    /* voller PMMU-Befehlssatz */
 
 #define REG_SP 15
 #define REG_MARK 16 /* internal mark to differentiate SP<->A7 */
@@ -6270,12 +6270,6 @@ static void MakeCode_68K(void)
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 
-static void InitCode_68K(void)
-{
-  SetFlag(&PMMUAvail, PMMUAvailName, False);
-  SetFlag(&FullPMMU, FullPMMUName, True);
-}
-
 static Boolean IsDef_68K(void)
 {
   return Memo("REG");
@@ -6309,14 +6303,15 @@ static void SwitchTo_68K(void *pUser)
 
   SwitchFrom = DeinitFields;
   InitFields();
-  AddONOFF("PMMU"    , &PMMUAvail , PMMUAvailName , False);
-  AddONOFF("FULLPMMU", &FullPMMU  , FullPMMUName  , False);
-  AddONOFF("FPU"     , &FPUAvail  , FPUAvailName  , False);
-  AddONOFF(SupAllowedCmdName , &SupAllowed, SupAllowedSymName, False);
-  AddMoto16PseudoONOFF();
+  onoff_fpu_add();
+  onoff_pmmu_add();
+  onoff_supmode_add();
+  if (onoff_test_and_set(e_onoff_reg_fullpmmu))
+    SetFlag(&FullPMMU, FullPMMUName, True);
+  AddONOFF(FullPMMUName, &FullPMMU  , FullPMMUName  , False);
+  AddMoto16PseudoONOFF(True);
 
   SetFlag(&FullPMMU, FullPMMUName, !(pCurrCPUProps->SuppFlags & eFlagIntPMMU));
-  SetFlag(&DoPadding, DoPaddingName, True);
   NativeFloatSize = (pCurrCPUProps->Family == eColdfire) ? eSymbolSizeFloat64Bit : eSymbolSizeFloat96Bit;
 }
 
@@ -6504,6 +6499,4 @@ void code68k_init(void)
   const tCPUProps *pProp;
   for (pProp = CPUProps; pProp->pName; pProp++)
     (void)AddCPUUser(pProp->pName, SwitchTo_68K, (void*)pProp, NULL);
-
-  AddInitPassProc(InitCode_68K);
 }

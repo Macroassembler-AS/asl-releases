@@ -26,6 +26,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmitree.h"
+#include "onoff_common.h"
 #include "errmsg.h"
 #include "ieeefloat.h"
 
@@ -1469,7 +1470,7 @@ Boolean DecodeIntelPseudo(Boolean BigEndian)
  * \brief  change Z80 syntax support for target
  * ------------------------------------------------------------------------ */
 
-void DecodeZ80SYNTAX(Word Code)
+static void DecodeZ80SYNTAX(Word Code)
 {
   UNUSED(Code);
 
@@ -1523,20 +1524,20 @@ Boolean ChkZ80Syntax(tZ80Syntax InstrSyntax)
 }
 
 /*!------------------------------------------------------------------------
- * \fn     intpseudo_init(void)
- * \brief  module-specific startup initializations
+ * \fn     AddZ80Syntax(struct sInstTable *InstTable)
+ * \brief  add Z80SYNTAX instruction to list & possibly set default
+ * \param  InstTable table to add to
  * ------------------------------------------------------------------------ */
 
-static void InitCode(void)
+void AddZ80Syntax(struct sInstTable *InstTable)
 {
-  tStrComp TmpComp;
+  if (!onoff_test_and_set(e_onoff_reg_z80syntax))
+  {
+    tStrComp TmpComp;
 
-  CurrZ80Syntax = eSyntax808x;
-  StrCompMkTemp(&TmpComp, Z80SyntaxName, 0);
-  EnterIntSymbol(&TmpComp, 0, SegNone, True);
-}
-
-void intpseudo_init(void)
-{
-  AddInitPassProc(InitCode);
+    CurrZ80Syntax = eSyntax808x;
+    StrCompMkTemp(&TmpComp, Z80SyntaxName, 0);
+    EnterIntSymbol(&TmpComp, 0, SegNone, True);
+  }
+  AddInstTable(InstTable, "Z80SYNTAX", 0, DecodeZ80SYNTAX);
 }

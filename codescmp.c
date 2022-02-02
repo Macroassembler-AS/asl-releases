@@ -20,6 +20,7 @@
 #include "asmpars.h"
 #include "asmitree.h"
 #include "asmallg.h"
+#include "onoff_common.h"
 #include "intpseudo.h"
 #include "codevars.h"
 #include "codepseudo.h"
@@ -286,11 +287,6 @@ static Boolean IsDef_SCMP(void)
   return False;
 }
 
-static void InitPass_SCMP(void)
-{
-  SetFlag(&TargetBigEndian, BigEndianName, False);
-}
-
 static void SwitchTo_SCMP(void)
 {
   TurnWords = False;
@@ -306,7 +302,7 @@ static void SwitchTo_SCMP(void)
   MakeCode = MakeCode_SCMP; IsDef = IsDef_SCMP;
   SwitchFrom = DeinitFields; InitFields();
 
-  AddONOFF("BIGENDIAN", &TargetBigEndian, BigEndianName, False);
+  onoff_bigendian_add();
 
   QualifyQuote = QualifyQuote_SingleQuoteConstant;
   IntConstModeIBMNoTerm = True;
@@ -315,6 +311,4 @@ static void SwitchTo_SCMP(void)
 void codescmp_init(void)
 {
   CPUSCMP = AddCPU("SC/MP", SwitchTo_SCMP);
-
-  AddInitPassProc(InitPass_SCMP);
 }

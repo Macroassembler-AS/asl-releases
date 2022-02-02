@@ -1,3 +1,10 @@
+2022-02-02 [1.42 Bld 218]
+
+- Addition    : add DEFBIT for uPD7807...7809
+- Change      : A couple of target-specific symbols now only appear
+                in the symbol table if the respective target was
+                actually used
+
 2022-01-30 [1.42 Bld 217]
 
 - Bugfix      : 2650: do not allow ANDZ R0 (decodes as HALT)
@@ -39,7 +46,7 @@
 
 2021-11-03 [1.42 Bld 212]
 
-- Bugfix      : Do not print enpty file name () on listing pages with symbol tables
+- Bugfix      : Do not print empty file name () on listing pages with symbol tables
 - Addition    : Add CP-1600 target (contribution by Haruo Asano)
 
 2021-10-03 [1.42 Bld 211]

@@ -19,6 +19,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmallg.h"
+#include "onoff_common.h"
 #include "asmrelocs.h"
 #include "codepseudo.h"
 #include "intpseudo.h"
@@ -2660,12 +2661,6 @@ static void InternSymbol_51(char *pArg, TempResult *pResult)
   }
 }
 
-static void InitPass_51(void)
-{
-  SetFlag(&SrcMode, SrcModeName, False);
-  SetFlag(&TargetBigEndian, BigEndianName, False);
-}
-
 static void SwitchTo_51(void)
 {
   TurnWords = False;
@@ -2725,8 +2720,10 @@ static void SwitchTo_51(void)
 
   InitFields();
   SwitchFrom = DeinitFields;
-  AddONOFF("SRCMODE"  , &SrcMode  , SrcModeName  , False);
-  AddONOFF("BIGENDIAN", &TargetBigEndian, BigEndianName, False);
+  if (!onoff_test_and_set(e_onoff_reg_srcmode))
+    SetFlag(&SrcMode, SrcModeSymName, False);
+  AddONOFF(SrcModeCmdName, &SrcMode, SrcModeSymName, False);
+  onoff_bigendian_add();
 }
 
 void code51_init(void)
@@ -2743,6 +2740,4 @@ void code51_init(void)
   CPU80C390 = AddCPU("80C390", SwitchTo_51);
   CPU80251  = AddCPU("80C251", SwitchTo_51);
   CPU80251T = AddCPU("80C251T", SwitchTo_51);
-
-  AddInitPassProc(InitPass_51);
 }

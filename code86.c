@@ -18,6 +18,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmallg.h"
+#include "onoff_common.h"
 #include "codepseudo.h"
 #include "intpseudo.h"
 #include "asmitree.h"
@@ -2845,7 +2846,7 @@ static void SwitchTo_86(void)
 
   MakeCode = MakeCode_86; IsDef = IsDef_86;
   SwitchFrom = DeinitFields; InitFields();
-  AddONOFF("FPU",&FPUAvail,FPUAvailName,False);
+  onoff_fpu_add();
 }
 
 void code86_init(void)

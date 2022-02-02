@@ -19,6 +19,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmallg.h"
+#include "onoff_common.h"
 #include "asmstructs.h"
 #include "asmitree.h"
 #include "codepseudo.h"
@@ -115,7 +116,7 @@ static Boolean DecodeRegCore(char *pArg, Byte *pResult, tSymbolSize *pSize)
   if (!as_strcasecmp(pArg, "SP"))
   {
     *pResult = REG_SP | REG_MARK;
-    *pSize = (Maximum) ? eSymbolSize32Bit : eSymbolSize16Bit;
+    *pSize = MaxMode ? eSymbolSize32Bit : eSymbolSize16Bit;
     return True;
   }
 
@@ -2320,12 +2321,10 @@ static void SwitchTo_H8_3(void)
   IntConstModeIBMNoTerm = True;
   SwitchFrom = DeinitFields;
   InitFields();
-  AddONOFF("MAXMODE", &Maximum   , MaximumName   , False);
-  AddMoto16PseudoONOFF();
+  onoff_maxmode_add();
+  AddMoto16PseudoONOFF(False);
 
   CPU16 = (MomCPU <= CPUH8_300);
-
-  SetFlag(&DoPadding, DoPaddingName, False);
 }
 
 void codeh8_3_init(void)

@@ -19,6 +19,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmallg.h"
+#include "onoff_common.h"
 #include "asmitree.h"
 #include "codevars.h"
 #include "intpseudo.h"
@@ -926,11 +927,6 @@ static Boolean IsDef_960(void)
   return Memo("REG");
 }
 
-static void InitPass_960(void)
-{
-  SetFlag(&FPUAvail, FPUAvailName, False);
-}
-
 /*!------------------------------------------------------------------------
  * \fn     InternSymbol_960(char *pArg, TempResult *pResult)
  * \brief  handle built-in symbols on i960
@@ -985,8 +981,8 @@ static void SwitchTo_960(void)
   InternSymbol = InternSymbol_960;
   DissectReg = DissectReg_960;
   SwitchFrom = DeinitFields;
-  AddONOFF("FPU"     , &FPUAvail  , FPUAvailName  , False);
-  AddONOFF(SupAllowedCmdName, &SupAllowed, SupAllowedSymName, False);
+  onoff_fpu_add();
+  onoff_supmode_add();
 
   InitFields();
 }
@@ -994,6 +990,4 @@ static void SwitchTo_960(void)
 void code960_init(void)
 {
   CPU80960 = AddCPU("80960", SwitchTo_960);
-
-  AddInitPassProc(InitPass_960);
 }

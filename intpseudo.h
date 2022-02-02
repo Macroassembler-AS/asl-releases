@@ -43,10 +43,9 @@ extern void DecodeIntelDT(Word Flags);
 
 extern Boolean DecodeIntelPseudo(Boolean BigEndian);
 
-extern void DecodeZ80SYNTAX(Word Code);
+struct sInstTable;
+extern void AddZ80Syntax(struct sInstTable *InstTable);
 
 extern Boolean ChkZ80Syntax(tZ80Syntax InstrSyntax);
-
-extern void intpseudo_init(void);
 
 #endif /* _INTPSEUDO_H */

@@ -1406,7 +1406,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "SRA", 0x10, DecodeSRA);
   AddInstTable(InstTable, "RLC", 0x07, DecodeRLC);
 
-  AddInstTable(InstTable, "Z80SYNTAX", 0, DecodeZ80SYNTAX);
+  AddZ80Syntax(InstTable);
 }
 
 static void DeinitFields(void)

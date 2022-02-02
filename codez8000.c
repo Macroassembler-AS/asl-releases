@@ -22,6 +22,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmallg.h"
+#include "onoff_common.h"
 #include "asmitree.h"
 #include "asmstructs.h"
 #include "codepseudo.h"
@@ -3453,7 +3454,7 @@ static void SwitchTo_Z8000(void *pUser)
   SetIsOccupiedFnc = TrueFnc;
   if (AMDSyntax)
     pPotMonadicOperator = &PotMonadicOperator;
-  AddONOFF(SupAllowedCmdName, &SupAllowed, SupAllowedSymName, False);
+  onoff_supmode_add();
 }
 
 /*!------------------------------------------------------------------------

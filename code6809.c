@@ -1514,12 +1514,10 @@ static void SwitchTo_6809(void)
 
   SwitchFrom = DeinitFields;
   InitFields();
-  AddMoto16PseudoONOFF();
+  AddMoto16PseudoONOFF(False);
 
   pASSUMERecs = ASSUME09s;
   ASSUMERecCnt = ASSUME09Count;
-
-  SetFlag(&DoPadding, DoPaddingName, False);
 }
 
 void code6809_init(void)

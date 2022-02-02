@@ -20,6 +20,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmallg.h"
+#include "onoff_common.h"
 #include "codepseudo.h"
 #include "motpseudo.h"
 #include "asmitree.h"
@@ -890,10 +891,8 @@ static void SwitchTo_MCORE(void)
    DissectReg = DissectReg_MCORE;
 
    SwitchFrom = DeinitFields; InitFields();
-   AddONOFF(SupAllowedCmdName, &SupAllowed, SupAllowedSymName, False);
-   AddMoto16PseudoONOFF();
-
-   SetFlag(&DoPadding, DoPaddingName, True);
+   onoff_supmode_add();
+   AddMoto16PseudoONOFF(True);
 }
 
 /*--------------------------------------------------------------------------*/

@@ -24,6 +24,7 @@
 #include "asmcode.h"
 #include "asmpars.h"
 #include "asmallg.h"
+#include "onoff_common.h"
 #include "asmitree.h"
 #include "codepseudo.h"
 #include "codevars.h"
@@ -1629,7 +1630,7 @@ static void SwitchTo_MSP(void)
   DispIntType = (MomCPU == CPUMSP430X) ? Int20 : Int16;
   SegLimits[SegCode] = IntTypeDefs[AdrIntType].Max;
 
-  AddONOFF("PADDING", &DoPadding, DoPaddingName, False);
+  AddONOFF(DoPaddingName, &DoPadding, DoPaddingName, False);
 
   DecodeAttrPart = DecodeAttrPart_MSP;
   MakeCode = MakeCode_MSP;

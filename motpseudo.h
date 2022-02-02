@@ -26,7 +26,7 @@ extern Boolean DecodeMotoPseudo(Boolean Turn);
 
 extern void ConvertMotoFloatDec(Double F, Byte *pDest, Boolean NeedsBig);
 
-extern void AddMoto16PseudoONOFF(void);
+extern void AddMoto16PseudoONOFF(Boolean default_paddding_value);
 
 extern void DecodeMotoDC(tSymbolSize OpSize, Boolean Turn);
 

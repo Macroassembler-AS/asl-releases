@@ -19,6 +19,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmallg.h"
+#include "onoff_common.h"
 #include "asmitree.h"
 #include "codepseudo.h"
 #include "intpseudo.h"
@@ -80,6 +81,7 @@ static ShortInt AdrMode;
 static Byte AdrPart,MemPart;
 static Byte AdrVals[4];
 static tSymbolSize OpSize;
+static Boolean DoBranchExt; /* automatically extend branches */
 
 #define ASSUMEXACount 1
 static ASSUMERec ASSUMEXAs[ASSUMEXACount] =
@@ -2183,14 +2185,14 @@ static void SwitchTo_XA(void)
   InternSymbol = InternSymbol_XA;
   DissectReg = DissectReg_XA;
   SwitchFrom = DeinitFields; InitFields();
-  AddONOFF(SupAllowedCmdName, &SupAllowed,  SupAllowedSymName, False);
-  AddONOFF("BRANCHEXT", &DoBranchExt, BranchExtName , False);
-  AddMoto16PseudoONOFF();
+  onoff_supmode_add();
+  if (!onoff_test_and_set(e_onoff_reg_branchext))
+    SetFlag(&DoBranchExt, BranchExtSymName, False);
+  AddONOFF(BranchExtCmdName, &DoBranchExt, BranchExtSymName , False);
+  AddMoto16PseudoONOFF(False);
 
   pASSUMERecs = ASSUMEXAs;
   ASSUMERecCnt = ASSUMEXACount;
-
-  SetFlag(&DoPadding, DoPaddingName, False);
 }
 
 void codexa_init(void)

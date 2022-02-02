@@ -21,6 +21,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmallg.h"
+#include "onoff_common.h"
 #include "asmitree.h"
 #include "asmstructs.h"
 #include "codepseudo.h"
@@ -3208,12 +3209,11 @@ static void SwitchTo_H16(void)
   InternSymbol = InternSymbol_H16;
   InitFields();
 
-  AddONOFF(SupAllowedCmdName, &SupAllowed, SupAllowedSymName, False);
-  AddMoto16PseudoONOFF();
+  onoff_supmode_add();
 
   /* H16 code is byte-oriented, so no padding by default */
 
-  SetFlag(&DoPadding, DoPaddingName, False);
+  AddMoto16PseudoONOFF(False);
 }
 
 /*!------------------------------------------------------------------------

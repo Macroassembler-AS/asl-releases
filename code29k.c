@@ -20,6 +20,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmallg.h"
+#include "onoff_common.h"
 #include "asmitree.h"
 #include "codepseudo.h"
 #include "intpseudo.h"
@@ -1062,7 +1063,7 @@ static void SwitchTo_29K(void)
   IsDef = IsDef_29K;
   InternSymbol = InternSymbol_29K;
   DissectReg = DissectReg_29K;
-  AddONOFF(SupAllowedCmdName, &SupAllowed, SupAllowedSymName, False);
+  onoff_supmode_add();
 
   pASSUMERecs = ASSUME29Ks;
   ASSUMERecCnt = ASSUME29KCount;

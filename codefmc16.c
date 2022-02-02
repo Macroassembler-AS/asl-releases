@@ -18,6 +18,7 @@
 #include "asmpars.h"
 #include "asmsub.h"
 #include "asmallg.h"
+#include "onoff_common.h"
 #include "errmsg.h"
 #include "codepseudo.h"
 #include "intpseudo.h"
@@ -2344,7 +2345,7 @@ static void SwitchTo_F2MC16(void)
   SwitchFrom = DeinitFields;
   InitFields();
 
-  AddONOFF(SupAllowedCmdName, &SupAllowed, SupAllowedSymName, False);
+  onoff_supmode_add();
 
   pASSUMERecs = ASSUMEF2MC16s;
   ASSUMERecCnt = ASSUMEF2MC16Count;

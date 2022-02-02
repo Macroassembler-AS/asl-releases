@@ -22,6 +22,7 @@
 #include "asmpars.h"
 #include "asmcode.h"
 #include "asmallg.h"
+#include "onoff_common.h"
 #include "asmitree.h"
 #include "codepseudo.h"
 #include "codevars.h"
@@ -1409,8 +1410,8 @@ static void SwitchTo_9900(void *pUser)
   IsDef = IsDef_9900;
   SwitchFrom = DeinitFields;
   InternSymbol = InternSymbol_9900;
-  AddONOFF("PADDING", &DoPadding , DoPaddingName , False);
-  AddONOFF(SupAllowedCmdName, &SupAllowed, SupAllowedSymName, False);
+  AddONOFF(DoPaddingName, &DoPadding , DoPaddingName , False);
+  onoff_supmode_add();
 
   InitFields();
 }

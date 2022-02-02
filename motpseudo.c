@@ -27,6 +27,7 @@
 #include "asmpars.h"
 #include "asmitree.h"
 #include "asmallg.h"
+#include "onoff_common.h"
 #include "asmcode.h"
 #include "errmsg.h"
 
@@ -757,9 +758,10 @@ static void Double_2_ieee2_wrap(Double Inp, Byte *pDest, Boolean BigEndian)
   (void)Double_2_ieee2(Inp, pDest, BigEndian);
 }
 
-void AddMoto16PseudoONOFF(void)
+void AddMoto16PseudoONOFF(Boolean default_padding_value)
 {
-  AddONOFF("PADDING", &DoPadding, DoPaddingName, False);
+  SetFlag(&DoPadding, DoPaddingName, default_padding_value);
+  AddONOFF(DoPaddingName, &DoPadding, DoPaddingName, False);
 }
 
 /*!------------------------------------------------------------------------

@@ -18,6 +18,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmallg.h"
+#include "onoff_common.h"
 #include "asmitree.h"
 #include "intpseudo.h"
 #include "codevars.h"
@@ -2063,11 +2064,6 @@ static Boolean IsDef_601(void)
   return Memo("REG");
 }
 
-static void InitPass_601(void)
-{
-  SetFlag(&TargetBigEndian, BigEndianName, False);
-}
-
 /*!------------------------------------------------------------------------
  * \fn     InternSymbol_601(char *Asc, TempResult *Erg)
  * \brief  handle built.in symbols for PPC
@@ -2128,8 +2124,8 @@ static void SwitchTo_601(void)
   SwitchFrom = DeinitFields;
   InternSymbol = InternSymbol_601;
   DissectReg = DissectReg_601;
-  AddONOFF(SupAllowedCmdName, &SupAllowed, SupAllowedSymName, False);
-  AddONOFF("BIGENDIAN", &TargetBigEndian,   BigEndianName,  False);
+  onoff_supmode_add();
+  onoff_bigendian_add();
 
   InitFields();
 }
@@ -2142,8 +2138,6 @@ void code601_init(void)
   CPU601  = AddCPU("MPC601", SwitchTo_601);
   CPU821  = AddCPU("MPC821", SwitchTo_601);
   CPU6000 = AddCPU("RS6000", SwitchTo_601);
-
-  AddInitPassProc(InitPass_601);
 
   AddCopyright("Motorola MPC821 Additions (C) 2012 Marcin Cieslak");
 }

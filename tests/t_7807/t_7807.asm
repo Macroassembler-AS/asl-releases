@@ -1119,6 +1119,18 @@
 
 	reti			; 62
 
+membit	defbit	0fe02h.2
+pa0	defbit	pa.0
+pb1	defbit	pb.1
+pc2	defbit	pc.2
+pd3	defbit	pd.3
+pf4	defbit	pf.4
+mkh5	defbit	mkh.5
+mkl6	defbit	mkl.6
+eom7	defbit	eom.7
+tmm0	defbit	tmm.0
+pt1	defbit	pt.1
+
 	mov	cy,0fe02h.2	; 5f 12
 	mov	cy,pa.0		; 5f 80
 	mov	cy,pb.1		; 5f 89
@@ -1131,17 +1143,17 @@
 	mov	cy,tmm.0	; 5f e8
 	mov	cy,pt.1		; 5f f1
 
-	mov	0fe02h.2,cy	; 5a 12
-	mov	pa.0,cy		; 5a 80
-	mov	pb.1,cy		; 5a 89
-	mov	pc.2,cy		; 5a 92
-	mov	pd.3,cy		; 5a 9b
-	mov	pf.4,cy		; 5a ac
-	mov	mkh.5,cy	; 5a b5
-	mov	mkl.6,cy	; 5a be
-	mov	eom.7,cy	; 5a df
-	mov	tmm.0,cy	; 5a e8
-	mov	pt.1,cy		; 5a f1
+	mov	membit,cy	; 5a 12
+	mov	pa0,cy		; 5a 80
+	mov	pb1,cy		; 5a 89
+	mov	pc2,cy		; 5a 92
+	mov	pd3,cy		; 5a 9b
+	mov	pf4,cy		; 5a ac
+	mov	mkh5,cy		; 5a b5
+	mov	mkl6,cy		; 5a be
+	mov	eom7,cy		; 5a df
+	mov	tmm0,cy		; 5a e8
+	mov	pt1,cy		; 5a f1
 
 	and	cy,0fe02h.2	; 31 12
 	and	cy,pa.0		; 31 80

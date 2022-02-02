@@ -1686,7 +1686,7 @@ static void SwitchTo_6812(void)
   IsDef = IsDef_6812;
   SwitchFrom = DeinitFields;
   InitFields();
-  AddMoto16PseudoONOFF();
+  AddMoto16PseudoONOFF(False);
 
   if (MomCPU >= CPU6812X)
   {
@@ -1700,8 +1700,6 @@ static void SwitchTo_6812(void)
    pASSUMERecs = ASSUME6812s;
    ASSUMERecCnt = ASSUME6812Count;
   }
-
-  SetFlag(&DoPadding, DoPaddingName, False);
 }
 
 void code6812_init(void)

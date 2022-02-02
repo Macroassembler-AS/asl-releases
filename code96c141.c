@@ -22,6 +22,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmallg.h"
+#include "onoff_common.h"
 #include "errmsg.h"
 #include "codepseudo.h"
 #include "intpseudo.h"
@@ -98,12 +99,12 @@ static CPUVar CPU96C141,CPU93C141;
 static Boolean IsRegBase(Byte No, Byte Size)
 {
   return ((Size == 2)
-       || ((Size == 1) && (No < 0xf0) && (!Maximum) && ((No & 3) == 0)));
+       || ((Size == 1) && (No < 0xf0) && (!MaxMode) && ((No & 3) == 0)));
 }
 
-static void ChkMaximum(Boolean MustMax, Byte *Result)
+static void ChkMaxMode(Boolean MustMax, Byte *Result)
 {
-  if (Maximum != MustMax)
+  if (MaxMode != MustMax)
   {
     *Result = 1;
     WrError((MustMax) ? ErrNum_OnlyInMaxmode : ErrNum_NotInMaxmode);
@@ -165,7 +166,7 @@ static Byte CodeEReg(char *Asc, Byte *ErgNo, Byte *ErgSize)
       *ErgNo = 0xe0 + (z << 2);
       *ErgSize = 2;
       if (z < 4)
-        ChkMaximum(True, &Result);
+        ChkMaxMode(True, &Result);
       return Result;
     }
   }
@@ -181,9 +182,9 @@ static Byte CodeEReg(char *Asc, Byte *ErgNo, Byte *ErgSize)
         if (*Asc == 'Q')
         {
           *ErgNo |= 2;
-          ChkMaximum(True, &Result);
+          ChkMaxMode(True, &Result);
         }
-        if (((*Asc == 'Q') || (Maximum)) && (Asc[2] > '3'))
+        if (((*Asc == 'Q') || (MaxMode)) && (Asc[2] > '3'))
         {
           WrError(ErrNum_OverRange);
           Result = 1;
@@ -206,9 +207,9 @@ static Byte CodeEReg(char *Asc, Byte *ErgNo, Byte *ErgSize)
         if (*Asc == 'Q')
         {
           *ErgNo |= 2;
-          ChkMaximum(True, &Result);
+          ChkMaxMode(True, &Result);
         }
-        if (((*Asc == 'Q') || (Maximum)) && (Asc[3] > '3'))
+        if (((*Asc == 'Q') || (MaxMode)) && (Asc[3] > '3'))
         {
           WrError(ErrNum_OverRange);
           Result = 1;
@@ -226,7 +227,7 @@ static Byte CodeEReg(char *Asc, Byte *ErgNo, Byte *ErgSize)
      if (strncmp(Asc, Reg32Names[z], 3) == 0)
      {
        *ErgNo = ((Asc[3] - '0') << 4) + (z << 2);
-       ChkMaximum(True, &Result);
+       ChkMaxMode(True, &Result);
        if (Asc[3] > '3')
        {
          WrError(ErrNum_OverRange); Result = 1;
@@ -243,7 +244,7 @@ static Byte CodeEReg(char *Asc, Byte *ErgNo, Byte *ErgSize)
     if (Asc[1] == Reg8Names[z])
     {
       *ErgNo = 0xe2 + ((z & 6) << 1) + (z & 1);
-      ChkMaximum(True, &Result);
+      ChkMaxMode(True, &Result);
       *ErgSize = 0;
       return Result;
     }
@@ -256,7 +257,7 @@ static Byte CodeEReg(char *Asc, Byte *ErgNo, Byte *ErgSize)
       if (!strcmp(Asc + 1, Reg16Names[z]))
       {
         *ErgNo = 0xe2 + (z << 2);
-        if (z < 4) ChkMaximum(True, &Result);
+        if (z < 4) ChkMaxMode(True, &Result);
         *ErgSize = 1;
         return Result;
       }
@@ -284,7 +285,7 @@ static Byte CodeEReg(char *Asc, Byte *ErgNo, Byte *ErgSize)
      if (Asc[l - 2] == Reg8Names[z])
      {
        *ErgNo = 0xd0 + ((z & 6) << 1) + ((strlen(Asc) - 2) << 1) + (z & 1);
-       if (l == 3) ChkMaximum(True, &Result);
+       if (l == 3) ChkMaxMode(True, &Result);
        *ErgSize = 0;
        return Result;
      }
@@ -299,7 +300,7 @@ static Byte CodeEReg(char *Asc, Byte *ErgNo, Byte *ErgSize)
       if (!strcmp(HAsc, Reg16Names[z]))
       {
         *ErgNo = 0xd0 + (z << 2) + ((strlen(Asc) - 3) << 1);
-        if (l == 4) ChkMaximum(True, &Result);
+        if (l == 4) ChkMaxMode(True, &Result);
         *ErgSize = 1;
         return Result;
       }
@@ -314,7 +315,7 @@ static Byte CodeEReg(char *Asc, Byte *ErgNo, Byte *ErgSize)
       if (!strcmp(HAsc, Reg32Names[z]))
       {
         *ErgNo = 0xd0 + (z << 2);
-        ChkMaximum(True, &Result);
+        ChkMaxMode(True, &Result);
         *ErgSize = 2;
         return Result;
       }
@@ -1764,7 +1765,7 @@ static void DecodeImm(Word Index)
       AdrWord = EvalStrIntExpression(&ArgStr[1], Int8, &OK);
     if (OK)
     {
-      if (((Maximum) && (AdrWord > ImmZ->MaxMax)) || ((!Maximum) && (AdrWord > ImmZ->MinMax))) WrError(ErrNum_OverRange);
+      if (((MaxMode) && (AdrWord > ImmZ->MaxMax)) || ((!MaxMode) && (AdrWord > ImmZ->MinMax))) WrError(ErrNum_OverRange);
       else if (Hi(ImmZ->Code) == 0)
       {
         CodeLen = 1;
@@ -2381,8 +2382,8 @@ static void DecodeLDxx(Word Code)
         ArgStr[2].str.p_str[l2 - 2] = '\0';
         if ((!as_strcasecmp(ArgStr[1].str.p_str + 1,"XIX")) && (!as_strcasecmp(ArgStr[2].str.p_str + 1, "XIY")))
           HReg = 2;
-        else if ((Maximum) && (!as_strcasecmp(ArgStr[1].str.p_str + 1, "XDE")) && (!as_strcasecmp(ArgStr[2].str.p_str + 1 , "XHL")));
-        else if ((!Maximum) && (!as_strcasecmp(ArgStr[1].str.p_str + 1, "DE")) && (!as_strcasecmp(ArgStr[2].str.p_str + 1 , "HL")));
+        else if ((MaxMode) && (!as_strcasecmp(ArgStr[1].str.p_str + 1, "XDE")) && (!as_strcasecmp(ArgStr[2].str.p_str + 1 , "XHL")));
+        else if ((!MaxMode) && (!as_strcasecmp(ArgStr[1].str.p_str + 1, "DE")) && (!as_strcasecmp(ArgStr[2].str.p_str + 1 , "HL")));
         else
           OK = False;
       }
@@ -2755,7 +2756,7 @@ static Boolean ChkPC_96C141(LargeWord Addr)
   switch (ActPC)
   {
     case SegCode:
-      if (Maximum) ok = (Addr <= 0xffffff);
+      if (MaxMode) ok = (Addr <= 0xffffff);
               else ok = (Addr <= 0xffff);
       break;
     default:
@@ -2796,8 +2797,8 @@ static void SwitchTo_96C141(void)
   ChkPC = ChkPC_96C141;
   IsDef = IsDef_96C141;
   SwitchFrom = DeinitFields;
-  AddONOFF("MAXMODE", &Maximum   , MaximumName   , False);
-  AddONOFF(SupAllowedCmdName, &SupAllowed, SupAllowedSymName, False);
+  onoff_maxmode_add();
+  onoff_supmode_add();
 
   InitFields();
 }

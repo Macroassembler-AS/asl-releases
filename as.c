@@ -46,8 +46,8 @@
 #include "asmdebug.h"
 #include "asmrelocs.h"
 #include "asmallg.h"
+#include "onoff_common.h"
 #include "codepseudo.h"
-#include "intpseudo.h"
 #include "as.h"
 
 #include "code68k.h"
@@ -2857,8 +2857,6 @@ static void AssembleFile_InitPass(void)
     EnterStringSymbol(&TmpComp, TimeS, True);
   }
 
-  SetFlag(&DoPadding, DoPaddingName, True);
-
   if (*DefCPU == '\0')
     SetCPUByType(0, NULL);
   else
@@ -2870,10 +2868,6 @@ static void AssembleFile_InitPass(void)
       SetCPUByType(0, NULL);
   }
 
-  SetFlag(&SupAllowed, SupAllowedSymName, DefSupAllowed);
-  SetFlag(&FPUAvail, FPUAvailName, False);
-  SetFlag(&Maximum, MaximumName, False);
-  SetFlag(&DoBranchExt, BranchExtName, False);
   strmaxcpy(TmpCompStr, ListOnName, sizeof(TmpCompStr)); EnterIntSymbol(&TmpComp, ListOn = 1, SegNone, True);
   SetLstMacroExp(eLstMacroExpAll);
   InitLstMacroExpMod(&LstMacroExpModOverride);
@@ -4258,7 +4252,7 @@ int main(int argc, char **argv)
     asmdebug_init();
 
     codeallg_init();
-    intpseudo_init();
+    onoff_common_init();
 
     code68k_init();
     code56k_init();

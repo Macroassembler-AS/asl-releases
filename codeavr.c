@@ -20,6 +20,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmallg.h"
+#include "onoff_common.h"
 #include "asmitree.h"
 #include "asmcode.h"
 #include "codepseudo.h"
@@ -73,7 +74,7 @@ typedef struct
 
 static FixedOrder *FixedOrders, *Reg1Orders, *Reg2Orders;
 
-static Boolean WrapFlag;
+static Boolean WrapFlag, Packing;
 static LongInt ORMask, SignMask, CodeSegSize;
 static const tCPUProps *pCurrCPUProps;
 
@@ -1117,11 +1118,6 @@ static void MakeCode_AVR(void)
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 
-static void InitCode_AVR(void)
-{
-  SetFlag(&Packing, PackingName, False);
-}
-
 static Boolean IsDef_AVR(void)
 {
   return (Memo("PORT")
@@ -1184,7 +1180,7 @@ static void SwitchTo_AVR(void *pUser)
   if (!CodeSegSize)
   {
     SegLimits[SegCode] = (SegLimits[SegCode] << 1) + 1;
-    AddONOFF("PADDING", &DoPadding, DoPaddingName, False);
+    AddONOFF(DoPaddingName, &DoPadding, DoPaddingName, False);
   }
   SegLimits[SegData] = (pCurrCPUProps->RegistersMapped ? RegBankSize : 0)
                      + pCurrCPUProps->IOAreaSize
@@ -1198,7 +1194,9 @@ static void SwitchTo_AVR(void *pUser)
   ORMask = ((LongInt) - 1) - SegLimits[SegCode];
 
   AddONOFF("WRAPMODE", &WrapFlag, WrapFlagName, False);
-  AddONOFF("PACKING", &Packing, PackingName, False);
+  if (!onoff_test_and_set(e_onoff_reg_packing))
+    SetFlag(&Packing, PackingSymName, False);
+  AddONOFF(PackingCmdName, &Packing, PackingSymName, False);
   SetFlag(&WrapFlag, WrapFlagName, False);
 
   MakeCode = MakeCode_AVR;
@@ -1339,6 +1337,4 @@ void codeavr_init(void)
 
   for (pProp = CPUProps; pProp->pName; pProp++)
     (void)AddCPUUserWithArgs(pProp->pName, SwitchTo_AVR, (void*)pProp, NULL, AVRArgs);
-
-   AddInitPassProc(InitCode_AVR);
 }

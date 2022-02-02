@@ -20,6 +20,7 @@
 #include "asmpars.h"
 #include "asmcode.h"
 #include "asmallg.h"
+#include "onoff_common.h"
 #include "asmitree.h"
 #include "codepseudo.h"
 #include "intpseudo.h"
@@ -66,7 +67,6 @@ typedef enum
 # include "codez80.hpp"
 #endif
 
-#define ExtFlagName    "INEXTMODE"       /* Flag-Symbolnamen */
 #define LWordFlagName  "INLWORDMODE"
 
 #define ModNone (-1)
@@ -4043,12 +4043,6 @@ static void MakeCode_Z80(void)
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 
-static void InitCode_Z80(void)
-{
-  SetFlag(&ExtFlag, ExtFlagName, False);
-  SetFlag(&LWordFlag, LWordFlagName, False);
-}
-
 static Boolean IsDef_Z80(void)
 {
   return Memo("PORT") || Memo("REG");
@@ -4173,11 +4167,13 @@ static void SwitchTo_Z80(void)
 
   if (MomCPU >= CPUZ380)
   {
-    AddONOFF("EXTMODE",   &ExtFlag   , ExtFlagName   , False);
-    AddONOFF("LWORDMODE", &LWordFlag , LWordFlagName , False);
+    if (!onoff_test_and_set(e_onoff_reg_extmode))
+      SetFlag(&ExtFlag, ExtModeSymName, False);
+    AddONOFF(ExtModeCmdName, &ExtFlag, ExtModeSymName, False);
+    if (!onoff_test_and_set(e_onoff_reg_lwordmode))
+      SetFlag(&LWordFlag, LWordModeSymName, False);
+    AddONOFF(LWordModeCmdName, &LWordFlag , LWordModeSymName , False);
   }
-  SetFlag(&ExtFlag, ExtFlagName, False);
-  SetFlag(&LWordFlag, LWordFlagName, False);
 }
 
 void codez80_init(void)
@@ -4189,6 +4185,4 @@ void codez80_init(void)
   CPUZ180  = AddCPU("Z180"      , SwitchTo_Z80);
   CPUR2000 = AddCPU("RABBIT2000", SwitchTo_Z80);
   CPUZ380  = AddCPU("Z380"      , SwitchTo_Z80);
-
-  AddInitPassProc(InitCode_Z80);
 }

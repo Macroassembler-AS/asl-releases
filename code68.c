@@ -1001,15 +1001,13 @@ static void SwitchTo_68(void)
   IsDef = IsDef_68;
   SwitchFrom = DeinitFields;
   InitFields();
-  AddMoto16PseudoONOFF();
+  AddMoto16PseudoONOFF(False);
 
   if (MomCPU == CPU68HC11K4)
   {
     pASSUMERecs = ASSUMEHC11s;
     ASSUMERecCnt = ASSUMEHC11Count;
   }
-
-  SetFlag(&DoPadding, DoPaddingName, False);
 }
 
 void code68_init(void)

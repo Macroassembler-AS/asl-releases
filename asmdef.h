@@ -88,17 +88,10 @@ extern char SrcSuffix[],IncSuffix[],PrgSuffix[],LstSuffix[],
 #define MomCPUIdentName  "MOMCPUNAME" /* mom. Prozessortyp */
 #define MomFPUIdentName  "MOMFPUNAME" /* mom. Koprozessortyp */
 #define MomPMMUIdentName  "MOMPMMUNAME" /* mom. MMU-Typ */
-#define SupAllowedCmdName "SUPMODE"   /* privilegierte Befehle erlaubt */
-#define SupAllowedSymName "INSUPMODE"
 #define DoPaddingName    "PADDING"    /* Padding an */
 #define PackingName      "PACKING"    /* gepackte Ablage an */
-#define MaximumName      "INMAXMODE"  /* CPU im Maximum-Modus */
-#define FPUAvailName     "HASFPU"     /* FPU-Befehle erlaubt */
-#define PMMUAvailName    "HASPMMU"    /* PMMU-Befehle erlaubt */
 #define ListOnName       "LISTON"     /* Listing an/aus */
 #define RelaxedName      "RELAXED"    /* alle Zahlenschreibweisen zugelassen */
-#define SrcModeName      "INSRCMODE"  /* CPU im Quellcode-kompatiblen Modus */
-#define BigEndianName    "BIGENDIAN"  /* Datenablage MSB first */
 #define BranchExtName    "BRANCHEXT"  /* Spruenge autom. verlaengern */
 #define FlagTrueName     "TRUE"	      /* Flagkonstanten */
 #define FlagFalseName    "FALSE"
@@ -336,14 +329,7 @@ extern char MomCPUIdent[20],
             MomFPUIdent[20],
             MomPMMUIdent[20];
 
-extern Boolean FPUAvail,
-               PMMUAvail;           /* PMMU-Befehle erlaubt? */
-extern Boolean DoPadding,
-               TargetBigEndian;
-extern Boolean Packing;
-extern Boolean DefSupAllowed, SupAllowed;
-extern Boolean Maximum;
-extern Boolean DoBranchExt;
+extern Boolean DefSupAllowed;
 
 extern int OutRadixBase, ListRadixBase;
 extern const char *pCommentLeadIn;
