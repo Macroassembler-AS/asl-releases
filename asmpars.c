@@ -3201,13 +3201,21 @@ typedef struct
   as_dynstr_t s;
 } TDebContext;
 
+static Boolean match_space_mask(unsigned mask, as_addrspace_t space)
+{
+  if (SegNone == space)
+    return !mask;
+  else
+    return !!((mask >> space) & 1);
+}
+
 static void PrintDebSymbols_PNode(PTree Tree, void *pData)
 {
   PSymbolEntry Node = (PSymbolEntry) Tree;
   TDebContext *DebContext = (TDebContext*) pData;
   int l1;
 
-  if (!((Node->SymWert.AddrSpaceMask >> DebContext->Space) & 1))
+  if (!match_space_mask(Node->SymWert.AddrSpaceMask, DebContext->Space))
     return;
 
   if (!DebContext->HWritten)

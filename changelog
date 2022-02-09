@@ -1,3 +1,8 @@
+2022-02-09 [1.42 Bld 219]
+
+- Bugfix      : Symbols without assigned address space did not appear
+                in MAP file
+
 2022-02-02 [1.42 Bld 218]
 
 - Addition    : add DEFBIT for uPD7807...7809
