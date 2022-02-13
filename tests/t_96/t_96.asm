@@ -27,7 +27,7 @@ edx		equ	dx
 		POPF
 		PUSHF
 		RET
-		RSC
+		RST
 		SETC
 		TRAP
                 PUSHA

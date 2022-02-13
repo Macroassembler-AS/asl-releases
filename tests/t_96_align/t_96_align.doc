@@ -1,0 +1,8 @@
++----------------------- Test Application 96_ALIGN --------------------------+
+|                                                                            |
+| This tests for the occurrence of error messages when MCS-96 register file  |
+| operands are not aligned according to their operand size, for 'special'    |
+| instructions that have differing operand sizes for the individual          |
+| arguments.                                                                 |
+|                                                                            |
++----------------------------------------------------------------------------+

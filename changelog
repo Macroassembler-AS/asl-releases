@@ -1,3 +1,10 @@
+2022-02-13 [1.42 Bld 220]
+
+- Bugfix      : correct MCS-96 RST instruction (was 'RSC' instead)
+- Change      : MCS-96: change a few 32 bit operand alignment warnings
+                to errors, to make consistent with 16 bit alignment
+                errors
+
 2022-02-09 [1.42 Bld 219]
 
 - Bugfix      : Symbols without assigned address space did not appear

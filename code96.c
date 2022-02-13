@@ -109,13 +109,6 @@ static Boolean ChkWork(Word *Adr)
     return (*Adr <= 0xff);
 }
 
-static void ChkAlign(Byte Adr, const tStrComp *pArg)
-{
-  if (((OpSize == 0) && (Adr & 1))
-   || ((OpSize == 1) && (Adr & 3)))
-    WrStrErrorPos(ErrNum_AddrNotAligned, pArg);
-}
-
 static void ChkAdr(Byte Mask, const tStrComp *pArg)
 {
   if ((AdrType == ModDir) && (!(Mask & MModDir)))
@@ -461,15 +454,13 @@ static void DecodeFixed(Word Code)
 
 static void DecodeALU3(Word Code)
 {
-  Boolean OK, Special;
-  int Start;
-
-  OpSize = Hi(Code) & 3;
-
   if (ChkArgCnt(2, 3))
   {
-    Start = 0;
-    Special = (Hi(Code) & 0x40) || FALSE;
+    int Start = 0;
+    Boolean Special = (Hi(Code) & 0x40) || False,
+            DoubleDest = (Hi(Code) & 0x08) || False;
+
+    OpSize = Hi(Code) & 3;
     if (Hi(Code) & 0x80)
       BAsmCode[Start++] = 0xfe;
     BAsmCode[Start++] = 0x40 + (Ord(ArgCnt==2) << 5)
@@ -478,6 +469,8 @@ static void DecodeALU3(Word Code)
     DecodeAdr(&ArgStr[ArgCnt], MModImm | MModMem, False);
     if (AdrType != ModNone)
     {
+      Boolean OK;
+
       BAsmCode[Start - 1] += AdrMode;
       memcpy(BAsmCode + Start, AdrVals, AdrCnt);
       Start += AdrCnt;
@@ -498,6 +491,7 @@ static void DecodeALU3(Word Code)
         OK = True;
       if (OK)
       {
+        OpSize += DoubleDest;
         DecodeAdr(&ArgStr[1], MModDir, False);
         if (AdrType != ModNone)
         {
@@ -507,7 +501,6 @@ static void DecodeALU3(Word Code)
           {
             ChkSFR(AdrVals[0], &ArgStr[1]);
             Chk296(AdrVals[0], &ArgStr[1]);
-            ChkAlign(AdrVals[0], &ArgStr[1]);
           }
         }
       }
@@ -517,16 +510,15 @@ static void DecodeALU3(Word Code)
 
 static void DecodeALU2(Word Code)
 {
-  int Start;
-  Byte HReg, Mask;
-  Boolean Special;
-
-  OpSize = Hi(Code) & 3;
-
   if (ChkArgCnt(2, 2))
   {
-    Start = 0;
-    Special = (Hi(Code) & 0x40) || FALSE;
+    int Start = 0;
+    Boolean Special = (Hi(Code) & 0x40) || False,
+            DoubleDest = (Hi(Code) & 0x08) || False;
+    Byte HReg, Mask;
+
+    OpSize = Hi(Code) & 3;
+
     if (Hi(Code) & 0x80)
       BAsmCode[Start++] = 0xfe;
     HReg = ((Hi(Code) & 0x20) ? 2 : 1) << 1;
@@ -540,6 +532,7 @@ static void DecodeALU2(Word Code)
       Start += AdrCnt;
       if ((Special) && (AdrMode == 0))
         ChkSFR(AdrVals[0], &ArgStr[2]);
+      OpSize += DoubleDest;
       DecodeAdr(&ArgStr[1], MModDir, False);
       if (AdrType != ModNone)
       {
@@ -548,7 +541,6 @@ static void DecodeALU2(Word Code)
         if (Special)
         {
           ChkSFR(AdrVals[0], &ArgStr[1]);
-          ChkAlign(AdrVals[0], &ArgStr[1]);
         }
       }
     }
@@ -617,18 +609,17 @@ static void DecodeBMOV(Word Code)
 
 static void DecodeALU1(Word Code)
 {
-  OpSize = Hi(Code) & 3;
-
   if (ChkArgCnt(1, 1))
   {
+    Boolean DoubleDest = (Hi(Code) & 0x08) || False;
+    OpSize = (Hi(Code) & 3) + DoubleDest;
     DecodeAdr(&ArgStr[1], MModDir, False);
     if (AdrType != ModNone)
     {
       CodeLen = 1 + AdrCnt;
+      OpSize -= DoubleDest;
       BAsmCode[0] = Code + ((1 - OpSize) << 4);
       memcpy(BAsmCode + 1, AdrVals, AdrCnt);
-      if (Hi(Code) & 0x80)
-        ChkAlign(AdrVals[0], &ArgStr[1]);
     }
   }
 }
@@ -701,19 +692,18 @@ static void DecodeNORML(Word Code)
 
   if (ChkArgCnt(2, 2))
   {
-    OpSize = 0;
+    OpSize = eSymbolSize8Bit;
     DecodeAdr(&ArgStr[2], MModDir, False);
     if (AdrType != ModNone)
     {
       BAsmCode[1] = AdrVals[0];
-      OpSize = 1;
+      OpSize = eSymbolSize32Bit;
       DecodeAdr(&ArgStr[1], MModDir, False);
       if (AdrType != ModNone)
       {
         CodeLen = 3;
         BAsmCode[0] = 0x0f;
         BAsmCode[2] = AdrVals[0];
-        ChkAlign(AdrVals[0], &ArgStr[1]);
       }
     }
   }
@@ -1245,21 +1235,21 @@ static void InitFields(void)
   AddFixed("PUSHA", 0xf4, CPU80196 , CPU80296 );
   AddFixed("PUSHF", 0xf2, CPU8096  , CPU80296 );
   AddFixed("RET"  , 0xf0, CPU8096  , CPU80296 );
-  AddFixed("RSC"  , 0xff, CPU8096  , CPU80296 );
+  AddFixed("RST"  , 0xff, CPU8096  , CPU80296 );
   AddFixed("SETC" , 0xf9, CPU8096  , CPU80296 );
   AddFixed("TRAP" , 0xf7, CPU8096  , CPU80296 );
   AddFixed("RETI" , 0xe5, CPU80196N, CPU80296 );
 
   AddALU3("ADD" , 0x0001);
   AddALU3("AND" , 0x0000);
-  AddALU3("MUL" , 0xc003);
-  AddALU3("MULU", 0x4003);
+  AddALU3("MUL" , 0xc803);
+  AddALU3("MULU", 0x4803);
   AddALU3("SUB" , 0x0002);
 
   AddALU2("ADDC", 0x20a4);
   AddALU2("CMP" , 0x2088);
-  AddALU2("DIV" , 0xe08c);
-  AddALU2("DIVU", 0x608c);
+  AddALU2("DIV" , 0xe88c);
+  AddALU2("DIVU", 0x688c);
   AddALU2("LD"  , 0x20a0);
   AddALU2("OR"  , 0x2080);
   AddALU2("ST"  , 0x00c0);
@@ -1268,7 +1258,7 @@ static void InitFields(void)
 
   AddALU1("CLR", 0x0001);
   AddALU1("DEC", 0x0005);
-  AddALU1("EXT", 0x8006);
+  AddALU1("EXT", 0x8806);
   AddALU1("INC", 0x0007);
   AddALU1("NEG", 0x0003);
   AddALU1("NOT", 0x0002);
