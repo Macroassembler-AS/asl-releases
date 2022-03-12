@@ -1,3 +1,7 @@
+2022-03-12 [1.42 Bld 221]
+
+- Bugfix      : 68K: allow k factor to FMOVE on dest operand
+
 2022-02-13 [1.42 Bld 220]
 
 - Bugfix      : correct MCS-96 RST instruction (was 'RSC' instead)

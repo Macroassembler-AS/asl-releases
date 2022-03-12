@@ -1,0 +1,8 @@
++---------------------- Test Application 68K_KFACT --------------------------+
+|                                                                            |
+|  When storing packed decimals, the 68881/68882 has the option to set a     |
+|  precision via a 'k factor'.  The 68KPRM was a bit ambiguous about where   |
+|  to put the factor, so it is now allowed as suffix to either the attribute |
+|  or the destination operand.                                               |
+|                                                                            |
++----------------------------------------------------------------------------+
