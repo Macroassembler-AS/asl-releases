@@ -69,7 +69,7 @@ void onoff_pmmu_add(void)
 void onoff_supmode_add(void)
 {
   if (!onoff_test_and_set(e_onoff_reg_supmode))
-    SetFlag(&SupAllowed, SupAllowedSymName, False);
+    SetFlag(&SupAllowed, SupAllowedSymName, DefSupAllowed);
   AddONOFF(SupAllowedCmdName, &SupAllowed, SupAllowedSymName, False);
 }
 

@@ -1,3 +1,8 @@
+2022-03-16 [1.42 Bld 222]
+
+- Bugfix      : -supmode command line switch works again
+- Bugfix      : Z8000: correct register overlap check for PUSH/POP
+
 2022-03-12 [1.42 Bld 221]
 
 - Bugfix      : 68K: allow k factor to FMOVE on dest operand
