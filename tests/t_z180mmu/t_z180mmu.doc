@@ -1,0 +1,10 @@
++----------------------- Test Application Z180MMU ---------------------------+
+|                                                                            |
+| This test plays with the CPU <-> physical mapping on the Z180.  It         |
+| offers a physical memory of 512 KByte, which is mapped in three portions   |
+| into the CPU's 64K address space.  Depending on the assumed values for     |
+| CBAR, CBR, and BBR, AS will translate physical to CPU addresses.  Manual   |
+| address translation is | possible via the cpu2phys() and phys2cpu()        |
+| functions.                                                                 |
+|                                                                            |
++----------------------------------------------------------------------------+

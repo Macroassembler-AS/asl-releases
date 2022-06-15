@@ -113,4 +113,6 @@ extern LongWord UTF8ToUnicode(const char* *ppChr);
 
 extern void UnicodeToUTF8(char* *ppChr, LongWord Unicode);
 
+extern unsigned as_wcwidth(unsigned codepoint);
+
 #endif /* _CHARDEFS_H */

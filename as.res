@@ -981,6 +981,10 @@ Message ErrMsgUnknownBitBltOpt
  "unbekannte BITBLT Option"
  "unknown BITBLT option"
 
+Message ErrMsgInvCBAR
+ "ung&uuml;ltiger Wert f&uuml;r CBAR"
+ "invalid CBAR value"
+
 Message ErrMsgInternalError
  "interner Fehler"
  "internal error"

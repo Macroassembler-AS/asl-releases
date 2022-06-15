@@ -1170,7 +1170,7 @@ typedef unsigned long Card32;
 
    Principally, a normal *NIX. */
 
-#if defined(__linux__) || defined(__FreeBSD__) || defined(__APPLE__)
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__APPLE__)
 
 /* no long long data type if C89 is used */
 
@@ -1182,6 +1182,8 @@ typedef unsigned long Card32;
 #define ARCHSYSNAME "unknown-linux"
 #elif defined __FreeBSD__
 #define ARCHSYSNAME "unknown-freebsd"
+#elif defined __NetBSD__
+#define ARCHSYSNAME "unknown-netbsd"
 #else
 #define ARCHSYSNAME "apple-osx"
 #endif
@@ -1204,7 +1206,7 @@ typedef unsigned long Card64;
 #define HAS64
 #define LOCALE_NLS
 
-#endif /* __linux__ || __FreeBSD__ || __APPLE__ */
+#endif /* __linux__ || __FreeBSD__ || __NetBSD__ || __APPLE__ */
 
 /*---------------------------------------------------------------------------*/
 /* Intel i386 with WIN32 and MinGW:

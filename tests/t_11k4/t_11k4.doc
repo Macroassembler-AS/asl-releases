@@ -1,0 +1,10 @@
++------------------------- Test Application 11K4 ----------------------------+
+|                                                                            |
+| This test plays with the CPU <-> physical mapping on the 68HC11K4.  It     |
+| offers two expansion areas of 512 KByte, which are 'mapped' by AS at       |
+| physical addresses $10000...$8ffff and $90000...$10ffff.  Depending on the |
+| assumed values for MMCR, MMSIZ, and MM[12]CR, AS will automatically        |
+| translate physical to CPU addresses.  Manual address translation is        |
+| possible via the cpu2phys() and phys2cpu() functions.                      |
+|                                                                            |
++----------------------------------------------------------------------------+

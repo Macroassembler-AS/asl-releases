@@ -1,3 +1,13 @@
+2022-06-15 [1.42 Bld 223]
+
+- Addition    : Support PACKING for MN1610 (contribution by Haruo Asano)
+                and CP1600 (contribution by Kasumi Yoshino)
+- Addition    : Support floating point constants for MN1610 (contribution by Haruo Asano)
+- Addition    : 68HC11K4: ASSUME may be informed about the values
+                of CONFIG, INIT and INIT2 registers
+- Addition    : Z180: Value of CBAR, CBR, and BBR may be specified
+                via ASSUME, to define the 64K -> 512K address mapping
+
 2022-03-16 [1.42 Bld 222]
 
 - Bugfix      : -supmode command line switch works again

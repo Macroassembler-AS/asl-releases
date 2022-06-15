@@ -6,21 +6,27 @@
 /*                                                                           */
 /* AS-Portierung                                                             */
 /*                                                                           */
-/* internal holder for int/float/string                                      */
+/* built-in (non-user-defined) functions                                     */
 /*                                                                           */
 /*****************************************************************************/
 
+#include <stddef.h>
 #include "datatypes.h"
 #include "tempresult.h"
+
+#define AS_FARG_MInt (1 << TempInt)
+#define AS_FARG_MFloat (1 << TempFloat)
+#define AS_FARG_MString (1 << TempString)
+#define AS_FARG_MAll (AS_FARG_MInt | AS_FARG_MFloat | AS_FARG_MString)
 
 typedef struct
 {
   const char *pName;
   Byte MinNumArgs, MaxNumArgs;
   Byte ArgTypes[3];
-  void (*pFunc)(TempResult *pErg, const TempResult *pArgs, unsigned ArgCnt);
+  Boolean (*pFunc)(TempResult *pErg, const TempResult *pArgs, unsigned ArgCnt);
 } tFunction;
 
-extern const tFunction Functions[];
+extern const tFunction *function_find(const char *p_name);
 
 #endif /* _FUNCTION_H */

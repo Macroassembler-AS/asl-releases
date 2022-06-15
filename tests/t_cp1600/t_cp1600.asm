@@ -136,4 +136,34 @@ CHK:	SUBI	48,R2
 	ADDI	2048,R1
 	ADDI	4096,R2
 
+	; Map PACKING to PAK/UPAK
+
+PAK	macro
+	packing	on
+	endm
+
+UPAK	macro
+	packing	off
+	endm
+
+CR:	EQU	X'0D'
+LF:	EQU	X'0A'
+
+	BYTE	127
+	WORD	127
+
+	; packing is on by default for CP1600
+
+	TEXT	"Hello", CR, LF, 0
+
+	; turn packing off -> one word per character
+
+	UPAK
+	TEXT	"Hello", CR, LF, 0
+
+	; turn packing on again
+
+	PAK
+	TEXT	"Hello", CR, LF, 0
+
 	END

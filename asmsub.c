@@ -19,6 +19,7 @@
 #include "stdhandl.h"
 #include "console.h"
 #include "nls.h"
+#include "chardefs.h"
 #include "nlmessages.h"
 #include "as.rsc"
 #include "strutil.h"
@@ -37,7 +38,7 @@
 
 #ifdef __TURBOC__
 #ifdef __DPMI16__
-#define STKSIZE 35072
+#define STKSIZE 34816
 #else
 #define STKSIZE 49152
 #endif
@@ -1123,7 +1124,8 @@ Boolean ChkMacSymbName(const char *pSym)
 
 /*!------------------------------------------------------------------------
  * \fn     visible_strlen(const char *pSym)
- * \brief  retrieve 'visible' length of string, regarding multi-by sequences for UTF-8
+ * \brief  retrieve 'visible' length of string, regarding multi-byte
+           sequences for UTF-8
  * \param  pSym symbol name
  * \return visible length in characters
  * ------------------------------------------------------------------------ */
@@ -1135,10 +1137,7 @@ unsigned visible_strlen(const char *pSym)
     unsigned Result = 0;
 
     while (*pSym)
-    {
-      (void)UTF8ToUnicode(&pSym);
-      Result++;
-    }
+      Result += as_wcwidth(UTF8ToUnicode(&pSym));
     return Result;
   }
   else

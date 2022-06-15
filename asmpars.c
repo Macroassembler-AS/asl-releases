@@ -1717,10 +1717,8 @@ func_exit2:
 
     /* search function */
 
-    for (pFunction = Functions; pFunction->pName; pFunction++)
-      if (!strcmp(FName.str.p_str, pFunction->pName))
-        break;
-    if (!pFunction->pName)
+    pFunction = function_find(FName.str.p_str);
+    if (!pFunction)
     {
       WrStrErrorPos(ErrNum_UnknownFunc, &FName);
       LEAVE;
@@ -1743,7 +1741,11 @@ func_exit2:
         LEAVE;
       }
     }
-    pFunction->pFunc(pErg, InVals, cnt);
+    if (!pFunction->pFunc(pErg, InVals, cnt))
+    {
+      WrStrErrorPos(ErrNum_UnknownFunc, &FName);
+      LEAVE;
+    }
     pErg->Flags |= PromotedFlags;
     pErg->AddrSpaceMask |= PromotedAddrSpaceMask;
     if (pErg->DataSize == eSymbolSizeUnknown) pErg->DataSize = PromotedDataSize;

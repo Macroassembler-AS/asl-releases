@@ -17,9 +17,10 @@
 #include "errmsg.h"
 #include "asmerr.h"
 #include "asmpars.h"
+#include "cpu2phys.h"
 #include "function.h"
 
-static void FuncSUBSTR(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncSUBSTR(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   int cnt = pArgs[0].Contents.str.len - pArgs[1].Contents.Int;
 
@@ -30,23 +31,29 @@ static void FuncSUBSTR(TempResult *pResult, const TempResult *pArgs, unsigned Ar
     cnt = 0;
   as_tempres_set_c_str(pResult, "");
   as_nonz_dynstr_append_raw(&pResult->Contents.str, pArgs[0].Contents.str.p_str + pArgs[1].Contents.Int, cnt);
+
+  return True;
 }
 
-static void FuncSTRSTR(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncSTRSTR(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   UNUSED(ArgCnt);
 
   as_tempres_set_int(pResult, as_nonz_dynstr_find(&pArgs[0].Contents.str, &pArgs[1].Contents.str));
+
+  return True;
 }
 
-static void FuncCHARFROMSTR(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncCHARFROMSTR(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   UNUSED(ArgCnt);
 
   as_tempres_set_int(pResult, ((pArgs[1].Contents.Int >= 0) && ((unsigned)pArgs[1].Contents.Int < pArgs[0].Contents.str.len)) ? pArgs[0].Contents.str.p_str[pArgs[1].Contents.Int] : -1);
+
+  return True;
 }
 
-static void FuncEXPRTYPE(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncEXPRTYPE(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   UNUSED(ArgCnt);
 
@@ -64,11 +71,13 @@ static void FuncEXPRTYPE(TempResult *pResult, const TempResult *pArgs, unsigned 
     default:
       as_tempres_set_int(pResult, -1);
   }
+
+  return True;
 }
 
 /* in Grossbuchstaben wandeln */
 
-static void FuncUPSTRING(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncUPSTRING(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   char *pRun;
 
@@ -79,11 +88,13 @@ static void FuncUPSTRING(TempResult *pResult, const TempResult *pArgs, unsigned 
        pRun < pResult->Contents.str.p_str + pResult->Contents.str.len;
        pRun++)
     *pRun = as_toupper(*pRun);
+
+  return True;
 }
 
 /* in Kleinbuchstaben wandeln */
 
-static void FuncLOWSTRING(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncLOWSTRING(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   char *pRun;
 
@@ -94,20 +105,24 @@ static void FuncLOWSTRING(TempResult *pResult, const TempResult *pArgs, unsigned
        pRun < pResult->Contents.str.p_str + pResult->Contents.str.len;
        pRun++)
     *pRun = as_tolower(*pRun);
+
+  return True;
 }
 
 /* Laenge ermitteln */
 
-static void FuncSTRLEN(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncSTRLEN(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   UNUSED(ArgCnt);
 
   as_tempres_set_int(pResult, pArgs[0].Contents.str.len);
+
+  return True;
 }
 
 /* Parser aufrufen */
 
-static void FuncVAL(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncVAL(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   String Tmp;
 
@@ -115,27 +130,33 @@ static void FuncVAL(TempResult *pResult, const TempResult *pArgs, unsigned ArgCn
 
   as_nonz_dynstr_to_c_str(Tmp, &pArgs[0].Contents.str, sizeof(Tmp));
   EvalExpression(Tmp, pResult);
+
+  return True;
 }
 
-static void FuncTOUPPER(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncTOUPPER(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   UNUSED(ArgCnt);
 
   if ((pArgs[0].Contents.Int < 0) || (pArgs[0].Contents.Int > 255)) WrError(ErrNum_OverRange);
   else
-    as_tempres_set_int(pResult, toupper(pArgs[0].Contents.Int));
+    as_tempres_set_int(pResult, as_toupper(pArgs[0].Contents.Int));
+
+  return True;
 }
 
-static void FuncTOLOWER(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncTOLOWER(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   UNUSED(ArgCnt);
 
   if ((pArgs[0].Contents.Int < 0) || (pArgs[0].Contents.Int > 255)) WrError(ErrNum_OverRange);
   else
-    as_tempres_set_int(pResult, tolower(pArgs[0].Contents.Int));
+    as_tempres_set_int(pResult, as_tolower(pArgs[0].Contents.Int));
+
+  return True;
 }
 
-static void FuncBITCNT(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncBITCNT(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   int z;
   LargeInt in = pArgs[0].Contents.Int, out = 0;
@@ -149,9 +170,11 @@ static void FuncBITCNT(TempResult *pResult, const TempResult *pArgs, unsigned Ar
     in >>= 1;
   }
   as_tempres_set_int(pResult, out);
+
+  return True;
 }
 
-static void FuncFIRSTBIT(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncFIRSTBIT(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   LargeInt in = pArgs[0].Contents.Int;
   int out;
@@ -167,9 +190,11 @@ static void FuncFIRSTBIT(TempResult *pResult, const TempResult *pArgs, unsigned 
   }
   while ((out < LARGEBITS) && !Odd(in));
   as_tempres_set_int(pResult, (out >= LARGEBITS) ? -1 : out);
+
+  return True;
 }
 
-static void FuncLASTBIT(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncLASTBIT(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   int z, out;
   LargeInt in = pArgs[0].Contents.Int;
@@ -184,9 +209,11 @@ static void FuncLASTBIT(TempResult *pResult, const TempResult *pArgs, unsigned A
     in >>= 1;
   }
   as_tempres_set_int(pResult, out);
+
+  return True;
 }
 
-static void FuncBITPOS(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncBITPOS(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   LargeInt out;
 
@@ -199,9 +226,11 @@ static void FuncBITPOS(TempResult *pResult, const TempResult *pArgs, unsigned Ar
     WrError(ErrNum_NotOneBit);
   }
   as_tempres_set_int(pResult, out);
+
+  return True;
 }
 
-static void FuncABS(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncABS(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   UNUSED(ArgCnt);
 
@@ -216,9 +245,11 @@ static void FuncABS(TempResult *pResult, const TempResult *pArgs, unsigned ArgCn
     default:
       pResult->Typ = TempNone;
   }
+
+  return True;
 }
 
-static void FuncSGN(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncSGN(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   UNUSED(ArgCnt);
 
@@ -233,9 +264,11 @@ static void FuncSGN(TempResult *pResult, const TempResult *pArgs, unsigned ArgCn
     default:
       as_tempres_set_none(pResult);
   }
+
+  return True;
 }
 
-static void FuncINT(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncINT(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   UNUSED(ArgCnt);
 
@@ -246,9 +279,11 @@ static void FuncINT(TempResult *pResult, const TempResult *pArgs, unsigned ArgCn
   }
   else
     as_tempres_set_int(pResult, (LargeInt) floor(pArgs[0].Contents.Float));
+
+  return True;
 }
 
-static void FuncSQRT(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncSQRT(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   UNUSED(ArgCnt);
 
@@ -259,25 +294,31 @@ static void FuncSQRT(TempResult *pResult, const TempResult *pArgs, unsigned ArgC
   }
   else
     as_tempres_set_float(pResult, sqrt(pArgs[0].Contents.Float));
+
+  return True;
 }
 
 /* trigonometrische Funktionen */
 
-static void FuncSIN(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncSIN(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   UNUSED(ArgCnt);
 
   as_tempres_set_float(pResult, sin(pArgs[0].Contents.Float));
+
+  return True;
 }
 
-static void FuncCOS(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncCOS(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   UNUSED(ArgCnt);
 
   as_tempres_set_float(pResult, cos(pArgs[0].Contents.Float));
+
+  return True;
 }
 
-static void FuncTAN(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncTAN(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   UNUSED(ArgCnt);
 
@@ -288,9 +329,11 @@ static void FuncTAN(TempResult *pResult, const TempResult *pArgs, unsigned ArgCn
   }
   else
     as_tempres_set_float(pResult, tan(pArgs[0].Contents.Float));
+
+  return True;
 }
 
-static void FuncCOT(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncCOT(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   Double FVal = sin(pArgs[0].Contents.Float);
   UNUSED(ArgCnt);
@@ -302,11 +345,13 @@ static void FuncCOT(TempResult *pResult, const TempResult *pArgs, unsigned ArgCn
   }
   else
     as_tempres_set_float(pResult, cos(pArgs[0].Contents.Float) / FVal);
+
+  return True;
 }
 
 /* inverse trigonometrische Funktionen */
 
-static void FuncASIN(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncASIN(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   UNUSED(ArgCnt);
 
@@ -317,9 +362,11 @@ static void FuncASIN(TempResult *pResult, const TempResult *pArgs, unsigned ArgC
   }
   else
     as_tempres_set_float(pResult, asin(pArgs[0].Contents.Float));
+
+  return True;
 }
 
-static void FuncACOS(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncACOS(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   UNUSED(ArgCnt);
 
@@ -330,23 +377,29 @@ static void FuncACOS(TempResult *pResult, const TempResult *pArgs, unsigned ArgC
   }
   else
     as_tempres_set_float(pResult, acos(pArgs[0].Contents.Float));
+
+  return True;
 }
 
-static void FuncATAN(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncATAN(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   UNUSED(ArgCnt);
 
   as_tempres_set_float(pResult, atan(pArgs[0].Contents.Float));
+
+  return True;
 }
 
-static void FuncACOT(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncACOT(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   UNUSED(ArgCnt);
 
   as_tempres_set_float(pResult, M_PI / 2 - atan(pArgs[0].Contents.Float));
+
+  return True;
 }
 
-static void FuncEXP(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncEXP(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   UNUSED(ArgCnt);
 
@@ -357,9 +410,11 @@ static void FuncEXP(TempResult *pResult, const TempResult *pArgs, unsigned ArgCn
   }
   else
     as_tempres_set_float(pResult, exp(pArgs[0].Contents.Float));
+
+  return True;
 }
 
-static void FuncALOG(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncALOG(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   UNUSED(ArgCnt);
 
@@ -370,9 +425,11 @@ static void FuncALOG(TempResult *pResult, const TempResult *pArgs, unsigned ArgC
   }
   else
     as_tempres_set_float(pResult, exp(pArgs[0].Contents.Float * log(10.0)));
+
+  return True;
 }
 
-static void FuncALD(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncALD(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   UNUSED(ArgCnt);
 
@@ -383,9 +440,11 @@ static void FuncALD(TempResult *pResult, const TempResult *pArgs, unsigned ArgCn
   }
   else
     as_tempres_set_float(pResult, exp(pArgs[0].Contents.Float * log(2.0)));
+
+  return True;
 }
 
-static void FuncSINH(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncSINH(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   UNUSED(ArgCnt);
 
@@ -396,9 +455,11 @@ static void FuncSINH(TempResult *pResult, const TempResult *pArgs, unsigned ArgC
   }
   else
     as_tempres_set_float(pResult, sinh(pArgs[0].Contents.Float));
+
+  return True;
 }
 
-static void FuncCOSH(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncCOSH(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   UNUSED(ArgCnt);
 
@@ -409,9 +470,11 @@ static void FuncCOSH(TempResult *pResult, const TempResult *pArgs, unsigned ArgC
   }
   else
     as_tempres_set_float(pResult, cosh(pArgs[0].Contents.Float));
+
+  return True;
 }
 
-static void FuncTANH(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncTANH(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   UNUSED(ArgCnt);
 
@@ -422,9 +485,11 @@ static void FuncTANH(TempResult *pResult, const TempResult *pArgs, unsigned ArgC
   }
   else
     as_tempres_set_float(pResult, tanh(pArgs[0].Contents.Float));
+
+  return True;
 }
 
-static void FuncCOTH(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncCOTH(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   Double FVal;
 
@@ -442,11 +507,13 @@ static void FuncCOTH(TempResult *pResult, const TempResult *pArgs, unsigned ArgC
   }
   else
     as_tempres_set_float(pResult, pResult->Contents.Float = 1.0 / FVal);
+
+  return True;
 }
 
 /* logarithmische & inverse hyperbolische Funktionen */
 
-static void FuncLN(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncLN(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   UNUSED(ArgCnt);
 
@@ -457,9 +524,11 @@ static void FuncLN(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt
   }
   else
     as_tempres_set_float(pResult, log(pArgs[0].Contents.Float));
+
+  return True;
 }
 
-static void FuncLOG(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncLOG(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   UNUSED(ArgCnt);
 
@@ -470,9 +539,11 @@ static void FuncLOG(TempResult *pResult, const TempResult *pArgs, unsigned ArgCn
   }
   else
     as_tempres_set_float(pResult, log10(pArgs[0].Contents.Float));
+
+  return True;
 }
 
-static void FuncLD(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncLD(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   UNUSED(ArgCnt);
 
@@ -483,16 +554,20 @@ static void FuncLD(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt
   }
   else
     as_tempres_set_float(pResult, log(pArgs[0].Contents.Float) / log(2.0));
+
+  return True;
 }
 
-static void FuncASINH(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncASINH(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   UNUSED(ArgCnt);
 
   as_tempres_set_float(pResult, log(pArgs[0].Contents.Float+sqrt(pArgs[0].Contents.Float * pArgs[0].Contents.Float + 1)));
+
+  return True;
 }
 
-static void FuncACOSH(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncACOSH(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   UNUSED(ArgCnt);
 
@@ -503,9 +578,11 @@ static void FuncACOSH(TempResult *pResult, const TempResult *pArgs, unsigned Arg
   }
   else
     as_tempres_set_float(pResult, log(pArgs[0].Contents.Float+sqrt(pArgs[0].Contents.Float * pArgs[0].Contents.Float - 1)));
+
+  return True;
 }
 
-static void FuncATANH(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncATANH(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   UNUSED(ArgCnt);
 
@@ -516,9 +593,11 @@ static void FuncATANH(TempResult *pResult, const TempResult *pArgs, unsigned Arg
   }
   else
     as_tempres_set_float(pResult, 0.5 * log((1 + pArgs[0].Contents.Float) / (1 - pArgs[0].Contents.Float)));
+
+  return True;
 }
 
-static void FuncACOTH(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+static Boolean FuncACOTH(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
 {
   UNUSED(ArgCnt);
 
@@ -529,54 +608,70 @@ static void FuncACOTH(TempResult *pResult, const TempResult *pArgs, unsigned Arg
   }
   else
     as_tempres_set_float(pResult, 0.5 * log((pArgs[0].Contents.Float + 1) / (pArgs[0].Contents.Float - 1)));
+
+  return True;
 }
 
-#define MInt (1 << TempInt)
-#define MFloat (1 << TempFloat)
-#define MString (1 << TempString)
-#define MAll (MInt | MFloat | MString)
-
-const tFunction Functions[] =
+static const tFunction Functions[] =
 {
-  { "SUBSTR"     , 3, 3, { MString, MInt, MInt   }, FuncSUBSTR      },
-  { "STRSTR"     , 2, 2, { MString, MString, 0   }, FuncSTRSTR      },
-  { "CHARFROMSTR", 2, 2, { MString, MInt, 0      }, FuncCHARFROMSTR },
-  { "EXPRTYPE"   , 1, 1, { MAll, 0, 0            }, FuncEXPRTYPE    },
-  { "UPSTRING"   , 1, 1, { MString, 0, 0         }, FuncUPSTRING    },
-  { "LOWSTRING"  , 1, 1, { MString, 0, 0         }, FuncLOWSTRING   },
-  { "STRLEN"     , 1, 1, { MString, 0, 0         }, FuncSTRLEN      },
-  { "VAL"        , 1, 1, { MString, 0, 0         }, FuncVAL         },
-  { "TOUPPER"    , 1, 1, { MInt, 0, 0            }, FuncTOUPPER     },
-  { "TOLOWER"    , 1, 1, { MInt, 0, 0            }, FuncTOLOWER     },
-  { "BITCNT"     , 1, 1, { MInt, 0, 0            }, FuncBITCNT      },
-  { "FIRSTBIT"   , 1, 1, { MInt, 0, 0            }, FuncFIRSTBIT    },
-  { "LASTBIT"    , 1, 1, { MInt, 0, 0            }, FuncLASTBIT     },
-  { "BITPOS"     , 1, 1, { MInt, 0, 0            }, FuncBITPOS      },
-  { "ABS"        , 1, 1, { MInt | MFloat, 0, 0   }, FuncABS         },
-  { "SGN"        , 1, 1, { MInt | MFloat, 0, 0   }, FuncSGN         },
-  { "INT"        , 1, 1, { MFloat, 0, 0          }, FuncINT         },
-  { "SQRT"       , 1, 1, { MFloat, 0, 0          }, FuncSQRT        },
-  { "SIN"        , 1, 1, { MFloat, 0, 0          }, FuncSIN         },
-  { "COS"        , 1, 1, { MFloat, 0, 0          }, FuncCOS         },
-  { "TAN"        , 1, 1, { MFloat, 0, 0          }, FuncTAN         },
-  { "COT"        , 1, 1, { MFloat, 0, 0          }, FuncCOT         },
-  { "ASIN"       , 1, 1, { MFloat, 0, 0          }, FuncASIN        },
-  { "ACOS"       , 1, 1, { MFloat, 0, 0          }, FuncACOS        },
-  { "ATAN"       , 1, 1, { MFloat, 0, 0          }, FuncATAN        },
-  { "ACOT"       , 1, 1, { MFloat, 0, 0          }, FuncACOT        },
-  { "EXP"        , 1, 1, { MFloat, 0, 0          }, FuncEXP         },
-  { "ALOG"       , 1, 1, { MFloat, 0, 0          }, FuncALOG        },
-  { "ALD"        , 1, 1, { MFloat, 0, 0          }, FuncALD         },
-  { "SINH"       , 1, 1, { MFloat, 0, 0          }, FuncSINH        },
-  { "COSH"       , 1, 1, { MFloat, 0, 0          }, FuncCOSH        },
-  { "TANH"       , 1, 1, { MFloat, 0, 0          }, FuncTANH        },
-  { "COTH"       , 1, 1, { MFloat, 0, 0          }, FuncCOTH        },
-  { "LN"         , 1, 1, { MFloat, 0, 0          }, FuncLN          },
-  { "LOG"        , 1, 1, { MFloat, 0, 0          }, FuncLOG         },
-  { "LD"         , 1, 1, { MFloat, 0, 0          }, FuncLD          },
-  { "ASINH"      , 1, 1, { MFloat, 0, 0          }, FuncASINH       },
-  { "ACOSH"      , 1, 1, { MFloat, 0, 0          }, FuncACOSH       },
-  { "ATANH"      , 1, 1, { MFloat, 0, 0          }, FuncATANH       },
-  { "ACOTH"      , 1, 1, { MFloat, 0, 0          }, FuncACOTH       },
-  { NULL         , 0, 0, { 0, 0, 0               }, NULL            },
+  { "SUBSTR"     , 3, 3, { AS_FARG_MString              , AS_FARG_MInt   , AS_FARG_MInt   }, FuncSUBSTR      },
+  { "STRSTR"     , 2, 2, { AS_FARG_MString              , AS_FARG_MString, 0              }, FuncSTRSTR      },
+  { "CHARFROMSTR", 2, 2, { AS_FARG_MString              , AS_FARG_MInt   , 0              }, FuncCHARFROMSTR },
+  { "EXPRTYPE"   , 1, 1, { AS_FARG_MAll                 , 0              , 0              }, FuncEXPRTYPE    },
+  { "UPSTRING"   , 1, 1, { AS_FARG_MString              , 0              , 0              }, FuncUPSTRING    },
+  { "LOWSTRING"  , 1, 1, { AS_FARG_MString              , 0              , 0              }, FuncLOWSTRING   },
+  { "STRLEN"     , 1, 1, { AS_FARG_MString              , 0              , 0              }, FuncSTRLEN      },
+  { "VAL"        , 1, 1, { AS_FARG_MString              , 0              , 0              }, FuncVAL         },
+  { "TOUPPER"    , 1, 1, { AS_FARG_MInt                 , 0              , 0              }, FuncTOUPPER     },
+  { "TOLOWER"    , 1, 1, { AS_FARG_MInt                 , 0              , 0              }, FuncTOLOWER     },
+  { "BITCNT"     , 1, 1, { AS_FARG_MInt                 , 0              , 0              }, FuncBITCNT      },
+  { "FIRSTBIT"   , 1, 1, { AS_FARG_MInt                 , 0              , 0              }, FuncFIRSTBIT    },
+  { "LASTBIT"    , 1, 1, { AS_FARG_MInt                 , 0              , 0              }, FuncLASTBIT     },
+  { "BITPOS"     , 1, 1, { AS_FARG_MInt                 , 0              , 0              }, FuncBITPOS      },
+  { "ABS"        , 1, 1, { AS_FARG_MInt | AS_FARG_MFloat, 0              , 0              }, FuncABS         },
+  { "SGN"        , 1, 1, { AS_FARG_MInt | AS_FARG_MFloat, 0              , 0              }, FuncSGN         },
+  { "INT"        , 1, 1, { AS_FARG_MFloat               , 0              , 0              }, FuncINT         },
+  { "SQRT"       , 1, 1, { AS_FARG_MFloat               , 0              , 0              }, FuncSQRT        },
+  { "SIN"        , 1, 1, { AS_FARG_MFloat               , 0              , 0              }, FuncSIN         },
+  { "COS"        , 1, 1, { AS_FARG_MFloat               , 0              , 0              }, FuncCOS         },
+  { "TAN"        , 1, 1, { AS_FARG_MFloat               , 0              , 0              }, FuncTAN         },
+  { "COT"        , 1, 1, { AS_FARG_MFloat               , 0              , 0              }, FuncCOT         },
+  { "ASIN"       , 1, 1, { AS_FARG_MFloat               , 0              , 0              }, FuncASIN        },
+  { "ACOS"       , 1, 1, { AS_FARG_MFloat               , 0              , 0              }, FuncACOS        },
+  { "ATAN"       , 1, 1, { AS_FARG_MFloat               , 0              , 0              }, FuncATAN        },
+  { "ACOT"       , 1, 1, { AS_FARG_MFloat               , 0              , 0              }, FuncACOT        },
+  { "EXP"        , 1, 1, { AS_FARG_MFloat               , 0              , 0              }, FuncEXP         },
+  { "ALOG"       , 1, 1, { AS_FARG_MFloat               , 0              , 0              }, FuncALOG        },
+  { "ALD"        , 1, 1, { AS_FARG_MFloat               , 0              , 0              }, FuncALD         },
+  { "SINH"       , 1, 1, { AS_FARG_MFloat               , 0              , 0              }, FuncSINH        },
+  { "COSH"       , 1, 1, { AS_FARG_MFloat               , 0              , 0              }, FuncCOSH        },
+  { "TANH"       , 1, 1, { AS_FARG_MFloat               , 0              , 0              }, FuncTANH        },
+  { "COTH"       , 1, 1, { AS_FARG_MFloat               , 0              , 0              }, FuncCOTH        },
+  { "LN"         , 1, 1, { AS_FARG_MFloat               , 0              , 0              }, FuncLN          },
+  { "LOG"        , 1, 1, { AS_FARG_MFloat               , 0              , 0              }, FuncLOG         },
+  { "LD"         , 1, 1, { AS_FARG_MFloat               , 0              , 0              }, FuncLD          },
+  { "ASINH"      , 1, 1, { AS_FARG_MFloat               , 0              , 0              }, FuncASINH       },
+  { "ACOSH"      , 1, 1, { AS_FARG_MFloat               , 0              , 0              }, FuncACOSH       },
+  { "ATANH"      , 1, 1, { AS_FARG_MFloat               , 0              , 0              }, FuncATANH       },
+  { "ACOTH"      , 1, 1, { AS_FARG_MFloat               , 0              , 0              }, FuncACOTH       },
+  { "PHYS2CPU"   , 1, 1, { AS_FARG_MInt                 , 0              , 0              }, fnc_phys_2_cpu  },
+  { "CPU2PHYS"   , 1, 1, { AS_FARG_MInt                 , 0              , 0              }, fnc_cpu_2_phys  },
+  { NULL         , 0, 0, { 0                            , 0              , 0              }, NULL            }
 };
+
+/*!------------------------------------------------------------------------
+ * \fn     tFunction *function_find(const char *p_name)
+ * \brief  look up built-in function
+ * \param  p_name function name
+ * \return retrieved function or NULL if not found
+ * ------------------------------------------------------------------------ */
+
+const tFunction *function_find(const char *p_name)
+{
+  const tFunction *p_run;
+
+  for (p_run = Functions; p_run->pName; p_run++)
+    if (!strcmp(p_name, p_run->pName))
+      return p_run;
+  return NULL;
+}

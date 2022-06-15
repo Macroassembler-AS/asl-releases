@@ -27,6 +27,7 @@
 #include "intpseudo.h"
 #include "codevars.h"
 #include "errmsg.h"
+#include "onoff_common.h"
 
 #include "codeavr.h"
 
@@ -74,7 +75,7 @@ typedef struct
 
 static FixedOrder *FixedOrders, *Reg1Orders, *Reg2Orders;
 
-static Boolean WrapFlag, Packing;
+static Boolean WrapFlag;
 static LongInt ORMask, SignMask, CodeSegSize;
 static const tCPUProps *pCurrCPUProps;
 
@@ -443,7 +444,7 @@ static void DecodeDATA_AVR(Word Index)
   UNUSED(Index);
 
   as_tempres_ini(&t);
-  MaxV = ((ActPC == SegCode) && (!Packing)) ? 65535 : 255;
+  MaxV = ((ActPC == SegCode) && !Packing) ? 65535 : 255;
   MinV = (-((MaxV + 1) >> 1));
   WordAccFull = FALSE;
   if (ChkArgCnt(1, ArgCntMax))
@@ -1193,10 +1194,8 @@ static void SwitchTo_AVR(void *pUser)
   SignMask = (SegLimits[SegCode] + 1) >> 1;
   ORMask = ((LongInt) - 1) - SegLimits[SegCode];
 
+  onoff_packing_add(False);
   AddONOFF("WRAPMODE", &WrapFlag, WrapFlagName, False);
-  if (!onoff_test_and_set(e_onoff_reg_packing))
-    SetFlag(&Packing, PackingSymName, False);
-  AddONOFF(PackingCmdName, &Packing, PackingSymName, False);
   SetFlag(&WrapFlag, WrapFlagName, False);
 
   MakeCode = MakeCode_AVR;

@@ -558,7 +558,7 @@ static LongWord eval_bit_position(const tStrComp *p_arg, Boolean *p_ok)
 
 static LongWord assemble_bit_symbol(Byte core, Boolean is_io, Word address, Byte bit_pos)
 {
-  LongWord result = bit_pos | (address << 3);
+  LongWord result = bit_pos | ((LongWord)address << 3);
 
   if (is_io)
     result |= 1ul << 19;

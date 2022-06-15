@@ -25,6 +25,7 @@
 #include "errmsg.h"
 #include "codepseudo.h"
 #include "ibmfloat.h"
+#include "onoff_common.h"
 
 #include "codemn2610.h"
 
@@ -1015,10 +1016,25 @@ void IncMaxCodeLen(unsigned NumWords)
   SetMaxCodeLen((CodeLen + NumWords) * 2);
 }
 
-static void AppendWord(Word Data)
+static void AppendWord(Word data, Boolean *p_half_filled_word)
 {
   IncMaxCodeLen(1);
-  WAsmCode[CodeLen++] = Data;
+  WAsmCode[CodeLen++] = data;
+  *p_half_filled_word = False;
+}
+
+static void AppendByte(Byte data, Boolean *p_half_filled_word)
+{
+  if (*p_half_filled_word)
+  {
+    WAsmCode[CodeLen - 1] |= data & 0xff;
+    *p_half_filled_word = False;
+  }
+  else
+  {
+    AppendWord(data << 8, p_half_filled_word);
+    *p_half_filled_word = True;
+  }
 }
 
 static void DecodeDC(Word Code)
@@ -1041,12 +1057,25 @@ static void DecodeDC(Word Code)
        switch (t.Typ)
        {
          case TempInt:
-         ToInt:
-           if (ChkRange(t.Contents.Int, -32768, 65535))
-             AppendWord(t.Contents.Int);
+           if (Packing)
+           {
+             if (mFirstPassUnknown(t.Flags))
+               t.Contents.Int &= 127;
+             if (ChkRange(t.Contents.Int, -128, 255))
+               AppendByte(t.Contents.Int, &HalfFilledWord);
+             else
+               OK = False;
+           }
            else
-             OK = False;
-           HalfFilledWord = False;
+           {
+           ToInt:
+             if (mFirstPassUnknown(t.Flags))
+               t.Contents.Int &= 32767;
+             if (ChkRange(t.Contents.Int, -32768, 65535))
+               AppendWord(t.Contents.Int, &HalfFilledWord);
+             else
+               OK = False;
+           }
            break;
          case TempString:
          {
@@ -1059,16 +1088,7 @@ static void DecodeDC(Word Code)
            for (z2 = 0; z2 < (int)t.Contents.str.len; z2++)
            {
              Trans = CharTransTable[((usint) t.Contents.str.p_str[z2]) & 0xff];
-             if (HalfFilledWord)
-             {
-               WAsmCode[CodeLen - 1] |= Trans & 0xff;
-               HalfFilledWord = False;
-             }
-             else
-             {
-               AppendWord(Trans << 8);
-               HalfFilledWord = True;
-             }
+             AppendByte(Trans, &HalfFilledWord);
            }
            break;
          }
@@ -1341,6 +1361,8 @@ static void SwitchTo_MN1610_Alt(void)
     SegLimits[SegCode] = 0xffff;
     SegLimits[SegIO] = 0xff; /* no RDR/WTR insn */
   }
+
+  onoff_packing_add(False);
 
   DecodeAttrPart = DecodeAttrPart_MN1610_Alt;
   MakeCode = MakeCode_MN1610_Alt;

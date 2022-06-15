@@ -25,6 +25,8 @@
 #include "codepseudo.h"
 #include "intpseudo.h"
 #include "codevars.h"
+#include "cpu2phys.h"
+#include "function.h"
 #include "errmsg.h"
 
 #include "codez80.h"
@@ -143,6 +145,9 @@ static Boolean MayLW,             /* Instruktion erlaubt 32 Bit */
 static PrefType CurrPrefix,       /* mom. explizit erzeugter Praefix */
                 LastPrefix;       /* von der letzten Anweisung generierter Praefix */
 
+static LongInt Reg_CBAR,
+               Reg_BBR,
+               Reg_CBR;
 static const char Reg8Names[] = "BCDEHL*A";
 static int Reg16Cnt;
 static const char Reg16Names[][3] = { "BC", "DE", "HL", "SP", "IX", "IY" };
@@ -3711,6 +3716,18 @@ static void DecodeLDI_LDD(Word Code)
   }
 }
 
+static void DecodePRWINS(Word Code)
+{
+  UNUSED(Code);
+
+  if (ChkExactCPU(CPUZ180))
+  {
+    printf("\nCBAR 0%02xh BBR 0%02xh CBR 0%02xh\n",
+           (unsigned)Reg_CBAR, (unsigned)Reg_BBR, (unsigned)Reg_CBR);
+    cpu_2_phys_area_dump(SegCode, stdout);
+  }
+}
+
 static void ModIntel(Word Code)
 {
   UNUSED(Code);
@@ -3719,6 +3736,64 @@ static void ModIntel(Word Code)
 
   strmov(OpPart.str.p_str + 1, OpPart.str.p_str + 3);
   DecodeIntelPseudo(False);
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     valid_cbar(void)
+ * \brief  allowed CBAR value?
+ * \return True if valid
+ * ------------------------------------------------------------------------ */
+
+static Boolean valid_cbar(void)
+{
+  return ((Reg_CBAR & 0x0f) <= ((Reg_CBAR >> 4) & 0x0f));
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     update_z180_areas(void)
+ * \brief  recompute Z180 mapped areas
+ * ------------------------------------------------------------------------ */
+
+static void update_z180_areas(void)
+{
+  if (valid_cbar())
+  {
+    Word common_area_start = ((Reg_CBAR >> 4) & 0x0f) << 12,
+         bank_area_start = (Reg_CBAR & 0x0f) << 12;
+
+    cpu_2_phys_area_clear(SegCode);
+
+    /* Common Area 0 */
+
+    if (bank_area_start > 0)
+      cpu_2_phys_area_add(SegCode, 0, 0, bank_area_start);
+
+    /* Bank Area */
+
+    if (common_area_start > bank_area_start)
+      cpu_2_phys_area_add(SegCode, bank_area_start, (Reg_BBR << 12) + bank_area_start, common_area_start - bank_area_start);
+
+    /* Common Area 1 - always present since upper nibble of CBAR is always < 0x10 */
+
+    cpu_2_phys_area_add(SegCode, common_area_start, (Reg_CBR << 12) + common_area_start, 0x10000ul - common_area_start);
+
+    /* this *SHOULD* be a NOP, since completely filled the 64K CPU space: */
+
+    cpu_2_phys_area_fill(SegCode, 0, 0xffff);
+  }
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     check_cbar(void)
+ * \brief  check valid CBAR value
+ * ------------------------------------------------------------------------ */
+
+static void check_cbar(void)
+{
+  if (valid_cbar())
+    update_z180_areas();
+  else
+    WrError(ErrNum_InvCBAR);
 }
 
 /*==========================================================================*/
@@ -3937,6 +4012,8 @@ static void InitFields(void)
   AddBit("BIT", 0); AddBit("RES", 1); AddBit("SET", 2);
 
   AddInstTable(InstTable, "REG" , 0, CodeREG);
+
+  AddInstTable(InstTable, "PRWINS", 0, DecodePRWINS);
 }
 
 static void DeinitFields(void)
@@ -4041,6 +4118,12 @@ static void MakeCode_Z80(void)
 
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
+}
+
+static void InitCode_Z80(void)
+{
+  Reg_CBAR = 0xf0;
+  Reg_CBR = Reg_BBR = 0x00;
 }
 
 static Boolean IsDef_Z80(void)
@@ -4174,6 +4257,20 @@ static void SwitchTo_Z80(void)
       SetFlag(&LWordFlag, LWordModeSymName, False);
     AddONOFF(LWordModeCmdName, &LWordFlag , LWordModeSymName , False);
   }
+
+  if (MomCPU == CPUZ180)
+  {
+    static const ASSUMERec ASSUMEZ180s[] =
+    {
+      { "CBAR" , &Reg_CBAR , 0,  0xff, 0xf0, check_cbar },
+      { "CBR"  , &Reg_CBR  , 0,  0xff, 0   , update_z180_areas },
+      { "BBR"  , &Reg_BBR  , 0,  0xff, 0   , update_z180_areas },
+    };
+
+    pASSUMERecs = ASSUMEZ180s;
+    ASSUMERecCnt = as_array_size(ASSUMEZ180s);
+    update_z180_areas();
+  }
 }
 
 void codez80_init(void)
@@ -4185,4 +4282,6 @@ void codez80_init(void)
   CPUZ180  = AddCPU("Z180"      , SwitchTo_Z80);
   CPUR2000 = AddCPU("RABBIT2000", SwitchTo_Z80);
   CPUZ380  = AddCPU("Z380"      , SwitchTo_Z80);
+
+  AddInitPassProc(InitCode_Z80);
 }

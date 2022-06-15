@@ -23,6 +23,7 @@
 #include "codepseudo.h"
 #include "headids.h"
 #include "errmsg.h"
+#include "onoff_common.h"
 
 #include "codecp1600.h"
 
@@ -512,6 +513,20 @@ static void DecodeRES(Word Index)
 	BookKeeping();
 }
 
+static void PutByte(Word value, int *p_half)
+{
+	if (*p_half & 1)
+	{
+		WAsmCode[CodeLen - 1] |= value << 8;
+	}
+	else
+	{
+		WAsmCode[CodeLen++] = value & 0xFF;
+	}
+	if (Packing)
+		(*p_half)++;
+}
+
 static void DecodeWORD(Word Index)
 {
 	int z;
@@ -555,16 +570,7 @@ static void DecodeWORD(Word Index)
 						break;
 					case 0x0002: /* TEXT */
 						if (ChkRange(t.Contents.Int, 0, 255))
-						{
-							if ((b++) & 1)
-							{
-								WAsmCode[CodeLen - 1] |= t.Contents.Int << 8;
-							}
-							else
-							{
-								WAsmCode[CodeLen++] = t.Contents.Int & 0xFF;
-							}
-						}
+							PutByte(t.Contents.Int & 0xff, &b);
 						break;
 					default:
 						OK = False;
@@ -580,17 +586,9 @@ static void DecodeWORD(Word Index)
 						OK = False;
 						break;
 					}
+          TranslateString(t.Contents.str.p_str, t.Contents.str.len);
 					for (c = 0; c < (int)t.Contents.str.len; c++)
-					{
-						if ((b++) & 1)
-						{
-							WAsmCode[CodeLen - 1] |= t.Contents.str.p_str[c] << 8;
-						}
-						else
-						{
-							WAsmCode[CodeLen++] = t.Contents.str.p_str[c];
-						}
-					}
+            PutByte(t.Contents.str.p_str[c], &b);
 					break;
 				default:
 					OK = False;
@@ -877,6 +875,8 @@ static void SwitchTo_CP1600(void)
 	Bits = 16;
 	Mask = 0x0000;
 	PrefixedSDBD = False;
+
+  onoff_packing_add(True);
 
 	MakeCode = MakeCode_CP1600;
 	IsDef = IsDef_CP1600;

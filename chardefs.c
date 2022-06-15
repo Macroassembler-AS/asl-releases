@@ -513,3 +513,58 @@ void UnicodeToUTF8(char* *ppChr, LongWord Unicode)
     *(*ppChr)++ = 0x80 | ((Unicode >> 0) & 0x3f);
   }
 }
+
+/*!------------------------------------------------------------------------
+ * \fn     as_wcwidth(unsigned codepoint)
+ * \brief  return display width of Unicode code point
+ * \param  codepoint code point
+ * \return width on display (0...)
+ * ------------------------------------------------------------------------ */
+
+unsigned as_wcwidth(unsigned codepoint)
+{
+  if (((codepoint >= 0x1100) && (codepoint <= 0x115F)) /* HANGUL CHOSEONG KIYEOK..HANGUL CHOSEONG FILLER */
+   || ((codepoint >= 0x231A) && (codepoint <= 0x231B)) /* WATCH..HOURGLASS */
+   || ((codepoint >= 0x2329) && (codepoint <= 0x232A)) /* LEFT/RIGHT-POINTING ANGLE BRACKET */
+   || ((codepoint >= 0x23E9) && (codepoint <= 0x23EC)) /* BLACK RIGHT-POINTING DOUBLE TRIANGLE..BLACK DOWN-POINTING DOUBLE TRIANGLE */
+   || (codepoint == 0x23F0)                            /* ALARM CLOCK */
+   || (codepoint == 0x23F3)                            /* HOURGLASS WITH FLOWING SAND */
+   || ((codepoint >= 0x25FD) && (codepoint <= 0x25FE)) /* WHITE MEDIUM SMALL SQUARE..BLACK MEDIUM SMALL SQUARE */
+   || ((codepoint >= 0x2614) && (codepoint <= 0x2615)) /* UMBRELLA WITH RAIN DROPS..HOT BEVERAGE */
+   || ((codepoint >= 0x2648) && (codepoint <= 0x2653)) /* ARIES..PISCES */
+   || (codepoint == 0x267F)                            /* WHEELCHAIR SYMBOL */
+   || (codepoint == 0x2693)                            /* ANCHOR */
+   || (codepoint == 0x26A1)                            /* HIGH VOLTAGE SIGN */
+   || (codepoint == 0x26CE)                            /* OPHIUCHUS */
+   || (codepoint == 0x26D4)                            /* NO ENTRY */
+   || (codepoint == 0x26EA)                            /* CHURCH */
+   || ((codepoint >= 0x26F2) && (codepoint <= 0x26F3)) /* FOUNTAIN..FLAG IN HOLE */
+   || (codepoint == 0x26F5)                            /* SAILBOAT */
+   || (codepoint == 0x26FA)                            /* TENT */
+   || (codepoint == 0x26FD)                            /* FUEL PUMP */
+   || (codepoint == 0x2705)                            /* WHITE HEAVY CHECK MARK */
+   || (codepoint == 0x2728)                            /* SPARKLES */
+   || (codepoint == 0x274C)                            /* CROSS MARK */
+   || ((codepoint >= 0x2753) && (codepoint <= 0x2755)) /* BLACK QUESTION MARK ORNAMENT..WHITE EXCLAMATION MARK ORNAMENT */
+   || (codepoint == 0x2757)                            /* HEAVY EXCLAMATION MARK SYMBOL */
+   || ((codepoint >= 0x2795) && (codepoint <= 0x2797)) /* HEAVY PLUS SIGN..HEAVY DIVISION SIGN */
+   || (codepoint == 0x27B0)                            /* CURLY LOOP */
+   || (codepoint == 0x27BF)                            /* DOUBLE CURLY LOOP */
+   || ((codepoint >= 0x2B1B) && (codepoint <= 0x2B1C)) /* BLACK LARGE SQUARE..WHITE LARGE SQUARE */
+   || (codepoint == 0x2B50)                            /* WHITE MEDIUM STAR */
+   || (codepoint == 0x2B55)                            /* HEAVY LARGE CIRCLE */
+   || ((codepoint >= 0x2E80) && (codepoint <= 0x2FFB)) /* CJK RADICAL REPEAT..IDEOGRAPHIC DESCRIPTION CHARACTER OVERLAID */
+   || ((codepoint >= 0x3004) && (codepoint <= 0x303E)) /* JAPANESE INDUSTRIAL STANDARD SYMBOL..IDEOGRAPHIC VARIATION INDICATOR */
+   || ((codepoint >= 0x3041) && (codepoint <= 0x3247)) /* HIRAGANA LETTER SMALL A..CIRCLED NUMBER EIGHTY ON BLACK SQUARE */
+   || ((codepoint >= 0x3250) && (codepoint <= 0x4DBF)) /* PARTNERSHIP SIGN..<reserved-4DBF> */
+   || ((codepoint >= 0x4E00) && (codepoint <= 0xA4C6)) /* CJK UNIFIED IDEOGRAPH-4E00..YI RADICAL KE */
+   || ((codepoint >= 0xA960) && (codepoint <= 0xA97C)) /* HANGUL CHOSEONG TIKEUT-MIEUM..HANGUL CHOSEONG SSANGYEORINHIEUH */
+   || ((codepoint >= 0xAC00) && (codepoint <= 0xD7A3)) /* HANGUL SYLLABLE GA..HANGUL SYLLABLE HIH */
+   || ((codepoint >= 0xF900) && (codepoint <= 0xFAFF)) /* CJK COMPATIBILITY IDEOGRAPH-F900..<reserved-FAFF> */
+   || ((codepoint >= 0xFE10) && (codepoint <= 0xFE19)) /* PRESENTATION FORM FOR VERTICAL COMMA..PRESENTATION FORM FOR VERTICAL HORIZONTAL ELLIPSIS */
+   || ((codepoint >= 0xFE31) && (codepoint <= 0xFE6B)) /* PRESENTATION FORM FOR VERTICAL EM DASH..SMALL COMMERCIAL AT */
+  )
+    return 2;
+  else
+    return 1;
+}

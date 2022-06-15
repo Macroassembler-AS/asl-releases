@@ -219,6 +219,27 @@
 	l	r4,(x'40')(ic)
 	endexpect
 
+	packing	on
+
+	dc	0
+	expect	1320
+	dc	65535
+	endexpect
+	expect	1315
+	dc	-32768
+	endexpect
+	dc	'A'
+	dc	'AB'
+	dc	'ABC'	; treated like "ABC" due to length > 16 bit
+	dc	"A"
+	dc	"AB"
+	dc	"ABC"
+	dc	"ABCD"
+	dc	"ABCDE"
+	dc	"ABCDEF"
+
+	packing	off
+
 	dc	0
 	dc	65535
 	dc	-32768
@@ -231,3 +252,4 @@
 	dc	"ABCD"
 	dc	"ABCDE"
 	dc	"ABCDEF"
+

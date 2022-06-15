@@ -259,6 +259,7 @@ typedef enum
   ErrNum_InvCfgList = 2253,
   ErrNum_ConfBitBltOpt = 2254,
   ErrNum_UnknownBitBltOpt = 2255,
+  ErrNum_InvCBAR = 2260,
   ErrNum_InternalError = 10000,
   ErrNum_OpeningFile = 10001,
   ErrNum_ListWrError = 10002,

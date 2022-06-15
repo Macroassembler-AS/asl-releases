@@ -20,7 +20,8 @@ Boolean FPUAvail,    /* floating point co processor instructions allowed? */
         SupAllowed,  /* supervisor mode enabled */
         MaxMode,     /* CPU in maximum mode */
         TargetBigEndian, /* Data storage Big Endian? */
-        DoPadding;   /* align to even address? */
+        DoPadding,   /* align to even address? */
+        Packing;     /* packed data storage? */
 unsigned registered;
 
 /*!------------------------------------------------------------------------
@@ -95,6 +96,19 @@ void onoff_bigendian_add(void)
   if (!onoff_test_and_set(e_onoff_reg_bigendian))
     SetFlag(&TargetBigEndian, BigEndianSymName, False);
   AddONOFF(BigEndianCmdName, &TargetBigEndian, BigEndianSymName, False);
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     onoff_packing_add(Boolean def_value)
+ * \brief  register on/off command to set packed data storage
+ * \param  def_value to set as default
+ * ------------------------------------------------------------------------ */
+
+void onoff_packing_add(Boolean def_value)
+{
+  if (!onoff_test_and_set(e_onoff_reg_packing))
+    SetFlag(&Packing, PackingSymName, def_value);
+  AddONOFF(PackingCmdName, &Packing, PackingSymName, False);
 }
 
 /*!------------------------------------------------------------------------

@@ -55,7 +55,7 @@ RMB \\
 \hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\kill
 ADR        \> BYT         \> DB          \> DC[.$<$size$>$] \> DFS     \\
 DS[.$<$size$>$] \> DW     \> FCB         \> FCC         \> FDB         \\
-PADDING     \> RMB \\
+PADDING     \> PRWINS(68HC11K4) \> RMB \\
 \end{tabbing}}
 
 \subsubsection{Motorola/Freescale 6805/68HC(S)08}
@@ -373,7 +373,7 @@ DQ         \> DS          \> DT          \> DW          \> REG \\
 \hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\kill
 DB         \> DD          \> DEFB        \> DEFW        \> DN \\
 DQ         \> DS          \> DT          \> DW          \> EXTMODE \\
-LWORDMODE  \> REG \\
+LWORDMODE  \> PRWINS(Z180) \> REG \\
 \end{tabbing}}
 
 \subsubsection{Zilog Z8}
@@ -894,7 +894,7 @@ DATA       \> RES         \> SFR \\
 
 {\tt\begin{tabbing}
 \hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\kill
-DC         \> DS \\
+DC         \> DS          \> PACKING \\
 \end{tabbing}}
 
 \subsubsection{Padauk PMC/PMS/PFSxxx}
@@ -960,5 +960,6 @@ DS         \> DT          \> DW          \> REG \\
 
 {\tt\begin{tabbing}
 \hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\kill
-BYTE       \> RES         \> TEXT        \> WORD       \> ZERO \\
+BYTE       \> PACKING     \> RES         \> TEXT        \> WORD \\
+ZERO \\
 \end{tabbing}}

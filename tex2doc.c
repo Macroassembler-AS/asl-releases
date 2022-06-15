@@ -112,6 +112,7 @@ static PInstTable TeXTable;
 
 static tCodepage Codepage;
 static const tNLSCharacterTab *pCharacterTab;
+static Boolean enable_hyphenation;
 
 /*--------------------------------------------------------------------------*/
 
@@ -654,7 +655,10 @@ static void AddLine(const char *Part, char *Sep)
         {
           save = (*lastalpha);
           *lastalpha = '\0';
-          DoHyphens(search + 1, &hyppos, &hypcnt);
+          if (enable_hyphenation)
+            DoHyphens(search + 1, &hyppos, &hypcnt);
+          else
+            hypcnt = 0;
           *lastalpha = save;
           hlen = -1;
           for (z = 0; z < hypcnt; z++)
@@ -2539,6 +2543,24 @@ int main(int argc, char **argv)
   nls_init();
   if (!NLS_Initialize(&argc, argv))
     exit(3);
+
+  enable_hyphenation = True;
+  if (argc)
+  {
+    int z, dest;
+
+    z = dest = 1;
+    while (z < argc)
+      if (!as_strcasecmp(argv[z], "-nohyphen"))
+      {
+        enable_hyphenation = False;
+        z++;
+      }
+      else
+        argv[dest++] = argv[z++];
+    argc = dest;
+  }
+
   Codepage = NLS_GetCodepage();
   pCharacterTab = GetCharacterTab(Codepage);
   pThisTable = (TTable*)calloc(1, sizeof(*pThisTable));

@@ -44,6 +44,8 @@
 #define max(a,b) ((a>b)?(a):(b))
 #endif
 
+#define as_array_size(a) (sizeof(a)/sizeof(*(a)))
+
 #ifndef M_PI
 #define M_PI 3.1415926535897932385E0
 #endif

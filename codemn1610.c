@@ -18,10 +18,13 @@
 #include "asmdef.h"
 #include "asmsub.h"
 #include "asmpars.h"
+#include "asmallg.h"
+#include "onoff_common.h"
 #include "asmitree.h"
 #include "codevars.h"
 #include "codepseudo.h"
 #include "errmsg.h"
+#include "ibmfloat.h"
 
 #include "codemn1610.h"
 
@@ -1359,12 +1362,33 @@ static void DecodeSKIP(Word Index)
 
 /* Pseudo Instruction */
 
+static void PutByte(Byte data, Boolean *p_lower_byte)
+{
+	if (*p_lower_byte)
+	{
+		WAsmCode[CodeLen - 1] |= data;
+		*p_lower_byte = False;
+	}
+	else
+	{
+		SetMaxCodeLen((CodeLen + 1) * 2);
+		WAsmCode[CodeLen++] = data << 8;
+		*p_lower_byte = True;
+	}
+}
+
+static void PutWord(Word data, Boolean *p_lower_byte)
+{
+	SetMaxCodeLen((CodeLen + 1) * 2);	
+	WAsmCode[CodeLen++] = data;
+  *p_lower_byte = False;
+}
+
 static void DecodeDC(Word Index)
 {
 	int z;
 	int c;
-	int b = 0;
-	Boolean OK;
+	Boolean OK, LowerByte = False;
 	TempResult t;
 	
 	UNUSED(Index);
@@ -1382,30 +1406,40 @@ static void DecodeDC(Word Index)
 				switch (t.Typ)
 				{
 				case TempInt:
-				ToInt:
-					if (ChkRange(t.Contents.Int, -32768, 65535))
+					if (Packing)
 					{
-						WAsmCode[CodeLen++] = t.Contents.Int;
+						if (ChkRange(t.Contents.Int, -128, 255))
+						{
+							PutByte(t.Contents.Int, &LowerByte);
+						}
 					}
-					b = 0;
+					else
+					{
+					ToInt:
+						if (ChkRange(t.Contents.Int, -32768, 65535))
+						{
+							PutWord(t.Contents.Int, &LowerByte);
+						}
+					}
 					break;
 				case TempFloat:
-					WrStrErrorPos(ErrNum_StringOrIntButFloat, &ArgStr[z]);
-					OK = False;
+					SetMaxCodeLen((CodeLen + 2) * 2);
+					if (Double2IBMFloat(&WAsmCode[CodeLen], t.Contents.Float, False))
+					{
+						CodeLen += 2;
+					}
+					else
+					{
+						OK = False;
+					}
+					LowerByte = False;
 					break;
 				case TempString:
 					if (MultiCharToInt(&t, 2))
 						goto ToInt;
 					for (c = 0; c < (int)t.Contents.str.len; c++)
 					{
-						if ((b++) & 1)
-						{
-							WAsmCode[CodeLen - 1] |= t.Contents.str.p_str[c];
-						}
-						else
-						{
-							WAsmCode[CodeLen++] = t.Contents.str.p_str[c] << 8;
-						}
+						PutByte(CharTransTable[((usint)t.Contents.str.p_str[c]) & 0xff], &LowerByte);
 					}
 					break;
 				default:
@@ -1789,6 +1823,8 @@ static void SwitchTo_MN1610(void)
 	ListGrans[SegIO] = 2;
 	SegInits[SegIO] = 0;
 	SegLimits[SegIO] = 0xffff;
+
+	onoff_packing_add(False);
 
 	MakeCode = MakeCode_MN1610;
 	IsDef = IsDef_MN1610;

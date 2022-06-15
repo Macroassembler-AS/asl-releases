@@ -650,6 +650,8 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
       msgno = Num_ErrMsgConfBitBltOpt; break;
     case ErrNum_UnknownBitBltOpt:
       msgno = Num_ErrMsgUnknownBitBltOpt; break;
+    case ErrNum_InvCBAR:
+      msgno = Num_ErrMsgInvCBAR; break;
     case ErrNum_InternalError:
       msgno = Num_ErrMsgInternalError; break;
     case ErrNum_OpeningFile:

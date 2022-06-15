@@ -23,6 +23,7 @@
 #include "errmsg.h"
 #include "as.h"
 #include "as.rsc"
+#include "function.h"
 #include "asmpars.h"
 #include "asmmac.h"
 #include "asmstructs.h"
@@ -1372,12 +1373,14 @@ static void CodeALIGN(Word Index)
 static void CodeASSUME(Word Index)
 {
   int z1;
-  unsigned z2;
+  unsigned z2, z3;
   Boolean OK;
   tSymbolFlags Flags;
   LongInt HVal;
   tStrComp RegPart, ValPart;
   char *pSep, EmptyStr[] = "";
+  void (*pPostProcs[5])(void);
+  unsigned PostProcCount = 0;
 
   UNUSED(Index);
 
@@ -1393,7 +1396,7 @@ static void CodeASSUME(Word Index)
   {
     z1 = 1;
     OK = True;
-    while ((z1 <= ArgCnt) && (OK))
+    while ((z1 <= ArgCnt) && OK)
     {
       pSep = QuotPos(ArgStr[z1].str.p_str, ':');
       if (pSep)
@@ -1431,11 +1434,28 @@ static void CodeASSUME(Word Index)
               *(pASSUMERecs[z2].Dest) = HVal;
           }
         }
+        /* collect different post procs so same proc is called only once */
         if (pASSUMERecs[z2].pPostProc)
-          pASSUMERecs[z2].pPostProc();
+        {
+          for (z3 = 0; z3 < PostProcCount; z3++)
+            if (pASSUMERecs[z2].pPostProc == pPostProcs[z3])
+              break;
+          if (z3 >= PostProcCount)
+          {
+            if (PostProcCount >= as_array_size(pPostProcs))
+            {
+              for (z3 = 0; z3 < PostProcCount; z3++)
+                pPostProcs[z3]();
+              PostProcCount = 0;
+            }
+            pPostProcs[PostProcCount++] = pASSUMERecs[z2].pPostProc;
+          }
+        }
       }
       z1++;
     }
+    for (z3 = 0; z3 < PostProcCount; z3++)
+      pPostProcs[z3]();
   }
 }
 

@@ -66,7 +66,7 @@
 
 \vspace{1cm}\par
 
-{\large Edition Januar 2022}
+{\large Edition Juni 2022}
 \end{raggedright}
 
 \clearpage
@@ -4098,7 +4098,7 @@ the 680x0 family, it has to be turned on explicitly for all other families.
 \subsection{PACKING}
 \ttindex{PACKING}
 
-{\em valid for: AVR}
+{\em valid for: AVR, MN1610, CP1600}
 
 In some way, {\tt PACKING} is similar to {\tt PADDING}, it just has a
 somewhat opposite effect: While {\tt PADDING} extends the disposed data to
@@ -4417,13 +4417,18 @@ generated!
 
 \subsubsection{68HC11K4}
 
-Also for the HC11, the designers finally weren't able to avoid the major
-sin: using a banking scheme to address more than 64 Kbytes with only 16
+Also for the HC11, the designers finally weren't able to avoid banking, to
+address more than 64 Kbytes with only 16
 address lines.  The registers {\tt MMSIZ}, {\tt MMWBR}, {\tt MM1CR}, and
 {\tt MM2CR} control whether and how the additional 512K address ranges are
-mapped into the physical address space.  AS intially assumes the reset
+mapped into the CPU's address space.  AS initially assumes the reset
 state of these registers, i.e. all are set to \$00 and windowing is
 disabled.
+
+Furthermore, the settings of the registers {\tt CONFIG}, {\tt INIT}, and
+{\tt INIT2} may be specified.  This enables the assembler to deduce the mapping
+of I/O registers, internal RAM and EEPROM into CPU address space, which
+has priority over mapping of memory via windowing.
 
 %%. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
@@ -4563,6 +4568,18 @@ preinitialized:
 \begin{verbatim}
   CS:CODE, DS:DATA, ES:NOTHING, SS:NOTHING
 \end{verbatim}
+
+%%. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+\subsubsection{Z180}
+
+The Z180 contains a built-in MMU whicht maps the CPU core's ''logical''
+address space of 64 KBytes to a physical address space of 512 KBytes.  The
+precise mappig is defined via the the registers {\tt CBAR}, {\tt CBR} and
+{\tt BBR}.  Opposed to the 68HC11K4, the assembler will not perform any 
+automatic translations of physical to logical addresses; only an internal
+mapping table is kept.  It is however possible to access this table via
+the {\tt phys2cpu()} function.
 
 %%. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
@@ -12492,6 +12509,10 @@ described by:
                {error}
                {The option does not exist.}
                {the option in question}
+\errentry{2260}{invalid CBAR value}
+               {error}
+               {This value for CBAR is not allowed (CA must be larger than BA).}
+               {none}
 \errentry{10001}{error in opening file}
                {fatal}
                {An error was detected while trying to open a file for input.}
@@ -12734,6 +12755,13 @@ one maybe does not find them immediately...
           \begin{verbatim}
           awk '{print $0"\r"}' test.hex >test_cr.hex
           \end{verbatim}}
+\item[Q:]{I have a 16 bit address in my program and have to load its
+          upper and lower half into separate CUP registers. How do I
+          extract the byte halves? Other assemblers have built-in
+          functions to accomodate this.}
+\item[A:]{This can be done ''by hand'' with the built-in logical and
+          shift operators.  However, there is also a file {\tt bitfuncs.inc}
+          that defines the functions {\tt lo()} respectively {\tt hi()}.}
 \end{description}
 
 %%===========================================================================
