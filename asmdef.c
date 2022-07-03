@@ -47,7 +47,7 @@ LargeWord *Phases;                       /* Verschiebungen */
 Word Grans[SegCountPlusStruct];          /* Groesse der Adressierungselemente */
 Word ListGrans[SegCountPlusStruct];      /* Wortgroesse im Listing */
 ChunkList SegChunks[SegCountPlusStruct]; /* Belegungen */
-Integer ActPC;                           /* gewaehlter Programmzaehler */
+as_addrspace_t ActPC;                    /* gewaehlter Programmzaehler */
 Boolean PCsUsed[SegCountPlusStruct];     /* PCs bereits initialisiert ? */
 LargeWord *SegInits;                     /* Segmentstartwerte */
 LargeWord *SegLimits;                    /* Segmentgrenzwerte */

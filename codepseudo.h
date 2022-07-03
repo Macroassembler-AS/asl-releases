@@ -27,4 +27,7 @@ extern void CodeEquate(as_addrspace_t DestSeg, LargeInt Min, LargeInt Max);
 
 extern Boolean QualifyQuote_SingleQuoteConstant(const char *pStart, const char *pQuotePos);
 
+extern int string_2_dasm_code(const struct as_nonz_dynstr *p_str, int bytes_per_dword, Boolean big_endian);
+extern int string_2_wasm_code(const struct as_nonz_dynstr *p_str, int bytes_per_dword, Boolean big_endian);
+
 #endif /* _CODEPSEUDO_H */

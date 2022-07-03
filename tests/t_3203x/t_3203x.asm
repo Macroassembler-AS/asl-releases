@@ -264,6 +264,8 @@ targ:		br	targ
 		 addf3	 *ar5++,*ar5++,r3
 		endexpect
 
+		; packed mode (4 chars per word)
+
 		single	 1.79750e+02
 		single	-6.281250e+01
 		single	-9.90337307e+27
@@ -283,4 +285,10 @@ targ:		br	targ
 		data	"a"
 		data	"ab"
 		data	"abc"
+		data	"abcd"
+
+		; unpacked mode (one char per word)
+
+		packing	off
+		data	12345h,-1.2345e6,"Hello world"
 		data	"abcd"

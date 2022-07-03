@@ -228,6 +228,23 @@
 		tgt	x0,a r0,r1
 		tne	y1,a
 
+		; packed storage (3 chars per word)
+
+		dc	"Hallo"
+		dc	'1'
+		dc	'12'
+		dc	'123'
+		dc	"1"
+		dc	"12"
+		dc	"123"
+		dc	$123456
+		dc	16777215
+		dc	-8388608
+		dc	"Dies ist ein Test, Leute" 0
+
+		; unpacked storage (one char per word)
+
+		packing	off
 		dc	"Hallo"
 		dc	'1'
 		dc	'12'

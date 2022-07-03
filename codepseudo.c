@@ -232,3 +232,43 @@ Boolean QualifyQuote_SingleQuoteConstant(const char *pStart, const char *pQuoteP
   return as_isalnum(*pRun);
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     string_2_xasm_code(const struct as_nonz_dynstr *p_str, int bytes_per_dword, Boolean big_endian)
+ * \brief  put characters from string into xx bit words of machine code
+ * \param  p_str source string
+ * \param  bytes_per_dword # of characters in a word
+ * \param  big_endian fill words starting with MSB?
+ * \return 0 or error code
+ * ------------------------------------------------------------------------ */
+
+#define declare_string_2_xasm_code(NAME, TYPE, VAR) \
+int NAME(const struct as_nonz_dynstr *p_str, int bytes_per_dword, Boolean big_endian) \
+{ \
+  int byte_fill, ret; \
+  const char *p_ch, *p_end; \
+  TYPE trans; \
+ \
+  for (byte_fill = 0, p_ch = p_str->p_str, p_end = p_ch + p_str->len; \
+       p_ch < p_end; p_ch++) \
+  { \
+    if (!byte_fill) \
+    { \
+      if ((ret = SetMaxCodeLen(CodeLen + 1) * sizeof(TYPE))) \
+        return ret; \
+      VAR[CodeLen++] = 0; \
+    } \
+    trans = CharTransTable[((usint)*p_ch) & 0xff]; \
+    if (big_endian) \
+      VAR[CodeLen - 1] = (VAR[CodeLen - 1] << 8) | trans; \
+    else \
+      VAR[CodeLen - 1] |= trans << (byte_fill * 8); \
+    if (++byte_fill >= bytes_per_dword) \
+      byte_fill = 0; \
+  } \
+  if (byte_fill && big_endian) \
+    VAR[CodeLen - 1] <<= 8 * (bytes_per_dword - byte_fill); \
+  return 0; \
+}
+
+declare_string_2_xasm_code(string_2_dasm_code, LongWord, DAsmCode)
+declare_string_2_xasm_code(string_2_wasm_code, Word, WAsmCode)

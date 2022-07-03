@@ -22,6 +22,8 @@
 #include "asmitree.h"
 #include "headids.h"
 #include "codevars.h"
+#include "codepseudo.h"
+#include "onoff_common.h"
 #include "errmsg.h"
 
 #include "code7720.h"
@@ -137,30 +139,13 @@ static void DecodeDATA_7720(Word Index)
       {
         case TempString:
         {
-          unsigned z2, CharsPerWord, Pos;
-          LongWord Trans;
-
-          CharsPerWord = ((ActPC == SegCode) && (MomCPU >= CPU7725)) ? 3 : 2;
-
           if (MultiCharToInt(&t, 3))
             goto ToInt;
 
-          Pos = 0;
-          for (z2 = 0; z2 < t.Contents.str.len; z2++)
-          {
-            Trans = CharTransTable[((usint) t.Contents.str.p_str[z2]) & 0xff];
-            if (ActPC == SegCode)
-              DAsmCode[CodeLen] = (Pos == 0) ? Trans : (DAsmCode[CodeLen] << 8) | Trans;
-            else
-              WAsmCode[CodeLen] = (Pos == 0) ? Trans : (WAsmCode[CodeLen] << 8) | Trans;
-            if (++Pos == CharsPerWord)
-            {
-              Pos = 0;
-              CodeLen++;
-            }
-          }
-          if (Pos != 0)
-            CodeLen++;
+          if (ActPC == SegCode)
+            string_2_dasm_code(&t.Contents.str, Packing ? ((MomCPU >= CPU7725) ? 3 : 2) : 1, True);
+          else
+            string_2_wasm_code(&t.Contents.str, Packing ? 2 : 1, True);
           break;
         }
         case TempInt:
@@ -612,6 +597,8 @@ static void SwitchTo_7720(void)
   MakeCode = MakeCode_7720;
   IsDef = IsDef_7720;
   SwitchFrom = SwitchFrom_7720;
+
+  onoff_packing_add(True);
 
   InOp = False;
   UsedOpFields = 0;

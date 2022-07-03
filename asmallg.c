@@ -212,7 +212,7 @@ void UnsetCPU(void)
   }
 }
 
-static void SetNSeg(Byte NSeg)
+static void SetNSeg(as_addrspace_t NSeg)
 {
   if ((ActPC != NSeg) || (!PCsUsed[ActPC]))
   {
@@ -1205,9 +1205,9 @@ static void CodeMACEXP(Word Index)
   }
 }
 
-static Boolean DecodeSegment(const tStrComp *pArg, Integer StartSeg, Integer *pResult)
+static Boolean DecodeSegment(const tStrComp *pArg, as_addrspace_t StartSeg, as_addrspace_t *pResult)
 {
-  Integer SegZ;
+  as_addrspace_t SegZ;
   Word Mask;
 
   for (SegZ = StartSeg, Mask = 1 << StartSeg; SegZ < SegCount; SegZ++, Mask <<= 1)
@@ -1222,7 +1222,7 @@ static Boolean DecodeSegment(const tStrComp *pArg, Integer StartSeg, Integer *pR
 
 static void CodeSEGMENT(Word Index)
 {
-  Integer NewSegment;
+  as_addrspace_t NewSegment;
   UNUSED(Index);
 
   if (ChkArgCnt(1, 1)
@@ -1524,7 +1524,7 @@ static void CodeENUMCONF(Word Index)
 
     if (ArgCnt >= 2)
     {
-      Integer NewSegment;
+      as_addrspace_t NewSegment;
 
       if (DecodeSegment(&ArgStr[2], SegNone, &NewSegment))
         EnumSegment = NewSegment;
@@ -2131,6 +2131,11 @@ void ClearONOFF(void)
 
   ONOFFCnt = z;
 }
+
+/*!------------------------------------------------------------------------
+ * \fn     CodeRELAXED(Word Index)
+ * \brief  handle RELAXED statement
+ * ------------------------------------------------------------------------ */
 
 static void CodeRELAXED(Word Index)
 {

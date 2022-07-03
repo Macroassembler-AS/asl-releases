@@ -14,7 +14,7 @@ PMMU       \> REG         \> SUPMODE \\
 
 {\tt\begin{tabbing}
 \hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\kill
-DC         \> DS          \> XSFR        \> YSFR \\
+DC         \> DS          \> PACKING     \> XSFR        \> YSFR \\
 \end{tabbing}}
 
 \subsubsection{PowerPC}
@@ -587,8 +587,8 @@ Qxx        \> RES         \> RSTRING     \> STRING      \> WORD \\
 
 {\tt\begin{tabbing}
 \hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\kill
-ASSUME     \> BSS         \> DATA        \> EXTENDED    \> SINGLE \\
-WORD \\
+ASSUME     \> BSS         \> DATA        \> EXTENDED    \> PACKING \\
+SINGLE     \> WORD \\
 \end{tabbing}}
 
 \subsubsection{Texas Instruments TM32C020x/TM32C05x/TM32C054x}
@@ -608,7 +608,7 @@ Qxx        \> RES         \> RSTRING     \> STRING      \> WORD \\
 
 {\tt\begin{tabbing}
 \hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\kill
-BSS         \> DATA        \> DOUBLE     \> SINGLE \\
+BSS         \> DATA        \> DOUBLE     \> PACKING     \> SINGLE \\
 WORD \\
 \end{tabbing}}
 
@@ -828,7 +828,7 @@ DS         \> DT         \> DW \\
 
 {\tt\begin{tabbing}
 \hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\kill
-DATA       \> RES \\
+DATA       \> PACKING     \> RES \\
 \end{tabbing}}
 
 \subsubsection{NEC $\mu$PD77230}
@@ -837,7 +837,7 @@ DATA       \> RES \\
 
 {\tt\begin{tabbing} 
 \hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\kill
-DS         \> DW \\
+DS         \> DW          \> PACKING \\
 \end{tabbing}}
 
 \subsubsection{Symbios Logic SYM53C8xx}

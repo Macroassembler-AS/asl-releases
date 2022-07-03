@@ -155,7 +155,7 @@ typedef struct _TSaveState
   struct _TSaveState *Next;
   CPUVar SaveCPU;
   char *pSaveCPUArgs;
-  Integer SavePC;
+  as_addrspace_t SavePC;
   Byte SaveListOn;
   tLstMacroExp SaveLstMacroExp;
   tLstMacroExpMod SaveLstMacroExpModDefault,
@@ -215,7 +215,7 @@ extern LargeWord *Phases;
 extern Word Grans[SegCountPlusStruct];
 extern Word ListGrans[SegCountPlusStruct];
 extern ChunkList SegChunks[SegCountPlusStruct];
-extern Integer ActPC;
+extern as_addrspace_t ActPC;
 extern Boolean PCsUsed[SegCountPlusStruct];
 extern LargeWord *SegInits;
 extern LargeWord *SegLimits;

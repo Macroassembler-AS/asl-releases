@@ -2303,45 +2303,72 @@ static void DecodeROL4_ROR4(Word Code)
   AddPrefixes();
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     DecodeBit1(Word Index)
+ * \brief  Handle V30-specific bit instructions (NOT1, CLR1, SET1, TEST1)
+ * \param  Index machine code index
+ * ------------------------------------------------------------------------ */
+
 static void DecodeBit1(Word Index)
 {
-  if (ChkArgCnt(2, 2)
-   && ChkMinCPU(CPUV30))
-  {
-    DecodeAdr(&ArgStr[1]);
-    if ((AdrType == TypeReg8) || (AdrType == TypeReg16))
-    {
-      AdrMode += 0xc0;
-      AdrType = TypeMem;
-    }
-    MinOneIs0();
-    if (OpSize == -1) WrError(ErrNum_UndefOpSizes);
-    else switch (AdrType)
-    {
-      case TypeMem:
-        BAsmCode[CodeLen    ] = 0x0f;
-        BAsmCode[CodeLen + 1] = 0x10 + (Index << 1) + OpSize;
-        BAsmCode[CodeLen + 2] = AdrMode;
-        MoveAdr(3);
-        if (!as_strcasecmp(ArgStr[2].str.p_str, "CL"))
-          CodeLen += 3 + AdrCnt;
-        else
-        {
-          Boolean OK;
+  int min_arg_cnt = (Index == 0) ? 2 : 1;
+  if (!ChkMinCPU(CPUV30))
+    return;
 
-          BAsmCode[CodeLen + 1] += 8;
-          BAsmCode[CodeLen + 3 + AdrCnt] = EvalStrIntExpression(&ArgStr[2], Int4, &OK);
-          if (OK)
-            CodeLen += 4 + AdrCnt;
-        }
-        break;
-      default:
-        if (AdrType != TypeNone)
-          WrError(ErrNum_InvAddrMode);
-    }
+  switch (ArgCnt)
+  {
+    case 2:
+      DecodeAdr(&ArgStr[1]);
+      if ((AdrType == TypeReg8) || (AdrType == TypeReg16))
+      {
+        AdrMode += 0xc0;
+        AdrType = TypeMem;
+      }
+      MinOneIs0();
+      if (OpSize == -1) WrError(ErrNum_UndefOpSizes);
+      else switch (AdrType)
+      {
+        case TypeMem:
+          BAsmCode[CodeLen    ] = 0x0f;
+          BAsmCode[CodeLen + 1] = 0x10 + (Index << 1) + OpSize;
+          BAsmCode[CodeLen + 2] = AdrMode;
+          MoveAdr(3);
+          if (!as_strcasecmp(ArgStr[2].str.p_str, "CL"))
+            CodeLen += 3 + AdrCnt;
+          else
+          {
+            Boolean OK;
+
+            BAsmCode[CodeLen + 1] += 8;
+            BAsmCode[CodeLen + 3 + AdrCnt] = EvalStrIntExpression(&ArgStr[2], Int4, &OK);
+            if (OK)
+              CodeLen += 4 + AdrCnt;
+          }
+          break;
+        default:
+          if (AdrType != TypeNone)
+            WrError(ErrNum_InvAddrMode);
+      }
+      break;
+
+    case 1:
+      if (min_arg_cnt > 1)
+        goto bad_arg_cnt;
+      if (as_strcasecmp(ArgStr[1].str.p_str, "CY")) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
+      BAsmCode[CodeLen++] = Index == 3 ? 0xf5 : (Index + 0xf7);
+      break;
+
+    bad_arg_cnt:
+    default:
+      (void)ChkArgCnt(min_arg_cnt, 2);
   }
   AddPrefixes();
 }
+
+/*!------------------------------------------------------------------------
+ * \fn     DecodeINS_EXT(Word Code)
+ * \brief  Handle V30-specific bit fiend instructions (INS, EXT)
+ * ------------------------------------------------------------------------ */
 
 static void DecodeINS_EXT(Word Code)
 {
@@ -2369,7 +2396,7 @@ static void DecodeINS_EXT(Word Code)
             else
             {
               BAsmCode[CodeLen + 1] += 8;
-              BAsmCode[CodeLen + 3] = AdrVals[1];
+              BAsmCode[CodeLen + 3] = AdrVals[0];
               CodeLen += 4;
             }
             break;

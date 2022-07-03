@@ -1,3 +1,13 @@
+2022-07-03  [1.42 Bld 224]
+
+- Addition    : Support PACKING for 56000, TMS320C3x/4x, TMS32060, 
+                uPD7720/7725, and uPD77230
+- Bugfix      : DATA on uPD7720/7725 in packed mode behaves the same
+                way as DW for uPD77230, i.e. characters are filled in
+                from left to right into words
+- Bugfix      : Correct INS/EXT on V30 with immediate operand
+- Bugfix      : On V30, allow CY as operand to NOT1/CLR1/SET1
+
 2022-06-15 [1.42 Bld 223]
 
 - Addition    : Support PACKING for MN1610 (contribution by Haruo Asano)

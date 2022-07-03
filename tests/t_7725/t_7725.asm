@@ -159,6 +159,8 @@ lab:
 	op	mov	@a,non
 		rpdec
 
+	; packed storage
+
 	data	0
 	data	1,2,3
 	data	16777215
@@ -174,3 +176,13 @@ lab:
 	data	"abcdefg"
 	data	"abcdefgh"
 
+	; unpacked storage
+	packing	off
+	data	"a"
+	data	"ab"
+	data	"abc"
+	data	"abcd"
+	data	"abcde"
+	data	"abcdef"
+	data	"abcdefg"
+	data	"abcdefgh"

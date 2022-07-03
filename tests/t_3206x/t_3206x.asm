@@ -239,6 +239,24 @@ zero		macro	dest
 [!b0]   add.l2  b5,b6,b7
 || [b0] sub.s2  b8,b9,b7
 
+	; packed mode (4 chars per word)
+
+	data	0
+	data	12345678h
+	data	4294967295
+	data	-2147483648
+	data	'A'
+	data	'AB'
+	data	'ABC'
+	data	'ABCD'
+	data	"A"
+	data	"AB"
+	data	"ABC"
+	data	"ABCD"
+	data	"Hello, world!"
+
+	; unpacked mode (one char per word)
+	packing off
 	data	0
 	data	12345678h
 	data	4294967295

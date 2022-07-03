@@ -12,6 +12,7 @@
 
 
 #include "symbolsize.h"
+#include "addrspace.h"
 
 struct sStructElem;
 struct sStrComp;
@@ -48,7 +49,7 @@ typedef struct sStructStack
 } TStructStack, *PStructStack;
 
 extern PStructStack StructStack, pInnermostNamedStruct;
-extern int StructSaveSeg;
+extern as_addrspace_t StructSaveSeg;
 
 extern PStructRec CreateStructRec(void);
 

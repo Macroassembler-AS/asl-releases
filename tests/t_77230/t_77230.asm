@@ -228,7 +228,7 @@ target:
 
 	jblk $+5
 
-	; Datenablage
+	; Data Storage (packed by default)
 
 	dw 12345678h
 	dw 4294967295
@@ -258,3 +258,15 @@ target:
 ;	dw 3.6e-39
 	dw 3.6e-38
 
+	; unpacked storage
+
+	packing	off
+	dw "a"
+	dw "ab"
+	dw "abc"
+	dw "abcd"
+	dw "abcde"
+	dw "abcdef"
+	dw "abcdefg"
+	dw "abcdefgh"
+	
