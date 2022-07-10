@@ -234,7 +234,7 @@ Boolean QualifyQuote_SingleQuoteConstant(const char *pStart, const char *pQuoteP
 
 /*!------------------------------------------------------------------------
  * \fn     string_2_xasm_code(const struct as_nonz_dynstr *p_str, int bytes_per_dword, Boolean big_endian)
- * \brief  put characters from string into xx bit words of machine code
+ * \brief  put characters from string into xx bit words of machine code - translation done outside!
  * \param  p_str source string
  * \param  bytes_per_dword # of characters in a word
  * \param  big_endian fill words starting with MSB?
@@ -246,7 +246,7 @@ int NAME(const struct as_nonz_dynstr *p_str, int bytes_per_dword, Boolean big_en
 { \
   int byte_fill, ret; \
   const char *p_ch, *p_end; \
-  TYPE trans; \
+  TYPE character; \
  \
   for (byte_fill = 0, p_ch = p_str->p_str, p_end = p_ch + p_str->len; \
        p_ch < p_end; p_ch++) \
@@ -257,11 +257,11 @@ int NAME(const struct as_nonz_dynstr *p_str, int bytes_per_dword, Boolean big_en
         return ret; \
       VAR[CodeLen++] = 0; \
     } \
-    trans = CharTransTable[((usint)*p_ch) & 0xff]; \
+    character = *p_ch & 0xff; \
     if (big_endian) \
-      VAR[CodeLen - 1] = (VAR[CodeLen - 1] << 8) | trans; \
+      VAR[CodeLen - 1] = (VAR[CodeLen - 1] << 8) | character; \
     else \
-      VAR[CodeLen - 1] |= trans << (byte_fill * 8); \
+      VAR[CodeLen - 1] |= character << (byte_fill * 8); \
     if (++byte_fill >= bytes_per_dword) \
       byte_fill = 0; \
   } \

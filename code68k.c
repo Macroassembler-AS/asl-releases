@@ -5894,7 +5894,7 @@ static void DecodeSTR(Word Index)
   {
     PutByte(l - 2);
     for (z = 1; z < l - 1; z++)
-      PutByte(CharTransTable[((usint) ArgStr[1].str.p_str[z]) & 0xff]);
+      PutByte(as_chartrans_xlate(CurrTransTable->Table, ((usint) ArgStr[1].str.p_str[z]) & 0xff));
   }
 }
 

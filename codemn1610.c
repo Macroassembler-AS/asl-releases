@@ -25,6 +25,7 @@
 #include "codepseudo.h"
 #include "errmsg.h"
 #include "ibmfloat.h"
+#include "chartrans.h"
 
 #include "codemn1610.h"
 
@@ -1437,9 +1438,10 @@ static void DecodeDC(Word Index)
 				case TempString:
 					if (MultiCharToInt(&t, 2))
 						goto ToInt;
+					as_chartrans_xlate_nonz_dynstr(CurrTransTable->Table, &t.Contents.str);
 					for (c = 0; c < (int)t.Contents.str.len; c++)
 					{
-						PutByte(CharTransTable[((usint)t.Contents.str.p_str[c]) & 0xff], &LowerByte);
+						PutByte(((usint)t.Contents.str.p_str[c]) & 0xff, &LowerByte);
 					}
 					break;
 				default:

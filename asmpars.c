@@ -33,6 +33,7 @@
 #include "function.h"
 #include "intformat.h"
 #include "ieeefloat.h"
+#include "chartrans.h"
 
 #include "asmpars.h"
 
@@ -428,46 +429,38 @@ LargeInt NonZString2Int(const struct as_nonz_dynstr *p_str)
 {
   if ((p_str->len > 0) && (p_str->len <= 4))
   {
-    const char *pRun;
-    Byte Digit;
+    unsigned Digit;
     LargeInt Result;
 
     Result = 0;
-    for (pRun = p_str->p_str;
-         pRun < p_str->p_str + p_str->len;
-         pRun++)
-    {
-      Digit = (usint) *pRun;
-      Result = (Result << 8) | CharTransTable[Digit & 0xff];
-    }
+    foreach_as_chartrans(CurrTransTable->Table, *p_str, Digit)
+      Result = (Result << 8) | (Digit & 0xff);
+    foreach_as_chartrans_end
     return Result;
   }
   return -1;
 }
 
-Boolean Int2NonZString(struct as_nonz_dynstr *p_str, LargeInt Src)
+Boolean Int2NonZString(struct as_nonz_dynstr *p_str, LargeInt src)
 {
-  int Search;
-  Byte Digit;
-  char *pDest;
+  char *p_dest;
+  int ret;
 
   if (p_str->capacity < 32)
     as_nonz_dynstr_realloc(p_str, 32);
   p_str->len = 0;
-  pDest = &p_str->p_str[p_str->capacity];
-  while (Src && (p_str->len < p_str->capacity))
+  p_dest = &p_str->p_str[p_str->capacity];
+  while (src && (p_str->len < p_str->capacity))
   {
-    Digit = Src & 0xff;
-    Src = (Src >> 8) & 0xfffffful;
-    for (Search = 0; Search < 256; Search++)
-      if (CharTransTable[Search] == Digit)
-      {
-        *(--pDest) = Search;
-        p_str->len++;
-        break;
-      }
+    ret = as_chartrans_xlate_rev(CurrTransTable->Table, src & 0xff);
+    if (ret >= 0)
+    {
+      *(--p_dest) = ret;
+      p_str->len++;
+    }
+    src = (src >> 8) & 0xfffffful;
   }
-  memmove(p_str->p_str, pDest, p_str->len);
+  memmove(p_str->p_str, p_dest, p_str->len);
   return True;
 }
 
@@ -1844,17 +1837,12 @@ LargeInt EvalStrIntExpressionWithResult(const tStrComp *pComp, IntType Type, tEv
 
       if ((l > 0) && (l <= 4))
       {
-        char *pRun;
-        Byte Digit;
+        unsigned Digit;
 
         Result = 0;
-        for (pRun = t.Contents.str.p_str;
-             pRun < t.Contents.str.p_str + l;
-             pRun++)
-        {
-          Digit = (usint) *pRun;
-          Result = (Result << 8) | CharTransTable[Digit & 0xff];
-        }
+        foreach_as_chartrans(CurrTransTable->Table, t.Contents.str, Digit)
+          Result = (Result << 8) | Digit;
+        foreach_as_chartrans_end
         pResult->Flags = t.Flags;
         pResult->AddrSpaceMask = t.AddrSpaceMask;
         pResult->DataSize = t.DataSize;

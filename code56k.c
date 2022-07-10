@@ -20,6 +20,7 @@
 #include "asmpars.h"
 #include "asmitree.h"
 #include "codepseudo.h"
+#include "chartrans.h"
 #include "codevars.h"
 #include "onoff_common.h"
 
@@ -1078,6 +1079,7 @@ static void DecodeDC(Word Code)
           if (MultiCharToInt(&t, 3))
             goto ToInt;
 
+          as_chartrans_xlate_nonz_dynstr(CurrTransTable->Table, &t.Contents.str);
           OK = !string_2_dasm_code(&t.Contents.str, Packing ? 3 : 1, True);
           break;
         ToInt:

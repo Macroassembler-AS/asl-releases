@@ -317,7 +317,6 @@ static Boolean DecodeAdr(const tStrComp *pArg, Byte Mask, OpType Type, LongWord 
           }
           else
             return ChkAdr(ModReg, Mask, Erg, Mode);
-          break;
         case eSymbolSizeFloat64Bit:
           return ChkAdr(ModFReg, Mask, Erg, Mode);
         default:

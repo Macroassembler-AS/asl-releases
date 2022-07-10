@@ -46,8 +46,6 @@ extern char *FirstBlank(const char *s);
 
 extern void SplitString(char *Source, char *Left, char *Right, char *Trenner);
 
-extern void TranslateString(char *s, int Length);
-
 extern ShortInt StrCaseCmp(const char *s1, const char *s2, LongInt Hand1, LongInt Hand2);
 
 extern char *MatchChars(const char *pStr, const char *pPattern, ...);

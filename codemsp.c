@@ -25,6 +25,7 @@
 #include "asmpars.h"
 #include "asmallg.h"
 #include "onoff_common.h"
+#include "chartrans.h"
 #include "asmitree.h"
 #include "codepseudo.h"
 #include "codevars.h"
@@ -1209,7 +1210,10 @@ static void DecodeBYTE(Word Index)
           break;
         case TempString:
         {
-          unsigned l = t.Contents.str.len;
+          unsigned l;
+
+          as_chartrans_xlate_nonz_dynstr(CurrTransTable->Table, &t.Contents.str);
+          l = t.Contents.str.len;
 
           if (SetMaxCodeLen(l + CodeLen))
           {
@@ -1219,7 +1223,6 @@ static void DecodeBYTE(Word Index)
           {
             char *pEnd = t.Contents.str.p_str + l, *p;
 
-            TranslateString(t.Contents.str.p_str, l);
             for (p = t.Contents.str.p_str; p < pEnd; PutByte(*(p++)));
           }
           break;

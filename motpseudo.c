@@ -28,6 +28,7 @@
 #include "asmitree.h"
 #include "asmallg.h"
 #include "onoff_common.h"
+#include "chartrans.h"
 #include "asmcode.h"
 #include "errmsg.h"
 
@@ -177,8 +178,8 @@ void DecodeMotoBYT(Word Index)
             if (MultiCharToInt(&t, 1))
               goto ToInt;
 
+            as_chartrans_xlate_nonz_dynstr(CurrTransTable->Table, &t.Contents.str);
             l = t.Contents.str.len;
-            TranslateString(t.Contents.str.p_str, l);
 
             if (SetMaxCodeLen(CodeLen + (Rep * l)))
             {
@@ -303,8 +304,8 @@ void DecodeMotoADR(Word Index)
           case TempString:
             if (MultiCharToInt(&Res, 2))
               goto ToInt;
+            as_chartrans_xlate_nonz_dynstr(CurrTransTable->Table, &Res.Contents.str);
             Cnt = Res.Contents.str.len;
-            TranslateString(Res.Contents.str.p_str, Res.Contents.str.len);
             break;
           case TempFloat:
             WrStrErrorPos(ErrNum_StringOrIntButFloat, &Arg);
@@ -362,19 +363,19 @@ void DecodeMotoADR(Word Index)
 
 static void DecodeFCC(Word Index)
 {
-  String SVal;
-  Boolean OK;
-  tStrComp *pArg, Arg;
-  int z3, l;
-  LongInt Rep,z2;
   UNUSED(Index);
 
   if (ChkArgCnt(1, ArgCntMax))
   {
-    OK = True;
+    Boolean OK = True;
+    tStrComp *pArg, Arg;
+    TempResult t;
 
+    as_tempres_ini(&t);
     forallargs (pArg, OK)
     {
+      LongInt Rep;
+
       if (!*pArg->str.p_str)
       {
         OK = FALSE;
@@ -386,24 +387,40 @@ static void DecodeFCC(Word Index)
       if (!OK)
         break;
 
-      EvalStrStringExpression(&Arg, &OK, SVal);
-      if (OK)
+      EvalStrExpression(&Arg, &t);
+      switch (t.Typ)
       {
-        if (SetMaxCodeLen(CodeLen + Rep * strlen(SVal)))
+        case TempString:
         {
-          WrError(ErrNum_CodeOverflow);
+          int l;
+
+          as_chartrans_xlate_nonz_dynstr(CurrTransTable->Table, &t.Contents.str);
+          l = t.Contents.str.len;
+          if (SetMaxCodeLen(CodeLen + Rep * l))
+          {
+            WrError(ErrNum_CodeOverflow);
+            OK = False;
+          }
+          else
+          {
+            LongInt z2;
+            int z3;
+
+            for (z2 = 0; z2 < Rep; z2++)
+              for (z3 = 0; z3 < l; z3++)
+                PutByte(t.Contents.str.p_str[z3]);
+          }
+          break;
+        }
+        case TempNone:
           OK = False;
-        }
-        else
-        {
-          l = strlen(SVal);
-          TranslateString(SVal, l);
-          for (z2 = 0; z2 < Rep; z2++)
-            for (z3 = 0; z3 < l; z3++)
-              PutByte(SVal[z3]);
-        }
+          break;
+        default:
+          WrStrErrorPos(ErrNum_ExpectString, &Arg);
+          OK = False;
       }
     }
+    as_tempres_free(&t);
 
     if (!OK)
       CodeLen = 0;
@@ -1028,6 +1045,7 @@ void DecodeMotoDC(tSymbolSize OpSize, Boolean Turn)
         case TempString:
           if (MultiCharToInt(&t, (WSize < 8) ? WSize : 8))
             goto ToInt;
+          as_chartrans_xlate_nonz_dynstr(CurrTransTable->Table, &t.Contents.str);
           if (!EnterInt)
           {
             if (ConvertFloat && EnterFloat)
@@ -1044,7 +1062,7 @@ void DecodeMotoDC(tSymbolSize OpSize, Boolean Turn)
                   {
                     Word TurnField[8];
 
-                    ConvertFloat(CharTransTable[(usint) (*zp & 0xff)], (Byte *) TurnField, HostBigEndian);
+                    ConvertFloat((usint) (*zp & 0xff), (Byte *) TurnField, HostBigEndian);
                     if (HostBigEndian && Swap)
                       Swap((void*) TurnField, WSize);
                     EnterFloat(TurnField);
@@ -1064,7 +1082,7 @@ void DecodeMotoDC(tSymbolSize OpSize, Boolean Turn)
           }
           else
             for (z2 = 0; z2 < Rep; z2++)
-              for (zp = t.Contents.str.p_str; zp < t.Contents.str.p_str + t.Contents.str.len; EnterInt(CharTransTable[((usint) *(zp++)) & 0xff]));
+              for (zp = t.Contents.str.p_str; zp < t.Contents.str.p_str + t.Contents.str.len; EnterInt(((usint) *(zp++)) & 0xff));
           break;
         case TempNone:
           OK = False;

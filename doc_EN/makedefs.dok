@@ -1,4 +1,4 @@
-docs_EN: docs_EN_notex $(DOC_EN_DIR)as.ps $(DOC_EN_DIR)as.pdf
+docs_EN: docs_EN_notex $(DOC_EN_DIR)as.pdf
 
 docs_EN_notex: $(DOC_EN_DIR)as.doc $(DOC_EN_DIR)as.html
 

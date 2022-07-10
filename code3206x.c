@@ -27,6 +27,7 @@
 #include "codevars.h"
 #include "onoff_common.h"
 #include "nlmessages.h"
+#include "chartrans.h"
 #include "as.rsc"
 
 /*---------------------------------------------------------------------------*/
@@ -707,9 +708,10 @@ static Boolean DecodePseudo(void)
              if (MultiCharToInt(&t, 4))
                goto ToInt;
 
+             as_chartrans_xlate_nonz_dynstr(CurrTransTable->Table, &t.Contents.str);
              for (z2 = 0; z2 < t.Contents.str.len; z2++)
              {
-               Trans = CharTransTable[((usint)t.Contents.str.p_str[z2]) & 0xff];
+               Trans = t.Contents.str.p_str[z2] & 0xff;
                if (Packing)
                {
                  if ((z2 & 3) == 0) DAsmCode[cnt++] = 0;

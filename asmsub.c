@@ -472,16 +472,6 @@ char *FindOpeningParenthese(const char *pStrBegin, const char *pStrEnd, const ch
 
 /****************************************************************************/
 
-void TranslateString(char *s, int Length)
-{
-  char *pRun, *pEnd;
-
-  if (Length < 0)
-    Length = strlen(s);
-  for (pRun = s, pEnd = pRun + Length; pRun < pEnd; pRun++)
-    *pRun = CharTransTable[((usint)(*pRun)) & 0xff];
-}
-
 ShortInt StrCaseCmp(const char *s1, const char *s2, LongInt Hand1, LongInt Hand2)
 {
   int tmp;

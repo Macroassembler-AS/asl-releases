@@ -30,6 +30,7 @@
 #include "codepseudo.h"
 #include "onoff_common.h"
 #include "errmsg.h"
+#include "chartrans.h"
 
 #include "code77230.h"
 
@@ -615,6 +616,7 @@ static Boolean DecodePseudo(void)
             if (MultiCharToInt(&t, 4))
               goto ToInt;
 
+            as_chartrans_xlate_nonz_dynstr(CurrTransTable->Table, &t.Contents.str);
             OK = !string_2_dasm_code(&t.Contents.str, Packing ? 4 : 1, True);
             break;
           case TempInt:

@@ -47,7 +47,7 @@
 
 \vspace{1cm}\par
 
-{\large Stand Juni 2022}
+{\large Stand Juli 2022}
 \end{raggedright}
 
 \clearpage
@@ -286,9 +286,12 @@ folgende Prozessorfamilien implementiert:
 \item{MIL STD 1750}
 \item{KENBAK-1}
 \item{GI CP-1600}
+\item{HP Nano Processor}
 \end{itemize}
 in Arbeit / Planung / "Uberlegung :
 \begin{itemize}
+\item{NEC V60}
+\item{ARM}
 \item{Analog Devices ADSP21xx}
 \item{SGS-Thomson ST20}
 \item{Texas Instruments TMS320C8x}
@@ -4084,7 +4087,7 @@ jeweils zugeh"origen Unterkapitel mit prozessorspezifischen Hinweisen beschriebe
 {\em
 G"ultigkeit SUPMODE: 680x0, NS32xxx, i960, TLCS-900, SH7000,
 i960, 29K, XA, PowerPC, M*CORE und TMS9900 \\
-G"ultigkeit FPU: 680x0, NS32xxx, 80x86  \\
+G"ultigkeit FPU: 680x0, NS32xxx, 80x86 \\
 G"ultigkeit PMMU: 680x0, NS32xxx \\
 G"ultigkeit CUSTOM: NS32xxx \\
 }
@@ -4206,8 +4209,8 @@ anderen werden erst nach Umschaltung Padding-Bytes eingef"ugt.
 \subsection{PACKING}
 \ttindex{PACKING}
 
-{\em G"ultigkeit: 56000, AVR, TMS3203x/4x, TMS3206x, MN1610, CP1600,
-     $\mu$PD7720/7725, $\mu$PD77230}
+{\em G"ultigkeit: 56000, AVR, TMS3203x/4x, TMS3206x, MN1610, \\
+     CP1600, $\mu$PD7720/7725, $\mu$PD77230}
 
 {\tt PACKING} ist in gewisser Weise "ahnlich zu {\tt PADDING}, es arbeitet
 nur gewisserma"sen anders herum: w"ahrend {\tt PADDING} die
@@ -10787,6 +10790,17 @@ ob der Prozessor zur Laufzeit wirklich zur angegebene Adresse springen w"urde.
 Dadurch kann z.B. gepr"uft werden, ob man nicht versehentlich versucht, einen
 einzelnen Ein-Byte-Befehl zu "uberspringen.  Ein weggelassenes Schiebeargument
 {\it [cnt]} bedeutet, da"s um eine Stelle geschoben werden soll.
+
+%%---------------------------------------------------------------------------
+
+\section{HP Nanoprocessor}
+
+Der HP Nanoprocessor verf"ugt "uber keinerlei Befehle, Daten aus dem ROM-
+Adre"sraum zu lesen und in ein Register zu transferieren.  Die diesbez"uglichen
+Befehle {\tt LDR} und {\tt STR} sind eher das, was man bei anderen Prozessoren
+als ,,immediate-Adressierung'' bezeichnen w"urde.  Aus diesen Grund sind f"ur
+den HP Nanoprocessor keinerlei Pseudobefehen definiert, mit denen sich Konstanten
+im ROM ablegen oder Platz reservieren l"a"st.
 
 %%===========================================================================
 

@@ -28,6 +28,7 @@
 #include "codevars.h"
 #include "errmsg.h"
 #include "onoff_common.h"
+#include "chartrans.h"
 
 #include "codeavr.h"
 
@@ -464,9 +465,10 @@ static void DecodeDATA_AVR(Word Index)
            if (MultiCharToInt(&t, 2))
              goto ToInt;
 
+           as_chartrans_xlate_nonz_dynstr(CurrTransTable->Table, &t.Contents.str);
            for (z2 = 0; z2 < (int)t.Contents.str.len; z2++)
            {
-             Trans = CharTransTable[((usint) t.Contents.str.p_str[z2]) & 0xff];
+             Trans = ((usint) t.Contents.str.p_str[z2]) & 0xff;
              PlaceValue(Trans, True);
            }
            break;

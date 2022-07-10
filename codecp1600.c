@@ -586,7 +586,7 @@ static void DecodeWORD(Word Index)
 						OK = False;
 						break;
 					}
-          TranslateString(t.Contents.str.p_str, t.Contents.str.len);
+          as_chartrans_xlate_nonz_dynstr(CurrTransTable->Table, &t.Contents.str);
 					for (c = 0; c < (int)t.Contents.str.len; c++)
             PutByte(t.Contents.str.p_str[c], &b);
 					break;

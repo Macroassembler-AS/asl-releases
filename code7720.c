@@ -25,6 +25,7 @@
 #include "codepseudo.h"
 #include "onoff_common.h"
 #include "errmsg.h"
+#include "chartrans.h"
 
 #include "code7720.h"
 
@@ -142,6 +143,7 @@ static void DecodeDATA_7720(Word Index)
           if (MultiCharToInt(&t, 3))
             goto ToInt;
 
+          as_chartrans_xlate_nonz_dynstr(CurrTransTable->Table, &t.Contents.str);
           if (ActPC == SegCode)
             string_2_dasm_code(&t.Contents.str, Packing ? ((MomCPU >= CPU7725) ? 3 : 2) : 1, True);
           else

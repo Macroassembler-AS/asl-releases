@@ -1,3 +1,9 @@
+2022-07-09  [1.42 Bld 225]
+
+- Addition    : Add HP Nano Processor target (contribution by Haruo Asano)
+- Change      : No longer provide manual as PostScript (may be generated
+                from PDF version or from doc_*/as.pdf target).
+
 2022-07-03  [1.42 Bld 224]
 
 - Addition    : Support PACKING for 56000, TMS320C3x/4x, TMS32060, 

@@ -27,6 +27,7 @@
 #include "asmpars.h"
 #include "asmitree.h"
 #include "onoff_common.h"
+#include "chartrans.h"
 #include "errmsg.h"
 #include "ieeefloat.h"
 
@@ -447,16 +448,17 @@ static Boolean LayoutByte(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
       break;
     case TempString:
     {
-      unsigned z;
+      unsigned ch;
 
       if (MultiCharToInt(&t, 1))
         goto ToInt;
 
-      TranslateString(t.Contents.str.p_str, t.Contents.str.len);
-
-      for (z = 0; z < t.Contents.str.len; z++)
-        if (!pCtx->Put8I(t.Contents.str.p_str[z], pCtx))
+      foreach_as_chartrans(CurrTransTable->Table, t.Contents.str, ch)
+      {
+        if (!pCtx->Put8I(ch, pCtx))
           LEAVE;
+      }
+      foreach_as_chartrans_end
 
       Result = True;
       break;
@@ -586,7 +588,7 @@ static Boolean LayoutWord(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
       if (MultiCharToInt(&t, 2))
         goto ToInt;
 
-      TranslateString(t.Contents.str.p_str, t.Contents.str.len);
+      as_chartrans_xlate_nonz_dynstr(CurrTransTable->Table, &t.Contents.str);
 
       for (z = 0; z < t.Contents.str.len; z++)
         if (!pCtx->Put16I(t.Contents.str.p_str[z], pCtx))
@@ -704,7 +706,7 @@ static Boolean LayoutDoubleWord(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
       if (MultiCharToInt(&erg, 4))
         goto ToInt;
 
-      TranslateString(erg.Contents.str.p_str, erg.Contents.str.len);
+      as_chartrans_xlate_nonz_dynstr(CurrTransTable->Table, &erg.Contents.str);
 
       for (z = 0; z < erg.Contents.str.len; z++)
         if (!pCtx->Put32I(erg.Contents.str.p_str[z], pCtx))
@@ -842,7 +844,7 @@ static Boolean LayoutQuadWord(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
       if (MultiCharToInt(&erg, 8))
         goto ToInt;
 
-      TranslateString(erg.Contents.str.p_str, erg.Contents.str.len);
+      as_chartrans_xlate_nonz_dynstr(CurrTransTable->Table, &erg.Contents.str);
 
       for (z = 0; z < erg.Contents.str.len; z++)
         if (!pCtx->Put64I(erg.Contents.str.p_str[z], pCtx))
@@ -928,7 +930,7 @@ static Boolean LayoutTenBytes(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
       if (MultiCharToInt(&erg, 4))
         goto ToInt;
 
-      TranslateString(erg.Contents.str.p_str, erg.Contents.str.len);
+      as_chartrans_xlate_nonz_dynstr(CurrTransTable->Table, &erg.Contents.str);
 
       for (z = 0; z < erg.Contents.str.len; z++)
         if (!pCtx->Put80F(erg.Contents.str.p_str[z], pCtx))

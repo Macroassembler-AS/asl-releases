@@ -19,6 +19,7 @@
 #include "asmitree.h"
 #include "codevars.h"
 #include "errmsg.h"
+#include "chartrans.h"
 
 #include "codesc14xxx.h"
 
@@ -165,8 +166,9 @@ static void DecodeDC(Word Code)
             PutByte(t.Contents.Int);
           break;
         case TempString:
+          as_chartrans_xlate_nonz_dynstr(CurrTransTable->Table, &t.Contents.str);
           for (p = t.Contents.str.p_str, pEnd = p + t.Contents.str.len; p < pEnd; p++)
-            PutByte(CharTransTable[((usint) *p) & 0xff]);
+            PutByte(((usint) *p) & 0xff);
           break;
         case TempFloat:
           WrStrErrorPos(ErrNum_StringOrIntButFloat, &ArgStr[z]);

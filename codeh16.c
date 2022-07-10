@@ -969,7 +969,6 @@ static Boolean ClassComp(tStrComp *pArg, tAdrComps *pComps)
       }
       else
         return False;
-      break;
     case eIsNoReg:
       break;
     case eRegAbort:

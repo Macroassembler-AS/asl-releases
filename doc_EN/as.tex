@@ -1,4 +1,4 @@
-%% Hello altogether,
+%% Hi Folks,
 %%
 %% this is a release of the English AS manual.  I haven't
 %% done the entire translation myself, large parts of it are the work of some
@@ -66,7 +66,7 @@
 
 \vspace{1cm}\par
 
-{\large Edition Juni 2022}
+{\large Edition July 2022}
 \end{raggedright}
 
 \clearpage
@@ -292,9 +292,12 @@ following processor families have been implemented:
 \item{MIL STD 1750}
 \item{KENBAK-1}
 \item{GI CP-1600}
+\item{HP Nano Processor}
 \end{itemize}
 under work / planned / in consideration :
 \begin{itemize}
+\item{NEC V60}
+\item{ARM}
 \item{Analog Devices ADSP21xx}
 \item{SGS-Thomson ST20}
 \item{Texas Instruments TMS320C8x}
@@ -10552,6 +10555,16 @@ will not become part of the machine code.  The assembler only checks whether the
 processor wil actually skip to the given address.  This allows for instance to check
 whether one actually tries to skip a one-byte instruction.  If the shift count
 argument {\it [cnt]} is omitted, a one-bit shift/rotate is coded.
+
+%%---------------------------------------------------------------------------
+
+\section{HP Nanoprocessor}
+
+The HP Nanoprocessor does not provide any instructions to read data from the ROM
+address space.  The respective instructions {\tt LDR} and {\tt STR} rather
+represent what is called ''immediate addressing'' on other processors.  For this
+reson, there are pseudo instructions that would allow placing data constants
+im ROM memory or to reserve space in it.
 
 %%===========================================================================
 

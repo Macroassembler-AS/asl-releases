@@ -27,6 +27,7 @@
 #include "codepseudo.h"
 #include "codevars.h"
 #include "ibmfloat.h"
+#include "chartrans.h"
 #include "errmsg.h"
 
 #include "code9900.h"
@@ -897,9 +898,10 @@ static void DecodeBYTE(Word Code)
           }
           else
           {
-            char *p, *pEnd = t.Contents.str.p_str + t.Contents.str.len;
+            char *p, *pEnd;
 
-            TranslateString(t.Contents.str.p_str, t.Contents.str.len);
+            as_chartrans_xlate_nonz_dynstr(CurrTransTable->Table, &t.Contents.str);
+            pEnd = t.Contents.str.p_str + t.Contents.str.len;
             for (p = t.Contents.str.p_str; p < pEnd; PutByte(*(p++)));
           }
           break;
@@ -911,7 +913,7 @@ static void DecodeBYTE(Word Code)
       }
       z++;
     }
-    while ((z <= ArgCnt) && (OK));
+    while ((z <= ArgCnt) && OK);
     if (!OK)
       CodeLen = 0;
   }

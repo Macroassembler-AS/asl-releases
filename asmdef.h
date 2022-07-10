@@ -22,6 +22,7 @@
 #include "cpulist.h"
 #include "tempresult.h"
 #include "addrspace.h"
+#include "chartrans.h"
 
 typedef struct _TCrossRef
 {
@@ -147,7 +148,7 @@ typedef struct _TTransTable
 {
   struct _TTransTable *Next;
   char *Name;
-  unsigned char *Table;
+  as_chartrans_table_t Table;
 } TTransTable, *PTransTable;
 
 typedef struct _TSaveState
@@ -363,7 +364,6 @@ extern Byte StopfZahl;
 
 extern Boolean SuppWarns;
 
-#define CharTransTable CurrTransTable->Table
 extern PTransTable TransTables, CurrTransTable;
 
 extern PDefinement FirstDefine;
