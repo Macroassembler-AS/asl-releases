@@ -288,7 +288,6 @@ extern StringPtr OutName;
 extern Integer CurrIncludeLevel;
 extern StringPtr CurrFileName;
 extern LongInt CurrLine;
-extern LongInt MomLineCounter;
 extern LongInt LineSum;
 extern LongInt MacLineSum;
 

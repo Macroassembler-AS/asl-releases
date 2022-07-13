@@ -84,7 +84,7 @@ ShortInt ExtendErrors;	                 /* erweiterte Fehlermeldungen */
 Integer EnumSegment;                     /* ENUM state & config */
 LongInt EnumIncrement, EnumCurrentValue;
 Boolean NumericErrors;                   /* Fehlermeldungen mit Nummer */
-Boolean CodeOutput;		         /* Code erzeugen */
+Boolean CodeOutput;	                     /* Code erzeugen */
 Boolean MacProOutput;                    /* Makroprozessorausgabe schreiben */
 Boolean MacroOutput;                     /* gelesene Makros schreiben */
 Boolean QuietMode;                       /* keine Meldungen */
@@ -104,8 +104,7 @@ StringPtr ErrorPath, ErrorName;          /* Ausgabedatei Fehlermeldungen */
 StringPtr OutName;                       /* Name Code-Datei */
 Integer CurrIncludeLevel;                /* current include nesting level */
 StringPtr CurrFileName;                  /* mom. bearbeitete Datei */
-LongInt MomLineCounter;                  /* Position in mom. Datei */
-LongInt CurrLine;       	         /* virtuelle Position */
+LongInt CurrLine;                        /* virtuelle Position */
 LongInt LineSum;                         /* Gesamtzahl Quellzeilen */
 LongInt MacLineSum;                      /* inkl. Makroexpansion */
 
@@ -240,7 +239,6 @@ void AsmDefInit(void)
   PrtTitleString[0] = '\0';
 
   CurrFileName[0] = '\0';
-  MomLineCounter = 0;
 
   FirstDefine = NULL;
   FirstSaveState = NULL;

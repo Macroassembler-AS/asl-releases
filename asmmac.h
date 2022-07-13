@@ -52,7 +52,7 @@ typedef struct _TInputTag
                                                       );
   LongInt ParCnt,ParZ;
   StringList Params;
-  LongInt LineCnt, LineZ;
+  LongInt LineCnt, ContLineCnt, LineZ;
   StringRecPtr Lines, LineRun;
   String SpecNameStr, SaveAttr, SaveLabel, AllArgs;
   tStrComp SpecName;
@@ -72,7 +72,7 @@ typedef struct _TInputTag
                                        );
   Boolean (*GetPos)(
 #ifdef __PROTOS__
-                    struct _TInputTag *P, char *Dest, size_t DestSize
+                    struct _TInputTag *P, char *Dest, size_t DestSize, Boolean ActGNUErrors
 #endif
                                                     );
   PMacroRec Macro;

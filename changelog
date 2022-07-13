@@ -1,3 +1,9 @@
+2022-07-13  [1.42 Bld 226]
+
+- Bugfix      : Correct argument separator for DSP56K (Tab)
+- Bugfix      : If line continuation is used, use the line
+                number of the first line, not the last one
+
 2022-07-09  [1.42 Bld 225]
 
 - Addition    : Add HP Nano Processor target (contribution by Haruo Asano)

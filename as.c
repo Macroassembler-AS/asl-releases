@@ -174,9 +174,10 @@ static void NULL_Restorer(PInputTag PInp)
   UNUSED(PInp);
 }
 
-static Boolean NULL_GetPos(PInputTag PInp, char *dest, size_t DestSize)
+static Boolean NULL_GetPos(PInputTag PInp, char *dest, size_t DestSize, Boolean ActGNUErrors)
 {
   UNUSED(PInp);
+  UNUSED(ActGNUErrors);
 
   if (DestSize)
     *dest = '\0';
@@ -196,7 +197,7 @@ static PInputTag GenerateProcessor(void)
   PInp->StartLine = CurrLine;
   PInp->ParCnt = 0; PInp->ParZ = 0;
   InitStringList(&(PInp->Params));
-  PInp->LineCnt = 0; PInp->LineZ = 1;
+  PInp->LineCnt = PInp->ContLineCnt = 0; PInp->LineZ = 1;
   PInp->Lines = PInp->LineRun = NULL;
   StrCompMkTemp(&PInp->SpecName, PInp->SpecNameStr, sizeof(PInp->SpecNameStr));
   StrCompReset(&PInp->SpecName);
@@ -218,7 +219,7 @@ static PInputTag GenerateProcessor(void)
 
   /* in case the input tag chain is empty, this must be the master file */
 
-  PInp->FromFile = (!FirstInputTag) || (FirstInputTag->Processor == INCLUDE_Processor);
+  PInp->FromFile = !FirstInputTag || (FirstInputTag->Processor == INCLUDE_Processor);
 
   return PInp;
 }
@@ -765,8 +766,9 @@ static void MACRO_Cleanup(PInputTag PInp)
   ClearStringList(&(PInp->Params));
 }
 
-static Boolean MACRO_GetPos(PInputTag PInp, char *dest, size_t DestSize)
+static Boolean MACRO_GetPos(PInputTag PInp, char *dest, size_t DestSize, Boolean ActGNUErrors)
 {
+  UNUSED(ActGNUErrors);
   as_snprintf(dest, DestSize, "%s(%lu) ", PInp->SpecName.str.p_str, (unsigned long)(PInp->LineZ - 1));
   return False;
 }
@@ -1091,11 +1093,13 @@ static void IRP_Cleanup(PInputTag PInp)
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 /* Posisionsangabe im IRP(C) fuer Fehlermeldungen */
 
-static Boolean IRP_GetPos(PInputTag PInp, char *dest, size_t DestSize)
+static Boolean IRP_GetPos(PInputTag PInp, char *dest, size_t DestSize, Boolean ActGNUErrors)
 {
   int z, ParZ = PInp->ParZ, LineZ = PInp->LineZ;
   const char *IRPType;
   char *IRPVal, tmp[20];
+
+  UNUSED(ActGNUErrors);
 
   /* LineZ/ParZ already hopped to next line - step one back: */
 
@@ -1471,9 +1475,11 @@ static void REPT_Cleanup(PInputTag PInp)
   ClearStringList(&(PInp->Lines));
 }
 
-static Boolean REPT_GetPos(PInputTag PInp, char *dest, size_t DestSize)
+static Boolean REPT_GetPos(PInputTag PInp, char *dest, size_t DestSize, Boolean ActGNUErrors)
 {
   int z1 = PInp->ParZ, z2 = PInp->LineZ;
+
+  UNUSED(ActGNUErrors);
 
   if (--z2 <= 0)
   {
@@ -1668,9 +1674,11 @@ static void WHILE_Cleanup(PInputTag PInp)
   ClearStringList(&(PInp->Lines));
 }
 
-static Boolean WHILE_GetPos(PInputTag PInp, char *dest, size_t DestSize)
+static Boolean WHILE_GetPos(PInputTag PInp, char *dest, size_t DestSize, Boolean ActGNUErrors)
 {
   int z1 = PInp->ParZ, z2 = PInp->LineZ;
+
+  UNUSED(ActGNUErrors);
 
   if (--z2 <= 0)
   {
@@ -1889,7 +1897,11 @@ static void INCLUDE_Cleanup(PInputTag PInp)
 {
   fclose(PInp->Datei);
   free(PInp->Buffer);
-  LineSum += MomLineCounter;
+
+  /* if last line in file was continued, do not forget to add up
+     continuation lines: */
+
+  LineSum += PInp->LineZ + PInp->ContLineCnt;
   if ((*LstName != '\0') && !QuietMode)
   {
     String Tmp;
@@ -1903,11 +1915,11 @@ static void INCLUDE_Cleanup(PInputTag PInp)
   CurrIncludeLevel = PInp->IncludeLevel;
 }
 
-static Boolean INCLUDE_GetPos(PInputTag PInp, char *dest, size_t DestSize)
+static Boolean INCLUDE_GetPos(PInputTag PInp, char *dest, size_t DestSize, Boolean ActGNUErrors)
 {
   UNUSED(PInp);
 
-  as_snprintf(dest, DestSize, GNUErrors ? "%s:%lu" : "%s(%lu) ", NamePart(PInp->SpecName.str.p_str), (unsigned long)PInp->LineZ);
+  as_snprintf(dest, DestSize, ActGNUErrors ? "%s:%lu" : "%s(%lu) ", NamePart(PInp->SpecName.str.p_str), (unsigned long)PInp->LineZ);
   return !GNUErrors;
 }
 
@@ -1915,6 +1927,14 @@ Boolean INCLUDE_Processor(PInputTag PInp, as_dynstr_t *p_dest)
 {
   Boolean Result;
   int Count = 1;
+
+  /* add up # of continuation lines from previous source line */
+
+  if (PInp->ContLineCnt)
+  {
+    CurrLine = (PInp->LineZ += PInp->ContLineCnt);
+    PInp->ContLineCnt = 0;
+  }
 
   Result = True;
 
@@ -1925,7 +1945,17 @@ Boolean INCLUDE_Processor(PInputTag PInp, as_dynstr_t *p_dest)
     Count = ReadLnCont(PInp->Datei, p_dest);
     /**ChkIO(ErrNum_FileReadError);**/
   }
-  PInp->LineZ = CurrLine = (MomLineCounter += Count);
+
+  /* Even if we had continuation lines, only increment line counter
+     by one at this place so the first line's # is the number of the
+     concatenated line: */
+
+  if (Count > 0)
+  {
+    PInp->LineZ++;
+    CurrLine = PInp->LineZ;
+    PInp->ContLineCnt = Count - 1;
+  }
   if (feof(PInp->Datei))
     Result = False;
 
@@ -1934,7 +1964,7 @@ Boolean INCLUDE_Processor(PInputTag PInp, as_dynstr_t *p_dest)
 
 static void INCLUDE_Restorer(PInputTag PInp)
 {
-  MomLineCounter = PInp->StartLine;
+  CurrLine = PInp->StartLine;
   strmaxcpy(CurrFileName, PInp->SaveAttr, STRINGSIZE);
   IncDepth--;
 }
@@ -1966,7 +1996,7 @@ static void ExpandINCLUDE_Core(const tStrComp *pArg, Boolean SearchPath)
 
   /* Sicherung alter Daten */
 
-  Tag->StartLine = MomLineCounter;
+  Tag->StartLine = CurrLine;
   strmaxcpy(Tag->SpecName.str.p_str, FNameArg.str.p_str, STRINGSIZE);
   LineCompReset(&Tag->SpecName.Pos);
   strmaxcpy(Tag->SaveAttr, CurrFileName, STRINGSIZE);
@@ -1983,7 +2013,7 @@ static void ExpandINCLUDE_Core(const tStrComp *pArg, Boolean SearchPath)
   /* neu besetzen */
 
   strmaxcpy(CurrFileName, FNameArg.str.p_str, STRINGSIZE);
-  Tag->LineZ = MomLineCounter = 0;
+  Tag->LineZ = 0;
   AddFile(FNameArg.str.p_str);
   PushInclude(FNameArg.str.p_str);
   if (++CurrIncludeLevel > MaxIncludeLevel)
@@ -2115,7 +2145,7 @@ char *GetErrorPos(void)
           pInnerTag = RunTag;
         else
         {
-          Last = RunTag->GetPos(RunTag, ActPos, sizeof(ActPos));
+          Last = RunTag->GetPos(RunTag, ActPos, sizeof(ActPos), GNUErrors);
           if (!Str.AllocLen)
           {
             pMsg = getmessage(Num_GNUErrorMsg1);
@@ -2150,7 +2180,7 @@ char *GetErrorPos(void)
 
     if (pInnerTag)
     {
-      pInnerTag->GetPos(pInnerTag, ActPos, sizeof(ActPos));
+      pInnerTag->GetPos(pInnerTag, ActPos, sizeof(ActPos), GNUErrors);
       NewLen = CurrStrLen + strlen(ActPos) + 1;
       ReallocStr(&Str, NewLen);
       as_snprcatf(Str.pStr, Str.AllocLen, "%s", ActPos);
@@ -2166,7 +2196,7 @@ char *GetErrorPos(void)
 
     for (RunTag = FirstInputTag; RunTag; RunTag = RunTag->Next)
     {
-      Last = RunTag->GetPos(RunTag, ActPos, sizeof(ActPos));
+      Last = RunTag->GetPos(RunTag, ActPos, sizeof(ActPos), GNUErrors);
       ThisLen = strlen(ActPos);
       ReallocStr(&Str, NewLen = CurrStrLen + ThisLen + 1);
       strmaxprep(Str.pStr, ActPos, Str.AllocLen);
@@ -2648,7 +2678,6 @@ again:
 static void ProcessFile(char *pFileName)
 {
   long NxtTime, ListTime;
-  const char *Name;
   char *Run;
   tStrComp FileArg;
 
@@ -2698,11 +2727,14 @@ static void ProcessFile(char *pFileName)
       if (((!ListToStdout) || ((ListMask&1) == 0)) && (DTime(ListTime, NxtTime) > 50))
       {
         String Num;
+        PInputTag p_input_tag;
 
-        Name = NamePart(CurrFileName);
-        as_snprintf(Num, sizeof(Num), "%s(", Name);
-        as_snprcatf(Num, sizeof(Num), LongIntFormat, MomLineCounter);
-        as_snprcatf(Num, sizeof(Num), ")");
+        /* search innermost file currently being read, and request its position */
+
+        for (p_input_tag = FirstInputTag; p_input_tag; p_input_tag = p_input_tag->Next)
+          if (p_input_tag->Processor == INCLUDE_Processor)
+            break;
+        p_input_tag->GetPos(p_input_tag, Num, sizeof(Num), False);
         WrConsoleLine(Num, False);
         fflush(stdout);
         ListTime = NxtTime;
@@ -2710,7 +2742,7 @@ static void ProcessFile(char *pFileName)
     }
 
     /* bei Ende Makroprozessor ausraeumen
-      OK - das ist eine Hauruckmethode... */
+       OK - das ist eine Hauruckmethode... */
 
     if (ENDOccured)
       while (FirstInputTag)
@@ -2774,7 +2806,6 @@ static void AssembleFile_InitPass(void)
   FirstInputTag = NULL;
   FirstOutputTag = NULL;
 
-  MomLineCounter = 0;
   MomLocHandle = -1;
   LocHandleCnt = 0;
   SectSymbolCounter = 0;
@@ -3044,7 +3075,6 @@ static void AssembleFile(char *Name)
   StartTime = GTime();
 
   PassNo = 0;
-  MomLineCounter = 0;
 
   /* Listdatei eroeffnen */
 

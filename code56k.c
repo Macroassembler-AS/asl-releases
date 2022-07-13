@@ -2947,7 +2947,7 @@ static void SwitchTo_56K(void)
   PCSymbol = "*";
   HeaderID = 0x09;
   NOPCode = 0x000000;
-  DivideChars = " \009";
+  DivideChars = " \t";
   HasAttrs = False;
 
   if (MomCPU == CPU56300)
