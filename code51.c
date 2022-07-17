@@ -1660,14 +1660,14 @@ static void DecodeJMP(Word Index)
         PutCode(0x01 + ((Hi(AdrLong) & 7) << 5));
         BAsmCode[CodeLen++] = Lo(AdrLong);
       }
-      else if (MomCPU < CPU8051) WrError(ErrNum_TargOnDiffPage);
+      else if (MomCPU < CPU8051) WrError(ErrNum_JmpTargOnDiffPage);
       else if (((((long)EProgCounter()) + 3) >> 16) == (AdrLong >> 16))
       {
         PutCode(0x02);
         BAsmCode[CodeLen++] = Hi(AdrLong);
         BAsmCode[CodeLen++] = Lo(AdrLong);
       }
-      else if (MomCPU < CPU80251) WrError(ErrNum_TargOnDiffPage);
+      else if (MomCPU < CPU80251) WrError(ErrNum_JmpTargOnDiffPage);
       else
       {
         PutCode(0x18a);
@@ -1709,7 +1709,7 @@ static void DecodeCALL(Word Index)
         PutCode(0x11 + ((Hi(AdrLong) & 7) << 5));
         BAsmCode[CodeLen++] = Lo(AdrLong);
       }
-      else if (MomCPU < CPU8051) WrError(ErrNum_TargOnDiffPage);
+      else if (MomCPU < CPU8051) WrError(ErrNum_JmpTargOnDiffPage);
       else if (ChkSamePage(AdrLong, EProgCounter() + 3, 16, Flags))
       {
         PutCode(0x12);

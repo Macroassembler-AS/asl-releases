@@ -1,0 +1,6 @@
++----------------------- Test Application 2650R -----------------------------+
+|                                                                            |
+|   This is a test of the 2650's peculiar relative addressing scheme,        |
+|   which is modulo-8K.                                                      |
+|                                                                            |
++----------------------------------------------------------------------------+

@@ -1,3 +1,15 @@
+2022-07-17 [1.42 Bld 227, the Asano & Tadaoka build ;-) ]
+
+- Bugfix      : re-initialize radix & outradix base at every
+                pass
+- Bugfix      : assemble LODZ R0 as IORZ R0 on 2650
+- Bugfix      : explicitly disallow STRZ R0 on 2650
+- Bugfix      : regard 8K modulo arithmetic for relative addressing on 2650
+- Change      : Allow 32K (4*8K) address space on 2650
+- Bugfix      : Add missing V30 BRKEM instruction
+- Addition    : Add V30EMU target as variant of 8080 with
+                CALLN and RETEM instructions
+
 2022-07-13  [1.42 Bld 226]
 
 - Bugfix      : Correct argument separator for DSP56K (Tab)

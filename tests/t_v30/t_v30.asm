@@ -71,4 +71,6 @@
 	add4s
 	sub4s
 	cmp4s
+
+	brkem	23h
 	

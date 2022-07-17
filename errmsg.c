@@ -545,6 +545,6 @@ Boolean ChkSamePage(LargeWord CurrAddr, LargeWord DestAddr, unsigned PageBits, t
   Boolean Result = ((CurrAddr & Mask) == (DestAddr & Mask))
                 || mFirstPassUnknownOrQuestionable(DestFlags);
   if (!Result)
-    WrError(ErrNum_TargOnDiffPage);
+    WrError(ErrNum_JmpTargOnDiffPage);
   return Result;
 }

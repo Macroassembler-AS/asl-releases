@@ -744,6 +744,30 @@ static void DecodeINT(Word Index)
   AddPrefixes();
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     DecodeBRKEM(Word Index)
+ * \brief  Decode BKEM instruction
+ * \param  Index unused
+ * ------------------------------------------------------------------------ */
+
+static void DecodeBRKEM(Word Index)
+{
+  Boolean OK;
+  UNUSED(Index);
+
+  if (ChkArgCnt(1, 1) && ChkMinCPU(CPUV30))
+  {
+    BAsmCode[CodeLen + 2] = EvalStrIntExpression(&ArgStr[1], UInt8, &OK);
+    if (OK)
+    {
+      BAsmCode[CodeLen++] = 0x0f;
+      BAsmCode[CodeLen++] = 0xff;
+      CodeLen++;
+    }
+  }
+  AddPrefixes();
+}
+
 static void DecodeINOUT(Word Index)
 {
   if (ChkArgCnt(2, 2))
@@ -2614,6 +2638,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "INC"  , 0, DecodeINCDEC);
   AddInstTable(InstTable, "DEC"  , 8, DecodeINCDEC);
   AddInstTable(InstTable, "INT"  , 0, DecodeINT);
+  AddInstTable(InstTable, "BRKEM", 0, DecodeBRKEM);
   AddInstTable(InstTable, "IN"   , 0, DecodeINOUT);
   AddInstTable(InstTable, "OUT"  , 2, DecodeINOUT);
   AddInstTable(InstTable, "CALL" , 0, DecodeCALLJMP);

@@ -11,6 +11,7 @@
 #include "stdinc.h"
 #include "stddef.h"
 #include <assert.h>
+#include <string.h>
 #include "strutil.h"
 #include "tempresult.h"
 #include "asmdef.h"

@@ -421,7 +421,7 @@ immed		equ	$a5
 	lodr,r2   *$-23h
 	lodr,r3   $-23h
 	lodr,r3   *$-23h
-	lodz  r0
+	lodz  r0		; 0x60 (IORZ R0) instead of 0x00
 	lodz  r1
 	lodz  r2
 	lodz  r3
@@ -500,6 +500,9 @@ immed		equ	$a5
 	strr,r2   *$-23h
 	strr,r3   $-23h
 	strr,r3   *$-23h
+	expect	1445
+	strz  r0
+	endexpect
 	strz  r1
 	strz  r2
 	strz  r3

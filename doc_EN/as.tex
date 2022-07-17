@@ -3302,12 +3302,16 @@ Transaction Server (PTS) and therefore looses again two machine
 instructions.
 %%-----------
 \begin{quote}
-z) 8080 $\rightarrow$ 8085 $\rightarrow$ 8085UNDOC
+z) 8080 $\rightarrow$ V30EMU $\rightarrow$ 8085 $\rightarrow$ 8085UNDOC
 \end{quote}
 The 8085 knows the additional commands \tty{RIM} and \tty{SIM} for
 controlling the interrupt mask and the two I/O-pins.  The type {\tt
 8085UNDOC} enables additional instructions that are not documented
 by Intel.  These instructions are documented in section \ref{8085Spec}.
+
+{\tt V30EMU} as target behaves like an 8080, with the addition of
+the instructions {\tt RETEM} and {\em CALLN}.  These allow to
+end or interrupt the 8080 emulation on a V20/V30.
 %%-----------
 \begin{quote}
 aa) 8086 $\rightarrow$ 80186 $\rightarrow$ V30 $\rightarrow$ V35
@@ -11766,6 +11770,11 @@ described by:
                {error}
                {The displacement used for an address is too large.}
                {none}
+\errentry{1331}{target not on same page}
+               {error}
+               {Instruction and operand address must be located in the
+                same memory page.}
+               {the address argument in question}
 \errentry{1340}{short addressing not allowed}
                {error}
                {The address of the operand is outside of the address space

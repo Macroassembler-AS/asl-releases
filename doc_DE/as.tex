@@ -3393,12 +3393,16 @@ Peripheral Transaction Server} (PTS) und verliert damit wieder zwei
 Maschinenbefehle.
 %%-----------
 \begin{quote}
-z) 8080 $\rightarrow$ 8085 $\rightarrow$ 8085UNDOC
+z) 8080 $\rightarrow$ V30EMU $\rightarrow$ 8085 $\rightarrow$ 8085UNDOC
 \end{quote}
 Der 8085 kennt zus"atzlich die Befehle \tty{RIM} und \tty{SIM} zum Steuern der
 Interruptmaske und der zwei I/O-Pins.  Der Typ {\tt 8085UNDOC} schaltet
 zus"atzliche, nicht von Intel dokumentierte Befehle ein.  Diese Befehle
 sind in Abschnitt \ref{8085Spec} dokumentiert.
+
+{\tt V30EMU} als Ziel schaltet gegen"uber einem 8080 die Befehle {\tt RETEM}
+und {\em CALLN} frei, mit denen die 8080-Emulation auf einem V20/V30
+verlassen bzw. unterbrochen werden kann.
 %%-----------
 \begin{quote}
 aa) 8086 $\rightarrow$ 80186 $\rightarrow$ V30 $\rightarrow$ V35
@@ -12031,6 +12035,11 @@ Angaben:
                {Der in einem Adre"sausdruck enthaltene
                 Displacement-Wert ist zu gro"s.}
                {keines}
+\errentry{1331}{Ziel nicht auf gleicher Seite}
+               {Fehler}
+               {Befehl und Operandenadresse m"ussen
+                auf der gleichen Seite liegen.}
+               {das fragliche Adre"s-Argument}
 \errentry{1340}{Kurzadressierung nicht m"oglich}
                {Fehler}
                {Die Adresse des Operanden liegt au"serhalb des

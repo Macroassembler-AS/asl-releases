@@ -158,3 +158,11 @@
 	shlx	d
 	lhlx
 	lhlx	d
+
+;-----------------------------------------------------
+; instructions supported by V30 in 8080 emulation mode
+
+	cpu	v30emu
+
+	calln	5
+	retem

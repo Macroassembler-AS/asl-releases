@@ -800,7 +800,7 @@ static void DecodeJSB(Word Code)
       Addr = 0xffe0;
     if (OK)
     {
-      if ((Addr & 0xffe1) != 0xffe0) WrError(ErrNum_TargOnDiffPage);
+      if ((Addr & 0xffe1) != 0xffe0) WrError(ErrNum_JmpTargOnDiffPage);
       else
       {
         BAsmCode[0] = 0x0b | ((Addr & 0x000e) << 3);

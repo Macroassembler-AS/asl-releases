@@ -331,6 +331,8 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
       msgno = Num_ErrMsgNotAligned; break;
     case ErrNum_DistTooBig:
       msgno = Num_ErrMsgDistTooBig; break;
+    case ErrNum_TargOnDiffPage:
+      msgno = Num_ErrMsgTargOnDiffPage; break;
     case ErrNum_InAccReg:
       msgno = Num_ErrMsgInAccReg; break;
     case ErrNum_NoShortAddr:
@@ -524,8 +526,8 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
       msgno = Num_ErrMsgNotOnThisAddress; break;
     case ErrNum_NotFromThisAddress:
       msgno = Num_ErrMsgNotFromThisAddress; break;
-    case ErrNum_TargOnDiffPage:
-      msgno = Num_ErrMsgTargOnDiffPage; break;
+    case ErrNum_JmpTargOnDiffPage:
+      msgno = Num_ErrMsgJmpTargOnDiffPage; break;
     case ErrNum_TargOnDiffSection:
       msgno = Num_ErrMsgTargOnDiffSection; break;
     case ErrNum_CodeOverflow:
@@ -814,7 +816,7 @@ void WrXErrorPos(tErrorNum Num, const char *pExtendError, const struct sLineComp
 
   pErrorMsg = ErrorNum2String(Num, h, sizeof(h));
 
-  if (((Num == ErrNum_TargOnDiffPage) || (Num == ErrNum_JmpDistTooBig))
+  if (((Num == ErrNum_JmpTargOnDiffPage) || (Num == ErrNum_JmpDistTooBig))
    && !Repass)
     JmpErrors++;
 

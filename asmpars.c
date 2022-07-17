@@ -189,6 +189,12 @@ static PCToken MomSection;
 static char *LastGlobSymbol;
 static PFunction FirstFunction;	        /* Liste definierter Funktionen */
 
+void InitPass_AsmPars(void)
+{
+  RadixBase = 10;
+  OutRadixBase = 16;
+}
+
 void AsmParsInit(void)
 {
   FirstSymbol = NULL;
@@ -199,9 +205,9 @@ void AsmParsInit(void)
   FirstStack = NULL;
   FirstFunction = NULL;
   DoRefs = True;
-  RadixBase = 10;
-  OutRadixBase = 16;
+  InitPass_AsmPars();
   RegistersDefined = False;
+  AddInitPassProc(InitPass_AsmPars);
 }
 
 /*!------------------------------------------------------------------------

@@ -47,7 +47,7 @@ typedef enum
 #define MModImm (1 << ModImm)
 #define MModIM (1 << ModIM)
 
-static CPUVar CPU8080, CPU8085, CPU8085U;
+static CPUVar CPU8080, CPUV30EMU, CPU8085, CPU8085U;
 static tAdrMode AdrMode;
 static Byte AdrVals[2], OpSize;
 
@@ -1251,6 +1251,44 @@ static void DecodeRLC(Word Code)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     DecodeCALLN(Word code)
+ * \brief  handle CALLN instruction
+ * \param  code machine code
+ * ------------------------------------------------------------------------ */
+
+static void DecodeCALLN(Word code)
+{
+  if (ChkArgCnt(1, 1) && ChkExactCPU(CPUV30EMU))
+  {
+    Boolean ok;
+
+    BAsmCode[2] = EvalStrIntExpression(&ArgStr[1], UInt8, &ok);
+    if (ok)
+    {
+      BAsmCode[0] = Hi(code);
+      BAsmCode[1] = Lo(code);
+      CodeLen = 3;
+    }
+  }
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     DecodeRETEM(Word code)
+ * \brief  handle RETEM instruction
+ * \param  code machine code
+ * ------------------------------------------------------------------------ */
+
+static void DecodeRETEM(Word code)
+{
+  if (ChkArgCnt(0, 0) && ChkExactCPU(CPUV30EMU))
+  {
+    BAsmCode[0] = Hi(code);
+    BAsmCode[1] = Lo(code);
+    CodeLen = 2;
+  }
+}
+
 static void DecodePORT(Word Index)
 {
   UNUSED(Index);
@@ -1406,6 +1444,9 @@ static void InitFields(void)
   AddInstTable(InstTable, "SRA", 0x10, DecodeSRA);
   AddInstTable(InstTable, "RLC", 0x07, DecodeRLC);
 
+  AddInstTable(InstTable, "CALLN", 0xeded, DecodeCALLN);
+  AddInstTable(InstTable, "RETEM", 0xedfd, DecodeRETEM);
+
   AddZ80Syntax(InstTable);
 }
 
@@ -1472,6 +1513,7 @@ static void SwitchTo_85(void)
 void code85_init(void)
 {
   CPU8080 = AddCPU("8080", SwitchTo_85);
+  CPUV30EMU = AddCPU("V30EMU", SwitchTo_85);
   CPU8085 = AddCPU("8085", SwitchTo_85);
   CPU8085U = AddCPU("8085UNDOC", SwitchTo_85);
 }
