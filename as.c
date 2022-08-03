@@ -150,6 +150,7 @@
 #include "codekenbak.h"
 #include "codecp1600.h"
 #include "codenano.h"
+#include "code6100.h"
 /**          Code21xx};**/
 
 static long StartTime, StopTime;
@@ -4385,6 +4386,7 @@ int main(int argc, char **argv)
     codekenbak_init();
     codecp1600_init();
     codenano_init();
+    code6100_init();
     First = FALSE;
   }
 

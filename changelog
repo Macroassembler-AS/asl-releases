@@ -1,3 +1,8 @@
+2022-08-03 [1.42 Bld 228]
+
+- Addition    : Add Intersil IM6100/6120 target (contribution
+                by Haruo Asano)
+
 2022-07-17 [1.42 Bld 227, the Asano & Tadaoka build ;-) ]
 
 - Bugfix      : re-initialize radix & outradix base at every

@@ -66,7 +66,7 @@
 
 \vspace{1cm}\par
 
-{\large Edition July 2022}
+{\large Edition August 2022}
 \end{raggedright}
 
 \clearpage
@@ -288,11 +288,13 @@ following processor families have been implemented:
 \item{Padauk PMS/PMC/PFSxxx}
 \item{Symbios Logic SYM53C8xx (yes, they are programmable!)}
 \item{Intersil CDP1802/1804/1805(A)}
+\item{Intersil IM6100/6120}
 \item{XMOS XS1}
 \item{MIL STD 1750}
 \item{KENBAK-1}
 \item{GI CP-1600}
 \item{HP Nano Processor}
+\item{Intersil IM6100/6120}
 \end{itemize}
 under work / planned / in consideration :
 \begin{itemize}
@@ -1407,7 +1409,7 @@ MOMLINE       & line number in source file \\
 MOMPASS       & number of the currently running pass \\
 MOMSECTION    & name of the current section \\
               & or an empty string \\
-\verb!*!, \$ resp. PC & current value of program counter \\
+\verb!*!, ,. \$ resp. PC & current value of program counter \\
 \hline
 \end{tabular}\end{center}
 \caption{Predefined Symbols\label{TabPredefined}}
@@ -2405,8 +2407,8 @@ A little hidden extra feature allows to set the program counter via
 \tty{SET} or \tty{EQU}, something one would ordinarily do via \tty{ORG}.
 To accomplish this, use the special value as symbol name that may also
 be used to query the current program counter's value.  Depending on the
-selected target architecture, this is either an asterisk, a dollar sign
-or \tty{PC}.
+selected target architecture, this is either an asterisk, a dollar sign,
+a period, or \tty{PC}.
 
 In case the target architecture supports instruction attributes to define
 the operand size (e.g. on 680x0), those are also allowed for \tty{SET} and
@@ -3913,6 +3915,16 @@ Since there has never been a KENBAK-2, the target is simply KENBAK...
 \begin{quote}
 cn) CP-1600
 \end{quote}
+%%-----------
+\begin{quote}
+co) HPNANO
+\end{quote}
+%%-----------
+\begin{quote}
+cp) 6100 $\rightarrow$ 6120
+\end{quote}
+The IM6120 supports a larger address space (32K
+instead of 4K) and additional machine instructions.
 
 The \tty{CPU} instruction needs the processor type as a simple literal, a
 calculation like:
@@ -3985,11 +3997,13 @@ certain target supports such options.
 \label{SectSUPMODE}
 
 {\em
-SUPMODE valid for: 680x0, i960, TLCS-900, SH7000, i960, 29K, XA,\\
-PowerPC, M*Core, and TMS9900 \\
-FPU valid for: 680x0, NS32xxx, 80x86 \\
-PMMU valid for: 680x0, NS32xxx \\
-CUSTOM valid for: NS32xxx \\
+\begin{itemize}
+\item{SUPMODE valid for: 680x0, i960, TLCS-900, SH7000, i960, 29K, XA,
+      PowerPC, M*Core, and TMS9900}
+\item{FPU valid for: 680x0, NS32xxx, 80x86}
+\item{PMMU valid for: 680x0, NS32xxx}
+\item{CUSTOM valid for: NS32xxx}
+\end{itemize}
 }
 
 These three switches allow to define which parts of the instruction set
@@ -4228,6 +4242,21 @@ the complete address space...
 
 This switch is set to {\tt OFF} by default, and its current setting may be
 read from a symbol with same name.
+
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+\subsection{PANEL}
+\ttindex{PANEL}
+
+{\em valid for: IM61x0}
+
+This switch is used to inform the assembler whether the following code is
+executet with a set or cleared {\em Control Panel Flip-Flop}.  A couple
+of {\tt IOT} instructions are only allowed if the flip-flop has a certain
+state.  Usage of these instructions in the other state will be reported
+as an error by the assembler.
+
+The current setting may be read from the symbol {\tt INPANEL}.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -4867,6 +4896,18 @@ an absolute address is outside the window defined by the used segment register.
 If the address is within the window, it will compute the correc t16-bit offset.
 Naturally, this cannot be done when indirect addressing is used.
 
+%%. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+\subsubsection{IM61x0}
+
+These micro processors implement the instruction set of a PDP/8 and therefore
+fundamentally support an address space of 4 KWords. Banking allows to extend this
+address to eight ''fields' of 4 KWords. Addressing of data and jumps are principally
+only possible within the same field, with one exception: The IB register allows
+to perform a jump to another 4K field.  It provides the upper three bits of the
+15 bit target address, if IB has been set to a value unequal to \tty{NOTHING} via
+\tty{ASSUME}.
+
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 \subsection{CKPT}
@@ -5001,7 +5042,8 @@ number of parameters which are being processed from left to right.
 \subsection{DC[.Size]}
 \ttindex{DC}
 
-{\em valid for: 680x0, M*Core, 68xx, H8, SH7x00, DSP56xxx, XA, ST7/STM8, MN161x}
+{\em valid for: 680x0, M*Core, 68xx, H8, SH7x00, DSP56xxx, XA,
+  ST7/STM8, MN161x, IM61x0}
 
 This instruction places one or several constants of the type
 specified by the attribute into memory.  The attributes are the same ones as
@@ -5050,7 +5092,8 @@ constants in a single statement.
 \subsection{DS[.Size]}
 \ttindex{DS}
 
-{\em valid for: 680x0, M*Core, 68xx, H8, SH7x00, DSP56xxx, XA, ST7/STM8, MN161x}
+{\em valid for: 680x0, M*Core, 68xx, H8, SH7x00, DSP56xxx, XA, ST7/STM8,
+  MN161x, IM61x0}
 
 On the one hand, this instruction enables to reserve memory space for
 the specified count of numbers of the type given by the attribute.
@@ -5558,7 +5601,7 @@ used to fill the area.
 \subsection{LTORG}
 \ttindex{LTORG}
 
-{\em valid for: SH7x00}
+{\em valid for: SH7x00, IM61x0}
 
 Although the SH7000 processor can do an immediate register load with
 8 bit only, AS shows up with no such restriction.  This behaviour is
@@ -6745,6 +6788,8 @@ line.)
 
 \subsection{RADIX}
 \ttindex{RADIX}
+\ttindex{DECIMAL}
+\ttindex{OCTAL}
 
 \tty{RADIX} with a numerical argument between 2 and 36 sets the default
 numbering system for integer constants, i.e. the numbering system used if
@@ -6755,6 +6800,10 @@ some possible pitfalls to keep in mind which are described in section
 Independent of the current setting, the argument of {\tt RADIX} is {\em
 always decimal}; furthermore, no symbolic or formula expressions may be
 used as argument. Only use simple constant numbers!
+
+If the IM61x0 is the current target, the instructions \tty{DECIMAL} and
+\tty{OCTAL} are available as shortforms for \tty{RADIX 10} respectively
+\tty{RADIX 8}.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -10570,6 +10619,29 @@ represent what is called ''immediate addressing'' on other processors.  For this
 reson, there are pseudo instructions that would allow placing data constants
 im ROM memory or to reserve space in it.
 
+%%---------------------------------------------------------------------------
+
+\section{IM61x0}
+
+This microprocessor is effectively a single chip implementation of the PDP8/E,
+which is why Digital Equipment's PAL-II is usually the ''reference assembler''
+for source code samples.  The AS implementation deviates from the PAL-III syntax
+in a couple of areas, among other reasons also because several things only
+could have been provided with huge efforts.  Here are some hints about how to
+adapt existing code:
+
+\begin{itemize}
+\item{PAL-III marks labels by an appended comma.  AS instead uses an appended
+      double colon, or no special character at all if the label begins in the
+      first column of a line.}
+\item{Placing constants in memory is done with PAL-III simply by writing the
+      numeric constant instead of a mnemonic.  AS uses the \tty{DC} instruction
+      to place data, which will also accept more than one word as argument.
+      However, the \tty{LTORG} mechanism may be used in some cases to get
+      around explicitly placing constants in memory at all.}
+\item{The program counter is set by \tty{ORG address} instead of {*address}.}
+\end{itemize}
+
 %%===========================================================================
 
 \cleardoublepage
@@ -11589,6 +11661,16 @@ described by:
                 Instead, indexed addressing with a dummy displacement of
                 zero will be used.}
                {the argument holding the indirect addressing expression}
+\errentry{ 390}{not allowed in normal mode}
+               {warning}
+               {This machine instruction is only allowed in panel mode,
+                not during ''normal operation''.}
+               {the machine instruction in question}
+\errentry{ 400}{not allowed in panel mode}
+               {warning}
+               {This machine instruction is only allowed during ''normal
+                operation'', not in panel mode.}
+               {the machine instruction in question}
 \errentry{1000}{symbol double defined}
                {error}
                {A new value is assigned to a symbol, using a label or a
@@ -12536,6 +12618,25 @@ described by:
                {error}
                {This value for CBAR is not allowed (CA must be larger than BA).}
                {none}
+\errentry{2270}{page not accessible}
+               {error}
+               {The target address is located in a memory page that is currently
+                inaccessible.}
+               {none}
+\errentry{2280}{field not accessible}
+               {error}
+               {The target address is located in a memory field that is currently
+                inaccessible.}
+               {none}
+\errentry{2281}{target not in same field}
+               {error}
+               {Instruction and target address must be located in the
+                same memory field.}
+               {none}
+\errentry{2290}{invalid instruction combination}
+               {error}
+               {These instructions may not be combined with each other.}
+               {none}
 \errentry{10001}{error in opening file}
                {fatal}
                {An error was detected while trying to open a file for input.}
@@ -12817,50 +12918,41 @@ Additionally, there are:
 \chapter{Predefined Symbols}
 \label{AppInternSyms}
 
-\begin{table*}[htb]
-\begin{center}\begin{tabular}{|l|l|l|l|}
+\begin{center}\begin{longtable}{|l|l|l|l|}
 \hline
-name          & data type & definition & meaning \\
+Name          & Data Type & Definition & Meaning \\
 \hline
 \hline
+\endhead
 ARCHITECTURE  & string    & predef.    & target platform AS was \\
               &           &            & compiled for, in the style \\
               &           &            & processor-manufacturer- \\
               &           &            & operating system \\
 BIGENDIAN     & boolean   & dyn.(0)    & storage of constants MSB \\
-              &           &            & first ? \\
+              &           &            & first? \\
 CASESENSITIVE & boolean   & normal     & case sensitivity in symbol \\
-              &           &            & names ? \\
+              &           &            & names? \\
 CONSTPI       & float     & normal     & constant Pi (3.1415.....) \\
 DATE          & string    & predef.    & date of begin of assembly \\
 FALSE         & boolean   & predef.    & 0 = logically ''false'' \\
 HASFPU        & boolean   & dyn.(0)    & coprocessor instructions \\
-              &           &            & enabled ? \\
-HASPMMU       & boolean   & dyn.(0)    & MMU instructions enabled ? \\
+              &           &            & enabled? \\
+HASPMMU       & boolean   & dyn.(0)    & MMU instructions \\
+              &           &            & enabled? \\
 INEXTMODE     & boolean   & dyn.(0)    & XM flag set for 4 Gbyte \\
-              &           &            & address space ? \\
+              &           &            & address space? \\
 INLWORDMODE   & boolean   & dyn.(0)    & LW flag set for 32 bit \\
-              &           &            & instructions ? \\
+              &           &            & instructions? \\
 INMAXMODE     & boolean   & dyn.(0)    & processor in maximum \\
-              &           &            & mode ? \\
+              &           &            & mode? \\
 INSUPMODE     & boolean   & dyn.(0)    & processor in supervisor \\
-              &           &            & mode ? \\
-\hline
-\end{tabular}\end{center}
-\caption{Predefined Symbols - Part 1\label{TabInternSyms1}}
-\end{table*}
-
-\begin{table*}[htb]
-\begin{center}\begin{tabular}{|l|l|l|l|}
-\hline
-name             &  data type   & definition & meaning \\
-\hline\hline
-INSRCMODE     & boolean   & dyn.(0)    & processor in source mode ? \\
+              &           &            & mode? \\
+INSRCMODE     & boolean   & dyn.(0)    & processor in source mode? \\
 FULLPMMU      & boolean   & dyn.(0/1)  & full PMMU instruction set \\
-              &           &            & allowed ? \\
-LISTON        & boolean   & dyn.(1)    & listing enabled ? \\
+              &           &            & allowed? \\
+LISTON        & boolean   & dyn.(1)    & listing enabled? \\
 MACEXP        & boolean   & dyn.(1)    & expansion of macro con- \\
-              &           &            & structs in listing enabled ? \\
+              &           &            & structs in listing enabled? \\
 MOMCPU        & integer   & dyn.       & number of target CPU \\
 	      & 	  & (68008)    & currently set \\
 MOMCPUNAME    & string    & dyn.       & name of target CPU \\
@@ -12876,44 +12968,33 @@ MOMSECTION    & string    & special    & name of current section or \\
 MOMSEGMENT    & string    & special    & name of address space \\
               &           &            & currently selected \\
               &           &            & with \tty{SEGMENT} \\
-              &           &            & \\
-\hline
-\end{tabular}\end{center}
-\caption{Predefined Symbols - Part 2\label{TabInternSyms2}}
-\end{table*}
-
-\begin{table*}[htb]
-\begin{center}\begin{tabular}{|l|l|l|l|}
-\hline
-name             &  data type   & definition & meaning \\
-\hline\hline
-\tty{NESTMAX} &  Integer  & dyn.(256)  & maximum nesting level \\
+NESTMAX       &  Integer  & dyn.(256)  & maximum nesting level \\
               &           &            & of macro expansions \\
-\hline
-PADDING       & boolean   & dyn.(1)    & pad byte field to even \\
-              &           &            & count ? \\
-RELAXED       & boolean   & dyn.(0)    & any syntax allowed integer \\
-              &           &            & constants ? \\
-PC            & integer   & special    & curr. program counter \\
+PADDING       & Boolean   & dyn.(1)    & pad byte field to even \\
+              &           &            & count? \\
+RELAXED       & Boolean   & dyn.(0)    & any syntax allowed integer \\
+              &           &            & constants? \\
+PC            & Integer   & special    & current program counter \\
               &           &            & (Thomson) \\
-TIME          & string    & predef.    & time of begin of assembly \\
-              &           &            & (1. pass) \\
-TRUE          & integer   & predef.    & 1 = logically ''true'' \\
-VERSION       & integer   & predef.    & version of AS in BCD \\
+TIME          & String    & predef.    & time of begin of assembly \\
+              &           &            & (1st pass) \\
+TRUE          & Integer   & predef.    & 1 = logically ''true'' \\
+VERSION       & Integer   & predef.    & version of AS in BCD \\
 	      &  	  &	       & coding, e.g. 1331 hex for \\
               &           &            & version 1.33p1 \\
-WRAPMODE      &  Integer  & predef.    & shortened program counter \\
-              &           &            & assumed? \\
-*             & integer   & special    & curr. program counter \\
-              &           &            &  (Motorola, Rockwell, Micro- \\
-              &           &            & chip, Hitachi) \\
-\$            & integer   & special    & curr. program counter (Intel, \\
-              &           &            & Zilog, Texas, Toshiba, NEC, \\
-              &           &            & Siemens, AMD) \\
+WRAPMODE      & Integer   & predef.    & shortened program \\
+              &           &            & counter assumed? \\
+\verb!*!      & Integer   & special    & current program counter \\
+              &           &            & (Motorola, Rockwell, \\
+              &           &            & Microchip, Hitachi) \\
+.             & Integer   & special    & curr. program counter \\
+              &           &            & (IM61x0) \\
+\$            & Integer   & special    & current program counter \\
+              &           &            & Intel, Zilog, Texas, \\
+              &           &            & Toshiba, NEC, Siemens, \\
+              &           &            & AMD) \\
 \hline
-\end{tabular}\end{center}
-\caption{Predefined Symbols - Part 3\label{TabInternSyms3}}
-\end{table*}
+\end{longtable}\end{center}
 
 To be exact, boolean symbols are just ordinary integer symbols with the
 difference that AS will assign only two different values to them (0 or 1,

@@ -47,7 +47,7 @@
 
 \vspace{1cm}\par
 
-{\large Stand Juli 2022}
+{\large Stand August 2022}
 \end{raggedright}
 
 \clearpage
@@ -282,11 +282,13 @@ folgende Prozessorfamilien implementiert:
 \item{Padauk PMS/PMC/PFSxxx}
 \item{Symbios Logic SYM53C8xx (ja, die kann man programmieren!)}
 \item{Intersil CDP1802/1804/1805(A)}
+\item{Intersil IM6100/6120}
 \item{XMOS XS1}
 \item{MIL STD 1750}
 \item{KENBAK-1}
 \item{GI CP-1600}
 \item{HP Nano Processor}
+\item{Intersil IM6100/6120}
 \end{itemize}
 in Arbeit / Planung / "Uberlegung :
 \begin{itemize}
@@ -789,7 +791,7 @@ Sie einer Environment-Variablen \tty{USEXMS} bzw. \tty{USEEMS} den Wert
 die Verwendung von Extended Memory verhindern.
 \par
 Da AS alle Ein-und Ausgaben "uber das Betriebssystem abwickelt (und daher
-unter DOS auch auf nicht ganz so kompatiblen PC's laufen sollte) und eine
+unter DOS auch auf nicht ganz so kompatiblen PCs laufen sollte) und eine
 rudiment"are Bildschirmsteuerung ben"otigt, gibt er w"ahrend der
 Assemblierung ANSI-Steuersequenzen aus.
 Falls Sie in den Ausgaben von AS \marginpar{{\em DOS/}} also seltsame
@@ -864,7 +866,7 @@ Momentan sind folgende Schalter definiert:
 \item{\tty{SPLITBYTE [Zeichen]}: Zahlen im Listing werden Byte-weise
       dargestellt, mit dem angegebenen Zeichen als Trenner.  Ein Punkt wird
       als Trenner verwendet, wenn kein Zeichen angegeben wurde.  Diese Option
-      wird "ublichwerweise zusammen mit der \tty{LISTRADIX}-Option verwendet;
+      wird "ublicherweise zusammen mit der \tty{LISTRADIX}-Option verwendet;
       Listradix 8 zusammen mit einem Punkt als Trenner ergibt die sogenannte
       ''Split-Octal''-Darstellung.}
 \item{\tty{o}:Bestimmt einen neuen Namen f"ur die von AS zu erzeugende
@@ -971,7 +973,7 @@ bzw. \ref{ChapShareOrder}.
       Eventuell kann diese Option die Arbeitsgeschwindigkeit des
       Assemblers erh"ohen, dies h"angt jedoch von den Quellen ab.}
 \item{\tty{x}: Legt die Ausf"uhrlichkeitsstufe von Fehlermeldungen fest.
-      Jedesmal, wenn diese Option angegeben wird, wird die Stufe
+      Jedes Mal, wenn diese Option angegeben wird, wird die Stufe
       um eins erh"oht oder gesenkt.  W"ahrend auf Stufe 0 (Vorgabe) nur
       der Fehler selber ausgegeben wird, wird ab Stufe 1 noch eine
       erweiterte Meldung ausgegeben, anhand der die Identifizierung des
@@ -1074,7 +1076,7 @@ spezifizieren.
 \par
 Neben der Angabe in der Kommandozeile k"onnen dauernd ben"otigte
 Optionen in der Environment-Variablen ASCMD abgelegt werden. Wer z.B.
-immer Listdateien haben m"ochte und ein festes Includeverzeichnis hat,
+immer Listdateien haben m"ochte und ein festes Include-Verzeichnis hat,
 kann sich mit dem Befehl
 \begin{verbatim}
  set ASCMD=-L -i c:\as\8051\include
@@ -1084,7 +1086,7 @@ Kommandozeile abgearbeitet werden, k"onnen Optionen in der
 Kommandozeile widersprechende im Environment "ubersteuern.
 \par
 Bei sehr langen Pfaden kann es jedoch auch in der ASCMD-Variablen eng
-werden.  F"ur solche F"alle kann auf eine sog. \ii{Key}- Datei
+werden.  F"ur solche F"alle kann auf eine sogenannte \ii{Key}-Datei
 ausgewichen werden, in der die Optionen genauso wie in der Kommandozeile
 oder ASCMD-Variablen abgelegt werden k"onnen, nur da"s diese Datei
 mehrere Zeilen mit jeweils maximal 255 Zeichen enthalten darf.  Wichtig
@@ -1140,7 +1142,7 @@ folgenden Returncodes:
 \item[1]{Der Assembler hat nur die Aufrufparameter ausgegeben und
          endete danach sofort.}
 \item[2]{Es sind Fehler bei der Assemblierung aufgetreten, es wurde
-         kein Codefile erzeugt.}
+         keine Code-Datei erzeugt.}
 \item[3]{Es trat ein fataler Fehler w"ahrend des Ablaufes auf, der
          zum sofortigen Abbruch gef"uhrt hat.}
 \item[4]{Bereits w"ahrend des Starts des Assemblers ist ein Fehler
@@ -1201,7 +1203,7 @@ Fall mu"s "ubrigens zwischen Doppelpunkt und dem Befehl mindestens ein
 Leerzeichen stehen, falls der eingestellte Zielprozessor zu denjenigen
 geh"ort, bei denen das Attribut auch eine mit einem Doppelpunkt
 abgetrennte Formatangabe sein darf.  Diese Einschr"ankung ist aus
-Eindeutigkeitsgr"unden n"otig, da sonst keine Unterscheidung zwischen
+Eindeutigkeits-Gr"unden n"otig, da sonst keine Unterscheidung zwischen
 Befehl mit Format und Label mit Befehl m"oglich w"are.
 \par
 Einige Signalprozessorreihen von Texas Instruments verwenden den f"ur das
@@ -1212,7 +1214,7 @@ in einem einzigen Wort vereinigt werden (C3x/C4x), macht ein zus"atzliches
 Label vor der zweiten Anweisung nat"urlich keinen Sinn und ist auch nicht
 vorgesehen.  Anders sieht es beim C6x mit seinen Instruktionspaketen
 variabler L"ange aus: Wer dort (unsch"onerweise...) mitten in ein Paket
-hineinspringen will, mu"s das Label daf"ur in eine Extrazeile davor setzen
+hinein springen will, mu"s das Label daf"ur in eine Extrazeile davor setzen
 (das gleiche gilt "ubrigens auch f"ur Bedingungen, die aber zusammen mit
 dem Doppelstrich in einer Zeile stehen d"urfen).
 \par
@@ -1441,7 +1443,7 @@ Name             & Bedeutung \\
                        & Leerstring \\
 \tty{MOMSEGMENT}       & Name des mit \tty{SEGMENT} gew"ahlten \\
                        & Adre"sraumes \\
-\verb!*!, \$ bzw. \tty{PC} & mom. Programmz"ahler \\
+\verb!*!, \$, . bzw. \tty{PC} & mom. Programmz"ahler \\
 \hline
 \end{tabular}\end{center}
 \caption{Vordefinierte Symbole\label{TabPredefined}}
@@ -1636,7 +1638,7 @@ Dies ist vielleicht der Typ von tempor"aren Symbolen, der dem Konzept von
 lokalen Symbolen und Sektionen am n"achsten kommt.  Wann immer der Name
 eines Symboles mit einem Punkt (.) anf"angt, wird das Symbol nicht mit
 diesem Namen in der Symboltabelle abgelegt.  Stattdessen wird der Name des
-zuletzt definierten Symbols ohne vorangestellten Punkt davorgeh"angt.  Auf
+zuletzt definierten Symbols ohne vorangestellten Punkt davor geh"angt.  Auf
 diese Weise nehmen Symbole, deren Name nicht mit einem Punkt anf"angt, quasi
 die Rolle von 'Bereichsgrenzen' ein und Symbole, deren Name mit einem
 Punkt anf"angt, k"onnen in jedem Bereich neu verwendet werden.  Sehen wir
@@ -1834,7 +1836,7 @@ auch in als ASCII definierten Integerkonstanten zul"assig, z.B. so:
 \begin{verbatim}
    move.b   #'\n',d0
 \end{verbatim}
-Jedoch hat alles seine Grenzen, weil der dar"uberliegende Splitter, der
+Jedoch hat alles seine Grenzen, weil der dar"uber liegende Splitter, der
 die Zeile in Opcode und Parameter zerlegt, nicht wei"s, womit er da
 eigentlich arbeitet, z.B. hier:
 \begin{verbatim}
@@ -2470,7 +2472,7 @@ Als kleines verstecktes Extra ist es m"oglich, "uber \tty{SET} oder \tty{EQU}
 den Programmz"ahler zu setzen, also das zu machen, wozu man ansonsten \tty{ORG}
 verwenden w"urde.  Dazu gibt man als Symbolnamen den Sonderwert an, mit dem
 sich auch der aktuelle Programmz"ahler abfragen l"a"st, also je nach
-gew"ahlter Zielarchitektur ein Stern, ein Dollarzeichen oder \tty{PC}.
+gew"ahlter Zielarchitektur ein Stern, ein Dollarzeichen, ein Punkt oder \tty{PC}.
 
 Falls die gew"ahlte Zielarchitektur ein Attribut an den Befehlen zur Angabe
 der Operandengr"o"se unterst"utzt (z.B. 680x0), so ist dieses ebenfalls
@@ -2774,7 +2776,7 @@ PIO_Ctrl   PORT PIO_Port_A+3
 \ttindex{REG}\ttindex{NAMEREG}
 
 {\em G"ultigkeit: 680x0, AVR, M*Core, ST9, 80C16x, Z8000, KCPSM \\
-     ({\tt NAMEREG} nur  f"ur KCPSM(3)), LatticeMico8, MSP430(X)}
+     (\tty{NAMEREG} nur f"ur KCPSM(3)), LatticeMico8, MSP430(X)}
 
 Obwohl immer mit gleicher Syntax, hat diese Anweisung von Prozessor
 zu Prozessor eine leicht abweichende Bedeutung: Falls der Zielprozessor
@@ -3227,9 +3229,9 @@ ist sie bin"ar aufw"artskompatibel.
 l) HD6475328 $\longrightarrow$ HD6475348 $\longrightarrow$
    HD6475368 $\longrightarrow$ HD6475388
 \end{quote}
-Diese Prozessoren besitzen alle den gleichen CPU-Kern; Die unter-
-schiedlichen Typen dienen lediglich der Einbindung des korrekten
-Registersatzes in der Datei \tty{REG53X.INC}.
+Diese Prozessoren besitzen alle den gleichen CPU-Kern; Die unterschiedlichen
+Typen dienen lediglich der Einbindung des korrekten Registersatzes
+in der Datei \tty{REG53X.INC}.
 %%-----------
 \begin{quote}
 m) SH7000 $\longrightarrow$ SH7600 $\longrightarrow$ SH7700
@@ -3678,7 +3680,7 @@ ay) ST7 \\
     STM8TL52F4, STM8TL52G4, STM8TL53C4, STM8TL53F4,\\
     STM8TL53G4
 \end{quote}
-Der STM8-Kern erweitert den Adre"raum auf bis zu 16 MByte und f"uhrt
+Der STM8-Kern erweitert den Adre"sraum auf bis zu 16 MByte und f"uhrt
 eine ganze Reihe neuer Befehle ein.  Obwohl viele Befehle den
 gleichen Maschinencode wie beim ST7 haben, ist er nicht bin"ar
 aufw"artskompatibel.
@@ -3719,7 +3721,7 @@ wird diese Unterscheidung ausgenutzt.  Die C4x-Varianten sind
 Quellcode-aufw"artskompatibel, unterscheiden sich im
 Maschinencode einiger Befehle jedoch subtil.  Auch hier ist ist
 der C44 eine abgespeckte Version des C40, mit weniger Peripherie
-und kleinerem Adre"raum.
+und kleinerem Adre"sraum.
 %%-----------
 \begin{quote}
 be) 320C203 $\rightarrow$ 320C50, 320C51, 320C53
@@ -4013,9 +4015,20 @@ MIL STD 1750 ist ein Standard, also gibt es auch nur eine
 cm) KENBAK
 \end{quote}
 Es hat nie einen KENBAK-2 gegeben...
+%%-----------
 \begin{quote}
 cn) CP-1600
 \end{quote}
+%%-----------
+\begin{quote}
+co) HPNANO
+\end{quote}
+%%-----------
+\begin{quote}
+cp) 6100 $\rightarrow$ 6120
+\end{quote}
+Der IM6120 unterst"utzt einen gr"o"seren Adre"sraum (32K
+anstelle 4K) sowie zus"atzliche Maschinenbefehle.
 
 Beim CPU-Befehl mu"s der Prozessortyp als einfaches Literal
 angegeben werden, eine Berechnung \`a la
@@ -4089,11 +4102,13 @@ jeweils zugeh"origen Unterkapitel mit prozessorspezifischen Hinweisen beschriebe
 \label{SectSUPMODE}
 
 {\em
-G"ultigkeit SUPMODE: 680x0, NS32xxx, i960, TLCS-900, SH7000,
-i960, 29K, XA, PowerPC, M*CORE und TMS9900 \\
-G"ultigkeit FPU: 680x0, NS32xxx, 80x86 \\
-G"ultigkeit PMMU: 680x0, NS32xxx \\
-G"ultigkeit CUSTOM: NS32xxx \\
+\begin{itemize}
+\item{G"ultigkeit SUPMODE: 680x0, NS32xxx, i960, TLCS-900, SH7000,
+      i960, 29K, XA, PowerPC, M*CORE und TMS9900}
+\item{G"ultigkeit FPU: 680x0, NS32xxx, 80x86}
+\item{G"ultigkeit PMMU: 680x0, NS32xxx}
+\item{G"ultigkeit CUSTOM: NS32xxx}
+\end{itemize}
 }
 
 Mit diesen Schaltern kann bestimmt werden, auf welche Teile des
@@ -4345,6 +4360,21 @@ Adre"sraum springen zu k"onnen...
 
 Defaultm"a"sig steht dieser Schalter auf {\tt OFF}, der momentane Stand
 l"a"st sich aus einem gleichnamigen Symbol auslesen.
+
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+\subsection{PANEL}
+\ttindex{PANEL}
+
+{\em G"ultigkeit: IM61x0}
+
+Mit diesem Schalter teilt man dem Assembler mit, ob der folgende Code
+mit gesetztem oder gel"oschtem {\em Control Panel Flip-Flop} ausgef"uhrt
+wird.  Eine Reihe von {\tt IOT}-Instruktionen sind nur bei einer bestimmten
+Stellung des Flip-Flops zul"assig.  Ihre Verwendung im anderen Modus
+wird vom Assembler mit einer Fehlermeldung quittiert.
+
+Die aktuelle Einstellung kann aus dem Symbol {\tt INPANEL} gelesen werden.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -5000,6 +5030,18 @@ Adresse innerhalb des 256K-Adre"sraums mit den aktuellen Werten nicht adressierb
 ist, und rechnet ansonsten den korrekten 16-bittigen Offset aus.  Bei indirekter
 Adressierung ist so eine Pr"ufung (naturgem"a"s) nicht m"oglich.
 
+%%. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+\subsubsection{IM61x0}
+
+Diese Mikroprozessoren implementieren den Befehlssatz einer PDP/8 und unterst"utzen
+grunds"atzlich einen Adre"sraum von 4 Kiloworten.  Durch Banking kann dieser
+auf acht ,,Felder'' von 4 Kiloworten erweitert werden.  Adressierung von Daten
+und Spr"unge sind prinzipiell nur im gleichen Feld m"oglich, mit einer Ausnahme:
+"uber das IB-Register sind Spr"unge in ein anderes 4K-Feld m"oglich.  Dieses gibt
+die oberen Bits der insgesamt 15 Bit langen Zieladresse vor, falls IB per \tty{ASSUME}
+auf einen Wert ungleich \tty{NOTHING} gesetzt ist.
+
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 \subsection{CKPT}
@@ -5129,7 +5171,8 @@ von Parametern angegeben werden, die der Reihe nach abgearbeitet werden.
 \subsection{DC[.size]}
 \ttindex{DC}
 
-{\em G"ultigkeit: 680x0, M*Core, 68xx, H8, SH7000, DSP56xxx, XA, ST7/STM8, MN161x}
+{\em G"ultigkeit: 680x0, M*Core, 68xx, H8, SH7x00, DSP56xxx,\\
+     XA, ST7/STM8, MN161x, IM61x0}
 
 Dieser Befehl legt eine oder mehrere Konstanten des beim durch
 das Attribut bestimmten Typs im Speicher ab.  Die Attribute entsprechen
@@ -5182,7 +5225,8 @@ Konstanten in einer Anweisung gemischt werden.
 \subsection{DS[.size]}
 \ttindex{DS}
 
-{\em G"ultigkeit: 680x0, M*Core, 68xx, H8, SH7x00, DSP56xxx, XA, ST7/STM8, MN161x}
+{\em G"ultigkeit: 680x0, M*Core, 68xx, H8, SH7x00, DSP56xxx,\\
+     XA, ST7/STM8, MN161x, IM61x0}
 
 Mit diesem Befehl l"a"st sich zum einen Speicherplatz f"ur die angegebene
 Zahl im Attribut beschriebener Zahlen reservieren.  So reserviert
@@ -5714,7 +5758,7 @@ Speicherbereichs nicht definiert.  Alternativ kann als zweites Argument ein
 \subsection{LTORG}
 \ttindex{LTORG}
 
-{\em G"ultigkeit: SH7x00}
+{\em G"ultigkeit: SH7x00, IM61x0}
 
 Da der SH7000-Prozessor seine Register immediate nur mit 8-Bit-Werten
 laden kann, AS dem Programmierer jedoch vorgaukelt, da"s es eine solche
@@ -6934,6 +6978,8 @@ abgeschaltet werden mu"s:
 
 \subsection{RADIX}
 \ttindex{RADIX}
+\ttindex{DECIMAL}
+\ttindex{OCTAL}
 
 \tty{RADIX} mit einem numerischen Argument zwischen 2 und 36 legt das
 Default-Zahlensystem f"ur Integer-Konstanten fest, d.h. das Zahlensystem,
@@ -6945,6 +6991,10 @@ beschrieben sind.
 Unabh"angig von der momentanen Einstellung ist das Argument von {\tt
 RADIX} {\em immer dezimal}; weiterhin d"urfen keine symbolischen oder
 Formelausdr"ucke verwendet werden, sondern nur einfache Zahlenkonstanten!
+
+Auf dem IM61x0 stehen die Anweisungen \tty{DECIMAL} und \tty{OCTAL} zur
+Verf"ugung, dies sind Kurzschreibweisen f"ur \tty{RADIX 10} beziehungsweise
+\tty{RADIX 8}.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -10806,6 +10856,30 @@ als ,,immediate-Adressierung'' bezeichnen w"urde.  Aus diesen Grund sind f"ur
 den HP Nanoprocessor keinerlei Pseudobefehen definiert, mit denen sich Konstanten
 im ROM ablegen oder Platz reservieren l"a"st.
 
+%%---------------------------------------------------------------------------
+
+\section{IM61x0}
+
+Dieser Mikroprozessor ist quasi eine Single-Chip-Implementierung einer PDP/8E,
+weshalb als ,,Assembler-Referenz'' in Quellcode-Beispielen "ublicherweise der
+PAL-III von Digital Equipment benutzt wird.  Die AS-Implementierung weicht in
+einigen Punkten von der PAL-III-Syntax ab, unter anderem auch, weil sich manche
+Dinge nur mit gro"sem Aufwand h"atten bereit stellen lassen.  Hier einige Hinweise,
+wie sich bestehender Code anpassen l"a"st:
+
+\begin{itemize}
+\item{Bei PAL-III werden Label durch ein angehängtes Komma gekennzeichnet.
+      Bei AS ist diese ein Doppelpunkt, bzw. gar nichts, wenn das Label in der
+      ersten Spalte beginnt.}
+\item{Die Ablage von Daten im Speicher erfolgt bei PAL-III einfach dadurch,
+      daß man die Konstante in das Feld des Mnemonics schreibt.  AS verwendet
+      zur Datenablage die \tty{DC}-Anweisung, die daf"ur auch mehrere Worte
+      auf einmal als Argument akzeptiert.  Unter Umst"anden kann man sich
+      die Ablage von Konstanten durch den \tty{LTORG}-Mechanismus aber auch
+      teilweise ersparen.}
+\item{Den Programmz"ahler setzt man mit \tty{ORG address} anstelle {*address}.}
+\end{itemize}
+
 %%===========================================================================
 
 \cleardoublepage
@@ -11835,6 +11909,16 @@ Angaben:
                 Es wird stattdessen indizierte Adressierung mit einem
                 (Dummy-)Displacement von Null verwendet.}
                {das Argument mit dem Adressierungsausdruck}
+\errentry{ 390}{nicht im Normal-Modus erlaubt}
+               {Warnung}
+               {Dieser Maschinenbefehl ist nur im Panel-Modus und nicht
+                im ,,Normalbetrieb'' erlaubt.}
+               {die fragliche Instruktion}
+\errentry{ 400}{nicht im Panel-Modus erlaubt}
+               {Warnung}
+               {Dieser Maschinenbefehl ist nur im ,,Nornalbetrieb''
+                und nicht im Panel-Modus erlaubt.}
+               {die fragliche Instruktion}
 \errentry{1000}{Symbol doppelt definiert}
                {Fehler}
                {Einem Symbol wurde durch ein Label oder
@@ -12847,6 +12931,25 @@ Angaben:
                {Fehler}
                {Dieser CBAR-Wert ist nicht erlaubt (CA mu"s gr"o"ser als BA sein).}
                {keines}
+\errentry{2270}{Seite nicht zugreifbar}
+               {Fehler}
+               {Die Zieladresse liegt auf einer Speicherseite, die aktuell nicht
+                zugreifbar ist.}
+               {keines}
+\errentry{2280}{Feld nicht zugreifbar}
+               {Fehler}
+               {Die Zieladresse liegt in einem Speicherfeld, das aktuell nicht
+                zugreifbar ist.}
+               {keines}
+\errentry{2281}{Ziel nicht in gleichem Feld}
+               {Fehler}
+               {Befehl und Operandenadresse m"ussen
+                im gleichen Speicherfeld liegen.}
+               {keines}
+\errentry{2290}{Ung"ultige Instruktions-Kombination}
+               {Fehler}
+               {Diese Befehle k"onnen nicht miteinander kombiniert werden.}
+               {keines}
 \errentry{10001}{Fehler bein "Offnen der Datei}
                {fatal}
                {Beim Versuch, eine Datei zu "offnen, ist ein
@@ -13180,11 +13283,11 @@ Zus"atzlich existieren:
 \cleardoublepage
 \chapter{Vordefinierte Symbole}\label{AppInternSyms}
 
-\begin{table*}[ht]
-\begin{center}\begin{tabular}{|l|l|l|l|}
+\begin{center}\begin{longtable}{|l|l|l|l|}
 \hline
 Name             &  Datentyp   & Definition & Bedeutung \\
 \hline\hline
+\endhead
 \tty{ARCHITECTURE} & String    & vordef.    & Zielplattform, f"ur die AS \\
                  &             &            & "ubersetzt wurde, in der Form \\
                  &             &            & Prozesor-Hersteller-Betriebs- \\
@@ -13232,15 +13335,6 @@ Name             &  Datentyp   & Definition & Bedeutung \\
                  &             &            & strukten im Listing \\
                  &             &            & freigeschaltet ? \\
 \hline
-\end{tabular}\end{center}
-\caption{Vordefinierte Symbole - Teil 1\label{TabInternSyms1}}
-\end{table*}
-
-\begin{table*}
-\begin{center}\begin{tabular}{|l|l|l|l|}
-\hline
-Name             &  Datentyp   & Definition & Bedeutung \\
-\hline\hline
 \tty{MOMCPU}     &  Integer    & dynam.     & Nummer der momentan \\
                  &             & (68008)    & gesetzten Ziel-CPU \\
 \hline
@@ -13288,17 +13382,19 @@ Name             &  Datentyp   & Definition & Bedeutung \\
 \tty{WRAPMODE}   &  Integer    & vordef.    & verk"urzter Programmz"ahler \\
                  &             &            & angenommen? \\
 \hline
-\verb!*!         &  Integer    & Spezial    & mom. Programmz"ahler (Motorola, \\
-                 &             &            & Rockwell, Microchip, Hitachi) \\
+\verb!*!         &  Integer    & Spezial    & mom. Programmz"ahler \\
+                 &             &            & (Motorola, Rockwell, \\
+                 &             &            & Microchip, Hitachi) \\
+\hline
+.                &  Integer    & Spezial    & mom. Programmz"ahler \\
+                 &             &            & (IM61x0) \\
 \hline
 \tty{\$}         &  Integer    & Spezial    & mom. Programmz"ahler (Intel, \\
                  &             &            & Zilog, Texas, Toshiba, NEC, \\
                  &             &            & Siemens, AMD) \\
 \hline
-\end{tabular}\end{center}
-\caption{Vordefinierte Symbole - Teil 2\label{TabInternSyms2}}
-\end{table*}
-\par
+\end{longtable}\end{center}
+
 Boolean-Symbole sind eigentlich normale normale Integer-Symbole, mit
 dem Unterschied, da"s ihnen von AS nur zwei verschiedene Werte (0 oder
 1, entsprechend FALSE oder TRUE) zugewiesen werden.  Spezialsymbole

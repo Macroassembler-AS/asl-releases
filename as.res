@@ -203,6 +203,14 @@ Message ErrMsgIndexedForIndirect
  "verwende indizierte anstelle indirekter Adressierung"
  "using indexed instead of indirect addressing"
 
+Message ErrMsgNotInNormalMode
+ "nicht im Normal-Modus erlaubt"
+ "not allowed in normal mode"
+
+Message ErrMsgNotInPanelMode
+ "nicht im Panel-Modus erlaubt"
+ "not allowed in panel mode"
+
 ;*****
 
 Message ErrMsgDoubleDef
@@ -988,6 +996,22 @@ Message ErrMsgUnknownBitBltOpt
 Message ErrMsgInvCBAR
  "ung&uuml;ltiger Wert f&uuml;r CBAR"
  "invalid CBAR value"
+
+Message ErrMsgInAccPageErr
+ "Seite nicht zugreifbar"
+ "page not accessible"
+
+Message ErrMsgInAccFieldErr
+ "Feld nicht zugreifbar"
+ "field not accessible"
+
+Message ErrMsgTargInDiffField
+ "Ziel nicht in gleichem Feld"
+ "target not in same field"
+
+Message ErrMsgInvCombination
+ "Ung&uuml;tige Instruktions-Kombination"
+ "invalid instruction combination"
 
 Message ErrMsgInternalError
  "interner Fehler"
