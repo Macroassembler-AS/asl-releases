@@ -280,6 +280,7 @@ following processor families have been implemented:
 \item{NEC 78K4}
 \item{NEC $\mu$PD7720/7725}
 \item{NEC $\mu$PD77230}
+\item{NEC V60}
 \item{Fujitsu F$^2$MC8L}
 \item{Fujitsu F$^2$MC16L}
 \item{OKI OLMS-40}
@@ -563,6 +564,7 @@ REGST6.INC        & register and macro definitions ST6 \\
 REGST7.INC        & register and macro definitions ST7 \\
 REGSTM8.INC       & register and macro definitions STM8 \\
 REGST9.INC        & register and macro definitions ST9 \\
+REGV60.INC        & register addresses NEC V60 \\
 REGZ380.INC       & register addresses Z380 \\
 STDDEF04.INC      & register addresses 6804 \\
 STDDEF16.INC      & instruction macros and register addresses \\
@@ -3836,8 +3838,13 @@ cb) 77230
 \end{quote}
 %%-----------
 \begin{quote}
+cc) 70616
+\end{quote}
+This is currently the representor of NEC's V60 family.
+%%-----------
+\begin{quote}
 \begin{tabbing}
-cc) \= SYM53C810, SYM53C860, SYM53C815, SYM53C825, \\
+cd) \= SYM53C810, SYM53C860, SYM53C815, SYM53C825, \\
     \> SYM53C875, SYM53C895
 \end{tabbing}
 \end{quote}
@@ -3846,37 +3853,37 @@ instruction variants, furthermore they are different in their set of
 internal registers.
 %%-----------
 \begin{quote}
-cd) MB89190
+ce) MB89190
 \end{quote}
 This processor type represents Fujitsu's F$^{2}$MC8L series...
 %%-----------
 \begin{quote}
-ce) MB9500
+cf) MB9500
 \end{quote}
 ...just like this one does it currently for the 16-bit variants from
 Fujitsu!
 %%-----------
 \begin{quote}
-cf) MSM5840, MSM5842, MSM58421, MSM58422, MSM5847
+cg) MSM5840, MSM5842, MSM58421, MSM58422, MSM5847
 \end{quote}
 These variants of the OLMS-40 family differ in their instruction
 set and in the amount of internal program and data memory.
 %%-----------
 \begin{quote}
-cg) MSM5054, MSM5055, MSM5056, MSM6051, MSM6052
+ch) MSM5054, MSM5055, MSM5056, MSM6051, MSM6052
 \end{quote}
 The as for the OLMS-40 family: differences in instruction
 set and the amount of internal program and data memory.
 %%-----------
 \begin{quote}
-ch) MN1610[ALT] $\rightarrow$ MN1613[ALT]
+ci) MN1610[ALT] $\rightarrow$ MN1613[ALT]
 \end{quote}
 In addition to its predecessor's features, the MN1613 offers a larger
 address space, a floating point unit and a couple of new machine
 instructions.
 %%-----------
 \begin{quote}
-ci) PMC150, PMS150, PFS154, PMC131, PMS130, PMS131 \\
+cj) PMC150, PMS150, PFS154, PMC131, PMS130, PMS131 \\
 PMS132, PMS132B, PMS152, PMS154B, PMS154C, PFS173 \\
 PMS133, PMS134, DF69, MCS11, PMC232, PMC234, PMC251 \\
 PMC271,PMC884, PMS232, PMS234, PMS271
@@ -3887,7 +3894,7 @@ the built-in peripherals, and their instruction set (both
 extent and binary coding).
 %%-----------
 \begin{quote}
-cj) 1802 $\rightarrow$ 1804, 1805, 1806 $\rightarrow$ 1804A,
+ck) 1802 $\rightarrow$ 1804, 1805, 1806 $\rightarrow$ 1804A,
 1805A, 1806A
 \end{quote}
 1804, 1805, and 1806 feature an instruction set that is slightly
@@ -3897,31 +3904,31 @@ an integrated timer.  The A variants extend the instruction set by
 subtraction in BCD format.
 %%-----------
 \begin{quote}
-ck) XS1
+cl) XS1
 \end{quote}
 This type represents the XCore-"family".
 %%-----------
 \begin{quote}
-cl) 1750
+cm) 1750
 \end{quote}
 MIL STD 1750 is a standard, therefore there is only one
 (standard) variant...
 %%-----------
 \begin{quote}
-cm) KENBAK
+cn) KENBAK
 \end{quote}
 Since there has never been a KENBAK-2, the target is simply KENBAK...
 %%-----------
 \begin{quote}
-cn) CP-1600
+co) CP-1600
 \end{quote}
 %%-----------
 \begin{quote}
-co) HPNANO
+cp) HPNANO
 \end{quote}
 %%-----------
 \begin{quote}
-cp) 6100 $\rightarrow$ 6120
+cq) 6100 $\rightarrow$ 6120
 \end{quote}
 The IM6120 supports a larger address space (32K
 instead of 4K) and additional machine instructions.
@@ -3999,7 +4006,7 @@ certain target supports such options.
 {\em
 \begin{itemize}
 \item{SUPMODE valid for: 680x0, i960, TLCS-900, SH7000, i960, 29K, XA,
-      PowerPC, M*Core, and TMS9900}
+      PowerPC, M*Core, V60, and TMS9900}
 \item{FPU valid for: 680x0, NS32xxx, 80x86}
 \item{PMMU valid for: 680x0, NS32xxx}
 \item{CUSTOM valid for: NS32xxx}
@@ -11671,6 +11678,12 @@ described by:
                {This machine instruction is only allowed during ''normal
                 operation'', not in panel mode.}
                {the machine instruction in question}
+\errentry{ 410}{argument out of range}
+               {warning}
+               {The argument or the sum of two arguments is outside the
+                range allowed for this instruction, though the instruction
+                principally provides room for larger values.}
+               {the argument in question}
 \errentry{1000}{symbol double defined}
                {error}
                {A new value is assigned to a symbol, using a label or a

@@ -2263,7 +2263,7 @@ static Boolean DecodeAttrPart_H8_3(void)
       WrStrErrorPos(ErrNum_TooLongAttr, &AttrPart);
       return False;
     }
-    if (!DecodeMoto16AttrSize(*AttrPart.str.p_str, &AttrPartOpSize, False))
+    if (!DecodeMoto16AttrSize(*AttrPart.str.p_str, &AttrPartOpSize[0], False))
       return False;
   }
   return True;
@@ -2278,8 +2278,8 @@ static void MakeCode_H8_3(void)
   if (Memo("")) return;
 
   OpSize = eSymbolSizeUnknown;
-  if (AttrPartOpSize != eSymbolSizeUnknown)
-    SetOpSize(AttrPartOpSize);
+  if (AttrPartOpSize[0] != eSymbolSizeUnknown)
+    SetOpSize(AttrPartOpSize[0]);
 
   if (DecodeMoto16Pseudo(OpSize, True)) return;
 

@@ -872,7 +872,7 @@ static tAdrMode DecodeAdr(const tStrComp *pArg, unsigned ModeMask, tAdrVals *pAd
 
   /* Indexed, base... */
 
-  SplitPos = FindDispBaseSplitWithQualifier(pArg->str.p_str, &ArgLen, ShortQualifier);
+  SplitPos = FindDispBaseSplitWithQualifier(pArg->str.p_str, &ArgLen, ShortQualifier, "()");
   if (SplitPos > 0)
   {
     String OutStr, InStr;

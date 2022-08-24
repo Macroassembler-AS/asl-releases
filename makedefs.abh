@@ -86,6 +86,7 @@ include $(TARG_OBJDIR)code78k3.dep
 include $(TARG_OBJDIR)code78k4.dep
 include $(TARG_OBJDIR)code7720.dep
 include $(TARG_OBJDIR)code77230.dep
+include $(TARG_OBJDIR)codev60.dep
 include $(TARG_OBJDIR)codescmp.dep
 include $(TARG_OBJDIR)code807x.dep
 include $(TARG_OBJDIR)codecop4.dep

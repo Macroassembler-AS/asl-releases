@@ -257,7 +257,7 @@ extern LongInt MomSectionHandle;
 extern PSaveSection SectionStack;
 extern tSavePhase *pPhaseStacks[SegCount];
 
-extern tSymbolSize AttrPartOpSize;
+extern tSymbolSize AttrPartOpSize[2];
 extern LongInt CodeLen;
 extern Byte *BAsmCode;
 extern Word *WAsmCode;

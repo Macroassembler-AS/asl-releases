@@ -69,22 +69,23 @@ Boolean IsIndirect(const char *Asc)
 }
 
 /*!------------------------------------------------------------------------
- * \fn     FindDispBaseSplitWithQualifier(const char *pArg, int *pArgLen, tDispBaseSplitQualifier Qualifier)
+ * \fn     FindDispBaseSplitWithQualifier(const char *pArg, int *pArgLen, tDispBaseSplitQualifier Qualifier, const char *pBracks)
  * \brief  check for argument of type xxx(yyyy)
  * \param  pArg argument to check
  * \param  pArgLen returns argument length
  * \param  Qualifier possible qualifier to allow more positive decisions
+ * \param  pBracks Opening/Closing Parentheses
  * \return index to opening parenthese or -1 if not like pattern
  * ------------------------------------------------------------------------ */
 
-int FindDispBaseSplitWithQualifier(const char *pArg, int *pArgLen, tDispBaseSplitQualifier Qualifier)
+int FindDispBaseSplitWithQualifier(const char *pArg, int *pArgLen, tDispBaseSplitQualifier Qualifier, const char *pBracks)
 {
   int Nest = 0, Start, SplitPos = -1;
   Boolean InSgl = False, InDbl = False;
 
   *pArgLen = strlen(pArg);
 
-  if (!*pArgLen || (pArg[*pArgLen - 1] != ')'))
+  if (!*pArgLen || (pArg[*pArgLen - 1] != pBracks[1]))
     return -1;
 
   /* We are looking for expressions of the form xxx(yyy),
@@ -97,6 +98,14 @@ int FindDispBaseSplitWithQualifier(const char *pArg, int *pArgLen, tDispBaseSpli
 
   for (Start = *pArgLen - 1; Start >= 0; Start--)
   {
+    if (pArg[Start] == pBracks[1])
+    {
+      if (!InSgl && !InDbl) Nest++;
+    }
+    else if (pArg[Start] == pBracks[0])
+    {
+      if (!InSgl && !InDbl) Nest--;
+    }
     switch (pArg[Start])
     {
       case '\'':
@@ -104,12 +113,6 @@ int FindDispBaseSplitWithQualifier(const char *pArg, int *pArgLen, tDispBaseSpli
         break;
       case '"':
         if (!InSgl) InDbl = !InDbl;
-        break;
-      case ')':
-        if (!InSgl && !InDbl) Nest++;
-        break;
-      case '(':
-        if (!InSgl && !InDbl) Nest--;
         break;
       default:
         break;
@@ -149,7 +152,11 @@ void CodeEquate(as_addrspace_t DestSeg, LargeInt Min, LargeInt Max)
     if (OK && !mFirstPassUnknown(Flags))
     {
       if (Min > Erg) WrError(ErrNum_UnderRange);
-      else if (Erg > Max) WrError(ErrNum_OverRange);
+      else if (
+#ifndef HAS64
+        (!(Max & 0x80000000ul)) &&   /* cannot check >=2G range if LargeInt is 32 bits */
+#endif
+        (Erg > Max)) WrError(ErrNum_OverRange);
       else
       {
         TempResult t;
@@ -253,7 +260,8 @@ int NAME(const struct as_nonz_dynstr *p_str, int bytes_per_dword, Boolean big_en
   { \
     if (!byte_fill) \
     { \
-      if ((ret = SetMaxCodeLen(CodeLen + 1) * sizeof(TYPE))) \
+      ret = SetMaxCodeLen((CodeLen + 1) * sizeof(TYPE)); \
+      if (ret) \
         return ret; \
       VAR[CodeLen++] = 0; \
     } \

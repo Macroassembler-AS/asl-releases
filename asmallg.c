@@ -414,8 +414,8 @@ static void CodeSETEQU(Word MayChange)
         {
           case TempInt:
             EnterIntSymbol(pName, t.Contents.Int, DestSeg, MayChange);
-            if (AttrPartOpSize != eSymbolSizeUnknown)
-              SetSymbolOrStructElemSize(pName, AttrPartOpSize);
+            if (AttrPartOpSize[0] != eSymbolSizeUnknown)
+              SetSymbolOrStructElemSize(pName, AttrPartOpSize[0]);
             break;
           case TempFloat:
             EnterFloatSymbol(pName, t.Contents.Float, MayChange);

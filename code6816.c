@@ -1074,7 +1074,12 @@ static void DeinitFields(void)
 
 static Boolean DecodeAttrPart_6816(void)
 {
-  return DecodeMoto16AttrSize(*AttrPart.str.p_str, &AttrPartOpSize, False);
+  if (strlen(AttrPart.str.p_str) > 1)
+  {
+    WrStrErrorPos(ErrNum_UndefAttr, &AttrPart);
+    return False;
+  }
+  return DecodeMoto16AttrSize(*AttrPart.str.p_str, &AttrPartOpSize[0], False);
 }
 
 static void MakeCode_6816(void)
@@ -1086,7 +1091,7 @@ static void MakeCode_6816(void)
   /* Operandengroesse festlegen. ACHTUNG! Das gilt nur fuer die folgenden
      Pseudobefehle! Die Maschinenbefehle ueberschreiben diesen Wert! */
 
-  OpSize = AttrPartOpSize;
+  OpSize = AttrPartOpSize[0];
 
   /* zu ignorierendes */
 

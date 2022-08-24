@@ -211,6 +211,10 @@ Message ErrMsgNotInPanelMode
  "nicht im Panel-Modus erlaubt"
  "not allowed in panel mode"
 
+Message ErrMsgArgOutOfRange
+ "Argument ausserhalb erlauben Bereichs"
+ "argument out of range"
+
 ;*****
 
 Message ErrMsgDoubleDef

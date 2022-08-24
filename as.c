@@ -136,6 +136,7 @@
 #include "code78k4.h"
 #include "code7720.h"
 #include "code77230.h"
+#include "codev60.h"
 #include "code53c8xx.h"
 #include "codefmc8.h"
 #include "codefmc16.h"
@@ -2439,7 +2440,7 @@ static void Produce_Code(void)
       }
       else
       {
-        AttrPartOpSize = eSymbolSizeUnknown;
+        AttrPartOpSize[0] = AttrPartOpSize[1] = eSymbolSizeUnknown;
         if (DecodeAttrPart ? DecodeAttrPart() : True)
         {
           if (!CodeGlobalPseudo())
@@ -4364,6 +4365,7 @@ int main(int argc, char **argv)
     code78k4_init();
     code7720_init();
     code77230_init();
+    codev60_init();
     codescmp_init();
     code807x_init();
     codecop4_init();

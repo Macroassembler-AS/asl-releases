@@ -255,6 +255,8 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
       msgno = Num_ErrMsgNotInNormalMode; break;
     case ErrNum_NotInPanelMode:
       msgno = Num_ErrMsgNotInPanelMode; break;
+    case ErrNum_ArgOutOfRange:
+      msgno = Num_ErrMsgArgOutOfRange; break;
     case ErrNum_DoubleDef:
       msgno = Num_ErrMsgDoubleDef; break;
     case ErrNum_SymbolUndef:

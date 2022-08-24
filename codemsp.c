@@ -1541,15 +1541,15 @@ static Boolean DecodeAttrPart_MSP(void)
     case '\0':
       break;
     case 'B':
-      AttrPartOpSize = eSymbolSize8Bit;
+      AttrPartOpSize[0] = eSymbolSize8Bit;
       break;
     case 'W':
-      AttrPartOpSize = eSymbolSize16Bit;
+      AttrPartOpSize[0] = eSymbolSize16Bit;
       break;
     case 'A':
       if (MomCPU >= CPUMSP430X)
       {
-        AttrPartOpSize = eSymbolSize24Bit; /* TODO: should be 20 bits */
+        AttrPartOpSize[0] = eSymbolSize24Bit; /* TODO: should be 20 bits */
         break;
       }
       /* else fall-through */
@@ -1570,7 +1570,7 @@ static void MakeCode_MSP(void)
 
   /* process attribute */
 
-  switch (AttrPartOpSize)
+  switch (AttrPartOpSize[0])
   {
     case eSymbolSize24Bit:
       OpSize = eOpSizeA;

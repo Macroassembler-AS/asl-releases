@@ -2501,13 +2501,13 @@ static Boolean DecodeAttrPart_97C241(void)
     switch (as_toupper(*AttrPart.str.p_str))
     {
       case 'B':
-        AttrPartOpSize = eSymbolSize8Bit;
+        AttrPartOpSize[0] = eSymbolSize8Bit;
         break;
       case 'W':
-        AttrPartOpSize = eSymbolSize16Bit;
+        AttrPartOpSize[0] = eSymbolSize16Bit;
         break;
       case 'D':
-        AttrPartOpSize = eSymbolSize32Bit;
+        AttrPartOpSize[0] = eSymbolSize32Bit;
         break;
       default:
        WrStrErrorPos(ErrNum_UndefAttr, &AttrPart);
@@ -2531,7 +2531,7 @@ static void MakeCode_97C241(void)
   if (Memo(""))
     return;
 
-  OpSize = AttrPartOpSize;
+  OpSize = AttrPartOpSize[0];
 
   /* Pseudoanweisungen */
 

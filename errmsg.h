@@ -61,6 +61,7 @@ typedef enum
   ErrNum_IndexedForIndirect = 380,
   ErrNum_NotInNormalMode = 390,
   ErrNum_NotInPanelMode = 400,
+  ErrNum_ArgOutOfRange = 410,
   ErrNum_DoubleDef = 1000,
   ErrNum_SymbolUndef = 1010,
   ErrNum_InvSymName = 1020,

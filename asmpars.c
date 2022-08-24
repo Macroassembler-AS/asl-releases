@@ -797,7 +797,7 @@ Boolean IdentifySection(const tStrComp *pName, LongInt *Erg)
     }
     if (*Erg == -2)
     {
-      WrError(ErrNum_InvSection);
+      WrStrErrorPos(ErrNum_InvSection, pName);
       return False;
     }
     else
@@ -815,7 +815,7 @@ Boolean IdentifySection(const tStrComp *pName, LongInt *Erg)
       SLauf = SLauf->Next;
     if (!SLauf)
     {
-      WrError(ErrNum_InvSection);
+      WrStrErrorPos(ErrNum_InvSection, pName);
       return False;
     }
     else
@@ -841,6 +841,11 @@ static Boolean GetSymSection(char *Name, LongInt *Erg, const tStrComp *pUnexpCom
 
   Name[l - 1] = '\0';
   q = RQuotPos(Name, '[');
+  if (!q)
+  {
+    *Erg = -2;
+    return True;
+  }
   Name[l - 1] = ']';
   if (Name + l - q <= 1)
   {

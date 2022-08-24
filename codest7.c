@@ -2358,14 +2358,19 @@ static void DeinitFields(void)
 
 static Boolean DecodeAttrPart_ST7(void)
 {
-  return DecodeMoto16AttrSize(*AttrPart.str.p_str, &AttrPartOpSize, False);
+  if (strlen(AttrPart.str.p_str) > 1)
+  {
+    WrStrErrorPos(ErrNum_UndefAttr, &AttrPart);
+    return False;
+  }
+  return DecodeMoto16AttrSize(*AttrPart.str.p_str, &AttrPartOpSize[0], False);
 }
 
 static void MakeCode_ST7(void)
 {
   CodeLen = 0;
   DontPrint = False;
-  OpSize = (AttrPartOpSize != eSymbolSizeUnknown) ? AttrPartOpSize : eSymbolSize8Bit;
+  OpSize = (AttrPartOpSize[0] != eSymbolSizeUnknown) ? AttrPartOpSize[0] : eSymbolSize8Bit;
   PrefixCnt = 0;
 
   /* zu ignorierendes */

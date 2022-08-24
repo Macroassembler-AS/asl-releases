@@ -274,6 +274,7 @@ folgende Prozessorfamilien implementiert:
 \item{NEC 78K4}
 \item{NEC $\mu$PD7720/7725}
 \item{NEC $\mu$PD77230}
+\item{NEC V60}
 \item{Fujitsu F$^2$MC8L}
 \item{Fujitsu F$^2$MC16L}
 \item{OKI OLMS-40}
@@ -592,6 +593,7 @@ STDDEF90.INC      & Register- \& Speicheradressen TLCS-90 \\
 STDDEF96.INC      & Register- \& Speicheradressen TLCS-900 \\
 STDDEFXA.INC      & SFR-\& Bitadressen Philips XA \\
 STDDEFZ8.INC      & Registeradressen Z8-Familie (alt)\\
+REGV60.INC        & Registeradressen NEC V60 \\
 REGZ8.INC         & Registeradressen Z8-Familie (neu)\\
 REGSX20.INC       & Register- \& Bitadressen Parallax SX20/28 \\
 AVR/\*.INC        & Register- \& Bitadressen AVR-Familie \\
@@ -3941,8 +3943,13 @@ cb) 77230
 \end{quote}
 %%-----------
 \begin{quote}
+cc) 70616
+\end{quote}
+Dies ist momentan der Repr"asentant der V60-Familie von NEC.
+%%-----------
+\begin{quote}
 \begin{tabbing}
-cc) \= SYM53C810, SYM53C860, SYM53C815, SYM53C825, \\
+cd) \= SYM53C810, SYM53C860, SYM53C815, SYM53C825, \\
     \> SYM53C875, SYM53C895
 \end{tabbing}
 \end{quote}
@@ -3951,36 +3958,36 @@ einige Befehlsvarianten nicht, au"serdem unterscheiden sie sich in ihrem
 Satz interner Register.
 %%-----------
 \begin{quote}
-cd) MB89190
+ce) MB89190
 \end{quote}
 Dieser Prozessortyp repr"asentiert die F$^{2}$MC8L-Serie von Fujitsu...
 %%-----------
 \begin{quote}
-ce) MB9500
+cf) MB9500
 \end{quote}
 ...so wie dieser es momentan f"ur die 16-Bit-Varianten von Fujitsu tut!
 %%-----------
 \begin{quote}
-cf) MSM5840, MSM5842, MSM58421, MSM58422, MSM5847
+cg) MSM5840, MSM5842, MSM58421, MSM58422, MSM5847
 \end{quote}
 Diese Varianten der OLMS-40-Familie unterscheiden sich im
 Befehlssatz sowie im internen Programm- und Datenspeicher.
 %%-----------
 \begin{quote}
-cg) MSM5054, MSM5055, MSM5056, MSM6051, MSM6052
+ch) MSM5054, MSM5055, MSM5056, MSM6051, MSM6052
 \end{quote}
 Gleiches wie bei der OLMS-40-Familie: Unterschiede im
 Befehlssatz sowie im internen Programm- und Datenspeicher.
 %%-----------
 \begin{quote}
-ch) MN1610[ALT] $\rightarrow$ MN1613[ALT]
+ci) MN1610[ALT] $\rightarrow$ MN1613[ALT]
 \end{quote}
 Zus"atzlich zu den Funktionen seines Vorg"angers bietet der
 MN1613 einen gr"o"seren Adre"sraum, eine Floating-Point-Einheit
 sowie eine ganze Reihe neuer Befehle.
 %%-----------
 \begin{quote}
-ci) PMC150, PMS150, PFS154, PMC131, PMS130, PMS131 \\
+cj) PMC150, PMS150, PFS154, PMC131, PMS130, PMS131 \\
 PMS132, PMS132B, PMS152, PMS154B, PMS154C, PFS173 \\
 PMS133, PMS134, DF69, MCS11, PMC232, PMC234, PMC251 \\
 PMC271,PMC884, PMS232, PMS234, PMS271
@@ -3991,7 +3998,7 @@ des internen ROMs (l"oschbar oder OTP), der eingebauten
 Peripherie sowie in Umfang und Kodierung des Befehlssatzes.
 %%-----------
 \begin{quote}
-cj) 1802 $\rightarrow$ 1804, 1805, 1806 $\rightarrow$ 1804A, 1805A
+ck) 1802 $\rightarrow$ 1804, 1805, 1806 $\rightarrow$ 1804A, 1805A
 1806A
 \end{quote}
 1804, 1805 und 1806 haben gegen"uber dem 'Original' 1802 einen leicht
@@ -4001,31 +4008,31 @@ Timer.  Die A-Versionen erweitern den Befehlssatz um \tty{DSAV},
 BCD-Format.
 %%-----------
 \begin{quote}
-ck) XS1
+cl) XS1
 \end{quote}
 Dieser Typ repr"asentiert die XCore-''Familie''.
 %%-----------
 \begin{quote}
-cl) 1750
+cm) 1750
 \end{quote}
 MIL STD 1750 ist ein Standard, also gibt es auch nur eine
 (Standard-)Variante...
 %%-----------
 \begin{quote}
-cm) KENBAK
+cn) KENBAK
 \end{quote}
 Es hat nie einen KENBAK-2 gegeben...
 %%-----------
 \begin{quote}
-cn) CP-1600
+co) CP-1600
 \end{quote}
 %%-----------
 \begin{quote}
-co) HPNANO
+cp) HPNANO
 \end{quote}
 %%-----------
 \begin{quote}
-cp) 6100 $\rightarrow$ 6120
+cq) 6100 $\rightarrow$ 6120
 \end{quote}
 Der IM6120 unterst"utzt einen gr"o"seren Adre"sraum (32K
 anstelle 4K) sowie zus"atzliche Maschinenbefehle.
@@ -4104,7 +4111,7 @@ jeweils zugeh"origen Unterkapitel mit prozessorspezifischen Hinweisen beschriebe
 {\em
 \begin{itemize}
 \item{G"ultigkeit SUPMODE: 680x0, NS32xxx, i960, TLCS-900, SH7000,
-      i960, 29K, XA, PowerPC, M*CORE und TMS9900}
+      i960, 29K, XA, PowerPC, M*CORE, V60 und TMS9900}
 \item{G"ultigkeit FPU: 680x0, NS32xxx, 80x86}
 \item{G"ultigkeit PMMU: 680x0, NS32xxx}
 \item{G"ultigkeit CUSTOM: NS32xxx}
@@ -11919,6 +11926,13 @@ Angaben:
                {Dieser Maschinenbefehl ist nur im ,,Nornalbetrieb''
                 und nicht im Panel-Modus erlaubt.}
                {die fragliche Instruktion}
+\errentry{ 410}{Argument ausserhalb erlauben Bereichs}
+               {Warnung}
+               {Das Argument oder die Summe zweier Argumente
+                liegt au"serhalb des f"ur diesen Befehls erlaubten
+                Bereichs, obwohl in der Instruktion prinzipiell
+                Raum f"ur gr"o"sere Werte ist.}
+               {das fragliche Argument}
 \errentry{1000}{Symbol doppelt definiert}
                {Fehler}
                {Einem Symbol wurde durch ein Label oder

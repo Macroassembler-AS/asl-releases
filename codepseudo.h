@@ -20,8 +20,8 @@ extern Boolean IsIndirectGen(const char *Asc, const char *pBeginEnd);
 extern Boolean IsIndirect(const char *Asc);
 
 typedef int (*tDispBaseSplitQualifier)(const char *pArg, int StartPos, int SplitPos);
-extern int FindDispBaseSplitWithQualifier(const char *pArg, int *pArgLen, tDispBaseSplitQualifier Qualifier);
-#define FindDispBaseSplit(pArg, pArgLen) FindDispBaseSplitWithQualifier(pArg, pArgLen, NULL)
+extern int FindDispBaseSplitWithQualifier(const char *pArg, int *pArgLen, tDispBaseSplitQualifier Qualifier, const char *pBracks);
+#define FindDispBaseSplit(pArg, pArgLen) FindDispBaseSplitWithQualifier(pArg, pArgLen, NULL, "()")
 
 extern void CodeEquate(as_addrspace_t DestSeg, LargeInt Min, LargeInt Max);
 

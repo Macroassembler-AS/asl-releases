@@ -3123,7 +3123,7 @@ static Boolean DecodeAttrPart_H16(void)
 
   if (*SizePart.str.p_str)
   {
-    if (!DecodeMoto16AttrSizeStr(&SizePart, &AttrPartOpSize, False))
+    if (!DecodeMoto16AttrSizeStr(&SizePart, &AttrPartOpSize[0], False))
       return False;
   }
   return True;
@@ -3137,7 +3137,7 @@ static void MakeCode_H16(void)
 
   if (Memo("")) return;
 
-  OpSize = AttrPartOpSize;
+  OpSize = AttrPartOpSize[0];
   if (DecodeMoto16Pseudo(OpSize, True))
     return;
 

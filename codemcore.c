@@ -829,15 +829,20 @@ static void InternSymbol_MCORE(char *pArg, TempResult *pResult)
 
 static Boolean DecodeAttrPart_MCORE(void)
 {
+  if (strlen(AttrPart.str.p_str) > 1)
+  {
+    WrStrErrorPos(ErrNum_UndefAttr, &AttrPart);
+    return False;
+  }
   /* operand size identifiers slightly differ from '68K Standard': */
 
   switch (as_toupper(*AttrPart.str.p_str))
   {
-    case 'H': AttrPartOpSize = eSymbolSize16Bit; break;
-    case 'W': AttrPartOpSize = eSymbolSize32Bit; break;
+    case 'H': AttrPartOpSize[0] = eSymbolSize16Bit; break;
+    case 'W': AttrPartOpSize[0] = eSymbolSize32Bit; break;
     case 'L': WrStrErrorPos(ErrNum_UndefAttr, &AttrPart); return False;
     default:
-      return DecodeMoto16AttrSize(*AttrPart.str.p_str, &AttrPartOpSize, False);
+      return DecodeMoto16AttrSize(*AttrPart.str.p_str, &AttrPartOpSize[0], False);
   }
   return True;
 }
@@ -846,7 +851,7 @@ static void MakeCode_MCORE(void)
 {
   CodeLen = 0;
 
-  OpSize = (AttrPartOpSize != eSymbolSizeUnknown) ? AttrPartOpSize : eSymbolSize32Bit;
+  OpSize = (AttrPartOpSize[0] != eSymbolSizeUnknown) ? AttrPartOpSize[0] : eSymbolSize32Bit;
   DontPrint = False;
 
   /* Nullanweisung */

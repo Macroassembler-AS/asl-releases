@@ -2692,15 +2692,15 @@ static Boolean DecodeAttrPart_M16C(void)
 
   switch (as_toupper(*AttrPart.str.p_str))
   {
-    case '\0': AttrPartOpSize = eSymbolSizeUnknown; break;
-    case 'B': AttrPartOpSize = eSymbolSize8Bit; break;
-    case 'W': AttrPartOpSize = eSymbolSize16Bit; break;
-    case 'L': AttrPartOpSize = eSymbolSize32Bit; break;
-    case 'Q': AttrPartOpSize = eSymbolSize64Bit; break;
-    case 'S': AttrPartOpSize = eSymbolSize80Bit; break;
-    case 'D': AttrPartOpSize = eSymbolSizeFloat32Bit; break;
-    case 'X': AttrPartOpSize = eSymbolSizeFloat64Bit; break;
-    case 'A': AttrPartOpSize = eSymbolSizeFloat96Bit; break;
+    case '\0': AttrPartOpSize[0] = eSymbolSizeUnknown; break;
+    case 'B': AttrPartOpSize[0] = eSymbolSize8Bit; break;
+    case 'W': AttrPartOpSize[0] = eSymbolSize16Bit; break;
+    case 'L': AttrPartOpSize[0] = eSymbolSize32Bit; break;
+    case 'Q': AttrPartOpSize[0] = eSymbolSize64Bit; break;
+    case 'S': AttrPartOpSize[0] = eSymbolSize80Bit; break;
+    case 'D': AttrPartOpSize[0] = eSymbolSizeFloat32Bit; break;
+    case 'X': AttrPartOpSize[0] = eSymbolSizeFloat64Bit; break;
+    case 'A': AttrPartOpSize[0] = eSymbolSizeFloat96Bit; break;
     default:
       WrStrErrorPos(ErrNum_UndefAttr, &AttrPart); return False;
   }
@@ -2730,7 +2730,7 @@ static void InternSymbol_M16C(char *pArg, TempResult *pResult)
 
 static void MakeCode_M16C(void)
 {
-  OpSize = AttrPartOpSize;
+  OpSize = AttrPartOpSize[0];
 
   /* zu ignorierendes */
 

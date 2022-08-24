@@ -1559,7 +1559,7 @@ static Boolean DecodeAttrPart_7000(void)
       WrError(ErrNum_TooLongAttr);
       return False;
     }
-    if (!DecodeMoto16AttrSize(*AttrPart.str.p_str, &AttrPartOpSize, False))
+    if (!DecodeMoto16AttrSize(*AttrPart.str.p_str, &AttrPartOpSize[0], False))
       return False;
   }
   return True;
@@ -1585,7 +1585,7 @@ static void MakeCode_7000(void)
   /* Attribut verwursten */
 
   if (*AttrPart.str.p_str)
-    SetOpSize(AttrPartOpSize);
+    SetOpSize(AttrPartOpSize[0]);
 
   if (DecodeMoto16Pseudo(OpSize, True))
     return;

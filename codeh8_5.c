@@ -2027,7 +2027,7 @@ static Boolean DecodeAttrPart_H8_5(void)
 
   if (*AttrPart.str.p_str)
   {
-    if (!DecodeMoto16AttrSize(*AttrPart.str.p_str, &AttrPartOpSize, False))
+    if (!DecodeMoto16AttrSize(*AttrPart.str.p_str, &AttrPartOpSize[0], False))
       return False;
   }
   return True;
@@ -2043,7 +2043,7 @@ static void MakeCode_H8_5(void)
 
   OpSize = eSymbolSizeUnknown;
   if (*AttrPart.str.p_str)
-    SetOpSize(AttrPartOpSize);
+    SetOpSize(AttrPartOpSize[0]);
 
   if (DecodeMoto16Pseudo(OpSize, True)) return;
 

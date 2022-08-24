@@ -6257,14 +6257,14 @@ static void InternSymbol_68K(char *pArg, TempResult *pResult)
 
 static Boolean DecodeAttrPart_68K(void)
 {
-  return DecodeMoto16AttrSize(*AttrPart.str.p_str, &AttrPartOpSize, False);
+  return DecodeMoto16AttrSize(*AttrPart.str.p_str, &AttrPartOpSize[0], False);
 }
 
 static void MakeCode_68K(void)
 {
   CodeLen = 0;
-  OpSize = (AttrPartOpSize != eSymbolSizeUnknown)
-         ? AttrPartOpSize
+  OpSize = (AttrPartOpSize[0] != eSymbolSizeUnknown)
+         ? AttrPartOpSize[0]
          : ((pCurrCPUProps->Family == eColdfire) ? eSymbolSize32Bit : eSymbolSize16Bit);
   DontPrint = False; RelPos = 2;
 
