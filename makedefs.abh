@@ -6,7 +6,7 @@ include $(TARG_OBJDIR)natpseudo.dep
 include $(TARG_OBJDIR)fourpseudo.dep
 include $(TARG_OBJDIR)ibmfloat.dep
 include $(TARG_OBJDIR)ieeefloat.dep
-include $(TARG_OBJDIR)vaxfloat.dep
+include $(TARG_OBJDIR)decfloat.dep
 include $(TARG_OBJDIR)codevars.dep
 include $(TARG_OBJDIR)code68k.dep
 include $(TARG_OBJDIR)code56k.dep
@@ -30,6 +30,7 @@ include $(TARG_OBJDIR)codehmcs400.dep
 include $(TARG_OBJDIR)code4500.dep
 include $(TARG_OBJDIR)codem16.dep
 include $(TARG_OBJDIR)codem16c.dep
+include $(TARG_OBJDIR)codepdp11.dep
 include $(TARG_OBJDIR)code4004.dep
 include $(TARG_OBJDIR)code8008.dep
 include $(TARG_OBJDIR)code48.dep

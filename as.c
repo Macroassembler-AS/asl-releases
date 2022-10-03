@@ -72,6 +72,7 @@
 #include "code4500.h"
 #include "codem16.h"
 #include "codem16c.h"
+#include "codepdp11.h"
 #include "code4004.h"
 #include "code8008.h"
 #include "code48.h"
@@ -4309,6 +4310,7 @@ int main(int argc, char **argv)
     code4500_init();
     codem16_init();
     codem16c_init();
+    codepdp11_init();
     code4004_init();
     code8008_init();
     code48_init();

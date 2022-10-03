@@ -47,7 +47,7 @@
 
 \vspace{1cm}\par
 
-{\large Stand August 2022}
+{\large Stand Oktober 2022}
 \end{raggedright}
 
 \clearpage
@@ -213,6 +213,7 @@ folgende Prozessorfamilien implementiert:
 \item{Mitsubishi MELPS-4500}
 \item{Mitsubishi M16}
 \item{Mitsubishi M16C}
+\item{DEC PDP-11}
 \item{Intel 4004/4040}
 \item{Intel MCS-48/41, einschlie"slich Siemens SAB80C382 und der
       OKI-Varianten}
@@ -2777,7 +2778,8 @@ PIO_Ctrl   PORT PIO_Port_A+3
 \subsection{REG und NAMEREG}
 \ttindex{REG}\ttindex{NAMEREG}
 
-{\em G"ultigkeit: 680x0, AVR, M*Core, ST9, 80C16x, Z8000, KCPSM \\
+{\em G"ultigkeit: 680x0, AVR, M*Core, ST9, 80C16x, Z8000, KCPSM, \\
+     PDP-11 \\
      (\tty{NAMEREG} nur f"ur KCPSM(3)), LatticeMico8, MSP430(X)}
 
 Obwohl immer mit gleicher Syntax, hat diese Anweisung von Prozessor
@@ -2793,6 +2795,14 @@ Register- als auch symbolischer Name als Argumente angegeben, z.B. so:
 \begin{verbatim}
      NAMEREG  s08, treg
 \end{verbatim}
+
+Auf der PDP-11 darf \tty{REG} zus"atzlich ohne Namen im Label-Feld benutzt
+werden.  Es wird dann als einziges Argument entweder \tty{ON} oder \tty{OFF}
+erwartet, und damit werden die eingebauten Register-Aliase (\tty{Rn} = \tty{\%n},
+\tty{SP} = \tty{R6}, \tty{PC} = \tty{R7}) ein- und ausgeschaltet.  Sie
+sind im Default verf"ugbar, und sollten nur abgeschaltet werden, wenn
+sie mit eigenen Symbolnamen in einem Programm kollidieren.  Die augenblickliche
+Einstellung l"a"st sich aus dem Symbol \tty{DEFAULT\_REGSYMS} lesen.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -3074,6 +3084,8 @@ Mittel der Wahl.
 \hline
 \multicolumn{11}{|l|}{$^{9}$ typabh"angig} \\
 \hline
+\multicolumn{11}{|l|}{$^{10}$ modellabh"angig} \\
+\hline
 \caption{Adre"sbereiche f"ur \tty{ORG}}
 \label{TabORG}
 \end{longtable}
@@ -3312,8 +3324,22 @@ s) M16
 \end{quote}
 %%-----------
 \begin{quote}
-t) M16
+t) M16C
 \end{quote}
+%%-----------
+\begin{quote}
+t) PDP-11/03, PDP-11/04, PDP-11/05, PDP-11/10,
+   PDP-11/15, PDP-11/20, PDP-11/23, PDP-11/24,
+   PDP-11/34, PDP-11/35, PDP-11/40, PDP-11/44,
+   PDP-11/45, PDP-11/50, MicroPDP-11/53,
+   PDP-11/55, PDP-11/60m PDP-11/70, MicroPDP-11/73,
+   MicroPDP-11/83, PDP-11/84, MicroPDP-11/93,
+   PDP-11/94, T-11
+\end{quote}
+Die Modelle der PDP-11-Serien unterscheiden sich im
+Befehlssatz (sowohl dem eingebauten als auch den verf"ugbaren
+Erweiterungen) als auch im verf"ugbaren Adre"sraum (64, 256
+oder 4096 KByte).
 %%-----------
 \begin{quote}
 u) 4004 $\rightarrow$ 4040
@@ -4110,8 +4136,8 @@ jeweils zugeh"origen Unterkapitel mit prozessorspezifischen Hinweisen beschriebe
 
 {\em
 \begin{itemize}
-\item{G"ultigkeit SUPMODE: 680x0, NS32xxx, i960, TLCS-900, SH7000,
-      i960, 29K, XA, PowerPC, M*CORE, V60 und TMS9900}
+\item{G"ultigkeit SUPMODE: 680x0, NS32xxx, PDP-11, i960, TLCS-900,
+      SH7000, i960, 29K, XA, PowerPC, M*CORE, V60 und TMS9900}
 \item{G"ultigkeit FPU: 680x0, NS32xxx, 80x86}
 \item{G"ultigkeit PMMU: 680x0, NS32xxx}
 \item{G"ultigkeit CUSTOM: NS32xxx}
@@ -4147,6 +4173,39 @@ folgendes:
 \end{itemize}
 Benutzung von auf diese Weise gesperrten Befehlen erzeugt bei \tty{SUPMODE}
 eine Warnung, bei \tty{PMMU} und \tty{FPU} eine echte Fehlermeldung.
+
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+\subsection{CIS, EIS, FIS und FP11}
+\ttindex{CIS}\ttindex{EIS}\ttindex{FIS}\ttindex{FP11}
+
+{\em
+\begin{itemize}
+\item{G"ultigkeit: PDP-11}
+\end{itemize}
+}
+
+Mit diesen Anweisungen schaltet man die Verf"ugbarkeit bestimmter
+PDP-11-Befehlssatzerweiterungen ein oder aus.  Voraussetzung f"ur die
+Verf"ugbarkeit einer dieser Anweisungen ist, da"s die fraglichen Befehle
+nicht bereits im Basis-Befehlssatz enthalten sind, und da"s eine
+entsprechende Aufr"ustm"oglichkeit bestanden hat.  Im einzelnen:
+\begin{itemize}
+\item{{\tt CIS}: ,,Commercial Instruction Set'', d.h. Befehle zur
+      Verarbeitung gepackter und nicht gepackter BCD-Zahlen mit
+      variabler L"ange.  Diese waren auf dem LSI-11 sowie der
+      PDP-11/44 als Option verf"ugbar.}
+\item{{\tt EIS}: Die Befehle {\tt MUL, DIV, ASH} und {\tt ASHC},
+      die auf fr"uhen bzw. einfachen PDP-11-Systemen nicht Teil
+      des Basisbefehlssatzes waren.  Auf dem LSI-11 bzw. der
+      PDP-11/35 und PDP-11/40 waren sie per Option nachrüstbar.}
+\item{{\tt FIS}: Stack-orientierte Befehle, die die Grundrechenarten
+      f"ur Gleitkommazahlen im F-Format (32 Bit) implementieren.
+      Auf dem LSI-11 bzw. der PDP-11/35 und PDP-11/40 waren sie
+      per Option nachrüstbar.}
+\item{{\tt FP11}: Volle Gleitkomma-Unterst"utzung mit separaten
+      FPU-Registern im F- und D-Format (32/64 Bit).}
+\end{itemize}
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -5336,10 +5395,16 @@ Alias f"ur \tty{DB} bzw. \tty{DW} dar, wobei die beiden Paare sich
 jedoch in der Byte-Order unterscheiden: Die Befehle, die von National
 zur Adre"sablage vorgesehen waren, benutzen Big-Endian, \tty{BYTE} bzw.
 \tty{WORD} jedoch Little-Endian.
+\par
+\ttindex{FLT2}\ttindex{FLT4}
+\tty{BYTE} bzw. \tty{WORD} stehen auf der PDP-11 als Alias f"ur
+\tty{DB} bzw. \tty{DW} zur Verf"ugung, sowie \tty{FLT2} und \tty{FLT4},
+die im Gegensatz zu \tty{DD} bzw. \tty{DQ} aber nur Gleitkommazahlen
+im Speicher ablegen (im DEC-eigenen F- bzw. D-Format).
 
 Wird \tty{DB} in einem Adre"sraum angewendet, der nicht byte-adressierbar
 ist (z.B. das \tty{CODE}-Segment des Atmel AVR), so werden immer zwei Bytes
-in ein 16-Bit-Wort gepackt, entsprechende der durch die Architektur gegebenen 
+in ein 16-Bit-Wort gepackt, entsprechend der durch die Architektur gegebenen
 Endinaness - das untere Byte wird bei Little-Endian also zuerst gef"ullt.  Ist
 die Gesamtmenge aller Bytes ungerade, so bleibt die andere Worth"alfte ungenutzt
 und ist quasi ''Padding''.  Sie wird auch nicht genutzt, falls im Quellcode
@@ -12086,6 +12151,11 @@ Angaben:
                {Fehler}
                {Das angesprochene Registersymbol wurde f"ur einen anderen Zielprozessor
                 als den aktuell verwendeten definiert und ist nicht kompatibel.}
+               {das fehlerhafte Argument}
+\errentry{1149}{Gleitkomma-Argument erwartet, aber Ganzzahl bekommen}
+               {Fehler}
+               {An dieser Stelle kann kein Ganzzahl-, sondern nur ein Gleitkomma-
+                Argument verwendet werden.}
                {das fehlerhafte Argument}
 \errentry{1200}{Unbekannter Befehl}
                {Fehler}

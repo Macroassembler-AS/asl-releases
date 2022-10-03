@@ -214,6 +214,20 @@ void cpu_2_phys_area_add(as_addrspace_t addr_space, LargeWord new_cpu_start, Lar
 }
 
 /*!------------------------------------------------------------------------
+ * \fn     cpu_2_phys_area_set_cpu_end(as_addrspace_t addr_space, LargeWord cpu_end)
+ * \brief  set the end of the CPU's address space
+ * \param  addr_space address space to operate on
+ * \param  cpu_end end of CPU address space
+ * ------------------------------------------------------------------------ */
+
+void cpu_2_phys_area_set_cpu_end(as_addrspace_t addr_space, LargeWord cpu_end)
+{
+  cpu_2_phys_area_list_t *p_list = get_list(addr_space);
+
+  p_list->end = cpu_end;
+}
+
+/*!------------------------------------------------------------------------
  * \fn     cpu_2_phys_area_fill(as_addrspace_t addr_space, LargeWord cpu_start, LargeWord cpu_end)
  * \brief  fill gaps in the CPU-side address space with 1:1 mappings
  * \param  addr_space address space to operate on
@@ -271,7 +285,7 @@ void cpu_2_phys_area_fill(as_addrspace_t addr_space, LargeWord cpu_start, LargeW
 
   /* Save the cpu_end for usage in phys_2_cpu(): */
 
-  p_list->end = cpu_end;
+  cpu_2_phys_area_set_cpu_end(addr_space, cpu_end);
 }
 
 /*!------------------------------------------------------------------------

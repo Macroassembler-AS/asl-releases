@@ -329,6 +329,10 @@ Message ErrMsgRegWrongTarget
  "Registersymbol f&uuml;r anderes Ziel"
  "register symbol for different target"
 
+Message ErrMsgFloatButInt
+ "Gleitkomma-Argument erwartet, aber Ganzzahl bekommen"
+ "expected floating point argument but got integer"
+
 Message ErrMsgUnknownInstruction
  "unbekannter Befehl"
  "unknown instruction"

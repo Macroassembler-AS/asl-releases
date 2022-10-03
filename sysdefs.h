@@ -697,7 +697,7 @@ typedef unsigned long long Card64;
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define VAXFLOAT
+#define HOST_DECFLOAT
 #define NEEDS_STRDUP
 #define BKOKEN_SPRINTF
 typedef signed char Integ8;
@@ -723,7 +723,7 @@ typedef unsigned int Card32;
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define VAXFLOAT
+#define HOST_DECFLOAT
 typedef signed char Integ8;
 typedef unsigned char Card8;
 typedef signed short Integ16;

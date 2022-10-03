@@ -33,50 +33,17 @@
 
 Boolean Double2IBMFloat(Word *pDest, double Src, Boolean ToDouble)
 {
-  Byte Buf[8];
   Word Sign;
   Integer Exponent;
   LongWord Mantissa, Fraction;
 
-  /* get into byte array, MSB first */
-
 #if DBG_FLOAT
   fprintf(stderr, "(0) %lf\n", Src);
 #endif
-  Double_2_ieee8(Src, Buf, True);
 
   /* (1) Dissect IEEE number */
 
-  /* (1a) Sign is MSB of first byte: */
-
-  Sign = !!(Buf[0] & 0x80);
-
-  /* (1b) Exponent is stored in the following 11 bits, with a bias of 1023:  */
-
-  Exponent = (Buf[0] & 0x7f);
-  Exponent = (Exponent << 4) | ((Buf[1] >> 4) & 15);
-  Exponent -= 1023;
-
-  /* (1c) Extract 28 bits of mantissa: */
-
-  Mantissa = Buf[1] & 15;
-  Mantissa = (Mantissa << 8) | Buf[2];
-  Mantissa = (Mantissa << 8) | Buf[3];
-  Mantissa = (Mantissa << 8) | Buf[4];
-
-  /* (1d) remaining 24 bits of mantissa, needed for double precision and rounding: */
-
-  Fraction = Buf[5];
-  Fraction = (Fraction << 8) | Buf[6];
-  Fraction = (Fraction << 8) | Buf[7];
-
-  /* (1e) if not denormal, make leading one of mantissa explicit: */
-
-  if (Exponent != -1023)
-    Mantissa |= 0x10000000ul;
-#if DBG_FLOAT
-  fprintf(stderr, "(cnvrt) %2d * 0x%08x * 2^%d Fraction 0x%08x\n", Sign ? -1 : 1, Mantissa, Exponent, Fraction);
-#endif
+  ieee8_dissect(&Sign, &Exponent, &Mantissa, &Fraction, Src);
 
   /* (2) Convert IEEE 2^n exponent to multiple of four since IBM float exponent is to the base of 16: */
 

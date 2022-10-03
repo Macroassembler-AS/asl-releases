@@ -92,6 +92,7 @@ typedef enum
   ErrNum_ExpectIntOrString = 1146,
   ErrNum_ExpectReg = 1147,
   ErrNum_RegWrongTarget = 1148,
+  ErrNum_FloatButInt = 1149,
   ErrNum_NoRelocs = 1150,
   ErrNum_UnresRelocs = 1155,
   ErrNum_Unexportable = 1156,

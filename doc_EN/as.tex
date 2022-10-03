@@ -66,7 +66,7 @@
 
 \vspace{1cm}\par
 
-{\large Edition August 2022}
+{\large Edition Oktober 2022}
 \end{raggedright}
 
 \clearpage
@@ -219,6 +219,7 @@ following processor families have been implemented:
 \item{Mitsubishi MELPS-4500}
 \item{Mitsubishi M16}
 \item{Mitsubishi M16C}
+\item{DEC PDP-11}
 \item{Intel 4004/4040}
 \item{Intel MCS-48/41, including Siemens SAB80C382, and the OKI
       variants}
@@ -2699,7 +2700,8 @@ PIO_ctrl   port PIO_port_A+3
 \subsection{REG and NAMEREG}
 \ttindex{REG}\ttindex{NAMEREG}
 
-{\em valid for: 680x0, AVR, M*Core, ST9, 80C16x, Z8000, KCPSM \\
+{\em valid for: 680x0, AVR, M*Core, ST9, 80C16x, Z8000, KCPSM, \\
+     PDP-11 \\
      ({\tt NAMEREG} valid only for KCPSM(3)), LatticeMico8, MSP430(X)}
 
 Though it always has the same syntax, this instruction has a slightly
@@ -2715,6 +2717,13 @@ symbolic name are given as arguments, for example:
 \begin{verbatim}
      NAMEREG  s08, treg
 \end{verbatim}
+
+On the PDP-11, \tty{REG} may additionally be used without a name in the
+label field.  It then expects a single \tty{ON} or \tty{OFF} as argument
+and enables or disables the built-in register aliases (\tty{Rn} = \tty{\%n},
+\tty{SP} = \tty{R6}, \tty{PC} = \tty{R7}).  They are available by default,
+and should only be disabled if they conflict with own synmbol names in a
+program. The current setting may be read from the symbol \tty{DEFAULT\_REGSYMS}.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -2978,6 +2987,8 @@ desired result when used as argument for \tty{ORG}.  The
 \hline
 \multicolumn{11}{|l|}{$^{9}$ device dependant} \\
 \hline
+\multicolumn{11}{|l|}{$^{10}$ model dependent} \\
+\hline
 \caption{Address Ranges for \tty{ORG}}
 \label{TabORG}
 \end{longtable}
@@ -3227,10 +3238,23 @@ t) M16C
 \end{quote}
 %%-----------
 \begin{quote}
+t) PDP-11/03, PDP-11/04, PDP-11/05, PDP-11/10,
+   PDP-11/15, PDP-11/20, PDP-11/23, PDP-11/24,
+   PDP-11/34, PDP-11/35, PDP-11/40, PDP-11/44,
+   PDP-11/45, PDP-11/50, MicroPDP-11/53,
+   PDP-11/55, PDP-11/60m PDP-11/70, MicroPDP-11/73,
+   MicroPDP-11/83, PDP-11/84, MicroPDP-11/93,
+   PDP-11/94, T-11
+\end{quote}
+The various models of the PDP-11 series differ in instruction
+set (both in built-in instructions as well as in available extensions)
+and the supported address space (64, 256, or 4096 KBytes).
+%%-----------
+\begin{quote}
 u) 4004 $\rightarrow$ 4040
 \end{quote}
-Opposed to its predecessor, the 4040 features about a dozen additional
-machine instructions.
+In comparison to its predecessor, the 4040 features about a dozen
+additional machine instructions.
 %%-----------
 \begin{quote}
 v) 8008 $\rightarrow$ 8008NEW
@@ -4005,8 +4029,8 @@ certain target supports such options.
 
 {\em
 \begin{itemize}
-\item{SUPMODE valid for: 680x0, i960, TLCS-900, SH7000, i960, 29K, XA,
-      PowerPC, M*Core, V60, and TMS9900}
+\item{SUPMODE valid for: 680x0, NS32xxx, PDP-11, i960, TLCS-900,
+      SH7000, i960, 29K, XA, PowerPC, M*Core, V60, and TMS9900}
 \item{FPU valid for: 680x0, NS32xxx, 80x86}
 \item{PMMU valid for: 680x0, NS32xxx}
 \item{CUSTOM valid for: NS32xxx}
@@ -4044,6 +4068,39 @@ The commands have the following meanings in detail:
 The usage of of instructions prohibited in this manner will generate a
 warning at \tty{SUPMODE}, at \tty{PMMU} and \tty{FPU} a real error
 message.
+
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+\subsection{CIS, EIS, FIS and FP11}
+\ttindex{CIS}\ttindex{EIS}\ttindex{FIS}\ttindex{FP11}
+
+{\em
+\begin{itemize}
+\item{valid for: PDP-11}
+\end{itemize}
+}
+
+These stetements enable or disable the availibility of certain PDP-11
+instruction set extensions.  For one of these statements to be available,
+the respective instructions must not be part of the machine's basic
+instruction set, and there must have been an upgrade option to add them.
+In detail:
+
+\begin{itemize}
+\item{{\tt CIS}: ,,Commercial Instruction Set'', i.e. instructions to
+      operate on packed and non-packed BCD numbers with variable length.
+      They were available as an option on the LSI-11 and the PDP-11/44.}
+\item{{\tt EIS}: The instructions {\tt MUL, DIV, ASH} und {\tt ASHC},
+      which were not part of the base instruction set on older or
+      smaller PDP-11 systems.  They were available as an option on the
+      LSI-11 resp. the PDP-11/35 and PDP-11/40.}
+\item{{\tt FIS}: Stack oriented instructions implementing the basic
+      mathematic operations on floating point numbers in F format (32 bits).
+      They were available as an option on the LSI-11 resp. the PDP-11/35
+      and PDP-11/40.}
+\item{{\tt FP11}: Full floating point support with separate FPU registers
+      in F and D format (32/64 bits).}
+\end{itemize}
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -5196,6 +5253,12 @@ Similarly, \tty{BYTE/ADDR} resp. \tty{WORD/ADDRW} in COP4/8 mode are an
 alias for \tty{DB} resp. \tty{DW}, with the pairs differing in byte order:
 instructions defined by National for address storage use big endian,
 \tty{BYTE} resp. \tty{WORD} in contrast use little endian.
+
+\ttindex{FLT2}\ttindex{FLT4}
+\tty{BYTE} resp. \tty{WORD} are available on PDP-11 as an alias for
+\tty{DB} resp. \tty{DW}.  \tty{FLT2} and \tty{FLT4} are similar to
+ \tty{DD} resp. \tty{DQ}, with the difference that they only store
+floating point numbers (in DEC's own F and D formats).
 
 If \tty{DB} is used in an address space that is not byte addressable (like
 the Atmel AVR's \tty{CODE} segment), bytes are packed in pairs into 16 bit
@@ -11823,6 +11886,11 @@ described by:
                {error}
                {The used register symbol was defined for a target different from
                 the current one and is not compatible.}
+               {the argument in question}
+\errentry{1149}{expected floating point argument but got integer}
+               {error}
+               {Only a floating point argument may be used at this place,
+                but an integer argument was given.}
                {the argument in question}
 \errentry{1200}{unknown instruction}
                {error}

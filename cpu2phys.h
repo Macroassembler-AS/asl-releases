@@ -17,6 +17,7 @@ struct sTempResult;
 
 extern void cpu_2_phys_area_clear(as_addrspace_t addr_space);
 extern void cpu_2_phys_area_add(as_addrspace_t addr_space, LargeWord cpu_start, LargeWord phys_start, LargeWord len);
+extern void cpu_2_phys_area_set_cpu_end(as_addrspace_t addr_space, LargeWord cpu_end);
 extern void cpu_2_phys_area_fill(as_addrspace_t addr_space, LargeWord cpu_start, LargeWord cpu_end);
 extern void cpu_2_phys_area_dump(as_addrspace_t addr_space, FILE *p_file);
 

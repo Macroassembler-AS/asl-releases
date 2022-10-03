@@ -11,8 +11,8 @@
 #include "stdinc.h"
 #include <string.h>
 
-const char *Version = "1.42 Beta [Bld 229]";
-const char *DebVersion = "1.42bld229-1";
+const char *Version = "1.42 Beta [Bld 230]";
+const char *DebVersion = "1.42bld230-1";
 LongInt VerNo = 0x142f;
 
 const char *InfoMessCopyright = "(C) 1992,2022 Alfred Arnold";
