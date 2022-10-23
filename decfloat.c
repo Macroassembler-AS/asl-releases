@@ -233,10 +233,8 @@ Boolean check_dec_fp_dispose_result(int ret, const struct sStrComp *p_arg)
     case E2BIG:
       WrStrErrorPos(ErrNum_OverRange, p_arg);
       return False;
-      break;
     default:
       WrXErrorPos(ErrNum_InvArg, "INF/NaN", &p_arg->Pos);
       return False;
-      break;
   }
 }

@@ -215,6 +215,10 @@ Message ErrMsgArgOutOfRange
  "Argument ausserhalb erlauben Bereichs"
  "argument out of range"
 
+Message ErrMsgTrySkipMultiwordInstruction
+ "Versuch, eine Mehrwort-Instruktion zu &uuml;berspringen"
+ "attempt to skip multiword instruction"
+
 ;*****
 
 Message ErrMsgDoubleDef
@@ -420,6 +424,10 @@ Message ErrMsgDuplicateInt
 Message ErrMsgJmpDistTooBig
  "Sprungdistanz zu gro&szlig;"
  "jump distance too big"
+
+Message ErrMsgJmpDistIsZero
+ "Sprungdistanz ist Null"
+ "jump distance is zero"
 
 Message ErrMsgDistIsOdd
  "Sprungdistanz ist ungerade"

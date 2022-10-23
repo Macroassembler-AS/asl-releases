@@ -21,6 +21,7 @@ static const TFamilyDescr Descrs[] =
   { "680x0"        , 0x0001, eHexFormatMotoS   },
   { "DSP56000"     , 0x0009, eHexFormatMotoS   },
   { "MPC601"       , 0x0005, eHexFormatMotoS   },
+  { "PALM"         , 0x000e, eHexFormatIntel   },
   { "M-CORE"       , 0x0003, eHexFormatMotoS   },
   { "XGATE"        , 0x0004, eHexFormatMotoS   },
   { "68xx"         , 0x0061, eHexFormatMotoS   },

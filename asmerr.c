@@ -257,6 +257,8 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
       msgno = Num_ErrMsgNotInPanelMode; break;
     case ErrNum_ArgOutOfRange:
       msgno = Num_ErrMsgArgOutOfRange; break;
+    case ErrNum_TrySkipMultiwordInstruction:
+      msgno = Num_ErrMsgTrySkipMultiwordInstruction; break;
     case ErrNum_DoubleDef:
       msgno = Num_ErrMsgDoubleDef; break;
     case ErrNum_SymbolUndef:
@@ -367,6 +369,8 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
       msgno = Num_ErrMsgDuplicateInt; break;
     case ErrNum_JmpDistTooBig:
       msgno = Num_ErrMsgJmpDistTooBig; break;
+    case ErrNum_JmpDistIsZero:
+      msgno = Num_ErrMsgJmpDistIsZero; break;
     case ErrNum_DistIsOdd:
       msgno = Num_ErrMsgDistIsOdd; break;
     case ErrNum_SkipTargetMismatch:

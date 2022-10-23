@@ -1670,8 +1670,8 @@ static void deinit_fields(void)
 /*!------------------------------------------------------------------------
  * \fn     intern_symbol_pdp11(char *pArg, TempResult *pResult)
  * \brief  handle built-in (register) symbols for PDP-11
- * \param  pArg source argument
- * \param  pResult result buffer
+ * \param  p_arg source argument
+ * \param  p_result result buffer
  * ------------------------------------------------------------------------ */
 
 static void intern_symbol_pdp11(char *p_arg, TempResult *p_result)

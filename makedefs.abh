@@ -11,6 +11,7 @@ include $(TARG_OBJDIR)codevars.dep
 include $(TARG_OBJDIR)code68k.dep
 include $(TARG_OBJDIR)code56k.dep
 include $(TARG_OBJDIR)code601.dep
+include $(TARG_OBJDIR)codepalm.dep
 include $(TARG_OBJDIR)codemcore.dep
 include $(TARG_OBJDIR)codexgate.dep
 include $(TARG_OBJDIR)code68.dep

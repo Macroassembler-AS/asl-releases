@@ -53,6 +53,7 @@
 #include "code68k.h"
 #include "code56k.h"
 #include "code601.h"
+#include "codepalm.h"
 #include "codemcore.h"
 #include "codexgate.h"
 #include "code68.h"
@@ -4291,6 +4292,7 @@ int main(int argc, char **argv)
     code68k_init();
     code56k_init();
     code601_init();
+    codepalm_init();
     codemcore_init();
     codexgate_init();
     code68_init();
