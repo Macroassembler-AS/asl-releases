@@ -47,7 +47,7 @@
 
 \vspace{1cm}\par
 
-{\large Stand Oktober 2022}
+{\large Stand November 2022}
 \end{raggedright}
 
 \clearpage
@@ -537,6 +537,7 @@ AS\_EN.TEX        & englische Dokumentation, LaTeX-Format \\
 \hline
 {\bf Verzeichnis INCLUDE} & \\
 \hline
+BCDIC.INC         & Definition BCDIC/Codepage 359 \\
 BITFUNCS.INC      & Funktionen zur Bitmanipulation \\
 CTYPE.INC         & Funktionen zur Klassifizierung von \\
                   & Zeichen \\
@@ -545,6 +546,7 @@ EBCDIC.INC        & Definition EBCDIC/Codepage 037 \\
 80C552.INC        & Registeradressen 80C552 \\
 H8\_3048.INC      & Registeradressen H8/3048 \\
 KENBAK.INC        & Registeradressen Kenbak-1 \\
+RADIX50.INC       & Definition RADIX 50 Zeichensatz \\
 REG166.INC        & Adressen \& Befehlsmakros 80C166/167 \\
 REG251.INC        & Adressen \& Bits 80C251 \\
 REG29K.INC        & Peripherieadressen AMD 2924x \\
@@ -2882,6 +2884,9 @@ mit ziemlich gr"undlichen Folgen: Dies bewirkt eine Reinitialisierung der
 Stringkonstanten, sondern auch als ,,ASCII'' formulierte Integerkonstanten.
 Dies bedeutet, da"s eine evtl. bereits modifizierte Umsetzungstabelle
 in den obigen Beispielen zu anderen Ergebnissen f"uhren kann!
+
+Mit der eingebauten Funktion \tty{CODEPAGE\_VAL} kann die "Ubersetzung
+eines einzelnen Zeichens abgefragt werden.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -7866,12 +7871,12 @@ Befehlsnamen, z.B.  {\tt MVI} f"ur ,,Move Immediate'' oder {\tt LDHD}
 f"ur ,,LoaD Halfword Direct''.  Dies ist f"ur einen Assembler deutlich
 einfacher zu parsen und in Maschinencode umzusetzen.
 
-Die anderen fassen
-unter einem Mnemonic alle Maschinenbefehle zusammen, die grob das
-gleiche tun, zum Beispiel {\tt LD} bzw. {\tt MOVE} um Daten zu transferieren.
-Das macht die Nutzung f"ur den Programmierer einfacher, sie
-sind mit den als Operanden geschriebenen Adressierungsarten f"ur einen
-Assembler aber etwas komplexer zu parsen.
+Die anderen fassen unter einem Mnemonic alle Maschinenbefehle
+zusammen, die grob das gleiche tun, zum Beispiel {\tt LD} bzw.
+{\tt MOVE} um Daten zu transferieren.  Das macht die Nutzung f"ur
+den Programmierer einfacher, sie sind mit den als Operanden
+geschriebenen Adressierungsarten f"ur einen Assembler aber etwas
+komplexer zu parsen.
 
 Auf diese Weise haben beide Mnemonic-S"atze ihre Berechtigung: Die
 einen, weil sie einfach das ,,Original'' sind und in allen
@@ -7896,6 +7901,17 @@ Folgt auf so einen Sprung ein Makrobefehl, so w"urde dieser nur
 teilweise "ubersprungen.  Ich habe daher eine kleine State-Machine
 vorgesehen, die solche Befehlsfolgen zu erkennen versucht und dann
 warnt.
+
+Die IBM-Systeme 5110 und 5120 verwenden nicht den heute "ublichen
+ASCII-Zeichensatz, sondern den von IBM-Gro"srechnern bekannten
+EBCDIC.  Im Include-Verzeichnis befindet sich eine Datei, die man
+zur Umsetzung von ASCII nach EDCDIC einbinden kann.  WICHTIG:
+EBCDIC ist in dieser Datei als eigene Codepage definiert, man
+mu"s die Umsetzung also noch mit einem
+\begin{verbatim}
+        codepage        cp037
+\end{verbatim}
+aktivieren.
 
 Noch ein Wort zur Integer-Syntax: Christian Corti hatte sich bei seiner
 Implementierung f"ur die Motorola-Syntax entschieden, also

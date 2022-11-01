@@ -32,6 +32,7 @@ extern void WrStrErrorPos(tErrorNum Num, const struct sStrComp *pStrComp);
 extern void CodeEXPECT(Word Code);
 extern void CodeENDEXPECT(Word Code);
 
+extern Boolean FindAndTakeExpectError(tErrorNum Num);
 
 extern void AsmErrPassInit(void);
 extern void AsmErrPassExit(void);

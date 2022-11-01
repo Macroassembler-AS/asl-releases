@@ -1,3 +1,16 @@
+2022-11-01  [1.42 Bld 232]
+
+- Addition    : Add translation of non-printable ASCII control characters
+                to EBCDIC code page
+- Addition    : Add BCDINC (code page 359)
+- Addition    : Add RADIX 50 code page and packing macro
+- Addition    : Add CODEPAGE_VAL function to query mapping of a
+                single character
+- Bugfix      : DC.x on V60 gets correct operand size, uses little
+                endian and does not pad by default
+- Bugfix      : V60: plain address as address operand is treated as
+                PC-relative instead of being silently ignored
+
 2022-10-23 [1.42 Bld 231]
 
 - Addition    : Add IBM PALM target

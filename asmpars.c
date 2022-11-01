@@ -4116,6 +4116,48 @@ void PrintRegDefs(void)
 
 /*--------------------------------------------------------------------------*/
 
+/*!------------------------------------------------------------------------
+ * \fn     FindCodepage(const char *p_name, PTransTable p_source)
+ * \brief  look up a code page by name
+ * \param  p_name name to look for
+ * \param  p_source source to copy from if creation allowed, otehrwise NULL
+ * \return * to found/created code page
+ * ------------------------------------------------------------------------ */
+
+PTransTable FindCodepage(const char *p_name, PTransTable p_source)
+{
+  PTransTable p_prev, p_run, p_new;
+  int cmp_res;
+
+  for (p_run = TransTables, p_prev = NULL; p_run; p_prev = p_run, p_run = p_run->Next)
+  {
+    cmp_res = CaseSensitive ? strcmp(p_name, p_run->Name) : as_strcasecmp(p_name, p_run->Name);
+    if (cmp_res <= 0)
+      break;
+  }
+  if (!cmp_res)
+    return p_run;
+  else if (!p_source)
+    return NULL;
+  else
+  {
+    p_new = (PTransTable) malloc(sizeof(TTransTable));
+    if (p_new)
+    {
+      p_new->Next = p_run;
+      p_new->Name = as_strdup(p_name);
+      if (!CaseSensitive)
+        UpString(p_new->Name);
+      p_new->Table = as_chartrans_table_dup(p_source->Table);
+      if (p_prev)
+        p_prev->Next = p_new;
+      else
+        TransTables = p_new;
+    }
+    return p_new;
+  }
+}
+
 void ClearCodepages(void)
 {
   PTransTable Old;

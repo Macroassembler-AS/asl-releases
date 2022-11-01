@@ -30,7 +30,7 @@ extern void AddMoto16PseudoONOFF(Boolean default_paddding_value);
 
 extern void DecodeMotoDC(tSymbolSize OpSize, Boolean Turn);
 
-extern Boolean DecodeMoto16Pseudo(tSymbolSize OpSize, Boolean Turn);
+extern Boolean DecodeMoto16Pseudo(tSymbolSize OpSize, Boolean BigEndian);
 
 extern Boolean DecodeMoto16AttrSize(char SizeSpec, tSymbolSize *pResult, Boolean Allow24);
 

@@ -10,6 +10,7 @@
 
 #include "stdinc.h"
 #include <errno.h>
+#include <string.h>
 #include "nonzstring.h"
 #include "chartrans.h"
 

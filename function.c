@@ -16,6 +16,7 @@
 #include "asmdef.h"
 #include "errmsg.h"
 #include "asmerr.h"
+#include "chartrans.h"
 #include "asmpars.h"
 #include "cpu2phys.h"
 #include "function.h"
@@ -50,6 +51,35 @@ static Boolean FuncCHARFROMSTR(TempResult *pResult, const TempResult *pArgs, uns
 
   as_tempres_set_int(pResult, ((pArgs[1].Contents.Int >= 0) && ((unsigned)pArgs[1].Contents.Int < pArgs[0].Contents.str.len)) ? pArgs[0].Contents.str.p_str[pArgs[1].Contents.Int] : -1);
 
+  return True;
+}
+
+static Boolean FuncCODEPAGE_VAL(TempResult *pResult, const TempResult *pArgs, unsigned ArgCnt)
+{
+  PTransTable p_table;
+
+  UNUSED(ArgCnt);
+
+  if (ArgCnt >= 2)
+  {
+    String name;
+
+    as_nonz_dynstr_to_c_str(name, &pArgs[1].Contents.str, sizeof(name));
+    p_table = FindCodepage(name, NULL);
+    if (!p_table)
+    {
+      WrXError(ErrNum_UnknownCodepage, name);
+      as_tempres_set_int(pResult, 0);
+      return True;
+    }
+  }
+  else
+    p_table = CurrTransTable;
+
+  if (ChkRange(pArgs[0].Contents.Int, 0, 255))
+    as_tempres_set_int(pResult, as_chartrans_xlate(p_table->Table, pArgs[0].Contents.Int));
+  else
+    as_tempres_set_int(pResult, 0);
   return True;
 }
 
@@ -617,6 +647,7 @@ static const tFunction Functions[] =
   { "SUBSTR"     , 3, 3, { AS_FARG_MString              , AS_FARG_MInt   , AS_FARG_MInt   }, FuncSUBSTR      },
   { "STRSTR"     , 2, 2, { AS_FARG_MString              , AS_FARG_MString, 0              }, FuncSTRSTR      },
   { "CHARFROMSTR", 2, 2, { AS_FARG_MString              , AS_FARG_MInt   , 0              }, FuncCHARFROMSTR },
+  { "CODEPAGE_VAL",1, 2, { AS_FARG_MInt                 , AS_FARG_MString, 0              }, FuncCODEPAGE_VAL},
   { "EXPRTYPE"   , 1, 1, { AS_FARG_MAll                 , 0              , 0              }, FuncEXPRTYPE    },
   { "UPSTRING"   , 1, 1, { AS_FARG_MString              , 0              , 0              }, FuncUPSTRING    },
   { "LOWSTRING"  , 1, 1, { AS_FARG_MString              , 0              , 0              }, FuncLOWSTRING   },

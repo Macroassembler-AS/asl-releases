@@ -294,6 +294,7 @@ extern void ClearLocStack(void);
 
 extern void PrintRegDefs(void);
 
+extern PTransTable FindCodepage(const char *p_name, PTransTable p_source);
 
 extern void ClearCodepages(void);
 

@@ -275,6 +275,58 @@ port1	port	22h
 	mov.d	#12345678h,r14
 	endexpect
 
+	; we treat a 'plain symbol' as PC-relative addressing.  Though not
+	; described by NEC, this is similar to e.g. the NS32K:
+
+	mov.b	$+100,r14
+	mov.b	$+100.8,r14
+	mov.b	$+100.16,r14
+	mov.b	$+100.32,r14
+	mov.b	$+1000,r14
+	expect	1320
+	mov.b	$+1000.8,r14
+	endexpect
+	mov.b	$+1000.16,r14
+	mov.b	$+1000.32,r14
+	mov.b	$+100000,r14
+	expect	1320,1320
+	mov.b	$+100000.8,r14
+	mov.b	$+100000.16,r14
+	endexpect
+	mov.b	$+100000.32,r14
+	mov.h	$+100,r14
+	mov.h	$+100.8,r14
+	mov.h	$+100.16,r14
+	mov.h	$+100.32,r14
+	mov.h	$+1000,r14
+	expect	1320
+	mov.h	$+1000.8,r14
+	endexpect
+	mov.h	$+1000.16,r14
+	mov.h	$+100000,r14
+	expect	1320,1320
+	mov.h	$+100000.8,r14
+	mov.h	$+100000.16,r14
+	endexpect
+	mov.h	$+100000.32,r14
+	mov.h	$+1000.32,r14
+	mov.w	$+100,r14
+	mov.w	$+100.8,r14
+	mov.w	$+100.16,r14
+	mov.w	$+100.32,r14
+	mov.w	$+1000,r14
+	expect	1320
+	mov.w	$+1000.8,r14
+	endexpect
+	mov.w	$+1000.16,r14
+	mov.w	$+1000.32,r14
+	mov.w	$+100000,r14
+	expect	1320,1320
+	mov.w	$+100000.8,r14
+	mov.w	$+100000.16,r14
+	endexpect
+	mov.w	$+100000.32,r14
+
 	; walk through instructions:
 
 	absf.s	r7,r9
@@ -4963,3 +5015,11 @@ port1	port	22h
 	cvt.lw	[ r20+ ], [ r20+ ]	; unpredictable
 	endexpect
 
+	; Endianess of dc.x was BE in first versions of the assembler.  However, V60 is LE:
+
+	dc.h	1,2,3
+	dc.b	1,2,3
+	dc.w	1,2,3
+	dc.d	1,2,3
+	dc.s	1.0,2.0,3.0
+	dc.l	1.0,2.0,3.0

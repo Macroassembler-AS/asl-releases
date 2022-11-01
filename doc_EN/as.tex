@@ -66,7 +66,7 @@
 
 \vspace{1cm}\par
 
-{\large Edition Oktober 2022}
+{\large Edition November 2022}
 \end{raggedright}
 
 \clearpage
@@ -532,6 +532,7 @@ AS\_EN.TEX        & english documentation, LaTeX format \\
 \hline
 {\bf Directory INCLUDE} & \\
 \hline
+BCDIC.INC         & definition of BCDIC/code page 359 \\
 BITFUNCS.INC      & functions for bit manipulation \\
 CTYPE.INC         & functions for classification of \\
                   & characters \\
@@ -540,6 +541,7 @@ EBCDIC.INC        & definition EBCDIC/code page 037 \\
 80C552.INC        & register addresses 80C552 \\
 H8\_3048.INC      & register addresses H8/3048 \\
 KENBAK.INC        & register addressed Kenbak-1 \\
+RADIX50.INC       & definition of RADIX 50 character set \\
 REG166.INC        & addresses and instruction macros 80C166/167 \\
 REG251.INC        & addresses and bits 80C251 \\
 REG29K.INC        & peripheral addresses AMD 2924x \\
@@ -2802,6 +2804,9 @@ memory, but also integer constants written as ''ASCII''. This means that
 an already modified translation table can lead to other results in the
 above mentioned examples!
 
+The built-in function \tty{CODEPAGE\_VAL} allows to query the translation
+of a single character in the current code page.
+
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 \subsection{CODEPAGE}
@@ -3246,12 +3251,12 @@ u) M16C
 \end{quote}
 %%-----------
 \begin{quote}
-v) PDP-11/03, PDP-11/04, PDP-11/05, PDP-11/10,
-   PDP-11/15, PDP-11/20, PDP-11/23, PDP-11/24,
-   PDP-11/34, PDP-11/35, PDP-11/40, PDP-11/44,
-   PDP-11/45, PDP-11/50, MicroPDP-11/53,
-   PDP-11/55, PDP-11/60m PDP-11/70, MicroPDP-11/73,
-   MicroPDP-11/83, PDP-11/84, MicroPDP-11/93,
+v) PDP-11/03, PDP-11/04, PDP-11/05, PDP-11/10,\\
+   PDP-11/15, PDP-11/20, PDP-11/23, PDP-11/24,\\
+   PDP-11/34, PDP-11/35, PDP-11/40, PDP-11/44,\\
+   PDP-11/45, PDP-11/50, MicroPDP-11/53,\\
+   PDP-11/55, PDP-11/60m PDP-11/70, MicroPDP-11/73,\\
+   MicroPDP-11/83, PDP-11/84, MicroPDP-11/93,\\
    PDP-11/94, T-11
 \end{quote}
 The various models of the PDP-11 series differ in instruction
@@ -3375,9 +3380,10 @@ These processors only differ in the size of their internal ROM which
 is defined in \tty{STDDEFXA.INC}.
 %%-----------
 \begin{quote}
-ag) AT90S1200, AT90S2313, AT90S2323, AT90S233, AT90S2343,\\
-    AT90S4414, AT90S4433, AT90S4434, AT90S8515,\\
-    AT90C8534, AT90S8535, ATTINY4, ATTINY5, ATTINY9,\\
+ag) AT90S1200, AT90S2313, AT90S2323, AT90S233,\\
+    AT90S2343, AT90S4414, AT90S4433, AT90S4434,\\
+    AT90S8515, AT90C8534, AT90S8535,\\
+    ATTINY4, ATTINY5, ATTINY9,\\
     ATTINY10, ATTINY11, ATTINY12, ATTINY13, ATTINY13A,\\
     ATTINY15, ATTINY20, ATTINY24(A), ATTINY25,\\
     ATTINY26, ATTINY28, ATTINY40, ATTINY44(A),\\
@@ -7713,6 +7719,15 @@ instruction word.  If such a skip is followed by a macro instruction,
 it would only partially be skipped.  I have therefore added a small
 state machine that attempts to detect such sequences and will issue a
 warning.
+
+The IBM 5110 and 5120 do not use the ASCII character set, but instead
+EBCDIC as known from IBM mainframes.  The include subdirectory holds
+a file that may be used to convert from ASCII to EBCDIC. IMPORTANT:
+This file defines EBCDIC as an extra code page, so the translation
+has to be activated with the statement
+\begin{verbatim}
+        codepage        cp037
+\end{verbatim}
 
 One more word about integer constant syntax: Christian Corti had
 decided to use the ''Motorola Syntax'', i.e.  hexadecimal constants

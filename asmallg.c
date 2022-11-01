@@ -834,6 +834,9 @@ static void CodeERROR(Word Index)
 
   if (ChkArgCnt(1, 1))
   {
+    if (FindAndTakeExpectError(ErrNum_UserError))
+      return;
+
     EvalStrStringExpression(&ArgStr[1], &OK, mess);
     if (!OK) WrError(ErrNum_InvString);
     else
@@ -963,55 +966,23 @@ static void CodePRSET(Word Index)
 
 static void CodeCODEPAGE(Word Index)
 {
-  PTransTable Prev, Run, New, Source;
-  int erg = 0;
+  PTransTable Source;
   UNUSED(Index);
 
   if (!ChkArgCnt(1, 2));
   else if (!ChkSymbName(ArgStr[1].str.p_str)) WrStrErrorPos(ErrNum_InvSymName, &ArgStr[1]);
   else
   {
-    if (!CaseSensitive)
-    {
-      UpString(ArgStr[1].str.p_str);
-      if (ArgCnt == 2)
-        UpString(ArgStr[2].str.p_str);
-    }
-
-    if (ArgCnt == 1)
-      Source = CurrTransTable;
-    else
-    {
-      for (Source = TransTables; Source; Source = Source->Next)
-        if (!strcmp(Source->Name, ArgStr[2].str.p_str))
-          break;
-    }
-
+    Source = (ArgCnt == 1) ? CurrTransTable : FindCodepage(ArgStr[2].str.p_str, NULL);
     if (!Source) WrStrErrorPos(ErrNum_UnknownCodepage, &ArgStr[2]);
     else
     {
-      for (Prev = NULL, Run = TransTables; Run; Prev = Run, Run = Run->Next)
-        if ((erg = strcmp(ArgStr[1].str.p_str, Run->Name)) <= 0)
-          break;
-
-      if ((!Run) || (erg < 0))
-      {
-        New = (PTransTable) malloc(sizeof(TTransTable));
-        New->Next = Run;
-        New->Name = as_strdup(ArgStr[1].str.p_str);
-        New->Table = as_chartrans_table_dup(Source->Table);
-        if (!Prev)
-          TransTables = New;
-        else
-          Prev->Next = New;
-        CurrTransTable = New;
-      }
-      else
-        CurrTransTable = Run;
+      Source = FindCodepage(ArgStr[1].str.p_str, Source);
+      if (Source)
+        CurrTransTable = Source;
     }
   }
 }
-
 
 static void CodeFUNCTION(Word Index)
 {

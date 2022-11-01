@@ -271,6 +271,7 @@ typedef enum
   ErrNum_InAccFieldErr = 2280,
   ErrNum_TargInDiffField = 2281,
   ErrNum_InvCombination = 2290,
+  ErrNum_UserError = 9990,
   ErrNum_InternalError = 10000,
   ErrNum_OpeningFile = 10001,
   ErrNum_ListWrError = 10002,

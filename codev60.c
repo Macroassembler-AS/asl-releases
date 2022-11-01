@@ -717,6 +717,24 @@ static Boolean DecodeAdr(tStrComp *pArg, tAdrVals *pResult, unsigned ModeMask)
       AppendToVals(pResult, OuterDispValue, OuterDispSize);
     }
   }
+  else
+  {
+    tSymbolSize DispSize = eSymbolSizeUnknown;
+    LongInt DispValue;
+
+    /* treat bare address as PC-relative */
+
+    CutSize(pArg, &DispSize);
+    DispValue = EvalDispOpt(pArg, &EvalResult, True);
+    if (!EvalResult.OK)
+      return False;
+    pResult->forced_disp_size = DispSize;
+    if (!DeduceAndCheckDispSize(pArg, DispValue, &DispSize, &EvalResult))
+      return False;
+    pResult->m = 0;
+    pResult->vals[pResult->count++] = 0xf0 + DispSize;
+    AppendToVals(pResult, DispValue, DispSize);
+  }
 
   return (pResult->count > 0) && check_mode_mask(pArg, ModMem, ModeMask);
 }
@@ -2868,7 +2886,7 @@ static void MakeCode_V60(void)
 
   /* Pseudo Instructions */
 
-  if (DecodeMoto16Pseudo(OpSize, False))
+  if (DecodeMoto16Pseudo(AttrPartOpSize[0], False))
     return;
 
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
@@ -2929,6 +2947,7 @@ static void SwitchTo_V60(void)
   SwitchFrom = SwitchFrom_V60;
   InternSymbol = InternSymbol_V60;
   DissectReg = DissectReg_V60;
+  AddMoto16PseudoONOFF(False);
 
   onoff_supmode_add();
 

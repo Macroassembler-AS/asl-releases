@@ -54,7 +54,14 @@ static void AddExpectError(tExpectError *pExpectError)
   pExpectErrors = pExpectError;
 }
 
-static tExpectError *FindAndTakeExpectError(tErrorNum Num)
+/*!------------------------------------------------------------------------
+ * \fn     FindAndTakeExpectError(tErrorNum Num)
+ * \brief  check whether a certain error was expected
+ * \param  Num number of error message that was expected
+ * \return True if ther was an expectation
+ * ------------------------------------------------------------------------ */
+
+Boolean FindAndTakeExpectError(tErrorNum Num)
 {
   tExpectError *pRun, *pPrev;
 
@@ -65,9 +72,10 @@ static tExpectError *FindAndTakeExpectError(tErrorNum Num)
         pPrev->pNext = pRun->pNext;
       else
         pExpectErrors = pRun->pNext;
-      return pRun;
+      free(pRun);
+      return True;
     }
-  return NULL;
+  return False;
 }
 
 /*!------------------------------------------------------------------------
@@ -819,14 +827,9 @@ void WrXErrorPos(tErrorNum Num, const char *pExtendError, const struct sLineComp
   String h;
   char Add[11];
   const char *pErrorMsg;
-  tExpectError *pExpectError;
 
-  pExpectError = FindAndTakeExpectError(Num);
-  if (pExpectError)
-  {
-    free(pExpectError);
+  if (FindAndTakeExpectError(Num))
     return;
-  }
 
   if (!CodeOutput && (Num == ErrNum_UnknownInstruction))
     return;
