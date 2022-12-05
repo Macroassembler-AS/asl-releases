@@ -327,6 +327,10 @@ port1	port	22h
 	endexpect
 	mov.w	$+100000.32,r14
 
+	; and yes, this may also incude an optional index register:
+
+	mov.w	$+100(r25),r14		; assure index prefix (0xc0 | 25 -> 0xd9) is included
+
 	; walk through instructions:
 
 	absf.s	r7,r9

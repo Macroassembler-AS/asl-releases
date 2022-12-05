@@ -3056,6 +3056,7 @@ static void InternSymbol_NS32K(char *pArg, TempResult *pResult)
     pResult->DataSize = Size;
     pResult->Contents.RegDescr.Reg = Reg;
     pResult->Contents.RegDescr.Dissect = DissectReg_NS32K;
+    pResult->Contents.RegDescr.compare = NULL;
   }
 }
 

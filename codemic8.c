@@ -528,6 +528,7 @@ static void InternSymbol_Mico8(char *pArg, TempResult *pResult)
     pResult->DataSize = eSymbolSize8Bit;
     pResult->Contents.RegDescr.Reg = RegNum;
     pResult->Contents.RegDescr.Dissect = DissectReg_Mico8;
+    pResult->Contents.RegDescr.compare = NULL;
   }
 }
 

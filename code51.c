@@ -2658,6 +2658,7 @@ static void InternSymbol_51(char *pArg, TempResult *pResult)
     pResult->DataSize = (tSymbolSize)Size;
     pResult->Contents.RegDescr.Reg = Erg;
     pResult->Contents.RegDescr.Dissect = DissectReg_51;
+    pResult->Contents.RegDescr.compare = NULL;
   }
 }
 

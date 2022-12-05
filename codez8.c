@@ -2674,6 +2674,7 @@ static void InternSymbol_Z8(char *pArg, TempResult *pResult)
     pResult->DataSize = eSymbolSize8Bit;
     pResult->Contents.RegDescr.Reg = RegNum;
     pResult->Contents.RegDescr.Dissect = DissectReg_Z8;
+    pResult->Contents.RegDescr.compare = NULL;
   }
   else if (IsWRRegCore(pArg, &RegNum))
   {
@@ -2681,6 +2682,7 @@ static void InternSymbol_Z8(char *pArg, TempResult *pResult)
     pResult->DataSize = eSymbolSize16Bit;
     pResult->Contents.RegDescr.Reg = RegNum;
     pResult->Contents.RegDescr.Dissect = DissectReg_Z8;
+    pResult->Contents.RegDescr.compare = NULL;
   }
 }
 

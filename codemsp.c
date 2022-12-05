@@ -78,7 +78,6 @@ typedef enum
 #define REG_PC 0
 #define REG_SP 1
 #define REG_SR 2
-#define REG_MARK 16 /* internal mark to differentiate PC<->R0, SP<->R1, and SR<->R2 */
 
 typedef struct
 {
@@ -133,15 +132,15 @@ static Boolean DecodeRegCore(const char *pArg, Word *pResult)
 {
   if (!as_strcasecmp(pArg, "PC"))
   {
-    *pResult = REG_MARK | REG_PC; return True;
+    *pResult = REGSYM_FLAG_ALIAS | REG_PC; return True;
   }
   else if (!as_strcasecmp(pArg,"SP"))
   {
-    *pResult = REG_MARK | REG_SP; return True;
+    *pResult = REGSYM_FLAG_ALIAS | REG_SP; return True;
   }
   else if (!as_strcasecmp(pArg, "SR"))
   {
-    *pResult = REG_MARK | REG_SR; return True;
+    *pResult = REGSYM_FLAG_ALIAS | REG_SR; return True;
   }
   if ((as_toupper(*pArg) == 'R') && (strlen(pArg) >= 2) && (strlen(pArg) <= 3))
   {
@@ -170,13 +169,13 @@ static void DissectReg_MSP(char *pDest, size_t DestSize, tRegInt Value, tSymbolS
     case eSymbolSize8Bit:
       switch (Value)
       {
-        case REG_MARK | REG_PC:
+        case REGSYM_FLAG_ALIAS | REG_PC:
           as_snprintf(pDest, DestSize, "PC");
           break;
-        case REG_MARK | REG_SP:
+        case REGSYM_FLAG_ALIAS | REG_SP:
           as_snprintf(pDest, DestSize, "SP");
           break;
-        case REG_MARK | REG_SR:
+        case REGSYM_FLAG_ALIAS | REG_SR:
           as_snprintf(pDest, DestSize, "SR");
           break;
         default:
@@ -205,12 +204,12 @@ static Boolean DecodeReg(const tStrComp *pArg, Word *pResult, Boolean MustBeReg)
 
   if (DecodeRegCore(pArg->str.p_str, pResult))
   {
-    *pResult &= ~REG_MARK;
+    *pResult &= ~REGSYM_FLAG_ALIAS;
     return True;
   }
 
   RegEvalResult = EvalStrRegExpressionAsOperand(pArg, &RegDescr, &EvalResult, eSymbolSize8Bit, MustBeReg);
-  *pResult = RegDescr.Reg & ~REG_MARK;
+  *pResult = RegDescr.Reg & ~REGSYM_FLAG_ALIAS;
   return (RegEvalResult == eIsReg);
 }
 
@@ -1526,6 +1525,7 @@ static void InternSymbol_MSP(char *pArg, TempResult *pResult)
     pResult->DataSize = eSymbolSize8Bit;
     pResult->Contents.RegDescr.Reg = RegNum;
     pResult->Contents.RegDescr.Dissect = DissectReg_MSP;
+    pResult->Contents.RegDescr.compare = NULL;
   }
 }
 

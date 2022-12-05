@@ -28,7 +28,6 @@
 
 #define REG_SP 15
 #define REG_FP 14
-#define REG_MARK 16
 
 #define ModNone      (-1)
 #define ModReg       0
@@ -164,9 +163,9 @@ static Boolean IsD16(LongInt inp)
 static Boolean DecodeRegCore(const char *pArg, Word *pResult)
 {
   if (!as_strcasecmp(pArg, "SP"))
-    *pResult = REG_SP | REG_MARK;
+    *pResult = REG_SP | REGSYM_FLAG_ALIAS;
   else if (!as_strcasecmp(pArg, "FP"))
-    *pResult = REG_FP | REG_MARK;
+    *pResult = REG_FP | REGSYM_FLAG_ALIAS;
   else if ((strlen(pArg) > 1) && (as_toupper(*pArg) == 'R'))
   {
     Boolean OK;
@@ -195,10 +194,10 @@ static void DissectReg_M16(char *pDest, size_t DestSize, tRegInt Value, tSymbolS
   {
     switch (Value)
     {
-      case REG_MARK | REG_SP:
+      case REGSYM_FLAG_ALIAS | REG_SP:
         as_snprintf(pDest, DestSize, "SP");
         break;
-      case REG_MARK | REG_FP:
+      case REGSYM_FLAG_ALIAS | REG_FP:
         as_snprintf(pDest, DestSize, "FP");
         break;
       default:
@@ -226,12 +225,12 @@ static tRegEvalResult DecodeReg(const tStrComp *pArg, Word *pResult, Boolean Mus
 
   if (DecodeRegCore(pArg->str.p_str, pResult))
   {
-    *pResult &= ~REG_MARK;
+    *pResult &= ~REGSYM_FLAG_ALIAS;
     return eIsReg;
   }
 
   RegEvalResult = EvalStrRegExpressionAsOperand(pArg, &RegDescr, &EvalResult, eSymbolSize32Bit, MustBeReg);
-  *pResult = RegDescr.Reg & ~REG_MARK;
+  *pResult = RegDescr.Reg & ~REGSYM_FLAG_ALIAS;
   return RegEvalResult;
 }
 
@@ -3178,6 +3177,7 @@ static void InternSymbol_M16(char *pArg, TempResult *pResult)
     pResult->DataSize = eSymbolSize32Bit;
     pResult->Contents.RegDescr.Reg = RegNum;
     pResult->Contents.RegDescr.Dissect = DissectReg_M16;
+    pResult->Contents.RegDescr.compare = NULL;
   }
 }
 

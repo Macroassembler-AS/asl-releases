@@ -768,6 +768,30 @@ typedef unsigned long Card64;
 #define LOCALE_NLS
 #endif
 
+/*---------------------------------------------------------------------------*/
+/* AArch64 with macOS (Apple M-series CPU) */
+
+#ifdef __APPLE__
+#define ARCHSYSNAME "apple-darwin"
+#define DEFSMADE
+#define OPENRDMODE "r"
+#define OPENWRMODE "w"
+#define OPENUPMODE "r+"
+#define IEEEFLOAT
+typedef signed char Integ8;
+typedef unsigned char Card8;
+typedef signed short Integ16;
+typedef unsigned short Card16;
+#define HAS16
+typedef signed int Integ32;
+#define PRIInteg32 "d"
+typedef unsigned int Card32;
+typedef signed long Integ64;
+typedef unsigned long Card64;
+#define HAS64
+#define LOCALE_NLS
+#endif
+
 #endif /* __aarch64__ */
 
 /*===========================================================================*/

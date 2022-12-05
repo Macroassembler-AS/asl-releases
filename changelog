@@ -1,4 +1,12 @@
-2022-11-01  [1.42 Bld 232]
+2022-12-05 [1.42 Bld 233]
+
+- Bugfix      : Correct encoding of SP register alias on SH
+- Bugfix      : Add missing comparison operators for register symbols
+- Addition    : Allow != as unequality operator
+- Bugfix      : addr(ireg) was correctly encoded as PC-relative on V60,
+                but without encoding a possible index register
+
+2022-11-01 [1.42 Bld 232]
 
 - Addition    : Add translation of non-printable ASCII control characters
                 to EBCDIC code page

@@ -1,0 +1,7 @@
++----------------------- Test Application 29KRCMP ---------------------------+
+|                                                                            |
+| This is a test of how 29K register symbols compare.  Since there are       |
+| registers in base/global/local space, they cannot be compared beyond       |
+| being equal or unequal.                                                    |
+|                                                                            |
++----------------------------------------------------------------------------+

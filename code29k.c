@@ -156,6 +156,49 @@ static void DissectReg_29K(char *pDest, size_t DestSize, tRegInt Value, tSymbolS
 }
 
 /*!------------------------------------------------------------------------
+ * \fn     compare_reg_29k(tRegInt reg1_num, tSymbolSize reg1_size, tRegInt reg2_num, tRegInt reg2_size)
+ * \brief  compare two register symbols
+ * \param  reg1_num 1st register's number
+ * \param  reg1_size 1st register's data size
+ * \param  reg2_num 2nd register's number
+ * \param  reg2_size 2nd register's data size
+ * \return 0, -1, 1, -2
+ * ------------------------------------------------------------------------ */
+
+static int compare_reg_29k(tRegInt reg1_num, tSymbolSize size1, tRegInt reg2_num, tSymbolSize size2)
+{
+  if ((size1 != eSymbolSize32Bit) || (size2 != eSymbolSize32Bit))
+    return -2;
+
+  /* We have up to 512 registers, which conflicts with the generic ALIAS flag in bit 7.
+     So we have to compare on our own.  R (0..255), GR (256...383), and LR (384...511)
+     spaces are disjoint: */
+
+  if ((reg1_num ^ reg2_num) & REG_LRMARK)
+    return -2;
+
+  if (reg1_num & REG_LRMARK)
+  {
+    if ((reg1_num ^ reg2_num) & 128)
+      return -2;
+    reg1_num &= 127;
+    reg2_num &= 127;
+  }
+  else
+  {
+    reg1_num &= 255;
+    reg2_num &= 255;
+  }
+
+  if (reg1_num < reg2_num)
+    return -1;
+  else if (reg1_num > reg2_num)
+    return 1;
+  else
+    return 0;
+}
+
+/*!------------------------------------------------------------------------
  * \fn     DecodeReg(const tStrComp *pArg, LongWord *pResult, Boolean MustBeReg)
  * \brief  check whether argument describes a CPU register
  * \param  pArg source argument
@@ -1006,6 +1049,7 @@ static void InternSymbol_29K(char *pArg, TempResult *pResult)
     pResult->DataSize = eSymbolSize32Bit;
     pResult->Contents.RegDescr.Reg = Reg;
     pResult->Contents.RegDescr.Dissect = DissectReg_29K;
+    pResult->Contents.RegDescr.compare = compare_reg_29k;
   }
 }
 

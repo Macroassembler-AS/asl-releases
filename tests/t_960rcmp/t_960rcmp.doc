@@ -1,0 +1,7 @@
++----------------------- Test Application 960RCMP ---------------------------+
+|                                                                            |
+| This is a test of how i960 register symbols compare.  Since there are      |
+| integer and floating point register in different register spaces, they     |
+| cannot be compare beyond being equal or unequal.                           |
+|                                                                            |
++----------------------------------------------------------------------------+

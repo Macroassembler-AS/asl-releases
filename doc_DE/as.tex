@@ -47,7 +47,7 @@
 
 \vspace{1cm}\par
 
-{\large Stand November 2022}
+{\large Stand Dezember 2022}
 \end{raggedright}
 
 \clearpage
@@ -1917,40 +1917,41 @@ Integers mit 64 Bit Breite behandelt.
 Der Assembler stellt zur Verkn"upfung die in Tabelle \ref{TabOps} genannten
 Operanden zur Verf"ugung.
 \begin{table*}[htbp]
-\begin{center}\begin{tabular}{|c|l|c|c|c|c|c|}
+\begin{center}\begin{tabular}{|c|l|c|c|c|c|c|c|}
 \hline
-Op. & Funktion & \#Ops. & Int & Float & String & Rang \\
+Op. & Funktion & \#Ops. & Int & Float & String & Register & Rang \\
 \hline
 \hline
-$<>$        & Ungleichheit         & 2 & ja   & ja   & ja   & 14 \\
-$>=$        & gr"o"ser o. gleich   & 2 & ja   & ja   & ja   & 14 \\
-$<=$        & kleiner o. gleich    & 2 & ja   & ja   & ja   & 14 \\
-$<$         & echt kleiner         & 2 & ja   & ja   & ja   & 14 \\
-$>$         & echt gr"o"ser        & 2 & ja   & ja   & ja   & 14 \\
-$=$         & Gleichheit           & 2 & ja   & ja   & ja   & 14 \\
-$==$        & Alias f"ur $=$       &   &      &      &      &    \\
+$<>$        & Ungleichheit         & 2 & ja   & ja   & ja   & ja   & 14 \\
+$!=$        & Alias f"ur $<>$      &   &      &      &      &      &    \\
+$>=$        & gr"o"ser o. gleich   & 2 & ja   & ja   & ja   & ja   & 14 \\
+$<=$        & kleiner o. gleich    & 2 & ja   & ja   & ja   & ja   & 14 \\
+$<$         & echt kleiner         & 2 & ja   & ja   & ja   & ja   & 14 \\
+$>$         & echt gr"o"ser        & 2 & ja   & ja   & ja   & ja   & 14 \\
+$=$         & Gleichheit           & 2 & ja   & ja   & ja   & ja   & 14 \\
+$==$        & Alias f"ur $=$       &   &      &      &      &      &    \\
             & & & & & &  \\
-$!!$        & log. XOR             & 2 & ja   & nein & nein & 13 \\
-$||$        & log. OR              & 2 & ja   & nein & nein & 12 \\
-\&\&        & log. AND             & 2 & ja   & nein & nein & 11 \\
-\verb! ~~ ! & log. NOT             & 1 & ja   & nein & nein & 2 \\
+$!!$        & log. XOR             & 2 & ja   & nein & nein & nein & 13 \\
+$||$        & log. OR              & 2 & ja   & nein & nein & nein & 12 \\
+\&\&        & log. AND             & 2 & ja   & nein & nein & nein & 11 \\
+\verb! ~~ ! & log. NOT             & 1 & ja   & nein & nein & nein & 2 \\
             & & & & & &  \\
--           & Differenz            & 2 & ja   & ja   & nein & 10 \\
-+           & Summe                & 2 & ja   & ja   & ja   & 10 \\
-\#          & Modulodivision       & 2 & ja   & nein & nein & 9 \\
-/           & Quotient             & 2 & ja*) & ja   & nein & 9 \\
-\verb! * !  & Produkt              & 2 & ja   & ja   & nein & 9 \\
-\verb! ^ !  & Potenz               & 2 & ja   & ja   & nein & 8 \\
+-           & Differenz            & 2 & ja   & ja   & nein & nein & 10 \\
++           & Summe                & 2 & ja   & ja   & ja   & nein & 10 \\
+\#          & Modulodivision       & 2 & ja   & nein & nein & nein & 9 \\
+/           & Quotient             & 2 & ja*) & ja   & nein & nein & 9 \\
+\verb! * !  & Produkt              & 2 & ja   & ja   & nein & nein & 9 \\
+\verb! ^ !  & Potenz               & 2 & ja   & ja   & nein & nein & 8 \\
             & & & & & &  \\
-$!$         & bin"ares XOR         & 2 & ja   & nein & nein & 7 \\
-$|$         & bin"ares OR          & 2 & ja   & nein & nein & 6 \\
-\&          & bin"ares AND         & 2 & ja   & nein & nein & 5 \\
-$><$        & Bitspiegelung        & 2 & ja   & nein & nein & 4 \\
-$>>$        & log. Rechtsschieben  & 2 & ja   & nein & nein & 3 \\
-$<<$        & log. Linksschieben   & 2 & ja   & nein & nein & 3 \\
-\verb! ~ !  & bin"ares NOT         & 1 & ja   & nein & nein & 1 \\
+$!$         & bin"ares XOR         & 2 & ja   & nein & nein & nein & 7 \\
+$|$         & bin"ares OR          & 2 & ja   & nein & nein & nein & 6 \\
+\&          & bin"ares AND         & 2 & ja   & nein & nein & nein & 5 \\
+$><$        & Bitspiegelung        & 2 & ja   & nein & nein & nein & 4 \\
+$>>$        & log. Rechtsschieben  & 2 & ja   & nein & nein & nein & 3 \\
+$<<$        & log. Linksschieben   & 2 & ja   & nein & nein & nein & 3 \\
+\verb! ~ !  & bin"ares NOT         & 1 & ja   & nein & nein & nein & 1 \\
 \hline
-\multicolumn{7}{|l|}{*) Rest wird verworfen} \\
+\multicolumn{8}{|l|}{*) Rest wird verworfen} \\
 \hline
 \end{tabular}\end{center}
 \caption{in AS definierte Operatoren\label{TabOps}}
@@ -1962,8 +1963,22 @@ Evaluierung l"a"st sich durch Klammerung neu festlegen.
 \par
 Die Vergleichsoperatoren liefern TRUE, falls die Bedingung zutrifft,
 und FALSE falls nicht.  Vergleiche betrachten Integerzahlen dabei als
-32 Bit breit und vorzeichenbehaftet. F"ur die logischen Operatoren
-ist ein Ausdruck TRUE, falls er ungleich 0 ist, ansonsten FALSE.
+32 oder 64 Bit breit (je nach Host-System) und vorzeichenbehaftet. F"ur
+die logischen Operatoren ist ein Ausdruck TRUE, falls er ungleich 0 ist,
+ansonsten FALSE.
+\par
+Bei Vergleichen von Register-Symbolen sind zwei Details zu beachten.
+Zum einen sind zwei Register-Symbole dann gleich, wenn sie auf das
+gleiche Register verweisen.  Da Register bei einigen Prozessoren
+Alias-Namen haben, werden diese Aliase als gleich betrachtet.  Zum
+Beispiel ist das Register {\tt A7} auf einem 68000 auch als {\tt SP}
+ansprechbar, und diese beiden Registersymbole sind gleich.  Zum anderen
+haben manche Prozessoren mehrere S"atze von Registern, auf einem 68040
+zum Beispiel die normalen (Integer-)Register und die FPU-Register.
+Zwischen zwei Registern aus unterschiedlichen Gruppen l"a"st sich
+keine kleiner/gr"o"ser-Beziehung angeben, die entsprechenden Operatoren
+liefern immer ein FALSE zur"uck.  Lediglich ein Test auf Gleichheit oder
+Ungleichheit ergibt einen Sinn.
 \par
 Die Bitspiegelung ist wohl etwas erkl"arungsbed"urftig: Der Operator
 spiegelt die untersten Bits im ersten Operanden, l"a"st die

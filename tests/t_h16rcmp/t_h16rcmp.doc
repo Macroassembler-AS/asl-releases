@@ -1,0 +1,6 @@
++----------------------- Test Application H16RCMP ---------------------------+
+|                                                                            |
+| This is a test of how 29K register symbols compare.  Since there are       |
+| R/PR/CR registers, they cannot be compared beyond being equal or unequal.  |
+|                                                                            |
++----------------------------------------------------------------------------+

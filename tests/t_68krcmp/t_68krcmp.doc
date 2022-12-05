@@ -1,0 +1,7 @@
++----------------------- Test Application 68KRCMP ---------------------------+
+|                                                                            |
+| This is a test of how 68K register symbols compare.  Since there are       |
+| integer and floating point registers in different register spaces, they    |
+| cannot be compared beyond being equal or unequal.                          |
+|                                                                            |
++----------------------------------------------------------------------------+

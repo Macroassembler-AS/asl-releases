@@ -580,6 +580,7 @@ static void InternSymbol_KCPSM(char *pArg, TempResult *pResult)
     pResult->DataSize = eSymbolSize8Bit;
     pResult->Contents.RegDescr.Reg = RegNum;
     pResult->Contents.RegDescr.Dissect = DissectReg_KCPSM;
+    pResult->Contents.RegDescr.compare = NULL;
   }
 }
 

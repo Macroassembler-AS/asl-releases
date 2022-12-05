@@ -26,7 +26,6 @@
 #include "onoff_common.h"
 
 #define REG_PC 0
-#define REG_MARK 16
 
 #define MODIFIER_0 8
 
@@ -73,7 +72,7 @@ static Boolean decode_reg_core(const char *p_arg, Word *p_result, tSymbolSize *p
 {
   if (!as_strcasecmp(p_arg, "PC"))
   {
-    *p_result = REG_PC | REG_MARK;
+    *p_result = REG_PC | REGSYM_FLAG_ALIAS;
     *p_size = eSymbolSize16Bit;
     return True;
   }
@@ -125,7 +124,7 @@ static tRegEvalResult decode_reg(const tStrComp *p_arg, Word *p_result, Boolean 
   else
     reg_eval_result = EvalStrRegExpressionAsOperand(p_arg, &reg_descr, &eval_result, eSymbolSizeUnknown, must_be_reg);
 
-  *p_result = reg_descr.Reg & ~REG_MARK;
+  *p_result = reg_descr.Reg & ~REGSYM_FLAG_ALIAS;
   return reg_eval_result;
 }
 
@@ -145,7 +144,7 @@ static void dissect_reg_palm(char *p_dest, size_t dest_size, tRegInt value, tSym
     case eSymbolSize16Bit:
       switch (value)
       {
-        case REG_MARK | REG_PC:
+        case REGSYM_FLAG_ALIAS | REG_PC:
           as_snprintf(p_dest, dest_size, "PC");
           break;
         default:
@@ -1402,6 +1401,7 @@ static void intern_symbol_palm(char *p_arg, TempResult *p_result)
     p_result->Typ = TempReg;
     p_result->Contents.RegDescr.Reg = reg_num;
     p_result->Contents.RegDescr.Dissect = dissect_reg_palm;
+    p_result->Contents.RegDescr.compare = NULL;
   }
 }
 

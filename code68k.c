@@ -125,7 +125,6 @@ typedef struct
 #define EMACAvailName  "HASEMAC"
 
 #define REG_SP 15
-#define REG_MARK 16 /* internal mark to differentiate SP<->A7 */
 #define REG_FPCTRL 8
 #define REG_FPCR 4
 #define REG_FPSR 2
@@ -294,7 +293,7 @@ static Boolean DecodeRegCore(const char *pArg, Word *pResult)
 {
   if (!as_strcasecmp(pArg, "SP"))
   {
-    *pResult = REG_SP | REG_MARK;
+    *pResult = REG_SP | REGSYM_FLAG_ALIAS;
     return True;
   }
 
@@ -382,7 +381,7 @@ static void DissectReg_68K(char *pDest, size_t DestSize, tRegInt Value, tSymbolS
   {
     switch (Value)
     {
-      case REG_MARK | REG_SP:
+      case REGSYM_FLAG_ALIAS | REG_SP:
         as_snprintf(pDest, DestSize, "SP");
         break;
       default:
@@ -391,6 +390,44 @@ static void DissectReg_68K(char *pDest, size_t DestSize, tRegInt Value, tSymbolS
   }
   else
     as_snprintf(pDest, DestSize, "%d-%u", (int)InpSize, (unsigned)Value);
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     compare_reg_68k(tRegInt reg1_num, tSymbolSize reg1_size, tRegInt reg2_num, tRegInt reg2_size)
+ * \brief  compare two register symbols
+ * \param  reg1_num 1st register's number
+ * \param  reg1_size 1st register's data size
+ * \param  reg2_num 2nd register's number
+ * \param  reg2_size 2nd register's data size
+ * \return 0, -1, 1, -2
+ * ------------------------------------------------------------------------ */
+
+static int compare_reg_68k(tRegInt reg1_num, tSymbolSize reg1_size, tRegInt reg2_num, tSymbolSize reg2_size)
+{
+  /* FP and Integer registers in different register files: */
+
+  if (reg1_size != reg2_size)
+    return -2;
+
+  if (reg1_size == NativeFloatSize)
+  {
+    /* only FP data registers have an ordering: */
+
+    if ((reg1_num & REG_FPCTRL) || (reg2_num & REG_FPCTRL))
+      return (reg1_num == reg2_num) ? 0 : -2;
+  }
+  else if (reg1_size == eSymbolSize32Bit)
+  {
+    reg1_num &= ~REGSYM_FLAG_ALIAS;
+    reg2_num &= ~REGSYM_FLAG_ALIAS;
+  }
+
+  if (reg1_num < reg2_num)
+    return -1;
+  else if (reg1_num > reg2_num)
+    return 1;
+  else
+    return 0;
 }
 
 /*-------------------------------------------------------------------------*/
@@ -446,12 +483,12 @@ static tRegEvalResult DecodeReg(const tStrComp *pArg, Word *pResult, Boolean Mus
 
   if (DecodeRegCore(pArg->str.p_str, pResult))
   {
-    *pResult &= ~REG_MARK;
+    *pResult &= ~REGSYM_FLAG_ALIAS;
     return eIsReg;
   }
 
   RegEvalResult = EvalStrRegExpressionAsOperand(pArg, &RegDescr, &EvalResult, eSymbolSize32Bit, MustBeReg);
-  *pResult = RegDescr.Reg & ~REG_MARK;
+  *pResult = RegDescr.Reg & ~REGSYM_FLAG_ALIAS;
   return RegEvalResult;
 }
 
@@ -472,7 +509,7 @@ static tRegEvalResult DecodeFPReg(const tStrComp *pArg, Word *pResult, Boolean M
 
   if (DecodeFPRegCore(pArg->str.p_str, pResult))
   {
-    *pResult &= ~REG_MARK;
+    *pResult &= ~REGSYM_FLAG_ALIAS;
     return eIsReg;
   }
 
@@ -499,7 +536,7 @@ static tRegEvalResult DecodeRegOrFPReg(const tStrComp *pArg, Word *pResult, tSym
 
   if (DecodeRegCore(pArg->str.p_str, pResult))
   {
-    *pResult &= ~REG_MARK;
+    *pResult &= ~REGSYM_FLAG_ALIAS;
     *pSize = eSymbolSize32Bit;
     return eIsReg;
   }
@@ -510,7 +547,7 @@ static tRegEvalResult DecodeRegOrFPReg(const tStrComp *pArg, Word *pResult, tSym
   }
 
   RegEvalResult = EvalStrRegExpressionAsOperand(pArg, &RegDescr, &EvalResult, eSymbolSizeUnknown, MustBeReg);
-  *pResult = RegDescr.Reg & ~REG_MARK;
+  *pResult = RegDescr.Reg & ~REGSYM_FLAG_ALIAS;
   *pSize = EvalResult.DataSize;
   return RegEvalResult;
 }
@@ -6245,6 +6282,7 @@ static void InternSymbol_68K(char *pArg, TempResult *pResult)
     pResult->DataSize = eSymbolSize32Bit;
     pResult->Contents.RegDescr.Reg = RegNum;
     pResult->Contents.RegDescr.Dissect = DissectReg_68K;
+    pResult->Contents.RegDescr.compare = compare_reg_68k;
   }
   else if (DecodeFPRegCore(pArg, &RegNum))
   {
@@ -6252,6 +6290,7 @@ static void InternSymbol_68K(char *pArg, TempResult *pResult)
     pResult->DataSize = NativeFloatSize;
     pResult->Contents.RegDescr.Reg = RegNum;
     pResult->Contents.RegDescr.Dissect = DissectReg_68K;
+    pResult->Contents.RegDescr.compare = compare_reg_68k;
   }
 }
 

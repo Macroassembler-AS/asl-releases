@@ -692,6 +692,7 @@ static void InternSymbol_XGATE(char *pArg, TempResult *pResult)
     pResult->DataSize = eSymbolSize16Bit;
     pResult->Contents.RegDescr.Reg = Reg;
     pResult->Contents.RegDescr.Dissect = DissectReg_XGATE;
+    pResult->Contents.RegDescr.compare = NULL;
   }
 }
 

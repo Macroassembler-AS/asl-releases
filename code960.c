@@ -90,8 +90,6 @@ typedef struct
   LongWord Code;
 } SpecReg;
 
-#define REG_MARK 32
-
 static FixedOrder *FixedOrders;
 static RegOrder *RegOrders;
 static CobrOrder *CobrOrders;
@@ -141,7 +139,7 @@ static Boolean DecodeIRegCore(const char *pArg, LongWord *pResult)
   for (z = 0; z < SpecRegCnt; z++)
    if (!as_strcasecmp(pArg, SpecRegs[z].Name))
    {
-     *pResult = REG_MARK | SpecRegs[z].Code;
+     *pResult = REGSYM_FLAG_ALIAS | SpecRegs[z].Code;
      return True;
    }
 
@@ -211,7 +209,7 @@ static void DissectReg_960(char *pDest, size_t DestSize, tRegInt Value, tSymbolS
       int z;
 
       for (z = 0; z < SpecRegCnt; z++)
-        if (Value == (REG_MARK | SpecRegs[z].Code))
+        if (Value == (REGSYM_FLAG_ALIAS | SpecRegs[z].Code))
         {
           as_snprintf(pDest, DestSize, "%s", SpecRegs[z].Name);
           return;
@@ -240,7 +238,7 @@ static tRegEvalResult DecodeIReg(const tStrComp *pArg, LongWord *pResult, Boolea
 {
   if (DecodeIRegCore(pArg->str.p_str, pResult))
   {
-    *pResult &= ~REG_MARK;
+    *pResult &= ~REGSYM_FLAG_ALIAS;
     return eIsReg;
   }
   else
@@ -251,7 +249,7 @@ static tRegEvalResult DecodeIReg(const tStrComp *pArg, LongWord *pResult, Boolea
 
     RegEvalResult = EvalStrRegExpressionAsOperand(pArg, &RegDescr, &EvalResult, eSymbolSize32Bit, MustBeReg);
     if (eIsReg == RegEvalResult)
-      *pResult = RegDescr.Reg & ~REG_MARK;
+      *pResult = RegDescr.Reg & ~REGSYM_FLAG_ALIAS;
     return RegEvalResult;
   }
 }
@@ -270,7 +268,7 @@ static tRegEvalResult DecodeIOrFPReg(const tStrComp *pArg, LongWord *pResult, tS
 {
   if (DecodeIRegCore(pArg->str.p_str, pResult))
   {
-    *pResult &= ~REG_MARK;
+    *pResult &= ~REGSYM_FLAG_ALIAS;
     *pSize = eSymbolSize32Bit;
     return eIsReg;
   }
@@ -288,7 +286,7 @@ static tRegEvalResult DecodeIOrFPReg(const tStrComp *pArg, LongWord *pResult, tS
     RegEvalResult = EvalStrRegExpressionAsOperand(pArg, &RegDescr, &EvalResult, eSymbolSizeUnknown, MustBeReg);
     if (eIsReg == RegEvalResult)
     {
-      *pResult = RegDescr.Reg & ~REG_MARK;
+      *pResult = RegDescr.Reg & ~REGSYM_FLAG_ALIAS;
       *pSize = EvalResult.DataSize;
     }
     return RegEvalResult;
@@ -943,6 +941,7 @@ static void InternSymbol_960(char *pArg, TempResult *pResult)
     pResult->DataSize = eSymbolSize32Bit;
     pResult->Contents.RegDescr.Reg = Reg;
     pResult->Contents.RegDescr.Dissect = DissectReg_960;
+    pResult->Contents.RegDescr.compare = NULL;
   }
   else if (DecodeFPRegCore(pArg, &Reg))
   {
@@ -950,6 +949,7 @@ static void InternSymbol_960(char *pArg, TempResult *pResult)
     pResult->DataSize = eSymbolSizeFloat64Bit;
     pResult->Contents.RegDescr.Reg = Reg;
     pResult->Contents.RegDescr.Dissect = DissectReg_960;
+    pResult->Contents.RegDescr.compare = NULL;
   }
 }
 

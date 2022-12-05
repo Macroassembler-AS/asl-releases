@@ -841,6 +841,7 @@ static void InternSymbol_XCore(char *pArg, TempResult *pResult)
     pResult->DataSize = eSymbolSize8Bit;
     pResult->Contents.RegDescr.Reg = RegNum;
     pResult->Contents.RegDescr.Dissect = DissectReg_XCore;
+    pResult->Contents.RegDescr.compare = NULL;
   }
 }
 

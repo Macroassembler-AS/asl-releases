@@ -66,7 +66,7 @@
 
 \vspace{1cm}\par
 
-{\large Edition November 2022}
+{\large Edition December 2022}
 \end{raggedright}
 
 \clearpage
@@ -1863,40 +1863,41 @@ platforms.
 The assembler provides the operands listed in table \ref{TabOps} for
 combination.
 \begin{table*}[htbp]
-\begin{center}\begin{tabular}{|c|l|c|c|c|c|c|}
+\begin{center}\begin{tabular}{|c|l|c|c|c|c|c|c|}
 \hline
-operand & function            & \#operands & integer & float & string & rank \\
+Operand & Function            & \#Operands & Integer & Float & String & Register & Rank \\
 \hline
 \hline
-$<>$        & inequality       & 2 & yes   & yes & yes & 14 \\
-$>=$        & greater or equal & 2 & yes   & yes & yes & 14 \\
-$<=$        & less or equal    & 2 & yes   & yes & yes & 14 \\
-$<$         & truly smaller    & 2 & yes   & yes & yes & 14 \\
-$>$         & truly greater    & 2 & yes   & yes & yes & 14 \\
-$=$         & equality         & 2 & yes   & yes & yes & 14 \\
-$==$        & alias for $=$    &   &       &     &     &    \\
+$<>$        & inequality       & 2 & yes   & yes & yes & yes & 14 \\
+$!=$        & alias for $<>$   &   &       &     &     &     &    \\
+$>=$        & greater or equal & 2 & yes   & yes & yes & yes & 14 \\
+$<=$        & less or equal    & 2 & yes   & yes & yes & yes & 14 \\
+$<$         & truly smaller    & 2 & yes   & yes & yes & yes & 14 \\
+$>$         & truly greater    & 2 & yes   & yes & yes & yes & 14 \\
+$=$         & equality         & 2 & yes   & yes & yes & yes & 14 \\
+$==$        & alias for $=$    &   &       &     &     &     &    \\
             & & & & & &  \\
-$!!$        & log. XOR         & 2 & yes   & no  & no  & 13 \\
-$||$        & log. OR          & 2 & yes   & no  & no  & 12 \\
-\&\&        & log. AND         & 2 & yes   & no  & no  & 11 \\
-\verb! ~~ ! & log. NOT         & 1 & yes   & no  & no  & 2 \\
+$!!$        & log. XOR         & 2 & yes   & no  & no  & no  & 13 \\
+$||$        & log. OR          & 2 & yes   & no  & no  & no  & 12 \\
+\&\&        & log. AND         & 2 & yes   & no  & no  & no  & 11 \\
+\verb! ~~ ! & log. NOT         & 1 & yes   & no  & no  & no  & 2 \\
             & & & & & &  \\
--           & difference       & 2 & yes   & yes & no  & 10 \\
-+           & sum              & 2 & yes   & yes & yes & 10 \\
-\#          & modulo division  & 2 & yes   & no  & no  & 9 \\
-/           & quotient         & 2 & yes*) & yes & no  & 9 \\
-\verb! * !  & product          & 2 & yes   & yes & no  & 9 \\
-\verb! ^ !  & power            & 2 & yes   & yes & no  & 8 \\
+-           & difference       & 2 & yes   & yes & no  & no  & 10 \\
++           & sum              & 2 & yes   & yes & yes & no  & 10 \\
+\#          & modulo division  & 2 & yes   & no  & no  & no  & 9 \\
+/           & quotient         & 2 & yes*) & yes & no  & no  & 9 \\
+\verb! * !  & product          & 2 & yes   & yes & no  & no  & 9 \\
+\verb! ^ !  & power            & 2 & yes   & yes & no  & no  & 8 \\
             & & & & & &  \\
-$!$         & binary XOR       & 2 & yes   & no  & no  & 7 \\
-$|$         & binary OR        & 2 & yes   & no  & no  & 6 \\
-\&          & binary AND       & 2 & yes   & no  & no  & 5 \\
-$><$        & mirror of bits   & 2 & yes   & no  & no  & 4 \\
-$>>$        & log. shift right & 2 & yes   & no  & no  & 3 \\
-$<<$        & log. shift left  & 2 & yes   & no  & no  & 3 \\
-\verb! ~ !  & binary NOT       & 1 & yes   & no  & no  & 1 \\
+$!$         & binary XOR       & 2 & yes   & no  & no  & no  & 7 \\
+$|$         & binary OR        & 2 & yes   & no  & no  & no  & 6 \\
+\&          & binary AND       & 2 & yes   & no  & no  & no  & 5 \\
+$><$        & mirror of bits   & 2 & yes   & no  & no  & no  & 4 \\
+$>>$        & log. shift right & 2 & yes   & no  & no  & no  & 3 \\
+$<<$        & log. shift left  & 2 & yes   & no  & no  & no  & 3 \\
+\verb! ~ !  & binary NOT       & 1 & yes   & no  & no  & no  & 1 \\
 \hline
-\multicolumn{7}{|l|}{*) remainder will be discarded} \\
+\multicolumn{8}{|l|}{*) remainder will be discarded} \\
 \hline
 \end{tabular}\end{center}
 \caption{Operators Predefined by AS\label{TabOps}}
@@ -1906,9 +1907,21 @@ into subexpressions.  The operator with the highest rank will be
 evaluated at the very end.  The order of evaluation can be defined by
 new bracketing.
 
-The compare operators deliver TRUE in case the condition fits,
+The comparison operators deliver TRUE in case the condition fits,
 and FALSE in case it doesn't.  For the logical operators an expression
 is TRUE in case it is not 0, otherwise it is FALSE.
+
+Two details have to be kept im mind when comparing register symbols.
+First, two register symbols are equal if they refer to the same 
+register.  Some processors have alias names for registers, and these
+aliases are regarded as equal.  Fr instance, the {\tt A7} register
+of a 68000 may also be referred to as {\tt SP}, and those two register
+symbols are equal.  On the other hand, some processors have more than
+one set of registers.  The 68040, fo rinstance, has 'normal' (integer)
+and floating point registers.  There is no greater or smaller relation
+between registers from different groups, the corresponding operators
+always return FALSE.  Only a test for equality or inequality makes
+sense.
 
 The mirroring of bits probably needs a little bit of explanation: the
 operator mirrors the lowest bits in the first operand and leaves the

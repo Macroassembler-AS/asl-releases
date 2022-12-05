@@ -1146,6 +1146,7 @@ static void InternSymbol_AVR(char *pArg, TempResult *pResult)
     pResult->DataSize = eSymbolSize8Bit;
     pResult->Contents.RegDescr.Reg = RegValue;
     pResult->Contents.RegDescr.Dissect = DissectReg_AVR;
+    pResult->Contents.RegDescr.compare = NULL;
   }
 }
 

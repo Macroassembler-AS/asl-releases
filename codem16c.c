@@ -2725,6 +2725,7 @@ static void InternSymbol_M16C(char *pArg, TempResult *pResult)
     pResult->DataSize = Size;
     pResult->Contents.RegDescr.Reg = Erg;
     pResult->Contents.RegDescr.Dissect = DissectReg_M16C;
+    pResult->Contents.RegDescr.compare = NULL;
   }
 }
 

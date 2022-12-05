@@ -2086,6 +2086,7 @@ static void InternSymbol_601(char *Asc, TempResult *Erg)
   {
     Erg->Typ = TempReg;
     Erg->Contents.RegDescr.Dissect = DissectReg_601;
+    Erg->Contents.RegDescr.compare = NULL;
     Erg->Contents.RegDescr.Reg = RegValue;
     Erg->DataSize = eSymbolSize32Bit;
   }
@@ -2093,6 +2094,7 @@ static void InternSymbol_601(char *Asc, TempResult *Erg)
   {
     Erg->Typ = TempReg;
     Erg->Contents.RegDescr.Dissect = DissectReg_601;
+    Erg->Contents.RegDescr.compare = NULL;
     Erg->Contents.RegDescr.Reg = RegValue;
     Erg->DataSize = eSymbolSizeFloat64Bit;
   }

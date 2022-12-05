@@ -55,7 +55,7 @@
 	listing	off
 addr	set	0000h
 	while	addr<10000h
-	if 	phys2cpu(cpu2phys(addr)) <> addr
+	if 	phys2cpu(cpu2phys(addr)) != addr
 	error	"mapping error at $\{ADDR}"
 	endif
 addr	set	addr+100h

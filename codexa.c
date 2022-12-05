@@ -43,7 +43,6 @@
 #define MModAbs (1 << ModAbs)
 
 #define REG_SP 7
-#define REG_MARK 16
 
 #define JBitOrderCnt 3
 #define RegOrderCnt 4
@@ -116,7 +115,7 @@ static tRegEvalResult DecodeRegCore(const char *pArg, tSymbolSize *pSize, Byte *
 
   if (!as_strcasecmp(pArg, "SP"))
   {
-    *pResult = REG_SP | REG_MARK;
+    *pResult = REG_SP | REGSYM_FLAG_ALIAS;
     *pSize = eSymbolSize16Bit;
     return eIsReg;
   }
@@ -210,14 +209,14 @@ static tRegEvalResult DecodeReg(const tStrComp *pArg, tSymbolSize *pSize, Byte *
   RegEvalResult = DecodeRegCore(pArg->str.p_str, pSize, pResult);
   if (RegEvalResult != eIsNoReg)
   {
-    *pResult &= ~REG_MARK;
+    *pResult &= ~REGSYM_FLAG_ALIAS;
     return RegEvalResult;
   }
 
   RegEvalResult = EvalStrRegExpressionAsOperand(pArg, &RegDescr, &EvalResult, eSymbolSizeUnknown, MustBeReg);
   if (RegEvalResult == eIsReg)
   {
-    *pResult = RegDescr.Reg & ~REG_MARK;
+    *pResult = RegDescr.Reg & ~REGSYM_FLAG_ALIAS;
     *pSize = EvalResult.DataSize;
   }
   return RegEvalResult;
@@ -2144,6 +2143,7 @@ static void InternSymbol_XA(char *pArg, TempResult *pResult)
     pResult->DataSize = Size;
     pResult->Contents.RegDescr.Reg = Reg;
     pResult->Contents.RegDescr.Dissect = DissectReg_XA;
+    pResult->Contents.RegDescr.compare = NULL;
   }
 }
 

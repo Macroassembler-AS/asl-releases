@@ -4199,6 +4199,7 @@ static void InternSymbol_Z80(char *p_arg, TempResult *p_result)
     p_result->DataSize = eSymbolSize8Bit;
     p_result->Contents.RegDescr.Reg = reg_num;
     p_result->Contents.RegDescr.Dissect = DissectReg_Z80;
+    p_result->Contents.RegDescr.compare = NULL;
   }
   else if (DecodeReg16Core(p_arg, &reg_num))
   {
@@ -4206,6 +4207,7 @@ static void InternSymbol_Z80(char *p_arg, TempResult *p_result)
     p_result->DataSize = eSymbolSize16Bit;
     p_result->Contents.RegDescr.Reg = reg_num;
     p_result->Contents.RegDescr.Dissect = DissectReg_Z80;
+    p_result->Contents.RegDescr.compare = NULL;
   }
 }
 

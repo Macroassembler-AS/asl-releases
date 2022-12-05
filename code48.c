@@ -1379,6 +1379,7 @@ static void InternSymbol_48(char *pArg, TempResult *pResult)
     pResult->DataSize = Size;
     pResult->Contents.RegDescr.Reg = Erg;
     pResult->Contents.RegDescr.Dissect = DissectReg_48;
+    pResult->Contents.RegDescr.compare = NULL;
   }
 }
 

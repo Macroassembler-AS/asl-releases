@@ -2132,6 +2132,7 @@ tRegEvalResult EvalStrRegExpressionAsOperand(const tStrComp *pArg, struct sRegDe
         {
           pResult->Reg = 0;
           pResult->Dissect = NULL;
+          pResult->compare = NULL;
           Repass = True;
           return eIsReg;
         }
