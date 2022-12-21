@@ -664,61 +664,84 @@ static void DecodeRMW(Word Index)
   }
 }
 
-static void DecodeBx(Word Index)
+static void decode_bset_bclr_core(Word code, int arg_index)
 {
-  Boolean OK = True;
+  Boolean ok = True;
 
+  if (!as_strcasecmp(ArgStr[arg_index].str.p_str, "D[X]")) BAsmCode[1] = 0x0e;
+  else if  (!as_strcasecmp(ArgStr[arg_index].str.p_str, "X")) BAsmCode[1] = 0x0f;
+  else BAsmCode[1] = EvalStrIntExpression(&ArgStr[2], Int8, &ok);
+
+  if (ok)
+  {
+    CodeLen = 2;
+    BAsmCode[0] = 0x10 | code;
+  }
+}
+
+static void decode_bset_bclr_1(Word code)
+{
+  if (ChkArgCnt(1, 1))
+    decode_bset_bclr_core(code, 1);
+}
+
+static void decode_bset_bclr_2(Word code)
+{
   if (ChkArgCnt(2, 2))
   {
-    if (!as_strcasecmp(ArgStr[2].str.p_str, "D[X]")) BAsmCode[1] = 0x0e;
-    else if  (!as_strcasecmp(ArgStr[2].str.p_str, "X")) BAsmCode[1] = 0x0f;
-    else BAsmCode[1] = EvalStrIntExpression(&ArgStr[2], Int8, &OK);
+    Boolean ok;
 
-    if (OK)
+    code |= EvalStrIntExpression(&ArgStr[1], UInt3, &ok) << 1;
+    if (ok)
+      decode_bset_bclr_core(code, 2);
+  }
+}
+
+static void decode_brset_brclr_core(Word code, int arg_index)
+{
+  Boolean ok = True;
+
+  if (!as_strcasecmp(ArgStr[2].str.p_str, "D[X]"))
+    BAsmCode[1] = 0x0e;
+  else if (!as_strcasecmp(ArgStr[2].str.p_str, "X"))
+    BAsmCode[1] = 0x0f;
+  else
+    BAsmCode[1] = EvalStrIntExpression(&ArgStr[arg_index], Int8, &ok);
+
+  if (ok)
+  {
+    tSymbolFlags flags;
+    LongInt address;
+
+    address = EvalStrIntExpressionWithFlags(&ArgStr[arg_index + 1], AdrIntType, &ok, &flags) - (EProgCounter() + 3);
+    if (ok)
     {
-      BAsmCode[0] = EvalStrIntExpression(&ArgStr[1], UInt3, &OK);
-      if (OK)
+      if (!mSymbolQuestionable(flags) && ((address < -128) || (address > 127))) WrError(ErrNum_JmpDistTooBig);
+      else
       {
-        CodeLen = 2;
-        BAsmCode[0] = 0x10 | (BAsmCode[0] << 1) | Index;
+        CodeLen = 3;
+        BAsmCode[0] = code;
+        BAsmCode[2] = Lo(address);
       }
     }
   }
 }
 
-static void DecodeBRx(Word Index)
+static void decode_brset_brclr_2(Word code)
 {
-  Boolean OK = True;
-  tSymbolFlags Flags;
-  LongInt AdrInt;
+  if (ChkArgCnt(2, 2))
+    decode_brset_brclr_core(code, 1);
+}
 
+static void decode_brset_brclr_3(Word code)
+{
   if (ChkArgCnt(3, 3))
   {
-    if (!as_strcasecmp(ArgStr[2].str.p_str, "D[X]"))
-      BAsmCode[1] = 0x0e;
-    else if (!as_strcasecmp(ArgStr[2].str.p_str, "X"))
-      BAsmCode[1] = 0x0f;
-    else
-      BAsmCode[1] = EvalStrIntExpression(&ArgStr[2], Int8, &OK);
+    Boolean ok;
 
-    if (OK)
-    {
-      BAsmCode[0] = EvalStrIntExpression(&ArgStr[1], UInt3, &OK);
-      if (OK)
-      {
-        AdrInt = EvalStrIntExpressionWithFlags(&ArgStr[3], AdrIntType, &OK, &Flags) - (EProgCounter() + 3);
-        if (OK)
-        {
-          if (!mSymbolQuestionable(Flags) && ((AdrInt < -128) || (AdrInt > 127))) WrError(ErrNum_JmpDistTooBig);
-          else
-          {
-            CodeLen = 3;
-            BAsmCode[0] = (BAsmCode[0] << 1) | Index;
-            BAsmCode[2] = Lo(AdrInt);
-          }
-        }
-      }
-    }
+    code |= EvalStrIntExpression(&ArgStr[1], UInt3, &ok) << 1;
+    if (ok)
+      decode_brset_brclr_core(code, 2);
   }
 }
 
@@ -760,9 +783,36 @@ static void AddRMW(const char *NName, CPUVar NMin, Byte NCode, Byte DCode, Word 
   AddInstTable(InstTable, NName, InstrZ++, DecodeRMW);
 }
 
+static void add_bset_bclr(const char *p_name, Word code)
+{
+  char name[10];
+  unsigned bit;
+
+  AddInstTable(InstTable, p_name, code, decode_bset_bclr_2);
+  for (bit = 0; bit < 8; bit++)
+  {
+    as_snprintf(name, sizeof(name), "%s%c", p_name, bit + '0');
+    AddInstTable(InstTable, name, code | (bit << 1), decode_bset_bclr_1);
+  }
+}
+
+static void add_brset_brclr(const char *p_name, Word code)
+{
+  char name[10];
+  unsigned bit;
+
+  AddInstTable(InstTable, p_name, code, decode_brset_brclr_3);
+  for (bit = 0; bit < 8; bit++)
+  {
+    as_snprintf(name, sizeof(name), "%s%c", p_name, bit + '0');
+    AddInstTable(InstTable, name, code | (bit << 1), decode_brset_brclr_2);
+  }
+}
+
 static void InitFields(void)
 {
-  InstTable = CreateInstTable(101);
+  InstTable = CreateInstTable(177);
+  SetDynamicInstTable(InstTable);
 
   FixedOrders = (BaseOrder *) malloc(sizeof(BaseOrder) * FixedOrderCnt); InstrZ = 0;
   AddFixed("SHA" , CPU68RS08, 0x45); AddFixed("SLA" , CPU68RS08, 0x42);
@@ -823,13 +873,12 @@ static void InitFields(void)
   AddInstTable(InstTable, "LDX"  , 0, DecodeLDX);
   AddInstTable(InstTable, "STX"  , 1, DecodeLDX);
 
-  AddInstTable(InstTable, "BCLR" , 0x01, DecodeBx);
-  AddInstTable(InstTable, "BSET" , 0x00, DecodeBx);
-  AddInstTable(InstTable, "BRCLR", 0x01, DecodeBRx);
-  AddInstTable(InstTable, "BRSET", 0x00, DecodeBRx);
+  add_bset_bclr("BCLR" , 0x01);
+  add_bset_bclr("BSET" , 0x00);
+  add_brset_brclr("BRCLR", 0x01);
+  add_brset_brclr("BRSET", 0x00);
 
-  AddInstTable(InstTable, "DB", 0, DecodeMotoBYT);
-  AddInstTable(InstTable, "DW", 0, DecodeMotoADR);
+  init_moto8_pseudo(InstTable, e_moto_8_be | e_moto_8_db | e_moto_8_dw);
 }
 
 static void DeinitFields(void)
@@ -859,9 +908,6 @@ static Boolean DecodeAttrPart_68rs08(void)
 
 static void MakeCode_68rs08(void)
 {
-  int l;
-  char ch;
-
   CodeLen = 0; DontPrint = False; OpSize = AttrPartOpSize[0];
 
   /* zu ignorierendes */
@@ -871,23 +917,8 @@ static void MakeCode_68rs08(void)
 
   /* Pseudoanweisungen */
 
-  if (DecodeMotoPseudo(True))
-    return;
   if (DecodeMoto16Pseudo(OpSize, True))
     return;
-
-  l = strlen(OpPart.str.p_str);
-  ch = OpPart.str.p_str[l - 1];
-  if ((ch >= '0') && (ch <= '7'))
-  {
-    InsertArg(1, 2);
-    ArgStr[1].str.p_str[0] = ch;
-    ArgStr[1].str.p_str[1] = '\0';
-    ArgStr[1].Pos.StartCol = OpPart.Pos.StartCol + l - 1;
-    ArgStr[1].Pos.Len = 1;
-    OpPart.str.p_str[l - 1] = '\0';
-    OpPart.Pos.Len--;
-  }
 
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);

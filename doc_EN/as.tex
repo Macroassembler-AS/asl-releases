@@ -5310,7 +5310,8 @@ them in the processor's proprietary 32-bit format). There is {\em no}
 
 {\em\begin{tabbing}
 valid for: \= Intel, Zilog, Toshiba, NEC, TMS370, Siemens, AMD, \\
-           \> M16(C), National, ST9, TMS7000, TMS1000, Intersil
+           \> M16(C), National, ST9, TMS7000, TMS1000, Intersil, \\
+           \> 6502, 68xx \\
 \end{tabbing}}
 
 With this instruction, you can reserve a memory area:
@@ -5340,8 +5341,9 @@ number.
 
 By this instruction, byte constants or ASCII strings are placed in
 65xx/68xx-mode, it therefore corresponds to \tty{DC.B} on the 68000 or
-\tty{DB} on Intel.  Similarly to \tty{DC}, a repetition factor enclosed
-in brackets ([..]) may be prepended to every single parameter.
+\tty{DB} on Intel (which ias also allowed).  Similarly to \tty{DC}, a
+repetition factor enclosed in brackets ([..]) may be prepended to every
+single parameter.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -5382,8 +5384,18 @@ constants or strings to memory.
 
 \tty{ADR} resp. \tty{FDB} stores word constants when in 65xx/68xx mode.
 It is therefore the equivalent to \tty{DC.W} on the 68000 or \tty{DW} on
-Intel platforms.  Similarly to \tty{DC}, a repetition factor enclosed
-in brackets ([..]) may be prepended to every single parameter.
+Intel platforms (which is also allowed).  Similarly to \tty{DC}, a repetition
+factor enclosed in brackets ([..]) may be prepended to every single parameter.
+
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+\subsection{DDB}
+\ttindex{DDB}
+
+{\em valid for: 6502, MELPS-7700}
+
+This instructions works similar to \tty{ADR}, just with the difference that
+the 16 bit values are stored in big endian order.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 

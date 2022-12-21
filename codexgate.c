@@ -665,11 +665,14 @@ static void InitFields(void)
   AddInstTable(InstTable, "STW"  , 0x5800, DecodeMem);
 
   AddInstTable(InstTable, "REG", 0, CodeREG);
+
+  init_moto8_pseudo(NULL, e_moto_8_be);
 }
 
 static void DeinitFields(void)
 {
   DestroyInstTable(InstTable);
+  deinit_moto8_pseudo();
 }
 
 /*--------------------------------------------------------------------------*/
@@ -709,7 +712,7 @@ static void MakeCode_XGATE(void)
 
   /* Pseudoanweisungen */
 
-  if (DecodeMotoPseudo(True))
+  if (decode_moto8_pseudo())
     return;
 
   /* Befehlszaehler ungerade ? */

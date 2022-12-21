@@ -284,17 +284,24 @@
         smb5    $12
 
 	byt	0
-	byt	255
+	db	255
 	byt	-128
-	byt	'a'
+	db	'a'
 	byt	'ab'	; treated as "ab" due to length
-	byt	"a"
+	db	"a"
 	byt	"ab"
 
 	adr	0
-	adr	65535
+	dw	65535
 	adr	-32768
-	adr	'a'
+	dw	'a'
 	adr	'ab'
-	adr	"a"
+	dw	"a"
 	adr	"ab"
+
+	ddb	'a'	; big endian storage
+	ddb	'ab'
+	ddb	"a"
+	ddb	"ab"
+
+	ds	10

@@ -2632,8 +2632,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "DEFBIT", 0, DecodeDEFBIT);
   AddInstTable(InstTable, "DEFBITFIELD", 0, DecodeDEFBITFIELD);
 
-  AddInstTable(InstTable, "DB", 0, DecodeMotoBYT);
-  AddInstTable(InstTable, "DW", 0, DecodeMotoADR);
+  init_moto8_pseudo(InstTable, e_moto_8_be | e_moto_8_db | e_moto_8_dw);
 }
 
 static void DeinitFields(void)
@@ -2681,7 +2680,6 @@ static void MakeCode_S12Z(void)
 
   /* TODO: handle eSymbolSize24Bit in DC/DS */
 
-  if (DecodeMotoPseudo(True)) return;
   if (DecodeMoto16Pseudo(OpSize, True)) return;
 
   if (!LookupInstTable(InstTable, OpPart.str.p_str))

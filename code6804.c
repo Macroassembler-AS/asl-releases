@@ -422,9 +422,7 @@ static void InitFields(void)
   AddALU("CMP", 0x04);
   AddALU("AND", 0x05);
 
-  AddInstTable(InstTable, "DB", 0, DecodeMotoBYT);
-  AddInstTable(InstTable, "DW", 0, DecodeMotoADR);
-  AddInstTable(InstTable, "DS", 0, DecodeMotoDFS);
+  init_moto8_pseudo(InstTable, e_moto_8_be | e_moto_8_db | e_moto_8_dw | e_moto_8_ds);
 }
 
 static void DeinitFields(void)
@@ -444,11 +442,6 @@ static void MakeCode_6804(void)
   /* zu ignorierendes */
 
   if (Memo(""))
-    return;
-
-  /* Pseudoanweisungen */
-
-  if (DecodeMotoPseudo(True))
     return;
 
   if (!LookupInstTable(InstTable, OpPart.str.p_str))

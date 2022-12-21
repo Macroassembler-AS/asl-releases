@@ -2339,6 +2339,8 @@ static void InitFields(void)
   AddRel("JRULE", 0x23);
   AddRel("JRULT", 0x25);
   AddRel("JRV"  , (pCurrCPUProps->Core == eCoreSTM8) ? 0x29 : 0x00);
+
+  init_moto8_pseudo(InstTable, e_moto_8_be);
 }
 
 /*!------------------------------------------------------------------------
@@ -2379,7 +2381,6 @@ static void MakeCode_ST7(void)
 
   /* Pseudoanweisungen */
 
-  if (DecodeMotoPseudo(True)) return;
   if (DecodeMoto16Pseudo(OpSize,True)) return;
 
   if (!LookupInstTable(InstTable, OpPart.str.p_str))

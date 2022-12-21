@@ -5454,7 +5454,7 @@ nicht}!
 
 {\em\begin{tabbing}
 G"ultigkeit: \= Intel, Zilog, Toshiba, NEC, TMS370, Siemens, AMD, M16(C),\\
-             \> National, ST9, TMS7000, TMS1000, Intersil
+             \> National, ST9, TMS7000, TMS1000, Intersil, 6502, 68xx
 \end{tabbing}}
 
 Dieser Befehl stellt eine Kurzschreibweise dar, um Speicherbereiche
@@ -5487,8 +5487,9 @@ die n"achstgr"o"sere gerade Zahl aufgerundet.
 
 Mit diesem Befehl werden im 65xx/68xx-Modus Byte-Konstanten oder
 ASCII-Strings abgelegt, er entspricht also \tty{DC.B} beim 68000 oder
-\tty{DB} bei Intel.  Ein Wiederholungsfaktor darf analog zu \tty{DC}
-jedem einzelnen Parameter in eckigen Klammern vorangestellt werden.
+bei Intel dem \tty{DB} (was ebenfalls erlaubt ist).  Ein Wiederholungsfaktor
+darf analog zu \tty{DC} jedem einzelnen Parameter in eckigen Klammern
+vorangestellt werden.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -5529,9 +5530,20 @@ Byte-Konstanten oder Strings im Speicher abgelegt werden.
 {\em G"ultigkeit: 6502, 68xx}
 
 Mit diesem Befehl werden im 65xx/68xx-Modus Wortkonstanten
-abgelegt, er entspricht also \tty{DC.W} beim 68000 oder \tty{DW}
-bei Intel.  Ein Wiederholungsfaktor darf analog zu \tty{DC} jedem
-einzelnen Parameter in eckigen Klammern vorangestellt werden.
+abgelegt, er entspricht also \tty{DC.W} beim 68000 oder bei Intel
+dem \tty{DW} (was auch zul"assig ist).  Ein Wiederholungsfaktor darf
+analog zu \tty{DC} jedem einzelnen Parameter in eckigen Klammern vorangestellt
+werden.
+
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+\subsection{DDB}
+\ttindex{DDB}
+
+{\em G"ultigkeit: 6502, MELPS-7700}
+
+Dieser Befehl funktioniert analog zu \tty{ADR}, nur mit dem Unterschied, da"s
+die 16-BitWerte im Big-Endian-Format im Speicher abgelegt werden.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 

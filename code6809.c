@@ -1427,8 +1427,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "LDBT" , InstrZ++, DecodeBit);
   AddInstTable(InstTable, "STBT" , InstrZ++, DecodeBit);
 
-  AddInstTable(InstTable, "DB", 0, DecodeMotoBYT);
-  AddInstTable(InstTable, "DW", 0, DecodeMotoADR);
+  init_moto8_pseudo(InstTable, e_moto_8_be | e_moto_8_db | e_moto_8_dw);
 }
 
 static void DeinitFields(void)
@@ -1473,8 +1472,6 @@ static void MakeCode_6809(void)
 
   /* Pseudoanweisungen */
 
-  if (DecodeMotoPseudo(True))
-    return;
   if (DecodeMoto16Pseudo(OpSize, True))
     return;
 

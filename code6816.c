@@ -1060,6 +1060,8 @@ static void InitFields(void)
   Regs = (const char **) malloc(sizeof(char *) * RegCnt);
   Regs[0] = "D"; Regs[1] = "E"; Regs[2] = "X"; Regs[3] = "Y";
   Regs[4] = "Z"; Regs[5] = "K"; Regs[6] = "CCR";
+
+  init_moto8_pseudo(InstTable, e_moto_8_be);
 }
 
 static void DeinitFields(void)
@@ -1100,8 +1102,6 @@ static void MakeCode_6816(void)
 
   /* Pseudoanweisungen */
 
-  if (DecodeMotoPseudo(True))
-    return;
   if (DecodeMoto16Pseudo(OpSize, True))
     return;
 

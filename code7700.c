@@ -1404,6 +1404,8 @@ static void InitFields(void)
 
   AddMulDiv("MPY", 0x0000, 14); AddMulDiv("MPYS", 0x0080, 12);
   AddMulDiv("DIV", 0x0020, 14); AddMulDiv("DIVS", 0x00a0, 12); /*???*/
+
+  init_moto8_pseudo(InstTable, e_moto_8_le | e_moto_8_ddb);
 }
 
 static void DeinitFields(void)
@@ -1426,8 +1428,6 @@ static void MakeCode_7700(void)
 
   /* Pseudoanweisungen */
 
-  if (DecodeMotoPseudo(False))
-    return;
   if (DecodeIntelPseudo(False))
     return;
 

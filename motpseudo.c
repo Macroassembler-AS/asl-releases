@@ -37,12 +37,6 @@
 #define LEAVE goto func_exit
 
 /*****************************************************************************
- * Local Variables
- *****************************************************************************/
-
-static Boolean M16Turn = False;
-
-/*****************************************************************************
  * Local Functions
  *****************************************************************************/
 
@@ -82,21 +76,19 @@ static Boolean CutRep(tStrComp *pDest, const tStrComp *pSrc, LongInt *pErg, tSym
   }
 }
 
-static void PutByte(Byte Value)
+static void PutByte(Byte Value, Boolean big_endian)
 {
   if ((ListGran() == 1) || (!(CodeLen & 1)))
     BAsmCode[CodeLen] = Value;
-  else if (M16Turn)
+  else if (big_endian)
     WAsmCode[CodeLen >> 1] = (((Word)BAsmCode[CodeLen -1]) << 8) | Value;
   else
     WAsmCode[CodeLen >> 1] = (((Word)Value) << 8) | BAsmCode[CodeLen -1];
   CodeLen++;
 }
 
-void DecodeMotoBYT(Word Index)
+void DecodeMotoBYT(Word big_endian)
 {
-  UNUSED(Index);
-
   if (ChkArgCnt(1, ArgCntMax))
   {
     ShortInt SpaceFlag = -1;
@@ -162,7 +154,7 @@ void DecodeMotoBYT(Word Index)
               LongInt z2;
 
               for (z2 = 0; z2 < Rep; z2++)
-                PutByte(t.Contents.Int);
+                PutByte(t.Contents.Int, big_endian);
             }
             break;
 
@@ -193,7 +185,7 @@ void DecodeMotoBYT(Word Index)
 
               for (z2 = 0; z2 < Rep; z2++)
                 for (z3 = 0; z3 < l; z3++)
-                  PutByte(t.Contents.str.p_str[z3]);
+                  PutByte(t.Contents.str.p_str[z3], big_endian);
             }
             break;
           }
@@ -218,14 +210,14 @@ void DecodeMotoBYT(Word Index)
   }
 }
 
-static void PutADR(Word Value)
+static void PutADR(Word Value, Boolean big_endian)
 {
   if (ListGran() > 1)
   {
     WAsmCode[CodeLen >> 1] = Value;
     CodeLen += 2;
   }
-  else if (M16Turn)
+  else if (big_endian)
   {
     BAsmCode[CodeLen++] = Hi(Value);
     BAsmCode[CodeLen++] = Lo(Value);
@@ -237,10 +229,8 @@ static void PutADR(Word Value)
   }
 }
 
-void DecodeMotoADR(Word Index)
+void DecodeMotoADR(Word big_endian)
 {
-  UNUSED(Index);
-
   if (ChkArgCnt(1, ArgCntMax))
   {
     tStrComp *pArg, Arg;
@@ -332,14 +322,14 @@ void DecodeMotoADR(Word Index)
           switch (Res.Typ)
           {
             case TempInt:
-              PutADR(Res.Contents.Int);
+              PutADR(Res.Contents.Int, big_endian);
               break;
             case TempString:
             {
               unsigned z3;
 
               for (z3 = 0; z3 < Res.Contents.str.len; z3++)
-                PutADR(Res.Contents.str.p_str[z3]);
+                PutADR(Res.Contents.str.p_str[z3], big_endian);
               break;
             }
             default:
@@ -361,10 +351,8 @@ void DecodeMotoADR(Word Index)
   }
 }
 
-static void DecodeFCC(Word Index)
+static void DecodeFCC(Word big_endian)
 {
-  UNUSED(Index);
-
   if (ChkArgCnt(1, ArgCntMax))
   {
     Boolean OK = True;
@@ -408,7 +396,7 @@ static void DecodeFCC(Word Index)
 
             for (z2 = 0; z2 < Rep; z2++)
               for (z3 = 0; z3 < l; z3++)
-                PutByte(t.Contents.str.p_str[z3]);
+                PutByte(t.Contents.str.p_str[z3], big_endian);
           }
           break;
         }
@@ -459,24 +447,38 @@ void DecodeMotoDFS(Word Index)
  * Global Functions
  *****************************************************************************/
 
-Boolean DecodeMotoPseudo(Boolean Turn)
+static PInstTable inst_table_moto8 = NULL;
+
+void init_moto8_pseudo(PInstTable p_inst_table, unsigned flags)
 {
-  static PInstTable InstTable = NULL;
+  if (!p_inst_table)
+    p_inst_table = inst_table_moto8 = CreateInstTable(23);
+  AddInstTable(p_inst_table, "BYT", !!(flags & e_moto_8_be), DecodeMotoBYT);
+  AddInstTable(p_inst_table, "FCB", !!(flags & e_moto_8_be), DecodeMotoBYT);
+  if (flags & e_moto_8_db)
+    AddInstTable(p_inst_table, "DB", !!(flags & e_moto_8_be), DecodeMotoBYT);
+  AddInstTable(p_inst_table, "ADR", !!(flags & e_moto_8_be), DecodeMotoADR);
+  AddInstTable(p_inst_table, "FDB", !!(flags & e_moto_8_be), DecodeMotoADR);
+  if (flags & e_moto_8_dw)
+    AddInstTable(p_inst_table, "DW", !!(flags & e_moto_8_be), DecodeMotoADR);
+  if (flags & e_moto_8_ddb)
+    AddInstTable(p_inst_table, "DDB", True, DecodeMotoADR);
+  AddInstTable(p_inst_table, "FCC", !!(flags & e_moto_8_be), DecodeFCC);
+  AddInstTable(p_inst_table, "DFS", 0, DecodeMotoDFS);
+  AddInstTable(p_inst_table, "RMB", 0, DecodeMotoDFS);
+  if (flags & e_moto_8_ds)
+    AddInstTable(p_inst_table, "DS", 0, DecodeMotoDFS);
+}
 
-  if (!InstTable)
-  {
-    InstTable = CreateInstTable(17);
-    AddInstTable(InstTable, "BYT", 0, DecodeMotoBYT);
-    AddInstTable(InstTable, "FCB", 0, DecodeMotoBYT);
-    AddInstTable(InstTable, "ADR", 0, DecodeMotoADR);
-    AddInstTable(InstTable, "FDB", 0, DecodeMotoADR);
-    AddInstTable(InstTable, "FCC", 0, DecodeFCC);
-    AddInstTable(InstTable, "DFS", 0, DecodeMotoDFS);
-    AddInstTable(InstTable, "RMB", 0, DecodeMotoDFS);
-  }
+Boolean decode_moto8_pseudo(void)
+{
+  return LookupInstTable(inst_table_moto8, OpPart.str.p_str);
+}
 
-  M16Turn = Turn;
-  return LookupInstTable(InstTable, OpPart.str.p_str);
+void deinit_moto8_pseudo(void)
+{
+  DestroyInstTable(inst_table_moto8);
+  inst_table_moto8 = NULL;
 }
 
 static void DigIns(char Ch, int Pos, Byte *pDest)

@@ -781,7 +781,7 @@ static void AddSing8(const char *NamePlain, const char *NameA, const char *NameB
 
 static void InitFields(void)
 {
-  InstTable = CreateInstTable(302);
+  InstTable = CreateInstTable(317);
   AddInstTable(InstTable, "JMP"  , 0, DecodeJMP);
   AddInstTable(InstTable, "JSR"  , 0, DecodeJSR);
   AddInstTable(InstTable, "BRCLR", 1, DecodeBRxx);
@@ -896,8 +896,7 @@ static void InitFields(void)
 
   AddInstTable(InstTable, "PRWINS", 0, DecodePRWINS);
 
-  AddInstTable(InstTable, "DB", 0, DecodeMotoBYT);
-  AddInstTable(InstTable, "DW", 0, DecodeMotoADR);
+  init_moto8_pseudo(InstTable, e_moto_8_be | e_moto_8_db | e_moto_8_dw);
 }
 
 static void DeinitFields(void)
@@ -936,8 +935,6 @@ static void MakeCode_68(void)
 
   /* Pseudoanweisungen */
 
-  if (DecodeMotoPseudo(True))
-    return;
   if (DecodeMoto16Pseudo(OpSize, True))
     return;
 
