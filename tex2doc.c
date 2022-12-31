@@ -1590,7 +1590,28 @@ static void TeXAddNotEq(Word Index)
 {
   UNUSED(Index);
 
-  DoAddNormal("<>", BackSepString);
+  DoAddNormal("!=", BackSepString);
+}
+
+static void TeXAddLAnd(Word Index)
+{
+  UNUSED(Index);
+
+  DoAddNormal("&", BackSepString);
+}
+
+static void TeXAddLOr(Word Index)
+{
+  UNUSED(Index);
+
+  DoAddNormal("|", BackSepString);
+}
+
+static void TeXAddOPlus(Word Index)
+{
+  UNUSED(Index);
+
+  DoAddNormal("^", BackSepString);
 }
 
 static void TeXAddMid(Word Index)
@@ -2611,6 +2632,9 @@ int main(int argc, char **argv)
   AddInstTable(TeXTable, "leq", 0, TeXAddLessEq);
   AddInstTable(TeXTable, "geq", 0, TeXAddGreaterEq);
   AddInstTable(TeXTable, "neq", 0, TeXAddNotEq);
+  AddInstTable(TeXTable, "land", 0, TeXAddLAnd);
+  AddInstTable(TeXTable, "lor", 0, TeXAddLOr);
+  AddInstTable(TeXTable, "oplus", 0, TeXAddOPlus);
   AddInstTable(TeXTable, "mid", 0, TeXAddMid);
   AddInstTable(TeXTable, "frac", 0, TeXDoFrac);
   AddInstTable(TeXTable, "rm", FontStandard, TeXNewFontType);

@@ -97,6 +97,7 @@ static const TFamilyDescr Descrs[] =
   { "SC14XXX"      , 0x006d, eHexFormatIntel   },
   { "NS32000"      , 0x0008, eHexFormatIntel   },
   { "ACE"          , 0x0067, eHexFormatIntel   },
+  { "CP-3F"        , 0x000f, eHexFormatIntel   },
   { "F8"           , 0x0044, eHexFormatIntel   },
   { "75xx"         , 0x005d, eHexFormatIntel   },
   { "78(C)xx"      , 0x007a, eHexFormatIntel   },

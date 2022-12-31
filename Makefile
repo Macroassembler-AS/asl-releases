@@ -78,7 +78,8 @@ include makedefs.abh
 #---------------------------------------------------------------------------
 # Documentation
 
-INCFILES = doc_COM/taborg*.tex doc_COM/tabids*.tex doc_COM/pscpu.tex doc_COM/pscomm.tex doc_COM/biblio.tex
+DOC_COM_DIR=doc_COM/
+include $(DOC_COM_DIR)makedefs.dok
 
 DOC_DE_DIR=doc_DE/
 include $(DOC_DE_DIR)makedefs.dok

@@ -101,29 +101,33 @@ void ExpandStructStd(const tStrComp *pVarName, const struct sStructElem *pStruct
   LabelHandle(pVarName, Base + pStructElem->Offset, True);
   if (pStructElem->OpSize != eSymbolSizeUnknown)
   {
-    String ExtName;
-    tStrComp ExtComp;
+    String ext_name_buf;
+    tStrComp ext_name;
+    const tStrComp *p_ext_name;
 
-    StrCompMkTemp(&ExtComp, ExtName, sizeof(ExtName));
-    if (ExpandStrSymbol(ExtName, sizeof(ExtName), pVarName))
-      SetSymbolOrStructElemSize(&ExtComp, pStructElem->OpSize);
+    StrCompMkTemp(&ext_name, ext_name_buf, sizeof(ext_name_buf));
+    p_ext_name = ExpandStrSymbol(&ext_name, pVarName, !CaseSensitive);
+    if (p_ext_name)
+      SetSymbolOrStructElemSize(p_ext_name, pStructElem->OpSize);
   }
 }
 
 PStructElem CreateStructElem(const tStrComp *pElemName)
 {
-  String ExtName;
+  String ext_name_buf;
+  tStrComp ext_name;
+  const tStrComp *p_ext_name;
   PStructElem pNeu;
 
-  if (!ExpandStrSymbol(ExtName, sizeof(ExtName), pElemName))
+  StrCompMkTemp(&ext_name, ext_name_buf, sizeof(ext_name_buf));
+  p_ext_name = ExpandStrSymbol(&ext_name, pElemName, !CaseSensitive);
+  if (!p_ext_name)
     return NULL;
 
   pNeu = (PStructElem) calloc(1, sizeof(TStructElem));
   if (pNeu)
   {
-    pNeu->pElemName = as_strdup(ExtName);
-    if (!CaseSensitive)
-      NLS_UpString(pNeu->pElemName);
+    pNeu->pElemName = as_strdup(p_ext_name->str.p_str);
     pNeu->pRefElemName = NULL;
     pNeu->ExpandFnc = ExpandStructStd;
     pNeu->Offset = 0;
@@ -196,27 +200,33 @@ Boolean AddStructElem(PStructRec pStructRec, PStructElem pElement)
 }
 
 /*!------------------------------------------------------------------------
- * \fn     SetStructElemSize(PStructRec pStructRec, const char *pElemName, tSymbolSize Size)
+ * \fn     SetStructElemSize(PStructRec pStructRec, const tStrComp *pElemName, tSymbolSize Size)
  * \brief  set the operand size of a structure's element
  * \param  pStructRec structure the element is contained in
  * \param  pElemName element's name
- * \param  Sizeoperand size to set
+ * \param  Size operand size to set
  * ------------------------------------------------------------------------ */
 
-void SetStructElemSize(PStructRec pStructRec, const char *pElemName, tSymbolSize Size)
+void SetStructElemSize(PStructRec pStructRec, const tStrComp *pElemName, tSymbolSize Size)
 {
   PStructElem pRun;
-  int Match;
+  String exp_name_buf;
+  tStrComp exp_name;
+  const tStrComp *p_exp_name;
 
+  StrCompMkTemp(&exp_name, exp_name_buf, sizeof(exp_name_buf));
+  p_exp_name = ExpandStrSymbol(&exp_name, pElemName, !CaseSensitive);
+  if (!p_exp_name)
+    return;
   for (pRun = pStructRec->Elems; pRun; pRun = pRun->Next)
   {
-    Match = CaseSensitive ? strcmp(pElemName, pRun->pElemName) : as_strcasecmp(pElemName, pRun->pElemName);
-    if (!Match)
+    if (!strcmp(p_exp_name->str.p_str, pRun->pElemName))
     {
       pRun->OpSize = Size;
-      break;
+      return;
     }
   }
+  fprintf(stderr, "SetStructElemSize: cannot set size of '%s', something wicked is going on\n", p_exp_name->str.p_str);
 }
 
 /*!------------------------------------------------------------------------
@@ -370,7 +380,7 @@ void AddStruct(PStructRec StructRec, char *Name, Boolean Protest)
   }
 }
 
-static PStructRec FoundStruct_FNode(LongInt Handle, char *Name)
+static PStructRec FoundStruct_FNode(LongInt Handle, const char *Name)
 {
   PStructNode Lauf;
 
@@ -381,19 +391,14 @@ static PStructRec FoundStruct_FNode(LongInt Handle, char *Name)
 Boolean FoundStruct(PStructRec *Erg, const char *pName)
 {
   PSaveSection Lauf;
-  String Part;
 
-  strmaxcpy(Part, pName, STRINGSIZE);
-  if (!CaseSensitive)
-    NLS_UpString(Part);
-
-  *Erg = FoundStruct_FNode(MomSectionHandle, Part);
+  *Erg = FoundStruct_FNode(MomSectionHandle, pName);
   if (*Erg)
     return True;
   Lauf = SectionStack;
   while (Lauf)
   {
-    *Erg = FoundStruct_FNode(Lauf->Handle, Part);
+    *Erg = FoundStruct_FNode(Lauf->Handle, pName);
     if (*Erg)
       return True;
     Lauf = Lauf->Next;
@@ -550,7 +555,7 @@ static void ExpandStruct_One(PStructRec StructRec, char *pVarPrefix, char *pStru
 
 #define DIMENSION_MAX 3
 
-void ExpandStruct(PStructRec StructRec)
+void ExpandStruct(PStructRec StructRec, const char *p_struct_name)
 {
   String CompVarName, CompStructName;
   int z;
@@ -597,7 +602,7 @@ void ExpandStruct(PStructRec StructRec)
       return;
     }
 
-  strmaxcpy(CompStructName, pLOpPart, sizeof(CompStructName));
+  strmaxcpy(CompStructName, p_struct_name, sizeof(CompStructName));
   strmaxcpy(CompVarName, LabPart.str.p_str, sizeof(CompVarName));
   if (!DimensionCnt)
   {

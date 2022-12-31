@@ -100,13 +100,14 @@ typedef struct _TOutputTag
 extern PInputTag FirstInputTag;
 extern POutputTag FirstOutputTag;
 
+struct sStrComp;
 
 extern void Preprocess(void);
 
 
 extern void AddMacro(PMacroRec Neu, LongInt DefSect, Boolean Protest);
 
-extern Boolean FoundMacro(PMacroRec *Erg);
+extern Boolean FoundMacro(PMacroRec *Erg, const struct sStrComp *p_name);
 
 extern void ClearMacroList(void);
 

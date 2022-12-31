@@ -97,6 +97,7 @@ include $(TARG_OBJDIR)codesc14xxx.dep
 include $(TARG_OBJDIR)codens32k.dep
 include $(TARG_OBJDIR)codeace.dep
 include $(TARG_OBJDIR)codef8.dep
+include $(TARG_OBJDIR)codecp3f.dep
 include $(TARG_OBJDIR)code53c8xx.dep
 include $(TARG_OBJDIR)codefmc8.dep
 include $(TARG_OBJDIR)codefmc16.dep

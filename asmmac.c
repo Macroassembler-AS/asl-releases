@@ -341,22 +341,17 @@ static PMacroRec FoundMacro_FNode(LongInt Handle, char *Part)
   return Result;
 }
 
-Boolean FoundMacro(PMacroRec *Erg)
+Boolean FoundMacro(PMacroRec *Erg, const tStrComp *p_name)
 {
   PSaveSection Lauf;
-  String Part;
 
-  strmaxcpy(Part, pLOpPart, STRINGSIZE);
-  if (!CaseSensitive)
-    NLS_UpString(Part);
-
-  *Erg = FoundMacro_FNode(MomSectionHandle, Part);
+  *Erg = FoundMacro_FNode(MomSectionHandle, p_name->str.p_str);
   if (*Erg)
     return True;
   Lauf = SectionStack;
   while (Lauf)
   {
-    *Erg = FoundMacro_FNode(Lauf->Handle, Part);
+    *Erg = FoundMacro_FNode(Lauf->Handle, p_name->str.p_str);
     if (*Erg)
       return True;
     Lauf = Lauf->Next;

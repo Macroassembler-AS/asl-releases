@@ -874,6 +874,47 @@ void NLS_UpString(char *pStr)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     NLS_UpString2(char *p_dest, size_t dest_size, const char *p_src, size_t src_len)
+ * \brief  comvert string to upper case
+ * \param  p_dest destination
+ * \param  dest_size capacity of destination
+ * \param  p_src source
+ * \param  src_len length of source (need not be NUL-terminated)
+ * ------------------------------------------------------------------------ */
+
+void NLS_UpString2(char *p_dest, size_t dest_size, const char *p_src, size_t src_len)
+{
+  unsigned unicode;
+  char *p_dest_end;
+  const char *p_src_end;
+
+  if (dest_size < 1)
+    return;
+  p_src_end = p_src + src_len;
+  p_dest_end = p_dest + dest_size - 1;
+
+  while (p_src < p_src_end)
+  {
+    if (eCodepageUTF8 == NLSInfo.Codepage)
+      unicode = UTF8ToUnicode(&p_src);
+    else
+      unicode = ((unsigned int)(*p_src++)) & 0xff;
+    unicode = (unicode < 256) ? (unsigned int)(UpCaseTable[unicode] & 0xff) : unicode;
+    if (eCodepageUTF8 == NLSInfo.Codepage)
+    {
+      if (p_dest < p_dest_end - 2)
+        UnicodeToUTF8(&p_dest, unicode);
+    }
+    else
+    {
+      if (p_dest < p_dest_end)
+        *p_dest++ = unicode;
+    }
+  }
+  *p_dest = '\0';
+}
+
 void NLS_LowString(char *pStr)
 {
   unsigned Unicode;

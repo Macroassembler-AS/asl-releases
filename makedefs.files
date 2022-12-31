@@ -8,7 +8,7 @@ BASEARCHFILES = *.c *.h *.hpp man/*.1 \
             include/st6/*.inc include/st7/*.inc include/stm8/*.inc include/stm8/stm8s/*.inc include/stm8/stm8l/*.inc include/stm8/stm8af/*.inc include/stm8/stm8al/*.inc include/stm8/stm8t/*.inc \
             include/z8/*.inc include/pdk/*.inc \
             Makefile.def-samples/ \
-            doc_DE/makedefs.dok doc_DE/*.tex doc_EN/makedefs.dok doc_EN/*.tex doc_COM/*.tex \
+            doc_DE/makedefs.dok doc_DE/*.tex doc_EN/makedefs.dok doc_EN/*.tex doc_COM/*.tex doc_COM/makedefs.dok \
             tests/testall tests/testall.bat tests/testall.cmd tests/warnlog.DE tests/warnlog.EN \
             tests/t_*/
 

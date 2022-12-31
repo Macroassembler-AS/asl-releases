@@ -1,0 +1,124 @@
+
+{\tt las imm4}        & {\tt ld a,\#$<$imm4}    & {\tt A} $\longleftarrow$ {\tt 0:imm4} \\
+\hline
+{\tt lal imm8}        & {\tt ld a,\#$>$imm8}    & {\tt A} $\longleftarrow$ {\tt imm8} \\
+\hline
+{\tt lss imm3}        & {\tt ld s,\#imm3}       & {\tt S} $\longleftarrow$ {\tt imm3} \\
+\hline
+{\tt lts imm3}        & {\tt ld t,\#imm3}       & {\tt T} $\longleftarrow$ {\tt imm3} \\
+\hline
+{\tt anl imm8}        & {\tt and [a,]\#imm8}    & {\tt A} $\longleftarrow$ {\tt A} $\land$ {\tt imm8} \\
+\hline
+{\tt eol imm8}        & {\tt xor [a,]\#imm8}    & {\tt A} $\longleftarrow$ {\tt A} $\oplus$ {\tt imm8} \\
+\hline
+{\tt orl imm8}        & {\tt or [a,]\#imm8}     & {\tt A} $\longleftarrow$ {\tt A} $\lor$ {\tt imm8} \\
+\hline
+{\tt adl imm8}        & {\tt add [a,]\#imm8}    & {\tt A} $\longleftarrow$ {\tt A} + {\tt imm8} \\
+\hline
+{\tt cml imm8}        & {\tt cp [a,]\#imm8}     & {\tt Flags} $\longleftarrow$ {\tt A} - {\tt imm8} \\
+\hline
+{\tt lav}             & {\tt ld a,v}            & {\tt A} $\longleftarrow$ {\tt V} \\
+\hline
+{\tt law}             & {\tt ld a,w}            & {\tt A} $\longleftarrow$ {\tt W} \\
+\hline
+{\tt lax}             & {\tt ld a,x}            & {\tt A} $\longleftarrow$ {\tt X} \\
+\hline
+{\tt lay}             & {\tt ld a,y}            & {\tt A} $\longleftarrow$ {\tt Y} \\
+\hline
+{\tt sav}             & {\tt ld v,a}            & {\tt V} $\longleftarrow$ {\tt A} \\
+\hline
+{\tt saw}             & {\tt ld w,a}            & {\tt W} $\longleftarrow$ {\tt A} \\
+\hline
+{\tt sax}             & {\tt ld x,a}            & {\tt X} $\longleftarrow$ {\tt A} \\
+\hline
+{\tt say}             & {\tt ld y,a}            & {\tt Y} $\longleftarrow$ {\tt A} \\
+\hline
+{\tt sat}             & {\tt ld t,a}            & {\tt T} $\longleftarrow$ {\tt A} \\
+\hline
+{\tt sst}             & {\tt ld st,a}           & {\tt S$|$T} $\longleftarrow$ {\tt A} \\
+\hline
+{\tt als}             & {\tt sla [a]}           & {\tt A(7..1)} $\longleftarrow$ {\tt A(6..0)}, \\
+                      & {\tt sla [a],1}         & {\tt A(0)} $\longleftarrow$ {\tt 0} \\
+\hline
+{\tt ars}             & {\tt srl [a]}           & {\tt A(6..0)} $\longleftarrow$ {\tt A(7..1)}, \\
+                      & {\tt srl [a],1}         & {\tt A(7)} $\longleftarrow$ {\tt 0} \\
+\hline
+{\tt alf}             & {\tt sla [a],4}         & {\tt A(7..4)} $\longleftarrow$ {\tt A(3..0)}, \\
+                      &                         & {\tt A(3..0)} $\longleftarrow$ {\tt 0} \\
+\hline
+{\tt arf}             & {\tt srl [a],4}         & {\tt A(3..0)} $\longleftarrow$ {\tt A(7..4)}, \\
+                      &                         & {\tt A(7..4)} $\longleftarrow$ {\tt 0} \\
+\hline
+{\tt lar n}           & {\tt ld a,n}            & {\tt A} $\longleftarrow$ {\tt R(n), n=0..11} \\
+\hline
+{\tt lar 12}          & {\tt ld a,(st)}         & {\tt A} $\longleftarrow$ {\tt R(S,T)} \\
+\hline
+{\tt lar 13}          & {\tt ld a,(st)-}        & {\tt A} $\longleftarrow$ {\tt R(S,T)}, \\
+                      &                         & {\tt S} $\longleftarrow$ {\tt S-1} \\
+\hline
+{\tt lar 14}          & {\tt ld a,(st)+}        & {\tt A} $\longleftarrow$ {\tt R(S,T)}, \\
+                      &                         & {\tt S} $\longleftarrow$ {\tt S+1} \\
+\hline
+{\tt sar n}           & {\tt ld n,a}            & {\tt R(n)} $\longleftarrow$ {\tt A, n=0..11} \\
+\hline
+{\tt sar 12}          & {\tt ld (st),a}         & {\tt R(S,T)} $\longleftarrow$ {\tt A} \\
+\hline
+{\tt sar 13}          & {\tt ld (st)-,a}        & {\tt R(S,T)} $\longleftarrow$ {\tt A}, \\
+                      &                         & {\tt S} $\longleftarrow$ {\tt S-1} \\
+\hline
+{\tt sar 14}          & {\tt ld (st)+,a}        & {\tt R(S,T)} $\longleftarrow$ {\tt A}, \\
+                      &                         & {\tt S} $\longleftarrow$ {\tt S+1} \\
+\hline
+{\tt adr n}           & {\tt add a,n}           & {\tt A} $\longleftarrow$ {\tt A} + {\tt R(n), n=0..11} \\
+\hline
+{\tt adr 12}          & {\tt add a,(st)}        & {\tt A} $\longleftarrow$ {\tt A} + {\tt R(S,T)} \\
+\hline
+{\tt adr 13}          & {\tt add a,(st)-}       & {\tt A} $\longleftarrow$ {\tt A} + {\tt R(S,T)}, \\
+                      &                         & {\tt S} $\longleftarrow$ {\tt S-1} \\
+\hline
+{\tt adr 14}          & {\tt add a,(st)+}       & {\tt A} $\longleftarrow$ {\tt A} + {\tt R(S,T)}, \\
+                      &                         & {\tt S} $\longleftarrow$ {\tt S+1} \\
+\hline
+{\tt anr n}           & {\tt and a,n}           & {\tt A} $\longleftarrow$ {\tt A} $\land$ {\tt R(n), n=0..11} \\
+\hline
+{\tt anr 12}          & {\tt and a,(st)}        & {\tt A} $\longleftarrow$ {\tt A} $\land$ {\tt R(S,T)} \\
+\hline
+{\tt anr 13}          & {\tt and a,(st)-}       & {\tt A} $\longleftarrow$ {\tt A} $\land$ {\tt R(S,T)}, \\
+                      &                         & {\tt S} $\longleftarrow$ {\tt S-1} \\
+\hline
+{\tt anr 14}          & {\tt and a,(st)+}       & {\tt A} $\longleftarrow$ {\tt A} $\land$ {\tt R(S,T)}, \\
+                      &                         & {\tt S} $\longleftarrow$ {\tt S+1} \\
+\hline
+{\tt eor n}           & {\tt xor a,n}           & {\tt A} $\longleftarrow$ {\tt A} $\oplus$ {\tt R(n), n=0..11} \\
+\hline
+{\tt eor 12}          & {\tt xor a,(st)}        & {\tt A} $\longleftarrow$ {\tt A} $\oplus$ {\tt R(S,T)} \\
+\hline
+{\tt eor 13}          & {\tt xor a,(st)-}       & {\tt A} $\longleftarrow$ {\tt A} $\oplus$ {\tt R(S,T)}, \\
+                      &                         & {\tt S} $\longleftarrow$ {\tt S-1} \\
+\hline
+{\tt eor 14}          & {\tt xor a,(st)+}       & {\tt A} $\longleftarrow$ {\tt A} $\oplus$ {\tt R(S,T)}, \\
+                      &                         & {\tt S} $\longleftarrow$ {\tt S+1} \\
+\hline
+{\tt dec n}           & {\tt dec a,n}           & {\tt R(n)} $\longleftarrow$ {\tt R(n) - 1, n=0..11} \\
+\hline
+{\tt dec 12}          & {\tt dec a,(st)}        & {\tt R(S,T)} $\longleftarrow$ {\tt R(S,T) - 1} \\
+\hline
+{\tt dec 13}          & {\tt dec a,(st)-}       & {\tt R(S,T)} $\longleftarrow$ {\tt R(S,T) - 1}, \\
+                      &                         & {\tt S} $\longleftarrow$ {\tt S-1} \\
+\hline
+{\tt dec 14}          & {\tt dec a,(st)+}       & {\tt R(S,T)} $\longleftarrow$ {\tt R(S,T) - 1}, \\
+                      &                         & {\tt S} $\longleftarrow$ {\tt S+1} \\
+\hline
+{\tt six}             & {\tt ld (z(x)),a}       & {\tt (Z(module X))} $\longleftarrow$ {\tt A} \\
+\hline
+{\tt lix}             & {\tt ld a,(z(x))}       & {\tt A} $\longleftarrow$ {\tt (Z(module X))} \\
+\hline
+{\tt liy}             & {\tt ld a,(z(y))}       & {\tt A} $\longleftarrow$ {\tt (Z(module Y))} \\
+\hline
+{\tt sqx}             & {\tt ld q(x),a}         & {\tt Q(module X)} $\longleftarrow$ {\tt X$|$A} \\
+\hline
+{\tt sqy}             & {\tt ld q(y),a}         & {\tt Q(module Y)} $\longleftarrow$ {\tt Y$|$A} \\
+\hline
+{\tt szx}             & {\tt ld z(x),a}         & {\tt Z(module X)} $\longleftarrow$ {\tt X$|$A} \\
+\hline
+{\tt szy}             & {\tt ld z(y),a}         & {\tt Z(module Y)} $\longleftarrow$ {\tt Y$|$A}

@@ -39,6 +39,8 @@ extern size_t as_dynstr_copy(as_dynstr_t *p_dest, const as_dynstr_t *p_src);
 
 extern size_t as_dynstr_copy_c_str(as_dynstr_t *p_dest, const char *p_src);
 
+extern size_t as_dynstr_append(as_dynstr_t *p_dest, const char *p_src, size_t len);
+
 extern size_t as_dynstr_append_c_str(as_dynstr_t *p_dest, const char *p_src);
 
 extern void as_dynstr_dump_hex(FILE *p_file, const as_dynstr_t *p_str);

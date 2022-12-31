@@ -1558,28 +1558,28 @@ static void TeXAddGreekPi(Word Index)
 {
   UNUSED(Index);
 
-  DoAddNormal("Pi", BackSepString);
+  DoAddNormal("&pi;", BackSepString);
 }
 
 static void TeXAddLessEq(Word Index)
 {
   UNUSED(Index);
 
-  DoAddNormal("<=", BackSepString);
+  DoAddNormal("&le;", BackSepString);
 }
 
 static void TeXAddGreaterEq(Word Index)
 {
   UNUSED(Index);
 
-  DoAddNormal(">=", BackSepString);
+  DoAddNormal("&ge;", BackSepString);
 }
 
 static void TeXAddNotEq(Word Index)
 {
   UNUSED(Index);
 
-  DoAddNormal("<>", BackSepString);
+  DoAddNormal("&ne;", BackSepString);
 }
 
 static void TeXAddMid(Word Index)
@@ -1589,39 +1589,60 @@ static void TeXAddMid(Word Index)
   DoAddNormal("|", BackSepString);
 }
 
+static void TeXAddLAnd(Word Index)
+{
+  UNUSED(Index);
+
+  DoAddNormal("&and;", BackSepString);
+}
+
+static void TeXAddLOr(Word Index)
+{
+  UNUSED(Index);
+
+  DoAddNormal("&or;", BackSepString);
+}
+
+static void TeXAddOPlus(Word Index)
+{
+  UNUSED(Index);
+
+  DoAddNormal("&veebar;", BackSepString);
+}
+
 static void TeXAddRightArrow(Word Index)
 {
   UNUSED(Index);
 
-  DoAddNormal("->", BackSepString);
+  DoAddNormal("&RightArrow;", BackSepString);
 }
 
 static void TeXAddLongRightArrow(Word Index)
 {
   UNUSED(Index);
 
-  DoAddNormal("-->", BackSepString);
+  DoAddNormal("&LongRightArrow;", BackSepString);
 }
 
 static void TeXAddLeftArrow(Word Index)
 {
   UNUSED(Index);
 
-  DoAddNormal("<-", BackSepString);
+  DoAddNormal("&LeftArrow;", BackSepString);
 }
 
 static void TeXAddLongLeftArrow(Word Index)
 {
   UNUSED(Index);
 
-  DoAddNormal("<--", BackSepString);
+  DoAddNormal("&LongLeftArrow;", BackSepString);
 }
 
 static void TeXAddLeftRightArrow(Word Index)
 {
   UNUSED(Index);
 
-  DoAddNormal("<->", BackSepString);
+  DoAddNormal("&LeftRightArrow;", BackSepString);
 }
 
 static void TeXDoFrac(Word Index)
@@ -2765,6 +2786,9 @@ int main(int argc, char **argv)
   AddInstTable(TeXTable, "geq", 0, TeXAddGreaterEq);
   AddInstTable(TeXTable, "neq", 0, TeXAddNotEq);
   AddInstTable(TeXTable, "mid", 0, TeXAddMid);
+  AddInstTable(TeXTable, "land", 0, TeXAddLAnd);
+  AddInstTable(TeXTable, "lor", 0, TeXAddLOr);
+  AddInstTable(TeXTable, "oplus", 0, TeXAddOPlus);
   AddInstTable(TeXTable, "frac", 0, TeXDoFrac);
   AddInstTable(TeXTable, "rm", FontStandard, TeXNewFontType);
   AddInstTable(TeXTable, "em", FontEmphasized, TeXNewFontType);

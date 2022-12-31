@@ -33,7 +33,7 @@ static void check_dynamic(const as_dynstr_t *p_str)
 
 void as_dynstr_ini(as_dynstr_t *p_str, size_t ini_capacity)
 {
-  p_str->p_str = (char*)malloc(ini_capacity);
+  p_str->p_str = ini_capacity ? (char*)malloc(ini_capacity) : NULL;
   p_str->capacity = p_str->p_str ? ini_capacity : 0;
   p_str->dynamic = !!p_str->p_str;
   memset(p_str->p_str, 0, p_str->capacity);
@@ -168,6 +168,28 @@ size_t as_dynstr_copy_c_str(as_dynstr_t *p_dest, const char *p_src)
 }
 
 /*!------------------------------------------------------------------------
+ * \fn     as_dynstr_append(as_dynstr_t *p_dest, const char *p_src, size_t src_len)
+ * \brief  extend string
+ * \param  p_dest string to extend
+ * \param  p_src what to append
+ * \param  src_len how much to append
+ * \return actual # of bytes transferred
+ * ------------------------------------------------------------------------ */
+
+size_t as_dynstr_append(as_dynstr_t *p_dest, const char *p_src, size_t src_len)
+{
+  size_t dest_len = strlen(p_dest->p_str);
+
+  if ((dest_len + src_len + 1 > p_dest->capacity) && p_dest->dynamic)
+    as_dynstr_realloc(p_dest, as_dynstr_roundup_len(dest_len + src_len));
+  if (src_len >= p_dest->capacity - dest_len)
+    src_len = p_dest->capacity - dest_len - 1;
+  memcpy(p_dest->p_str + dest_len, p_src, src_len);
+  p_dest->p_str[dest_len + src_len] = '\0';
+  return src_len;
+}
+
+/*!------------------------------------------------------------------------
  * \fn     as_dynstr_append_c_str(as_dynstr_t *p_dest, const char *p_src)
  * \brief  extend string
  * \param  p_dest string to extend
@@ -177,16 +199,7 @@ size_t as_dynstr_copy_c_str(as_dynstr_t *p_dest, const char *p_src)
 
 size_t as_dynstr_append_c_str(as_dynstr_t *p_dest, const char *p_src)
 {
-  size_t src_len = strlen(p_src),
-         dest_len = strlen(p_dest->p_str);
-
-  if (dest_len + src_len + 1 > p_dest->capacity)
-    as_dynstr_realloc(p_dest, as_dynstr_roundup_len(dest_len + src_len));
-  if (src_len >= p_dest->capacity - dest_len)
-    src_len = p_dest->capacity - dest_len - 1;
-  memcpy(p_dest->p_str + dest_len, p_src, src_len);
-  p_dest->p_str[dest_len + src_len] = '\0';
-  return src_len;
+  return as_dynstr_append(p_dest, p_src, strlen(p_src));
 }
 
 /*!------------------------------------------------------------------------

@@ -155,7 +155,7 @@ extern Boolean FloatRangeCheck(Double Wert, FloatType Typ);
 extern Boolean IdentifySection(const struct sStrComp *pName, LongInt *Erg);
 
 
-extern Boolean ExpandStrSymbol(char *pDest, size_t DestSize, const struct sStrComp *pSrc);
+extern struct sStrComp *ExpandStrSymbol(struct sStrComp *p_exp_comp, const struct sStrComp *pSrc, Boolean convert_upper);
 
 extern void ChangeSymbol(struct sSymbolEntry *pEntry, LargeInt Value);
 
@@ -264,7 +264,7 @@ extern void PrintCrossList(void);
 extern void ClearCrossList(void);
 
 
-extern LongInt GetSectionHandle(char *SName_O, Boolean AddEmpt, LongInt Parent);
+extern LongInt GetSectionHandle(const char *SName, Boolean AddEmpt, LongInt Parent);
 
 extern const char *GetSectionName(LongInt Handle);
 

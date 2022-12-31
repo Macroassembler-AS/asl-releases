@@ -1,5 +1,5 @@
-+-------------------------- Test Application PALM_A -------------------------+
++------------------------- Test Application STACK ---------------------------+
 |                                                                            |
-|    This is a (synthetic) test of the IBM PALM instruction aliases          |
+| Basic test of symbol PUSHing and POPing.                                   |
 |                                                                            |
 +----------------------------------------------------------------------------+

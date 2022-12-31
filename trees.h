@@ -32,7 +32,7 @@ extern void DestroyTree(PTree *Tree, TTreeCallback Callback, void *pData);
 
 extern void DumpTree(PTree Tree);
 
-extern PTree SearchTree(PTree Tree, char *Name, LongInt Attribute);
+extern PTree SearchTree(PTree Tree, const char *Name, LongInt Attribute);
 
 extern Boolean EnterTree(PTree *PDest, PTree Neu, TTreeAdder Adder, void *pData);
 

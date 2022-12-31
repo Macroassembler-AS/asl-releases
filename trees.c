@@ -102,7 +102,7 @@ void DumpTree(PTree Tree)
   DumpTreeIter(Tree, 0);
 }
 
-PTree SearchTree(PTree Tree, char *Name, LongInt Attribute)
+PTree SearchTree(PTree Tree, const char *Name, LongInt Attribute)
 {
   ShortInt SErg = -1;
 
