@@ -212,12 +212,13 @@ static void dissect_reg_pdp11(char *p_dest, size_t dest_size, tRegInt value, tSy
  * \param  def_value default value of flag upon first use
  * ------------------------------------------------------------------------ */
 
+static Byte ext_registered = 0;
+
 unsigned ext_test_and_set(unsigned mask)
 {
-  static Byte registered = 0;
-  unsigned curr = registered;
+  unsigned curr = ext_registered;
 
-  registered |= mask;
+  ext_registered |= mask;
   return curr & mask;
 }
 
@@ -586,7 +587,7 @@ static Boolean decode_adr(tStrComp *p_arg, adr_vals_t *p_result, Word pc_value, 
       p_result->mode |= 010;
     else
     {
-      p_result->vals[0] = EvalStrIntExpressionWithResult(&arg, Int16, &eval_result);
+      p_result->vals[0] = EvalStrIntExpressionWithResult(&disp_arg, Int16, &eval_result);
       if (!eval_result.OK)
         return False;
       p_result->mode |= deferred ? 070 : 060;
@@ -1751,6 +1752,7 @@ static void initpass_pdp11(void)
       reg_pdr[z] = 0x7f05;
     }
   }
+  ext_registered = 0;
 }
 
 /*!------------------------------------------------------------------------

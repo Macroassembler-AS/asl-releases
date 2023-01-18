@@ -21,6 +21,7 @@
 #include "asmpars.h"
 #include "asmallg.h"
 #include "asmitree.h"
+#include "literals.h"
 #include "codevars.h"
 #include "codepseudo.h"
 #include "headids.h"
@@ -88,18 +89,6 @@ typedef struct
 
 static tInstInfo *InstInfo;
 
-typedef struct _TLiteral
-{
-	struct _TLiteral *Next;
-	Word Value;
-	Word FCount;
-	Boolean IsForward;
-	Integer PassNo;
-} *PLiteral, TLiteral;
-
-static PLiteral FirstLiteral;
-static LongInt ForwardCount;
-
 /*---------------------------------------------------------------------------*/
 
 static Boolean ChkValidInst(Word Index)
@@ -137,17 +126,6 @@ static Boolean ChkValidInst(Word Index)
 	}
 
 	return True;
-}
-
-static char *LiteralName(PLiteral Lit, char *Result, size_t ResultSize)
-{
-	as_snprintf(Result, ResultSize, "LITERAL_");
-	if (Lit->IsForward)
-		as_snprcatf(Result, ResultSize, "F_%03x", (unsigned)Lit->FCount);
-	else
-		as_snprcatf(Result, ResultSize, "W_%03x", (unsigned)Lit->Value);
-	as_snprcatf(Result, ResultSize, "_%x", (unsigned)Lit->PassNo);
-	return Result;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -210,57 +188,12 @@ static void DecodeMR(Word Index)
 		Boolean Critical = mFirstPassUnknown(Flags) || mUsesForwards(Flags);
 		tStrComp LComp;
 		String LStr;
-		PLiteral Curr;
-		PLiteral Last;
-		Boolean Found;
-		String Name;
-		Boolean LDef;
 
 		if (!mFirstPassUnknownOrQuestionable(Flags) && !ChkRange(Adr, -2048, 4095)) return;
 
 		StrCompMkTemp(&LComp, LStr, sizeof(LStr));
 
-		/* Already available ? */
-		Curr = FirstLiteral;
-		Last = NULL;
-		Found = False;
-		while (Curr && !Found)
-		{
-			Last = Curr;
-			if (!Critical && !Curr->IsForward)
-			{
-				if ((Adr & 07777) == Curr->Value) Found = True;
-			}
-			if (!Found)
-				Curr = Curr->Next;
-		}
-
-		/* Create */
-		if (!Found)
-		{
-			Curr = (PLiteral)malloc(sizeof(TLiteral));
-			Curr->Value = Adr & 07777;
-			Curr->IsForward = Critical;
-			if (Critical)
-				Curr->FCount = ForwardCount++;
-			Curr->Next = NULL;
-			Curr->PassNo = 1;
-			do
-			{
-				tStrComp LStrComp;
-
-				as_snprintf(LComp.str.p_str, STRINGSIZE, "%s[PARENT0]", LiteralName(Curr, Name, sizeof(Name)));
-				StrCompMkTemp(&LStrComp, LStr, sizeof(LStr));
-				LDef = IsSymbolDefined(&LStrComp);
-				if (LDef) Curr->PassNo++;
-			}
-			while (LDef);
-			if (!Last)
-				FirstLiteral = Curr;
-			else
-				Last->Next = Curr;
-		}
-		as_snprintf(LComp.str.p_str, STRINGSIZE, "%s[PARENT0]", LiteralName(Curr, Name, sizeof(Name)));
+    literal_make(&LComp, NULL, Adr, eSymbolSize12Bit, Critical);
 		Adr = EvalStrIntExpressionWithFlags(&LComp, UInt12, &OK, &Flags);
 		if (!OK) return;
 
@@ -494,7 +427,7 @@ static Boolean DecodeConst(tStrComp *pStr)
 	int c;
 	Boolean ret = True;
 
-  as_tempres_ini(&t);
+	as_tempres_ini(&t);
 	EvalStrExpression(pStr, &t);
 	Flags = t.Flags;
 	switch (t.Typ)
@@ -515,7 +448,7 @@ static Boolean DecodeConst(tStrComp *pStr)
 		default:
 			ret = False;
 	}
-  as_tempres_free(&t);
+	as_tempres_free(&t);
 
 	return ret;
 }
@@ -561,48 +494,26 @@ static void DecodeDS(Word Index)
 	BookKeeping();
 }
 
+static LargeInt ltorg_12(const as_literal_t *p_lit, struct sStrComp *p_name)
+{
+  LargeInt ret;
+
+  SetMaxCodeLen((CodeLen + 1) * 2);
+	WAsmCode[CodeLen] = p_lit->value & 07777;
+  ret = EProgCounter() + CodeLen;
+	EnterIntSymbol(p_name, ret, ActPC, False);
+	CodeLen++;
+  return ret;
+}
+
 static void DecodeLTORG(Word Index)
 {
-	PLiteral Curr, Tmp, Last;
-	String Name;
-	tStrComp TmpComp;
 
 	UNUSED(Index);
 
 	if (!ChkArgCnt(0, 0)) return;
 
-	Curr = FirstLiteral;
-	while (Curr)
-	{
-		WAsmCode[CodeLen] = Curr->Value & 07777;
-		LiteralName(Curr, Name, sizeof(Name));
-		StrCompMkTemp(&TmpComp, Name, sizeof(Name));
-		EnterIntSymbol(&TmpComp, EProgCounter() + CodeLen, SegCode, False);
-		Curr->PassNo = -1;
-		CodeLen++;
-		Curr = Curr->Next;
-	}
-
-	Curr = FirstLiteral;
-	Last = NULL;
-	while (Curr)
-	{
-		if (Curr->PassNo < 0)
-		{
-			Tmp = Curr->Next;
-			if (!Last)
-				FirstLiteral = Tmp;
-			else
-				Last->Next = Tmp;
-			free(Curr);
-			Curr = Tmp;
-		}
-		else
-		{
-			Last = Curr;
-			Curr = Curr->Next;
-		}
-	}
+  literals_dump(ltorg_12, eSymbolSize12Bit, MomSectionHandle, False);
 }
 
 /* TODO: Not used anywhere? */
@@ -778,9 +689,6 @@ static void InitCode_6100(void)
 	mregistered = 0;
 
 	IBVal = 0;
-
-	FirstLiteral = NULL;
-	ForwardCount = 0;
 }
 
 static Boolean IsDef_6100(void)
@@ -791,9 +699,6 @@ static Boolean IsDef_6100(void)
 static void SwitchFrom_6100(void)
 {
 	DeinitFields();
-
-	if (FirstLiteral)
-		WrError(ErrNum_MsgMissingLTORG);
 }
 
 static void SwitchTo_6100(void)

@@ -63,7 +63,7 @@ int as_fpclassify(Double inp)
  * \brief  dissect IEEE 64 bit float into components
  * \param  p_sign extracted sign (1 for negative)
  * \param  p_exponent extracted power-of-2s exponent, without bias
- * \param  p_mantissa upper 25 bits of mantissa, including leading 1 made explicit
+ * \param  p_mantissa upper 29 bits of mantissa, including leading 1 made explicit
  * \param  p_fraction lower 24 bits of mantissa
  * \param  num number to dissect
  * ------------------------------------------------------------------------ */

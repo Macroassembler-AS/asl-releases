@@ -33,6 +33,7 @@
 #include "operator.h"
 #include "codepseudo.h"
 #include "nlmessages.h"
+#include "literals.h"
 #include "asmallg.h"
 
 #define LEAVE goto func_exit
@@ -204,6 +205,7 @@ Boolean SetCPUByName(const tStrComp *pName)
 
 void UnsetCPU(void)
 {
+  literals_chk_alldone();
   if (SwitchFrom)
   {
     ClearONOFF();

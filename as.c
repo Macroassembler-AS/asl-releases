@@ -45,6 +45,7 @@
 #include "asmlabel.h"
 #include "asmdebug.h"
 #include "asmrelocs.h"
+#include "literals.h"
 #include "asmallg.h"
 #include "onoff_common.h"
 #include "codepseudo.h"
@@ -67,6 +68,7 @@
 #include "codeh8_5.h"
 #include "code7000.h"
 #include "code65.h"
+#include "codepps4.h"
 #include "codeh16.h"
 #include "code7700.h"
 #include "codehmcs400.h"
@@ -4313,6 +4315,7 @@ int main(int argc, char **argv)
 
     codeallg_init();
     onoff_common_init();
+    literals_init();
 
     code68k_init();
     code56k_init();
@@ -4331,6 +4334,7 @@ int main(int argc, char **argv)
     codeh8_5_init();
     code7000_init();
     code65_init();
+    codepps4_init();
     codeh16_init();
     code7700_init();
     codehmcs400_init();

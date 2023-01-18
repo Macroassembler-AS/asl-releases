@@ -1,3 +1,9 @@
+2023-01-18 [1.42 Bld 236]
+
+- Addition    : Add Rockwell PPS-4 target
+- Addition    : Add DCM statement to 6502 to dispose
+                floating point constants in Apple format
+
 2022-12-31 [1.42 Bld 235]
 
 - Addition    : Add AEG/Olympia CP-3F target

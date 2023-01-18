@@ -31,6 +31,7 @@
 #include "chartrans.h"
 #include "asmcode.h"
 #include "errmsg.h"
+#include "aplfloat.h"
 
 #include "motpseudo.h"
 
@@ -351,6 +352,112 @@ void DecodeMotoADR(Word big_endian)
   }
 }
 
+void DecodeMotoDCM(Word big_endian)
+{
+  if (ChkArgCnt(1, ArgCntMax))
+  {
+    tStrComp *pArg, Arg;
+    Boolean OK = True;
+    LongInt Rep;
+    ShortInt SpaceFlag = -1;
+
+    forallargs (pArg, OK)
+    {
+      if (!*pArg->str.p_str)
+      {
+        OK = FALSE;
+        WrError(ErrNum_EmptyArgument);
+        break;
+      }
+
+      OK = CutRep(&Arg, pArg, &Rep, NULL);
+      if (!OK)
+        break;
+
+      if (!strcmp(Arg.str.p_str, "?"))
+      {
+        if (SpaceFlag == 0)
+        {
+          WrError(ErrNum_MixDBDS);
+          OK = False;
+        }
+        else
+        {
+          SpaceFlag = 1;
+          CodeLen += 4 * Rep;
+        }
+      }
+      else if (SpaceFlag == 1)
+      {
+        WrError(ErrNum_MixDBDS);
+        OK = False;
+      }
+      else
+      {
+        TempResult Res;
+        LongInt z2;
+        int ret;
+        Word buf[2];
+
+        SpaceFlag = 0;
+        as_tempres_ini(&Res);
+        EvalStrExpression(&Arg, &Res);
+
+        switch (Res.Typ)
+        {
+          case TempInt:
+            TempResultToFloat(&Res);
+            break;
+          case TempFloat:
+            break;
+          case TempString:
+            WrStrErrorPos(ErrNum_FloatButString, &Arg);
+            /* fall-through */
+          default:
+            Res.Typ = TempNone;
+            break;
+        }
+        if (TempNone == Res.Typ)
+        {
+          OK = False;
+          break;
+        }
+
+        if (SetMaxCodeLen(CodeLen + (Rep << 2)))
+        {
+          WrError(ErrNum_CodeOverflow);
+          OK = False;
+          break;
+        }
+
+        ret = Double_2_apl4(Res.Contents.Float, buf);
+        if (!check_apl_fp_dispose_result(ret, &Arg))
+        {
+          OK = False;
+          break;
+        }
+
+        for (z2 = 0; z2 < Rep; z2++)
+        {
+          PutADR(buf[0], big_endian);
+          PutADR(buf[1], big_endian);
+        }
+        as_tempres_free(&Res);
+      }
+    }
+
+    if (!OK)
+      CodeLen = 0;
+    else
+    {
+      if (SpaceFlag)
+        DontPrint = True;
+      if (*LabPart.str.p_str)
+        SetSymbolOrStructElemSize(&LabPart, eSymbolSize16Bit);
+    }
+  }
+}
+
 static void DecodeFCC(Word big_endian)
 {
   if (ChkArgCnt(1, ArgCntMax))
@@ -463,6 +570,8 @@ void init_moto8_pseudo(PInstTable p_inst_table, unsigned flags)
     AddInstTable(p_inst_table, "DW", !!(flags & e_moto_8_be), DecodeMotoADR);
   if (flags & e_moto_8_ddb)
     AddInstTable(p_inst_table, "DDB", True, DecodeMotoADR);
+  if (flags & e_moto_8_dcm)
+    AddInstTable(p_inst_table, "DCM", True, DecodeMotoDCM);
   AddInstTable(p_inst_table, "FCC", !!(flags & e_moto_8_be), DecodeFCC);
   AddInstTable(p_inst_table, "DFS", 0, DecodeMotoDFS);
   AddInstTable(p_inst_table, "RMB", 0, DecodeMotoDFS);

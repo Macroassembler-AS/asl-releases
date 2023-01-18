@@ -1,0 +1,8 @@
++-------------------- Test Application APLFLOAT -----------------------------+
+|                                                                            |
+|      This is a test of the Applesoft BASIC floating point format.  Note:   |
+|      I left out the 'non-simple' values.  They do work on a 'normal' x86   |
+|      PC with IEEE floating point, but they are in general prone to         |
+|      rounding errors.                                                      |
+|                                                                            |
++----------------------------------------------------------------------------+

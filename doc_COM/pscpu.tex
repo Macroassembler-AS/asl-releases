@@ -188,9 +188,9 @@ BIT        \> DC[.$<$size$>$]    \> DS[.$<$size$>$]   \> REG       \> SUPMODE \\
 
 {\tt\begin{tabbing}
 \hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\kill
-ADR        \> ASSUME      \> BYT         \> DB          \> DDB \\
-DFS        \> DS          \> DW          \> FCB         \> FCC \\
-FDB        \> RMB \\
+ADR        \> ASSUME      \> BYT         \> DB          \> DCB \\
+DDB        \> DFS         \> DS          \> DW          \> FCB \\
+FCC        \> FDB         \> RMB \\
 \end{tabbing}}
 
 \subsubsection{65816/MELPS-7700}
@@ -213,6 +213,16 @@ RMB \\
 \hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\kill
 DATA       \> RES         \> SFR \\
 \end{tabbing}}
+
+\subsubsection{Rockwell PPS-4}
+
+{\em Default Integer Syntax: Intel}
+
+{\tt\begin{tabbing}
+\hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\kill
+DATA       \> DC          \> DS          \> RES \\
+\end{tabbing}}
+
 
 \subsubsection{Mitsubishi M16}
 

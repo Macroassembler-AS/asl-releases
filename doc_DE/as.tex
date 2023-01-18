@@ -47,7 +47,7 @@
 
 \vspace{1cm}\par
 
-{\large Stand Dezember 2022}
+{\large Stand Januar 2023}
 \end{raggedright}
 
 \clearpage
@@ -208,6 +208,7 @@ folgende Prozessorfamilien implementiert:
 \item{Hitachi H16}
 \item{Rockwell 6502, 65(S)C02, Commodore 65CE02, WDC W65C02S, Rockwell 65C19 und
       Hudson HuC6280}
+\item{Rockwell PPS-4}
 \item{CMD 65816}
 \item{Mitsubishi MELPS-740}
 \item{Mitsubishi MELPS-7700}
@@ -3345,19 +3346,23 @@ bzw. MELPS-740) orientieren.  Z.T.~werden auch andere Mnemonics f"ur
 gleiche Befehle verwendet.
 %%-----------
 \begin{quote}
-s) MELPS4500
+s) PPS-4
 \end{quote}
 %%-----------
 \begin{quote}
-t) M16
+t) MELPS4500
 \end{quote}
 %%-----------
 \begin{quote}
-u) M16C
+u) M16
 \end{quote}
 %%-----------
 \begin{quote}
-v) PDP-11/03, PDP-11/04, PDP-11/05, PDP-11/10,
+v) M16C
+\end{quote}
+%%-----------
+\begin{quote}
+w) PDP-11/03, PDP-11/04, PDP-11/05, PDP-11/10,
    PDP-11/15, PDP-11/20, PDP-11/23, PDP-11/24,
    PDP-11/34, PDP-11/35, PDP-11/40, PDP-11/44,
    PDP-11/45, PDP-11/50, MicroPDP-11/53,
@@ -3371,30 +3376,30 @@ Erweiterungen) als auch im verf"ugbaren Adre"sraum (64, 256
 oder 4096 KByte).
 %%-----------
 \begin{quote}
-w) CP-3F, LP8000, M380
+x) CP-3F, LP8000, M380
 \end{quote}
 Das Prozessorelement des Chipsatzes ist von AEG/Olympia, GI
 und SGS-Ates unter den jeweiligen Namen vertrieben worden.
 Im Befehlssatz und den Adre"sr"aumen bestehen keine Unterschiede.
 %%-----------
 \begin{quote}
-x) 4004 $\rightarrow$ 4040
+y) 4004 $\rightarrow$ 4040
 \end{quote}
 Der 4040 besitzt gegen"uber seinem Vorg"anger ein gutes Dutzend
 zus"atzlicher Maschineninstruktionen.
 %%-----------
 \begin{quote}
-y) 8008 $\rightarrow$ 8008NEW
+z) 8008 $\rightarrow$ 8008NEW
 \end{quote}
 Intel hat 1975 die Mnemonics des umdefiniert, die zweite Variante spiegelt
 diesen neuen Befehlssatz wieder.  Eine gleichzeitige Unterst"utzung beider
 Varianten war nicht m"oglich, da teilweise "Uberschneidungen vorliegen.
 %%-----------
 \begin{quote}
-z) 8021, 8022, \\
-   8401, 8411, 8421, 8461, \\
-   8039, (MSM)80C39, 8048, (MSM)80C48, 8041, 8042, \\
-   80C382
+aa) 8021, 8022, \\
+    8401, 8411, 8421, 8461, \\
+    8039, (MSM)80C39, 8048, (MSM)80C48, 8041, 8042, \\
+    80C382
 \end{quote}
 Bei den ROM-losen Versionen 8039 und 80C39 sind die Befehle verboten,
 die den BUS (Port 0) ansprechen.  Der 8021 und 8022 sind Sonderversionen
@@ -3423,7 +3428,7 @@ beschneiden.
 \begin{quote}
 \begin{tabbing}
 \hspace{0.7cm} \= \kill
-aa) \> 87C750 $\rightarrow$ 8051, 8052, 80C320, 80C501, 80C502, \\
+ab) \> 87C750 $\rightarrow$ 8051, 8052, 80C320, 80C501, 80C502, \\
     \> 80C504, 80515, und 80517 \\
     \> $\rightarrow$ 80C390 \\
     \> $\rightarrow$ 80C251
@@ -3445,7 +3450,7 @@ Semiconductor hat den Befehlssatz und die Architektur nur so weit
 ver"andert, wie es f"ur die 16 MByte gro"sen Adre"sr"aume notwendig war.
 %%-----------
 \begin{quote}
-ab) 8096 $\rightarrow$ 80196 $\rightarrow$ 80196N $\rightarrow$ 80296
+ac) 8096 $\rightarrow$ 80196 $\rightarrow$ 80196N $\rightarrow$ 80296
 \end{quote}
 Neben einem anderen Satz von SFRs (die "ubrigens von Unterversion zu
 Unterversion stark differieren) kennt der 80196 eine Reihe von
@@ -3459,7 +3464,7 @@ Peripheral Transaction Server} (PTS) und verliert damit wieder zwei
 Maschinenbefehle.
 %%-----------
 \begin{quote}
-ac) 8080 $\rightarrow$ V30EMU $\rightarrow$ 8085 $\rightarrow$ 8085UNDOC
+ad) 8080 $\rightarrow$ V30EMU $\rightarrow$ 8085 $\rightarrow$ 8085UNDOC
 \end{quote}
 Der 8085 kennt zus"atzlich die Befehle \tty{RIM} und \tty{SIM} zum Steuern der
 Interruptmaske und der zwei I/O-Pins.  Der Typ {\tt 8085UNDOC} schaltet
@@ -3471,31 +3476,31 @@ und {\em CALLN} frei, mit denen die 8080-Emulation auf einem V20/V30
 verlassen bzw. unterbrochen werden kann.
 %%-----------
 \begin{quote}
-ad) 8086 $\rightarrow$ 80186 $\rightarrow$ V30 $\rightarrow$ V35
+ae) 8086 $\rightarrow$ 80186 $\rightarrow$ V30 $\rightarrow$ V35
 \end{quote}
 Hier kommen wieder nur neue Befehle dazu.  Die entsprechenden 8-Bitter sind
 wegen ihrer Befehlskompatibilit"at nicht aufgef"uhrt, f"ur ein 8088-System
 ist also z.B. 8086 anzugeben.
 %%-----------
 \begin{quote}
-ae) 80960
+af) 80960
 \end{quote}
 %%-----------
 \begin{quote}
-af) 8X300 $\rightarrow$ 8X305
+ag) 8X300 $\rightarrow$ 8X305
 \end{quote}
 Der 8X305 besitzt eine Reihe zus"atzlicher Arbeitsregister, die dem
 8X300 fehlen und kann mit diesen auch zus"atzliche Operationen ausf"uhren,
 wie das direkte Schreiben von 8-Bit-Werten auf Peripherieadressen.
 %%-----------
 \begin{quote}
-ag) XAG1, XAG2, XAG3
+ah) XAG1, XAG2, XAG3
 \end{quote}
 Diese Prozessoren unterscheiden sich nur in der Gr"o"se des eingebauten
 ROMs, die in \tty{STDDEFXA.INC} definiert ist.
 %%-----------
 \begin{quote}
-ah) AT90S1200, AT90S2313, AT90S2323, AT90S233, AT90S2343,\\
+ai) AT90S1200, AT90S2313, AT90S2323, AT90S233, AT90S2343,\\
     AT90S4414, AT90S4433, AT90S4434, AT90S8515,\\
     AT90C8534, AT90S8535, ATTINY4, ATTINY5, ATTINY9,\\
     ATTINY10, ATTINY11, ATTINY12, ATTINY13, ATTINY13A,\\
@@ -3528,7 +3533,7 @@ Vergleich zu den AT90...-Vorg"angern auch neue Maschinenbefehle
 mit, den ATtinys fehlen wiederum die Multiplikationsbefehle.
 %%-----------
 \begin{quote}
-ai) AM29245 $\rightarrow$ AM29243 $\rightarrow$ AM29240 $\rightarrow$ AM29000
+aj) AM29245 $\rightarrow$ AM29243 $\rightarrow$ AM29240 $\rightarrow$ AM29000
 \end{quote}
 Je weiter man sich in der Liste nach rechts bewegt, desto weniger
 Befehle m"ussen in Software emuliert werden.  W"ahrend z.B. der 29245
@@ -3537,7 +3542,7 @@ beiden Vertretern in der Mitte nur die Gleitkommabefehle.  Der 29000
 dient dabei als ,,generischer'' Typ, der alle Befehle in Hardware versteht.
 %%-----------
 \begin{quote}
-aj) 80C166 $\longrightarrow$ 80C167,80C165,80C163
+ak) 80C166 $\longrightarrow$ 80C167,80C165,80C163
 \end{quote}
 80C167 und 80C165/163 haben anstelle 256 Kbyte max. 16 Mbyte Adre"sraum,
 au"serdem kennen sie einige zus"atzliche Befehle f"ur erweiterte
@@ -3546,7 +3551,7 @@ unterscheiden sich diese Prozessoren der ,,zweiten Generation'' nur in der
 eingebauten Peripherie.
 %%-----------
 \begin{quote}
-ak) LR35902/GBZ80 $\rightarrow$ Z80 $\rightarrow$ Z80UNDOC \\
+al) LR35902/GBZ80 $\rightarrow$ Z80 $\rightarrow$ Z80UNDOC \\
     $\rightarrow$ Z180 $\rightarrow$ Z380
 \end{quote}
 W"ahrend f"ur den Z180 nur die zus"atzlichen Befehle definiert sind
@@ -3567,7 +3572,7 @@ I/O-Adre"sraum, die zweite Registerbank sowie eine Reihe von
 16-Bit-Befehlen.
 %%-----------
 \begin{quote}
-al) Z8601, Z8603, Z86C03, Z86E03, Z86C06, Z86E06, \\
+am) Z8601, Z8603, Z86C03, Z86E03, Z86C06, Z86E06, \\
     Z86C08, Z86C21, Z86E21, Z86C30, Z86C31, Z86C32 Z86C40 \\
     $\rightarrow$ Z88C00, Z88C01 \\
     $\rightarrow$ eZ8, Z8F0113, Z8F011A, Z8F0123, Z8F012A, \\
@@ -3589,7 +3594,7 @@ Richtungen) stark erweiterten Befehlss"atzen, die auch auf Quellcode-Ebene
 nur g"o"stenteils aufw"arts-kompatibel sind.
 %%-----------
 \begin{quote}
-am) Z8001, Z8002, Z8003, Z8004
+an) Z8001, Z8002, Z8003, Z8004
 \end{quote}
 "Uber die Wahl des Prozessors wird die Betriebsart (segmentiert f"ur
 Z8001 und Z8003, nicht segmentiert f"ur Z8002 und Z8004) bestimmt.  Eine
@@ -3597,7 +3602,7 @@ Unterscheidung zwischen dem Z8001/8002 einerseits und Z8003/8004 andererseits
 findet aktuell nicht statt.
 %%-----------
 \begin{quote}
-an) KCPSM, KCPSM3
+ao) KCPSM, KCPSM3
 \end{quote}
 Bei beiden Prozessorkernen handelt es sich um keine eigenst"andigen
 Bausteine, sondern Logik-Kerne f"ur Gate-Arrays der Firma Xilinx.  Die
@@ -3606,7 +3611,7 @@ Instruktionen.  Es ist zu beachten, da"s sie nicht bin"ar
 aufw"artskompatibel ist!
 %%-----------
 \begin{quote}
-ao) MICO8\_05, MICO8\_V3, MICO8\_V31
+ap) MICO8\_05, MICO8\_V3, MICO8\_V31
 \end{quote}
 Leider hat Lattice die Maschinencodes des Mico8 mehrfach ge"andert, so
 da"s verschiedene Targets notwendig wurden, um auch alte Designs weiter
@@ -3615,18 +3620,18 @@ im 2005er-Manual beschrieben wurde, die beiden anderen die Versionen 3.0
 bzw. 3.1.
 %%-----------
 \begin{quote}
-ap) 96C141, 93C141
+aq) 96C141, 93C141
 \end{quote}
 Diese beiden Prozessoren repr"asentieren die beiden Varianten der
 Prozessorfamilie: TLCS-900 und TLCS-900L.  Die Unterschiede dieser beiden
 Varianten werden in Abschnitt \ref{TLCS900Spec} genauer beleuchtet.
 %%-----------
 \begin{quote}
-aq) 90C141
+ar) 90C141
 \end{quote}
 %%-----------
 \begin{quote}
-ar) 87C00, 87C20, 87C40, 87C70
+as) 87C00, 87C20, 87C40, 87C70
 \end{quote}
 Die Prozessoren der TLCS-870-Reihe haben zwar den identischen CPU-Kern, je
 nach Variante aber eine unterschiedliche Peripherieausstattung.  Zum
@@ -3635,50 +3640,50 @@ Die Datei STDDEF87.INC benutzt analog zur MCS-51-Familie die hier
 m"ogliche Unterscheidung, um automatisch den korrekten Symbolsatz
 bereitzustellen.
 %%-----------
-as) TLCS-870/C
+at) TLCS-870/C
 Momentan ist nur der Prozessorkern der TLCS-870/C-Familie implmentiert.
 %%-----------
 \begin{quote}
-at) 47C00 $\rightarrow$ 470C00 $\rightarrow$ 470AC00
+au) 47C00 $\rightarrow$ 470C00 $\rightarrow$ 470AC00
 \end{quote}
 Diese drei Varianten der TLCS-47-Familie haben unterschiedlich gro"se
 RAM-und ROM-Adre"sbereiche, wodurch jeweils einige Befehle zur
 Bankumschaltung hinzukommen oder wegfallen.
 %%-----------
 \begin{quote}
-au) 97C241
+av) 97C241
 \end{quote}
 %%-----------
 \begin{quote}
-av) TC9331
+aw) TC9331
 \end{quote}
 %%-----------
 \begin{quote}
-aw) 16C54 $\rightarrow$ 16C55 $\rightarrow$ 16C56 $\rightarrow$ 16C57
+ax) 16C54 $\rightarrow$ 16C55 $\rightarrow$ 16C56 $\rightarrow$ 16C57
 \end{quote}
 Diese Prozessoren unterscheiden sich durch den verf"ugbaren
 Adre"sraum im Programmspeicher, d.h. durch die Adresse, ab der
 der AS "Uberl"aufe anmeckert.
 %%-----------
 \begin{quote}
-ax) 16C64, 16C84
+ay) 16C64, 16C84
 \end{quote}
 Analog zur MCS-51-Familie findet hier keine Unterscheidung im
 Codegenerator statt, die unterschiedlichen Nummern dienen lediglich
 der Einblendung der korrekten SFRs in STDDEF18.INC.
 %%-----------
 \begin{quote}
-ay) 17C42
+az) 17C42
 \end{quote}
 %%-----------
 \begin{quote}
-az) SX20, SX28
+ba) SX20, SX28
 \end{quote}
 Der SX20 steckt in einem kleineren Geh"ause, weshalb der Port C
 fehlt.
 %%-----------
 \begin{quote}
-ba) ST6200, ST6201, ST6203, ST6208, ST6209,\\
+bb) ST6200, ST6201, ST6203, ST6208, ST6209,\\
     ST6210, ST6215, ST6218, ST6220, ST6225,\\
     ST6228, ST6230, ST6232, ST6235, ST6240,\\
     ST6242, ST6245, ST6246, ST6252, ST6253,\\
@@ -3689,7 +3694,7 @@ Die einzelnen ST6-Varianten differieren in der Menge der
 On-Chip-Peripherie und dem eingebauten Speicher.
 %%-----------
 \begin{quote}
-bb) ST7 \\
+bc) ST7 \\
     ST72251G1, ST72251G2, ST72311J2, ST72311J4, \\
     ST72321BR6, ST72321BR7, ST72321BR9, ST72325S4, \\
     ST72325S6, ST72325J7, ST72325R9, ST72324J6, \\
@@ -3750,7 +3755,7 @@ gleichen Maschinencode wie beim ST7 haben, ist er nicht bin"ar
 aufw"artskompatibel.
 %%-----------
 \begin{quote}
-bc) ST9020, ST9030, ST9040, ST9050
+bd) ST9020, ST9030, ST9040, ST9050
 \end{quote}
 Diese 4 Namen vetreten die vier ,,Unterfamilien'' der ST9-Familie, die
 sich durch eine unterschiedliche Ausstattung mit On-Chip-Peripherie
@@ -3759,11 +3764,11 @@ Unterscheidung wieder nur in der Include-Datei mit den Peripherieadressen zum
 Zuge kommt.
 %%-----------
 \begin{quote}
-bd) 6804
+be) 6804
 \end{quote}
 %%-----------
 \begin{quote}
-be) 32010 $\rightarrow$ 32015
+bf) 32010 $\rightarrow$ 32015
 \end{quote}
 Der TMS32010 besitzt nur 144 Byte internes RAM, weshalb AS Adressen im
 Datensegment auf eben diesen Bereich begrenzt.  F"ur den 32015 gilt diese
@@ -3771,13 +3776,13 @@ Beschr"ankung nicht, es kann der volle Bereich von 0--255 angesprochen
 werden.
 %%-----------
 \begin{quote}
-bf) 320C25 $\rightarrow$ 320C26 $\rightarrow$ 320C28
+bg) 320C25 $\rightarrow$ 320C26 $\rightarrow$ 320C28
 \end{quote}
 Diese Prozessoren unterscheiden sich nur leicht in der
 On-Chip-Peripherie sowie den Konfigurationsbefehlen.
 %%-----------
 \begin{quote}
-bg) 320C30, 320C31 $\rightarrow$ 320C40, 320C44
+bh) 320C30, 320C31 $\rightarrow$ 320C40, 320C44
 \end{quote}
 Der 320C31 ist eine etwas ,,abgespeckte'' Version des 320C30 mit dem
 gleichen Befehlssatz, jedoch weniger Peripherie.  In STDDEF3X.INC
@@ -3788,7 +3793,7 @@ der C44 eine abgespeckte Version des C40, mit weniger Peripherie
 und kleinerem Adre"sraum.
 %%-----------
 \begin{quote}
-bh) 320C203 $\rightarrow$ 320C50, 320C51, 320C53
+bi) 320C203 $\rightarrow$ 320C50, 320C51, 320C53
 \end{quote}
 Ersterer ist der generelle Repr"asentant f"ur die
 C20x-Signalprozessorfamilie, die eine Untermenge des C5x-Befehlssatzes
@@ -3796,12 +3801,12 @@ implementieren.  Die Unterscheidung zwischen den verschiedenen
 C5x-Prozessoren wird von AS momentan nicht ausgenutzt.
 %%-----------
 \begin{quote}
-bi) 320C541
+bj) 320C541
 \end{quote}
 Dies ist momentan der Repr"asentant f"ur die TMS320C54x-Familie...
 %%-----------
 \begin{quote}
-bj) TI990/4, TI990/10, TI990/12 \\
+bk) TI990/4, TI990/10, TI990/12 \\
     TMS9900, TMS9940, TMS9995, TMS99105, TMS99110
 \end{quote}
 Die TMS99xx/99xxx-Prozessoren sind im Prinzip Single-Chip-Implementierungen
@@ -3813,7 +3818,7 @@ dem Vorhandensein eines privilegierten Modus.
 \begin{quote}
 \begin{tabbing}
 \hspace{0.7cm} \= \kill
-bk) \> TMS70C00, TMS70C20, TMS70C40, \\
+bl) \> TMS70C00, TMS70C20, TMS70C40, \\
     \> TMS70CT20, TMS70CT40, \\
     \> TMS70C02, TMS70C42, TMS70C82, \\
     \> TMS70C08, TMS70C48 \\
@@ -3828,21 +3833,21 @@ interne RAM-Menge, unterscheiden sich also nur in der Menge
 eingebauten ROMs.
 %%-----------
 \begin{quote}
-bl) 370C010, 370C020, 370C030, 370C040 und 370C050
+bm) 370C010, 370C020, 370C030, 370C040 und 370C050
 \end{quote}
 Analog zur MCS-51-Familie werden die unterschiedlichen Typen nur
 zur Unterscheidung der Peripherie in STDDEF37.INC genutzt, der
 Befehlssatz ist identisch.
 %%-----------
 \begin{quote}
-bm) MSP430 $\rightarrow$ MSP430X
+bn) MSP430 $\rightarrow$ MSP430X
 Die X-Variante des CPU-Kerns erweitert den Adre"sraum von 64
 KiByte auf 1 MiByte und erweitert den Befehlssatz, um
 Instruktionen mehrfach ausf"uhren zu k"onnen.
 \end{quote}
 %%-----------
 \begin{quote}
-bn) TMS1000, TMS1100, TMS1200, TMS1300
+bo) TMS1000, TMS1100, TMS1200, TMS1300
 \end{quote}
 F"ur TMS1000 und TMS1200 sind jeweils 1 KByte ROM und 64 Nibbles
 RAM vorgesehen, f"ur TMS1100 und TMS1300 jeweils das doppelte.  Des
@@ -3851,18 +3856,18 @@ Default-Befehlssatz vorgesehen (AS kennt nur die Default-
 Befehlss"atze!).
 %%-----------
 \begin{quote}
-bo) SC/MP
+bp) SC/MP
 \end{quote}
 %%-----------
 \begin{quote}
-bp) 8070
+bq) 8070
 \end{quote}
 Dieser Prozessor repr"asentiert die gesamte 807x-Familie (die mindestens
 aus den 8070, 8072 und 8073 besteht), der jedoch ein einheitlicher
 CPU-Kern gemeinsam ist.
 %%-----------
 \begin{quote}
-bq) COP87L84
+br) COP87L84
 \end{quote}
 Dies ist das momentan einzige unterst"utzte Mitglied der COP8-Familie
 von National Semiconductor.  Mir ist bekannt, da"s die Familie
@@ -3871,7 +3876,7 @@ Befehlssatz existieren, die nach Bedarf hinzukommen werden.  Es ist eben
 ein Anfang, und die Dokumentation von National ist ziemlich umfangreich...
 %%-----------
 \begin{quote}
-br) COP410 $\rightarrow$ COP420 $\rightarrow$ COP440 $\rightarrow$ COP444
+bs) COP410 $\rightarrow$ COP420 $\rightarrow$ COP440 $\rightarrow$ COP444
 Die COP42x-Derivate bieten einige weitere Befehle, des weiteren wurden
 Befehlen in ihrem Wertebereich erweitert.
 \end{quote}
@@ -3879,7 +3884,7 @@ Befehlen in ihrem Wertebereich erweitert.
 \begin{quote}
 \begin{tabbing}
 \hspace{0.7cm} \= \kill
-bs) \> SC14400, SC14401, SC14402, SC14404, SC14405, \\
+bt) \> SC14400, SC14401, SC14402, SC14404, SC14405, \\
     \> SC14420, SC14421, SC14422, SC14424 \\
 \end{tabbing}
 \end{quote}
@@ -3889,7 +3894,7 @@ unterst"utzt werden und deren Architektur im Laufe der Zeit optimiert
 wurde.
 %%-----------
 \begin{quote}
-bt) NS16008, NS32008, NS08032, NS16032, NS32016, NS32032, \\
+bu) NS16008, NS32008, NS08032, NS16032, NS32016, NS32032, \\
     NS32332, NS32CG16, NS32532
 \end{quote}
 National hat in den ersten Jahren die CPUs der ersten Generation
@@ -3900,11 +3905,11 @@ und der NS32CG16 ist eine Embedded-Variante mit Zusatzbefehlen f"ur
 Bitblock-Transfers.
 %%-----------
 \begin{quote}
-bu) ACE1101, ACE1202
+bv) ACE1101, ACE1202
 \end{quote}
 %%-----------
 \begin{quote}
-bv) F3850, MK3850, \\
+bw) F3850, MK3850, \\
     MK3870, MK3870/10, MK3870/12, "MK3870/20, MK3870/22, \\
     MK3870/30, MK3870/32, MK3870/40, MK3870/42, \\
     MK3872, MK3873, MK3873/10, MK3873/12, MK3873/20, MK3873/22, \\
@@ -3926,7 +3931,7 @@ MK3875 bietet einen zweiten Betriebsspannungsanschlu"s, um den
 internen RAM-Inhalt im Standby halten zu k"onnen.
 %%-----------
 \begin{quote}
-bw) 7800, 7801, 7802 \\
+bx) 7800, 7801, 7802 \\
 78C05, 78C06 \\
 7807, 7808, 7809 \\
 7810 $\rightarrow$ 78C10, 78C11, 78C12, 78C14, 78C17, 78C18
@@ -3944,7 +3949,7 @@ ZCM-Register fehlen demzufolge.  \bb{VORSICHT!} NMOS- und CMOS-Version
 differieren zum Teil in den Reset-Werten einiger Register!
 %%-----------
 \begin{quote}
-bx) 7566 $\leftrightarrow$ 7508
+by) 7566 $\leftrightarrow$ 7508
 \end{quote}
 Es existieren in der $\mu$PD75xx-Familie zwei verschiedene
 CPU-Kerne: Der 7566 repr"asentiert den 'instruction set B', der
@@ -3956,7 +3961,7 @@ sind nicht 100\%-ig bin"arkompatibel!
 \begin{quote}
 \begin{tabbing}
 \hspace{0.7cm} \= \kill
-by) \> 75402, \\
+bz) \> 75402, \\
     \> 75004, 75006, 75008, \\
     \> 75268, \\
     \> 75304, 75306, 75308, 75312, 75316, \\
@@ -3972,46 +3977,46 @@ unterscheiden sich einmal durch ihre on-chip-Peripherie und
 zum anderen durch die M"achtigkeit des Befehlssatzes.
 %%-----------
 \begin{quote}
-bz) 78070
+ca) 78070
 \end{quote}
 Dies ist das einzige, mir momentan vertraute Mitglied der
 78K0-Familie von NEC.  Es gelten "ahnliche Aussagen wie zur
 COP8-Familie!
 %%-----------
 \begin{quote}
-ca) 78214
+cb) 78214
 \end{quote}
 Dies ist momentan der Repr"asentant der 78K2-Familie von NEC.
 %%-----------
 \begin{quote}
-cb) 78310
+cc) 78310
 \end{quote}
 Dies ist momentan der Repr"asentant der 78K3-Familie von NEC.
 %%-----------
 \begin{quote}
-cc) 784026
+cd) 784026
 \end{quote}
 Dies ist momentan der Repr"asentant der 78K4-Familie von NEC.
 %%-----------
 \begin{quote}
-cd) 7720 $\rightarrow$ 7725
+ce) 7720 $\rightarrow$ 7725
 \end{quote}
 Der $\mu$PD7725 bietet im Vergleich zu seinem Vorg"anger gr"o"sere
 Adre"sr"aume und einige zus"atzliche Befehle. {\bf VORSICHT!}  Die
 Prozessoren sind nicht zueinander bin"arkompatibel!
 %%-----------
 \begin{quote}
-ce) 77230
+cf) 77230
 \end{quote}
 %%-----------
 \begin{quote}
-cf) 70616
+cg) 70616
 \end{quote}
 Dies ist momentan der Repr"asentant der V60-Familie von NEC.
 %%-----------
 \begin{quote}
 \begin{tabbing}
-cg) \= SYM53C810, SYM53C860, SYM53C815, SYM53C825, \\
+ch) \= SYM53C810, SYM53C860, SYM53C815, SYM53C825, \\
     \> SYM53C875, SYM53C895
 \end{tabbing}
 \end{quote}
@@ -4020,36 +4025,36 @@ einige Befehlsvarianten nicht, au"serdem unterscheiden sie sich in ihrem
 Satz interner Register.
 %%-----------
 \begin{quote}
-ch) MB89190
+ci) MB89190
 \end{quote}
 Dieser Prozessortyp repr"asentiert die F$^{2}$MC8L-Serie von Fujitsu...
 %%-----------
 \begin{quote}
-ci) MB9500
+cj) MB9500
 \end{quote}
 ...so wie dieser es momentan f"ur die 16-Bit-Varianten von Fujitsu tut!
 %%-----------
 \begin{quote}
-cj) MSM5840, MSM5842, MSM58421, MSM58422, MSM5847
+ck) MSM5840, MSM5842, MSM58421, MSM58422, MSM5847
 \end{quote}
 Diese Varianten der OLMS-40-Familie unterscheiden sich im
 Befehlssatz sowie im internen Programm- und Datenspeicher.
 %%-----------
 \begin{quote}
-ck) MSM5054, MSM5055, MSM5056, MSM6051, MSM6052
+cl) MSM5054, MSM5055, MSM5056, MSM6051, MSM6052
 \end{quote}
 Gleiches wie bei der OLMS-40-Familie: Unterschiede im
 Befehlssatz sowie im internen Programm- und Datenspeicher.
 %%-----------
 \begin{quote}
-cl) MN1610[ALT] $\rightarrow$ MN1613[ALT]
+cm) MN1610[ALT] $\rightarrow$ MN1613[ALT]
 \end{quote}
 Zus"atzlich zu den Funktionen seines Vorg"angers bietet der
 MN1613 einen gr"o"seren Adre"sraum, eine Floating-Point-Einheit
 sowie eine ganze Reihe neuer Befehle.
 %%-----------
 \begin{quote}
-cm) PMC150, PMS150, PFS154, PMC131, PMS130, PMS131 \\
+cn) PMC150, PMS150, PFS154, PMC131, PMS130, PMS131 \\
 PMS132, PMS132B, PMS152, PMS154B, PMS154C, PFS173 \\
 PMS133, PMS134, DF69, MCS11, PMC232, PMC234, PMC251 \\
 PMC271,PMC884, PMS232, PMS234, PMS271
@@ -4060,7 +4065,7 @@ des internen ROMs (l"oschbar oder OTP), der eingebauten
 Peripherie sowie in Umfang und Kodierung des Befehlssatzes.
 %%-----------
 \begin{quote}
-cn) 1802 $\rightarrow$ 1804, 1805, 1806 $\rightarrow$ 1804A, 1805A
+co) 1802 $\rightarrow$ 1804, 1805, 1806 $\rightarrow$ 1804A, 1805A
 1806A
 \end{quote}
 1804, 1805 und 1806 haben gegen"uber dem 'Original' 1802 einen leicht
@@ -4070,31 +4075,31 @@ Timer.  Die A-Versionen erweitern den Befehlssatz um \tty{DSAV},
 BCD-Format.
 %%-----------
 \begin{quote}
-co) XS1
+cp) XS1
 \end{quote}
 Dieser Typ repr"asentiert die XCore-''Familie''.
 %%-----------
 \begin{quote}
-cp) 1750
+cq) 1750
 \end{quote}
 MIL STD 1750 ist ein Standard, also gibt es auch nur eine
 (Standard-)Variante...
 %%-----------
 \begin{quote}
-cq) KENBAK
+cr) KENBAK
 \end{quote}
 Es hat nie einen KENBAK-2 gegeben...
 %%-----------
 \begin{quote}
-cr) CP-1600
+cs) CP-1600
 \end{quote}
 %%-----------
 \begin{quote}
-cs) HPNANO
+ct) HPNANO
 \end{quote}
 %%-----------
 \begin{quote}
-ct) 6100 $\rightarrow$ 6120
+cu) 6100 $\rightarrow$ 6120
 \end{quote}
 Der IM6120 unterst"utzt einen gr"o"seren Adre"sraum (32K
 anstelle 4K) sowie zus"atzliche Maschinenbefehle.
@@ -5328,7 +5333,7 @@ Konstanten in einer Anweisung gemischt werden.
 \ttindex{DS}
 
 {\em G"ultigkeit: 680x0, M*Core, 68xx, H8, SH7x00, DSP56xxx,\\
-     XA, ST7/STM8, MN161x, IM61x0, CP-3F}
+     XA, ST7/STM8, MN161x, IM61x0, CP-3F, PPS-4}
 
 Mit diesem Befehl l"a"st sich zum einen Speicherplatz f"ur die angegebene
 Zahl im Attribut beschriebener Zahlen reservieren.  So reserviert
@@ -5552,6 +5557,18 @@ werden.
 
 Dieser Befehl funktioniert analog zu \tty{ADR}, nur mit dem Unterschied, da"s
 die 16-BitWerte im Big-Endian-Format im Speicher abgelegt werden.
+
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+\subsection{DCM}
+\ttindex{DCM}
+
+{\em G"ultigkeit: 6502}
+
+Mit diesem Befehl werden Gleitkomma-Konstanten im Speicher abgelegt, und
+zwar in dem in \cite{AppleFloat} beschriebenen Format: Ein Exponent
+von 8 Bit und eine 24-bittige Mantisse im Zweierkomplement, im Big-Endian-Format
+abgelegt.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -5809,12 +5826,13 @@ Dito.
 \ttindex{RES}
 
 {\em G"ultigkeit: PIC, MELPS-4500, HMCS400, 3201x, 320C2(0)x,\\
-     320C5x, AVR, $\mu$PD772x, OLMS-40/50, Padauk, CP-1600}
+     320C5x, AVR, $\mu$PD772x, OLMS-40/50, Padauk, CP-1600,\\
+     PPS-4}
 
 Dieser Befehl dient zur Reservierung von Speicher.  Er reserviert
 im Codesegment immer W"orter (10/12/14/16 Bit), im Datensegment bei
-den PICs Bytes, beim 4500er und OLMS-40/50 Nibbles sowie bei Texas ebenfalls
-W"orter.
+den PICs Bytes, beim 4500er, PPS-4 und OLMS-40/50 Nibbles sowie bei
+TI W"orter.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
