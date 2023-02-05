@@ -75,6 +75,7 @@ tIntTypeDef IntTypeDefs[IntTypeCnt] =
   { 0xc00e, 0, 0, 0 }, /* Int14 */
   { 0x800f, 0, 0, 0 }, /* SInt15 */
   { 0x000f, 0, 0, 0 }, /* UInt15 */
+  { 0xc00f, 0, 0, 0 }, /* Int15 */
   { 0x8010, 0, 0, 0 }, /* SInt16 */
   { 0x0010, 0, 0, 0 }, /* UInt16 */
   { 0xc010, 0, 0, 0 }, /* Int16 */

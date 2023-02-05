@@ -124,6 +124,7 @@
 #include "codemsp.h"
 #include "codetms1.h"
 #include "codescmp.h"
+#include "codeimp16.h"
 #include "code807x.h"
 #include "codecop4.h"
 #include "codecop8.h"
@@ -4400,6 +4401,7 @@ int main(int argc, char **argv)
     code77230_init();
     codev60_init();
     codescmp_init();
+    codeimp16_init();
     code807x_init();
     codecop4_init();
     codecop8_init();

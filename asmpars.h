@@ -36,7 +36,7 @@ typedef enum
   UInt12   , Int12   ,
   UInt13   ,
   UInt14   , Int14   ,
-  SInt15   , UInt15  ,
+  SInt15   , UInt15  , Int15   ,
   SInt16   , UInt16  , Int16   ,
   UInt17   ,
   UInt18   ,

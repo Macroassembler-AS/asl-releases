@@ -267,6 +267,8 @@ following processor families have been implemented:
 \item{Texas Instruments TMS1000}
 \item{Texas Instruments TMS370xxx}
 \item{Texas Instruments MSP430(X)}
+\item{National Semiconductor IMP-16}
+\item{National Semiconductor IPC-16 ('PACE'), INS8900}
 \item{National Semiconductor SC/MP}
 \item{National Semiconductor INS807x}
 \item{National Semiconductor COP4}
@@ -2699,7 +2701,8 @@ symbolically defined bit may also be used as argument for
 \subsection{PORT}
 \ttindex{PORT}
 
-{\em valid for: PALM, 8008/8080/8085/8086, XA, Z80, Z8000, 320C2x/5x, TLCS-47, AVR, F8}
+{\em valid for: PALM, 8008/8080/8085/8086, XA, Z80, Z8000, 320C2x/5x, TLCS-47, AVR,
+     F8, IMP-16}
 
 \tty{PORT} works similar to \tty{EQU}, just the symbol becomes assigned to the
 I/O-address range.  Allowed values are 0..7 for the 3201x and 8008, 0..15 for the
@@ -3754,17 +3757,31 @@ default instruction set fot TMS1100 and TMS1300(AS only knows the
 default instruction sets!)
 %%-----------
 \begin{quote}
-bp) SC/MP
+bp) IMP-16C/200, IMP-16C/300, IMP-16P/200, IMP-16P/300, IMP-16L
+\end{quote}
+The IMP-16L defines a few additional bits in its status register,
+plus more branch conditions.  It supports the extended instruction
+set just like the /300 variants.
+%%-----------
+\begin{quote}
+bq) IPC-16, INS8900
+\end{quote}
+The INS8900 is just a re-implementation of PACE in a more modern
+NMOS manufacturing process; there are no differences in instruction
+set.
+%%-----------
+\begin{quote}
+br) SC/MP
 \end{quote}
 %%-----------
 \begin{quote}
-bq) 8070
+bs) 8070
 \end{quote}
 This processor represents the whole 807x family (which consists at least
 of the 8070, 8072, and 8073), which however shares identical CPU cores.
 %%-----------
 \begin{quote}
-br) COP87L84
+bt) COP87L84
 \end{quote}
 This is the only member of National Semiconductor's COP8 family that
 is currently supported.  I know that the family is substantially
@@ -3773,7 +3790,7 @@ instruction sets which will be added when a need occurs.  It is a
 beginning, and National's documentation is quite extensive...
 %%-----------
 \begin{quote}
-bs) COP410 $\rightarrow$ COP420 $\rightarrow$ COP440 $\rightarrow$ COP444
+bu) COP410 $\rightarrow$ COP420 $\rightarrow$ COP440 $\rightarrow$ COP444
 The COP42x derivates offer some additional instructions, plus other
 instructions have an extended operand range.
 \end{quote}
@@ -3781,7 +3798,7 @@ instructions have an extended operand range.
 \begin{quote}
 \begin{tabbing}
 \hspace{0.7cm} \= \kill
-bt) \> SC14400, SC14401, SC14402, SC14404, SC14405, \\
+bv) \> SC14400, SC14401, SC14402, SC14404, SC14405, \\
     \> SC14420, SC14421, SC14422, SC14424 \\
 \end{tabbing}
 \end{quote}
@@ -3790,7 +3807,7 @@ instructions, since each of them supports different B field formats and
 their architecture has been optimized over time.
 %%-----------
 \begin{quote}
-bu) NS16008, NS32008, NS08032, NS16032, NS32016, NS32032, \\
+bw) NS16008, NS32008, NS08032, NS16032, NS32016, NS32032, \\
     NS32332, NS32CG16, NS32532
 \end{quote}
 National renamed the first-generation CPUs several times in the early
@@ -3800,11 +3817,11 @@ MBytes, and the NS32CG16 is an embedded variant with additional instructions
 for bit block transfers.
 %%-----------
 \begin{quote}
-bv) ACE1101, ACE1202
+bx) ACE1101, ACE1202
 \end{quote}
 %%-----------
 \begin{quote}
-bw) F3850, MK3850, \\
+by) F3850, MK3850, \\
     MK3870, MK3870/10, MK3870/12, "MK3870/20, MK3870/22, \\
     MK3870/30, MK3870/32, MK3870/40, MK3870/42, \\
     MK3872, MK3873, MK3873/10, MK3873/12, MK3873/20, \\
@@ -3825,7 +3842,7 @@ while the MK3875 offers a second supply voltage pin to buffer the internal
 memory in standby mode.
 %%-----------
 \begin{quote}
-bx) 7800, 7801, 7802 \\
+bz) 7800, 7801, 7802 \\
 78C05, 78C06 \\
 7807, 7808, 7809 \\
 7810$\rightarrow$78C10, 78C11, 78C12, 78C14, 78C17, 78C18
@@ -3843,7 +3860,7 @@ no stop-mode; the respective command and the ZCM register are omitted.
 values of some registers!
 %%-----------
 \begin{quote}
-by) 7500 $\leftrightarrow$ 7508
+ca) 7500 $\leftrightarrow$ 7508
 \end{quote}
 There are two different types of CPU cores in the $\mu$PD75xx
 family: the 7566 represents the the 'instruction set B', which
@@ -3854,7 +3871,7 @@ CAUTION!} These instruction sets are not 100\% binary compatible!
 \begin{quote}
 \begin{tabbing}
 \hspace{0.7cm} \= \kill
-bz) \> 75402,\\
+cb) \> 75402,\\
     \> 75004, 75006, 75008,\\
     \> 75268,\\
     \> 75304, 75306, 75308, 75312, 75316,\\
@@ -3870,45 +3887,45 @@ peripherals on the one hand and by their instruction set's power on
 the other hand.
 %%-----------
 \begin{quote}
-ca) 78070
+cc) 78070
 \end{quote}
 This is currently the only member of NEC's 78K0 family I am familiar
 with.  Similar remarks like for the COP8 family apply!
 %%-----------
 \begin{quote}
-cb) 78214
+cd) 78214
 \end{quote}
 This is currently the representor of NEC's 78K2 family.
 %%-----------
 \begin{quote}
-cc) 78310
+ce) 78310
 \end{quote}
 This is currently the representor of NEC's 78K3 family.
 %%-----------
 \begin{quote}
-cd) 784026
+cf) 784026
 \end{quote}
 This is currently the representor of NEC's 78K4 family.
 %%-----------
 \begin{quote}
-ce) 7720 $\rightarrow$ 7725
+cg) 7720 $\rightarrow$ 7725
 \end{quote}
 The $\mu$PD7725 offers larger address spaces and som more instructions
 compared to his predecessor. {\bf CAUTION!}  The processors are not binary
 compatible to each other!
 %%-----------
 \begin{quote}
-cf) 77230
+ch) 77230
 \end{quote}
 %%-----------
 \begin{quote}
-cg) 70616
+ci) 70616
 \end{quote}
 This is currently the representor of NEC's V60 family.
 %%-----------
 \begin{quote}
 \begin{tabbing}
-ch) \= SYM53C810, SYM53C860, SYM53C815, SYM53C825, \\
+cj) \= SYM53C810, SYM53C860, SYM53C815, SYM53C825, \\
     \> SYM53C875, SYM53C895
 \end{tabbing}
 \end{quote}
@@ -3917,37 +3934,37 @@ instruction variants, furthermore they are different in their set of
 internal registers.
 %%-----------
 \begin{quote}
-ci) MB89190
+ck) MB89190
 \end{quote}
 This processor type represents Fujitsu's F$^{2}$MC8L series...
 %%-----------
 \begin{quote}
-cj) MB9500
+cl) MB9500
 \end{quote}
 ...just like this one does it currently for the 16-bit variants from
 Fujitsu!
 %%-----------
 \begin{quote}
-ck) MSM5840, MSM5842, MSM58421, MSM58422, MSM5847
+cm) MSM5840, MSM5842, MSM58421, MSM58422, MSM5847
 \end{quote}
 These variants of the OLMS-40 family differ in their instruction
 set and in the amount of internal program and data memory.
 %%-----------
 \begin{quote}
-cl) MSM5054, MSM5055, MSM5056, MSM6051, MSM6052
+cn) MSM5054, MSM5055, MSM5056, MSM6051, MSM6052
 \end{quote}
 The as for the OLMS-40 family: differences in instruction
 set and the amount of internal program and data memory.
 %%-----------
 \begin{quote}
-cm) MN1610[ALT] $\rightarrow$ MN1613[ALT]
+co) MN1610[ALT] $\rightarrow$ MN1613[ALT]
 \end{quote}
 In addition to its predecessor's features, the MN1613 offers a larger
 address space, a floating point unit and a couple of new machine
 instructions.
 %%-----------
 \begin{quote}
-cn) PMC150, PMS150, PFS154, PMC131, PMS130, PMS131 \\
+cp) PMC150, PMS150, PFS154, PMC131, PMS130, PMS131 \\
     PMS132, PMS132B, PMS152, PMS154B, PMS154C, PFS173 \\
     PMS133, PMS134, DF69, MCS11, PMC232, PMC234, PMC251 \\
     PMC271,PMC884, PMS232, PMS234, PMS271
@@ -3958,7 +3975,7 @@ the built-in peripherals, and their instruction set (both
 extent and binary coding).
 %%-----------
 \begin{quote}
-co) 1802 $\rightarrow$ 1804, 1805, 1806 $\rightarrow$ 1804A,
+cq) 1802 $\rightarrow$ 1804, 1805, 1806 $\rightarrow$ 1804A,
 1805A, 1806A
 \end{quote}
 1804, 1805, and 1806 feature an instruction set that is slightly
@@ -3968,31 +3985,31 @@ an integrated timer.  The A variants extend the instruction set by
 subtraction in BCD format.
 %%-----------
 \begin{quote}
-cp) XS1
+cr) XS1
 \end{quote}
 This type represents the XCore-"family".
 %%-----------
 \begin{quote}
-cq) 1750
+cs) 1750
 \end{quote}
 MIL STD 1750 is a standard, therefore there is only one
 (standard) variant...
 %%-----------
 \begin{quote}
-cr) KENBAK
+ct) KENBAK
 \end{quote}
 Since there has never been a KENBAK-2, the target is simply KENBAK...
 %%-----------
 \begin{quote}
-cs) CP-1600
+cu) CP-1600
 \end{quote}
 %%-----------
 \begin{quote}
-ct) HPNANO
+cv) HPNANO
 \end{quote}
 %%-----------
 \begin{quote}
-cu) 6100 $\rightarrow$ 6120
+cw) 6100 $\rightarrow$ 6120
 \end{quote}
 The IM6120 supports a larger address space (32K
 instead of 4K) and additional machine instructions.
@@ -4804,6 +4821,16 @@ The default value is 0.
 
 %%. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
+\subsubsection{IPC-16/INS8900}
+\label{PACEAssume}
+
+The processor provides an input pin named {\tt BPS} to select which address
+range shall be directly addressable: either the first 256 words, or both
+the lowest and topmost 128 words.  The first variant is the default, an
+{\tt ASSUME BPS:1} switches to the second variant.
+
+%%. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
 \subsubsection{ST6}
 \label{ST6Assume}
 
@@ -5427,7 +5454,8 @@ big-endian order.
 \subsection{WORD}
 \ttindex{WORD}
 
-{\em valid for: ST6, i960, 320C2(0)x, 320C3x/C4x/C5x, MSP, CP-1600}
+{\em valid for: ST6, i960, 320C2(0)x, 320C3x/C4x/C5x, MSP, CP-1600,\\
+      IMP-16, IPC-16}
 
 If assembling for the 320C3x/C4x or i960, this command stores 32-bit words,
 16-bit words for the other families.  Note that when in 320C2(0)x/5x mode,
@@ -5591,7 +5619,7 @@ while the second one sets the filling constant itself.
 \subsection{ASCII and ASCIZ}
 \ttindex{ASCII}\ttindex{ASCIZ}
 
-{\em valid for: ST6}
+{\em valid for: ST6, \tty{ASCII} also on IMP-16/IPC-16}
 
 Both commands store string constants to memory.  While \tty{ASCII} writes
 the character information only, \tty{ASCIZ} additionally appends a zero to
@@ -5736,7 +5764,7 @@ used to fill the area.
 \subsection{LTORG}
 \ttindex{LTORG}
 
-{\em valid for: SH7x00, IM61x0}
+{\em valid for: SH7x00, IM61x0, IMP-16, IPC-16}
 
 Although the SH7000 processor can do an immediate register load with
 8 bit only, AS shows up with no such restriction.  This behaviour is
@@ -12374,6 +12402,11 @@ described by:
                {Custom instruction set extensions must be enabled
                 to use this instruction.}
                {The instruction in question}
+\errentry{1509}{instruction extension not enabled}
+               {error}
+               {This instruction is part of an extension whose
+                usage has not been enabled.}
+               {The extension's name}
 \errentry{1510}{invalid bit position}
                {error}
                {Either the number of bits specified is not allowed, or

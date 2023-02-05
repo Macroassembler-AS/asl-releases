@@ -91,6 +91,8 @@ static const TFamilyDescr Descrs[] =
   { "TMS370xx"     , 0x0049, eHexFormatIntel   },
   { "MSP430"       , 0x004a, eHexFormatIntel   },
   { "TMS1000"      , 0x0007, eHexFormatIntel   },
+  { "IMP-16"       , 0x0017, eHexFormatIntel   },
+  { "IPC-16"       , 0x0018, eHexFormatIntel   },
   { "SC/MP"        , 0x006e, eHexFormatIntel   },
   { "807x"         , 0x006a, eHexFormatIntel   },
   { "COP4"         , 0x005f, eHexFormatIntel   },

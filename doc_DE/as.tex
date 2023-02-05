@@ -261,6 +261,8 @@ folgende Prozessorfamilien implementiert:
 \item{Texas Instruments TMS1000}
 \item{Texas Instruments TMS370xxx}
 \item{Texas Instruments MSP430(X)}
+\item{National Semiconductor IMP-16}
+\item{National Semiconductor IPC-16 ('PACE'), INS8900}
 \item{National Semiconductor SC/MP}
 \item{National Semiconductor INS807x}
 \item{National Semiconductor COP4}
@@ -2780,7 +2782,8 @@ f"ur \tty{BFINS} und \tty{BFEXT} verwendet werden.
 \subsection{PORT}
 \ttindex{PORT}
 
-{\em G"ultigkeit: PALM, 8008/8080/8085/8086, XA, Z80, Z8000, 320C2x/5x, TLCS-47, AVR, F8}
+{\em G"ultigkeit: PALM, 8008/8080/8085/8086, XA, Z80, Z8000, 320C2x/5x, TLCS-47, AVR,
+     F8, IMP-16}
 
 \tty{PORT} arbeitet analog zu \tty{SFR}, nur wird das Symbol dem I/O-Adre"sbereich
 zugeordnet.  Erlaubte Werte sind 0..7 beim 3201x und 8008, 0..15 beim 320C2x und PALM,
@@ -3856,18 +3859,32 @@ Default-Befehlssatz vorgesehen (AS kennt nur die Default-
 Befehlss"atze!).
 %%-----------
 \begin{quote}
-bp) SC/MP
+bp) IMP-16C/200, IMP-16C/300, IMP-16P/200, IMP-16P/300, IMP-16L
+\end{quote}
+Beim IMP-16L sind einige zus"atzliche Bits im Statusregister sowie
+weitere Sprungbedingungen definiert. Den erweiterten Befehlssatz 
+unterst"utzt er ebenso wie die 300er-Varianten.
+%%-----------
+\begin{quote}
+bq) IPC-16, INS8900
+\end{quote}
+Der INS8900 ist lediglich eine Re-Implementierung des PACE in
+einem modernerem NMOS-Fertigungsprozess; es bestehen keine
+Unterschiede im Befehlssatz.
+%%-----------
+\begin{quote}
+br) SC/MP
 \end{quote}
 %%-----------
 \begin{quote}
-bq) 8070
+bs) 8070
 \end{quote}
 Dieser Prozessor repr"asentiert die gesamte 807x-Familie (die mindestens
 aus den 8070, 8072 und 8073 besteht), der jedoch ein einheitlicher
 CPU-Kern gemeinsam ist.
 %%-----------
 \begin{quote}
-br) COP87L84
+bt) COP87L84
 \end{quote}
 Dies ist das momentan einzige unterst"utzte Mitglied der COP8-Familie
 von National Semiconductor.  Mir ist bekannt, da"s die Familie
@@ -3876,7 +3893,7 @@ Befehlssatz existieren, die nach Bedarf hinzukommen werden.  Es ist eben
 ein Anfang, und die Dokumentation von National ist ziemlich umfangreich...
 %%-----------
 \begin{quote}
-bs) COP410 $\rightarrow$ COP420 $\rightarrow$ COP440 $\rightarrow$ COP444
+bu) COP410 $\rightarrow$ COP420 $\rightarrow$ COP440 $\rightarrow$ COP444
 Die COP42x-Derivate bieten einige weitere Befehle, des weiteren wurden
 Befehlen in ihrem Wertebereich erweitert.
 \end{quote}
@@ -3884,7 +3901,7 @@ Befehlen in ihrem Wertebereich erweitert.
 \begin{quote}
 \begin{tabbing}
 \hspace{0.7cm} \= \kill
-bt) \> SC14400, SC14401, SC14402, SC14404, SC14405, \\
+bv) \> SC14400, SC14401, SC14402, SC14404, SC14405, \\
     \> SC14420, SC14421, SC14422, SC14424 \\
 \end{tabbing}
 \end{quote}
@@ -3894,7 +3911,7 @@ unterst"utzt werden und deren Architektur im Laufe der Zeit optimiert
 wurde.
 %%-----------
 \begin{quote}
-bu) NS16008, NS32008, NS08032, NS16032, NS32016, NS32032, \\
+bw) NS16008, NS32008, NS08032, NS16032, NS32016, NS32032, \\
     NS32332, NS32CG16, NS32532
 \end{quote}
 National hat in den ersten Jahren die CPUs der ersten Generation
@@ -3905,11 +3922,11 @@ und der NS32CG16 ist eine Embedded-Variante mit Zusatzbefehlen f"ur
 Bitblock-Transfers.
 %%-----------
 \begin{quote}
-bv) ACE1101, ACE1202
+bx) ACE1101, ACE1202
 \end{quote}
 %%-----------
 \begin{quote}
-bw) F3850, MK3850, \\
+by) F3850, MK3850, \\
     MK3870, MK3870/10, MK3870/12, "MK3870/20, MK3870/22, \\
     MK3870/30, MK3870/32, MK3870/40, MK3870/42, \\
     MK3872, MK3873, MK3873/10, MK3873/12, MK3873/20, MK3873/22, \\
@@ -3931,7 +3948,7 @@ MK3875 bietet einen zweiten Betriebsspannungsanschlu"s, um den
 internen RAM-Inhalt im Standby halten zu k"onnen.
 %%-----------
 \begin{quote}
-bx) 7800, 7801, 7802 \\
+bz) 7800, 7801, 7802 \\
 78C05, 78C06 \\
 7807, 7808, 7809 \\
 7810 $\rightarrow$ 78C10, 78C11, 78C12, 78C14, 78C17, 78C18
@@ -3949,7 +3966,7 @@ ZCM-Register fehlen demzufolge.  \bb{VORSICHT!} NMOS- und CMOS-Version
 differieren zum Teil in den Reset-Werten einiger Register!
 %%-----------
 \begin{quote}
-by) 7566 $\leftrightarrow$ 7508
+ca) 7566 $\leftrightarrow$ 7508
 \end{quote}
 Es existieren in der $\mu$PD75xx-Familie zwei verschiedene
 CPU-Kerne: Der 7566 repr"asentiert den 'instruction set B', der
@@ -3961,7 +3978,7 @@ sind nicht 100\%-ig bin"arkompatibel!
 \begin{quote}
 \begin{tabbing}
 \hspace{0.7cm} \= \kill
-bz) \> 75402, \\
+cb) \> 75402, \\
     \> 75004, 75006, 75008, \\
     \> 75268, \\
     \> 75304, 75306, 75308, 75312, 75316, \\
@@ -3977,46 +3994,46 @@ unterscheiden sich einmal durch ihre on-chip-Peripherie und
 zum anderen durch die M"achtigkeit des Befehlssatzes.
 %%-----------
 \begin{quote}
-ca) 78070
+cc) 78070
 \end{quote}
 Dies ist das einzige, mir momentan vertraute Mitglied der
 78K0-Familie von NEC.  Es gelten "ahnliche Aussagen wie zur
 COP8-Familie!
 %%-----------
 \begin{quote}
-cb) 78214
+cd) 78214
 \end{quote}
 Dies ist momentan der Repr"asentant der 78K2-Familie von NEC.
 %%-----------
 \begin{quote}
-cc) 78310
+ce) 78310
 \end{quote}
 Dies ist momentan der Repr"asentant der 78K3-Familie von NEC.
 %%-----------
 \begin{quote}
-cd) 784026
+cf) 784026
 \end{quote}
 Dies ist momentan der Repr"asentant der 78K4-Familie von NEC.
 %%-----------
 \begin{quote}
-ce) 7720 $\rightarrow$ 7725
+cg) 7720 $\rightarrow$ 7725
 \end{quote}
 Der $\mu$PD7725 bietet im Vergleich zu seinem Vorg"anger gr"o"sere
 Adre"sr"aume und einige zus"atzliche Befehle. {\bf VORSICHT!}  Die
 Prozessoren sind nicht zueinander bin"arkompatibel!
 %%-----------
 \begin{quote}
-cf) 77230
+ch) 77230
 \end{quote}
 %%-----------
 \begin{quote}
-cg) 70616
+ci) 70616
 \end{quote}
 Dies ist momentan der Repr"asentant der V60-Familie von NEC.
 %%-----------
 \begin{quote}
 \begin{tabbing}
-ch) \= SYM53C810, SYM53C860, SYM53C815, SYM53C825, \\
+cj) \= SYM53C810, SYM53C860, SYM53C815, SYM53C825, \\
     \> SYM53C875, SYM53C895
 \end{tabbing}
 \end{quote}
@@ -4025,36 +4042,36 @@ einige Befehlsvarianten nicht, au"serdem unterscheiden sie sich in ihrem
 Satz interner Register.
 %%-----------
 \begin{quote}
-ci) MB89190
+ck) MB89190
 \end{quote}
 Dieser Prozessortyp repr"asentiert die F$^{2}$MC8L-Serie von Fujitsu...
 %%-----------
 \begin{quote}
-cj) MB9500
+cl) MB9500
 \end{quote}
 ...so wie dieser es momentan f"ur die 16-Bit-Varianten von Fujitsu tut!
 %%-----------
 \begin{quote}
-ck) MSM5840, MSM5842, MSM58421, MSM58422, MSM5847
+cm) MSM5840, MSM5842, MSM58421, MSM58422, MSM5847
 \end{quote}
 Diese Varianten der OLMS-40-Familie unterscheiden sich im
 Befehlssatz sowie im internen Programm- und Datenspeicher.
 %%-----------
 \begin{quote}
-cl) MSM5054, MSM5055, MSM5056, MSM6051, MSM6052
+cn) MSM5054, MSM5055, MSM5056, MSM6051, MSM6052
 \end{quote}
 Gleiches wie bei der OLMS-40-Familie: Unterschiede im
 Befehlssatz sowie im internen Programm- und Datenspeicher.
 %%-----------
 \begin{quote}
-cm) MN1610[ALT] $\rightarrow$ MN1613[ALT]
+co) MN1610[ALT] $\rightarrow$ MN1613[ALT]
 \end{quote}
 Zus"atzlich zu den Funktionen seines Vorg"angers bietet der
 MN1613 einen gr"o"seren Adre"sraum, eine Floating-Point-Einheit
 sowie eine ganze Reihe neuer Befehle.
 %%-----------
 \begin{quote}
-cn) PMC150, PMS150, PFS154, PMC131, PMS130, PMS131 \\
+cp) PMC150, PMS150, PFS154, PMC131, PMS130, PMS131 \\
 PMS132, PMS132B, PMS152, PMS154B, PMS154C, PFS173 \\
 PMS133, PMS134, DF69, MCS11, PMC232, PMC234, PMC251 \\
 PMC271,PMC884, PMS232, PMS234, PMS271
@@ -4065,7 +4082,7 @@ des internen ROMs (l"oschbar oder OTP), der eingebauten
 Peripherie sowie in Umfang und Kodierung des Befehlssatzes.
 %%-----------
 \begin{quote}
-co) 1802 $\rightarrow$ 1804, 1805, 1806 $\rightarrow$ 1804A, 1805A
+cq) 1802 $\rightarrow$ 1804, 1805, 1806 $\rightarrow$ 1804A, 1805A
 1806A
 \end{quote}
 1804, 1805 und 1806 haben gegen"uber dem 'Original' 1802 einen leicht
@@ -4075,31 +4092,31 @@ Timer.  Die A-Versionen erweitern den Befehlssatz um \tty{DSAV},
 BCD-Format.
 %%-----------
 \begin{quote}
-cp) XS1
+cr) XS1
 \end{quote}
 Dieser Typ repr"asentiert die XCore-''Familie''.
 %%-----------
 \begin{quote}
-cq) 1750
+cs) 1750
 \end{quote}
 MIL STD 1750 ist ein Standard, also gibt es auch nur eine
 (Standard-)Variante...
 %%-----------
 \begin{quote}
-cr) KENBAK
+ct) KENBAK
 \end{quote}
 Es hat nie einen KENBAK-2 gegeben...
 %%-----------
 \begin{quote}
-cs) CP-1600
+cu) CP-1600
 \end{quote}
 %%-----------
 \begin{quote}
-ct) HPNANO
+cv) HPNANO
 \end{quote}
 %%-----------
 \begin{quote}
-cu) 6100 $\rightarrow$ 6120
+cw) 6100 $\rightarrow$ 6120
 \end{quote}
 Der IM6120 unterst"utzt einen gr"o"seren Adre"sraum (32K
 anstelle 4K) sowie zus"atzliche Maschinenbefehle.
@@ -4937,6 +4954,17 @@ festgelegt werden.  Der Default ist 0.
 
 %%. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
+\subsubsection{IPC-16/INS8900}
+\label{PACEAssume}
+
+Der Prozessor verf"ugt "uber einen Eingangs-Pin namens {\tt BPS}, mit dem man
+w"ahlen kann, welcher Adre"sbereich direkt adressierbar sein soll: entweder
+die untersten 256 Worte des Speichers, oder die jeweils obersten und untersten
+128 Worte.  Der Default is ersteres, mit einem {\tt ASSUME BPS:1} schaltet man
+auf die zweite Variante um.
+
+%%. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
 \subsubsection{ST6}
 \label{ST6Assume}
 
@@ -5575,7 +5603,8 @@ abgelegt.
 \subsection{WORD}
 \ttindex{WORD}
 
-{\em G"ultigkeit: ST6, i960, 320C2(0)x, 320C3x/C4x/C5x, MSP, CP-1600}
+{\em G"ultigkeit: ST6, i960, 320C2(0)x, 320C3x/C4x/C5x, MSP, CP-1600,\\
+     IMP-16, IPC-16}
 
 F"ur den 320C3x/C4x und i960 werden hiermit 32-Bit-Worte abgelegt, f"ur die
 alle anderen Familien 16-Bit-Worte.  Ein im 320C2(0)x/5x-Modus vor dem Befehl
@@ -5740,7 +5769,7 @@ wird.
 \subsection{ASCII und ASCIZ}
 \ttindex{ASCII}\ttindex{ASCIZ}
 
-{\em G"ultigkeit: ST6}
+{\em G"ultigkeit: ST6, \tty{ASCII} auch IMP-16 und IPC-16}
 
 Mit diesen beiden Befehlen k"onnen Stringkonstanten im Speicher
 abgelegt werden.  W"ahrend ASCII nur die reinen Daten im Speicher
@@ -5896,7 +5925,7 @@ Speicherbereichs nicht definiert.  Alternativ kann als zweites Argument ein
 \subsection{LTORG}
 \ttindex{LTORG}
 
-{\em G"ultigkeit: SH7x00, IM61x0}
+{\em G"ultigkeit: SH7x00, IM61x0, IMP-16, IPC-16}
 
 Da der SH7000-Prozessor seine Register immediate nur mit 8-Bit-Werten
 laden kann, AS dem Programmierer jedoch vorgaukelt, da"s es eine solche
@@ -12669,6 +12698,11 @@ Angaben:
                {Die benutzerdefinierten Befehlssatzerweiterungen
                 m"ussen erlaubt werden, um diesen Befehl zu benutzen.}
                {Der fragliche Befehl}
+\errentry{1509}{Befehls-Erweiterung nicht freigeschaltet}
+               {Fehler}
+               {Dieser Befehl ist Teil einer Befehlssatz-Erweiterung,
+                deren Benutzung nicht erlaubt wurde.}
+               {Der Name der Erweiterung}
 \errentry{1510}{Ung"ultige Bitstelle}
                {Fehler}
                {Die angegebene Bitnummer ist nicht erlaubt

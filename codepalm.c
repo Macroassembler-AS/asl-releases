@@ -466,7 +466,7 @@ static Boolean strip_indirect(tStrComp *p_dest, tStrComp *p_src)
 
 static void put_code(Word code)
 {
-  /* Skip instructions only skip the next halfwor dof code.  If the
+  /* Skip instructions only skip the next halfword of code.  If the
      previous instruction was a skip, and we are about to create an
      instruction consisting of more than one halfword, warn about this.
      Note this only happens for 'macro instructions' like JMP,
@@ -1428,7 +1428,7 @@ static void make_code_palm(void)
   if (decode_pseudo())
   {
     this_was_skip = last_was_skip;
-    return;
+    goto func_exit;
   }
   if (DecodeIntelPseudo(True))
     return;

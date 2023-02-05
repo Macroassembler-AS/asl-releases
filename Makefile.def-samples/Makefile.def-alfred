@@ -1,0 +1,107 @@
+# -------------------------------------------------------------------------
+# This is the Makefile.def I currently use on my own Debian systems.  It
+# provides cross build for Linux 32 bit, Windows, optional Valgrind testing
+# and PPC cross compiling/emulation to test on a big endian host:
+# any additionally needed flags
+
+# ...for host-side build tools:
+
+OBJDIR =
+CC = gcc
+CFLAGS = -g -O3 -fomit-frame-pointer -Wall -Wextra -Werror -ansi -std=c89 -pedantic -Wstrict-prototypes -Wshift-overflow=2 -Wshift-count-overflow
+#CFLAGS = -g -O3 -fomit-frame-pointer -Wall -Wextra -Werror -ansi -pedantic -Wstrict-prototypes -Wshift-overflow=2 -Wshift-count-overflow
+HOST_OBJEXTENSION = .o
+LDFLAGS =
+LD = $(CC)
+HOST_EXEXTENSION =
+
+# Here I select the target.  Object directories have to exist:
+
+TARG_OBJDIR = x86_64-linux/
+#TARG_OBJDIR = i686-linux/
+#TARG_OBJDIR = ppc-linux/
+#TARG_OBJDIR = i686-w32/
+#TARG_OBJDIR = x86_64-w64/
+
+# ...for the actual build targets.  This is the simple case for no cross-build:
+
+ifeq ($(TARG_OBJDIR),x86_64-linux/)
+ TARG_CC = $(CC)
+ TARG_CFLAGS = $(CFLAGS)
+ #TARG_CC = clang
+ #TARG_CFLAGS = -g -O3 -fomit-frame-pointer -Wall -Wextra -Werror -ansi -std=c89 -pedantic -Wstrict-prototypes -Wshift-count-overflow
+ #TARG_CC = g++
+ #TARG_CFLAGS = -g -O3 -fomit-frame-pointer -Wall -Wextra -Werror -ansi -std=c++98 -pedantic -Wno-deprecated
+ #TARG_CC = clang++
+ #TARG_CFLAGS = -g -O3 -fomit-frame-pointer -Wall -Wextra -Werror -ansi -std=c++98 -pedantic -Wno-deprecated
+ #TARG_CC = tcc
+ #TARG_CFLAGS = -g -O3 -fomit-frame-pointer -Wall -Wextra -Werror -pedantic -Wno-deprecated
+ TARG_OBJEXTENSION = $(HOST_OBJEXTENSION)
+ TARG_LD = $(TARG_CC)
+ TARG_LDFLAGS = $(LDFLAGS)
+ TARG_EXEXTENSION = $(HOST_EXEXTENSION)
+ ifeq ($(VALGRIND),1)
+  TARG_RUNCMD = "valgrind --leak-check=full"
+ endif
+endif
+
+# build 32 bit Linux binary on 64 bit system
+
+ifeq ($(TARG_OBJDIR),i686-linux/)
+ TARG_CC = gcc -m32
+ TARG_CFLAGS = $(CFLAGS)
+ TARG_OBJEXTENSION = .o
+ TARG_LD = $(TARG_CC)
+ TARG_LDFLAGS = $(LDFLAGS)
+ TARG_EXEXTENSION =
+endif
+
+# PPC build to test big endian
+
+ifeq ($(TARG_OBJDIR),ppc-linux/)
+ TARG_CC = powerpc-linux-gnu-gcc
+ TARG_CFLAGS = $(CFLAGS)
+ TARG_OBJEXTENSION = .o
+ TARG_LD = $(TARG_CC)
+ TARG_LDFLAGS = $(LDFLAGS) -static
+ TARG_EXEXTENSION =
+ TARG_RUNCMD = qemu-ppc-static
+endif
+
+# cross Build with MinGW32
+# do not use -stdc=89 since we otherwise get no 'long long' data type and therefore
+# no 64 bit support
+
+ifeq ($(TARG_OBJDIR),i686-w32/)
+ TARG_CC = i686-w64-mingw32-gcc
+ TARG_CFLAGS = -g -O3 -fomit-frame-pointer -Wall -Wextra -Werror -ansi -pedantic -Wno-deprecated
+ TARG_OBJEXTENSION = .o
+ TARG_LD = $(TARG_CC)
+ TARG_LDFLAGS = $(LDFLAGS)
+ TARG_EXEXTENSION = .exe
+ TARG_RUNCMD = wine
+ TEX2DOC_FLAGS=-codepage 1252
+endif
+
+# cross Build with MinGW64
+
+ifeq ($(TARG_OBJDIR),x86_64-w64/)
+ TARG_CC = x86_64-w64-mingw32-gcc
+ TARG_CFLAGS = $(CFLAGS)
+ TARG_OBJEXTENSION = .o
+ TARG_LD = $(TARG_CC)
+ TARG_LDFLAGS = $(LDFLAGS)
+ TARG_EXEXTENSION = .exe
+ TARG_RUNCMD = wine
+ TEX2DOC_FLAGS=-codepage 1252
+endif
+
+# -------------------------------------------------------------------------
+# directories where binaries, includes, and manpages should go during
+# installation
+
+BINDIR = /usr/local/bin
+INCDIR = /usr/local/include/asl
+MANDIR = /usr/local/man
+LIBDIR = /usr/local/lib/asl
+DOCDIR = /usr/local/doc/asl
