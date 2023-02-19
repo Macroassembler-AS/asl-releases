@@ -47,7 +47,7 @@
 
 \vspace{1cm}\par
 
-{\large Stand Januar 2023}
+{\large Stand Februar 2023}
 \end{raggedright}
 
 \clearpage
@@ -545,7 +545,10 @@ BCDIC.INC         & Definition BCDIC/Codepage 359 \\
 BITFUNCS.INC      & Funktionen zur Bitmanipulation \\
 CTYPE.INC         & Funktionen zur Klassifizierung von \\
                   & Zeichen \\
-EBCDIC.INC        & Definition EBCDIC/Codepage 037 \\
+EBCDIC.INC        & Inkludiert alle EBCDIC-Varianten \\
+CP037.INC         & Definition EBCDIC (Codepage 037) \\
+CP5100.INC        & Definition Zeichensatz IBM 5100 \\
+CP5110.INC        & Definition EBCDIC (IBM 5110) \\
 80C50X.INC        & Registeradressen SAB C50x \\
 80C552.INC        & Registeradressen 80C552 \\
 H8\_3048.INC      & Registeradressen H8/3048 \\
@@ -1715,6 +1718,8 @@ bin"ar      & Suffix B        & Pr"afix \%  & Pr"afix 0b  & B'..' \\
 oktal       & Suffix O oder Q & Pr"afix @   & Pr"afix 0   & O'..' \\
 \ii{Kennung}& \tty{octo}      & \tty{@oct}  & \tty{0oct}  & \tty{o'oct'} \\  
             & \tty{octq}      &             &             & \\
+ASCII       &                 &             &             & A'..' \\
+\ii{Kennung}&                 &             &             & \tty{a'asc'} \\
 \hline
 \end{tabular}\end{center}
 \caption{definierte Zahlensysteme und Schreibweisen\label{TabSystems}}
@@ -1726,8 +1731,21 @@ sich auch ,,ungew"ohnliche'' Zahlensysteme, d.h. andere als 2, 8, 10 oder 16
 einstellen.
 
 G"ultige Ziffern sind die Zahlen 0 bis 9 sowie die Buchstaben A bis Z
-(Wert 10 bis 35) bis zur Basis des Zahlensystems minus eins.  Die
-Verwendung von Buchstaben in Integerkonstanten bringt allerdings auch
+(Wert 10 bis 35) bis zur Basis des Zahlensystems minus eins.  Die ASCII-
+Darstellung f"allt etwas aus diesem System heraus: hier beschreibt der
+ASCII-Wert (bzw. der Code im aktuell eingestellten Zeichensatz, siehe
+Abschnitt \ref{SectCHARSET}) ein ganzes Byte.  Solcherart geschriebene
+Integer-Konstanten sind also letzten Endes identisch zu Multi-Character-Konstanten.
+Die beiden Schreibweisen:
+\begin{verbatim}
+'ABCD'
+A'ABCD'
+\end{verbatim}
+sind also identisch, das vorangestellte 'A' ist eigentlich redundant.  Man
+kan diese Schreibweise aber für existierenden Code erlauben, weil einige "altere
+Original-Assembler (z.B. Signetics 2650) diese Schreibweise unterst"utzen.
+
+Die Verwendung von Buchstaben in Integerkonstanten bringt allerdings auch
 einige Mehrdeutigkeiten mit sich, da Symbolnamen ja auch Ketten aus Zahlen
 und Buchstaben sind: Ein Symbolname darf nicht mit einem Zeichen von 0 bis
 9 beginnen, was bedeutet, da"s eine Integerkonstante, die nicht durch ein
@@ -2850,63 +2868,85 @@ Abschnitt \ref{8X30xSpec}.
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 \subsection{CHARSET}
-\ttindex{CHARSET}
+\label{SectCHARSET}
+\ttindex{CHARSET}\ttindex{CODEPAGE\_VAL}
 
 {\em G"ultigkeit: alle Prozessoren}
 
-Einplatinensysteme, zumal wenn sie LCDs ansteuern, benutzen h"aufig
+Einplatinen-Systeme, zumal wenn sie LCDs ansteuern, benutzen h"aufig
 einen anderen Zeichensatz als ASCII, und da"s die Umlautkodierung mit
-der im PC "ubereinstimmt, d"urfte wohl reiner Zufall sein.  Um nun
-aber keine fehlertr"achtigen Handumkodierungen vornehmen zu m"ussen,
-enth"alt der Assembler eine Umsetzungstabelle f"ur Zeichen, die jedem
-Quellcode ein Zielzeichen zuordnet.  Zur Modifikation dieser Tabelle
-(die initial 1:1 "ubersetzt), dient der Befehl \tty{CHARSET}.
-\tty{CHARSET} kann mit verschiedenen Parameterzahlen und -typen angewendet
-werden.  Ist die Parameterzahl eins, so mu"s es sich um einen
-String-Ausdruck handeln, der von AS als Dateiname interpretiert wird.  Aus
-dieser Datei liest AS dann die ersten 256 Bytes aus und kopiert sie in die
-"Ubersetzungstabelle.  Hiermit lassen sich also komplexere, extern
-erzeugte Tabellen in einem Schlag aktivieren.  In allen anderen Varianten
-mu"s der erste Parameter ein Integer im Bereich von 0 bis 255 sein, der
-den Startpunkt der in der "Ubersetzungstabelle zu modifizierenden
-Eintr"age angibt.  Es folgen dann ein oder zwei weitere Parameter, die die
-Art der "Ubersetzung angeben:
+der im PC "ubereinstimmt, d"urfte wohl reiner Zufall sein.  Und dann
+gibt es auch (historische) Systeme, die z.B. eine EBCDIC-Variante
+verwenden...um nun aber keine fehlertr"achtigen Umkodierungen im Code
+per Hand vornehmen zu m"ussen, enth"alt der Assembler eine Umsetzungstabelle
+f"ur Zeichen, die jedem (ASCII-)zeichen im Quellcode ein Zielzeichen zuordnet.
+Zur Modifikation dieser Tabelle (die initial 1:1 "ubersetzt), dient der
+Befehl \tty{CHARSET}.  \tty{CHARSET} kann mit verschiedenen Parameterzahlen
+und -typen aufgerufen werden:
 
-Ein einzelner, weiterer Integer ver"andert genau einen Eintrag.  So
-bedeutet z.B.
+Ein
 \begin{quote}{\tt
-        CHARSET '"a',128}
-\end{quote}
-da"s das Zielsystem das "a mit der Zahl 128 kodiert.  Sind jedoch zwei
-weitere Integers angegeben, so ist der erste von ihnen der letzte zu
-modifizierende Eintrag, der zweite der neue Wert des ersten Eintrags; alle
-weiteren Eintr"age bis zum Bereichsende werden sequentiell neu belegt.
-Falls z.B. das Zielsystem keine Kleinbuchstaben unterst"utzt, k"onnen mit
+        CHARSET
+}\end{quote}
+ohne jegliche Argumente setzt die "Ubersetzungstabelle auf den 1:1-Default
+wieder zur"uck.
+
+Wird nur ein Argument gegeben, mu"s es sich dabei um einen String-Ausdruck
+handeln, der von AS als Dateiname interpretiert wird:
+\begin{verbatim}
+        CHARSET  "mapping.bin"
+\end{verbatim}
+Aus dieser Datei liest AS dann die ersten 256 Bytes aus und kopiert sie in die
+"Ubersetzungstabelle.  Hiermit lassen sich also komplexere, extern
+erzeugte Tabellen mit einer Anweisung laden.
+
+In allen anderen Varianten wird ein einzelner Eintrag oder ein ganzer
+Bereich von Einträgen in der Tabelle modifiziert.  Mit zwei (Integer-)Argumenten
+kann ein einzelner Eintrag neu gesetzt werden.  Ein
+\begin{quote}{\tt
+        CHARSET '"a',128
+}\end{quote}
+bedeutet zum Beispiel, da"s das Zielsystem das "a mit der Zahl 128 kodiert.
+Es ist auch m"oglich zu definieren, da"s ein bestimmtes Zeichen "uberhaupt
+nicht dargestellt werden kann.  Daf"ur l"a"st man das zweite Argument leer:
+\begin{quote}{\tt
+        CHARSET '[',
+}\end{quote}
+Soll fortan das ,,gel"oschte'' Zeichen irgendwo in einem String im Speicher
+abgelegt werden, f"uhrt dies zu einer Fehlermeldung.
+
+Anstelle eines einzelnen Zeichens kann auch ein ganzer Bereich umgemappt
+werden.  Das erste und zweite Argument geben den Bereich der Zeichen an, das
+dritte das Mapping des ersten Zeichens.  Falls z.B. das Zielsystem keine
+Kleinbuchstaben unterst"utzt, k"onnen mit
 \begin{verbatim}
         CHARSET 'a','z','A'
 \end{verbatim}
 alle Kleinbuchstaben auf die passenden Gro"sbuchstaben automatisch
-umgemappt werden.
+umgesetzt werden.  Und auch ein Bereich von Zeichen kann als
+,,nicht verf"ugbar'' markiert werden:
+\begin{verbatim}
+        CHARSET 'a','z',
+\end{verbatim}
+verbietet die Verwendung von Kleinbuchstabem.
 
-In der letzten Variante folgt nach dem Startindex ein String, der die ab
-dem Startindex abzulegenden Zeichen angibt.  Das letzte Beispiel k"onnte
-man also auch so formulieren:
+In der letzten Variante (wieder mit nur zwei Argumenten) folgt nach dem
+Startindex ein String, der das Mapping ab dem Start-Zeichen auflistet.
+Das Umlegen von Klein- auf Gro"sbuchstaben k"onnte man also auch so
+formulieren:
 \begin{verbatim}
         CHARSET 'a',"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 \end{verbatim}
 
-\tty{CHARSET} kann auch ganz ohne Parameter aufgerufen werden, allerdings
-mit ziemlich gr"undlichen Folgen: Dies bewirkt eine Reinitialisierung der
-"Ubersetzungstabelle in ihren Urzustand, d.h. man bekommt wieder eine
-1:1-"Ubersetzung.
-
-\bb{ACHTUNG!} \tty{CHARSET} beeinflu"st nicht nur im Speicher abgelegte
-Stringkonstanten, sondern auch als ,,ASCII'' formulierte Integerkonstanten.
-Dies bedeutet, da"s eine evtl. bereits modifizierte Umsetzungstabelle
-in den obigen Beispielen zu anderen Ergebnissen f"uhren kann!
+\bb{ACHTUNG!} Das durch \tty{CHARSET} definierte Mapping greift nicht nur
+beim Ablegen von Strings im Speicher, es greift auch bei Multi-Character-Konstanten,
+also als ,,ASCII'' formulierten Integer-Konstanten.  Dies bedeutet, da"s
+eine bereits modifizierte Umsetzungstabelle in den obigen Beispielen zu
+anderen Ergebnissen f"uhren kann!
 
 Mit der eingebauten Funktion \tty{CODEPAGE\_VAL} kann die "Ubersetzung
-eines einzelnen Zeichens abgefragt werden.
+eines einzelnen Zeichens abgefragt werden.  F"ur nicht gemappte Zeichen
+liefert die Funktion eine -1 zur"uck.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -4442,7 +4482,7 @@ kann man aus der Variablen \tty{INSRCMODE} auslesen.  Der Default ist
 \subsection{BIGENDIAN}
 \ttindex{BIGENDIAN}
 
-{\em G"ultigkeit: MCS-51/251, PowerPC, SC/MP}
+{\em G"ultigkeit: MCS-51/251, PowerPC, SC/MP, 2650}
 
 Bei den Prozessoren der 8051-Serie ist Intel seinen eigenen Prinzipien
 untreu geworden: Der Prozessor verwendet entgegen jeglicher Tradition
@@ -5619,8 +5659,18 @@ Hinweisen erl"autert.
 
 {\em G"ultigkeit: SC144xx}
 
-Diser Befehl ist beim SC144xx der Weg, Konstanten mit Wortl"ange (16 Bit)
+Dieser Befehl ist beim SC144xx der Weg, Konstanten mit Wortl"ange (16 Bit)
 im Speicher abzulegen und damit ein ALIAS f"ur DW.
+
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+\subsection{ACON}
+\ttindex{ACON}
+
+{\em G"ultigkeit: 2650}
+
+{\tt ACON} arbeitet analog zu {\tt DW}, jedoch werden die 16-Bit-Zahlenwerte
+im Big-Endian-Format abgelegt.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -5856,7 +5906,7 @@ Dito.
 
 {\em G"ultigkeit: PIC, MELPS-4500, HMCS400, 3201x, 320C2(0)x,\\
      320C5x, AVR, $\mu$PD772x, OLMS-40/50, Padauk, CP-1600,\\
-     PPS-4}
+     PPS-4, 2650}
 
 Dieser Befehl dient zur Reservierung von Speicher.  Er reserviert
 im Codesegment immer W"orter (10/12/14/16 Bit), im Datensegment bei

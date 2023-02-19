@@ -77,7 +77,7 @@ static Boolean FuncCODEPAGE_VAL(TempResult *pResult, const TempResult *pArgs, un
     p_table = CurrTransTable;
 
   if (ChkRange(pArgs[0].Contents.Int, 0, 255))
-    as_tempres_set_int(pResult, as_chartrans_xlate(p_table->Table, pArgs[0].Contents.Int));
+    as_tempres_set_int(pResult, as_chartrans_xlate(p_table->p_table, pArgs[0].Contents.Int));
   else
     as_tempres_set_int(pResult, 0);
   return True;

@@ -1,3 +1,22 @@
+2023-02-19 [1.42 Bld 238]
+
+- Bugfix      : Extend and correct Code page 037 definition
+- Addition    : Support ORB as alias for OR on PALM
+- Addition    : Add definition of IBM 5110's variant of EBCDIC
+- Addition    : Add character set definition for IBM 5100
+- Addition    : JMP on PALM encodes as BRA if possible
+- Addition    : CHARSET allows characters to be defined
+                'non-existant' on the target system
+- Addition    : Allow alternative conditions P/N/Z on 2650,
+                plus numeric conditions
+- Addition    : Add ACON and RES instructions on 2650
+- Addition    : Optionally allow A'...' syntax for multi
+                character constants.
+- Addition    : Support BIGENDIAN on 2650 to control
+                behaviour of DW, DD, DQ...
+- Bugfix      : JMP on PALM now also supports auto-increment
+                and -decrement
+
 2023-02-05 [1.42 Bld 237]
 
 - Addition    : Add National Semiconductor IMP-16 and PACE targets

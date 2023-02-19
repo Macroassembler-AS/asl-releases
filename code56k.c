@@ -1067,30 +1067,32 @@ static void DecodeDC(Word Code)
   as_tempres_ini(&t);
   if (ChkArgCnt(1, ArgCntMax))
   {
-    Word z;
     Boolean OK = True;
+    tStrComp *pArg;
 
-    for (z = 1; OK && (z <= ArgCnt); z++)
+    forallargs(pArg, OK)
     {
-      EvalStrExpression(&ArgStr[z], &t);
+      EvalStrExpression(pArg, &t);
       switch (t.Typ)
       {
         case TempString:
           if (MultiCharToInt(&t, 3))
             goto ToInt;
 
-          as_chartrans_xlate_nonz_dynstr(CurrTransTable->Table, &t.Contents.str);
-          OK = !string_2_dasm_code(&t.Contents.str, Packing ? 3 : 1, True);
+          if (as_chartrans_xlate_nonz_dynstr(CurrTransTable->p_table, &t.Contents.str, pArg))
+            OK = False;
+          else
+            OK = !string_2_dasm_code(&t.Contents.str, Packing ? 3 : 1, True);
           break;
         ToInt:
         case TempInt:
           if (mFirstPassUnknown(t.Flags)) t.Contents.Int &= 0xffffff;
-          if (!(OK = RangeCheck(t.Contents.Int, Int24))) WrError(ErrNum_OverRange);
+          if (!(OK = RangeCheck(t.Contents.Int, Int24))) WrStrErrorPos(ErrNum_OverRange, pArg);
           else
             DAsmCode[CodeLen++] = t.Contents.Int & 0xffffff;
           break;
         case TempFloat:
-          WrStrErrorPos(ErrNum_StringOrIntButFloat, &ArgStr[z]);
+          WrStrErrorPos(ErrNum_StringOrIntButFloat, pArg);
           /* fall-through */
         default:
           OK = False;

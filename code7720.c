@@ -115,8 +115,6 @@ static void DecodeDATA_7720(Word Index)
 {
   LongInt MinV, MaxV;
   TempResult t;
-  int z;
-  Boolean OK;
 
   as_tempres_ini(&t);
   UNUSED(Index);
@@ -128,11 +126,12 @@ static void DecodeDATA_7720(Word Index)
   MinV = (-((MaxV + 1) >> 1));
   if (ChkArgCnt(1, ArgCntMax))
   {
-    OK = True;
-    z = 1;
-    while ((OK) & (z <= ArgCnt))
+    Boolean OK = True;
+    tStrComp *pArg;
+
+    forallargs(pArg, OK)
     {
-      EvalStrExpression(&ArgStr[z], &t);
+      EvalStrExpression(pArg, &t);
       if (mFirstPassUnknown(t.Flags) && (t.Typ == TempInt))
         t.Contents.Int &= MaxV;
 
@@ -143,8 +142,9 @@ static void DecodeDATA_7720(Word Index)
           if (MultiCharToInt(&t, 3))
             goto ToInt;
 
-          as_chartrans_xlate_nonz_dynstr(CurrTransTable->Table, &t.Contents.str);
-          if (ActPC == SegCode)
+          if (as_chartrans_xlate_nonz_dynstr(CurrTransTable->p_table, &t.Contents.str, pArg))
+            OK = False;
+          else if (ActPC == SegCode)
             string_2_dasm_code(&t.Contents.str, Packing ? ((MomCPU >= CPU7725) ? 3 : 2) : 1, True);
           else
             string_2_wasm_code(&t.Contents.str, Packing ? 2 : 1, True);
@@ -162,12 +162,11 @@ static void DecodeDATA_7720(Word Index)
           }
           break;
         case TempFloat:
-          WrStrErrorPos(ErrNum_StringOrIntButFloat, &ArgStr[z]);
+          WrStrErrorPos(ErrNum_StringOrIntButFloat, pArg);
           /* fall-through */
         default:
           OK = False;
       }
-      z++;
     }
   }
   as_tempres_free(&t);

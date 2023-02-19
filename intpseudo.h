@@ -42,6 +42,7 @@ extern void DecodeIntelDW(Word Flags);
 extern void DecodeIntelDD(Word Flags);
 extern void DecodeIntelDQ(Word Flags);
 extern void DecodeIntelDT(Word Flags);
+extern void DecodeIntelDS(Word Flags);
 
 extern Boolean DecodeIntelPseudo(Boolean BigEndian);
 

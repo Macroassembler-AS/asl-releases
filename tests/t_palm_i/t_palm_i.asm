@@ -40,6 +40,7 @@ var2	equ	x'ac'
 	move	dest, src
 	and	dest, src
 	or	dest, src
+	orb	dest, src
 	xor	dest, src
 	add	dest, src
 	sub	dest, src
@@ -253,6 +254,7 @@ var2	equ	x'ac'
 	mvp1	r13,r14		; 0DE2
 	mvp2	r13,r14		; 0DE3
 	or	r13,r14		; 0DE6
+	orb	r13,r14		; 0DE6
 	putb    13,r14		; 4DE8
 	rotr	r13		; E0DD
 	seti	r13,x'55'	; BD55

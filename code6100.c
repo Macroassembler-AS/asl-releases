@@ -439,7 +439,7 @@ static Boolean DecodeConst(tStrComp *pStr)
 			WAsmCode[CodeLen++] = t.Contents.Int & 07777;
 			break;
 		case TempString:
-			as_chartrans_xlate_nonz_dynstr(CurrTransTable->Table, &t.Contents.str);
+			as_chartrans_xlate_nonz_dynstr(CurrTransTable->p_table, &t.Contents.str, pStr);
 			for (c = 0; c < (int)t.Contents.str.len; c++)
 			{
 				WAsmCode[CodeLen++] = t.Contents.str.p_str[c] & 07777;

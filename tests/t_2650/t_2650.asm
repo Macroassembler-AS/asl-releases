@@ -104,32 +104,88 @@ immed		equ	$a5
 	andz  r3
 	bcfa,eq   *absolute
 	bcfa,eq   absolute
+	bcfa,z    *absolute
+	bcfa,z    absolute
+	bcfa,0    *absolute
+	bcfa,0    absolute
 	bcfa,gt   *absolute
 	bcfa,gt   absolute
+	bcfa,p    *absolute
+	bcfa,p    absolute
+	bcfa,1    *absolute
+	bcfa,1    absolute
 	bcfa,lt   *absolute
 	bcfa,lt   absolute
+	bcfa,n    *absolute
+	bcfa,n    absolute
+	bcfa,2    *absolute
+	bcfa,2    absolute
 	bcfr,eq   $-23h
 	bcfr,eq   *$-23h
+	bcfr,z    $-23h
+	bcfr,z    *$-23h
+	bcfr,0    $-23h
+	bcfr,0    *$-23h
 	bcfr,gt   $-23h
 	bcfr,gt   *$-23h
+	bcfr,p    $-23h
+	bcfr,p    *$-23h
+	bcfr,1    $-23h
+	bcfr,1    *$-23h
 	bcfr,lt   $-23h
 	bcfr,lt   *$-23h
+	bcfr,n    $-23h
+	bcfr,n    *$-23h
+	bcfr,2    $-23h
+	bcfr,2    *$-23h
 	bcta,always   *absolute
 	bcta,always   absolute
+	bcta,un   *absolute
+	bcta,un   absolute
+	bcta,3    *absolute
+	bcta,3    absolute
 	bcta,eq   *absolute
 	bcta,eq   absolute
+	bcta,z    *absolute
+	bcta,z    absolute
+	bcta,0    *absolute
+	bcta,0    absolute
 	bcta,gt   *absolute
 	bcta,gt   absolute
+	bcta,p    *absolute
+	bcta,p    absolute
+	bcta,1    *absolute
+	bcta,1    absolute
 	bcta,lt   *absolute
 	bcta,lt   absolute
+	bcta,n    *absolute
+	bcta,n    absolute
+	bcta,2    *absolute
+	bcta,2    absolute
 	bctr,always   $-23h
 	bctr,always   *$-23h
+	bctr,un   $-23h
+	bctr,un   *$-23h
+	bctr,3    $-23h
+	bctr,3    *$-23h
 	bctr,eq   $-23h
 	bctr,eq   *$-23h
+	bctr,z    $-23h
+	bctr,z    *$-23h
+	bctr,0    $-23h
+	bctr,0    *$-23h
 	bctr,gt   $-23h
 	bctr,gt   *$-23h
+	bctr,p    $-23h
+	bctr,p    *$-23h
+	bctr,1    $-23h
+	bctr,1    *$-23h
 	bctr,lt   $-23h
 	bctr,lt   *$-23h
+	bctr,n    $-23h
+	bctr,n    *$-23h
+	bctr,2    $-23h
+	bctr,2    *$-23h
 	bdra,r0   *absolute
 	bdra,r0   absolute
 	bdra,r1   *absolute
@@ -579,3 +635,23 @@ immed		equ	$a5
 
 	db	01h
 	db	20 dup (10, "Hello World")
+
+	; little endian
+
+	dw	1234h,5678h
+
+	; big endian
+
+	acon	1234h,5678h
+
+	; behavior of DW can be controlled via BIGENDIAN,
+	; while ACON is always big endian:
+
+	bigendian on
+	dw	1234h,5678h
+
+	; optional multi character syntax:
+
+	intsyntax +a'asc'
+
+	acon	a'ab'

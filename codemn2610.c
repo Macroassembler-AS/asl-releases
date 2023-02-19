@@ -1040,8 +1040,7 @@ static void AppendByte(Byte data, Boolean *p_half_filled_word)
 
 static void DecodeDC(Word Code)
 {
-  Boolean OK, HalfFilledWord = False;
-  int z;
+  Boolean HalfFilledWord = False;
   TempResult t;
 
   UNUSED(Code);
@@ -1049,65 +1048,68 @@ static void DecodeDC(Word Code)
   as_tempres_ini(&t);
   if (ChkArgCnt(1, ArgCntMax))
   {
-    OK = True;
-    for (z = 1; z <= ArgCnt; z++)
-     if (OK)
-     {
-       EvalStrExpression(&ArgStr[z], &t);
-       if (mFirstPassUnknown(t.Flags) && (t.Typ == TempInt)) t.Contents.Int &= 0x7fff;
-       switch (t.Typ)
-       {
-         case TempInt:
-           if (Packing)
-           {
-             if (mFirstPassUnknown(t.Flags))
-               t.Contents.Int &= 127;
-             if (ChkRange(t.Contents.Int, -128, 255))
-               AppendByte(t.Contents.Int, &HalfFilledWord);
-             else
-               OK = False;
-           }
-           else
-           {
-           ToInt:
-             if (mFirstPassUnknown(t.Flags))
-               t.Contents.Int &= 32767;
-             if (ChkRange(t.Contents.Int, -32768, 65535))
-               AppendWord(t.Contents.Int, &HalfFilledWord);
-             else
-               OK = False;
-           }
-           break;
-         case TempString:
-         {
-           Word Trans;
-           int z2;
+    Boolean OK = True;
+    tStrComp *pArg;
 
-           if (MultiCharToInt(&t, 2))
-             goto ToInt;
+    forallargs(pArg, OK)
+    {
+      EvalStrExpression(pArg, &t);
+      if (mFirstPassUnknown(t.Flags) && (t.Typ == TempInt)) t.Contents.Int &= 0x7fff;
+      switch (t.Typ)
+      {
+        case TempInt:
+          if (Packing)
+          {
+            if (mFirstPassUnknown(t.Flags))
+              t.Contents.Int &= 127;
+            if (ChkRange(t.Contents.Int, -128, 255))
+              AppendByte(t.Contents.Int, &HalfFilledWord);
+            else
+              OK = False;
+          }
+          else
+          {
+          ToInt:
+            if (mFirstPassUnknown(t.Flags))
+              t.Contents.Int &= 32767;
+            if (ChkRange(t.Contents.Int, -32768, 65535))
+              AppendWord(t.Contents.Int, &HalfFilledWord);
+            else
+              OK = False;
+          }
+          break;
+        case TempString:
+        {
+          Word Trans;
+          int z2;
 
-           as_chartrans_xlate_nonz_dynstr(CurrTransTable->Table, &t.Contents.str);
-           for (z2 = 0; z2 < (int)t.Contents.str.len; z2++)
-           {
-             Trans = ((usint) t.Contents.str.p_str[z2]) & 0xff;
-             AppendByte(Trans, &HalfFilledWord);
-           }
-           break;
-         }
-         case TempFloat:
-         {
-           IncMaxCodeLen(2);
-           if (Double2IBMFloat(&WAsmCode[CodeLen], t.Contents.Float, False))
-             CodeLen += 2;
-           else
-             OK = False;
-           HalfFilledWord = False;
-           break;
-         }
-         default:
-           OK = False;
-       }
-     }
+          if (MultiCharToInt(&t, 2))
+            goto ToInt;
+
+          if (as_chartrans_xlate_nonz_dynstr(CurrTransTable->p_table, &t.Contents.str, pArg))
+            OK = False;
+          else
+            for (z2 = 0; z2 < (int)t.Contents.str.len; z2++)
+            {
+              Trans = ((usint) t.Contents.str.p_str[z2]) & 0xff;
+              AppendByte(Trans, &HalfFilledWord);
+            }
+          break;
+        }
+        case TempFloat:
+        {
+          IncMaxCodeLen(2);
+          if (Double2IBMFloat(&WAsmCode[CodeLen], t.Contents.Float, False))
+            CodeLen += 2;
+          else
+            OK = False;
+          HalfFilledWord = False;
+          break;
+        }
+        default:
+          OK = False;
+      }
+    }
     if (!OK)
        CodeLen = 0;
   }

@@ -41,6 +41,10 @@
 	jmp	x'1235'
 	endexpect
 
+	jmp	*+10		; bra *+10
+
+	jmp	>*+10		; ldhi pc,pc,2 ; dw *+10 (forced absolute)
+
 	jmp	(x'ac')		; ldhd pc,x'ac'
 	move	r0,x'ac'
 
@@ -49,6 +53,9 @@
 
 	jmp	r5		; move pc,r5
 	move	r0,r5
+
+	jmp	(r15)-		; move pc,(r15)-
+	move	r0,(r15)-
 
 	call	x'1234',r2 	; mvp2 r2,pc ; ldhi pc,r2,2 ; dw x'1234'
         inc2	r2,r0

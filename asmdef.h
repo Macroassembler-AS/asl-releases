@@ -148,7 +148,7 @@ typedef struct _TTransTable
 {
   struct _TTransTable *Next;
   char *Name;
-  as_chartrans_table_t Table;
+  as_chartrans_table_t *p_table;
 } TTransTable, *PTransTable;
 
 typedef struct _TSaveState

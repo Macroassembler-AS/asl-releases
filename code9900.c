@@ -862,8 +862,6 @@ static void DecodeRTWP(Word Code)
 
 static void DecodeBYTE(Word Code)
 {
-  int z;
-  Boolean OK;
   TempResult t;
 
   UNUSED(Code);
@@ -871,20 +869,22 @@ static void DecodeBYTE(Word Code)
   as_tempres_ini(&t);
   if (ChkArgCnt(1, ArgCntMax))
   {
-    z = 1; OK = True;
-    do
+    Boolean OK = True;
+    tStrComp *pArg;
+
+    forallargs(pArg, OK)
     {
-      KillBlanks(ArgStr[z].str.p_str);
-      EvalStrExpression(&ArgStr[z], &t);
+      KillBlanks(pArg->str.p_str);
+      EvalStrExpression(pArg, &t);
       switch (t.Typ)
       {
         case TempInt:
           if (mFirstPassUnknown(t.Flags))
             t.Contents.Int &= 0xff;
-          if (!RangeCheck(t.Contents.Int, Int8)) WrError(ErrNum_OverRange);
+          if (!RangeCheck(t.Contents.Int, Int8)) WrStrErrorPos(ErrNum_OverRange, pArg);
           else if (SetMaxCodeLen(CodeLen + 1))
           {
-            WrError(ErrNum_CodeOverflow);
+            WrStrErrorPos(ErrNum_CodeOverflow, pArg);
             OK = False;
           }
           else
@@ -893,27 +893,29 @@ static void DecodeBYTE(Word Code)
         case TempString:
           if (SetMaxCodeLen(t.Contents.str.len + CodeLen))
           {
-            WrError(ErrNum_CodeOverflow);
+            WrStrErrorPos(ErrNum_CodeOverflow, pArg);
             OK = False;
           }
           else
           {
             char *p, *pEnd;
 
-            as_chartrans_xlate_nonz_dynstr(CurrTransTable->Table, &t.Contents.str);
-            pEnd = t.Contents.str.p_str + t.Contents.str.len;
-            for (p = t.Contents.str.p_str; p < pEnd; PutByte(*(p++)));
+            if (as_chartrans_xlate_nonz_dynstr(CurrTransTable->p_table, &t.Contents.str, pArg))
+              OK = False;
+            else
+            {
+              pEnd = t.Contents.str.p_str + t.Contents.str.len;
+              for (p = t.Contents.str.p_str; p < pEnd; PutByte(*(p++)));
+            }
           }
           break;
         case TempFloat:
-          WrStrErrorPos(ErrNum_StringOrIntButFloat, &ArgStr[z]);
+          WrStrErrorPos(ErrNum_StringOrIntButFloat, pArg);
           /* fall-through */
         default:
           OK = False;
       }
-      z++;
     }
-    while ((z <= ArgCnt) && OK);
     if (!OK)
       CodeLen = 0;
   }

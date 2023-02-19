@@ -26,6 +26,7 @@ typedef enum
   eIntFormatIBMOct,   /* o'...' */
   eIntFormatIBMXHex,  /* x'...' */
   eIntFormatIBMHHex,  /* h'...' */
+  eIntFormatIBMAsc,   /* a'...' */
   eIntFormatCBin,     /* 0b... */
   eIntFormatCOct,     /* 0... */
   eIntFormatCHex,     /* 0x... */
@@ -58,7 +59,7 @@ typedef struct
 {
   tIntFormatCheck Check;
   Byte Id;
-  ShortInt Base;
+  Integer Base;
   char Ch;
   char Ident[7];
 } tIntFormatList;

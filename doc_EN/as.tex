@@ -66,7 +66,7 @@
 
 \vspace{1cm}\par
 
-{\large Edition Jaunary 2023}
+{\large Edition February 2023}
 \end{raggedright}
 
 \clearpage
@@ -540,7 +540,10 @@ BCDIC.INC         & definition of BCDIC/code page 359 \\
 BITFUNCS.INC      & functions for bit manipulation \\
 CTYPE.INC         & functions for classification of \\
                   & characters \\
-EBCDIC.INC        & definition EBCDIC/code page 037 \\
+EBCDIC.INC        & includes all EBCDIC variants \\
+CP037.INC         & definition EBCDIC (code page 037) \\
+CP5100.INC        & definition character set IBM 5100 \\
+CP5110.INC        & definition EBCDIC (IBM 5110) \\
 80C50X.INC        & register addresses SAB C50x \\
 80C552.INC        & register addresses 80C552 \\
 H8\_3048.INC      & register addresses H8/3048 \\
@@ -1669,6 +1672,8 @@ Binary    & Suffix B      & Prefix \%   & Prefix 0b   & O'..' \\
 Octal     & Suffix O or Q & Prefix @    & Prefix 0    & B'..' \\
 \ii{Ident}& \tty{octo}    & \tty{@oct}  & \tty{0oct}  & \tty{o'oct'} \\  
           & \tty{octq}    &             &             & \\
+ASCII     &               &             &             & A'..' \\
+\ii{Ident}&               &             &             & \tty{a'asc'} \\
 \hline
 \end{tabular}\end{center}
 \caption{Defined Numbering Systems and Notations\label{TabSystems}}
@@ -1680,18 +1685,30 @@ statement allows to set up 'unusual' numbering systems, i.e. others than
 2, 8, 10, or 16.
 
 Valid digits are numbers from 0 to 9 and letters from A to Z (value 10 to
-35) up to the numbering system's base minus one. The usage of letters in
-integer constants however brings along some ambiguities since symbol names
-also are sequences of numbers and letters: a symbol name must not start
-with a character from 0 to 9.  This means that an integer constant which
-is not clearly marked a such with a special prefix character never may
-begin with a letter.  One has to add an additional, otherwise superfluous
-zero in front in such cases.  The most prominent case is the writing of
-hexadecimal constants in Intel mode:  If the leftmost digit is between A
-and F, the trailing H doesn't help anything, an additional 0 has to be
-prefixed (e.g. 0F0H instead of F0H).  The Motorola and C syntaxes whis
-both mark the numbering system at the front of a constant do not have this
-problem.
+35) up to the numbering system's base minus one. An exception from this is
+the ASCII represenation: For this variant, a character's ASCII value (or its
+code in the currently active code page, see section \ref{SectCHARSET})
+describes a whole byte.  Therefore, integer constants written this way
+are identical to multi character constants.  These two expressions:
+\begin{verbatim}
+'ABCD'
+A'ABCD'
+\end{verbatim}
+are identical, the 'A' prefix is redundant.  One may enable this syntax
+for existing code, because there are a few original assemblers (e.g.
+for the Signetics 2650) that support this syntax. 
+
+The usage of letters in integer constants however brings along some ambiguities
+since symbol names are also sequences of numbers and letters: a symbol name
+however must not start with a character from 0 to 9.  This means that an
+integer constant which is not clearly marked a such with a special prefix
+character must not begin with a letter.  One has to add an additional,
+otherwise superfluous zero in front in such cases.  The most prominent case
+is the writing of hexadecimal constants in Intel mode:  If the leftmost digit
+is between A and F, the trailing H doesn't help to clarify, an additional 0
+has to be prefixed (e.g. 0F0H instead of F0H).  The Motorola and C syntaxes
+which both mark the numbering system at the front of a constant do not have
+this issue.
 
 Quite tricky is furthermore that the higher the default numbering system
 set via {\tt RADIX} becomes, the more letters used to denote numbering
@@ -2770,60 +2787,81 @@ bus objects can be found in section \ref{8X30xSpec} .
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 \subsection{CHARSET}
-\ttindex{CHARSET}
+\label{SectCHARSET}
+\ttindex{CHARSET}\ttindex{CODEPAGE\_VAL}
 
 {\em valid for: all processors}
 
 Single board systems, especially when driving LCDs, frequently use
 character sets different to ASCII.  So it is probably purely coincidental
-that the umlaut coding corresponds with the one used by the PC.  To avoid
-error-prone manual encoding, the assembler contains a translation table
-for characters which assigns a target character to each source-code.  To
-modify this table (which initial translates 1:1), one has to use the
-\tty{CHARSET} instruction.  \tty{CHARSET} may be used with different
-numbers and types of parameters.  If there is only a single parameter, it
-has to be a string expression which is interpreted as a file name by AS.
-AS reads the first 256 bytes from this table and copies them into the
-translation table.  This allows to activate complex, externally generated
-tables with a single statement.  For all other variants, the first
-parameter has to be an integer in the range of 0 to 255 which designates
-the start index of the entries to be modified in the translation table.
-One or two parameters follow, giving the type of modification:
+that the umlaut coding corresponds with the one used by the PC.  And there
+are of course also (historical) systems that use some variant of EBCDIC...to avoid
+error-prone manual encoding in the source code, the assembler contains a translation table
+for characters which assigns a target character to each (ASCII) character
+in the source code.  Use the \tty{CHARSET} instruction to modify this
+table, which initial translates one-to-one.  \tty{CHARSET} may be used with
+a variety of arguments:
 
-A single additional integer modies exactly one entry.  For example,
+A simple
+\begin{quote}{\tt
+        CHARSET
+}\end{quote}
+without any argument resets the table to the one-to-one default.
+
+If only a single argument is given, it has to be a string expression which is
+interpreted as a file name by AS:
+\begin{verbatim}
+        CHARSET  "mapping.bin"
+\end{verbatim}
+AS reads the first 256 bytes from this table and copies them into the translation
+table.  This allows to activate complex, externally generated tables with a single
+statement.
+
+All other variants modify a single entry or a sequence of entries in the
+table.  Use two (integer) arguments to change a single entry:
 \begin{quote}{\tt
        CHARSET  '\"a',128
 }\end{quote}
-means that the target system codes the '\"a'  into the number 128
-(80H).  If however two more integers are given, the first one describes
-the last entry to be modified, and the second the new value of the first
-table entry.  All entries up to the index end are loaded sequentially.
-For example, in case that the target system does not support lower-case
-characters, a simple
+means that the target system codes the '\"a'  into the number 128.  It is
+als possible to define that a certain character is unavailable on the target
+system.  Leave the second argument empty to define this:
+\begin{quote}{\tt
+        CHARSET '[',
+}\end{quote}
+If the 'deleted' character shall be disposed in memory, this reported as
+an error.
+
+Use three arguments to remap a whole range of characters.  The first and
+second argument define the character range, and the third one defines
+the mapping of the first character.  For instance, if the target system
+does not support lower case characters,
 \begin{verbatim}
         CHARSET 'a','z','A'
 \end{verbatim}
-translates all lower-case characters  automatically into the
-matching capital letters.
+translates all lower-case characters automatically into the matching
+capital letters.  Similar to a single character, it is also possible to
+'unmap' a range of characters:
+\begin{verbatim}
+        CHARSET 'a','z',
+\end{verbatim}
+forbids usage of lower case letters.
 
-For the last variant, a string follows the start index and contains the
-characters to be placed in the table.  The last example therefore may also
+The last variant (again only with two arguments), a string defines the
+mapping of a sequence of characters.  Mapping of lower to upper case may
+therefore also be written like this:
 be written as
 \begin{verbatim}
         CHARSET 'a',"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 \end{verbatim}
 
-\tty{CHARSET} may also be called without any parameters, which however has
-a drastical effect: the translation table is reinitialized to its initial
-state, i.e. all character translations are removed.
-
 \bb{CAUTION!} \tty{CHARSET} not only affects string constants stored in
-memory, but also integer constants written as ''ASCII''. This means that
-an already modified translation table can lead to other results in the
-above mentioned examples!
+memory, but also multi character constants, i.e. integer constants written
+as ''ASCII''.  This means that an already modified translation table can
+lead to different results in the examples mentioned above!
 
 The built-in function \tty{CODEPAGE\_VAL} allows to query the translation
-of a single character in the current code page.
+of a single character in the current code page.  It will return -1 for
+unmapped characters.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -4323,7 +4361,7 @@ required.  The current setting may be read from the variable
 \subsection{BIGENDIAN}
 \ttindex{BIGENDIAN}
 
-{\em valid for: MCS-51/251, PowerPC, SC/MP}
+{\em valid for: MCS-51/251, PowerPC, SC/MP, 2650}
 
 Intel broke with its own principles when the 8051 series was designed: in
 contrast to all traditions, the processor uses big-endian ordering for all
@@ -5476,6 +5514,16 @@ DW}.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+\subsection{ACON}
+\ttindex{ACON}
+
+{\em valid for: 2650}
+
+{\tt ACON} works the same way as {\tt DW}, the 16 bit numbers are however
+stored in big endian format.
+
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 \subsection{LONG}
 \ttindex{LONG}
 
@@ -5697,7 +5745,7 @@ Ditto.
 \ttindex{RES}
 
 {\em valid for: PIC, MELPS-4500, HMCS400, 3201x, 320C2(0)x, 320C5x, AVR,
- $\mu$PD772x, OLMS-40/50, Padauk, CP-1600, PPS-4}
+ $\mu$PD772x, OLMS-40/50, Padauk, CP-1600, PPS-4, 2650}
 
 This command allocates memory.  When used in code segments the
 argument counts words (10/12/14/16 bit).  In data segments it counts

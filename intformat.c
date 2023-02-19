@@ -10,14 +10,15 @@
 
 #include "strutil.h"
 #include "datatypes.h"
+#include "stdinc.h"
 #include <stdlib.h>
 #include <string.h>
 
 #include "intformat.h"
 
-static const Byte BaseVals[3] =
+static const Word BaseVals[4] =
 {
-  2, 8, 16
+  2, 8, 16, 256
 };
 
 LongWord NativeIntConstModeMask, OtherIntConstModeMask;
@@ -155,6 +156,7 @@ static const tIntFormatList IntFormatList_All[] =
   { ChkIntFormatIBM   , eIntFormatIBMXHex, 16, 'X', "x'hex'" },
   { ChkIntFormatIBM   , eIntFormatIBMBin,   2, 'B', "b'bin'" },
   { ChkIntFormatIBM   , eIntFormatIBMOct,   8, 'O', "o'oct'" },
+  { ChkIntFormatIBM   , eIntFormatIBMAsc, 256, 'A', "a'asc'" },
   { ChkIntFormatCOct  , eIntFormatCOct,     8, '0', "0oct"   },
   { ChkIntFormatNatHex, eIntFormatNatHex,  16, '0', "0hex"   },
   { ChkIntFormatDef   , eIntFormatDefRadix,-1, '\0', "dec"   }, /* -1 -> RadixBase */
@@ -176,7 +178,7 @@ const char *GetIntConstIntelSuffix(unsigned Radix)
   };
   unsigned BaseIdx;
 
-  for (BaseIdx = 0; BaseIdx < sizeof(BaseVals) / sizeof(*BaseVals); BaseIdx++)
+  for (BaseIdx = 0; BaseIdx < as_array_size(BaseLetters); BaseIdx++)
     if (Radix == BaseVals[BaseIdx])
     {
       static char Result[2] = { '\0', '\0' };
@@ -202,7 +204,7 @@ const char *GetIntConstMotoPrefix(unsigned Radix)
   };
   unsigned BaseIdx;
 
-  for (BaseIdx = 0; BaseIdx < sizeof(BaseVals) / sizeof(*BaseVals); BaseIdx++)
+  for (BaseIdx = 0; BaseIdx < as_array_size(BaseIds); BaseIdx++)
     if (Radix == BaseVals[BaseIdx])
     {
       static char Result[2] = { '\0', '\0' };
@@ -228,7 +230,7 @@ const char *GetIntConstCPrefix(unsigned Radix)
   };
   unsigned BaseIdx;
 
-  for (BaseIdx = 0; BaseIdx < sizeof(BaseVals) / sizeof(*BaseVals); BaseIdx++)
+  for (BaseIdx = 0; BaseIdx < as_array_size(BaseIds); BaseIdx++)
     if (Radix == BaseVals[BaseIdx])
       return BaseIds[BaseIdx];;
   return "";
@@ -243,13 +245,13 @@ const char *GetIntConstCPrefix(unsigned Radix)
 
 const char *GetIntConstIBMPrefix(unsigned Radix)
 {
-  static const char BaseIds[3] =
+  static const char BaseIds[4] =
   {
-    'B', 'O', 'X'
+    'B', 'O', 'X', 'A'
   };
   unsigned BaseIdx;
 
-  for (BaseIdx = 0; BaseIdx < sizeof(BaseVals) / sizeof(*BaseVals); BaseIdx++)
+  for (BaseIdx = 0; BaseIdx < as_array_size(BaseIds); BaseIdx++)
     if (Radix == BaseVals[BaseIdx])
     {
       static char Result[3] = { '\0', '\'', '\0' };
@@ -271,7 +273,7 @@ const char *GetIntConstIBMSuffix(unsigned Radix)
 {
   unsigned BaseIdx;
 
-  for (BaseIdx = 0; BaseIdx < sizeof(BaseVals) / sizeof(*BaseVals); BaseIdx++)
+  for (BaseIdx = 0; BaseIdx < as_array_size(BaseVals); BaseIdx++)
     if (Radix == BaseVals[BaseIdx])
       return "\'";
   return "";

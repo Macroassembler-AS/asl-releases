@@ -25,6 +25,7 @@
 #include "headids.h"
 #include "intpseudo.h"
 #include "errmsg.h"
+#include "onoff_common.h"
 
 #include "code2650.h"
 
@@ -48,22 +49,45 @@ static Boolean DecodeReg(const char *pAsc, Byte *pRes)
   return Result;
 }
 
-static Boolean DecodeCondition(const char *pAsc, Byte *pRes)
+/*!------------------------------------------------------------------------
+ * \fn     DecodeCondition(const tStrComp *p_arg, Byte *p_ret)
+ * \brief  decode condition code
+ * \param  p_arg source argument
+ * \param  p_ret binary encoded argument
+ * \return true if success
+ * ------------------------------------------------------------------------ */
+
+static Boolean DecodeCondition(const tStrComp *p_arg, Byte *p_ret)
 {
-  Boolean Result = TRUE;
+  const char *p_asc = p_arg->str.p_str;
 
-  if (!as_strcasecmp(pAsc, "EQ"))
-    *pRes = 0;
-  else if (!as_strcasecmp(pAsc, "GT"))
-    *pRes = 1;
-  else if (!as_strcasecmp(pAsc, "LT"))
-    *pRes = 2;
-  else if ((!as_strcasecmp(pAsc, "ALWAYS")) || (!as_strcasecmp(pAsc, "UN")))
-    *pRes = 3;
+  if (!as_strcasecmp(p_asc, "EQ") || !as_strcasecmp(p_asc, "Z"))
+  {
+    *p_ret = 0;
+    return True;
+  }
+  else if (!as_strcasecmp(p_asc, "GT") || !as_strcasecmp(p_asc, "P"))
+  {
+    *p_ret = 1;
+    return True;
+  }
+  else if (!as_strcasecmp(p_asc, "LT") || !as_strcasecmp(p_asc, "N"))
+  {
+    *p_ret = 2;
+    return True;
+  }
+  else if ((!as_strcasecmp(p_asc, "ALWAYS")) || (!as_strcasecmp(p_asc, "UN")))
+  {
+    *p_ret = 3;
+    return True;
+  }
   else
-    Result = FALSE;
+  {
+    Boolean ok;
 
-  return Result;
+    *p_ret = EvalStrIntExpression(p_arg, UInt2, &ok);
+    return ok;
+  }
 }
 
 /*!------------------------------------------------------------------------
@@ -321,9 +345,8 @@ static void DecodeCondAbs(Word Index)
   Word Address;
   Boolean OK, IndFlag;
 
-  if (!ChkArgCnt(2, 2));
-  else if (!DecodeCondition(ArgStr[1].str.p_str, &Cond)) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
-  else
+  if (ChkArgCnt(2, 2)
+   && DecodeCondition(&ArgStr[1], &Cond))
   {
     IndFlag = *ArgStr[2].str.p_str == '*';
     Address = EvalStrIntExpressionOffs(&ArgStr[2], IndFlag, ADDR_INT, &OK);
@@ -349,9 +372,8 @@ static void DecodeCondRel(Word code)
 {
   Byte cond;
 
-  if (!ChkArgCnt(2, 2));
-  else if (!DecodeCondition(ArgStr[1].str.p_str, &cond)) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
-  else
+  if (ChkArgCnt(2, 2)
+   && DecodeCondition(&ArgStr[1], &cond))
   {
     Boolean ind_flag, ok;
     tSymbolFlags flags;
@@ -423,9 +445,8 @@ static void DecodeCond(Word Index)
 {
   Byte Cond;
 
-  if (!ChkArgCnt(1, 1));
-  else if (!DecodeCondition(ArgStr[1].str.p_str, &Cond)) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
-  else
+  if (ChkArgCnt(1, 1)
+   && DecodeCondition(&ArgStr[1], &Cond))
   {
     BAsmCode[0] = Index | Cond;
     CodeLen = 1;
@@ -614,6 +635,9 @@ static void InitFields(void)
 
   AddZero("ZBRR", 0x9b);
   AddZero("ZBSR", 0xbb);
+
+  AddInstTable(InstTable, "RES", 0, DecodeIntelDS);
+  AddInstTable(InstTable, "ACON", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt, DecodeIntelDW);
 }
 
 static void DeinitFields(void)
@@ -639,7 +663,7 @@ static void MakeCode_2650(void)
 
   /* Pseudoanweisungen */
 
-  if (DecodeIntelPseudo(False)) return;
+  if (DecodeIntelPseudo(TargetBigEndian)) return;
 
   /* try to split off first (register) operand from instruction */
 
@@ -682,8 +706,9 @@ static void SwitchTo_2650(void)
   SegLimits[SegCode] = IntTypeDefs[ADDR_INT].Max;
 
   MakeCode = MakeCode_2650; IsDef = IsDef_2650;
-
   SwitchFrom = SwitchFrom_2650; InitFields();
+
+  onoff_bigendian_add();
 }
 
 /*--------------------------------------------------------------------------*/

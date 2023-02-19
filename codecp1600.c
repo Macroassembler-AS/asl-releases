@@ -529,10 +529,8 @@ static void PutByte(Word value, int *p_half)
 
 static void DecodeWORD(Word Index)
 {
-	int z;
 	int c;
 	int b = 0;
-	Boolean OK;
 	TempResult t;
 
 	PrefixedSDBD = False;
@@ -540,59 +538,60 @@ static void DecodeWORD(Word Index)
 	as_tempres_ini(&t);
 	if (ChkArgCnt(1, ArgCntMax))
 	{
-		OK = True;
-		for (z = 1; z <= ArgCnt; z++)
-		{
-			if (OK)
-			{
-				EvalStrExpression(&ArgStr[z], &t);
-				if (mFirstPassUnknown(t.Flags) && t.Typ == TempInt) t.Contents.Int &= 65535;
+		Boolean OK = True;
+		tStrComp *pArg;
 
-				switch (t.Typ)
+		forallargs (pArg, OK)
+		{
+			EvalStrExpression(pArg, &t);
+			if (mFirstPassUnknown(t.Flags) && t.Typ == TempInt) t.Contents.Int &= 65535;
+
+			switch (t.Typ)
+			{
+			case TempInt:
+				switch (Index)
 				{
-				case TempInt:
-					switch (Index)
+				case 0x0000: /* WORD */
+					if (ChkRange(t.Contents.Int, -32768, 65535))
 					{
-					case 0x0000: /* WORD */
-						if (ChkRange(t.Contents.Int, -32768, 65535))
-						{
-							WAsmCode[CodeLen++] = t.Contents.Int;
-						}
-						b = 0;
-						break;
-					case 0x0001: /* BYTE */
-						if (ChkRange(t.Contents.Int, -32768, 65535))
-						{
-							WAsmCode[CodeLen++] = t.Contents.Int & 0x00FF;
-							WAsmCode[CodeLen++] = (t.Contents.Int >> 8) & 0x00FF;
-						}
-						b = 0;
-						break;
-					case 0x0002: /* TEXT */
-						if (ChkRange(t.Contents.Int, 0, 255))
-							PutByte(t.Contents.Int & 0xff, &b);
-						break;
-					default:
-						OK = False;
+						WAsmCode[CodeLen++] = t.Contents.Int;
 					}
+					b = 0;
 					break;
-				case TempFloat:
-					WrStrErrorPos(ErrNum_StringOrIntButFloat, &ArgStr[z]);
-					OK = False;
-					break;
-				case TempString:
-					if (Index != 0x0002)
+				case 0x0001: /* BYTE */
+					if (ChkRange(t.Contents.Int, -32768, 65535))
 					{
-						OK = False;
-						break;
+						WAsmCode[CodeLen++] = t.Contents.Int & 0x00FF;
+						WAsmCode[CodeLen++] = (t.Contents.Int >> 8) & 0x00FF;
 					}
-          as_chartrans_xlate_nonz_dynstr(CurrTransTable->Table, &t.Contents.str);
-					for (c = 0; c < (int)t.Contents.str.len; c++)
-            PutByte(t.Contents.str.p_str[c], &b);
+					b = 0;
+					break;
+				case 0x0002: /* TEXT */
+					if (ChkRange(t.Contents.Int, 0, 255))
+						PutByte(t.Contents.Int & 0xff, &b);
 					break;
 				default:
 					OK = False;
 				}
+				break;
+			case TempFloat:
+				WrStrErrorPos(ErrNum_StringOrIntButFloat, pArg);
+				OK = False;
+				break;
+			case TempString:
+				if (Index != 0x0002)
+				{
+					OK = False;
+					break;
+				}
+				if (as_chartrans_xlate_nonz_dynstr(CurrTransTable->p_table, &t.Contents.str, pArg))
+					OK = False;
+				else
+					for (c = 0; c < (int)t.Contents.str.len; c++)
+						PutByte(t.Contents.str.p_str[c], &b);
+				break;
+			default:
+				OK = False;
 			}
 		}
 		if (!OK) CodeLen = 0;

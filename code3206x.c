@@ -636,7 +636,8 @@ static void SwapReg(LongWord *r1, LongWord *r2)
 static Boolean DecodePseudo(void)
 {
   Boolean OK;
-  int z, cnt;
+  unsigned dword_index;
+  tStrComp *pArg;
   LongInt Size;
 
   if (Memo("SINGLE"))
@@ -644,15 +645,18 @@ static Boolean DecodePseudo(void)
     if (ChkArgCnt(1, ArgCntMax))
     {
       OK = True;
-      for (z = 0; z < ArgCnt; z++)
+      forallargs(pArg, OK)
       {
-        double Float = EvalStrFloatExpression(&ArgStr[z + 1], Float32, &OK);
+        double Float = EvalStrFloatExpression(pArg, Float32, &OK);
 
-        if (!OK)
-          break;
-        Double_2_ieee4(Float, (Byte *) (DAsmCode + z), HostBigEndian);
+        if (OK)
+        {
+          dword_index = CodeLen >> 2;
+          Double_2_ieee4(Float, (Byte *) (DAsmCode + dword_index), HostBigEndian);
+          CodeLen += 4;
+        }
       }
-      if (OK) CodeLen = ArgCnt << 2;
+      if (!OK) CodeLen = 0;
     }
     return True;
   }
@@ -661,26 +665,26 @@ static Boolean DecodePseudo(void)
   {
     if (ChkArgCnt(1, ArgCntMax))
     {
-      int z2;
       double Float;
 
       OK = True;
-      for (z = 0; z < ArgCnt; z++)
+      forallargs(pArg, OK)
       {
-        z2 = z << 1;
-        Float = EvalStrFloatExpression(&ArgStr[z + 1], Float64, &OK);
-        if (!OK)
-          break;
-        Double_2_ieee8(Float, (Byte *) (DAsmCode + z2), HostBigEndian);
-        if (!HostBigEndian)
+        Float = EvalStrFloatExpression(pArg, Float64, &OK);
+        if (OK)
         {
-          DAsmCode[z2 + 2] = DAsmCode[z2 + 0];
-          DAsmCode[z2 + 0] = DAsmCode[z2 + 1];
-          DAsmCode[z2 + 1] = DAsmCode[z2 + 2];
+          dword_index = CodeLen >> 2;
+          Double_2_ieee8(Float, (Byte *) (DAsmCode + dword_index), HostBigEndian);
+          if (!HostBigEndian)
+          {
+            DAsmCode[dword_index + 2] = DAsmCode[dword_index + 0];
+            DAsmCode[dword_index + 0] = DAsmCode[dword_index + 1];
+            DAsmCode[dword_index + 1] = DAsmCode[dword_index + 2];
+          }
+          CodeLen += 8;
         }
       }
-      if (OK)
-        CodeLen = ArgCnt << 3;
+      if (!OK) CodeLen = 0;
     }
     return True;
   }
@@ -690,66 +694,67 @@ static Boolean DecodePseudo(void)
     if (ChkArgCnt(1, ArgCntMax))
     {
       TempResult t;
+      int cnt = 0;
 
       as_tempres_ini(&t);
       OK = True;
-      cnt = 0;
-      for (z = 1; z <= ArgCnt; z++)
-       if (OK)
-       {
-         EvalStrExpression(&ArgStr[z], &t);
-         switch (t.Typ)
-         {
-           case TempString:
-           {
-             unsigned z2;
-             LongWord Trans;
+      forallargs (pArg, OK)
+      {
+        EvalStrExpression(pArg, &t);
+        switch (t.Typ)
+        {
+          case TempString:
+          {
+            unsigned z2;
+            LongWord Trans;
 
-             if (MultiCharToInt(&t, 4))
-               goto ToInt;
+            if (MultiCharToInt(&t, 4))
+              goto ToInt;
 
-             as_chartrans_xlate_nonz_dynstr(CurrTransTable->Table, &t.Contents.str);
-             for (z2 = 0; z2 < t.Contents.str.len; z2++)
-             {
-               Trans = t.Contents.str.p_str[z2] & 0xff;
-               if (Packing)
-               {
-                 if ((z2 & 3) == 0) DAsmCode[cnt++] = 0;
-                 DAsmCode[cnt - 1] += Trans << (8 * (3 - (z2 & 3)));
-               }
-               else
-                 DAsmCode[cnt++] = Trans;
-             }
-             break;
-           }
-           case TempInt:
-           ToInt:
+            if (as_chartrans_xlate_nonz_dynstr(CurrTransTable->p_table, &t.Contents.str, pArg))
+              OK = False;
+            else
+              for (z2 = 0; z2 < t.Contents.str.len; z2++)
+              {
+                Trans = t.Contents.str.p_str[z2] & 0xff;
+                if (Packing)
+                {
+                  if ((z2 & 3) == 0) DAsmCode[cnt++] = 0;
+                  DAsmCode[cnt - 1] += Trans << (8 * (3 - (z2 & 3)));
+                }
+                else
+                  DAsmCode[cnt++] = Trans;
+              }
+            break;
+          }
+          case TempInt:
+          ToInt:
 #ifdef HAS64
-             if (!RangeCheck(t.Contents.Int, Int32))
-             {
-               OK = False;
-               WrError(ErrNum_OverRange);
-             }
-             else
+            if (!RangeCheck(t.Contents.Int, Int32))
+            {
+              OK = False;
+              WrStrErrorPos(ErrNum_OverRange, pArg);
+            }
+            else
 #endif
-               DAsmCode[cnt++] = t.Contents.Int;
-             break;
-           case TempFloat:
-             if (!FloatRangeCheck(t.Contents.Float, Float32))
-             {
-               OK = False;
-               WrError(ErrNum_OverRange);
-             }
-             else
-             {
-               Double_2_ieee4(t.Contents.Float, (Byte *) (DAsmCode + cnt), HostBigEndian);
-               cnt++;
-             }
-             break;
-           default:
-             OK = False;
-         }
-       }
+              DAsmCode[cnt++] = t.Contents.Int;
+            break;
+          case TempFloat:
+            if (!FloatRangeCheck(t.Contents.Float, Float32))
+            {
+              OK = False;
+              WrStrErrorPos(ErrNum_OverRange, pArg);
+            }
+            else
+            {
+              Double_2_ieee4(t.Contents.Float, (Byte *) (DAsmCode + cnt), HostBigEndian);
+              cnt++;
+            }
+            break;
+          default:
+            OK = False;
+        }
+      }
       if (OK)
         CodeLen = cnt << 2;
       as_tempres_free(&t);

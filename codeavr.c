@@ -437,8 +437,6 @@ static void PlaceValue(Word Value, Boolean IsByte)
 static void DecodeDATA_AVR(Word Index)
 {
   Integer Trans;
-  int z;
-  Boolean OK;
   TempResult t;
   LongInt MinV, MaxV;
 
@@ -450,41 +448,44 @@ static void DecodeDATA_AVR(Word Index)
   WordAccFull = FALSE;
   if (ChkArgCnt(1, ArgCntMax))
   {
-    OK = True;
-    for (z = 1; z <= ArgCnt; z++)
-     if (OK)
-     {
-       EvalStrExpression(&ArgStr[z], &t);
-       if (mFirstPassUnknown(t.Flags) && (t.Typ == TempInt)) t.Contents.Int &= MaxV;
-       switch (t.Typ)
-       {
-         case TempString:
-         {
-           int z2;
+    Boolean OK = True;
+    const tStrComp *pArg;
 
-           if (MultiCharToInt(&t, 2))
-             goto ToInt;
+    forallargs(pArg, OK)
+    {
+      EvalStrExpression(pArg, &t);
+      if (mFirstPassUnknown(t.Flags) && (t.Typ == TempInt)) t.Contents.Int &= MaxV;
+      switch (t.Typ)
+      {
+        case TempString:
+        {
+          int z2;
 
-           as_chartrans_xlate_nonz_dynstr(CurrTransTable->Table, &t.Contents.str);
-           for (z2 = 0; z2 < (int)t.Contents.str.len; z2++)
-           {
-             Trans = ((usint) t.Contents.str.p_str[z2]) & 0xff;
-             PlaceValue(Trans, True);
-           }
-           break;
-         }
-         ToInt:
-         case TempInt:
-           if (ChkRange(t.Contents.Int, MinV, MaxV))
-             PlaceValue(t.Contents.Int, Packing);
-           break;
-         case TempFloat:
-           WrStrErrorPos(ErrNum_StringOrIntButFloat, &ArgStr[z]);
-           /* fall-through */
-         default:
-           OK = False;
-       }
-     }
+          if (MultiCharToInt(&t, 2))
+            goto ToInt;
+
+          if (as_chartrans_xlate_nonz_dynstr(CurrTransTable->p_table, &t.Contents.str, pArg))
+            OK = False;
+          else
+            for (z2 = 0; z2 < (int)t.Contents.str.len; z2++)
+            {
+              Trans = ((usint) t.Contents.str.p_str[z2]) & 0xff;
+              PlaceValue(Trans, True);
+            }
+          break;
+        }
+        ToInt:
+        case TempInt:
+          if (ChkRange(t.Contents.Int, MinV, MaxV))
+            PlaceValue(t.Contents.Int, Packing);
+          break;
+        case TempFloat:
+          WrStrErrorPos(ErrNum_StringOrIntButFloat, pArg);
+          /* fall-through */
+        default:
+          OK = False;
+      }
+    }
     if (!OK)
       CodeLen = 0;
     else if (WordAccFull)

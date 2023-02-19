@@ -143,20 +143,21 @@ static void DecodeDS16(Word Code)
 
 static void DecodeDC(Word Code)
 {
-  int z;
-  Boolean OK;
   TempResult t;
-  char *p, *pEnd;
 
   UNUSED(Code);
 
   as_tempres_ini(&t);
   if (ChkArgCnt(1, ArgCntMax))
   {
-    z = 1; OK = TRUE; Toggle = FALSE;
-    while ((OK) && (z <= ArgCnt))
+    Boolean OK = True;
+    char *p, *pEnd;
+    tStrComp *pArg;
+
+    Toggle = FALSE;
+    forallargs(pArg, OK)
     {
-      EvalStrExpression(&ArgStr[z], &t);
+      EvalStrExpression(pArg, &t);
       switch (t.Typ)
       {
         case TempInt:
@@ -166,17 +167,18 @@ static void DecodeDC(Word Code)
             PutByte(t.Contents.Int);
           break;
         case TempString:
-          as_chartrans_xlate_nonz_dynstr(CurrTransTable->Table, &t.Contents.str);
-          for (p = t.Contents.str.p_str, pEnd = p + t.Contents.str.len; p < pEnd; p++)
-            PutByte(((usint) *p) & 0xff);
+          if (as_chartrans_xlate_nonz_dynstr(CurrTransTable->p_table, &t.Contents.str, pArg))
+            OK = False;
+          else
+            for (p = t.Contents.str.p_str, pEnd = p + t.Contents.str.len; p < pEnd; p++)
+              PutByte(((usint) *p) & 0xff);
           break;
         case TempFloat:
-          WrStrErrorPos(ErrNum_StringOrIntButFloat, &ArgStr[z]);
+          WrStrErrorPos(ErrNum_StringOrIntButFloat, pArg);
           /* fall-through */
         default:
           OK = False;
       }
-      z++;
     }
     if (!OK)
       CodeLen = 0;

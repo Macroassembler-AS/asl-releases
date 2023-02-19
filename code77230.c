@@ -594,8 +594,6 @@ static void DecodeNAL(Word Index)
 
 static Boolean DecodePseudo(void)
 {
-  int z;
-  Boolean OK;
   LongWord temp;
   LongInt sign, mant, expo, Size;
 
@@ -604,26 +602,29 @@ static Boolean DecodePseudo(void)
     if (ChkArgCnt(1, ArgCntMax))
     {
       TempResult t;
+      Boolean OK = True;
+      tStrComp *pArg;
 
       as_tempres_ini(&t);
-      z = 1; OK = True;
-      while (OK && (z <= ArgCnt))
+      forallargs(pArg, OK)
       {
-        EvalStrExpression(&ArgStr[z], &t);
+        EvalStrExpression(pArg, &t);
         switch(t.Typ)
         {
           case TempString:
             if (MultiCharToInt(&t, 4))
               goto ToInt;
 
-            as_chartrans_xlate_nonz_dynstr(CurrTransTable->Table, &t.Contents.str);
-            OK = !string_2_dasm_code(&t.Contents.str, Packing ? 4 : 1, True);
+            if (as_chartrans_xlate_nonz_dynstr(CurrTransTable->p_table, &t.Contents.str, pArg))
+              OK = False;
+            else
+              OK = !string_2_dasm_code(&t.Contents.str, Packing ? 4 : 1, True);
             break;
           case TempInt:
           ToInt:
             if (!RangeCheck(t.Contents.Int, Int32))
             {
-              WrError(ErrNum_OverRange);
+              WrStrErrorPos(ErrNum_OverRange, pArg);
               OK = False;
               break;
             }
@@ -632,7 +633,7 @@ static Boolean DecodePseudo(void)
           case TempFloat:
             if (!FloatRangeCheck(t.Contents.Float, Float32))
             {
-              WrError(ErrNum_OverRange);
+              WrStrErrorPos(ErrNum_OverRange, pArg);
               OK = False;
               break;
             }
@@ -664,7 +665,6 @@ static Boolean DecodePseudo(void)
           default:
             OK = False;
         }
-        z++;
       }
       if (!OK)
         CodeLen = 0;
@@ -678,6 +678,7 @@ static Boolean DecodePseudo(void)
     if (ChkArgCnt(1, 1))
     {
       tSymbolFlags Flags;
+      Boolean OK;
 
       Size = EvalStrIntExpressionWithFlags(&ArgStr[1], Int16, &OK, &Flags);
       if (mFirstPassUnknown(Flags))
