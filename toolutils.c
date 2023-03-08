@@ -347,7 +347,7 @@ void DestroyRelocInfo(PRelocInfo PInfo)
   free (PInfo);
 }
 
-CMDResult CMD_FilterList(Boolean Negate, const char *Arg)
+as_cmd_result_t CMD_FilterList(Boolean Negate, const char *Arg)
 {
   Byte FTemp;
   Boolean err;
@@ -356,7 +356,7 @@ CMDResult CMD_FilterList(Boolean Negate, const char *Arg)
   String Copy;
 
   if (*Arg == '\0')
-    return CMDErr;
+    return e_cmd_err;
   strmaxcpy(Copy, Arg, STRINGSIZE);
 
   do
@@ -366,7 +366,7 @@ CMDResult CMD_FilterList(Boolean Negate, const char *Arg)
       *p = '\0';
     FTemp = ConstLongInt(Copy, &err, 10);
     if (!err)
-      return CMDErr;
+      return e_cmd_err;
 
     for (Search = 0; Search < FilterCnt; Search++)
       if (FilterBytes[Search] == FTemp)
@@ -385,10 +385,10 @@ CMDResult CMD_FilterList(Boolean Negate, const char *Arg)
 
   DoFilter = (FilterCnt != 0);
 
-  return CMDArg;
+  return e_cmd_arg;
 }
 
-extern CMDResult CMD_Range(LongWord *pStartAddr, LongWord *pStopAddr,
+extern as_cmd_result_t CMD_Range(LongWord *pStartAddr, LongWord *pStopAddr,
                            Boolean *pStartAuto, Boolean *pStopAuto,
                            const char *Arg)
 {
@@ -397,7 +397,7 @@ extern CMDResult CMD_Range(LongWord *pStartAddr, LongWord *pStopAddr,
   Boolean ok;
 
   p = strchr(Arg, '-');
-  if (!p) return CMDErr;
+  if (!p) return e_cmd_err;
 
   strmemcpy(StartStr, sizeof(StartStr), Arg, p - Arg);
   *pStartAuto = AddressWildcard(StartStr);
@@ -406,7 +406,7 @@ extern CMDResult CMD_Range(LongWord *pStartAddr, LongWord *pStopAddr,
   else
     *pStartAddr = ConstLongInt(StartStr, &ok, 10);
   if (!ok)
-    return CMDErr;
+    return e_cmd_err;
 
   *pStopAuto = AddressWildcard(p + 1);
   if (*pStopAuto)
@@ -414,20 +414,20 @@ extern CMDResult CMD_Range(LongWord *pStartAddr, LongWord *pStopAddr,
   else
     *pStopAddr = ConstLongInt(p + 1, &ok, 10);
   if (!ok)
-    return CMDErr;
+    return e_cmd_err;
 
   if (!*pStartAuto && !*pStopAuto && (*pStartAddr > *pStopAddr))
-    return CMDErr;
+    return e_cmd_err;
 
-  return CMDArg;
+  return e_cmd_arg;
 }
 
-CMDResult CMD_QuietMode(Boolean Negate, const char *Arg)
+as_cmd_result_t CMD_QuietMode(Boolean Negate, const char *Arg)
 {
   UNUSED(Arg);
 
   QuietMode = !Negate;
-  return CMDOK;
+  return e_cmd_ok;
 }
 
 Boolean FilterOK(Byte Header)

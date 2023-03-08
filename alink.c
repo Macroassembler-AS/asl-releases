@@ -59,7 +59,7 @@ static LongWord UndefErr;
 
 static String TargName;
 
-static CMDProcessed ParUnprocessed;
+static as_cmd_processed_t ParUnprocessed;
 
 static PPart PartList, PartLast;
 
@@ -439,7 +439,7 @@ static void ProcessFile(const char *pSrcName, int Index)
 /****************************************************************************/
 /* command line processing */
 
-static CMDResult CMD_Verbose(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_Verbose(Boolean Negate, const char *Arg)
 {
   UNUSED(Arg);
 
@@ -451,7 +451,7 @@ static CMDResult CMD_Verbose(Boolean Negate, const char *Arg)
   else
     Verbose++;
 
-  return CMDOK;
+  return e_cmd_ok;
 }
 
 static void ParamError(Boolean InEnv, char *Arg)
@@ -462,9 +462,7 @@ static void ParamError(Boolean InEnv, char *Arg)
   exit(1);
 }
 
-#define ALINKParamCnt (sizeof(ALINKParams) / sizeof(*ALINKParams))
-
-static CMDRec ALINKParams[] =
+static const as_cmd_rec_t ALINKParams[] =
 {
   {"v", CMD_Verbose}
 };
@@ -496,7 +494,7 @@ int main(int argc, char **argv)
   /* open message catalog */
 
   nlmessages_init("alink.msg", *argv, MsgId1, MsgId2); ioerrs_init(*argv);
-  cmdarg_init(*argv);
+  as_cmdarg_init(*argv);
   toolutils_init(*argv);
 
   as_snprintf(Ver, sizeof(Ver), "ALINK/C V%s", Version);
@@ -527,14 +525,14 @@ int main(int argc, char **argv)
 
   /* process arguments */
 
-  ProcessCMD(argc, argv, ALINKParams, ALINKParamCnt, ParUnprocessed, "ALINKCMD", ParamError);
+  as_cmd_process(argc, argv, ALINKParams, as_array_size(ALINKParams), ParUnprocessed, "ALINKCMD", ParamError);
 
   if ((Verbose >= 1) && (argc > 1))
    printf("\n");
 
   /* extract target file */
 
-  if (ProcessedEmpty(ParUnprocessed))
+  if (as_cmd_processed_empty(ParUnprocessed))
   {
     errno = 0;
     printf("%s\n", getmessage(Num_ErrMsgTargMissing));
@@ -551,7 +549,7 @@ int main(int argc, char **argv)
 
   /* walk over source file(s): */
 
-  if (ProcessedEmpty(ParUnprocessed))
+  if (as_cmd_processed_empty(ParUnprocessed))
   {
     errno = 0;
     printf("%s\n", getmessage(Num_ErrMsgSrcMissing));

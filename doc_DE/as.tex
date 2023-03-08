@@ -1,5 +1,6 @@
 %%TITLE Bedienungsanleitung Makroassembler AS
 \documentclass[12pt,a4paper,twoside]{report}
+%% Try \usepackage[german]{babel} if your Tex distribution does not provide the german sty file:
 \usepackage{german}
 \usepackage{makeidx}
 \usepackage{hyperref}
@@ -1025,11 +1026,15 @@ bzw. \ref{ChapShareOrder}.
       werden; ohne Angabe kommen die Warnungen ab dem ersten Pass.  Machen
       Sie sich aber so oder so auf einen ziemlichen Haufen an Meldungen
       gefa"st!!}
+\item{\tty{bigendian}: Mit diesem Schalter schaltet man vom Beginn des
+      Programms die Ablage von Werten im Speicher im Big Endian Modus ein,
+      sofern die Zielarchitektur den gleichnamigen Pseudobefehl unterst"utzt
+      (siehe Abschnitt \ref{SectBIGENDIAN}).}
 \item{\tty{relaxed}: Mit diesem Schalter aktiviert man den RELAXED-Modus
       vom Beginn des Programms an, der ansonsten erst durch die gleichnamige
       Pseudoanweisung (siehe Abschnitt \ref{SectRELAXED}) eingeschaltet
       werden mu"s.}
-\item{\tty{supmode}: Mit diesem Schalter erlaubt man Beginn des Programms
+\item{\tty{supmode}: Mit diesem Schalter erlaubt man vom Beginn des Programms
       an die Verwendung von Maschinenbefehlen, die nur im Supervisor-Modus
       des Prozessors verwendet werden d"urfen (siehe Abschnitt \ref{SectSUPMODE}).}
 \item{\tty{Y}: Mit diesem Schalter weist man AS an, alle Fehlermeldungen
@@ -1061,6 +1066,9 @@ bzw. \ref{ChapShareOrder}.
 \item{\tty{compmode}: Dieser Schalter weist den Assembler an, im Default
       im Kompatibilit"atsmodus zu arbeiten.  Genauere Informationen zu
       diesem Modus finden sich im Abschnitt \ref{SectCompMode}.}
+\item{\tty{packing}: Dieser Schalter "ubersteuert den Architektur-
+      abh"angigen Default f"ur die {\tt PACKING}-Option (siehe
+      Abschnitt \ref{SectPACKING}).}
 \end{itemize}
 Sofern Schalter keine Argumente ben"otigen und ihre Zusammenziehung
 keinen mehrbuchstabigen Schalter ergibt, k"onnen mehrere Schalter
@@ -4390,7 +4398,7 @@ anderen werden erst nach Umschaltung Padding-Bytes eingef"ugt.
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 \subsection{PACKING}
-\ttindex{PACKING}
+\ttindex{PACKING}\label{SectPACKING}
 
 {\em G"ultigkeit: 56000, AVR, TMS3203x/4x, TMS3206x, MN1610, \\
      CP1600, $\mu$PD7720/7725, $\mu$PD77230}
@@ -4480,7 +4488,7 @@ kann man aus der Variablen \tty{INSRCMODE} auslesen.  Der Default ist
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 \subsection{BIGENDIAN}
-\ttindex{BIGENDIAN}
+\ttindex{BIGENDIAN}\label{SectBIGENDIAN}
 
 {\em G"ultigkeit: MCS-51/251, PowerPC, SC/MP, 2650}
 
@@ -8118,19 +8126,21 @@ wird.  AS kennt diese Optimierung und benutzt sie auch, wenn dies nicht
 durch einen expliziten \tty{:16}-Suffix am Immediate-Operanden verboten
 wird.
 
-Leider scheint der Original-Assembler von Hitachi diese Optimierung anders
-zu implementiern, er geht von einer Null-Erweiterung statt einer Vorzeichen-
-Erweiterung aus.  Das bedeutet, nicht Argumente von -128 bis +127 (\$ff80 bis
-\$007f) werden als ein Byte kodiert, sondern von 0 bis 255 (\$0000 bis \$00ff).
-Ob nun der Hitachi-Assember recht hat oder doch das H8/500 Programming
-Manual ist mir leider nicht bekannt und ich kann es auch nicht nachpr"ufen.
-Wie dem auch sein, falls man ohne "Anderung von existierendem Code das
-''Hitachi-Assembler-Verhalten'' m"ochte, kann man in den Kompatibilit"atsmodus
-schalten, entweder durch ein
+Es hat sich in diesem Zusammenhang nur herausgestellt, da"s der Original-Assembler
+von Hitachi diese Optimierung anders umsetzt: er scheint von einer Null- statt
+einer Vorzeichen-Erweiterung auszugehen.  Das bedeutet, nicht Argumente von
+-128 bis +127 (\$ff80 bis \$007f) werden als ein Byte kodiert, sondern von 0 bis
+255 (\$0000 bis \$00ff).  Tests an echter Hardware haben ergeben, da"s
+das Programmers Manual in dieser Hinsicht Recht hat: Es wird eine Vorzeichen-
+Erweiterung durchgef"uhrt.  Deshalb verwendet AS im Default die k"urzere
+Kodierung nur, wenn im Quellcode ein Wert von -128 bis +127 bzw. (\$ff80 bis
+\$007f) benutzt wird.  F"ur existierenden Code, der sich darauf verl"a"st,
+da"s Werte von \$80 bis \$ff mit nur einem Byte kodiert werden, kann in einen
+Kompatibilit"atsmodus geschaltet werden, entweder durch ein
 \begin{verbatim}
   compmode on
 \end{verbatim}
-oder den entsprechenden Kommandozeilen-Schalter.
+im Quellcode oder den gleichnamigen Schalter auf der Kommandozeile.
 
 Ansonsten gelten die gleichen Hinweise bez"uglich der Syntax hexadezimaler
 Zahlen wie f"ur H8/300.

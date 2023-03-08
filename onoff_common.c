@@ -19,10 +19,27 @@ Boolean FPUAvail,    /* floating point co processor instructions allowed? */
         PMMUAvail,   /* PMMU instructions allowed? */
         SupAllowed,  /* supervisor mode enabled */
         MaxMode,     /* CPU in maximum mode */
+        CompMode,    /* Enable Compatibility Mode */
         TargetBigEndian, /* Data storage Big Endian? */
         DoPadding,   /* align to even address? */
         Packing;     /* packed data storage? */
 unsigned registered;
+
+#define SupAllowedCmdName "SUPMODE"   /* Privileged instructions allowed */
+#define SupAllowedSymName "INSUPMODE"
+static Boolean DefSupAllowed;
+
+#define BigEndianCmdName  "BIGENDIAN"
+#define BigEndianSymName  "BIGENDIAN"  /* Data storage MSB first */
+static Boolean DefBigEndian;
+
+#define CompModeCmdName   "COMPMODE"   /* Compatibility Mode */
+#define CompModeSymName   "COMPMODE"
+static Boolean DefCompMode;
+
+#define PackingCmdName    "PACKING"
+#define PackingSymName    "PACKING"
+static Boolean DefPacking, DefPackingSet;
 
 /*!------------------------------------------------------------------------
  * \fn     onoff_test_and_set(unsigned mask)
@@ -87,6 +104,18 @@ void onoff_maxmode_add(void)
 }
 
 /*!------------------------------------------------------------------------
+ * \fn     onoff_compmode_add(void)
+ * \brief  register on/off command to enable/disable compatibility mode
+ * ------------------------------------------------------------------------ */
+
+void onoff_compmode_add(void)
+{
+  if (!onoff_test_and_set(e_onoff_reg_compmode))
+    SetFlag(&CompMode, CompModeSymName, DefCompMode);
+  AddONOFF(CompModeCmdName, &CompMode, CompModeSymName, False);
+}
+
+/*!------------------------------------------------------------------------
  * \fn     onoff_bigendian_add(void)
  * \brief  register on/off command to set big/little endian data storage
  * ------------------------------------------------------------------------ */
@@ -94,7 +123,7 @@ void onoff_maxmode_add(void)
 void onoff_bigendian_add(void)
 {
   if (!onoff_test_and_set(e_onoff_reg_bigendian))
-    SetFlag(&TargetBigEndian, BigEndianSymName, False);
+    SetFlag(&TargetBigEndian, BigEndianSymName, DefBigEndian);
   AddONOFF(BigEndianCmdName, &TargetBigEndian, BigEndianSymName, False);
 }
 
@@ -107,7 +136,7 @@ void onoff_bigendian_add(void)
 void onoff_packing_add(Boolean def_value)
 {
   if (!onoff_test_and_set(e_onoff_reg_packing))
-    SetFlag(&Packing, PackingSymName, def_value);
+    SetFlag(&Packing, PackingSymName, DefPackingSet ? DefPacking : def_value);
   AddONOFF(PackingCmdName, &Packing, PackingSymName, False);
 }
 
@@ -126,7 +155,53 @@ static void initpass_onoff(void)
  * \brief  module initialization
  * ------------------------------------------------------------------------ */
 
+static as_cmd_result_t CMD_SupAllowed(Boolean Negate, const char *pArg)
+{
+  UNUSED(pArg);
+
+  DefSupAllowed = !Negate;
+  return e_cmd_ok;
+}
+
+static as_cmd_result_t CMD_BigEndian(Boolean Negate, const char *pArg)
+{
+  UNUSED(pArg);
+
+  DefBigEndian = !Negate;
+  return e_cmd_ok;
+}
+
+static as_cmd_result_t CMD_CompMode(Boolean Negate, const char *Arg)
+{
+  UNUSED(Arg);
+
+  DefCompMode = !Negate;
+  return e_cmd_ok;
+}
+
+static as_cmd_result_t CMD_Packing(Boolean Negate, const char *Arg)
+{
+  UNUSED(Arg);
+
+  DefPacking = !Negate;
+  DefPackingSet = True;
+  return e_cmd_ok;
+}
+
+static const as_cmd_rec_t onoff_params[] =
+{
+  { BigEndianCmdName  , CMD_BigEndian       },
+  { CompModeCmdName   , CMD_CompMode        },
+  { PackingCmdName    , CMD_Packing         },
+  { SupAllowedCmdName , CMD_SupAllowed      }
+};
+
 extern void onoff_common_init(void)
 {
+  as_cmd_extend(&as_cmd_recs, &as_cmd_rec_cnt, onoff_params, as_array_size(onoff_params));
+  DefSupAllowed = False;
+  DefBigEndian = False;
+  DefCompMode = False;
+  DefPacking = DefPackingSet = False;
   AddInitPassProc(initpass_onoff);
 }

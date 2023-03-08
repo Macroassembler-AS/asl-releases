@@ -35,7 +35,7 @@ const char *FileName, LongWord Offset
 );
 
 
-static CMDProcessed ParUnprocessed;
+static as_cmd_processed_t ParUnprocessed;
 
 static FILE *TargFile;
 static String SrcName, TargName;
@@ -391,19 +391,19 @@ static void MeasureFile(const char *FileName, LongWord Offset)
     ChkIO(FileName);
 }
 
-static CMDResult CMD_AdrRange(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_AdrRange(Boolean Negate, const char *Arg)
 {
   if (Negate)
   {
     StartAdr = 0; StopAdr = 0x7fff;
-    return CMDOK;
+    return e_cmd_ok;
   }
   else
     return CMD_Range(&StartAdr, &StopAdr,
                      &StartAuto, &StopAuto, Arg);
 }
 
-static CMDResult CMD_ByteMode(Boolean Negate, const char *pArg)
+static as_cmd_result_t CMD_ByteMode(Boolean Negate, const char *pArg)
 {
 #define ByteModeCnt 9
   static const char *ByteModeStrings[ByteModeCnt] =
@@ -431,7 +431,7 @@ static CMDResult CMD_ByteMode(Boolean Negate, const char *pArg)
     SizeDiv = 1;
     ANDEq = 0;
     ANDMask = 0;
-    return CMDOK;
+    return e_cmd_ok;
   }
   else
   {
@@ -448,13 +448,13 @@ static CMDResult CMD_ByteMode(Boolean Negate, const char *pArg)
         ANDEq   = ByteModeEqs[z];
       }
     if (ANDEq == 0xff)
-      return CMDErr;
+      return e_cmd_err;
     else
-      return CMDArg;
+      return e_cmd_arg;
   }
 }
 
-static CMDResult CMD_StartHeader(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_StartHeader(Boolean Negate, const char *Arg)
 {
   Boolean err;
   ShortInt Sgn;
@@ -462,13 +462,13 @@ static CMDResult CMD_StartHeader(Boolean Negate, const char *Arg)
   if (Negate)
   {
     StartHeader = 0;
-    return CMDOK;
+    return e_cmd_ok;
   }
   else
   {
     Sgn = 1;
     if (*Arg == '\0')
-      return CMDErr;
+      return e_cmd_err;
     switch (as_toupper(*Arg))
     {
       case 'B':
@@ -479,72 +479,71 @@ static CMDResult CMD_StartHeader(Boolean Negate, const char *Arg)
     }
     StartHeader = ConstLongInt(Arg, &err, 10);
     if ((!err) || (StartHeader > 4))
-      return CMDErr;
+      return e_cmd_err;
     StartHeader *= Sgn;
-    return CMDArg;
+    return e_cmd_arg;
   }
 }	
 
-static CMDResult CMD_EntryAdr(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_EntryAdr(Boolean Negate, const char *Arg)
 {
   Boolean err;
 
   if (Negate)
   {
     EntryAdrPresent = False;
-    return CMDOK;
+    return e_cmd_ok;
   }
   else
   {
     EntryAdr = ConstLongInt(Arg, &err, 10);
     if (err)
       EntryAdrPresent = True;
-    return (err) ? CMDArg : CMDErr;
+    return (err) ? e_cmd_arg : e_cmd_err;
   }
 }
 
-static CMDResult CMD_FillVal(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_FillVal(Boolean Negate, const char *Arg)
 {
   Boolean err;
   UNUSED(Negate);
 
   FillVal = ConstLongInt(Arg, &err, 10);
-  return err ? CMDArg : CMDErr;
+  return err ? e_cmd_arg : e_cmd_err;
 }
 
-static CMDResult CMD_CheckSum(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_CheckSum(Boolean Negate, const char *Arg)
 {
   UNUSED(Arg);
 
   DoCheckSum = !Negate;
-  return CMDOK;
+  return e_cmd_ok;
 }
 
-static CMDResult CMD_AutoErase(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_AutoErase(Boolean Negate, const char *Arg)
 {
   UNUSED(Arg);
 
   AutoErase = !Negate;
-  return CMDOK;
+  return e_cmd_ok;
 }
 
-static CMDResult CMD_ForceSegment(Boolean Negate,  const char *Arg)
+static as_cmd_result_t CMD_ForceSegment(Boolean Negate,  const char *Arg)
 {
   int z = addrspace_lookup(Arg);
 
   if (z >= SegCount)
-    return CMDErr;
+    return e_cmd_err;
 
   if (!Negate)
     ValidSegment = z;
   else if (ValidSegment == z)
     ValidSegment = SegCode;
 
-  return CMDArg;
+  return e_cmd_arg;
 }
 
-#define P2BINParamCnt (sizeof(P2BINParams) / sizeof(*P2BINParams))
-static CMDRec P2BINParams[] =
+static as_cmd_rec_t P2BINParams[] =
 {
   { "f"        , CMD_FilterList },
   { "r"        , CMD_AdrRange },
@@ -575,7 +574,7 @@ int main(int argc, char **argv)
   nlmessages_init("p2bin.msg", *argv, MsgId1, MsgId2);
   ioerrs_init(*argv);
   chunks_init();
-  cmdarg_init(*argv);
+  as_cmdarg_init(*argv);
   toolutils_init(*argv);
 
   InitChunk(&UsedList);
@@ -607,7 +606,7 @@ int main(int argc, char **argv)
   AutoErase = False;
   StartHeader = 0;
   ValidSegment = SegCode;
-  ProcessCMD(argc, argv, P2BINParams, P2BINParamCnt, ParUnprocessed, "P2BINCMD", ParamError);
+  as_cmd_process(argc, argv, P2BINParams, as_array_size(P2BINParams), ParUnprocessed, "P2BINCMD", ParamError);
 
   if (!QuietMode)
   {
@@ -615,7 +614,7 @@ int main(int argc, char **argv)
     WrCopyRight(Ver);
   }
 
-  if (ProcessedEmpty(ParUnprocessed))
+  if (as_cmd_processed_empty(ParUnprocessed))
   {
     errno = 0;
     fprintf(stderr, "%s\n", getmessage(Num_ErrMsgTargMissing));
@@ -630,7 +629,7 @@ int main(int argc, char **argv)
   if (!RemoveOffset(TargName, &Dummy))
     ParamError(False, argv[z]);
   ParUnprocessed[z] = False;
-  if (ProcessedEmpty(ParUnprocessed))
+  if (as_cmd_processed_empty(ParUnprocessed))
   {
     strmaxcpy(SrcName, argv[z], STRINGSIZE);
     DelSuffix(TargName);
@@ -644,7 +643,7 @@ int main(int argc, char **argv)
       StartAdr = 0xfffffffful;
     if (StopAuto)
       StopAdr = 0;
-    if (ProcessedEmpty(ParUnprocessed))
+    if (as_cmd_processed_empty(ParUnprocessed))
       ProcessGroup(SrcName, MeasureFile);
     else
       for (z = 1; z < argc; z++)
@@ -666,7 +665,7 @@ int main(int argc, char **argv)
 
   OpenTarget();
 
-  if (ProcessedEmpty(ParUnprocessed))
+  if (as_cmd_processed_empty(ParUnprocessed))
     ProcessGroup(SrcName, ProcessFile);
   else
     for (z = 1; z < argc; z++)
@@ -677,7 +676,7 @@ int main(int argc, char **argv)
 
   if (AutoErase)
   {
-    if (ProcessedEmpty(ParUnprocessed))
+    if (as_cmd_processed_empty(ParUnprocessed))
       ProcessGroup(SrcName, EraseFile);
     else
       for (z = 1; z < argc; z++)

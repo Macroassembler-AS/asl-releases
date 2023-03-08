@@ -1012,6 +1012,10 @@ chapters \ref{ChapShareMain} resp. \ref{ChapShareOrder}.
       first pass where issuing of such messages shall start.
       Without this argument, warnings will come starting with
       the first pass.  Be prepared for a bunch of messages!!}
+\item{\tty{bigendian}: This switch sets big endian mode for values placed
+      in memory right from the program's beginning, given the target
+      architecture supports the pseudo instruction of same name (see
+      \ref{SectBIGENDIAN}).}
 \item{\tty{relaxed}: this switch enables the RELAXED mode right from the
       beginning of the program, which otherwise has to be enabled by the
       pseudo instruction of sane name(see section \ref{SectRELAXED}).}
@@ -1045,6 +1049,8 @@ chapters \ref{ChapShareMain} resp. \ref{ChapShareOrder}.
 \item{\tty{compmode}: This switch instructs the assembler to operate by
       default in compatibility mode.  See section \ref{SectCompMode} for
       more information about this mode.}
+\item{\tty{packing}: This switch overrides the architecture specific
+      default of the {\tt PACKING} option (see section \ref{SectPACKING}).}
 \end{itemize}
 As long as switches require no arguments and their concatenation does
 not result in a multi-letter switch, it is possible to specify several
@@ -4276,7 +4282,7 @@ the 680x0 family, it has to be turned on explicitly for all other families.
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 \subsection{PACKING}
-\ttindex{PACKING}
+\ttindex{PACKING}\label{SectPACKING}
 
 {\em valid for: 56000, AVR, TMS3203x/4x, TMS3206x, MN1610, CP1600,
      $\mu$PD7720/7725, $\mu$PD77230}
@@ -4359,7 +4365,7 @@ required.  The current setting may be read from the variable
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 \subsection{BIGENDIAN}
-\ttindex{BIGENDIAN}
+\ttindex{BIGENDIAN}\label{SectBIGENDIAN}
 
 {\em valid for: MCS-51/251, PowerPC, SC/MP, 2650}
 
@@ -7923,23 +7929,27 @@ like this:
 \begin{verbatim}
    mov.w #$ffff,@$1234
 \end{verbatim}
-it is possible to encode the source just as a single \$ff and to save one
-byte in code size.  The processor automatically performs a sign extension,
-which turns \$ff into the desired value \$ffff.  AS is awarte of this
-optimization and will use it, unless it was explicitly forbidden via a \tty{:16}
-suffix at the immediate operand.
+it is possible to encode the immediate source code operand just as a single
+\$ff and to save one byte in code size.  The processor automatically performs
+a sign extension, which turns \$ff into the desired value \$ffff.  AS is aware
+of this optimization and will use it, unless it was explicitly forbidden via
+a \tty{:16} suffix at the immediate operand.
 
-Unfortunately, the original Hitachi assembler seems to implement this optimization
-in another way: it assumes a zero instead of a sign extension.  This means that
+Feedback from users trying to assemble existing code has revealed that the
+original Hitachi assembler implements this optimization in a different way:
+it assumes a zero instead of a sign extension.  This means that immediate
 values from 0 to 255 (\$0000 to \$00ff) and not from -128 to +127 (\$ff80 to
-\$007f) are encoded as one byte.  I do not know whether the Hitachi assembler
-or the H8/500 Programmers Manual is right, and I have no way to verify this.
-Anyway, if one wants the ''Hitachi Assembler Behaviour'' for existing source
-code, one may enable the compatibility mode, either by the statement
+\$007f) are encoded as one byte.  Tests with physical hardware brought the
+result that the Programmers Manual is correct: The processor performs a sign
+extension.  AS will therefore by default only use the shorter encoding if 
+a value ranging from -128 to +127 respectively \$ff80 to \$007f is used.
+If you have existing code that assumes values from \$80 to \$ff are encoded
+as one byte, you may activate a 'compatibility mode', either by the
+statement
 \begin{verbatim}
   compmode on
 \end{verbatim}
-or by the respective command line switch.
+in the source code or by the command line switch of same name.
 
 Aside from this, the same remarks regarding hexadecimal number syntax apply
 as for H8/500.

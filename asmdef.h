@@ -23,6 +23,7 @@
 #include "tempresult.h"
 #include "addrspace.h"
 #include "chartrans.h"
+#include "cmdarg.h"
 
 typedef struct _TCrossRef
 {
@@ -110,7 +111,6 @@ extern char SrcSuffix[],IncSuffix[],PrgSuffix[],LstSuffix[],
 #define DefStackName     "DEFSTACK"   /* Default-Stack */
 #define NestMaxName      "NESTMAX"    /* max. nesting level of a macro */
 #define DottedStructsName "DOTTEDSTRUCTS" /* struct elements by default with . */
-#define CompModeName     "COMPMODE"   /* compatibility mode */
 
 extern const char *EnvName;
 
@@ -203,6 +203,9 @@ typedef struct _ASSUMERec
   void (*pPostProc)(void);
 } ASSUMERec;
 
+extern as_cmd_rec_t *as_cmd_recs;
+extern size_t as_cmd_rec_cnt;
+
 extern StringPtr SourceFile;
 
 extern StringPtr CursUp;
@@ -245,7 +248,6 @@ extern Boolean MakeCrossList;
 extern Boolean MakeSectionList;
 extern Boolean MakeIncludeList;
 extern Boolean DefRelaxedMode;
-extern Boolean CompMode, DefCompMode;
 extern Word ListMask;
 extern ShortInt ExtendErrors;
 extern Integer EnumSegment;
@@ -328,8 +330,6 @@ extern char DefCPU[20];
 extern char MomCPUIdent[20],
             MomFPUIdent[20],
             MomPMMUIdent[20];
-
-extern Boolean DefSupAllowed;
 
 extern int OutRadixBase, ListRadixBase;
 extern const char *pCommentLeadIn;

@@ -62,13 +62,13 @@ extern PRelocInfo ReadRelocInfo(FILE *f);
 
 extern void DestroyRelocInfo(PRelocInfo PInfo);
 
-extern CMDResult CMD_FilterList(Boolean Negate, const char *Arg);
+extern as_cmd_result_t CMD_FilterList(Boolean Negate, const char *Arg);
 
-extern CMDResult CMD_Range(LongWord *pStart, LongWord *pStop,
+extern as_cmd_result_t CMD_Range(LongWord *pStart, LongWord *pStop,
                            Boolean *pStartAuto, Boolean *pStopAuto,
                            const char *Arg);
 
-extern CMDResult CMD_QuietMode(Boolean Negate, const char *Arg);
+extern as_cmd_result_t CMD_QuietMode(Boolean Negate, const char *Arg);
 
 extern Boolean FilterOK(Byte Header);
 

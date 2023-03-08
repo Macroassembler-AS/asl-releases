@@ -2936,7 +2936,6 @@ static void AssembleFile_InitPass(void)
   InitLstMacroExpMod(&LstMacroExpModDefault);
   SetFlag(&RelaxedMode, RelaxedName, DefRelaxedMode);
   SetIntConstRelaxedMode(DefRelaxedMode);
-  SetFlag(&CompMode, CompModeName, DefCompMode);
   strmaxcpy(TmpCompStr, NestMaxName, sizeof(TmpCompStr)); EnterIntSymbol(&TmpComp, NestMax = DEF_NESTMAX, SegNone, True);
   CopyDefSymbols();
 
@@ -3429,7 +3428,7 @@ static void AssembleGroup(const char *pFileMask)
 
 /*-------------------------------------------------------------------------*/
 
-static CMDResult CMD_SharePascal(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_SharePascal(Boolean Negate, const char *Arg)
 {
   UNUSED(Arg);
 
@@ -3437,10 +3436,10 @@ static CMDResult CMD_SharePascal(Boolean Negate, const char *Arg)
     ShareMode = 1;
   else if (ShareMode == 1)
     ShareMode = 0;
-  return CMDOK;
+  return e_cmd_ok;
 }
 
-static CMDResult CMD_ShareC(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_ShareC(Boolean Negate, const char *Arg)
 {
   UNUSED(Arg);
 
@@ -3448,10 +3447,10 @@ static CMDResult CMD_ShareC(Boolean Negate, const char *Arg)
     ShareMode = 2;
   else if (ShareMode == 2)
     ShareMode = 0;
-  return CMDOK;
+  return e_cmd_ok;
 }
 
-static CMDResult CMD_ShareAssembler(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_ShareAssembler(Boolean Negate, const char *Arg)
 {
   UNUSED(Arg);
 
@@ -3459,10 +3458,10 @@ static CMDResult CMD_ShareAssembler(Boolean Negate, const char *Arg)
     ShareMode = 3;
   else if (ShareMode == 3)
     ShareMode = 0;
-  return CMDOK;
+  return e_cmd_ok;
 }
 
-static CMDResult CMD_DebugMode(Boolean Negate, const char *pArg)
+static as_cmd_result_t CMD_DebugMode(Boolean Negate, const char *pArg)
 {
   String Arg;
 
@@ -3472,63 +3471,63 @@ static CMDResult CMD_DebugMode(Boolean Negate, const char *pArg)
   if (Negate)
   {
     if (Arg[0] != '\0')
-      return CMDErr;
+      return e_cmd_err;
     else
     {
       DebugMode = DebugNone;
-      return CMDOK;
+      return e_cmd_ok;
     }
   }
   else if (!strcmp(Arg, ""))
   {
     DebugMode = DebugMAP;
-    return CMDOK;
+    return e_cmd_ok;
   }
   else if (!strcmp(Arg, "ATMEL"))
   {
     DebugMode = DebugAtmel;
-    return CMDArg;
+    return e_cmd_arg;
   }
   else if (!strcmp(Arg, "MAP"))
   {
     DebugMode = DebugMAP;
-    return CMDArg;
+    return e_cmd_arg;
   }
   else if (!strcmp(Arg, "NOICE"))
   {
     DebugMode = DebugNoICE;
-    return CMDArg;
+    return e_cmd_arg;
   }
 #if 0
   else if (!strcmp(Arg, "A.OUT"))
   {
     DebugMode = DebugAOUT;
-    return CMDArg;
+    return e_cmd_arg;
   }
   else if (!strcmp(Arg, "COFF"))
   {
     DebugMode = DebugCOFF;
-    return CMDArg;
+    return e_cmd_arg;
   }
   else if (!strcmp(Arg, "ELF"))
   {
     DebugMode = DebugELF;
-    return CMDArg;
+    return e_cmd_arg;
   }
 #endif
   else
-    return CMDErr;
+    return e_cmd_err;
 
 #if 0
   if (Negate)
     DebugMode = DebugNone;
   else
     DebugMode = DebugMAP;
-  return CMDOK;
+  return e_cmd_ok;
 #endif
 }
 
-static CMDResult CMD_ListConsole(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_ListConsole(Boolean Negate, const char *Arg)
 {
   UNUSED(Arg);
 
@@ -3536,10 +3535,10 @@ static CMDResult CMD_ListConsole(Boolean Negate, const char *Arg)
     ListMode = 1;
   else if (ListMode == 1)
     ListMode = 0;
-  return CMDOK;
+  return e_cmd_ok;
 }
 
-static CMDResult CMD_ListRadix(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_ListRadix(Boolean Negate, const char *Arg)
 {
   Boolean OK;
   LargeWord NewListRadixBase;
@@ -3549,16 +3548,16 @@ static CMDResult CMD_ListRadix(Boolean Negate, const char *Arg)
   if (Negate)
   {
     ListRadixBase = 16;
-    return CMDOK;
+    return e_cmd_ok;
   }
   NewListRadixBase = ConstLongInt(Arg, &OK, 10);
   if (!OK || (NewListRadixBase < 2) || (NewListRadixBase > 36))
-    return CMDErr;
+    return e_cmd_err;
   ListRadixBase = NewListRadixBase;
-  return CMDArg;
+  return e_cmd_arg;
 }
 
-static CMDResult CMD_ListFile(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_ListFile(Boolean Negate, const char *Arg)
 {
   UNUSED(Arg);
 
@@ -3566,50 +3565,50 @@ static CMDResult CMD_ListFile(Boolean Negate, const char *Arg)
     ListMode = 2;
   else if (ListMode == 2)
     ListMode = 0;
-  return CMDOK;
+  return e_cmd_ok;
 }
 
-static CMDResult CMD_SuppWarns(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_SuppWarns(Boolean Negate, const char *Arg)
 {
   UNUSED(Arg);
 
   SuppWarns = !Negate;
-  return CMDOK;
+  return e_cmd_ok;
 }
 
-static CMDResult CMD_UseList(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_UseList(Boolean Negate, const char *Arg)
 {
   UNUSED(Arg);
 
   MakeUseList = !Negate;
-  return CMDOK;
+  return e_cmd_ok;
 }
 
-static CMDResult CMD_CrossList(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_CrossList(Boolean Negate, const char *Arg)
 {
   UNUSED(Arg);
 
   MakeCrossList = !Negate;
-  return CMDOK;
+  return e_cmd_ok;
 }
 
-static CMDResult CMD_SectionList(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_SectionList(Boolean Negate, const char *Arg)
 {
   UNUSED(Arg);
 
   MakeSectionList = !Negate;
-  return CMDOK;
+  return e_cmd_ok;
 }
 
-static CMDResult CMD_BalanceTree(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_BalanceTree(Boolean Negate, const char *Arg)
 {
   UNUSED(Arg);
 
   BalanceTrees = !Negate;
-  return CMDOK;
+  return e_cmd_ok;
 }
 
-static CMDResult CMD_MakeDebug(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_MakeDebug(Boolean Negate, const char *Arg)
 {
   UNUSED(Arg);
 
@@ -3626,42 +3625,42 @@ static CMDResult CMD_MakeDebug(Boolean Negate, const char *Arg)
     MakeDebug = False;
     CloseIfOpen(&Debug);
   }
-  return CMDOK;
+  return e_cmd_ok;
 }
 
-static CMDResult CMD_MacProOutput(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_MacProOutput(Boolean Negate, const char *Arg)
 {
   UNUSED(Arg);
 
   MacProOutput = !Negate;
-  return CMDOK;
+  return e_cmd_ok;
 }
 
-static CMDResult CMD_MacroOutput(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_MacroOutput(Boolean Negate, const char *Arg)
 {
   UNUSED(Arg);
 
   MacroOutput = !Negate;
-  return CMDOK;
+  return e_cmd_ok;
 }
 
-static CMDResult CMD_MakeIncludeList(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_MakeIncludeList(Boolean Negate, const char *Arg)
 {
   UNUSED(Arg);
 
   MakeIncludeList = !Negate;
-  return CMDOK;
+  return e_cmd_ok;
 }
 
-static CMDResult CMD_CodeOutput(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_CodeOutput(Boolean Negate, const char *Arg)
 {
   UNUSED(Arg);
 
   CodeOutput = !Negate;
-  return CMDOK;
+  return e_cmd_ok;
 }
 
-static CMDResult CMD_MsgIfRepass(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_MsgIfRepass(Boolean Negate, const char *Arg)
 {
   Boolean OK;
   UNUSED(Arg);
@@ -3672,7 +3671,7 @@ static CMDResult CMD_MsgIfRepass(Boolean Negate, const char *Arg)
     if (Arg[0] == '\0')
     {
       PassNoForMessage = 1;
-      return CMDOK;
+      return e_cmd_ok;
     }
     else
     {
@@ -3680,35 +3679,27 @@ static CMDResult CMD_MsgIfRepass(Boolean Negate, const char *Arg)
       if (!OK)
       {
         PassNoForMessage = 1;
-        return CMDOK;
+        return e_cmd_ok;
       }
       else if (PassNoForMessage < 1)
-        return CMDErr;
+        return e_cmd_err;
       else
-        return CMDArg;
+        return e_cmd_arg;
     }
   }
   else
-    return CMDOK;
+    return e_cmd_ok;
 }
 
-static CMDResult CMD_Relaxed(Boolean Negate, const char *pArg)
+static as_cmd_result_t CMD_Relaxed(Boolean Negate, const char *pArg)
 {
   UNUSED(pArg);
 
   DefRelaxedMode = !Negate;
-  return CMDOK;
+  return e_cmd_ok;
 }
 
-static CMDResult CMD_SupAllowed(Boolean Negate, const char *pArg)
-{
-  UNUSED(pArg);
-
-  DefSupAllowed = !Negate;
-  return CMDOK;
-}
-
-static CMDResult CMD_ExtendErrors(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_ExtendErrors(Boolean Negate, const char *Arg)
 {
   UNUSED(Arg);
 
@@ -3717,94 +3708,86 @@ static CMDResult CMD_ExtendErrors(Boolean Negate, const char *Arg)
   else if ((!Negate) && (ExtendErrors < 2))
     ExtendErrors++;
 
-  return CMDOK;
+  return e_cmd_ok;
 }
 
-static CMDResult CMD_NumericErrors(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_NumericErrors(Boolean Negate, const char *Arg)
 {
   UNUSED(Arg);
 
   NumericErrors = !Negate;
-  return CMDOK;
+  return e_cmd_ok;
 }
 
-static CMDResult CMD_HexLowerCase(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_HexLowerCase(Boolean Negate, const char *Arg)
 {
   UNUSED(Arg);
 
   HexStartCharacter = Negate ? 'A' : 'a';
-  return CMDOK;
+  return e_cmd_ok;
 }
 
-static CMDResult CMD_SplitByte(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_SplitByte(Boolean Negate, const char *Arg)
 {
   UNUSED(Arg);
 
   if (Negate)
   {
     SplitByteCharacter = '\0';
-    return CMDOK;
+    return e_cmd_ok;
   }
   else if (*Arg)
   {
     if (strlen(Arg) != 1)
-      return CMDErr;
+      return e_cmd_err;
     SplitByteCharacter = *Arg;
-    return CMDArg;
+    return e_cmd_arg;
   }
   else
   {
     SplitByteCharacter = '.';
-    return CMDOK;
+    return e_cmd_ok;
   }
 }
 
-static CMDResult CMD_QuietMode(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_QuietMode(Boolean Negate, const char *Arg)
 {
   UNUSED(Arg);
 
   QuietMode = !Negate;
-  return CMDOK;
+  return e_cmd_ok;
 }
 
-static CMDResult CMD_CompMode(Boolean Negate, const char *Arg)
-{
-  UNUSED(Arg);
-
-  DefCompMode = !Negate;
-  return CMDOK;
-}
-
-static CMDResult CMD_ThrowErrors(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_ThrowErrors(Boolean Negate, const char *Arg)
 {
   UNUSED(Arg);
 
   ThrowErrors = !Negate;
-  return CMDOK;
+  return e_cmd_ok;
 }
 
-static CMDResult CMD_CaseSensitive(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_CaseSensitive(Boolean Negate, const char *Arg)
 {
   UNUSED(Arg);
 
   CaseSensitive = !Negate;
-  return CMDOK;
+  return e_cmd_ok;
 }
 
-static CMDResult CMD_GNUErrors(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_GNUErrors(Boolean Negate, const char *Arg)
 {
   UNUSED(Arg);
 
   GNUErrors  =  !Negate;
-  return CMDOK;
+  return e_cmd_ok;
 }
 
-static CMDResult CMD_IncludeList(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_IncludeList(Boolean Negate, const char *Arg)
 {
   char *p;
   String Copy, part;
 
-  if (*Arg == '\0') return CMDErr;
+  if (*Arg == '\0') return e_cmd_err;
   else
   {
     strmaxcpy(Copy, Arg, STRINGSIZE);
@@ -3827,35 +3810,35 @@ static CMDResult CMD_IncludeList(Boolean Negate, const char *Arg)
         AddIncludeList(part);
     }
     while (Copy[0] != '\0');
-    return CMDArg;
+    return e_cmd_arg;
   }
 }
 
-static CMDResult CMD_ListMask(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_ListMask(Boolean Negate, const char *Arg)
 {
   Word erg;
   Boolean OK;
 
   if (Arg[0] == '\0')
-    return CMDErr;
+    return e_cmd_err;
   else
   {
     erg = ConstLongInt(Arg, &OK, 10);
     if ((!OK) || (erg > 511))
-      return CMDErr;
+      return e_cmd_err;
     else
     {
       ListMask = Negate ? (ListMask & ~erg) : (ListMask | erg);
-      return CMDArg;
+      return e_cmd_arg;
     }
   }
 }
 
-static CMDResult CMD_DefSymbol(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_DefSymbol(Boolean Negate, const char *Arg)
 {
   String Copy, Part, Name;
   char *p;
-  CMDResult Result = CMDErr;
+  as_cmd_result_t Result = e_cmd_err;
 
   TempResult t;
   as_tempres_ini(&t);
@@ -3903,7 +3886,7 @@ static CMDResult CMD_DefSymbol(Boolean Negate, const char *Arg)
      {
        EvalExpression(Part, &t);
        if ((t.Typ == TempNone) || mFirstPassUnknown(t.Flags))
-         return CMDErr;
+         return e_cmd_err;
      }
      else
        as_tempres_set_int(&t, 1);
@@ -3912,47 +3895,47 @@ static CMDResult CMD_DefSymbol(Boolean Negate, const char *Arg)
   }
   while (Copy[0] != '\0');
 
-  Result = CMDArg;
+  Result = e_cmd_arg;
 func_exit:
   as_tempres_free(&t);
   return Result;
 }
 
-static CMDResult CMD_ErrorPath(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_ErrorPath(Boolean Negate, const char *Arg)
 {
   if (Negate)
-    return CMDErr;
+    return e_cmd_err;
   else if (Arg[0] == '\0')
   {
     ErrorPath[0] = '\0';
-    return CMDOK;
+    return e_cmd_ok;
   }
   else
   {
     strmaxcpy(ErrorPath, Arg, STRINGSIZE);
-    return CMDArg;
+    return e_cmd_arg;
   }
 }
 
-static CMDResult CMD_HardRanges(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_HardRanges(Boolean Negate, const char *Arg)
 {
   UNUSED(Arg);
 
   HardRanges = Negate;
-  return CMDOK;
+  return e_cmd_ok;
 }
 
-static CMDResult CMD_OutFile(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_OutFile(Boolean Negate, const char *Arg)
 {
   if (Arg[0] == '\0')
   {
     if (Negate)
     {
       ClearOutList();
-      return CMDOK;
+      return e_cmd_ok;
     }
     else
-      return CMDErr;
+      return e_cmd_err;
   }
   else
   {
@@ -3960,21 +3943,21 @@ static CMDResult CMD_OutFile(Boolean Negate, const char *Arg)
       RemoveFromOutList(Arg);
     else
       AddToOutList(Arg);
-    return CMDArg;
+    return e_cmd_arg;
   }
 }
 
-static CMDResult CMD_ShareOutFile(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_ShareOutFile(Boolean Negate, const char *Arg)
 {
   if (Arg[0] == '\0')
   {
     if (Negate)
     {
       ClearShareOutList();
-      return CMDOK;
+      return e_cmd_ok;
     }
     else
-      return CMDErr;
+      return e_cmd_err;
   }
   else
   {
@@ -3982,21 +3965,21 @@ static CMDResult CMD_ShareOutFile(Boolean Negate, const char *Arg)
       RemoveFromShareOutList(Arg);
     else
       AddToShareOutList(Arg);
-    return CMDArg;
+    return e_cmd_arg;
   }
 }
 
-static CMDResult CMD_ListOutFile(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_ListOutFile(Boolean Negate, const char *Arg)
 {
   if (Arg[0] == '\0')
   {
     if (Negate)
     {
       ClearListOutList();
-      return CMDOK;
+      return e_cmd_ok;
     }
     else
-      return CMDErr;
+      return e_cmd_err;
   }
   else
   {
@@ -4004,7 +3987,7 @@ static CMDResult CMD_ListOutFile(Boolean Negate, const char *Arg)
       RemoveFromListOutList(Arg);
     else
       AddToListOutList(Arg);
-    return CMDArg;
+    return e_cmd_arg;
   }
 }
 
@@ -4018,20 +4001,20 @@ static Boolean CMD_CPUAlias_ChkCPUName(char *s)
   return True;
 }
 
-static CMDResult CMD_CPUAlias(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_CPUAlias(Boolean Negate, const char *Arg)
 {
   const char *p;
   String s1, s2;
 
   if (Negate)
-    return CMDErr;
+    return e_cmd_err;
   else if (Arg[0] == '\0')
-    return CMDErr;
+    return e_cmd_err;
   else
   {
     p = strchr(Arg, '=');
     if (!p)
-      return CMDErr;
+      return e_cmd_err;
     else
     {
       strmemcpy(s1, STRINGSIZE, Arg, p - Arg);
@@ -4039,26 +4022,26 @@ static CMDResult CMD_CPUAlias(Boolean Negate, const char *Arg)
       strmaxcpy(s2, p + 1, STRINGSIZE);
       UpString(s2);
       if (!(CMD_CPUAlias_ChkCPUName(s1) && CMD_CPUAlias_ChkCPUName(s2)))
-        return CMDErr;
+        return e_cmd_err;
       else if (!AddCPUAlias(s2, s1))
-        return CMDErr;
+        return e_cmd_err;
       else
-        return CMDArg;
+        return e_cmd_arg;
     }
   }
 }
 
-static CMDResult CMD_SetCPU(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_SetCPU(Boolean Negate, const char *Arg)
 {
   if (Negate)
   {
     *DefCPU = '\0';
-    return CMDOK;
+    return e_cmd_ok;
   }
   else
   {
     if (*Arg == '\0')
-      return CMDErr;
+      return e_cmd_err;
 
     strmaxcpy(DefCPU, Arg, sizeof(DefCPU) - 1);
     NLS_UpString(DefCPU);
@@ -4066,13 +4049,13 @@ static CMDResult CMD_SetCPU(Boolean Negate, const char *Arg)
     if (!LookupCPUDefByName(DefCPU))
     {
       *DefCPU = '\0';
-      return CMDErr;
+      return e_cmd_err;
     }
-    return CMDArg;
+    return e_cmd_arg;
   }
 }
 
-static CMDResult CMD_NoICEMask(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_NoICEMask(Boolean Negate, const char *Arg)
 {
   Word erg;
   Boolean OK;
@@ -4080,41 +4063,41 @@ static CMDResult CMD_NoICEMask(Boolean Negate, const char *Arg)
   if (Negate)
   {
     NoICEMask = 1 << SegCode;
-    return CMDOK;
+    return e_cmd_ok;
   }
   else if (Arg[0] == '\0')
-    return CMDErr;
+    return e_cmd_err;
   else
   {
     erg = ConstLongInt(Arg, &OK, 10);
     if (!OK || (erg >= (1 << SegCount)))
-      return CMDErr;
+      return e_cmd_err;
     else
     {
       NoICEMask = erg;
-      return CMDArg;
+      return e_cmd_arg;
     }
   }
 }
 
-static CMDResult CMD_MaxErrors(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_MaxErrors(Boolean Negate, const char *Arg)
 {
   if (Negate)
   {
     MaxErrors = 0;
-    return CMDOK;
+    return e_cmd_ok;
   }
   else if (Arg[0] == '\0')
-    return CMDErr;
+    return e_cmd_err;
   else
   {
     Boolean OK;
     LongWord NewMaxErrors = ConstLongInt(Arg, &OK, 10);
 
     if (!OK)
-      return CMDErr;
+      return e_cmd_err;
     MaxErrors = NewMaxErrors;
-    return CMDArg;
+    return e_cmd_arg;
   }
 }
 
@@ -4128,33 +4111,33 @@ static CMDResult CMD_MaxErrors(Boolean Negate, const char *Arg)
 
 #define DEFAULT_MACINCLUDELEVEL 200
 
-static CMDResult CMD_MaxIncludeLevel(Boolean Negate, const char *pArg)
+static as_cmd_result_t CMD_MaxIncludeLevel(Boolean Negate, const char *pArg)
 {
   if (Negate)
   {
     MaxErrors = DEFAULT_MACINCLUDELEVEL;
-    return CMDOK;
+    return e_cmd_ok;
   }
   else if (pArg[0] == '\0')
-    return CMDErr;
+    return e_cmd_err;
   else
   {
     Boolean OK;
     Integer NewMaxIncludeLevel = ConstLongInt(pArg, &OK, 10);
 
     if (!OK)
-      return CMDErr;
+      return e_cmd_err;
     MaxIncludeLevel = NewMaxIncludeLevel;
-    return CMDArg;
+    return e_cmd_arg;
   }
 }
 
-static CMDResult CMD_TreatWarningsAsErrors(Boolean Negate, const char *Arg)
+static as_cmd_result_t CMD_TreatWarningsAsErrors(Boolean Negate, const char *Arg)
 {
   UNUSED(Arg);
 
   TreatWarningsAsErrors = !Negate;
-  return CMDOK;
+  return e_cmd_ok;
 }
 
 static void ParamError(Boolean InEnv, char *Arg)
@@ -4163,9 +4146,7 @@ static void ParamError(Boolean InEnv, char *Arg)
   exit(4);
 }
 
-#define ASParamCnt (sizeof(ASParams) / sizeof(*ASParams))
-
-static CMDRec ASParams[] =
+static const as_cmd_rec_t ASParams[] =
 {
   { "A"             , CMD_BalanceTree     },
   { "ALIAS"         , CMD_CPUAlias        },
@@ -4195,12 +4176,10 @@ static CMDRec ASParams[] =
   { "p"             , CMD_SharePascal     },
   { "q"             , CMD_QuietMode       },
   { "QUIET"         , CMD_QuietMode       },
-  { CompModeName    , CMD_CompMode        },
   { "r"             , CMD_MsgIfRepass     },
   { RelaxedName     , CMD_Relaxed         },
   { "s"             , CMD_SectionList     },
   { "SHAREOUT"      , CMD_ShareOutFile    },
-  { SupAllowedCmdName,CMD_SupAllowed      },
   { "OLIST"         , CMD_ListOutFile     },
   { "t"             , CMD_ListMask        },
   { "u"             , CMD_UseList         },
@@ -4278,7 +4257,7 @@ int main(int argc, char **argv)
   char *Env, *ph1, *ph2;
   String Dummy;
   static Boolean First = TRUE;
-  CMDProcessed ParUnprocessed;     /* bearbeitete Kommandozeilenparameter */
+  as_cmd_processed_t ParUnprocessed;     /* bearbeitete Kommandozeilenparameter */
 
   if (First)
   {
@@ -4293,7 +4272,8 @@ int main(int argc, char **argv)
 
     nlmessages_init("as.msg", *argv, MsgId1, MsgId2);
     ioerrs_init(*argv);
-    cmdarg_init(*argv);
+    as_cmdarg_init(*argv);
+    as_cmd_extend(&as_cmd_recs, &as_cmd_rec_cnt, ASParams, as_array_size(ASParams));
 
     asmfnums_init();
     asminclist_init();
@@ -4466,8 +4446,6 @@ int main(int argc, char **argv)
   MakeDebug = False;
   ExtendErrors = 0;
   DefRelaxedMode = False;
-  DefSupAllowed = False;
-  DefCompMode = False;
   MacroOutput = False;
   MacProOutput = False;
   CodeOutput = True;
@@ -4508,7 +4486,7 @@ int main(int argc, char **argv)
 #if defined(INCDIR)
   CMD_IncludeList(False, INCDIR);
 #endif
-  ProcessCMD(argc, argv, ASParams, ASParamCnt, ParUnprocessed, EnvName, ParamError);
+  as_cmd_process(argc, argv, as_cmd_recs, as_cmd_rec_cnt, ParUnprocessed, EnvName, ParamError);
 
   /* wegen QuietMode dahinter */
 

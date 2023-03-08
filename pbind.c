@@ -29,7 +29,7 @@
 
 static const char *Creator = "BIND/C 1.42";
 
-static CMDProcessed ParUnprocessed;
+static as_cmd_processed_t ParUnprocessed;
 
 static FILE *TargFile;
 static String TargName;
@@ -153,8 +153,7 @@ static void ParamError(Boolean InEnv, char *Arg)
   exit(1);
 }
 
-#define BINDParamCnt (sizeof(BINDParams) / sizeof(*BINDParams))
-static CMDRec BINDParams[] =
+static const as_cmd_rec_t BINDParams[] =
 {
   { "f"        , CMD_FilterList},
   { "q"        , CMD_QuietMode },
@@ -172,7 +171,7 @@ int main(int argc, char **argv)
   endian_init();
 
   stdhandl_init();
-  cmdarg_init(*argv);
+  as_cmdarg_init(*argv);
   toolutils_init(*argv);
   nls_init();
   nlmessages_init("pbind.msg", *argv, MsgId1, MsgId2);
@@ -192,7 +191,7 @@ int main(int argc, char **argv)
     exit(1);
   }
 
-  ProcessCMD(argc, argv, BINDParams, BINDParamCnt, ParUnprocessed, "BINDCMD", ParamError);
+  as_cmd_process(argc, argv, BINDParams, as_array_size(BINDParams), ParUnprocessed, "BINDCMD", ParamError);
 
   if (!QuietMode)
   {

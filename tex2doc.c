@@ -2536,16 +2536,55 @@ static void TeXDocumentStyle(Word Index)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     TeXUsePackage(Word Index)
+ * \brief  parse \usepackage command
+ * ------------------------------------------------------------------------ */
+
 static void TeXUsePackage(Word Index)
 {
-  char Token[TOKLEN];
+  char Token[TOKLEN], Msg[2 * TOKLEN + 1];
+  Boolean read_german_opt = False;
+
   UNUSED(Index);
 
-  assert_token("{");
-  ReadToken(Token);
-  if (!strcmp(Token, "german"))
-    SetLang(True);
-  assert_token("}");
+  while (True)
+  {
+    ReadToken(Token);
+    if (!strcmp(Token, "["))
+    {
+      do
+      {
+        ReadToken(Token);
+        if (!strcmp(Token, "german"))
+          read_german_opt = True;
+      }
+      while (strcmp(Token, "]"));
+    }
+    else if (!strcmp(Token, "{"))
+    {
+      ReadToken(Token);
+      if (!as_strcasecmp(Token, "german"))
+        SetLang(True);
+      else if (!as_strcasecmp(Token, "babel"))
+        SetLang(read_german_opt);
+      else if (!as_strcasecmp(Token, "makeidx"));
+      else if (!as_strcasecmp(Token, "hyperref"));
+      else if (!as_strcasecmp(Token, "longtable"));
+      else
+      {
+        as_snprintf(Msg, sizeof(Msg), "unknown package '%s'", Token);
+        error(Msg);
+      }
+      assert_token("}");
+      break;
+    }
+    else
+    {
+      as_snprintf(Msg, sizeof(Msg), "expecting [ or { after \\usepackage");
+      error(Msg);
+    }
+  }
 }
 
 /*--------------------------------------------------------------------------*/

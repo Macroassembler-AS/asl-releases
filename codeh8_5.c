@@ -2098,6 +2098,7 @@ static void SwitchTo_H8_5(void)
   IntConstModeIBMNoTerm = True;
   InitFields();
   onoff_maxmode_add();
+  onoff_compmode_add();
   AddMoto16PseudoONOFF(False);
 
   pASSUMERecs = ASSUMEH8_5s;

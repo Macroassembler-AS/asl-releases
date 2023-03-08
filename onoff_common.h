@@ -13,8 +13,6 @@
 #define FPUAvailName     "HASFPU"     /* FPU-Befehle erlaubt */
 #define PMMUAvailName    "HASPMMU"    /* PMMU-Befehle erlaubt */
 #define FullPMMUName     "FULLPMMU"
-#define SupAllowedCmdName "SUPMODE"   /* Privileged instructions allowed */
-#define SupAllowedSymName "INSUPMODE"
 #define MaxModeSymName    "INMAXMODE"  /* CPU in maximum mode */
 #define MaxModeCmdName    "MAXMODE"
 #define SrcModeCmdName    "SRCMODE"
@@ -27,10 +25,6 @@
 #define DSPSymName        "HASDSP"
 #define CustomAvailCmdName "CUSTOM"
 #define CustomAvailSymName "CUSTOM"
-#define PackingCmdName    "PACKING"
-#define PackingSymName    "PACKING"
-#define BigEndianCmdName  "BIGENDIAN"
-#define BigEndianSymName  "BIGENDIAN"  /* Data storage MSB first */
 #define BranchExtCmdName  "BRANCHEXT"
 #define BranchExtSymName  "BRANCHEXT"
 
@@ -38,6 +32,7 @@ extern Boolean FPUAvail,
                PMMUAvail,
                SupAllowed,
                MaxMode,
+               CompMode,
                TargetBigEndian,
                DoPadding,
                Packing;
@@ -71,6 +66,7 @@ extern void onoff_fpu_add(void);
 extern void onoff_pmmu_add(void);
 extern void onoff_supmode_add(void);
 extern void onoff_maxmode_add(void);
+extern void onoff_compmode_add(void);
 extern void onoff_bigendian_add(void);
 extern void onoff_packing_add(Boolean def_value);
 

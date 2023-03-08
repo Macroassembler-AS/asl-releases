@@ -1439,7 +1439,7 @@ static void DecodeLogic(Word Code)
     DecodeAdr(&ArgStr[2], MModReg);
     if (AdrMode != ModNone)
     {
-      if ((OpSize == eSymbolSizeUnknown) || ChkCPU32(ErrNum_AddrModeNotSupported))
+      if ((OpSize <= eSymbolSize8Bit) || ChkCPU32(ErrNum_AddrModeNotSupported))
       {
         Byte HReg = AdrPart;
         DecodeAdr(&ArgStr[1], MModImm | MModReg);
