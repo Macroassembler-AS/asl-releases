@@ -1,3 +1,7 @@
+2023-03-27 [1.42 Bld 240]
+
+- Addition    : add Konami 052001 as target
+
 2023-03-08 [1.42 Bld 239]
 
 - Addition    : allow to set BIGENDIAN flag's default value by

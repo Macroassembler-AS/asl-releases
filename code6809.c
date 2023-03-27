@@ -55,19 +55,33 @@ typedef struct
 {
   char *Name;
   Word Code;
-  Byte Op16;
+  tSymbolSize OpSize;
   Boolean MayImm;
   CPUVar MinCPU;
 } ALUOrder;
 
-enum
+typedef enum
 {
-  ModNone = -1,
-  ModImm = 1,
-  ModDir = 2,
-  ModInd = 3,
-  ModExt = 4
-};
+  e_adr_mode_none = -1,
+  e_adr_mode_imm = 1,
+  e_adr_mode_dir = 2,
+  e_adr_mode_ind = 3,
+  e_adr_mode_ext = 4
+} adr_mode_t;
+
+#define adr_mode_mask_imm (1 << e_adr_mode_imm)
+#define adr_mode_mask_dir (1 << e_adr_mode_dir)
+#define adr_mode_mask_ind (1 << e_adr_mode_ind)
+#define adr_mode_mask_ext (1 << e_adr_mode_ext)
+#define adr_mode_mask_no_imm (adr_mode_mask_dir | adr_mode_mask_ind | adr_mode_mask_ext)
+#define adr_mode_mask_all (adr_mode_mask_imm | adr_mode_mask_no_imm)
+
+typedef struct
+{
+  adr_mode_t mode;
+  int cnt;
+  Byte vals[5];
+} adr_vals_t;
 
 #define FixedOrderCnt 73
 #define RelOrderCnt 19
@@ -91,10 +105,6 @@ static Byte StackRegMasks[StackRegCnt] =
 
 static const char FlagChars[] = "CVZNIHFE";
 
-static ShortInt AdrMode;
-static Byte AdrVals[5];
-static tSymbolSize OpSize;
-static Boolean ExtFlag;
 static LongInt DPRValue;
 
 static BaseOrder  *FixedOrders;
@@ -104,7 +114,6 @@ static BaseOrder *RMWOrders;
 static FlagOrder *FlagOrders;
 static BaseOrder *LEAOrders;
 static BaseOrder *ImmOrders;
-static BaseOrder *StackOrders;
 
 static CPUVar CPU6809, CPU6309;
 
@@ -169,7 +178,15 @@ static Boolean IsZeroOrEmpty(const tStrComp *pArg)
   return OK && !Value;
 }
 
-static void DecodeAdr(int ArgStartIdx, int ArgEndIdx, unsigned OpcodeLen)
+static void reset_adr_vals(adr_vals_t *p_vals)
+{
+  p_vals->mode = e_adr_mode_none;
+  p_vals->cnt = 0;
+}
+
+static adr_mode_t DecodeAdr(int ArgStartIdx, int ArgEndIdx,
+                            unsigned OpcodeLen, tSymbolSize op_size,
+                            unsigned mode_mask, adr_vals_t *p_vals)
 {
   tStrComp *pStartArg, *pEndArg, IndirComps[2];
   String temp;
@@ -181,9 +198,9 @@ static void DecodeAdr(int ArgStartIdx, int ArgEndIdx, unsigned OpcodeLen)
   unsigned Offset;
   Integer AdrInt;
   int AdrArgCnt = ArgEndIdx - ArgStartIdx + 1;
+  const Boolean allow_6309 = (MomCPU >= CPU6309);
 
-  AdrMode = ModNone;
-  AdrCnt = 0;
+  reset_adr_vals(p_vals);
   pStartArg = &ArgStr[ArgStartIdx];
   pEndArg = &ArgStr[ArgEndIdx];
 
@@ -191,40 +208,40 @@ static void DecodeAdr(int ArgStartIdx, int ArgEndIdx, unsigned OpcodeLen)
 
   if ((*pStartArg->str.p_str == '#') && (AdrArgCnt == 1))
   {
-    switch (OpSize)
+    switch (op_size)
     {
       case eSymbolSize32Bit:
         AdrLong = EvalStrIntExpressionOffs(pStartArg, 1, Int32, &OK);
         if (OK)
         {
-          AdrVals[0] = Lo(AdrLong >> 24);
-          AdrVals[1] = Lo(AdrLong >> 16);
-          AdrVals[2] = Lo(AdrLong >>  8);
-          AdrVals[3] = Lo(AdrLong);
-          AdrCnt = 4;
+          p_vals->vals[0] = Lo(AdrLong >> 24);
+          p_vals->vals[1] = Lo(AdrLong >> 16);
+          p_vals->vals[2] = Lo(AdrLong >>  8);
+          p_vals->vals[3] = Lo(AdrLong);
+          p_vals->cnt = 4;
         }
         break;
       case eSymbolSize16Bit:
         AdrWord = EvalStrIntExpressionOffs(pStartArg, 1, Int16, &OK);
         if (OK)
         {
-          AdrVals[0] = Hi(AdrWord);
-          AdrVals[1] = Lo(AdrWord);
-          AdrCnt = 2;
+          p_vals->vals[0] = Hi(AdrWord);
+          p_vals->vals[1] = Lo(AdrWord);
+          p_vals->cnt = 2;
         }
         break;
       case eSymbolSize8Bit:
-        AdrVals[0] = EvalStrIntExpressionOffs(pStartArg, 1, Int8, &OK);
+        p_vals->vals[0] = EvalStrIntExpressionOffs(pStartArg, 1, Int8, &OK);
         if (OK)
-          AdrCnt = 1;
+          p_vals->cnt = 1;
         break;
       default:
         OK = False;
         break;
     }
     if (OK)
-      AdrMode = ModImm;
-    return;
+      p_vals->mode = e_adr_mode_imm;
+    goto chk_mode;
   }
 
   /* indirekter Ausdruck ? */
@@ -264,11 +281,11 @@ static void DecodeAdr(int ArgStartIdx, int ArgEndIdx, unsigned OpcodeLen)
     if ((AdrArgCnt == 2) && !IsZeroOrEmpty(pStartArg)) WrError(ErrNum_InvAddrMode);
     else
     {
-      AdrCnt = 1;
-      AdrVals[0] = 0x82 + (EReg << 5) + (Ord(IndFlag) << 4);
-      AdrMode = ModInd;
+      p_vals->cnt = 1;
+      p_vals->vals[0] = 0x82 + (EReg << 5) + (Ord(IndFlag) << 4);
+      p_vals->mode = e_adr_mode_ind;
     }
-    return;
+    goto chk_mode;
   }
 
   if ((AdrArgCnt >= 1) && (AdrArgCnt <= 2) && (strlen(pEndArg->str.p_str) == 3) && (!strncmp(pEndArg->str.p_str, "--", 2)) && (CodeReg(pEndArg->str.p_str + 2, &EReg)))
@@ -276,23 +293,24 @@ static void DecodeAdr(int ArgStartIdx, int ArgEndIdx, unsigned OpcodeLen)
     if ((AdrArgCnt == 2) && !IsZeroOrEmpty(pStartArg)) WrError(ErrNum_InvAddrMode);
     else
     {
-      AdrCnt = 1;
-      AdrVals[0] = 0x83 + (EReg << 5) + (Ord(IndFlag) << 4);
-      AdrMode = ModInd;
+      p_vals->cnt = 1;
+      p_vals->vals[0] = 0x83 + (EReg << 5) + (Ord(IndFlag) << 4);
+      p_vals->mode = e_adr_mode_ind;
     }
-    return;
+    goto chk_mode;
   }
 
   if ((AdrArgCnt >= 1) && (AdrArgCnt <= 2) && (!as_strcasecmp(pEndArg->str.p_str, "--W")))
   {
     if ((AdrArgCnt == 2) && !IsZeroOrEmpty(pStartArg)) WrError(ErrNum_InvAddrMode);
-    else if (ChkMinCPUExt(CPU6309, ErrNum_AddrModeNotSupported))
+    else if (!allow_6309) WrError(ErrNum_AddrModeNotSupported);
+    else
     {
-      AdrCnt = 1;
-      AdrVals[0] = 0xef + Ord(IndFlag);
-      AdrMode = ModInd;
+      p_vals->cnt = 1;
+      p_vals->vals[0] = 0xef + Ord(IndFlag);
+      p_vals->mode = e_adr_mode_ind;
     }
-    return;
+    goto chk_mode;
   }
 
   /* Postinkrement ? */
@@ -306,11 +324,11 @@ static void DecodeAdr(int ArgStartIdx, int ArgEndIdx, unsigned OpcodeLen)
       if ((AdrArgCnt == 2) && !IsZeroOrEmpty(pStartArg)) WrError(ErrNum_InvAddrMode);
       else
       {
-        AdrCnt = 1;
-        AdrVals[0] = 0x80 + (EReg << 5) + (Ord(IndFlag) << 4);
-        AdrMode = ModInd;
+        p_vals->cnt = 1;
+        p_vals->vals[0] = 0x80 + (EReg << 5) + (Ord(IndFlag) << 4);
+        p_vals->mode = e_adr_mode_ind;
       }
-      return;
+      goto chk_mode;
     }
   }
 
@@ -323,85 +341,86 @@ static void DecodeAdr(int ArgStartIdx, int ArgEndIdx, unsigned OpcodeLen)
       if ((AdrArgCnt == 2) && !IsZeroOrEmpty(pStartArg)) WrError(ErrNum_InvAddrMode);
       else
       {
-        AdrCnt = 1;
-        AdrVals[0] = 0x81 + (EReg << 5) + (Ord(IndFlag) << 4);
-        AdrMode = ModInd;
+        p_vals->cnt = 1;
+        p_vals->vals[0] = 0x81 + (EReg << 5) + (Ord(IndFlag) << 4);
+        p_vals->mode = e_adr_mode_ind;
       }
-      return;
+      goto chk_mode;
     }
   }
 
   if ((AdrArgCnt >= 1) && (AdrArgCnt <= 2) && (!as_strcasecmp(pEndArg->str.p_str, "W++")))
   {
     if ((AdrArgCnt == 2) && !IsZeroOrEmpty(pStartArg)) WrError(ErrNum_InvAddrMode);
-    else if (ChkMinCPUExt(CPU6309, ErrNum_AddrModeNotSupported))
+    else if (!allow_6309) WrError(ErrNum_AddrModeNotSupported);
+    else
     {
-      AdrCnt = 1;
-      AdrVals[0] = 0xcf + Ord(IndFlag);
-      AdrMode = ModInd;
+      p_vals->cnt = 1;
+      p_vals->vals[0] = 0xcf + Ord(IndFlag);
+      p_vals->mode = e_adr_mode_ind;
     }
-    return;
+    goto chk_mode;
   }
 
   /* 16-Bit-Register (mit Index) ? */
 
   if ((AdrArgCnt <= 2) && (AdrArgCnt >= 1) && (CodeReg(pEndArg->str.p_str, &EReg)))
   {
-    AdrVals[0] = (EReg << 5) + (Ord(IndFlag) << 4);
+    p_vals->vals[0] = (EReg << 5) + (Ord(IndFlag) << 4);
 
     /* nur 16-Bit-Register */
 
     if (AdrArgCnt == 1)
     {
-      AdrCnt = 1;
-      AdrVals[0] += 0x84;
-      AdrMode = ModInd;
-      return;
+      p_vals->cnt = 1;
+      p_vals->vals[0] += 0x84;
+      p_vals->mode = e_adr_mode_ind;
+      goto chk_mode;
     }
 
     /* mit Index */
 
     if (!as_strcasecmp(pStartArg->str.p_str, "A"))
     {
-      AdrCnt = 1;
-      AdrVals[0] += 0x86;
-      AdrMode = ModInd;
-      return;
+      p_vals->cnt = 1;
+      p_vals->vals[0] += 0x86;
+      p_vals->mode = e_adr_mode_ind;
+      goto chk_mode;
     }
     if (!as_strcasecmp(pStartArg->str.p_str, "B"))
     {
-      AdrCnt = 1;
-      AdrVals[0] += 0x85;
-      AdrMode = ModInd;
-      return;
+      p_vals->cnt = 1;
+      p_vals->vals[0] += 0x85;
+      p_vals->mode = e_adr_mode_ind;
+      goto chk_mode;
     }
     if (!as_strcasecmp(pStartArg->str.p_str, "D"))
     {
-      AdrCnt = 1;
-      AdrVals[0] += 0x8b;
-      AdrMode = ModInd;
-      return;
+      p_vals->cnt = 1;
+      p_vals->vals[0] += 0x8b;
+      p_vals->mode = e_adr_mode_ind;
+      goto chk_mode;
     }
-    if ((!as_strcasecmp(pStartArg->str.p_str, "E")) && (MomCPU >= CPU6309))
+    if ((!as_strcasecmp(pStartArg->str.p_str, "E")) && allow_6309)
     {
-      AdrCnt = 1;
-      AdrVals[0] += 0x87;
-      AdrMode = ModInd;
-      return;
+      p_vals->cnt = 1;
+      p_vals->vals[0] += 0x87;
+      p_vals->mode = e_adr_mode_ind;
+      goto chk_mode;
     }
-    if ((!as_strcasecmp(pStartArg->str.p_str, "F")) && (MomCPU >= CPU6309))
+    if ((!as_strcasecmp(pStartArg->str.p_str, "F")) && allow_6309)
     {
-      AdrCnt = 1;
-      AdrVals[0] += 0x8a;
-      AdrMode = ModInd;
-      return;
+      p_vals->cnt = 1;
+      p_vals->vals[0] += 0x8a;
+      p_vals->mode = e_adr_mode_ind;
+      goto chk_mode;
     }
-    if ((!as_strcasecmp(pStartArg->str.p_str, "W")) && (MomCPU >= CPU6309))
+    if ((!as_strcasecmp(pStartArg->str.p_str, "W")) && allow_6309)
     {
-      AdrCnt = 1;
-      AdrVals[0] += 0x8e;
-      AdrMode = ModInd;
-      return;
+      p_vals->cnt = 1;
+      p_vals->vals[0] += 0x8e;
+      p_vals->mode = e_adr_mode_ind;
+      goto chk_mode;
     }
 
     /* Displacement auswerten */
@@ -418,16 +437,16 @@ static void DecodeAdr(int ArgStartIdx, int ArgEndIdx, unsigned OpcodeLen)
     else
       AdrInt = EvalStrIntExpressionOffs(pStartArg, Offset, Int16, &OK);
     if (!OK)
-      return;
+      goto chk_mode;
 
     /* Displacement 0 ? */
 
     if ((ZeroMode == 0) && (AdrInt == 0))
     {
-      AdrCnt = 1;
-      AdrVals[0] += 0x84;
-      AdrMode = ModInd;
-      return;
+      p_vals->cnt = 1;
+      p_vals->vals[0] += 0x84;
+      p_vals->mode = e_adr_mode_ind;
+      goto chk_mode;
     }
 
     /* 5-Bit-Displacement */
@@ -438,11 +457,11 @@ static void DecodeAdr(int ArgStartIdx, int ArgEndIdx, unsigned OpcodeLen)
       else if (IndFlag) WrError(ErrNum_InvAddrMode);
       else
       {
-        AdrMode = ModInd;
-        AdrCnt = 1;
-        AdrVals[0] += AdrInt & 0x1f;
+        p_vals->mode = e_adr_mode_ind;
+        p_vals->cnt = 1;
+        p_vals->vals[0] += AdrInt & 0x1f;
       }
-      return;
+      goto chk_mode;
     }
 
     /* 8-Bit-Displacement */
@@ -452,38 +471,38 @@ static void DecodeAdr(int ArgStartIdx, int ArgEndIdx, unsigned OpcodeLen)
       if (!MayShort(AdrInt)) WrError(ErrNum_NoShortAddr);
       else
       {
-        AdrMode = ModInd;
-        AdrCnt = 2;
-        AdrVals[0] += 0x88;
-        AdrVals[1] = Lo(AdrInt);
+        p_vals->mode = e_adr_mode_ind;
+        p_vals->cnt = 2;
+        p_vals->vals[0] += 0x88;
+        p_vals->vals[1] = Lo(AdrInt);
       }
-      return;
+      goto chk_mode;
     }
 
     /* 16-Bit-Displacement */
 
     else
     {
-      AdrMode = ModInd;
-      AdrCnt = 3;
-      AdrVals[0] += 0x89;
-      AdrVals[1] = Hi(AdrInt);
-      AdrVals[2] = Lo(AdrInt);
-      return;
+      p_vals->mode = e_adr_mode_ind;
+      p_vals->cnt = 3;
+      p_vals->vals[0] += 0x89;
+      p_vals->vals[1] = Hi(AdrInt);
+      p_vals->vals[2] = Lo(AdrInt);
+      goto chk_mode;
     }
   }
 
-  if ((AdrArgCnt <= 2) && (AdrArgCnt >= 1) && (MomCPU >= CPU6309) && (!as_strcasecmp(pEndArg->str.p_str, "W")))
+  if ((AdrArgCnt <= 2) && (AdrArgCnt >= 1) && allow_6309 && (!as_strcasecmp(pEndArg->str.p_str, "W")))
   {
-    AdrVals[0] = 0x8f + Ord(IndFlag);
+    p_vals->vals[0] = 0x8f + Ord(IndFlag);
 
     /* nur W-Register */
 
     if (AdrArgCnt == 1)
     {
-      AdrCnt = 1;
-      AdrMode = ModInd;
-      return;
+      p_vals->cnt = 1;
+      p_vals->mode = e_adr_mode_ind;
+      goto chk_mode;
     }
 
     /* Displacement auswerten */
@@ -495,21 +514,21 @@ static void DecodeAdr(int ArgStartIdx, int ArgEndIdx, unsigned OpcodeLen)
 
     if ((ZeroMode == 0) && (AdrInt == 0))
     {
-      AdrCnt = 1;
-      AdrMode = ModInd;
-      return;
+      p_vals->cnt = 1;
+      p_vals->mode = e_adr_mode_ind;
+      goto chk_mode;
     }
 
     /* 16-Bit-Displacement */
 
     else
     {
-      AdrMode = ModInd;
-      AdrCnt = 3;
-      AdrVals[0] += 0x20;
-      AdrVals[1] = Hi(AdrInt);
-      AdrVals[2] = Lo(AdrInt);
-      return;
+      p_vals->mode = e_adr_mode_ind;
+      p_vals->cnt = 3;
+      p_vals->vals[0] += 0x20;
+      p_vals->vals[1] = Hi(AdrInt);
+      p_vals->vals[2] = Lo(AdrInt);
+      goto chk_mode;
     }
   }
 
@@ -517,12 +536,12 @@ static void DecodeAdr(int ArgStartIdx, int ArgEndIdx, unsigned OpcodeLen)
 
   if ((AdrArgCnt == 2) && ((!as_strcasecmp(pEndArg->str.p_str, "PCR")) || (!as_strcasecmp(pEndArg->str.p_str, "PC"))))
   {
-    AdrVals[0] = Ord(IndFlag) << 4;
+    p_vals->vals[0] = Ord(IndFlag) << 4;
     Offset = ChkZero(pStartArg->str.p_str, &ZeroMode);
     AdrInt = EvalStrIntExpressionOffs(pStartArg, Offset, Int16, &OK);
     if (OK)
     {
-      AdrInt -= EProgCounter() + 2 + OpcodeLen + Ord(ExtFlag);
+      AdrInt -= EProgCounter() + 2 + OpcodeLen;
 
       if (ZeroMode == 3) WrError(ErrNum_InvAddrMode);
 
@@ -531,24 +550,24 @@ static void DecodeAdr(int ArgStartIdx, int ArgEndIdx, unsigned OpcodeLen)
         if (!MayShort(AdrInt)) WrError(ErrNum_OverRange);
         else
         {
-          AdrCnt = 2;
-          AdrVals[0] += 0x8c;
-          AdrVals[1] = Lo(AdrInt);
-          AdrMode = ModInd;
+          p_vals->cnt = 2;
+          p_vals->vals[0] += 0x8c;
+          p_vals->vals[1] = Lo(AdrInt);
+          p_vals->mode = e_adr_mode_ind;
         }
       }
 
       else
       {
         AdrInt--;
-        AdrCnt = 3;
-        AdrVals[0] += 0x8d;
-        AdrVals[1] = Hi(AdrInt);
-        AdrVals[2] = Lo(AdrInt);
-        AdrMode = ModInd;
+        p_vals->cnt = 3;
+        p_vals->vals[0] += 0x8d;
+        p_vals->vals[1] = Hi(AdrInt);
+        p_vals->vals[2] = Lo(AdrInt);
+        p_vals->mode = e_adr_mode_ind;
       }
     }
-    return;
+    goto chk_mode;
   }
 
   if (AdrArgCnt == 1)
@@ -570,9 +589,9 @@ static void DecodeAdr(int ArgStartIdx, int ArgEndIdx, unsigned OpcodeLen)
         else if (Hi(AdrInt) != DPRValue) WrError(ErrNum_NoShortAddr);
         else
         {
-          AdrCnt = 1;
-          AdrMode = ModDir;
-          AdrVals[0] = Lo(AdrInt);
+          p_vals->cnt = 1;
+          p_vals->mode = e_adr_mode_dir;
+          p_vals->vals[0] = Lo(AdrInt);
         }
       }
 
@@ -580,28 +599,37 @@ static void DecodeAdr(int ArgStartIdx, int ArgEndIdx, unsigned OpcodeLen)
       {
         if (IndFlag)
         {
-          AdrMode = ModInd;
-          AdrCnt = 3; AdrVals[0] = 0x9f;
-          AdrVals[1] = Hi(AdrInt);
-          AdrVals[2] = Lo(AdrInt);
+          p_vals->mode = e_adr_mode_ind;
+          p_vals->cnt = 3;
+          p_vals->vals[0] = 0x9f;
+          p_vals->vals[1] = Hi(AdrInt);
+          p_vals->vals[2] = Lo(AdrInt);
         }
         else
         {
-          AdrMode = ModExt;
-          AdrCnt = 2;
-          AdrVals[0] = Hi(AdrInt);
-          AdrVals[1] = Lo(AdrInt);
+          p_vals->mode = e_adr_mode_ext;
+          p_vals->cnt = 2;
+          p_vals->vals[0] = Hi(AdrInt);
+          p_vals->vals[1] = Lo(AdrInt);
         }
       }
     }
-    return;
+    goto chk_mode;
   }
 
-  if (AdrMode == ModNone)
+  if (p_vals->mode == e_adr_mode_none)
     WrError(ErrNum_InvAddrMode);
+
+chk_mode:
+  if ((p_vals->mode != e_adr_mode_none) && !((mode_mask >> p_vals->mode) & 1))
+  {
+    WrError(ErrNum_InvAddrMode);
+    reset_adr_vals(p_vals);
+  }
+  return p_vals->mode;
 }
 
-static Boolean CodeCPUReg(char *Asc, Byte *Erg)
+static Boolean CodeCPUReg(const char *Asc, Byte *Erg)
 {
 #define RegCnt (sizeof(RegNames) / sizeof(*RegNames))
   static const char RegNames[][4] =
@@ -669,6 +697,12 @@ static Boolean SplitBit(tStrComp *pArg, int *Erg)
     return False;
   *p = '\0';
   return True;
+}
+
+static void append_adr_vals(const adr_vals_t *p_vals)
+{
+  memcpy(&BAsmCode[CodeLen], p_vals->vals, p_vals->cnt);
+  CodeLen += p_vals->cnt;
 }
 
 /*-------------------------------------------------------------------------*/
@@ -780,19 +814,14 @@ static void DecodeALU(Word Index)
   if (ChkArgCnt(1, 2)
    && ChkMinCPU(pOrder->MinCPU))
   {
-    OpSize = pOrder->Op16 ? eSymbolSize16Bit : eSymbolSize8Bit;
-    DecodeAdr(1, ArgCnt, 1 + !!Hi(pOrder->Code));
-    if (AdrMode != ModNone)
+    adr_vals_t vals;
+
+    if (DecodeAdr(1, ArgCnt, 1 + !!Hi(pOrder->Code), pOrder->OpSize, pOrder->MayImm ? adr_mode_mask_all : adr_mode_mask_no_imm, &vals) != e_adr_mode_none)
     {
-      if ((!pOrder->MayImm) && (AdrMode == ModImm)) WrError(ErrNum_InvAddrMode);
-      else
-      {
-        if (Hi(pOrder->Code))
-          BAsmCode[CodeLen++] = Hi(pOrder->Code);
-        BAsmCode[CodeLen++] = Lo(pOrder->Code) + ((AdrMode - 1) << 4);
-        memcpy(BAsmCode + CodeLen + Ord(ExtFlag), AdrVals, AdrCnt);
-        CodeLen += AdrCnt;
-      }
+      if (Hi(pOrder->Code))
+        BAsmCode[CodeLen++] = Hi(pOrder->Code);
+      BAsmCode[CodeLen++] = Lo(pOrder->Code) + ((vals.mode - 1) << 4);
+      append_adr_vals(&vals);
     }
   }
 }
@@ -804,20 +833,18 @@ static void DecodeLDQ(Word Index)
   if (ChkArgCnt(1, 2)
    && ChkMinCPU(CPU6309))
   {
-    OpSize = eSymbolSize32Bit;
-    DecodeAdr(1, ArgCnt, 2);
-    if (AdrMode == ModImm)
+    adr_vals_t vals;
+
+    if (DecodeAdr(1, ArgCnt, 2, eSymbolSize32Bit, adr_mode_mask_all, &vals) == e_adr_mode_imm)
     {
-      BAsmCode[0] = 0xcd;
-      memcpy(BAsmCode + 1, AdrVals, AdrCnt);
-      CodeLen = 1 + AdrCnt;
+      BAsmCode[CodeLen++] = 0xcd;
+      append_adr_vals(&vals);
     }
     else
     {
-      BAsmCode[0] = 0x10;
-      BAsmCode[1] = 0xcc + ((AdrMode - 1) << 4);
-      CodeLen = 2 + AdrCnt;
-      memcpy(BAsmCode + 2, AdrVals, AdrCnt);
+      BAsmCode[CodeLen++] = 0x10;
+      BAsmCode[CodeLen++] = 0xcc + ((vals.mode - 1) << 4);
+      append_adr_vals(&vals);
     }
   }
 }
@@ -831,27 +858,24 @@ static void DecodeRMW(Word Index)
   if (ChkArgCnt(1, 2)
    && ChkMinCPU(pOrder->MinCPU))
   {
-    DecodeAdr(1, ArgCnt, 1);
-    if (AdrMode != ModNone)
+    adr_vals_t vals;
+
+    switch (DecodeAdr(1, ArgCnt, 1, eSymbolSizeUnknown, adr_mode_mask_no_imm, &vals))
     {
-      if (AdrMode == ModImm) WrError(ErrNum_InvAddrMode);
-      else
-      {
-        CodeLen = 1 + AdrCnt;
-        switch (AdrMode)
-        {
-          case ModDir:
-            BAsmCode[0] = pOrder->Code;
-            break;
-          case ModInd:
-            BAsmCode[0] = pOrder->Code + 0x60;
-            break;
-          case ModExt:
-            BAsmCode[0] = pOrder->Code + 0x70;
-            break;
-        }
-        memcpy(BAsmCode + 1, AdrVals, AdrCnt);
-      }
+      case e_adr_mode_dir:
+        BAsmCode[CodeLen++] = pOrder->Code;
+        goto append;
+      case e_adr_mode_ind:
+        BAsmCode[CodeLen++] = pOrder->Code + 0x60;
+        goto append;
+      case e_adr_mode_ext:
+        BAsmCode[CodeLen++] = pOrder->Code + 0x70;
+        goto append;
+      append:
+        append_adr_vals(&vals);
+        break;
+      default:
+        return;
     }
   }
 }
@@ -922,24 +946,25 @@ static void DecodeImm(Word Index)
     BAsmCode[1] = EvalStrIntExpressionOffs(&ArgStr[1], 1, Int8, &OK);
     if (OK)
     {
-      DecodeAdr(2, ArgCnt, 2);
-      if (AdrMode == ModImm) WrError(ErrNum_InvAddrMode);
-      else
+      adr_vals_t vals;
+
+      switch (DecodeAdr(2, ArgCnt, 2, eSymbolSizeUnknown, adr_mode_mask_no_imm, &vals))
       {
-        switch (AdrMode)
-        {
-          case ModDir:
-            BAsmCode[0] = pOrder->Code;
-            break;
-          case ModExt:
-            BAsmCode[0] = pOrder->Code + 0x70;
-            break;
-          case ModInd:
-            BAsmCode[0] = pOrder->Code + 0x60;
-            break;
-        }
-        memcpy(BAsmCode + 2, AdrVals, AdrCnt);
-        CodeLen = 2 + AdrCnt;
+        case e_adr_mode_dir:
+          BAsmCode[0] = pOrder->Code;
+          goto append;
+        case e_adr_mode_ext:
+          BAsmCode[0] = pOrder->Code + 0x70;
+          goto append;
+        case e_adr_mode_ind:
+          BAsmCode[0] = pOrder->Code + 0x60;
+          goto append;
+        append:
+          CodeLen = 2;
+          append_adr_vals(&vals);
+          break;
+        default:
+          return;
       }
     }
   }
@@ -957,9 +982,9 @@ static void DecodeBit(Word Code)
     else if ((BAsmCode[2] < 8) || (BAsmCode[2] > 11)) WrError(ErrNum_InvRegName);
     else
     {
-      DecodeAdr(2, 2, 3);
-      if (AdrMode != ModDir) WrError(ErrNum_InvAddrMode);
-      else
+      adr_vals_t vals;
+
+      if (DecodeAdr(2, 2, 3, eSymbolSizeUnknown, adr_mode_mask_dir, &vals) != e_adr_mode_none)
       {
         BAsmCode[2] -= 7;
         if (BAsmCode[2] == 3)
@@ -967,7 +992,7 @@ static void DecodeBit(Word Code)
         BAsmCode[0] = 0x11;
         BAsmCode[1] = 0x30 + Code;
         BAsmCode[2] = (BAsmCode[2] << 6) + (z3 << 3) + z2;
-        BAsmCode[3] = AdrVals[0];
+        BAsmCode[3] = vals.vals[0];
         CodeLen = 4;
       }
     }
@@ -976,7 +1001,7 @@ static void DecodeBit(Word Code)
 
 /* Register-Register-Operationen */
 
-static void DecodeTFR_TFM_EXG(Word Code)
+void DecodeTFR_TFM_EXG_6809(Word code, Boolean allow_inc_dec, reg_decoder_6809_t reg_decoder, Boolean reverse)
 {
   if (ChkArgCnt(2, 2))
   {
@@ -986,14 +1011,17 @@ static void DecodeTFR_TFM_EXG(Word Code)
     SplitIncDec(ArgStr[2].str.p_str, &Inc2);
     if ((Inc1 != 0) || (Inc2 != 0))
     {
-      if (Memo("EXG")) WrError(ErrNum_InvAddrMode);
-      else if (!CodeCPUReg(ArgStr[1].str.p_str, BAsmCode + 3) || (BAsmCode[3] > 4)) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
-      else if (!CodeCPUReg(ArgStr[2].str.p_str, BAsmCode + 2) || (BAsmCode[2] > 4)) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[2]);
+      if (!allow_inc_dec) WrError(ErrNum_InvAddrMode);
+      else if (!reg_decoder(ArgStr[1].str.p_str, BAsmCode + 3) || (BAsmCode[3] > 4)) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[1]);
+      else if (!reg_decoder(ArgStr[2].str.p_str, BAsmCode + 2) || (BAsmCode[2] > 4)) WrStrErrorPos(ErrNum_InvRegName, &ArgStr[2]);
       else
       {
         BAsmCode[0] = 0x11;
         BAsmCode[1] = 0;
-        BAsmCode[2] += BAsmCode[3] << 4;
+        if (reverse)
+          BAsmCode[2] = (BAsmCode[2] << 4) | (BAsmCode[3] & 0x0f);
+        else
+          BAsmCode[2] |= BAsmCode[3] << 4;
         if ((Inc1 == 1) && (Inc2 == 1))
           BAsmCode[1] = 0x38;
         else if ((Inc1 == -1) && (Inc2 == -1))
@@ -1008,17 +1036,30 @@ static void DecodeTFR_TFM_EXG(Word Code)
       }
     }
     else if (Memo("TFM")) WrError(ErrNum_InvAddrMode);
-    else if (!CodeCPUReg(ArgStr[1].str.p_str, BAsmCode + 2)) WrError(ErrNum_InvRegName);
-    else if (!CodeCPUReg(ArgStr[2].str.p_str, BAsmCode + 1)) WrError(ErrNum_InvRegName);
+    else if (!reg_decoder(ArgStr[1].str.p_str, BAsmCode + 2)) WrError(ErrNum_InvRegName);
+    else if (!reg_decoder(ArgStr[2].str.p_str, BAsmCode + 1)) WrError(ErrNum_InvRegName);
     else if ((BAsmCode[1] != 13) && (BAsmCode[2] != 13) /* Z Register compatible to all other registers */
           && (((BAsmCode[1] ^ BAsmCode[2]) & 0x08) != 0)) WrError(ErrNum_ConfOpSizes);
     else
     {
       CodeLen = 2;
-      BAsmCode[0] = Code;
-      BAsmCode[1] += BAsmCode[2] << 4;
+      BAsmCode[0] = code;
+      if (reverse)
+        BAsmCode[1] = (BAsmCode[1] << 4) | (BAsmCode[2] & 0x0f);
+      else
+        BAsmCode[1] |= BAsmCode[2] << 4;
     }
   }
+}
+
+static void DecodeTFR_TFM(Word code)
+{
+  DecodeTFR_TFM_EXG_6809(code, MomCPU == CPU6309, CodeCPUReg, False);
+}
+
+static void DecodeEXG(Word code)
+{
+  DecodeTFR_TFM_EXG_6809(code, False, CodeCPUReg, False);
 }
 
 static void DecodeALU2(Word Code)
@@ -1045,27 +1086,23 @@ static void DecodeLEA(Word Index)
 
   if (ChkArgCnt(1, 2))
   {
-    DecodeAdr(1, ArgCnt, 1);
-    if (AdrMode != ModNone)
+    adr_vals_t vals;
+
+    if (DecodeAdr(1, ArgCnt, 1, eSymbolSizeUnknown, adr_mode_mask_ind, &vals) != e_adr_mode_none)
     {
-      if (AdrMode != ModInd) WrError(ErrNum_InvAddrMode);
-      else
-      {
-        CodeLen = 1 + AdrCnt;
-        BAsmCode[0] = pOrder->Code;
-        memcpy(BAsmCode + 1, AdrVals, AdrCnt);
-      }
+      BAsmCode[CodeLen++] = pOrder->Code;
+      append_adr_vals(&vals);
     }
   }
 }
 
 /* Push/Pull */
 
-static void DecodeStack(Word Index)
+void DecodeStack_6809(Word code)
 {
-  const BaseOrder *pOrder = StackOrders + Index;
   Boolean OK = True, Extent = False;
   int z2, z3;
+  Boolean has_w = !!Hi(code);
 
   BAsmCode[1] = 0;
 
@@ -1077,7 +1114,7 @@ static void DecodeStack(Word Index)
     {
       if (!as_strcasecmp(ArgStr[z2].str.p_str, "W"))
       {
-        if (!ChkMinCPU(CPU6309))
+        if (!has_w)
           OK = False;
         else if (ArgCnt != 1)
         {
@@ -1115,12 +1152,12 @@ static void DecodeStack(Word Index)
     {
       CodeLen = 2;
       BAsmCode[0] = 0x10;
-      BAsmCode[1] = pOrder->Code + 4;
+      BAsmCode[1] = Lo(code) + 4;
     }
     else
     {
       CodeLen = 2;
-      BAsmCode[0] = pOrder->Code;
+      BAsmCode[0] = code;
     }
   }
   else
@@ -1170,11 +1207,11 @@ static void AddRel(const char *NName, Word NCode8, Word NCode16)
   InstrZ++;
 }
 
-static void AddALU(const char *NName, Word NCode, Byte NSize, Boolean NImm, CPUVar NCPU)
+static void AddALU(const char *NName, Word NCode, tSymbolSize NSize, Boolean NImm, CPUVar NCPU)
 {
   if (InstrZ >= ALUOrderCnt) exit(255);
   ALUOrders[InstrZ].Code = NCode;
-  ALUOrders[InstrZ].Op16 = NSize;
+  ALUOrders[InstrZ].OpSize = NSize;
   ALUOrders[InstrZ].MayImm = NImm;
   ALUOrders[InstrZ].MinCPU = NCPU;
   AddInstTable(InstTable, NName, InstrZ++, DecodeALU);
@@ -1223,14 +1260,6 @@ static void AddImm(const char *NName, Word NCode, CPUVar NCPU)
   AddInstTable(InstTable, NName, InstrZ++, DecodeImm);
 }
 
-static void AddStack(const char *NName, Word NCode, CPUVar NCPU)
-{
-  if (InstrZ >= StackOrderCnt) exit(255);
-  StackOrders[InstrZ].Code = NCode;
-  StackOrders[InstrZ].MinCPU = NCPU;
-  AddInstTable(InstTable, NName, InstrZ++, DecodeStack);
-}
-
 static void InitFields(void)
 {
   InstTable = CreateInstTable(307);
@@ -1238,9 +1267,9 @@ static void InitFields(void)
 
   AddInstTable(InstTable, "SWI", 0, DecodeSWI);
   AddInstTable(InstTable, "LDQ", 0, DecodeLDQ);
-  AddInstTable(InstTable, "TFR", 0x1f, DecodeTFR_TFM_EXG);
-  AddInstTable(InstTable, "TFM", 0x1e, DecodeTFR_TFM_EXG);
-  AddInstTable(InstTable, "EXG", 0x1e, DecodeTFR_TFM_EXG);
+  AddInstTable(InstTable, "TFR", 0x1f, DecodeTFR_TFM);
+  AddInstTable(InstTable, "TFM", 0x1138, DecodeTFR_TFM);
+  AddInstTable(InstTable, "EXG", 0x1e, DecodeEXG);
   AddInstTable(InstTable, "BITMD", 0x3c, DecodeBITMD_LDMD);
   AddInstTable(InstTable, "LDMD", 0x3d, DecodeBITMD_LDMD);
 
@@ -1296,82 +1325,82 @@ static void InitFields(void)
   AddRel("BSR", 0x008d, 0x0017);
 
   ALUOrders = (ALUOrder *) malloc(sizeof(ALUOrder) * ALUOrderCnt); InstrZ = 0;
-  AddALU("LDA" , 0x0086, 0, True , CPU6809);
-  AddALU("STA" , 0x0087, 0, False, CPU6809);
-  AddALU("CMPA", 0x0081, 0, True , CPU6809);
-  AddALU("ADDA", 0x008b, 0, True , CPU6809);
-  AddALU("ADCA", 0x0089, 0, True , CPU6809);
-  AddALU("SUBA", 0x0080, 0, True , CPU6809);
-  AddALU("SBCA", 0x0082, 0, True , CPU6809);
-  AddALU("ANDA", 0x0084, 0, True , CPU6809);
-  AddALU("ORA" , 0x008a, 0, True , CPU6809);
-  AddALU("EORA", 0x0088, 0, True , CPU6809);
-  AddALU("BITA", 0x0085, 0, True , CPU6809);
+  AddALU("LDA" , 0x0086, eSymbolSize8Bit , True , CPU6809);
+  AddALU("STA" , 0x0087, eSymbolSize8Bit , False, CPU6809);
+  AddALU("CMPA", 0x0081, eSymbolSize8Bit , True , CPU6809);
+  AddALU("ADDA", 0x008b, eSymbolSize8Bit , True , CPU6809);
+  AddALU("ADCA", 0x0089, eSymbolSize8Bit , True , CPU6809);
+  AddALU("SUBA", 0x0080, eSymbolSize8Bit , True , CPU6809);
+  AddALU("SBCA", 0x0082, eSymbolSize8Bit , True , CPU6809);
+  AddALU("ANDA", 0x0084, eSymbolSize8Bit , True , CPU6809);
+  AddALU("ORA" , 0x008a, eSymbolSize8Bit , True , CPU6809);
+  AddALU("EORA", 0x0088, eSymbolSize8Bit , True , CPU6809);
+  AddALU("BITA", 0x0085, eSymbolSize8Bit , True , CPU6809);
 
-  AddALU("LDB" , 0x00c6, 0, True , CPU6809);
-  AddALU("STB" , 0x00c7, 0, False, CPU6809);
-  AddALU("CMPB", 0x00c1, 0, True , CPU6809);
-  AddALU("ADDB", 0x00cb, 0, True , CPU6809);
-  AddALU("ADCB", 0x00c9, 0, True , CPU6809);
-  AddALU("SUBB", 0x00c0, 0, True , CPU6809);
-  AddALU("SBCB", 0x00c2, 0, True , CPU6809);
-  AddALU("ANDB", 0x00c4, 0, True , CPU6809);
-  AddALU("ORB" , 0x00ca, 0, True , CPU6809);
-  AddALU("EORB", 0x00c8, 0, True , CPU6809);
-  AddALU("BITB", 0x00c5, 0, True , CPU6809);
+  AddALU("LDB" , 0x00c6, eSymbolSize8Bit , True , CPU6809);
+  AddALU("STB" , 0x00c7, eSymbolSize8Bit , False, CPU6809);
+  AddALU("CMPB", 0x00c1, eSymbolSize8Bit , True , CPU6809);
+  AddALU("ADDB", 0x00cb, eSymbolSize8Bit , True , CPU6809);
+  AddALU("ADCB", 0x00c9, eSymbolSize8Bit , True , CPU6809);
+  AddALU("SUBB", 0x00c0, eSymbolSize8Bit , True , CPU6809);
+  AddALU("SBCB", 0x00c2, eSymbolSize8Bit , True , CPU6809);
+  AddALU("ANDB", 0x00c4, eSymbolSize8Bit , True , CPU6809);
+  AddALU("ORB" , 0x00ca, eSymbolSize8Bit , True , CPU6809);
+  AddALU("EORB", 0x00c8, eSymbolSize8Bit , True , CPU6809);
+  AddALU("BITB", 0x00c5, eSymbolSize8Bit , True , CPU6809);
 
-  AddALU("LDD" , 0x00cc, 1, True , CPU6809);
-  AddALU("STD" , 0x00cd, 1, False, CPU6809);
-  AddALU("CMPD", 0x1083, 1, True , CPU6809);
-  AddALU("ADDD", 0x00c3, 1, True , CPU6809);
-  AddALU("ADCD", 0x1089, 1, True , CPU6309);
-  AddALU("SUBD", 0x0083, 1, True , CPU6809);
-  AddALU("SBCD", 0x1082, 1, True , CPU6309);
-  AddALU("MULD", 0x118f, 1, True , CPU6309);
-  AddALU("DIVD", 0x118d, 1, True , CPU6309);
-  AddALU("ANDD", 0x1084, 1, True , CPU6309);
-  AddALU("ORD" , 0x108a, 1, True , CPU6309);
-  AddALU("EORD", 0x1088, 1, True , CPU6309);
-  AddALU("BITD", 0x1085, 1, True , CPU6309);
+  AddALU("LDD" , 0x00cc, eSymbolSize16Bit, True , CPU6809);
+  AddALU("STD" , 0x00cd, eSymbolSize16Bit, False, CPU6809);
+  AddALU("CMPD", 0x1083, eSymbolSize16Bit, True , CPU6809);
+  AddALU("ADDD", 0x00c3, eSymbolSize16Bit, True , CPU6809);
+  AddALU("ADCD", 0x1089, eSymbolSize16Bit, True , CPU6309);
+  AddALU("SUBD", 0x0083, eSymbolSize16Bit, True , CPU6809);
+  AddALU("SBCD", 0x1082, eSymbolSize16Bit, True , CPU6309);
+  AddALU("MULD", 0x118f, eSymbolSize16Bit, True , CPU6309);
+  AddALU("DIVD", 0x118d, eSymbolSize16Bit, True , CPU6309);
+  AddALU("ANDD", 0x1084, eSymbolSize16Bit, True , CPU6309);
+  AddALU("ORD" , 0x108a, eSymbolSize16Bit, True , CPU6309);
+  AddALU("EORD", 0x1088, eSymbolSize16Bit, True , CPU6309);
+  AddALU("BITD", 0x1085, eSymbolSize16Bit, True , CPU6309);
 
-  AddALU("LDW" , 0x1086, 1, True , CPU6309);
-  AddALU("STW" , 0x1087, 1, False, CPU6309);
-  AddALU("CMPW", 0x1081, 1, True , CPU6309);
-  AddALU("ADDW", 0x108b, 1, True , CPU6309);
-  AddALU("SUBW", 0x1080, 1, True , CPU6309);
+  AddALU("LDW" , 0x1086, eSymbolSize16Bit, True , CPU6309);
+  AddALU("STW" , 0x1087, eSymbolSize16Bit, False, CPU6309);
+  AddALU("CMPW", 0x1081, eSymbolSize16Bit, True , CPU6309);
+  AddALU("ADDW", 0x108b, eSymbolSize16Bit, True , CPU6309);
+  AddALU("SUBW", 0x1080, eSymbolSize16Bit, True , CPU6309);
 
-  AddALU("STQ" , 0x10cd, 1, True , CPU6309);
-  AddALU("DIVQ", 0x118e, 1, True , CPU6309);
+  AddALU("STQ" , 0x10cd, eSymbolSize16Bit, True , CPU6309);
+  AddALU("DIVQ", 0x118e, eSymbolSize16Bit, True , CPU6309);
 
-  AddALU("LDE" , 0x1186, 0, True , CPU6309);
-  AddALU("STE" , 0x1187, 0, False, CPU6309);
-  AddALU("CMPE", 0x1181, 0, True , CPU6309);
-  AddALU("ADDE", 0x118b, 0, True , CPU6309);
-  AddALU("SUBE", 0x1180, 0, True , CPU6309);
+  AddALU("LDE" , 0x1186, eSymbolSize8Bit , True , CPU6309);
+  AddALU("STE" , 0x1187, eSymbolSize8Bit , False, CPU6309);
+  AddALU("CMPE", 0x1181, eSymbolSize8Bit , True , CPU6309);
+  AddALU("ADDE", 0x118b, eSymbolSize8Bit , True , CPU6309);
+  AddALU("SUBE", 0x1180, eSymbolSize8Bit , True , CPU6309);
 
-  AddALU("LDF" , 0x11c6, 0, True , CPU6309);
-  AddALU("STF" , 0x11c7, 0, False, CPU6309);
-  AddALU("CMPF", 0x11c1, 0, True , CPU6309);
-  AddALU("ADDF", 0x11cb, 0, True , CPU6309);
-  AddALU("SUBF", 0x11c0, 0, True , CPU6309);
+  AddALU("LDF" , 0x11c6, eSymbolSize8Bit , True , CPU6309);
+  AddALU("STF" , 0x11c7, eSymbolSize8Bit , False, CPU6309);
+  AddALU("CMPF", 0x11c1, eSymbolSize8Bit , True , CPU6309);
+  AddALU("ADDF", 0x11cb, eSymbolSize8Bit , True , CPU6309);
+  AddALU("SUBF", 0x11c0, eSymbolSize8Bit , True , CPU6309);
 
-  AddALU("LDX" , 0x008e, 1, True , CPU6809);
-  AddALU("STX" , 0x008f, 1, False, CPU6809);
-  AddALU("CMPX", 0x008c, 1, True , CPU6809);
+  AddALU("LDX" , 0x008e, eSymbolSize16Bit, True , CPU6809);
+  AddALU("STX" , 0x008f, eSymbolSize16Bit, False, CPU6809);
+  AddALU("CMPX", 0x008c, eSymbolSize16Bit, True , CPU6809);
 
-  AddALU("LDY" , 0x108e, 1, True , CPU6809);
-  AddALU("STY" , 0x108f, 1, False, CPU6809);
-  AddALU("CMPY", 0x108c, 1, True , CPU6809);
+  AddALU("LDY" , 0x108e, eSymbolSize16Bit, True , CPU6809);
+  AddALU("STY" , 0x108f, eSymbolSize16Bit, False, CPU6809);
+  AddALU("CMPY", 0x108c, eSymbolSize16Bit, True , CPU6809);
 
-  AddALU("LDU" , 0x00ce, 1, True , CPU6809);
-  AddALU("STU" , 0x00cf, 1, False, CPU6809);
-  AddALU("CMPU", 0x1183, 1, True , CPU6809);
+  AddALU("LDU" , 0x00ce, eSymbolSize16Bit, True , CPU6809);
+  AddALU("STU" , 0x00cf, eSymbolSize16Bit, False, CPU6809);
+  AddALU("CMPU", 0x1183, eSymbolSize16Bit, True , CPU6809);
 
-  AddALU("LDS" , 0x10ce, 1, True , CPU6809);
-  AddALU("STS" , 0x10cf, 1, False, CPU6809);
-  AddALU("CMPS", 0x118c, 1, True , CPU6809);
+  AddALU("LDS" , 0x10ce, eSymbolSize16Bit, True , CPU6809);
+  AddALU("STS" , 0x10cf, eSymbolSize16Bit, False, CPU6809);
+  AddALU("CMPS", 0x118c, eSymbolSize16Bit, True , CPU6809);
 
-  AddALU("JSR" , 0x008d, 1, False, CPU6809);
+  AddALU("JSR" , 0x008d, eSymbolSize16Bit, False, CPU6809);
 
   InstrZ = 0;
   AddALU2("ADD"); AddALU2("ADC");
@@ -1411,11 +1440,10 @@ static void InitFields(void)
   AddImm("EIM", 0x05, CPU6309);
   AddImm("TIM", 0x0b, CPU6309);
 
-  StackOrders = (BaseOrder *) malloc(sizeof(BaseOrder) * StackOrderCnt); InstrZ = 0;
-  AddStack("PSHS", 0x34, CPU6809);
-  AddStack("PULS", 0x35, CPU6809);
-  AddStack("PSHU", 0x36, CPU6809);
-  AddStack("PULU", 0x37, CPU6809);
+  AddInstTable(InstTable, "PSHS", 0x34 | ((MomCPU == CPU6309) ? 0x100 : 0), DecodeStack_6809);
+  AddInstTable(InstTable, "PULS", 0x35 | ((MomCPU == CPU6309) ? 0x100 : 0), DecodeStack_6809);
+  AddInstTable(InstTable, "PSHU", 0x36 | ((MomCPU == CPU6309) ? 0x100 : 0), DecodeStack_6809);
+  AddInstTable(InstTable, "PULU", 0x37 | ((MomCPU == CPU6309) ? 0x100 : 0), DecodeStack_6809);
 
   InstrZ = 0;
   AddInstTable(InstTable, "BAND" , InstrZ++, DecodeBit);
@@ -1440,7 +1468,6 @@ static void DeinitFields(void)
   free(FlagOrders);
   free(LEAOrders);
   free(ImmOrders);
-  free(StackOrders);
 }
 
 /*-------------------------------------------------------------------------*/
@@ -1460,10 +1487,11 @@ static Boolean DecodeAttrPart_6809(void)
 
 static void MakeCode_6809(void)
 {
+  tSymbolSize OpSize;
+
   CodeLen = 0;
   DontPrint = False;
   OpSize = (AttrPartOpSize[0] != eSymbolSizeUnknown) ? AttrPartOpSize[0] : eSymbolSize8Bit;
-  ExtFlag = False;
 
   /* zu ignorierendes */
 

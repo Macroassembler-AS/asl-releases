@@ -67,6 +67,7 @@
 #include "codeh8_3.h"
 #include "codeh8_5.h"
 #include "code7000.h"
+#include "codeko09.h"
 #include "code65.h"
 #include "codepps4.h"
 #include "codeh16.h"
@@ -4312,6 +4313,7 @@ int main(int argc, char **argv)
     codeh8_3_init();
     codeh8_5_init();
     code7000_init();
+    codeko09_init();
     code65_init();
     codepps4_init();
     codeh16_init();

@@ -31,6 +31,7 @@ static const TFamilyDescr Descrs[] =
   { "S12Z"         , 0x0045, eHexFormatMotoS   },
   { "68HC16"       , 0x0065, eHexFormatMotoS   },
   { "68RS08"       , 0x005e, eHexFormatMotoS   },
+  { "052001"       , 0x0022, eHexFormatMotoS   },
   { "H8/300(H}"    , 0x0068, eHexFormatMotoS   },
   { "H8/500"       , 0x0069, eHexFormatMotoS   },
   { "H16"          , 0x0040, eHexFormatMotoS   },
