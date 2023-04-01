@@ -1,3 +1,13 @@
+2023-04-01 [1.42 Bld 241]
+
+- Bugfix      : Correct displacement value for relative branches
+                and PC-relative addressing on PDP-11
+- Addition    : Support CALL as alias for JSR on PDP-11 with PC
+                as register
+- Bugfix      : Correct availibility of MTPS/MFPS on PDP-11 variants
+- Bugfix      : Correct 16-bit indexed addressing on Konami 052001
+                if index register is not PC
+
 2023-03-27 [1.42 Bld 240]
 
 - Addition    : add Konami 052001 as target

@@ -434,11 +434,11 @@ dest	equ	r5
 	br	*+77		; odd displacement not OK
 	br	*-79
 	endexpect
-	br	*+258		; just OK
-	br	*-252
-	expect	1370,1370
-	br	*+260
+	br	*+256		; just OK
 	br	*-254
+	expect	1370,1370
+	br	*+258
+	br	*-256
 	endexpect
 
 	bvc	*+180
@@ -449,6 +449,21 @@ dest	equ	r5
 	expect	1320
 	c	20
 	endexpect
+
+	; CALL is JSR with register 6 (SP)
+
+	call	r1
+	call	@r2
+	call	(r3)+
+	call	@(r4)+
+	call	-(r5)
+	call	@-(r6)
+	call	0123456(r1)
+	call	@0123456(r2)
+	call	#0123456
+	call	@#0123456
+	call	0123456
+	call	@0123456
 
 	clr	r1
 	clr	@r2

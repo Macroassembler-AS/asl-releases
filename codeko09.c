@@ -95,11 +95,13 @@ static void reset_adr_vals(adr_vals_t *p_vals)
   p_vals->cnt = 0;
 }
 
+#define IDX_PCREG 7
+
 static Boolean code_reg(const char *p_arg, Byte *p_ret)
 {
   if (!as_strcasecmp(p_arg, "PCR") || !as_strcasecmp(p_arg, "PC"))
   {
-    *p_ret = 7;
+    *p_ret = IDX_PCREG;
     return True;
   }
 
@@ -335,7 +337,7 @@ static adr_mode_t DecodeAdr(int ArgStartIdx, int ArgEndIdx,
     /* Displacement auswerten */
 
     Offset = ChkZero(pStartArg->str.p_str, &ZeroMode);
-    if (EReg == 7)
+    if (EReg == IDX_PCREG)
       AdrInt = EvalStrIntExpressionOffs(pStartArg, Offset, UInt16, &OK)
              - (EProgCounter() + 2 + OpcodeLen);
     else if (ZeroMode > 1)
@@ -377,7 +379,8 @@ static adr_mode_t DecodeAdr(int ArgStartIdx, int ArgEndIdx,
       p_vals->mode = e_adr_mode_ind;
       p_vals->cnt = 3;
       p_vals->vals[0] += 0x05;
-      AdrInt--;
+      if (EReg == IDX_PCREG)
+        AdrInt--;
       p_vals->vals[1] = Hi(AdrInt);
       p_vals->vals[2] = Lo(AdrInt);
       goto chk_mode;

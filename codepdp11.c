@@ -82,6 +82,7 @@ enum
   e_ext_csm = 11,
   e_ext_wrtlck = 12,
   e_ext_tstset = 13,
+  e_ext_mfps_mtps = 14,
   e_ext_cnt
 };
 
@@ -99,6 +100,7 @@ enum
 #define e_cpu_flag_csm (1 << e_ext_csm)
 #define e_cpu_flag_wrtlck (1 << e_ext_wrtlck)
 #define e_cpu_flag_tstset (1 << e_ext_tstset)
+#define e_cpu_flag_mfps_mtps (1 << e_ext_mfps_mtps)
 
 typedef struct
 {
@@ -596,9 +598,10 @@ static Boolean decode_adr(tStrComp *p_arg, adr_vals_t *p_result, Word pc_value, 
     return check_mode_mask(mode_mask, MModMem, p_arg);
   }
 
-  /* remains: rel, @rel */
+  /* Remains: rel, @rel
+     PC value is the PC value after displacement was loaded: */
 
-  p_result->vals[0] = EvalStrIntExpressionWithResult(&arg, UInt16, &eval_result) - pc_value;
+  p_result->vals[0] = EvalStrIntExpressionWithResult(&arg, UInt16, &eval_result) - (pc_value + 2);
   if (!eval_result.OK)
     return False;
   p_result->mode = REG_PC | (deferred ? 070 : 060);
@@ -758,6 +761,27 @@ static void decode_tstset(Word code)
 static void decode_mfp_mtp(Word code)
 {
   if (ChkArgCnt(1, 1) && check_cpu_ext(e_ext_mfp_mtp))
+  {
+    adr_vals_t adr_vals;
+
+    op_size = (code & CODE_FLAG_16BIT) ? eSymbolSize16Bit : eSymbolSize8Bit;
+    if (decode_adr(&ArgStr[1], &adr_vals, EProgCounter() + 2, MModReg | MModMem | imm_mask(code)))
+    {
+      append_word((code & 0177700) | adr_vals.mode);
+      append_adr_vals(&adr_vals);
+    }
+  }
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     decode_mfps_mtps(Word code)
+ * \brief  handle MFPS/MTPS instructions
+ * \param  code machine code
+ * ------------------------------------------------------------------------ */
+
+static void decode_mfps_mtps(Word code)
+{
+  if (ChkArgCnt(1, 1) && check_cpu_ext(e_ext_mfps_mtps))
   {
     adr_vals_t adr_vals;
 
@@ -1170,7 +1194,7 @@ static void decode_branch(Word code)
   if (ChkArgCnt(1, 1))
   {
     tEvalResult eval_result;
-    LongInt dist = EvalStrIntExpressionWithResult(&ArgStr[1], UInt16, &eval_result) - (EProgCounter() + 4);
+    LongInt dist = EvalStrIntExpressionWithResult(&ArgStr[1], UInt16, &eval_result) - (EProgCounter() + 2);
 
     if ((dist & 1) && !mFirstPassUnknownOrQuestionable(eval_result.Flags)) WrStrErrorPos(ErrNum_DistIsOdd, &ArgStr[1]);
     else
@@ -1233,6 +1257,25 @@ static void decode_jmp(Word code)
 }
 
 /*!------------------------------------------------------------------------
+ * \fn     decode_jsr_core(Word code, Word reg)
+ * \brief  JSR instruction common core
+ * \param  code machine code
+ * \param  reg register operand
+ * ------------------------------------------------------------------------ */
+
+static void decode_jsr_core(Word code, Word reg)
+{
+  adr_vals_t addr_adr_vals;
+
+  op_size = eSymbolSize16Bit;
+  if (decode_adr(&ArgStr[ArgCnt], &addr_adr_vals, EProgCounter() + 2, MModReg | MModMem | MModImm))
+  {
+    append_word((code & 0177000) | ((reg & 7) << 6) | addr_adr_vals.mode);
+    append_adr_vals(&addr_adr_vals);
+  }
+}
+
+/*!------------------------------------------------------------------------
  * \fn     decode_jsr(Word code)
  * \brief  handle JSR instruction
  * \param  code machine code
@@ -1242,16 +1285,24 @@ static void decode_jsr(Word code)
 {
   if (ChkArgCnt(2, 2))
   {
-    adr_vals_t reg_adr_vals, dest_adr_vals;
+    adr_vals_t reg_adr_vals;
 
     op_size = eSymbolSize16Bit;
-    if (decode_adr(&ArgStr[1], &reg_adr_vals, EProgCounter() + 2, MModReg)
-     && decode_adr(&ArgStr[2], &dest_adr_vals, EProgCounter() + 2 + reg_adr_vals.count, MModReg | MModMem | MModImm))
-    {
-      append_word((code & 0177000) | ((reg_adr_vals.mode & 7) << 6) | dest_adr_vals.mode);
-      append_adr_vals(&dest_adr_vals);
-    }
+    if (decode_adr(&ArgStr[1], &reg_adr_vals, EProgCounter() + 2, MModReg))
+      decode_jsr_core(code, reg_adr_vals.mode & 7);
   }
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     decode_call(Word code)
+ * \brief  handle CALL instruction
+ * \param  code machine code
+ * ------------------------------------------------------------------------ */
+
+static void decode_call(Word code)
+{
+  if (ChkArgCnt(1, 1))
+    decode_jsr_core(code, REG_PC);
 }
 
 /*!------------------------------------------------------------------------
@@ -1534,10 +1585,10 @@ static void init_fields(void)
   AddInstTable(InstTable, "CSM"   , 0007000 | CODE_FLAG_16BIT | CODE_FLAG_GEN_IMM, decode_csm);
   AddInstTable(InstTable, "MFPD"  , 0006500 | CODE_FLAG_16BIT | CODE_FLAG_GEN_IMM, decode_mfp_mtp);
   AddInstTable(InstTable, "MFPI"  , 0106500 | CODE_FLAG_16BIT | CODE_FLAG_GEN_IMM, decode_mfp_mtp);
-  AddInstTable(InstTable, "MFPS"  , 0106700 , decode_mfp_mtp);
+  AddInstTable(InstTable, "MFPS"  , 0106700 , decode_mfps_mtps);
   AddInstTable(InstTable, "MTPD"  , 0006600 | CODE_FLAG_16BIT, decode_mfp_mtp);
   AddInstTable(InstTable, "MTPI"  , 0106600 | CODE_FLAG_16BIT, decode_mfp_mtp);
-  AddInstTable(InstTable, "MTPS"  , 0106400 | CODE_FLAG_GEN_IMM, decode_mfp_mtp);
+  AddInstTable(InstTable, "MTPS"  , 0106400 | CODE_FLAG_GEN_IMM, decode_mfps_mtps);
 
   AddInstTable(InstTable, "FADD"  , 0075000, decode_fis);
   AddInstTable(InstTable, "FSUB"  , 0075010, decode_fis);
@@ -1613,9 +1664,10 @@ static void init_fields(void)
   AddInstTable(InstTable, "BVS" , 0102400, decode_branch);
   AddInstTable(InstTable, "SOB" , 0077000, decode_sob);
 
-  AddInstTable(InstTable, "JMP", 000100, decode_jmp);
-  AddInstTable(InstTable, "JSR", 004000, decode_jsr);
-  AddInstTable(InstTable, "RTS", 000200, decode_rts);
+  AddInstTable(InstTable, "JMP" , 000100, decode_jmp);
+  AddInstTable(InstTable, "JSR" , 004000, decode_jsr);
+  AddInstTable(InstTable, "CALL", 004000, decode_call);
+  AddInstTable(InstTable, "RTS" , 000200, decode_rts);
   AddInstTable(InstTable, "MARK", 006400, decode_mark);
 
   AddInstTable(InstTable, "EMT"  , 0104000, decode_trap);
@@ -1863,16 +1915,16 @@ static void switch_to_pdp11(void *p_user)
    since noone knows which subset, we just treat DIS as CIS: */
 
 #define opt_cpu_flags_lsi11 (e_cpu_flag_eis | e_cpu_flag_fis | e_cpu_flag_cis)
-#define cpu_flags_lsi11 (e_cpu_flag_sob_sxt | e_cpu_flag_xor | e_cpu_flag_rtt | e_cpu_flag_mark)
+#define cpu_flags_lsi11 (e_cpu_flag_sob_sxt | e_cpu_flag_xor | e_cpu_flag_rtt | e_cpu_flag_mark | e_cpu_flag_mfps_mtps)
 
 #define opt_cpu_flags_f11 (e_cpu_flag_fp11)
-#define cpu_flags_f11 (e_cpu_flag_sob_sxt | e_cpu_flag_mark | e_cpu_flag_rtt | e_cpu_flag_xor | e_cpu_flag_mfpt | e_cpu_flag_eis | e_cpu_flag_mfp_mtp)
+#define cpu_flags_f11 (e_cpu_flag_sob_sxt | e_cpu_flag_mark | e_cpu_flag_rtt | e_cpu_flag_xor | e_cpu_flag_mfpt | e_cpu_flag_eis | e_cpu_flag_mfp_mtp | e_cpu_flag_mfps_mtps)
 
 #define opt_cpu_flags_t11 0
-#define cpu_flags_t11 (e_cpu_flag_sob_sxt | e_cpu_flag_rtt)
+#define cpu_flags_t11 (e_cpu_flag_sob_sxt | e_cpu_flag_rtt | e_cpu_flag_mfps_mtps)
 
 #define opt_cpu_flags_j11 0
-#define cpu_flags_j11 (e_cpu_flag_eis | e_cpu_flag_fp11 | e_cpu_flag_sob_sxt | e_cpu_flag_xor | e_cpu_flag_rtt | e_cpu_flag_mark | e_cpu_flag_mfpt | e_cpu_flag_mfp_mtp | e_cpu_flag_spl | e_cpu_flag_csm | e_cpu_flag_wrtlck | e_cpu_flag_tstset)
+#define cpu_flags_j11 (e_cpu_flag_eis | e_cpu_flag_fp11 | e_cpu_flag_sob_sxt | e_cpu_flag_xor | e_cpu_flag_rtt | e_cpu_flag_mark | e_cpu_flag_mfpt | e_cpu_flag_mfp_mtp | e_cpu_flag_mfps_mtps | e_cpu_flag_spl | e_cpu_flag_csm | e_cpu_flag_wrtlck | e_cpu_flag_tstset)
 
 static const cpu_props_t cpu_props[] =
 {
@@ -1884,7 +1936,7 @@ static const cpu_props_t cpu_props[] =
   {      "PDP-11/20" , UInt16, 0                                , 0 },
   {      "PDP-11/23" , UInt22, opt_cpu_flags_f11                , cpu_flags_f11 },
   {      "PDP-11/24" , UInt22, opt_cpu_flags_f11                , cpu_flags_f11 },
-  {      "PDP-11/34" , UInt18, e_cpu_flag_fp11                  ,                   e_cpu_flag_sob_sxt | e_cpu_flag_mark | e_cpu_flag_rtt | e_cpu_flag_eis | e_cpu_flag_xor                   | e_cpu_flag_mfp_mtp },
+  {      "PDP-11/34" , UInt18, e_cpu_flag_fp11                  ,                   e_cpu_flag_sob_sxt | e_cpu_flag_mark | e_cpu_flag_rtt | e_cpu_flag_eis | e_cpu_flag_xor                   | e_cpu_flag_mfp_mtp | e_cpu_flag_mfps_mtps },
   {      "PDP-11/35" , UInt18, e_cpu_flag_eis | e_cpu_flag_fis  ,                   e_cpu_flag_sob_sxt | e_cpu_flag_mark | e_cpu_flag_rtt                  | e_cpu_flag_xor                   | e_cpu_flag_mfp_mtp }, /* OEM version of PDP-11/40 */
   {      "PDP-11/40" , UInt18, e_cpu_flag_eis | e_cpu_flag_fis  ,                   e_cpu_flag_sob_sxt | e_cpu_flag_mark | e_cpu_flag_rtt                  | e_cpu_flag_xor                   | e_cpu_flag_mfp_mtp },
   {      "PDP-11/44" , UInt22, e_cpu_flag_fp11 | e_cpu_flag_cis ,                   e_cpu_flag_sob_sxt | e_cpu_flag_mark | e_cpu_flag_rtt | e_cpu_flag_eis | e_cpu_flag_xor | e_cpu_flag_mfpt | e_cpu_flag_mfp_mtp | e_cpu_flag_spl | e_cpu_flag_csm },
