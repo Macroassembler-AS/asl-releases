@@ -147,6 +147,7 @@ static void SetCPUCore(const tCPUDef *pCPUDef, const tStrComp *pCPUArgs)
   SetIsOccupiedFnc =
   SaveIsOccupiedFnc =
   RestoreIsOccupiedFnc = NULL;
+  multi_char_le = False;
   DecodeAttrPart = NULL;
   SwitchIsOccupied =
   PageIsOccupied =
@@ -2272,7 +2273,8 @@ Boolean CodeGlobalPseudo(void)
         CodeSETEQU(True);
         return True;
       }
-      else if (!SaveIsOccupied() && Memo("SAVE"))
+      else if ((!SaveIsOccupied() && Memo("SAVE"))
+            || Memo("SAVEENV"))
       {
         CodeSAVE(0);
         return True;
@@ -2294,7 +2296,8 @@ Boolean CodeGlobalPseudo(void)
       }
       break;
     case 'R':
-      if (!RestoreIsOccupied() && Memo("RESTORE"))
+      if ((!RestoreIsOccupied() && Memo("RESTORE"))
+       || Memo("RESTOREENV"))
       {
         CodeRESTORE(0);
         return True;

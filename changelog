@@ -1,3 +1,11 @@
+2023-04-10  [1.42 Bld 242]
+
+- Change      : Enable more FP16 tests
+- Bugfix      : assign unique header ID to PDP-11
+- Change      : Multi-character constants are now little endian
+                on PDP-11
+- Addition    : Add Western Digital WD16 target
+
 2023-04-01 [1.42 Bld 241]
 
 - Bugfix      : Correct displacement value for relative branches

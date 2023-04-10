@@ -438,14 +438,20 @@ int NonZString2Int(const struct as_nonz_dynstr *p_str, LargeInt *p_result)
 {
   if ((p_str->len > 0) && (p_str->len <= 4))
   {
-    unsigned digit;
+    unsigned digit, shift;
     const char *p_run = p_str->p_str;
     size_t run_len = p_str->len;
     int ret;
 
-    *p_result = 0;
+    *p_result = shift = 0;
     while (!(ret = as_chartrans_xlate_next(CurrTransTable->p_table, &digit, &p_run, &run_len)))
-      *p_result = (*p_result << 8) | (digit & 0xff);
+      if (multi_char_le)
+      {
+        *p_result |= ((LargeWord)digit) << shift;
+        shift += 8;
+      }
+      else
+        *p_result = (*p_result << 8) | (digit & 0xff);
     /* ENOMEM -> regular end of string */
     return (ret == ENOMEM) ? 0 : ret;
   }
@@ -460,18 +466,19 @@ Boolean Int2NonZString(struct as_nonz_dynstr *p_str, LargeInt src)
   if (p_str->capacity < 32)
     as_nonz_dynstr_realloc(p_str, 32);
   p_str->len = 0;
-  p_dest = &p_str->p_str[p_str->capacity];
+  p_dest = &p_str->p_str[multi_char_le ? 0 : p_str->capacity];
   while (src && (p_str->len < p_str->capacity))
   {
     ret = as_chartrans_xlate_rev(CurrTransTable->p_table, src & 0xff);
     if (ret >= 0)
     {
-      *(--p_dest) = ret;
+      *(multi_char_le ? p_dest++ : --p_dest) = ret;
       p_str->len++;
     }
     src = (src >> 8) & 0xfffffful;
   }
-  memmove(p_str->p_str, p_dest, p_str->len);
+  if (!multi_char_le)
+    memmove(p_str->p_str, p_dest, p_str->len);
   return True;
 }
 
@@ -518,7 +525,7 @@ int TempResultToInt(TempResult *pResult)
  * \fn     MultiCharToInt(TempResult *pResult, unsigned MaxLen)
  * \brief  optionally convert multi-character constant to integer
  * \param  pResult holding value
- * \param  MaxLen maximum lenght of multi-character constant
+ * \param  MaxLen maximum length of multi-character constant
  * \return True if converted
  * ------------------------------------------------------------------------ */
 
@@ -1876,14 +1883,8 @@ LargeInt EvalStrIntExpressionWithResult(const tStrComp *pComp, IntType Type, tEv
 
       if ((l > 0) && (l <= 4))
       {
-        unsigned Digit;
-        const char *p_run = t.Contents.str.p_str;
-        size_t run_len = t.Contents.str.len;
-        int ret;
+        int ret = NonZString2Int(&t.Contents.str, &Result);
 
-        Result = 0;
-        while (!(ret = as_chartrans_xlate_next(CurrTransTable->p_table, &Digit, &p_run, &run_len)))
-          Result = (Result << 8) | Digit;
         if (ENOENT == ret)
         {
           WrStrErrorPos(ErrNum_UnmappedChar, pComp);

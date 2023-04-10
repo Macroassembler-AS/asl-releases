@@ -83,6 +83,7 @@ enum
   e_ext_wrtlck = 12,
   e_ext_tstset = 13,
   e_ext_mfps_mtps = 14,
+  e_ext_wd16 = 15, /* not a real extension, but an instruction set discriminator */
   e_ext_cnt
 };
 
@@ -101,6 +102,7 @@ enum
 #define e_cpu_flag_wrtlck (1 << e_ext_wrtlck)
 #define e_cpu_flag_tstset (1 << e_ext_tstset)
 #define e_cpu_flag_mfps_mtps (1 << e_ext_mfps_mtps)
+#define e_cpu_flag_wd16 (1 << e_ext_wd16)
 
 typedef struct
 {
@@ -113,6 +115,11 @@ static const cpu_props_t *p_curr_cpu_props;
 static tSymbolSize op_size;
 static Boolean default_regsyms;
 static LongInt *reg_par, *reg_pdr;
+
+static Boolean is_wd16(void)
+{
+  return !!(p_curr_cpu_props->flags & e_cpu_flag_wd16);
+}
 
 /*-------------------------------------------------------------------------*/
 /* Register Symbols */
@@ -711,6 +718,43 @@ static void decode_rtt(Word code)
 }
 
 /*!------------------------------------------------------------------------
+ * \fn     decode_one_reg(Word code)
+ * \brief  handle instructions with one register as argument
+ * \param  code machine code
+ * ------------------------------------------------------------------------ */
+
+static void decode_one_reg(Word code)
+{
+  if (ChkArgCnt(1, 1))
+  {
+    adr_vals_t reg_adr_vals;
+
+    op_size = eSymbolSize16Bit;
+    if (decode_adr(&ArgStr[1], &reg_adr_vals, EProgCounter() + 2, MModReg))
+      append_word((code & 0xfff8) | reg_adr_vals.mode);
+  }
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     decode_two_reg(Word code)
+ * \brief  handle instructions with two registers as argument
+ * \param  code machine code
+ * ------------------------------------------------------------------------ */
+
+static void decode_two_reg(Word code)
+{
+  if (ChkArgCnt(2, 2))
+  {
+    adr_vals_t src_adr_vals, dest_adr_vals;
+
+    op_size = eSymbolSize16Bit;
+    if (decode_adr(&ArgStr[1], &src_adr_vals, EProgCounter() + 2, MModReg)
+     && decode_adr(&ArgStr[2], &dest_adr_vals, EProgCounter() + 2, MModReg))
+      append_word((code & 0xffc0) | ((src_adr_vals.mode & 7) << 3) | (dest_adr_vals.mode & 7));
+  }
+}
+
+/*!------------------------------------------------------------------------
  * \fn     decode_one_arg(Word code)
  * \brief  handle instructions with one generic arg
  * \param  code machine code
@@ -1146,6 +1190,28 @@ static void decode_eis(Word code)
 }
 
 /*!------------------------------------------------------------------------
+ * \fn     decode_reg_gen(Word code)
+ * \brief  handle instructions with one register and one general argument
+ * \param  code machine code
+ * ------------------------------------------------------------------------ */
+
+static void decode_reg_gen(Word code)
+{
+  if (ChkArgCnt(2, 2))
+  {
+    adr_vals_t reg_adr_vals, dest_adr_vals;
+
+    op_size = eSymbolSize16Bit;
+    if (decode_adr(&ArgStr[1], &reg_adr_vals, EProgCounter() + 2, MModReg)
+     && decode_adr(&ArgStr[2], &dest_adr_vals, EProgCounter() + 2 + reg_adr_vals.count, MModReg | MModMem | MModImm))
+    {
+      append_word((code & 0177000) | ((reg_adr_vals.mode & 7) << 6) | dest_adr_vals.mode);
+      append_adr_vals(&dest_adr_vals);
+    }
+  }
+}
+
+/*!------------------------------------------------------------------------
  * \fn     decode_xor(Word code)
  * \brief  handle XOR instruction
  * \param  code machine code
@@ -1196,13 +1262,16 @@ static void decode_branch(Word code)
     tEvalResult eval_result;
     LongInt dist = EvalStrIntExpressionWithResult(&ArgStr[1], UInt16, &eval_result) - (EProgCounter() + 2);
 
-    if ((dist & 1) && !mFirstPassUnknownOrQuestionable(eval_result.Flags)) WrStrErrorPos(ErrNum_DistIsOdd, &ArgStr[1]);
-    else
+    if (eval_result.OK)
     {
-      dist /= 2;
-      if (!RangeCheck(dist, SInt8) && !mFirstPassUnknownOrQuestionable(eval_result.Flags)) WrStrErrorPos(ErrNum_JmpDistTooBig, &ArgStr[1]);
+      if ((dist & 1) && !mFirstPassUnknownOrQuestionable(eval_result.Flags)) WrStrErrorPos(ErrNum_DistIsOdd, &ArgStr[1]);
       else
-        append_word((code & 0xff00) | (dist & 0x00ff));
+      {
+        dist /= 2;
+        if (!RangeCheck(dist, SInt8) && !mFirstPassUnknownOrQuestionable(eval_result.Flags)) WrStrErrorPos(ErrNum_JmpDistTooBig, &ArgStr[1]);
+        else
+          append_word((code & 0xff00) | (dist & 0x00ff));
+      }
     }
   }
 }
@@ -1268,7 +1337,7 @@ static void decode_jsr_core(Word code, Word reg)
   adr_vals_t addr_adr_vals;
 
   op_size = eSymbolSize16Bit;
-  if (decode_adr(&ArgStr[ArgCnt], &addr_adr_vals, EProgCounter() + 2, MModReg | MModMem | MModImm))
+  if (decode_adr(&ArgStr[ArgCnt], &addr_adr_vals, EProgCounter() + 2, (is_wd16() ? 0 : MModReg) | MModMem | MModImm))
   {
     append_word((code & 0177000) | ((reg & 7) << 6) | addr_adr_vals.mode);
     append_adr_vals(&addr_adr_vals);
@@ -1324,6 +1393,24 @@ static void decode_rts(Word code)
 }
 
 /*!------------------------------------------------------------------------
+ * \fn     decode_imm6(Word code)
+ * \brief  handle instructions with 6 bit numeric argument
+ * \param  code machine code
+ * ------------------------------------------------------------------------ */
+
+static void decode_imm6(Word code)
+{
+  if (ChkArgCnt(1, 1))
+  {
+    Boolean ok;
+    Word num = EvalStrIntExpression(&ArgStr[1], UInt6, &ok);
+
+    if (ok)
+      append_word(code | (num & 63));
+  }
+}
+
+/*!------------------------------------------------------------------------
  * \fn     decode_mark(Word code)
  * \brief  handle MARK instruction
  * \param  code machine code
@@ -1331,13 +1418,33 @@ static void decode_rts(Word code)
 
 static void decode_mark(Word code)
 {
-  if (ChkArgCnt(1, 1) && check_cpu_ext(e_ext_mark))
-  {
-    Boolean ok;
-    Word num = EvalStrIntExpression(&ArgStr[1], UInt6, &ok);
+  if (check_cpu_ext(e_ext_mark))
+    decode_imm6(code);
+}
 
-    if (ok)
-      append_word(code | (num & 63));
+/*!------------------------------------------------------------------------
+ * \fn     decode_imm4p1_reg(Word code)
+ * \brief  handle instructions with 4 bit immediate and register argument
+ * \param  code machine code
+ * ------------------------------------------------------------------------ */
+
+static void decode_imm4p1_reg(Word code)
+{
+  adr_vals_t reg_adr_vals;
+
+  if (ChkArgCnt(2, 2)
+   && decode_adr(&ArgStr[2], &reg_adr_vals, EProgCounter() + 2, MModReg))
+  {
+    tEvalResult eval_result;
+    Word imm_val = EvalStrIntExpressionWithResult(&ArgStr[1], UInt5, &eval_result);
+
+    if (eval_result.OK)
+    {
+      if (mFirstPassUnknownOrQuestionable(eval_result.Flags))
+        imm_val = 1;
+      if (ChkRange(imm_val, 1, 16))
+        append_word(code | ((reg_adr_vals.mode & 7) << 6) | ((imm_val - 1) & 15));
+    }
   }
 }
 
@@ -1396,9 +1503,57 @@ static void decode_flags(Word code)
 }
 
 /*!------------------------------------------------------------------------
+ * \fn     decode_lcc(Word code)
+ * \brief  handle LCC instruction (WD16)
+ * \param  code machine code
+ * ------------------------------------------------------------------------ */
+
+static void decode_lcc(Word code)
+{
+  if (ChkArgCnt(1, 1))
+  {
+    Boolean ok;
+    Word num = EvalStrIntExpression(&ArgStr[1], UInt4, &ok);
+
+    if (ok)
+      append_word(code | (num & 15));
+  }
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     decode_format11(Word code)
+ * \brief  handle format 11 instructions
+ * \param  code machine code
+ * ------------------------------------------------------------------------ */
+
+static Boolean decode_adr_01(tStrComp *p_arg, adr_vals_t *p_vals)
+{
+  if (!decode_adr(p_arg, p_vals, EProgCounter() + 2, MModReg | MModMem))
+    return False;
+  if ((p_vals->mode & 070) >= 020)
+  {
+    WrStrErrorPos(ErrNum_InvAddrMode, p_arg);
+    reset_adr_vals(p_vals);
+    return False;
+  }
+  return True;
+}
+
+static void decode_format11(Word code)
+{
+  adr_vals_t src_adr_vals, dest_adr_vals;
+
+  if (ChkArgCnt(2, 2)
+   && decode_adr_01(&ArgStr[1], &src_adr_vals)
+   && decode_adr_01(&ArgStr[2], &dest_adr_vals))
+    append_word(code | ((src_adr_vals.mode & 15) << 4) | (dest_adr_vals.mode& 15));
+}
+
+
+/*!------------------------------------------------------------------------
  * \fn     decode_pseudo(void)
  * \brief  handle pseudo instructions
- * \return True if handles
+ * \return True if handled
  * ------------------------------------------------------------------------ */
 
 static Boolean decode_pseudo(void)
@@ -1429,16 +1584,26 @@ static Boolean decode_pseudo(void)
     return True;
   }
 
-  if (Memo("FLT2"))
+  if (is_wd16())
   {
-    DecodeIntelDD(eIntPseudoFlag_AllowFloat | eIntPseudoFlag_DECFormat);
-    return True;
+    if (Memo("FLT3"))
+    {
+      DecodeIntelDM(eIntPseudoFlag_AllowFloat | eIntPseudoFlag_DECFormat);
+      return True;
+    }
   }
-
-  if (Memo("FLT4"))
   {
-    DecodeIntelDQ(eIntPseudoFlag_AllowFloat | eIntPseudoFlag_DECFormat);
-    return True;
+    if (Memo("FLT2"))
+    {
+      DecodeIntelDD(eIntPseudoFlag_AllowFloat | eIntPseudoFlag_DECFormat);
+      return True;
+    }
+
+    if (Memo("FLT4"))
+    {
+      DecodeIntelDQ(eIntPseudoFlag_AllowFloat | eIntPseudoFlag_DECFormat);
+      return True;
+    }
   }
 
   if (Memo("PRWINS"))
@@ -1500,8 +1665,34 @@ static void update_apr(void)
 /* Instruction Lookup Table */
 
 /*!------------------------------------------------------------------------
- * \fn     init_fields(void)
- * \brief  create lookup table
+ * \fn     init_branches(void)
+ * \brief  add branch instructions to lookup table (same on PDP-11 and WD16)
+ * ------------------------------------------------------------------------ */
+
+static void init_branches(void)
+{
+  AddInstTable(InstTable, "BCC" , 0103000, decode_branch);
+  AddInstTable(InstTable, "BCS" , 0103400, decode_branch);
+  AddInstTable(InstTable, "BEQ" , 0001400, decode_branch);
+  AddInstTable(InstTable, "BGE" , 0002000, decode_branch);
+  AddInstTable(InstTable, "BGT" , 0003000, decode_branch);
+  AddInstTable(InstTable, "BHI" , 0101000, decode_branch);
+  AddInstTable(InstTable, "BHIS", 0103000, decode_branch);
+  AddInstTable(InstTable, "BLE" , 0003400, decode_branch);
+  AddInstTable(InstTable, "BLO" , 0103400, decode_branch);
+  AddInstTable(InstTable, "BLOS", 0101400, decode_branch);
+  AddInstTable(InstTable, "BLT" , 0002400, decode_branch);
+  AddInstTable(InstTable, "BMI" , 0100400, decode_branch);
+  AddInstTable(InstTable, "BNE" , 0001000, decode_branch);
+  AddInstTable(InstTable, "BPL" , 0100000, decode_branch);
+  AddInstTable(InstTable, "BR"  , 0000400, decode_branch);
+  AddInstTable(InstTable, "BVC" , 0102000, decode_branch);
+  AddInstTable(InstTable, "BVS" , 0102400, decode_branch);
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     init_fields_pdp11(void)
+ * \brief  create lookup table - PDP-11 encoding
  * ------------------------------------------------------------------------ */
 
 static void add_one_arg(const char *p_name, Word code)
@@ -1541,7 +1732,7 @@ static void add_cis(const char *p_name, Word code, InstProc inline_proc)
   AddInstTable(InstTable, name, code | 0000100, inline_proc);
 }
 
-static void init_fields(void)
+static void init_fields_pdp11(void)
 {
   InstTable = CreateInstTable(201);
   SetDynamicInstTable(InstTable);
@@ -1645,23 +1836,7 @@ static void init_fields(void)
   AddInstTable(InstTable, "MUL" , 0070000, decode_eis);
   AddInstTable(InstTable, "XOR" , 0074000, decode_xor);
 
-  AddInstTable(InstTable, "BCC" , 0103000, decode_branch);
-  AddInstTable(InstTable, "BCS" , 0103400, decode_branch);
-  AddInstTable(InstTable, "BEQ" , 0001400, decode_branch);
-  AddInstTable(InstTable, "BGE" , 0002000, decode_branch);
-  AddInstTable(InstTable, "BGT" , 0003000, decode_branch);
-  AddInstTable(InstTable, "BHI" , 0101000, decode_branch);
-  AddInstTable(InstTable, "BHIS", 0103000, decode_branch);
-  AddInstTable(InstTable, "BLE" , 0003400, decode_branch);
-  AddInstTable(InstTable, "BLO" , 0103400, decode_branch);
-  AddInstTable(InstTable, "BLOS", 0101400, decode_branch);
-  AddInstTable(InstTable, "BLT" , 0002400, decode_branch);
-  AddInstTable(InstTable, "BMI" , 0100400, decode_branch);
-  AddInstTable(InstTable, "BNE" , 0001000, decode_branch);
-  AddInstTable(InstTable, "BPL" , 0100000, decode_branch);
-  AddInstTable(InstTable, "BR"  , 0000400, decode_branch);
-  AddInstTable(InstTable, "BVC" , 0102000, decode_branch);
-  AddInstTable(InstTable, "BVS" , 0102400, decode_branch);
+  init_branches();
   AddInstTable(InstTable, "SOB" , 0077000, decode_sob);
 
   AddInstTable(InstTable, "JMP" , 000100, decode_jmp);
@@ -1704,6 +1879,126 @@ static void init_fields(void)
   add_cis("SPANC", 0076043, decode_cis_2);
   add_cis("SUBN" , 0076051, decode_cis_3);
   add_cis("SUBP" , 0076071, decode_cis_3);
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     init_fields_wd16(void)
+ * \brief  create lookup table - WD16 encoding
+ * ------------------------------------------------------------------------ */
+
+static Boolean TrueFnc(void)
+{
+  return True;
+}
+
+static void init_fields_wd16(void)
+{
+  InstTable = CreateInstTable(201);
+  SetDynamicInstTable(InstTable);
+
+  AddInstTable(InstTable, "NOP"  , NOPCode, decode_fixed);
+  AddInstTable(InstTable, "RESET", 0x0001 , decode_fixed);
+  AddInstTable(InstTable, "IEN"  , 0x0002 , decode_fixed);
+  AddInstTable(InstTable, "IDS"  , 0x0003 , decode_fixed);
+  AddInstTable(InstTable, "HALT" , 0x0004 , decode_fixed);
+  AddInstTable(InstTable, "XCT"  , 0x0005 , decode_fixed);
+  AddInstTable(InstTable, "BPT"  , 0x0006 , decode_fixed);
+  AddInstTable(InstTable, "WFI"  , 0x0007 , decode_fixed);
+  AddInstTable(InstTable, "RSVC" , 0x0008 , decode_fixed);
+  AddInstTable(InstTable, "RRTT" , 0x0009 , decode_fixed);
+  AddInstTable(InstTable, "SAVE" , 0x000a , decode_fixed); SaveIsOccupiedFnc = TrueFnc;
+  AddInstTable(InstTable, "SAVS" , 0x000b , decode_fixed);
+  AddInstTable(InstTable, "REST" , 0x000c , decode_fixed);
+  AddInstTable(InstTable, "RRTN" , 0x000d , decode_fixed);
+  AddInstTable(InstTable, "RSTS" , 0x000e , decode_fixed);
+  AddInstTable(InstTable, "RTT"  , 0x000f , decode_fixed);
+
+  AddInstTable(InstTable, "IAK"  , 0x0010 , decode_one_reg);
+  AddInstTable(InstTable, "RTN"  , 0x0018 , decode_one_reg);
+  AddInstTable(InstTable, "MSKO" , 0x0020 , decode_one_reg);
+  AddInstTable(InstTable, "PRTN" , 0x0028 , decode_one_reg);
+
+  AddInstTable(InstTable, "LCC"  , 0x0030 , decode_lcc);
+
+  AddInstTable(InstTable, "SVCA" , 0x0040 , decode_imm6);
+  AddInstTable(InstTable, "SVCB" , 0x0080 , decode_imm6);
+  AddInstTable(InstTable, "SVCC" , 0x00c0 , decode_imm6);
+
+  AddInstTable(InstTable, "ADDI" , 0x0800 , decode_imm4p1_reg);
+  AddInstTable(InstTable, "SUBI" , 0x0810 , decode_imm4p1_reg);
+  AddInstTable(InstTable, "BICI" , 0x0820 , decode_imm4p1_reg);
+  AddInstTable(InstTable, "MOVI" , 0x0830 , decode_imm4p1_reg);
+  AddInstTable(InstTable, "SSRR" , 0x8800 , decode_imm4p1_reg);
+  AddInstTable(InstTable, "SSLR" , 0x8810 , decode_imm4p1_reg);
+  AddInstTable(InstTable, "SSRA" , 0x8820 , decode_imm4p1_reg);
+  AddInstTable(InstTable, "SSLA" , 0x8830 , decode_imm4p1_reg);
+  AddInstTable(InstTable, "SDRR" , 0x8e00 , decode_imm4p1_reg);
+  AddInstTable(InstTable, "SDLR" , 0x8e10 , decode_imm4p1_reg);
+  AddInstTable(InstTable, "SDRA" , 0x8e20 , decode_imm4p1_reg);
+  AddInstTable(InstTable, "SDLA" , 0x8e30 , decode_imm4p1_reg);
+
+  add_one_arg("ROR", 0x0a00);
+  add_one_arg("ROL", 0x0a40);
+  add_one_arg("TST", 0x0a80);
+  add_one_arg("ASL", 0x0ac0);
+  add_one_arg("SET", 0x0b00); SetIsOccupiedFnc = TrueFnc;
+  add_one_arg("CLR", 0x0b40);
+  add_one_arg("ASR", 0x0b80);
+  add_one_arg("COM", 0x0c00);
+  add_one_arg("NEG", 0x0c40);
+  add_one_arg("INC", 0x0c80);
+  add_one_arg("DEC", 0x0cc0);
+  AddInstTable(InstTable, "SWAB" , 0x0bc0, decode_one_arg);
+  AddInstTable(InstTable, "SWAD" , 0x8bc0, decode_one_arg);
+  AddInstTable(InstTable, "IW2"  , 0x0d00, decode_one_arg);
+  AddInstTable(InstTable, "SXT"  , 0x0d40, decode_one_arg);
+  AddInstTable(InstTable, "TCALL", 0x0d80 | CODE_FLAG_GEN_IMM | CODE_FLAG_16BIT, decode_one_arg);
+  AddInstTable(InstTable, "TJMP" , 0x0dc0 | CODE_FLAG_GEN_IMM | CODE_FLAG_16BIT, decode_one_arg);
+  AddInstTable(InstTable, "LSTS" , 0x8d00 | CODE_FLAG_GEN_IMM | CODE_FLAG_16BIT, decode_one_arg);
+  AddInstTable(InstTable, "SSTS" , 0x8d40, decode_one_arg);
+  AddInstTable(InstTable, "ADC"  , 0x8d80, decode_one_arg);
+  AddInstTable(InstTable, "SBC"  , 0x8dc0, decode_one_arg);
+
+  AddInstTable(InstTable, "MBWU" , 0x0e00, decode_two_reg);
+  AddInstTable(InstTable, "MBWD" , 0x0e40, decode_two_reg);
+  AddInstTable(InstTable, "MBBU" , 0x0e80, decode_two_reg);
+  AddInstTable(InstTable, "MBBD" , 0x0ec0, decode_two_reg);
+  AddInstTable(InstTable, "MBWA" , 0x0f00, decode_two_reg);
+  AddInstTable(InstTable, "MBBA" , 0x0f40, decode_two_reg);
+  AddInstTable(InstTable, "MABW" , 0x0f80, decode_two_reg);
+  AddInstTable(InstTable, "MABB" , 0x0fc0, decode_two_reg);
+
+  AddInstTable(InstTable, "JSR" , 0x7000, decode_jsr);
+  AddInstTable(InstTable, "CALL", 0x7000, decode_call);
+  AddInstTable(InstTable, "LEA" , 0x7200, decode_jsr);
+  AddInstTable(InstTable, "JMP" , 0x7200, decode_call);
+  AddInstTable(InstTable, "ASH" , 0x7400, decode_reg_gen);
+  AddInstTable(InstTable, "SOB" , 0x7600, decode_sob);
+  AddInstTable(InstTable, "XCH" , 0x7800, decode_reg_gen);
+  AddInstTable(InstTable, "ASHC", 0x7a00, decode_reg_gen);
+  AddInstTable(InstTable, "MUL" , 0x7c00, decode_reg_gen);
+  AddInstTable(InstTable, "DIV" , 0x7e00, decode_reg_gen);
+
+  AddInstTable(InstTable, "ADD" , 0x1000 | CODE_FLAG_16BIT, decode_two_arg);
+  AddInstTable(InstTable, "SUB" , 0x2000 | CODE_FLAG_16BIT, decode_two_arg);
+  AddInstTable(InstTable, "AND" , 0x3000 | CODE_FLAG_16BIT, decode_two_arg);
+  AddInstTable(InstTable, "BIC" , 0x4000 | CODE_FLAG_16BIT, decode_two_arg);
+  AddInstTable(InstTable, "BIS" , 0x5000 | CODE_FLAG_16BIT, decode_two_arg);
+  AddInstTable(InstTable, "XOR" , 0x6000 | CODE_FLAG_16BIT, decode_two_arg);
+  AddInstTable(InstTable, "CMP" , 0x9000 | CODE_FLAG_GEN_IMM | CODE_FLAG_16BIT, decode_two_arg);
+  AddInstTable(InstTable, "BIT" , 0xa000 | CODE_FLAG_GEN_IMM | CODE_FLAG_16BIT, decode_two_arg);
+  AddInstTable(InstTable, "MOV" , 0xb000 | CODE_FLAG_16BIT, decode_two_arg);
+  AddInstTable(InstTable, "CMPB", 0xc000 | CODE_FLAG_GEN_IMM, decode_two_arg);
+  AddInstTable(InstTable, "MOVB", 0xd000, decode_two_arg);
+  AddInstTable(InstTable, "BISB", 0xe000, decode_two_arg);
+
+  AddInstTable(InstTable, "FADD", 0xf000, decode_format11);
+  AddInstTable(InstTable, "FSUB", 0xf100, decode_format11);
+  AddInstTable(InstTable, "FMUL", 0xf200, decode_format11);
+  AddInstTable(InstTable, "FDIV", 0xf300, decode_format11);
+  AddInstTable(InstTable, "FCMP", 0xf400, decode_format11);
+
+  init_branches();
 }
 
 /*!------------------------------------------------------------------------
@@ -1815,6 +2110,7 @@ static void initpass_pdp11(void)
 static void switch_from_pdp11(void)
 {
   deinit_fields();
+  p_curr_cpu_props = NULL;
 }
 
 /*!------------------------------------------------------------------------
@@ -1826,15 +2122,16 @@ static void switch_to_pdp11(void *p_user)
 {
   static char *p_assume_reg_names = NULL;
   static ASSUMERec *p_assumes = NULL;
-  const TFamilyDescr *p_descr = FindFamilyByName("PDP-11");
+  const TFamilyDescr *p_descr;
 
   p_curr_cpu_props = (const cpu_props_t*)p_user;
+  p_descr = FindFamilyByName(is_wd16() ? "WD16" : "PDP-11");
   TurnWords = False;
   SetIntConstMode(eIntConstModeC);
 
   PCSymbol = "*";
   HeaderID = p_descr->Id;
-  NOPCode = 000240;
+  NOPCode = is_wd16() ? 0x0000 : 000240;
   DivideChars = ",";
 
   ValidSegs = 1 << SegCode;
@@ -1848,8 +2145,10 @@ static void switch_to_pdp11(void *p_user)
   SwitchFrom = switch_from_pdp11;
   InternSymbol = intern_symbol_pdp11;
   DissectReg = dissect_reg_pdp11;
+  multi_char_le = True;
 
-  onoff_supmode_add();
+  if (!is_wd16())
+    onoff_supmode_add();
   AddONOFF(DoPaddingName, &DoPadding, DoPaddingName, False);
   if (p_curr_cpu_props->opt_flags & e_cpu_flag_eis)
     onoff_ext_add(e_ext_eis, False);
@@ -1862,48 +2161,54 @@ static void switch_to_pdp11(void *p_user)
   if (!ext_test_and_set(0x80))
     SetFlag(&default_regsyms, default_regsyms_name, True);
 
-  /* create list of paging registers upon first use */
+  /* create list of PDP-11 paging registers upon first use */
 
-  if (!reg_par)
+  if (!is_wd16())
   {
-    reg_par = (LongInt*)calloc(APR_COUNT, sizeof(*reg_par));
-    reg_pdr = (LongInt*)calloc(APR_COUNT, sizeof(*reg_pdr));
-    initpass_pdp11();
-  }
-  if (!p_assumes)
-  {
-    int apr_index, assume_index, l;
-    char *p_reg_name;
-
-    if (!p_assume_reg_names)
-      p_assume_reg_names = (char*)malloc(ASSUME_COUNT * (4 + 1));
-    p_assumes = (ASSUMERec*)calloc(ASSUME_COUNT, sizeof(*p_assumes));
-
-    p_reg_name = p_assume_reg_names;
-    for (apr_index = 0; apr_index < APR_COUNT; apr_index++)
+    if (!reg_par)
     {
-      l = as_snprintf(p_reg_name, 6, "PAR%c", apr_index + '0');
-      p_assumes[apr_index * 2].Name = p_reg_name;
-      p_assumes[apr_index * 2].Dest = &reg_par[apr_index];
-      p_reg_name += l + 1;
-      l = as_snprintf(p_reg_name, 6, "PDR%c", apr_index + '0');
-      p_assumes[apr_index * 2 + 1].Name = p_reg_name;
-      p_assumes[apr_index * 2 + 1].Dest = &reg_pdr[apr_index];
-      p_reg_name += l + 1;
+      reg_par = (LongInt*)calloc(APR_COUNT, sizeof(*reg_par));
+      reg_pdr = (LongInt*)calloc(APR_COUNT, sizeof(*reg_pdr));
+      initpass_pdp11();
     }
-    for (assume_index = 0; assume_index < ASSUME_COUNT; assume_index++)
+    if (!p_assumes)
     {
-      p_assumes[assume_index].Min = 0x0000;
-      p_assumes[assume_index].Max = 0xffff;
-      p_assumes[assume_index].NothingVal = 0x0000;
-      p_assumes[assume_index].pPostProc = update_apr;
-    }
-  }
-  pASSUMERecs = p_assumes;
-  ASSUMERecCnt = ASSUME_COUNT;
-  update_apr();
+      int apr_index, assume_index, l;
+      char *p_reg_name;
 
-  init_fields();
+      if (!p_assume_reg_names)
+        p_assume_reg_names = (char*)malloc(ASSUME_COUNT * (4 + 1));
+      p_assumes = (ASSUMERec*)calloc(ASSUME_COUNT, sizeof(*p_assumes));
+
+      p_reg_name = p_assume_reg_names;
+      for (apr_index = 0; apr_index < APR_COUNT; apr_index++)
+      {
+        l = as_snprintf(p_reg_name, 6, "PAR%c", apr_index + '0');
+        p_assumes[apr_index * 2].Name = p_reg_name;
+        p_assumes[apr_index * 2].Dest = &reg_par[apr_index];
+        p_reg_name += l + 1;
+        l = as_snprintf(p_reg_name, 6, "PDR%c", apr_index + '0');
+        p_assumes[apr_index * 2 + 1].Name = p_reg_name;
+        p_assumes[apr_index * 2 + 1].Dest = &reg_pdr[apr_index];
+        p_reg_name += l + 1;
+      }
+      for (assume_index = 0; assume_index < ASSUME_COUNT; assume_index++)
+      {
+        p_assumes[assume_index].Min = 0x0000;
+        p_assumes[assume_index].Max = 0xffff;
+        p_assumes[assume_index].NothingVal = 0x0000;
+        p_assumes[assume_index].pPostProc = update_apr;
+      }
+    }
+    pASSUMERecs = p_assumes;
+    ASSUMERecCnt = ASSUME_COUNT;
+    update_apr();
+  }
+
+  if (is_wd16())
+    init_fields_wd16();
+  else
+    init_fields_pdp11();
 }
 
 /*!------------------------------------------------------------------------
@@ -1951,7 +2256,15 @@ static const cpu_props_t cpu_props[] =
   {      "PDP-11/84" , UInt22, opt_cpu_flags_j11                , cpu_flags_j11 },
   { "MicroPDP-11/93" , UInt22, opt_cpu_flags_j11                , cpu_flags_j11 },
   {      "PDP-11/94" , UInt22, opt_cpu_flags_j11                , cpu_flags_j11 },
-  {           "T-11" , UInt16, opt_cpu_flags_t11                , cpu_flags_t11 }
+  {           "T-11" , UInt16, opt_cpu_flags_t11                , cpu_flags_t11 },
+
+  /* The WD16 is basically an LSI-11 with 
+     - different microcode,
+     - different opcodes,
+     - different floating point format
+     but same architecture: */
+
+  {           "WD16" , UInt16, 0                                , e_cpu_flag_wd16 | e_cpu_flag_sob_sxt },
 };
 
 void codepdp11_init(void)

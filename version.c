@@ -11,7 +11,7 @@
 #include "stdinc.h"
 #include <string.h>
 
-const char *Version = "1.42 Beta [Bld 241]";
+const char *Version = "1.42 Beta [Bld 242]";
 const char *DebVersion = "1.42bld241-1";
 LongInt VerNo = 0x142f;
 

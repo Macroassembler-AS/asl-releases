@@ -207,7 +207,6 @@ void Double_2_ieee10(Double inp, Byte *pDest, Boolean NeedsBig)
 
 Boolean Double_2_ieee2(Double inp, Byte *pDest, Boolean NeedsBig)
 {
-  Byte Buf[8];
   Word Sign;
   Integer Exponent;
   LongWord Mantissa, Fraction;
@@ -217,36 +216,11 @@ Boolean Double_2_ieee2(Double inp, Byte *pDest, Boolean NeedsBig)
   fprintf(stderr, "(0) %g\n", inp);
 #endif
 
-  /* get into byte array, MSB first */
-
-  Double_2_ieee8(inp, Buf, True);
-
   /* (1) Dissect IEEE number */
 
-  /* (1a) Sign is MSB of first byte: */
+  ieee8_dissect(&Sign, &Exponent, &Mantissa, &Fraction, inp);
 
-  Sign = !!(Buf[0] & 0x80);
-
-  /* (1b) Exponent is stored in the following 11 bits, with a bias of 1023:  */
-
-  Exponent = (Buf[0] & 0x7f);
-  Exponent = (Exponent << 4) | ((Buf[1] >> 4) & 15);
-  Exponent -= 1023;
-
-  /* (1c) Extract 28 bits of mantissa: */
-
-  Mantissa = Buf[1] & 15;
-  Mantissa = (Mantissa << 8) | Buf[2];
-  Mantissa = (Mantissa << 8) | Buf[3];
-  Mantissa = (Mantissa << 8) | Buf[4];
-
-  /* (1d) remaining 24 bits of mantissa, needed for double precision and rounding: */
-
-  Fraction = Buf[5];
-  Fraction = (Fraction << 8) | Buf[6];
-  Fraction = (Fraction << 8) | Buf[7];
-
-  /* (1e) All-ones Exponent (2047-1023=1024) is reserved for NaN and infinity: */
+  /* (1b) All-ones Exponent (2047-1023=1024) is reserved for NaN and infinity: */
 
   if (Exponent == 1024)
   {
@@ -273,7 +247,7 @@ Boolean Double_2_ieee2(Double inp, Byte *pDest, Boolean NeedsBig)
     return True;
   }
 
-  /* (1f) if not denormal, make leading one of mantissa explicit: */
+  /* (1c) if not denormal, make leading one of mantissa explicit: */
 
   if (Exponent != -1023)
     Mantissa |= 0x10000000ul;
@@ -281,34 +255,34 @@ Boolean Double_2_ieee2(Double inp, Byte *pDest, Boolean NeedsBig)
   fprintf(stderr, "(cnvrt) %2d * 0x%08x * 2^%d Fraction 0x%08x\n", Sign ? -1 : 1, Mantissa, Exponent, Fraction);
 #endif
 
- /* (2) Round-to-the-nearest for FP16: */
+  /* (2) Round-to-the-nearest for FP16: */
 
-   /* Bits 27..18 of fractional part of mantissa will make it into dest, so the decision bit is bit 17: */
+  /* Bits 27..18 of fractional part of mantissa will make it into dest, so the decision bit is bit 17: */
 
-   if (Mantissa & 0x20000ul) /* fraction is >= 0.5 */
-   {
-     if ((Mantissa & 0x1fffful) || Fraction) /* fraction is > 0.5 -> round up */
-       RoundUp = True;
-     else /* fraction is 0.5 -> round towards even, i.e. round up if mantissa is odd */
-       RoundUp = !!(Mantissa & 0x40000ul);
-   }
-   else /* fraction is < 0.5 -> round down */
-     RoundUp = False;
+  if (Mantissa & 0x20000ul) /* fraction is >= 0.5 */
+  {
+    if ((Mantissa & 0x1fffful) || Fraction) /* fraction is > 0.5 -> round up */
+      RoundUp = True;
+    else /* fraction is 0.5 -> round towards even, i.e. round up if mantissa is odd */
+      RoundUp = !!(Mantissa & 0x40000ul);
+  }
+  else /* fraction is < 0.5 -> round down */
+    RoundUp = False;
 #if DBG_FLOAT
-   fprintf(stderr, "RoundUp %u\n", RoundUp);
+  fprintf(stderr, "RoundUp %u\n", RoundUp);
 #endif
-   if (RoundUp)
-   {
-     Mantissa += 0x40000ul - (Mantissa & 0x3fffful);
-     Fraction = 0;
-     if (Mantissa & 0x20000000ul)
-     {
-       Mantissa >>= 1;
-       Exponent++;
-     }
-   }
+  if (RoundUp)
+  {
+    Mantissa += 0x40000ul - (Mantissa & 0x3fffful);
+    Fraction = 0;
+    if (Mantissa & 0x20000000ul)
+    {
+      Mantissa >>= 1;
+      Exponent++;
+    }
+  }
 #if DBG_FLOAT
-   fprintf(stderr, "(round) %2d * 0x%08x * 2^%d Fraction 0x%08x\n", Sign ? -1 : 1, Mantissa, Exponent, Fraction);
+  fprintf(stderr, "(round) %2d * 0x%08x * 2^%d Fraction 0x%08x\n", Sign ? -1 : 1, Mantissa, Exponent, Fraction);
 #endif
 
   /* (3a) Overrange? */

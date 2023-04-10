@@ -121,6 +121,7 @@ Boolean (*SetIsOccupiedFnc)(void),       /* TRUE: SET instr, to be parsed by cod
 Boolean SwitchIsOccupied,                /* TRUE: SWITCH/PAGE/SHIFT ist Prozessorbefehl */
         PageIsOccupied,
         ShiftIsOccupied;
+Boolean multi_char_le;
 #ifdef __PROTOS__
 Boolean (*DecodeAttrPart)(void);         /* dissect attribute of instruction */
 void (*MakeCode)(void);                  /* Codeerzeugungsprozedur */
