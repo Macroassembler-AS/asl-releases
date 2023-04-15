@@ -1,4 +1,11 @@
-2023-04-10  [1.42 Bld 242]
+2023-04-15 [1.42 Bld 243]
+
+- Addition    : Add Renesas RX target (contribution
+                by Haruo Asano)
+- Bugfix      : WD16: correct format 11 addressing modes
+- Bugfix      : PDP-11/WD16: @(Rn) was wrongly assembled as @Rn
+
+2023-04-10 [1.42 Bld 242]
 
 - Change      : Enable more FP16 tests
 - Bugfix      : assign unique header ID to PDP-11

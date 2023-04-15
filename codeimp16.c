@@ -1182,8 +1182,8 @@ static void init_fields(Boolean is_pace)
 
   if (ValidSegs & (1 << SegCode))
     AddInstTable(InstTable, "PORT" , 0, decode_port);
-  AddInstTable(InstTable, "ASCII" , eIntPseudoFlag_AllowInt | eIntPseudoFlag_BigEndian, DecodeIntelDB);
-  AddInstTable(InstTable, "WORD" , eIntPseudoFlag_AllowInt, DecodeIntelDW);
+  AddInstTable(InstTable, "ASCII" , eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_BigEndian, DecodeIntelDB);
+  AddInstTable(InstTable, "WORD" , eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString, DecodeIntelDW);
   AddInstTable(InstTable, "LTORG", 0, decode_ltorg);
 
   conditions = (symbol_t*) calloc(condition_cnt, sizeof(*conditions)); InstrZ = 0;

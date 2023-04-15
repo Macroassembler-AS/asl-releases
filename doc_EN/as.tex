@@ -66,7 +66,7 @@
 
 \vspace{1cm}\par
 
-{\large Edition March 2023}
+{\large Edition April 2023}
 \end{raggedright}
 
 \clearpage
@@ -295,6 +295,7 @@ following processor families have been implemented:
 \item{OKI OLMS-40}
 \item{OKI OLMS-50}
 \item{Panafacom MN1610/MN1613}
+\item{Renesas RX}
 \item{Padauk PMS/PMC/PFSxxx}
 \item{Symbios Logic SYM53C8xx (yes, they are programmable!)}
 \item{Intersil CDP1802/1804/1805(A)}
@@ -307,7 +308,6 @@ following processor families have been implemented:
 \end{itemize}
 under work / planned / in consideration :
 \begin{itemize}
-\item{NEC V60}
 \item{ARM}
 \item{Analog Devices ADSP21xx}
 \item{SGS-Thomson ST20}
@@ -4036,7 +4036,20 @@ address space, a floating point unit and a couple of new machine
 instructions.
 %%-----------
 \begin{quote}
-cr) PMC150, PMS150, PFS154, PMC131, PMS130, PMS131 \\
+cr) RXV1, RX110, RX111, RX113, RX130, RX210,\\
+    RX21A, RX220, RX610, RX621, RX62N, RX630,\\
+    RX631 $\longrightarrow$ \\
+    RXV2, RX140, RX230, RX231, RX64M,\\
+    RX651 $\longrightarrow$ \\
+    RXV3, RX660, RX671, RX72M, RX72N.\\
+\end{quote}
+Controllers of the RX series can coarsely be classified
+into three groups or generations.  From generation to 
+generation (RXv1, RXv2, RXv3), new machine instructions
+were added.
+%%-----------
+\begin{quote}
+cs) PMC150, PMS150, PFS154, PMC131, PMS130, PMS131 \\
     PMS132, PMS132B, PMS152, PMS154B, PMS154C, PFS173 \\
     PMS133, PMS134, DF69, MCS11, PMC232, PMC234, PMC251 \\
     PMC271,PMC884, PMS232, PMS234, PMS271
@@ -4047,7 +4060,7 @@ the built-in peripherals, and their instruction set (both
 extent and binary coding).
 %%-----------
 \begin{quote}
-cs) 1802 $\rightarrow$ 1804, 1805, 1806 $\rightarrow$ 1804A,
+ct) 1802 $\rightarrow$ 1804, 1805, 1806 $\rightarrow$ 1804A,
 1805A, 1806A
 \end{quote}
 1804, 1805, and 1806 feature an instruction set that is slightly
@@ -4057,31 +4070,31 @@ an integrated timer.  The A variants extend the instruction set by
 subtraction in BCD format.
 %%-----------
 \begin{quote}
-ct) XS1
+cu) XS1
 \end{quote}
 This type represents the XCore-"family".
 %%-----------
 \begin{quote}
-cu) 1750
+cv) 1750
 \end{quote}
 MIL STD 1750 is a standard, therefore there is only one
 (standard) variant...
 %%-----------
 \begin{quote}
-cv) KENBAK
+cw) KENBAK
 \end{quote}
 Since there has never been a KENBAK-2, the target is simply KENBAK...
 %%-----------
 \begin{quote}
-cw) CP-1600
+cx) CP-1600
 \end{quote}
 %%-----------
 \begin{quote}
-cx) HPNANO
+cy) HPNANO
 \end{quote}
 %%-----------
 \begin{quote}
-cy) 6100 $\rightarrow$ 6120
+cz) 6100 $\rightarrow$ 6120
 \end{quote}
 The IM6120 supports a larger address space (32K
 instead of 4K) and additional machine instructions.
@@ -4393,7 +4406,7 @@ required.  The current setting may be read from the variable
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 \subsection{BIGENDIAN}
-\ttindex{BIGENDIAN}\label{SectBIGENDIAN}
+\ttindex{ENDIAN}\ttindex{BIGENDIAN}\label{SectBIGENDIAN}
 
 {\em valid for: MCS-51/251, PowerPC, SC/MP, 2650}
 
@@ -4411,6 +4424,10 @@ memory as it used to be on earlier versions of AS, \tty{BIGENDIAN ON}
 engages the big-endian mode compatible to the MCS-251.  One may of course
 change this setting as often as one wants; the current setting can be read
 from the symbol with the same name.
+
+The Renesas RX as target also supports a selectable endianess.  For
+compatibility to the original assembler, the statement is named \tty{ENDIAN}
+and accepts \tty{LITTLE} or \tty{BIG} as argument.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -5335,6 +5352,18 @@ attributes therefore do not exist just as in the case of \tty{DC}.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+\subsection{BLKB, BLKW, BLKL, BLKD}
+\ttindex{BLKB}\ttindex{BLKW}\ttindex{BLKL}\ttindex{BLKD}
+
+{\em valid for: Renesas RX}
+
+These statements are used to reserve memory on Renesas RX. The total amount
+of memory reserved is the instruction's argument times the operand size
+given by the instruction (1 byte for \tty{BLKB}, 2 bytes for \tty{BLKW}, 4
+bytes for \tty{BLKL}, and 8 bytes for \tty{BLKD}).
+
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 \subsection{DN,DB,DW,DD,DQ, and DT}
 \ttindex{DN}\ttindex{DB}\ttindex{DW}\ttindex{DD}\ttindex{DQ}\ttindex{DT}
 
@@ -5389,16 +5418,30 @@ The \tty{DUP} operator only gets recognized if it is itself not enclosed
 in parentheses, and if there is a non-empty argument to its left.  This
 way, it is possible to use a symbol of same name as argument.
 
-In order to be compatible to the M80, \tty{DEFB/DEFW} may be used instead of
-\tty{DB/DW} in Z80-mode.
-
-Similarly, \tty{BYTE/ADDR} resp. \tty{WORD/ADDRW} in COP4/8 mode are an
-alias for \tty{DB} resp. \tty{DW}, with the pairs differing in byte order:
-instructions defined by National for address storage use big endian,
-\tty{BYTE} resp. \tty{WORD} in contrast use little endian.
-
-\tty{BYTE} resp. \tty{WORD} are available on PDP-11 and WD16 as an alias
-for \tty{DB} resp. \tty{DW}.
+Several platforms define pseudo instructions with same functionality,
+but different names:
+\begin{itemize}
+\ttindex{DEFB}\ttindex{DEFW}
+\item{In order to be compatible to the M80, \tty{DEFB/DEFW} may be used
+      instead of \tty{DB/DW} in Z80-mode.}
+\ttindex{BYTE}\ttindex{WORD}\ttindex{ADDR}\ttindex{ADDRW}
+\item{\tty{BYTE/ADDR} resp. \tty{WORD/ADDRW} in COP4/8 mode are an
+      alias for \tty{DB} resp. \tty{DW}, with the pairs differing in byte
+      order: instructions defined by National for address storage use big
+      endian, \tty{BYTE} resp. \tty{WORD} in contrast use little endian.}
+\ttindex{BYTE}\ttindex{WORD}
+\item{\tty{BYTE} resp. \tty{WORD} are available on PDP-11 and WD16 as an
+      alias for \tty{DB} resp. \tty{DW}.}
+\ttindex{BYTE}\ttindex{WORD}\ttindex{LWORD}\ttindex{FLOAT}\ttindex{DOUBLE}
+\item{The Renesas RX target provides:
+      \begin{itemize}
+      \item{\tty{BYTE} (like \tty{DB})}
+      \item{\tty{WORD} (like \tty{DW}, only integer arguments)}
+      \item{\tty{LWORD} (like \tty{DD}, only integer arguments)}
+      \item{\tty{FLOAT} (like \tty{DD}, only floating point arguments)}
+      \item{\tty{DOUBLE} (like \tty{DQ}, only floating point arguments)}
+      \end{itemize}}
+\end{itemize}
 
 If \tty{DB} is used in an address space that is not byte addressable (like
 the Atmel AVR's \tty{CODE} segment), bytes are packed in pairs into 16 bit
@@ -12193,6 +12236,21 @@ described by:
                {error}
                {Only a floating point argument may be used at this place,
                 but an integer argument was given.}
+               {the argument in question}
+\errentry{1151}{expected integer or floating point number but got register}
+               {error}
+               {Only an integer or floating point number argument may be used at this place,
+                but a register was given.}
+               {the argument in question}
+\errentry{1152}{expected integer or string but got register}
+               {error}
+               {Only an integer or string argument may be used at this place,
+                but a register was given.}
+               {the argument in question}
+\errentry{1153}{expected integer but got register}
+               {error}
+               {Only an integer argument may be used at this place,
+                but a register was given.}
                {the argument in question}
 \errentry{1200}{unknown instruction}
                {error}

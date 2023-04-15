@@ -2924,9 +2924,9 @@ static void InitFields(void)
   AddInstTable(InstTable, "WRVAL", 0x01 | (eSymbolSize32Bit << 8), DecodeRDVAL_WRVAL);
 
   AddInstTable(InstTable, "REG" , 0, CodeREG);
-  AddInstTable(InstTable, "BYTE"   , eIntPseudoFlag_AllowInt   , DecodeIntelDB);
-  AddInstTable(InstTable, "WORD"   , eIntPseudoFlag_AllowInt   , DecodeIntelDW);
-  AddInstTable(InstTable, "DOUBLE" , eIntPseudoFlag_AllowInt   , DecodeIntelDD);
+  AddInstTable(InstTable, "BYTE"   , eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString , DecodeIntelDB);
+  AddInstTable(InstTable, "WORD"   , eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString , DecodeIntelDW);
+  AddInstTable(InstTable, "DOUBLE" , eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString , DecodeIntelDD);
   AddInstTable(InstTable, "FLOAT"  , eIntPseudoFlag_AllowFloat , DecodeIntelDD);
   AddInstTable(InstTable, "LONG"   , eIntPseudoFlag_AllowFloat , DecodeIntelDQ);
   AddInstTable(InstTable, "FPU"    , 0, CodeFPU);

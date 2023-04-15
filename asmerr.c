@@ -329,6 +329,12 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
       msgno = Num_ErrMsgFloatButInt; break;
     case ErrNum_NoRelocs:
       msgno = Num_ErrMsgNoRelocs; break;
+    case ErrNum_IntOrFloatButReg:
+      msgno = Num_ErrMsgIntOrFloatButReg; break;
+    case ErrNum_IntOrStringButReg:
+      msgno = Num_ErrMsgIntOrStringButReg; break;
+    case ErrNum_IntButReg:
+      msgno = Num_ErrMsgIntButReg; break;
     case ErrNum_UnresRelocs:
       msgno = Num_ErrMsgUnresRelocs; break;
     case ErrNum_Unexportable:

@@ -150,6 +150,10 @@ dest	equ	r5
 	endexpect
 	endif
 
+	; @(Rn) was wrongly 'optimized' to @Rn up to Build 242:
+
+	adc	@(r4)
+
 	; -> immediate, which is actually (PC)+
 
 	mov	#1234,r3

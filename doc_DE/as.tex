@@ -48,7 +48,7 @@
 
 \vspace{1cm}\par
 
-{\large Stand M"arz 2023}
+{\large Stand April 2023}
 \end{raggedright}
 
 \clearpage
@@ -290,6 +290,7 @@ folgende Prozessorfamilien implementiert:
 \item{OKI OLMS-40}
 \item{OKI OLMS-50}
 \item{Panafacom MN1610/MN1613}
+\item{Renesas RX}
 \item{Padauk PMS/PMC/PFSxxx}
 \item{Symbios Logic SYM53C8xx (ja, die kann man programmieren!)}
 \item{Intersil CDP1802/1804/1805(A)}
@@ -302,7 +303,6 @@ folgende Prozessorfamilien implementiert:
 \end{itemize}
 in Arbeit / Planung / "Uberlegung :
 \begin{itemize}
-\item{NEC V60}
 \item{ARM}
 \item{Analog Devices ADSP21xx}
 \item{SGS-Thomson ST20}
@@ -4147,7 +4147,20 @@ MN1613 einen gr"o"seren Adre"sraum, eine Floating-Point-Einheit
 sowie eine ganze Reihe neuer Befehle.
 %%-----------
 \begin{quote}
-cr) PMC150, PMS150, PFS154, PMC131, PMS130, PMS131 \\
+cr) RXV1, RX110, RX111, RX113, RX130, RX210,\\
+    RX21A, RX220, RX610, RX621, RX62N, RX630,\\
+    RX631 $\longrightarrow$ \\
+    RXV2, RX140, RX230, RX231, RX64M,\\
+    RX651 $\longrightarrow$ \\
+    RXV3, RX660, RX671, RX72M, RX72N.\\
+\end{quote}
+Die Controller der RX-Serie k"onnen grob in drei
+Gruppen bzw. Generationen eingeteilt werden, wobei
+von Generation zu Generation (RXv1, RXv2, RXv3)
+jeweils neue Instruktionen hinzu gekommen sind.
+%%-----------
+\begin{quote}
+cs) PMC150, PMS150, PFS154, PMC131, PMS130, PMS131 \\
 PMS132, PMS132B, PMS152, PMS154B, PMS154C, PFS173 \\
 PMS133, PMS134, DF69, MCS11, PMC232, PMC234, PMC251 \\
 PMC271,PMC884, PMS232, PMS234, PMS271
@@ -4158,7 +4171,7 @@ des internen ROMs (l"oschbar oder OTP), der eingebauten
 Peripherie sowie in Umfang und Kodierung des Befehlssatzes.
 %%-----------
 \begin{quote}
-cs) 1802 $\rightarrow$ 1804, 1805, 1806 $\rightarrow$ 1804A, 1805A
+ct) 1802 $\rightarrow$ 1804, 1805, 1806 $\rightarrow$ 1804A, 1805A
 1806A
 \end{quote}
 1804, 1805 und 1806 haben gegen"uber dem 'Original' 1802 einen leicht
@@ -4168,31 +4181,31 @@ Timer.  Die A-Versionen erweitern den Befehlssatz um \tty{DSAV},
 BCD-Format.
 %%-----------
 \begin{quote}
-ct) XS1
+cu) XS1
 \end{quote}
 Dieser Typ repr"asentiert die XCore-''Familie''.
 %%-----------
 \begin{quote}
-cu) 1750
+cv) 1750
 \end{quote}
 MIL STD 1750 ist ein Standard, also gibt es auch nur eine
 (Standard-)Variante...
 %%-----------
 \begin{quote}
-cv) KENBAK
+cw) KENBAK
 \end{quote}
 Es hat nie einen KENBAK-2 gegeben...
 %%-----------
 \begin{quote}
-cw) CP-1600
+cx) CP-1600
 \end{quote}
 %%-----------
 \begin{quote}
-cx) HPNANO
+cy) HPNANO
 \end{quote}
 %%-----------
 \begin{quote}
-cy) 6100 $\rightarrow$ 6120
+cz) 6100 $\rightarrow$ 6120
 \end{quote}
 Der IM6120 unterst"utzt einen gr"o"seren Adre"sraum (32K
 anstelle 4K) sowie zus"atzliche Maschinenbefehle.
@@ -4516,7 +4529,7 @@ kann man aus der Variablen \tty{INSRCMODE} auslesen.  Der Default ist
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 \subsection{BIGENDIAN}
-\ttindex{BIGENDIAN}\label{SectBIGENDIAN}
+\ttindex{ENDIAN}\ttindex{BIGENDIAN}\label{SectBIGENDIAN}
 
 {\em G"ultigkeit: MCS-51/251, PowerPC, SC/MP, 2650}
 
@@ -4536,6 +4549,10 @@ zuerst das niederwertigste Byte abgelegt, mit \tty{BIGENDIAN ON} wird die
 MCS-251-kompatible Variante benutzt.  Nat"urlich kann man diese Einstellung
 beliebig oft im Code "andern; die momentane Einstellung kann aus dem
 gleichnamigen Symbol ausgelesen werden.
+
+F"ur Renesas RX ist die Endianess ebenfalls umschaltbar, aus Kompatibilit"at
+zum Original-Assembler hei"st der Befehl hier jedoch \tty{ENDIAN} und
+akzeptiert ein \tty{LITTLE} oder \tty{BIG} als Argument.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -5474,6 +5491,19 @@ Attribute gibt es deswegen wie bei \tty{DC} auch hier nicht.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+\subsection{BLKB, BLKW, BLKL, BLKD}
+\ttindex{BLKB}\ttindex{BLKW}\ttindex{BLKL}\ttindex{BLKD}
+
+{\em G"ultigkeit: Renesas RX}
+
+Mit diesen Befehlen wird auf dem Renesas RX Speicher reserviert.  Die
+Gesamtgr"o"se des reservierten Speicher resultiert aus dem Produkt des
+Arguments und der durch den Befehl gegebenen Operandengr"o"se (1 Byte
+f"ur \tty{BLKB}, 2 Byte f"ur \tty{BLKW}, 4 Byte f"ur \tty{BLKL} und
+8 Byte f"ur \tty{BLKD}).
+
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 \subsection{DN,DB,DW,DD,DQ \& DT}
 \ttindex{DN}\ttindex{DB}\ttindex{DW}\ttindex{DD}\ttindex{DQ}\ttindex{DT}
 
@@ -5534,19 +5564,32 @@ und links von ihm ein nicht-leeres Argument steht; auf diese Weise ist es
 m"oglich ein eventuell definiertes Symbol gleichen Namens auch als Argument
 zu verwenden.
 \par
+Auf verschiedenen Plattformen existieren Befehle mit identischer
+Funktionalit"at, jedoch anderem Namen:
+\begin{itemize}
 \ttindex{DEFB}\ttindex{DEFW}
-Um mit dem M80 vertr"aglich zu sein, darf im Z80-Modus anstelle von
-\tty{DB}/\tty{DW} auch \tty{DEFB}/\tty{DEFW} geschrieben werden.
-\par
+\item{Um mit dem M80 vertr"aglich zu sein, darf im Z80-Modus anstelle
+      von \tty{DB}/\tty{DW} auch \tty{DEFB}/\tty{DEFW} geschrieben
+      werden.}
 \ttindex{BYTE}\ttindex{WORD}\ttindex{ADDR}\ttindex{ADDRW}
-Analog stellen \tty{BYTE/ADDR} bzw. \tty{WORD/ADDRW} beim COP4/8 einen
-Alias f"ur \tty{DB} bzw. \tty{DW} dar, wobei die beiden Paare sich
-jedoch in der Byte-Order unterscheiden: Die Befehle, die von National
-zur Adre"sablage vorgesehen waren, benutzen Big-Endian, \tty{BYTE} bzw.
-\tty{WORD} jedoch Little-Endian.
-\par
-\tty{BYTE} bzw. \tty{WORD} stehen auf der PDP-11 und WD16 als Alias f"ur
-\tty{DB} bzw. \tty{DW} zur Verf"ugung.
+\item{\tty{BYTE/ADDR} bzw. \tty{WORD/ADDRW} beim COP4/8 stellen einen
+      Alias f"ur \tty{DB} bzw. \tty{DW} dar, wobei die beiden Paare sich
+      jedoch in der Byte-Order unterscheiden: Die Befehle, die von
+      National zur Adre"sablage vorgesehen waren, benutzen Big-Endian,
+      \tty{BYTE} bzw. \tty{WORD} jedoch Little-Endian.}
+\ttindex{BYTE}\ttindex{WORD}
+\item{\tty{BYTE} bzw. \tty{WORD} stehen auf der PDP-11 und WD16 als
+      Alias f"ur \tty{DB} bzw. \tty{DW} zur Verf"ugung.}
+\ttindex{BYTE}\ttindex{WORD}\ttindex{LWORD}\ttindex{FLOAT}\ttindex{DOUBLE}
+\item{Auf dem Renesas RX existieren:
+      \begin{itemize}
+      \item{\tty{BYTE} (wie \tty{DB})}
+      \item{\tty{WORD} (wie \tty{DW}, nur Ganzzahl-Argumente)}
+      \item{\tty{LWORD} (wie \tty{DD}, nur Ganzzahl-Argumente)}
+      \item{\tty{FLOAT} (wie \tty{DD}, nur Gleitkomma-Argumente)}
+      \item{\tty{DOUBLE} (wie \tty{DQ}, nur Gleitkomma-Argumente)}
+      \end{itemize}}
+\end{itemize}
 
 Wird \tty{DB} in einem Adre"sraum angewendet, der nicht byte-adressierbar
 ist (z.B. das \tty{CODE}-Segment des Atmel AVR), so werden immer zwei Bytes
@@ -12471,6 +12514,21 @@ Angaben:
                {Fehler}
                {An dieser Stelle kann kein Ganzzahl-, sondern nur ein Gleitkomma-
                 Argument verwendet werden.}
+               {das fehlerhafte Argument}
+\errentry{1151}{Ganz- oder Gleitkommazahl erwartet, aber Register bekommen}
+               {Fehler}
+               {An dieser Stelle kann kein Register, sondern nur eine Ganz-
+                oder Gleitkommazahl als Argument verwendet werden.}
+               {das fehlerhafte Argument}
+\errentry{1152}{Ganzzahl oder String erwartet, aber Register bekommen}
+               {Fehler}
+               {An dieser Stelle kann kein Register, sondern nur eine Ganzzahl
+                 oder ein String als Argument verwendet werden.}
+               {das fehlerhafte Argument}
+\errentry{1153}{Ganzzahl erwartet, aber Register bekommen}
+               {Fehler}
+               {An dieser Stelle kann kein Register, sondern nur eine Ganzzahl
+                als Argument verwendet werden.}
                {das fehlerhafte Argument}
 \errentry{1200}{Unbekannter Befehl}
                {Fehler}

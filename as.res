@@ -1093,6 +1093,18 @@ Message ErrMsgNoRelocs
  "relokatible Symbole nicht erlaubt"
  "relocatable symbols not allowed"
 
+Message ErrMsgIntOrFloatButReg
+ "Ganz- oder Gleitkommazahl erwartet, aber Register bekommen"
+ "expected integer or floating point number but got register"
+
+Message ErrMsgIntOrStringButReg
+ "Ganzzahl oder String erwartet, aber Register bekommen"
+ "expected integer or string but got register"
+
+Message ErrMsgIntButReg
+ "Ganzzahl erwartet, aber Register bekommen"
+ "expected integer but got register"
+
 Message ErrMsgUnresRelocs
  "unverarbeitete externe Referenzen"
  "unprocessed external references"

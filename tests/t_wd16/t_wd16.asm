@@ -962,44 +962,47 @@
 	bisb	0x1234,0x1345		; 0xedf7 0x0a26 0x0b35
 	bisb	@0x1234,@0x1345		; 0xefff 0x0a20 0x0b2f
 
-	fadd	r2,r3			; 0xf023
-	fadd	r2,@r3			; 0xf02b
-	fadd	@r2,r3			; 0xf0a3
-	fadd	@r2,@r3			; 0xf0ab
+	; note that (Rn) without displacement is treated
+	; like @Rn, so either is allowed here for mode FP0:
+
+	fadd	@r2,(r3)		; 0xf023
+	fadd	(r2),@(r3)		; 0xf02b
+	fadd	@(r2),@r3		; 0xf0a3
+	fadd	@(r2),@(r3)		; 0xf0ab
 	expect	1350
-	fadd	r2,(r4)+
+	fadd	@r2,(r4)+
 	endexpect
 
-	fsub	r2,r3			; 0xf123
-	fsub	r2,@r3			; 0xf12b
-	fsub	@r2,r3			; 0xf1a3
-	fsub	@r2,@r3			; 0xf1ab
+	fsub	@r2,(r3)		; 0xf123
+	fsub	(r2),@(r3)		; 0xf12b
+	fsub	@(r2),@r3		; 0xf1a3
+	fsub	@(r2),@(r3)		; 0xf1ab
 	expect	1350
-	fsub	r2,(r4)+
+	fsub	@r2,(r4)+
 	endexpect
 
-	fmul	r2,r3			; 0xf223
-	fmul	r2,@r3			; 0xf22b
-	fmul	@r2,r3			; 0xf2a3
-	fmul	@r2,@r3			; 0xf2ab
+	fmul	@r2,(r3)		; 0xf223
+	fmul	(r2),@(r3)		; 0xf22b
+	fmul	@(r2),@r3		; 0xf2a3
+	fmul	@(r2),@(r3)		; 0xf2ab
 	expect	1350
-	fmul	r2,(r4)+
+	fmul	@r2,(r4)+
 	endexpect
 
-	fdiv	r2,r3			; 0xf323
-	fdiv	r2,@r3			; 0xf32b
-	fdiv	@r2,r3			; 0xf3a3
-	fdiv	@r2,@r3			; 0xf3ab
+	fdiv	@r2,(r3)		; 0xf323
+	fdiv	(r2),@(r3)		; 0xf32b
+	fdiv	@(r2),@r3		; 0xf3a3
+	fdiv	@(r2),@(r3)		; 0xf3ab
 	expect	1350
-	fdiv	r2,(r4)+
+	fdiv	@r2,(r4)+
 	endexpect
 
-	fcmp	r2,r3			; 0xf423
-	fcmp	r2,@r3			; 0xf42b
-	fcmp	@r2,r3			; 0xf4a3
-	fcmp	@r2,@r3			; 0xf4ab
+	fcmp	@r2,(r3)		; 0xf423
+	fcmp	(r2),@(r3)		; 0xf42b
+	fcmp	@(r2),@r3		; 0xf4a3
+	fcmp	@(r2),@(r3)		; 0xf4ab
 	expect	1350
-	fcmp	r2,(r4)+
+	fcmp	@r2,(r4)+
 	endexpect
 
 	; The assumption is that the WD-16's

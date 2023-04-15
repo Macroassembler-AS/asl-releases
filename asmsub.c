@@ -38,7 +38,7 @@
 
 #ifdef __TURBOC__
 #ifdef __DPMI16__
-#define STKSIZE 33792
+#define STKSIZE 32768
 #else
 #define STKSIZE 49152
 #endif
