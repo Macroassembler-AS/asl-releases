@@ -27,6 +27,20 @@ derived from imported vendor commits on `upstream`.
   particular versions of ASL.
 
 
+Building ASL
+------------
+
+The detailed instructions are with the ASL code itself in the `upstream`
+branch. However, as a quick guide for Linux:
+
+    sudo apt-get install build-essential texlive    # Debian packages
+    git checkout upstream
+    cp Makefile.def-samples/Makefile.def-x86_64-unknown-linux Makefile.def
+    #   edit Makefile.def to set install path
+    make -j8        # does not build docs
+    make install    # optional, but needed for it to find libary include files
+
+
 Importing New ASL Releases
 --------------------------
 
