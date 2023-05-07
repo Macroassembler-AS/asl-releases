@@ -206,6 +206,39 @@ PInstTable CreateInstTable(int TableSize)
   return tab;
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     inst_fnc_table_create(int table_size)
+ * \brief  create new instance of function table
+ * \param  table_size max. # of entries in table
+ * \return * to table
+ * ------------------------------------------------------------------------ */
+
+inst_fnc_table_t *inst_fnc_table_create(int table_size)
+{
+  int z;
+  inst_fnc_table_entry_t *p_entries = NULL;
+  inst_fnc_table_t *p_ret = NULL;
+
+  p_entries = (inst_fnc_table_entry_t*)calloc(table_size, sizeof(*p_entries));
+  if (!p_entries)
+    goto func_exit;
+  for (z = 0; z < table_size; z++)
+    p_entries[z].p_name = NULL;
+
+  p_ret = (inst_fnc_table_t*) calloc(1, sizeof(*p_ret));
+  if (!p_ret)
+    goto func_exit;
+  p_ret->fill = 0;
+  p_ret->size = table_size;
+  p_ret->p_entries = p_entries; p_entries = NULL;
+  p_ret->dynamic = False;
+
+func_exit:
+  if (p_entries)
+    free(p_entries);
+  return p_ret;
+}
+
 void SetDynamicInstTable(PInstTable Table)
 {
   Table->Dynamic = TRUE;
@@ -256,6 +289,48 @@ void AddInstTable(PInstTable tab, const char *Name, Word Index, InstProc Proc)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     inst_fnc_table_add(inst_fnc_table_t *p_table, const char *p_name, Word index, inst_fnc_t fnc)
+ * \brief  augment table by one entry
+ * \param  p_table table to add to
+ * \param  p_name name of instruction
+ * \param  index callback argument
+ * \param  fnc callback itself
+ * ------------------------------------------------------------------------ */
+
+void inst_fnc_table_add(inst_fnc_table_t *p_table, const char *p_name, Word index, inst_fnc_t fnc)
+{
+  LongWord tab_index = GetKey(p_name, p_table->size), num_coll = 0;
+
+  /* mindestens ein freies Element lassen, damit der Sucher garantiert terminiert */
+
+  if (p_table->size - 1 <= p_table->fill)
+  {
+    fprintf(stderr, "\nhash table overflow\n");
+    exit(255);
+  }
+  while (1)
+  {
+    if (!p_table->p_entries[tab_index].p_name)
+    {
+      p_table->p_entries[tab_index].p_name = (p_table->dynamic) ? as_strdup(p_name) : (char*)p_name;
+      p_table->p_entries[tab_index].fnc = fnc;
+      p_table->p_entries[tab_index].index = index;
+      p_table->p_entries[tab_index].coll = num_coll;
+      p_table->fill++;
+      return;
+    }
+    if (!strcmp(p_table->p_entries[tab_index].p_name, p_name))
+    {
+      printf("%s double in table\n", p_name);
+      exit(255);
+    }
+    num_coll++;
+    if ((LongInt)(++tab_index) == p_table->size)
+      tab_index = 0;
+  }
+}
+
 void RemoveInstTable(PInstTable tab, const char *Name)
 {
   LongWord h0 = GetKey(Name, tab->Size);
@@ -291,6 +366,29 @@ Boolean LookupInstTable(PInstTable tab, const char *Name)
     }
     if ((LongInt)(++h0) == tab->Size)
       h0 = 0;
+  }
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     inst_fnc_table_lookup(const inst_fnc_table_t *p_table, const char *p_name)
+ * \brief  look up & execute instruction callback
+ * \param  p_table table with functions
+ * \param  p_name instruction name
+ * \return True if callback was found and executed
+ * ------------------------------------------------------------------------ */
+
+Boolean inst_fnc_table_lookup(const inst_fnc_table_t *p_table, const char *p_name)
+{
+  LongWord index = GetKey(p_name, p_table->size);
+
+  while (1)
+  {
+    if (!p_table->p_entries[index].p_name)
+      return False;
+    else if (!strcmp(p_table->p_entries[index].p_name, p_name))
+      return p_table->p_entries[index].fnc(p_table->p_entries[index].index);
+    if ((LongInt)(++index) == p_table->size)
+      index = 0;
   }
 }
 

@@ -437,12 +437,16 @@ Boolean CodeIFs(void)
       else Result = False;
       break;
     case 'S':
-      if (Memo("SWITCH") && !SwitchIsOccupied) CodeSWITCH();
+      if (memo_switch_pseudo()) CodeSWITCH();
       else if (Memo("SELECT") && SwitchIsOccupied) CodeSWITCH();
       else Result = False;
       break;
     case 'C':
       if (Memo("CASE")) CodeCASE();
+      else Result = False;
+      break;
+    case '.':
+      if (Memo(".SWITCH")) CodeSWITCH();
       else Result = False;
       break;
     default:

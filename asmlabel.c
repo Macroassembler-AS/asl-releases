@@ -63,23 +63,25 @@ Boolean LabelPresent(void)
   switch (*OpPart.str.p_str)
   {
     case '=':
-      return (!Memo("="));
+      return !Memo("=");
     case ':':
-      return (!Memo(":="));
+      return !Memo(":=");
+    case '.':
+      return !Memo(".SET") && !Memo(".EQU");
     case 'M':
-      return (!Memo("MACRO"));
+      return !Memo("MACRO");
     case 'F':
-      return (!Memo("FUNCTION"));
+      return !Memo("FUNCTION");
     case 'L':
-      return (!Memo("LABEL"));
+      return !Memo("LABEL");
     case 'S':
-      return (!Memo("SET") || SetIsOccupied()) && (!(Memo("STRUCT") || Memo("STRUC")));
+      return !memo_set_pseudo() && (!(Memo("STRUCT") || Memo("STRUC")));
     case 'E':
       if (Memo("EQU") || Memo("ENDSTRUCT") || Memo("ENDS") || Memo("ENDSTRUC") || Memo("ENDUNION"))
         return False;
       return !Memo("EVAL");
     case 'U':
-      return (!Memo("UNION"));
+      return !Memo("UNION");
     default:
       return True;
   }

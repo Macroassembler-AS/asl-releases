@@ -356,10 +356,12 @@ static Boolean DecodeFloat(const tStrComp *pArg, LongInt *pResult)
 	const char *str = pArg->str.p_str;
 	tStrComp ImmArg;
 	TempResult temp;
+  Boolean Result = True;
 
 	if (str[0] != '#') return False;
 
 	StrCompRefRight(&ImmArg, pArg, 1);
+  as_tempres_ini(&temp);
 	EvalStrExpression(&ImmArg, &temp);
 	switch (temp.Typ)
 	{
@@ -373,10 +375,11 @@ static Boolean DecodeFloat(const tStrComp *pArg, LongInt *pResult)
       DSwap(pResult, 4);
 		break;
 	default:
-		return False;
+		Result = False;
 	}
+  as_tempres_free(&temp);
 
-	return True;
+	return Result;
 }
 
 static Boolean DecodeIndirectL(const tStrComp *pArg, Byte *reg, LongInt *disp, tSymbolFlags *flags)

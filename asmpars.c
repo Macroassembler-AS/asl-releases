@@ -2339,27 +2339,28 @@ static void EnterLocSymbol(PSymbolEntry Neu)
   FirstLocSymbol = (PSymbolEntry)TreeRoot;
 }
 
-static void EnterSymbol_Search(PForwardSymbol *Lauf, PForwardSymbol *Prev,
-                               PForwardSymbol **RRoot, PSymbolEntry Neu,
-                               PForwardSymbol *Root, Byte ResCode, Byte *SearchErg)
+static Boolean EnterSymbol_SearchAndUnchain(PSymbolEntry Neu, PForwardSymbol *pp_root, LongInt *p_override_section)
 {
-  *Lauf = (*Root);
-  *Prev = NULL;
-  *RRoot = Root;
-  while ((*Lauf) && (strcmp((*Lauf)->Name, Neu->Tree.Name)))
-  {
-    *Prev = (*Lauf);
-    *Lauf = (*Lauf)->Next;
-  }
-  if (*Lauf)
-    *SearchErg = ResCode;
+  PForwardSymbol p_run, p_prev;
+
+  for (p_run = *pp_root, p_prev= NULL;
+       p_run;
+       p_prev = p_run, p_run = p_run->Next)
+    if (!strcmp(p_run->Name, Neu->Tree.Name))
+    {
+      *p_override_section = p_run->DestSection;
+      if (!p_prev)
+        *pp_root = p_run->Next;
+      else
+        p_prev->Next = p_run->Next;
+      free_forward_symbol(p_run);
+      return True;
+    }
+  return False;
 }
 
 static void EnterSymbol(PSymbolEntry Neu, Boolean MayChange, LongInt ResHandle)
 {
-  PForwardSymbol Lauf, Prev;
-  PForwardSymbol *RRoot;
-  Byte SearchErg;
   String CombName;
   PSaveSection RunSect;
   LongInt MSect;
@@ -2367,28 +2368,35 @@ static void EnterSymbol(PSymbolEntry Neu, Boolean MayChange, LongInt ResHandle)
   TEnterStruct EnterStruct;
   PTree TreeRoot = &(FirstSymbol->Tree);
 
-  SearchErg = 0;
   EnterStruct.MayChange = MayChange;
   EnterStruct.DoCross = MakeCrossList;
   Neu->Tree.Attribute = (ResHandle == -2) ? MomSectionHandle : ResHandle;
-  if ((SectionStack) && (Neu->Tree.Attribute == MomSectionHandle))
+
+  /* Within a section: special treatment for FORWARD, PUBLIC and GLOBAL: */
+
+  if (SectionStack && (Neu->Tree.Attribute == MomSectionHandle))
   {
-    EnterSymbol_Search(&Lauf, &Prev, &RRoot, Neu, &(SectionStack->LocSyms),
-                       1, &SearchErg);
-    if (!Lauf)
-      EnterSymbol_Search(&Lauf, &Prev, &RRoot, Neu,
-                         &(SectionStack->GlobSyms), 2, &SearchErg);
-    if (!Lauf)
-      EnterSymbol_Search(&Lauf, &Prev, &RRoot, Neu,
-                         &(SectionStack->ExportSyms), 3, &SearchErg);
-    if (SearchErg == 2)
-      Neu->Tree.Attribute = Lauf->DestSection;
-    if (SearchErg == 3)
+    LongInt override_section;
+
+    /* FORWARD: just an info to avoid resolution to global symbol.  This symbol remains
+       in current section: */
+
+    if (EnterSymbol_SearchAndUnchain(Neu, &(SectionStack->LocSyms), &override_section))
+    { }
+
+    /* PUBLIC: relocate scope of symbol to given section: */
+
+    else if (EnterSymbol_SearchAndUnchain(Neu, &(SectionStack->GlobSyms), &override_section))
+      Neu->Tree.Attribute = override_section;
+
+    /* GLOBAL: create copy with scope in given section: */
+
+    else if (EnterSymbol_SearchAndUnchain(Neu, &(SectionStack->ExportSyms), &override_section))
     {
       strmaxcpy(CombName, Neu->Tree.Name, STRINGSIZE);
       RunSect = SectionStack;
       MSect = MomSectionHandle;
-      while ((MSect != Lauf->DestSection) && (RunSect))
+      while ((MSect != override_section) && (RunSect))
       {
         strmaxprep(CombName, "_", STRINGSIZE);
         strmaxprep(CombName, GetSectionName(MSect), STRINGSIZE);
@@ -2398,7 +2406,7 @@ static void EnterSymbol(PSymbolEntry Neu, Boolean MayChange, LongInt ResHandle)
       Copy = (PSymbolEntry) calloc(1, sizeof(TSymbolEntry));
       *Copy = (*Neu);
       Copy->Tree.Name = as_strdup(CombName);
-      Copy->Tree.Attribute = Lauf->DestSection;
+      Copy->Tree.Attribute = override_section;
       Copy->SymWert.Relocs = DupRelocs(Neu->SymWert.Relocs);
       if (Copy->SymWert.Typ == TempString)
       {
@@ -2408,16 +2416,6 @@ static void EnterSymbol(PSymbolEntry Neu, Boolean MayChange, LongInt ResHandle)
                Copy->SymWert.Contents.str.len = Copy->SymWert.Contents.str.capacity = l);
       }
       EnterTree(&TreeRoot, &(Copy->Tree), SymbolAdder, &EnterStruct);
-    }
-    if (Lauf)
-    {
-      free(Lauf->Name);
-      free(Lauf->pErrorPos);
-      if (!Prev)
-        *RRoot = Lauf->Next;
-      else
-        Prev->Next = Lauf->Next;
-      free(Lauf);
     }
   }
   EnterTree(&TreeRoot, &(Neu->Tree), SymbolAdder, &EnterStruct);
@@ -3670,7 +3668,9 @@ void SetFlag(Boolean *Flag, const char *Name, Boolean Wert)
 
   *Flag = Wert;
   StrCompMkTemp(&TmpComp, (char*)Name, 0);
+  PushLocHandle(-1);
   EnterIntSymbol(&TmpComp, *Flag ? 1 : 0, SegNone, True);
+  PopLocHandle();
 }
 
 void AddDefSymbol(char *Name, TempResult *Value)

@@ -59,14 +59,14 @@
 {\large Alfred Arnold, Stefan Hilse, Stephan Kanthak, Oliver
  Sellke, Vittorio De Tomasi}
 \vspace{1cm}\par
-{\huge Macro Assembler AS V1.42}\\
+{\huge Macro Assembler AS V1.42\\ (''ACASM'')}\\
 \rule{9.5cm}{0.3mm}\\
 \vspace{2mm}\par
 {\huge User's Manual}
 
 \vspace{1cm}\par
 
-{\large Edition April 2023}
+{\large Edition May 2023}
 \end{raggedright}
 
 \clearpage
@@ -120,6 +120,18 @@ literature in the bibliography which was substantial in the implementation
 of the different code generators.  There is no book I know where you can
 learn Assembler from the start, so I generally learned this by ''trial and
 error''.
+
+After a small discussion on the mailing list, I decided to make an own proposal
+for a better name: ''ACASM''.  It is good tradition in the open source scene
+that acronyms may have multiple meanings.  Just some ideas:
+\begin{itemize}
+\item{,,AC'' may just refer to my hometown Aachen, since that is what cars
+      over here have on their license plates;}
+\item{,,Another CPU'', every time yet another new target was added;}
+\item{,,All Crap'', if you got frustrated over it...}
+\item{...or ,,Alfreds Cute Assembler'', if you really want to reference my
+      name...}
+\end{itemize}
 
 %%---------------------------------------------------------------------------
 
@@ -452,14 +464,6 @@ DPMI has been enabled via the box's DOS settings (set to \tty{on} or
 \tty{auto}) and that a sufficient amount of XMS memory has been assigned
 to the box.  The virtual memory management of OS/2 will free you
 from thinking about the amount of free real memory.
-
-The hardware requirements of the OS/2 \marginpar{{\em OS/2}} version
-mainly result from the needs of the underlying operating system, i.e. at
-minimum an 80386SX processor, 8 Mbytes of RAM (resp. 4 Mbytes without the
-graphical user interface) and 100..150 Mbytes of hard disk space.  AS2 is
-only a 16-bit application and therefore it should also work on older OS/2
-versions (thereby reducing the processor needs to at least an 80286
-processor); I had however no chance to test this.
 
 The C version of AS \marginpar{{\em UNIX}} is delivered as source code and
 therefore requires a UNIX or OS/2 system equipped with a C compiler.  The
@@ -1380,7 +1384,7 @@ question.
 
 \bb{CAUTION!}  AS can only print the listing correctly if it was
 previously informed about the output media's page length and width!
-This has to be done with the \tty{PAGE} instruction (see there).  The
+This has to be done with the \tty{PAGE} instruction (see \ref{SectPAGE}).  The
 preset default is a length of 60 lines and an unlimited line width.
 
 %%---------------------------------------------------------------------------
@@ -2396,7 +2400,9 @@ individual description.
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 \subsection{SET, EQU, and CONSTANT}
-\ttindex{SET}\ttindex{EQU}\ttindex{CONSTANT}
+\ttindex{SET}\ttindex{EQU}
+\ttindex{.SET}\ttindex{.EQU}
+\ttindex{CONSTANT}
 
 {\em valid for: all processors, {\tt CONSTANT} only for KCPSM(3)}
 
@@ -2434,12 +2440,14 @@ FloatTwo equ    2.0
 \end{verbatim}
 Some processors unfortunately have already a \tty{SET} instruction. For
 these targets, \tty{EVAL} must be used instead of \tty{SET} if no
-differentiation via the argument count is possible.
+differentiation via the argument count is possible.  As an alternative,
+it is always possible to explicitly invoke the pseudo instruction
+by prepending a period (\tty{.SET} instead of  \tty{SET}).
 
-A simple equation sign may be used instead of \tty{EQU}.  Similarly, one
-may simply write \tty{:=} instead of \tty{SET} resp. \tty{EVAL}.
-Furthermore, there is an 'alternate' syntax that does not take
-the symbol's name from the label field, but instead from the
+A single equation sign or \tty{.EQU} may be used instead of \tty{EQU}.
+Similarly, one may simply write \tty{:=} instead of \tty{SET} resp.
+\tty{EVAL}. Furthermore, there is an 'alternate' syntax that does not
+take the symbol's name from the label field, but instead from the
 first argument.  So for instance, it is valid to write:
 \begin{verbatim}
           EQU   IntTwo,2
@@ -2448,7 +2456,7 @@ first argument.  So for instance, it is valid to write:
 
 For compatibility reasons to the original assembler, the KCPSM target also
 knows the {\tt CONSTANT} statement, which - in contrast to \tty{EQU} -
-takes both name and value as argument.  For example:
+always expects name and value as arguments.  For example:
 \begin{verbatim}
       CONSTANT  const1, 2
 \end{verbatim}
@@ -4572,6 +4580,7 @@ this instruction pair only makes real sense in the code segment.
 
 \subsection{SAVE and RESTORE}
 \ttindex{SAVE}\ttindex{RESTORE}
+\ttindex{.SAVE}\ttindex{.RESTORE}
 \ttindex{SAVEENV}\ttindex{RESTOREENV}
 
 {\em valid for: all processors}
@@ -4617,7 +4626,8 @@ following cases:
 \end{itemize}
 In case the currently used target has machine instructions named \tty{SAVE} or
 \tty{RESTORE}, this functionality may be reached via \tty{SAVEENV} resp.
-\tty{RESTOREENV}.
+\tty{RESTOREENV}.  As an alternative, it is always possible to explicitly invoke
+the pseudo instructions by prepending a period (\tty{.SAVE} resp. \tty{.RESTORE}).
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -6399,7 +6409,7 @@ completely break out of a nested construct, one has to use additional
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 \subsection{SHIFT}
-\ttindex{SHIFT}\ttindex{SHFT}
+\ttindex{SHIFT}\ttindex{.SHIFT}\ttindex{SHFT}
 
 {\tt SHIFT} is a tool to construct macros with variable argument lists: it
 discards the first parameter, with the result that the second parameter
@@ -6431,7 +6441,8 @@ step.  The important trick is that a new macro expansion is started in
 each step...
 
 In case {\tt SHIFT} ist already a machine instruction for a certain target,
-one has to use {\tt SHFT} instead.
+{\tt SHFT} may be used instead, or the pseudo instruction is referenced 
+explicitly by prepending a period (\tty{.SHIFT} instead of \tty{SHIFT}).
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -6791,7 +6802,8 @@ the corresponding {\tt IF...} will be shown.
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 \subsection{SWITCH / CASE / ELSECASE / ENDCASE}
-\ttindex{SWITCH}\ttindex{SELECT}\ttindex{CASE}\ttindex{ELSECASE}\ttindex{ENDCASE}
+\ttindex{SWITCH}\ttindex{.SWITCH}\ttindex{SELECT}
+\ttindex{CASE}\ttindex{ELSECASE}\ttindex{ENDCASE}
 
 \tty{CASE} is a special case of \tty{IF} and is designed for situations
 when an expression has to be compared with a couple of values.  This could
@@ -6840,8 +6852,9 @@ don't leave other \tty{IF}s open!), for the sake of better readability
 this should however not be done.
 
 In case that \tty{SWITCH} is already a machine instruction on the
-selected processor target, the construct is started instead with
-\tty{SELECT}.
+selected processor target, the  construct may be openend via \tty{SELECT},
+or by a leading period to explicitly invoke the pseudo instruction
+(\tty{.SWITCH} instead of \tty{SWITCH}).
 
 Similarly to {\tt IF} constructs, there must be exactly one {\tt ENDCASE}
 for every {\tt SWITCH}.  Analogous to {\tt ENDIF}, for {\tt ENDCASE} the
@@ -6855,8 +6868,9 @@ line number of the corresponding {\tt SWITCH} is shown in the listing.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-\subsection{PAGE}
-\ttindex{PAGE}
+\subsection{PAGE, PAGESIZE}
+\label{SectPAGE}
+\ttindex{PAGE}\ttindex{.PAGE}\ttindex{PAGESIZE}
 
 \tty{PAGE} is used to tell AS the dimensions of the paper that is used to
 print the assembly listing.  The first parameter is thereby the
@@ -6892,7 +6906,9 @@ called with only one parameter.
 
 In case \tty{PAGE} is already a machine instruction on the
 selected processor target, use instead \tty{PAGESIZE} to define
-the paper size.
+the paper size.  As an alternative, it is always possible to explicitly
+invoke the pseudo instruction by prepending a period (\tty{.PAGE} instead
+of \tty{PAGE}).
 
 \bb{CAUTION!}  There is no way for AS to check whether the specified
 listing length and width correspond to the reality!

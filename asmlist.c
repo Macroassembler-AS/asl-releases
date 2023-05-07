@@ -77,7 +77,7 @@ void MakeList(const char *pSrcLine)
 
     if (*ListLine)
     {
-      as_sdprcatf(&list_buf, "%s %s%s", ListLine, Blanks(LISTLINESPACE - strlen(ListLine)), pSrcLine);
+      as_sdprcatf(&list_buf, "%s %s%s", ListLine, Blanks(LISTLINESPACE - 1 - strlen(ListLine)), pSrcLine);
       WrLstLine(list_buf.p_str);
       *ListLine = '\0';
     }

@@ -41,14 +41,14 @@
 \begin{raggedright}
 {\large Alfred Arnold}\\
 \vspace{1cm}\par
-{\huge Makroassembler AS V1.42}\\
-\rule{9.5cm}{0.3mm}\\
+{\huge Makroassembler AS V1.42 (,,ACASM'')}\\
+\rule{14cm}{0.3mm}\\
 \vspace{2mm}\par
 {\huge Benutzeranleitung}
 
 \vspace{1cm}\par
 
-{\large Stand April 2023}
+{\large Stand Mai 2023}
 \end{raggedright}
 
 \clearpage
@@ -106,7 +106,7 @@ Linux angefertigt und formatiert.
 \chapter{Allgemeines}
 
 Diese Anleitung wendet sich an Programmierer, die bereits mit der Programmierung in Assembler
-vertraut sind und sich dar"uber informieren m"ochten, wie man mit AS umgeht.  Sie
+vertraut sind und sich dar"uber informieren m"ochten, wie man mit ACASM umgeht.  Sie
 hat eher die Form eines Referenz- und nicht Benutzerhandbuches.  Als solches
 macht sie weder den Versuch, die Sprache Assembler an sich zu erkl"aren, noch
 erl"autert sie die Architektur bestimmter Prozessoren.  Im Literaturverzeichnis
@@ -114,6 +114,19 @@ habe ich weiterf"uhrende Literatur aufgelistet, die bei der Implementation der
 einzelnen Codegeneratoren ma"sgebend war.  Um Assembler von Grund auf zu
 lernen, kenne ich kein Buch; ich habe es im wesentlichen im ,,Trial and
 error''-Verfahren gelernt.
+
+Nach einer kleineren Diskussion auf der Mailing-Liste und einigen Vorschl"agen
+habe ich beschlossen, mit ,,ACASM'' einen eigenen Vorschlag f"ur einen besseren
+Namen zu machen.  Es ist in der OpenSource-Szene ja gute Tradition, da"s die
+Abk"urzungen mehrere Deutungen gestatten.  Ein paar Vorschl"age:
+\begin{itemize}
+\item{,,AC'' k"onnte einfach für meine Heimatstadt Aachen stehen, denn dies
+      ist Aachens KFZ-Kennzeichen;}
+\item{,,Another CPU'', wenn (mal wieder) ein neues Target dazugekommen ist;}
+\item{,,All Crap'', wenn man sich dar"uber ge"argert hat...}
+\item{...oder ,,Alfreds Cute Assembler'', wenn man unbedingt meinen Namen
+      damit in Verbindung bringen will...}
+\end{itemize}
 
 %%---------------------------------------------------------------------------
 
@@ -456,14 +469,6 @@ DOS-Einstellungen der Box erlaubt sein (Einstellung \tty{An} oder
 zugeordnet sein.  Die virtuelle Speicherverwaltung von OS/2 sorgt hier
 "ubrigens daf"ur, da"s man sich keine Gedanken machen mu"s, ob der
 eingestellte Speicher auch real verf"ugbar ist.
-
-Die Hardware-Anforderungen der \marginpar{{\em OS/2}} OS/2-Version ergeben sich
-weitestgehend durch die des darunterliegenden Betriebssytemes, d.h.
-mindestens ein 80386SX-Prozessor, 8 Mbyte RAM (bzw. 4 ohne grafische
-Benutzeroberfl"ache) sowie ca 100..150 Mbyte Platz auf der Festplatte.  Da
-AS2 nur eine 16-Bit-Applikation ist, sollte er theoretisch auch auf
-"alteren OS/2-Versionen (und damit 80286-Prozessoren) lauff"ahig sein;
-ausprobieren konnte ich dies aber nicht.
 
 Die C-Version \marginpar{{\em UNIX}} von AS wird im Quellcode ausgeliefert
 und erfordert damit ein Unix- oder OS/2-System mit einem C-Compiler.
@@ -1414,7 +1419,7 @@ der entsprechenden Datei nicht referenziert wurde.
 \par
 \bb{ACHTUNG!} AS kann dieses Listing nur dann korrekt aufs Papier bringen,
 wenn man ihm vorher die L"ange und Breite des Ausgabemediums mit Hilfe des
-\tty{PAGE}-Befehls (siehe dort) mitgeteilt hat!  Der voreingestellte
+\tty{PAGE}-Befehls (siehe \ref{SectPAGE}) mitgeteilt hat!  Der voreingestellte
 Default sind 60 Zeilen und eine unbegrenzte Zeilenbreite.
 
 %%---------------------------------------------------------------------------
@@ -2465,7 +2470,9 @@ welche Prozessortypen dieser Befehl erlaubt ist.
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 \subsection{SET, EQU und CONSTANT}
-\ttindex{SET}\ttindex{EQU}\ttindex{CONSTANT}
+\ttindex{SET}\ttindex{EQU}
+\ttindex{.SET}\ttindex{.EQU}
+\ttindex{CONSTANT}
 
 {\em G"ultigkeit: alle Prozessoren, {\tt CONSTANT} nur KCPSM(3)}
 
@@ -2500,14 +2507,16 @@ FloatZwei EQU   2.0
 Einige Prozessoren besitzen leider bereits selber einen \tty{SET}-Befehl.
 Bei diesen mu"s \tty{EVAL} anstelle von \tty{SET} verwendet werden, falls
 sich der Maschinenbefehl nicht durch die andere Anzahl der Argumente 
-erkennen l"a"st.
+erkennen l"a"st.  Alternativ ist es auch immer m"oglich, durch einen
+vorangestellten Punkt (\tty{.SET} anstelle \tty{SET}) explizit den
+Pseudobefehl aufzurufen.
 \par
-Anstelle von \tty{EQU} darf auch einfach ein Gleichheitszeichen geschrieben
-werden, analog kann man anstelle von \tty{SET} bzw. \tty{EVAL}
-einfach \tty{:=} schreiben.  Des weiteren existiert eine
-'alternative' Syntax, bei der der Synbolname nicht aus dem Feld
-f"ur das Label genommen wird, sondern das erste Argument ist.
-Alternativ darf man also auch schreiben:
+Anstelle von \tty{EQU} darf auch \tty{.EQU} oder einfach ein
+Gleichheitszeichen geschrieben werden, analog kann man anstelle
+von \tty{SET} bzw. \tty{EVAL} einfach \tty{:=} schreiben.  Des weiteren
+existiert eine 'alternative' Syntax, bei der der Synbolname nicht aus dem
+Feld f"ur das Label genommen wird, sondern das erste Argument ist.
+Wahlweise darf man also auch schreiben:
 \begin{verbatim}
           EQU   IntZwei,2
           EQU   FloatZwei,2.0
@@ -2516,7 +2525,7 @@ Das Feld f"ur das Label mu"s in diesem Fall leer bleiben.
 \par
 Aus Kompatibilit"atsgr"unden zum Originalassembler gibt es f"ur das
 KCPSM-Target auch den {\tt CONSTANT}-Befehl, der im Gegensatz zu {\tt EQU}
-Namen und Wert als Argument erwartet, also z.B. so:
+Namen und Wert immer als Argumente erwartet, also z.B. so:
 \begin{verbatim}
       CONSTANT  const1, 2
 \end{verbatim}
@@ -4704,6 +4713,7 @@ verwaltet der Assembler f"ur alle definierten Segmente Phasenwerte.
 
 \subsection{SAVE und RESTORE}
 \ttindex{SAVE}\ttindex{RESTORE}
+\ttindex{.SAVE}\ttindex{.RESTORE}
 \ttindex{SAVEENV}\ttindex{RESTOREENV}
 
 {\em G"ultigkeit: alle Prozessoren}
@@ -4746,7 +4756,9 @@ Der Assembler "uberpr"uft, ob die Zahl von \tty{SAVE}-und \tty{RESTORE}-Befehlen
 \end{itemize}
 Falls das aktuell benutzte Target bereits einen Maschinenbefehl namens \tty{SAVE}
 bzw. \tty{RESTORE} hat, kann die Funktionalit"at "uber \tty{SAVEENV} bzw.
-\tty{RESTOREENV} erreicht werden.
+\tty{RESTOREENV} erreicht werden.  Wahlweise ist es auch immer m"oglich, explizit
+die Pseudobefehle durch voran gestellte Punkte (\tty{.SAVE} bzw. \tty{.RESTORE})
+aufzurufen.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -6603,7 +6615,7 @@ vollst"andig ,,ausbrechen'' will, mu"s auf den h"oheren Ebenen ebenfalls
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 \subsection{SHIFT}
-\ttindex{SHIFT}\ttindex{SHFT}
+\ttindex{SHIFT}\ttindex{.SHIFT}\ttindex{SHFT}
 
 {\tt SHIFT} ist ein Mittel, um Makros mit variablen Argumentlisten
 abzuarbeiten: Es verwirft den ersten Parameter, so da"s der zweite
@@ -6635,7 +6647,9 @@ um eins verk"urzt wird.  Der wichtige Trick ist, da"s jedes Mal eine neue
 Expansion gestartet wird...
 
 Auf Plattformen, bei denen {\tt SHIFT} bereits eine Maschineninstruktion ist,
-mu"s stattdessen {\tt SHFT} geschrieben werden.
+kann stattdessen {\tt SHFT} geschrieben werden, oder man spricht explizit
+die Pseudoinstruktion durch einen vorangestellten Punkt (\tty{.SHIFT} anstelle
+\tty{SHIFT}) an.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -6987,7 +7001,8 @@ Zeilennummer des entsprechenden {\tt IF}s angezeigt.
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 \subsection{SWITCH / CASE / ELSECASE / ENDCASE}
-\ttindex{SWITCH}\ttindex{SELECT}\ttindex{CASE}\ttindex{ELSECASE}\ttindex{ENDCASE}
+\ttindex{SWITCH}\ttindex{.SWITCH}\ttindex{SELECT}
+\ttindex{CASE}\ttindex{ELSECASE}\ttindex{ENDCASE}
 
 \tty{SWITCH} ist ein Spezialfall von \tty{IF} und f"ur den Fall gedacht, da"s ein
 Ausdruck mit einer Reihe von Werten verglichen werden soll.  Dies ist
@@ -7035,7 +7050,9 @@ offen bleiben!), im Sinne eines durchschaubaren Codes sollte davon aber
 kein Gebrauch gemacht werden.
 \par
 Ist \tty{SWITCH} auf dem gew"ahlten Target ein Maschinenbefehl,
-so leitet man das Konstrukt stattdessen mit \tty{SELECT} ein.
+so leitet man das Konstrukt stattdessen mit \tty{SELECT} ein, oder spricht
+den Pseudobefehl explizit durch einen vorangestellten Punk an (\tty{.SWITCH}
+anstelle von \tty{SWITCH}).
 \par
 "Ahnlich wie bei {\tt IF...}-Konstrukten, mu"s es f"ur jedes {\tt SWITCH}
 genau ein {\tt ENDCASE} geben.  Analog zu {\tt ENDIF} wird bei {\tt ENDCASE}
@@ -7049,8 +7066,9 @@ im Listing die Zeilennummer des korrespondierenden {\tt SWITCH} angezeigt.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-\subsection{PAGE(PAGESIZE)}
-\ttindex{PAGE}\ttindex{PAGESIZE}
+\subsection{PAGE, PAGESIZE}
+\label{SectPAGE}
+\ttindex{PAGE}\ttindex{.PAGE}\ttindex{PAGESIZE}
 
 Mit \tty{PAGE} kann man AS die Dimensionen des Papiers, auf dem das
 Listing ausgedruckt werden soll, mitteilen.  Als erster Parameter
@@ -7086,8 +7104,10 @@ Die Defaulteinstellung f"ur die Seitenl"ange ist 60 Zeilen, f"ur die
 Zeilenbreite 0; letztere Wert wird auch angenommen, wenn \tty{PAGE} nur mit
 einem Argument aufgerufen wird.
 \par
-Falls \tty{PAGE} auf dem gew"ahlten Target bereits ein
-Maschinenbefehl ist, benutzt man stattdessen \tty{PAGESIZE}.
+Falls \tty{PAGE} auf dem gew"ahlten Target bereits ein Maschinenbefehl ist,
+benutzt man stattdessen \tty{PAGESIZE}.  Alternativ ist es immer möglich,
+durch Voranstellen eines Punktes (\tty{.PAGE} anstelle \tty{PAGE}) explizit
+den Pseudobefehl anzusprechen.
 \par
 \bb{ACHTUNG!} AS hat keine M"oglichkeit, zu "uberpr"ufen, ob die
 eingestellte Listing-L"ange und Breite mit der Wirklichkeit "ubereinstimmen!

@@ -77,6 +77,7 @@
 #include "codem16.h"
 #include "codem16c.h"
 #include "codepdp11.h"
+#include "codevax.h"
 #include "code4004.h"
 #include "code8008.h"
 #include "code48.h"
@@ -2414,7 +2415,7 @@ static void Produce_Code(void)
       case 'S':
         /* shift macro arguments ? */
         Found = True;
-        if (Memo(ShiftIsOccupied ? "SHFT" : "SHIFT")) ExpandSHIFT();
+        if (memo_shift_pseudo() || (ShiftIsOccupied && Memo("SHFT"))) ExpandSHIFT();
         else Found = False;
         break;
       case 'I':
@@ -2623,6 +2624,7 @@ static void SplitLine(void)
 
   /* Attribut abspalten */
 
+  oppart_leading_dot = False;
   if (HasAttrs)
   {
     const char *pActAttrChar;
@@ -2652,6 +2654,8 @@ again:
       {
         StrCompCopy(&OpPart, &AttrPart);
         StrCompReset(&AttrPart);
+        if (!Tries && (AttrSplit == '.'))
+          oppart_leading_dot = True;
         if (++Tries < 2)
           goto again;
       }
@@ -4324,6 +4328,7 @@ int main(int argc, char **argv)
     codem16_init();
     codem16c_init();
     codepdp11_init();
+    codevax_init();
     code4004_init();
     code8008_init();
     code48_init();

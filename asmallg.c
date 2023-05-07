@@ -41,7 +41,9 @@
 /*--------------------------------------------------------------------------*/
 
 
-static PInstTable PseudoTable = NULL, ONOFFTable;
+static PInstTable PseudoTable = NULL,
+                  ONOFFTable  = NULL;
+static inst_fnc_table_t *pseudo_inst_fnc_table = NULL;
 
 /*--------------------------------------------------------------------------*/
 
@@ -289,14 +291,12 @@ static void CodeENDSECTION_ChkEmptList(PForwardSymbol *Root)
 
   while (*Root)
   {
-    strmaxcpy(XError, (*Root)->Name, STRINGSIZE);
+    Tmp = (*Root); *Root = Tmp->Next;
+    strmaxcpy(XError, Tmp->Name, STRINGSIZE);
     strmaxcat(XError, ", ", STRINGSIZE);
-    strmaxcat(XError, (*Root)->pErrorPos, STRINGSIZE);
+    strmaxcat(XError, Tmp->pErrorPos, STRINGSIZE);
     WrXError(ErrNum_UndefdForward, XError);
-    free((*Root)->Name);
-    free((*Root)->pErrorPos);
-    Tmp = (*Root);
-    *Root = Tmp->Next; free(Tmp);
+    free_forward_symbol(Tmp);
   }
 }
 
@@ -2193,163 +2193,261 @@ static void CodeINTSYNTAX(Word Index)
   }
 }
 
-/*------------------------------------------------------------------------*/
+/*!------------------------------------------------------------------------
+ * \fn     code_set_cond(Word may_change)
+ * \brief  process SET pseudo statement if no machine instruction
+ * \param  may_change fixed True for SET
+ * \return True if instruction was processed
+ * ------------------------------------------------------------------------ */
 
-typedef struct
+static Boolean code_set_cond(Word may_change)
 {
-  const char *Name;
-  InstProc Proc;
-  Word Index;
-} PseudoOrder;
-static const PseudoOrder Pseudos[] =
-{
-  {"ALIGN",      CodeALIGN      , 0 },
-  {"ASEG",       CodeSEGTYPE    , 0 },
-  {"ASSUME",     CodeASSUME     , 0 },
-  {"BINCLUDE",   CodeBINCLUDE   , 0 },
-  {"CHARSET",    CodeCHARSET    , 0 },
-  {"CODEPAGE",   CodeCODEPAGE   , 0 },
-  {"CPU",        CodeCPU        , 0 },
-  {"DEPHASE",    CodeDEPHASE    , 0 },
-  {"END",        CodeEND        , 0 },
-  {"ENDEXPECT",  CodeENDEXPECT  , 0 },
-  {"ENDS",       CodeENDSTRUCT  , 0 },
-  {"ENDSECTION", CodeENDSECTION , 0 },
-  {"ENDSTRUC",   CodeENDSTRUCT  , 0 },
-  {"ENDSTRUCT",  CodeENDSTRUCT  , 0 },
-  {"ENDUNION",   CodeENDSTRUCT  , 1 },
-  {"ENUM",       CodeENUM       , 0 },
-  {"ENUMCONF",   CodeENUMCONF   , 0 },
-  {"EQU",        CodeSETEQU     , 0 },
-  {"ERROR",      CodeERROR      , 0 },
-  {"EXPECT",     CodeEXPECT     , 0 },
-  {"EXPORT_SYM", CodeEXPORT     , 0 },
-  {"EXTERN_SYM", CodeEXTERN     , 0 },
-  {"FATAL",      CodeFATAL      , 0 },
-  {"FUNCTION",   CodeFUNCTION   , 0 },
-  {"INTSYNTAX",  CodeINTSYNTAX  , 0 },
-  {"LABEL",      CodeLABEL      , 0 },
-  {"LISTING",    CodeLISTING    , 0 },
-  {"MESSAGE",    CodeMESSAGE    , 0 },
-  {"NEWPAGE",    CodeNEWPAGE    , 0 },
-  {"NESTMAX",    CodeNESTMAX    , 0 },
-  {"NEXTENUM",   CodeENUM       , 1 },
-  {"ORG",        CodeORG        , 0 },
-  {"OUTRADIX",   CodeRADIX      , 1 },
-  {"PHASE",      CodePHASE      , 0 },
-  {"POPV",       CodePOPV       , 0 },
-  {"PRSET",      CodePRSET      , 0 },
-  {"PRTINIT",    CodeString     , 0 },
-  {"PRTEXIT",    CodeString     , 1 },
-  {"TITLE",      CodeString     , 2 },
-  {"PUSHV",      CodePUSHV      , 0 },
-  {"RADIX",      CodeRADIX      , 0 },
-  {"READ",       CodeREAD       , 0 },
-  {"RELAXED",    CodeRELAXED    , 0 },
-  {"MACEXP",     CodeMACEXP     , 0x10 },
-  {"MACEXP_DFT", CodeMACEXP     , 0 },
-  {"MACEXP_OVR", CodeMACEXP     , 1 },
-  {"RORG",       CodeRORG       , 0 },
-  {"RSEG",       CodeSEGTYPE    , 0 },
-  {"SECTION",    CodeSECTION    , 0 },
-  {"SEGMENT",    CodeSEGMENT    , 0 },
-  {"SHARED",     CodeSHARED     , 0 },
-  {"STRUC",      CodeSTRUCT     , 0 },
-  {"STRUCT",     CodeSTRUCT     , 0 },
-  {"UNION",      CodeSTRUCT     , 1 },
-  {"WARNING",    CodeWARNING    , 0 },
-  {"=",          CodeSETEQU     , 0 },
-  {":=",         CodeSETEQU     , 1 },
-  {""       ,    NULL           , 0 }
-};
-
-Boolean CodeGlobalPseudo(void)
-{
-  switch (*OpPart.str.p_str)
+  if (is_set_pseudo())
   {
-    case 'S':
-      if (!SetIsOccupied() && Memo("SET"))
-      {
-        CodeSETEQU(True);
-        return True;
-      }
-      else if ((!SaveIsOccupied() && Memo("SAVE"))
-            || Memo("SAVEENV"))
-      {
-        CodeSAVE(0);
-        return True;
-      }
-      break;
-    case 'E':
-      if (Memo("EVAL"))
-      {
-        CodeSETEQU(True);
-        return True;
-      }
-      break;
-    case 'P':
-      if ((!PageIsOccupied && Memo("PAGE"))
-       || (PageIsOccupied && Memo("PAGESIZE")))
-      {
-        CodePAGE(0);
-        return True;
-      }
-      break;
-    case 'R':
-      if ((!RestoreIsOccupied() && Memo("RESTORE"))
-       || Memo("RESTOREENV"))
-      {
-        CodeRESTORE(0);
-        return True;
-      }
-      break;
+    CodeSETEQU(may_change);
+    return True;
   }
+  else
+    return False;
+}
 
-  if (LookupInstTable(ONOFFTable, OpPart.str.p_str))
-    return True;
+/*!------------------------------------------------------------------------
+ * \fn     code_save_cond(Word may_change)
+ * \brief  process SAVE pseudo statement if no machine instruction
+ * \param  may_change fixed 0 for SAVE
+ * \return True if instruction was processed
+ * ------------------------------------------------------------------------ */
 
-  if (LookupInstTable(PseudoTable, OpPart.str.p_str))
+static Boolean code_save_cond(Word arg)
+{
+  if (is_save_pseudo())
+  {
+    CodeSAVE(arg);
     return True;
+  }
+  else
+    return False;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     code_page_cond(Word may_change)
+ * \brief  process PAGE pseudo statement if no machine instruction
+ * \param  may_change fixed 0 for PAGE
+ * \return True if instruction was processed
+ * ------------------------------------------------------------------------ */
+
+static Boolean code_page_cond(Word arg)
+{
+  if (is_page_pseudo())
+  {
+    CodePAGE(arg);
+    return True;
+  }
+  else
+    return False;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     code_pagesize_cond(Word may_change)
+ * \brief  process PAGESIZE pseudo statement if PAGE is a machine instruction
+ * \param  may_change fixed 0 for PAGESIZE
+ * \return True if instruction was processed
+ * ------------------------------------------------------------------------ */
+
+static Boolean code_pagesize_cond(Word arg)
+{
+  if (PageIsOccupied)
+  {
+    CodePAGE(arg);
+    return True;
+  }
+  else
+    return False;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     code_restore_cond(Word may_change)
+ * \brief  process RESTORE pseudo statement if no machine instruction
+ * \param  may_change fixed 0 for RESTORE
+ * \return True if instruction was processed
+ * ------------------------------------------------------------------------ */
+
+static Boolean code_restore_cond(Word arg)
+{
+  if (is_restore_pseudo())
+  {
+    CodeRESTORE(arg);
+    return True;
+  }
+  else
+    return False;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     code_forward_cond(Word arg)
+ * \brief  process FORWARD pseudo statement if within section
+ * \param  arg constant 0 for FORWARD
+ * \return True if processed
+ * ------------------------------------------------------------------------ */
+
+static Boolean code_forward_cond(Word arg)
+{
+  UNUSED(arg);
 
   if (SectionStack)
   {
-    if (Memo("FORWARD"))
-    {
-      if (PassNo <= MaxSymPass)
+    if (PassNo <= MaxSymPass)
         CodePPSyms(&(SectionStack->LocSyms),
                    &(SectionStack->GlobSyms),
                    &(SectionStack->ExportSyms));
-      return True;
-    }
-    if (Memo("PUBLIC"))
-    {
-      CodePPSyms(&(SectionStack->GlobSyms),
-                 &(SectionStack->LocSyms),
-                 &(SectionStack->ExportSyms));
-      return True;
-    }
-    if (Memo("GLOBAL"))
-    {
-      CodePPSyms(&(SectionStack->ExportSyms),
-                 &(SectionStack->LocSyms),
-                 &(SectionStack->GlobSyms));
-      return True;
-    }
+    return True;
   }
-
-  return False;
+  else
+    return False;
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     code_public_cond(Word arg)
+ * \brief  process PUBLIC pseudo statement if within section
+ * \param  arg constant 0 for PUBLIC
+ * \return True if processed
+ * ------------------------------------------------------------------------ */
+
+static Boolean code_public_cond(Word arg)
+{
+  UNUSED(arg);
+
+  if (SectionStack)
+  {
+    CodePPSyms(&(SectionStack->GlobSyms),
+               &(SectionStack->LocSyms),
+               &(SectionStack->ExportSyms));
+    return True;
+  }
+  else
+    return False;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     code_global_cond(Word arg)
+ * \brief  process GLOBAL pseudo statement if within section
+ * \param  arg constant 0 for GLOBAL
+ * \return True if processed
+ * ------------------------------------------------------------------------ */
+
+static Boolean code_global_cond(Word arg)
+{
+  UNUSED(arg);
+
+  if (SectionStack)
+  {
+    CodePPSyms(&(SectionStack->ExportSyms),
+               &(SectionStack->LocSyms),
+               &(SectionStack->GlobSyms));
+    return True;
+  }
+  else
+    return False;
+}
+
+/*------------------------------------------------------------------------*/
+
+
+Boolean CodeGlobalPseudo(void)
+{
+  return 
+      LookupInstTable(ONOFFTable, OpPart.str.p_str)
+   || LookupInstTable(PseudoTable, OpPart.str.p_str)
+   || inst_fnc_table_lookup(pseudo_inst_fnc_table, OpPart.str.p_str);
+}
 
 void codeallg_init(void)
 {
-  const PseudoOrder *POrder;
-
   ONOFFList = (ONOFFTab*)calloc(ONOFFMax, sizeof(*ONOFFList));
 
   PseudoTable = CreateInstTable(201);
-  for (POrder = Pseudos; POrder->Proc; POrder++)
-    AddInstTable(PseudoTable, POrder->Name, POrder->Index, POrder->Proc);
+  AddInstTable(PseudoTable, "ALIGN",      0,  CodeALIGN     );
+  AddInstTable(PseudoTable, "ASEG",       0,  CodeSEGTYPE   );
+  AddInstTable(PseudoTable, "ASSUME",     0,  CodeASSUME    );
+  AddInstTable(PseudoTable, "BINCLUDE",   0,  CodeBINCLUDE  );
+  AddInstTable(PseudoTable, "CHARSET",    0,  CodeCHARSET   );
+  AddInstTable(PseudoTable, "CODEPAGE",   0,  CodeCODEPAGE  );
+  AddInstTable(PseudoTable, "CPU",        0,  CodeCPU       );
+  AddInstTable(PseudoTable, "DEPHASE",    0,  CodeDEPHASE   );
+  AddInstTable(PseudoTable, "END",        0,  CodeEND       );
+  AddInstTable(PseudoTable, "ENDEXPECT",  0,  CodeENDEXPECT );
+  AddInstTable(PseudoTable, "ENDS",       0,  CodeENDSTRUCT );
+  AddInstTable(PseudoTable, "ENDSECTION", 0,  CodeENDSECTION);
+  AddInstTable(PseudoTable, "ENDSTRUC",   0,  CodeENDSTRUCT );
+  AddInstTable(PseudoTable, "ENDSTRUCT",  0,  CodeENDSTRUCT );
+  AddInstTable(PseudoTable, "ENDUNION",   1,  CodeENDSTRUCT );
+  AddInstTable(PseudoTable, "ENUM",       0,  CodeENUM      );
+  AddInstTable(PseudoTable, "ENUMCONF",   0,  CodeENUMCONF  );
+  AddInstTable(PseudoTable, "EQU",        0,  CodeSETEQU    );
+  AddInstTable(PseudoTable, "ERROR",      0,  CodeERROR     );
+  AddInstTable(PseudoTable, "EXPECT",     0,  CodeEXPECT    );
+  AddInstTable(PseudoTable, "EXPORT_SYM", 0,  CodeEXPORT    );
+  AddInstTable(PseudoTable, "EXTERN_SYM", 0,  CodeEXTERN    );
+  AddInstTable(PseudoTable, "EVAL",       1,  CodeSETEQU    );
+  AddInstTable(PseudoTable, "FATAL",      0,  CodeFATAL     );
+  AddInstTable(PseudoTable, "FUNCTION",   0,  CodeFUNCTION  );
+  AddInstTable(PseudoTable, "INTSYNTAX",  0,  CodeINTSYNTAX );
+  AddInstTable(PseudoTable, "LABEL",      0,  CodeLABEL     );
+  AddInstTable(PseudoTable, "LISTING",    0,  CodeLISTING   );
+  AddInstTable(PseudoTable, "MESSAGE",    0,  CodeMESSAGE   );
+  AddInstTable(PseudoTable, "NEWPAGE",    0,  CodeNEWPAGE   );
+  AddInstTable(PseudoTable, "NESTMAX",    0,  CodeNESTMAX   );
+  AddInstTable(PseudoTable, "NEXTENUM",   1,  CodeENUM      );
+  AddInstTable(PseudoTable, "ORG",        0,  CodeORG       );
+  AddInstTable(PseudoTable, "OUTRADIX",   1,  CodeRADIX     );
+  AddInstTable(PseudoTable, "PHASE",      0,  CodePHASE     );
+  AddInstTable(PseudoTable, "POPV",       0,  CodePOPV      );
+  AddInstTable(PseudoTable, "PRSET",      0,  CodePRSET     );
+  AddInstTable(PseudoTable, "PRTINIT",    0,  CodeString    );
+  AddInstTable(PseudoTable, "PRTEXIT",    1,  CodeString    );
+  AddInstTable(PseudoTable, "TITLE",      2,  CodeString    );
+  AddInstTable(PseudoTable, "PUSHV",      0,  CodePUSHV     );
+  AddInstTable(PseudoTable, "RADIX",      0,  CodeRADIX     );
+  AddInstTable(PseudoTable, "READ",       0,  CodeREAD      );
+  AddInstTable(PseudoTable, "RELAXED",    0,  CodeRELAXED   );
+  AddInstTable(PseudoTable, "MACEXP",     0x10, CodeMACEXP  );
+  AddInstTable(PseudoTable, "MACEXP_DFT", 0,  CodeMACEXP    );
+  AddInstTable(PseudoTable, "MACEXP_OVR", 1,  CodeMACEXP    );
+  AddInstTable(PseudoTable, "RESTOREENV", 0,  CodeRESTORE   );
+  AddInstTable(PseudoTable, "RORG",       0,  CodeRORG      );
+  AddInstTable(PseudoTable, "RSEG",       0,  CodeSEGTYPE   );
+  AddInstTable(PseudoTable, "SAVEENV",    0,  CodeSAVE      );
+  AddInstTable(PseudoTable, "SECTION",    0,  CodeSECTION   );
+  AddInstTable(PseudoTable, "SEGMENT",    0,  CodeSEGMENT   );
+  AddInstTable(PseudoTable, "SHARED",     0,  CodeSHARED    );
+  AddInstTable(PseudoTable, "STRUC",      0,  CodeSTRUCT    );
+  AddInstTable(PseudoTable, "STRUCT",     0,  CodeSTRUCT    );
+  AddInstTable(PseudoTable, "UNION",      1,  CodeSTRUCT    );
+  AddInstTable(PseudoTable, "WARNING",    0,  CodeWARNING   );
+  AddInstTable(PseudoTable, "=",          0,  CodeSETEQU    );
+  AddInstTable(PseudoTable, ":=",         1,  CodeSETEQU    );
+
+  /* NOTE: These will only be selected if the current target does
+     NOT use the dot to separate an attribute part.  If it does,
+     the oppart_leading_dot flag gets set and the appropriate
+     rules kick in: */
+
+  AddInstTable(PseudoTable, ".EQU",        0, CodeSETEQU );
+  AddInstTable(PseudoTable, ".SET",        1, CodeSETEQU );
+  AddInstTable(PseudoTable, ".SAVE",       0, CodeSAVE   );
+  AddInstTable(PseudoTable, ".RESTORE",    0, CodeRESTORE);
+  AddInstTable(PseudoTable, ".PAGE",       0, CodePAGE   );
+
   ONOFFTable = CreateInstTable(47);
   AddONOFF("DOTTEDSTRUCTS", &DottedStructs, DottedStructsName, True);
+
+  pseudo_inst_fnc_table = inst_fnc_table_create(103);
+  inst_fnc_table_add(pseudo_inst_fnc_table, "SET", True, code_set_cond);
+  inst_fnc_table_add(pseudo_inst_fnc_table, "SAVE", 0, code_save_cond);
+  inst_fnc_table_add(pseudo_inst_fnc_table, "PAGE", 0, code_page_cond);
+  inst_fnc_table_add(pseudo_inst_fnc_table, "PAGESIZE", 0, code_pagesize_cond);
+  inst_fnc_table_add(pseudo_inst_fnc_table, "RESTORE", 0, code_restore_cond);
+  inst_fnc_table_add(pseudo_inst_fnc_table, "FORWARD", 0, code_forward_cond);
+  inst_fnc_table_add(pseudo_inst_fnc_table, "PUBLIC", 0, code_public_cond);
+  inst_fnc_table_add(pseudo_inst_fnc_table, "GLOBAL", 0, code_global_cond);
 }
