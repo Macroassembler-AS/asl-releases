@@ -36,7 +36,7 @@ extern unsigned long LoDWord(LargeWord Src);
 
 extern Boolean Odd (int inp);
 
-extern Boolean DirScan(char *Mask, charcallback callback);
+extern Boolean DirScan(const char *Mask, charcallback callback);
 
 extern LongInt MyGetFileTime(char *Name);
 

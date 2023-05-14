@@ -88,7 +88,7 @@ static char *EnvNames[EnvCount] =
 static int IncludeNest;
 static FILE *infiles[50], *outfile;
 static char TocName[200];
-static char SrcDir[TOKLEN + 1];
+static char SrcDir[TOKLEN + 1], asname[TOKLEN];
 
 #define CHAPMAX 6
 static int Chapters[CHAPMAX];
@@ -1058,31 +1058,40 @@ static void TeXDummyInCurl(Word Index)
 
 static void TeXNewCommand(Word Index)
 {
-  char Token[TOKLEN];
+  char token[TOKLEN], command[TOKLEN], sum_token[TOKLEN], arg_cnt[TOKLEN];
   int level;
   UNUSED(Index);
 
   assert_token("{");
   assert_token("\\");
-  ReadToken(Token);
+  ReadToken(command);
   assert_token("}");
-  ReadToken(Token);
-  if (!strcmp(Token, "["))
+  ReadToken(token);
+
+  if (!strcmp(token, "["))
   {
-    ReadToken(Token);
+    ReadToken(arg_cnt);
     assert_token("]");
+    ReadToken(token);
   }
-  assert_token("{");
+  if (strcmp(token, "{"))
+    error("\"{\" expected");
+
   level = 1;
+  *sum_token = '\0';
   do
   {
-    ReadToken(Token);
-    if (!strcmp(Token, "{"))
+    ReadToken(token);
+    if (!strcmp(token, "{"))
       level++;
-    else if (!strcmp(Token, "}"))
+    else if (!strcmp(token, "}"))
       level--;
+    if (level != 0)
+      strmaxcat(sum_token, token, sizeof(sum_token));
   }
   while (level != 0);
+  if (!strcmp(command, "asname"))
+    strmaxcpy(asname, sum_token, sizeof(asname));
 }
 
 static void TeXDef(Word Index)
@@ -1619,6 +1628,17 @@ static void TeXAddMid(Word Index)
   UNUSED(Index);
 
   DoAddNormal("|", BackSepString);
+}
+
+static void TeXASName(Word Index)
+{
+  char arg[TOKLEN];
+
+  UNUSED(Index);
+
+  assert_token("{");
+  collect_token(arg, "}");
+  DoAddNormal(asname, BackSepString);
 }
 
 static void TeXAddRightArrow(Word Index)
@@ -2675,6 +2695,7 @@ int main(int argc, char **argv)
   AddInstTable(TeXTable, "lor", 0, TeXAddLOr);
   AddInstTable(TeXTable, "oplus", 0, TeXAddOPlus);
   AddInstTable(TeXTable, "mid", 0, TeXAddMid);
+  AddInstTable(TeXTable, "asname", 0, TeXASName);
   AddInstTable(TeXTable, "frac", 0, TeXDoFrac);
   AddInstTable(TeXTable, "rm", FontStandard, TeXNewFontType);
   AddInstTable(TeXTable, "em", FontEmphasized, TeXNewFontType);

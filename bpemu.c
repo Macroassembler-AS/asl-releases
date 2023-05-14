@@ -288,7 +288,7 @@ Boolean Odd(int inp)
   return ((inp & 1) == 1);
 }
 
-Boolean DirScan(char *Mask, charcallback callback)
+Boolean DirScan(const char *Mask, charcallback callback)
 {
   char Name[1024];
 

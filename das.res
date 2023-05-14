@@ -2,7 +2,7 @@
 ;*****************************************************************************
 ;* AS-Portierung                                                             *
 ;*                                                                           *
-;* String-Definitions for DA S                                               *
+;* String-Definitions for DAS                                                *
 ;*                                                                           *
 ;*****************************************************************************
 ;* $Id: das.res,v 1.1 2015/02/01 20:51:38 alfred Exp $                       *
@@ -84,39 +84,45 @@ Message KeyWaitMsg
  "--- <ENTER> to go on ---"
 
 Message InfoMessHead1
- "Aufruf : "
- "calling convention : "
+ "Aufruf: "
+ "Usage: "
 
 Message InfoMessHead2
  " [Optionen] [Datei] [Optionen] ..."
  " [options] [file] [options] ..."
 
 Message InfoMessHelp
- "--------\n" \
  "\n" \
- "Optionen :\n" \
- "----------\n" \
+ "Optionen:\n" \
+ "  -cpu <Name>              : setze Zielprozessor\n" \
+ "                             ('?' oder 'list', um verf&uuml;gbare nur anzuzeigen)\n" \
+ "  -binfile <Name>[@Start[,L&auml;nge[,Granularit&auml;t]]] : lade Bin&auml;rdatei\n" \
+ "  -hexfile <Name>          : lade HEX-Datei\n" \
+ "  -entryaddress (<Adresse>[,L&auml;nge[,MSB|LSB]]),<Name> : definiere indirekte Startadresse\n" \
+ "  -entryaddress <Adresse>,<Name> : definiere direkte Startadresse\n" \
+ "  -symbol <Adresse>=<Name> : definiere Symbol\n" \
+ "  -h                       : Hexadezimalzahlen mit Kleinbuchstaben\n" \
+ "  -help                    : nur Hilfe ausgeben\n" \
+ "  -version                 : nur Versionsinfo ausgeben\n"
+ "  -screenheight <#>        : Bildschirmh&ouml;he f&uuml;r Paging von '-help'\n" \
+ "                             und '-cpu list' setzen\n" \
+ "\n"
  "\n" \
- "-cpu <Name> : setze Zielprozessor\n" \
- "-binfile <Name>[@Start[,L&auml;nge[,Granularit&auml;t]]] : lade Bin&auml;rdatei\n" \
- "-hexfile <Name> : lade HEX-Datei\n" \
- "-entryaddress (<Adresse>[,L&auml;nge[,MSB|LSB]]),<Name> : definiere indirekte Startadresse\n" \
- "-entryaddress <Adresse>,<Name> : definiere direkte Startadresse\n" \
- "-symbol <Adresse>=<Name> : definiere Symbol\n" \
- "-h : Hexadezimalzahlen mit Kleinbuchstaben\n" \
- "\n" \
- "implementierte Prozessoren :\n"
- "--------------------\n" \
- "\n" \
- "options :\n" \
- "---------\n" \
- "\n" \
- "-cpu <name> : set target processor\n" \
- "-binfile <name>[@start[,length[,granularity]]] : load binary file\n" \
- "-hexfile <name> : load HEX file\n" \
- "-entryaddress (<address>[length[,MSB|LSB]]),<name> : define indirect start address\n" \
- "-entryaddress <address>,<name> : define direct start address\n" \
- "-symbol <address>=<name> : define symbol\n" \
- "-h : use lower case in hexadecimal output\n" \
- "\n" \
- "implemented processors :\n"
+ "options:\n" \
+ "  -cpu <name>              : set target processor\n" \
+ "                             ('?' or 'list' to list available ones and exit)\n" \
+ "  -binfile <name>[@start[,length[,granularity]]] : load binary file\n" \
+ "  -hexfile <name>          : load HEX file\n" \
+ "  -entryaddress (<address>[length[,MSB|LSB]]),<name> : define indirect start address\n" \
+ "  -entryaddress <address>,<name> : define direct start address\n" \
+ "  -symbol <address>=<name> : define symbol\n" \
+ "  -h                       : use lower case in hexadecimal output\n" \
+ "  -help                    : print help and exit\n" \
+ "  -version                 : print version info and exit\n"
+ "  -screenheight <#>        : set screen height for paging of '-help'\n" \
+ "                             and '-cpu list'\n" \
+ "\n"
+
+Message InfoMessCPUList
+ "implementierte Prozessoren :"
+ "implemented processors :"

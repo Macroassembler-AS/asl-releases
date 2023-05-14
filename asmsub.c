@@ -73,19 +73,15 @@ void AddCopyright(const char *NewLine)
   AddStringListLast(&CopyrightList, NewLine);
 }
 
-void WriteCopyrights(TSwitchProc NxtProc)
+void WriteCopyrights(void(*PrintProc)(const char *))
 {
   StringRecPtr Lauf;
 
   if (!StringListEmpty(CopyrightList))
   {
-    WrConsoleLine(GetStringListFirst(CopyrightList, &Lauf), True);
-    NxtProc();
+    PrintProc(GetStringListFirst(CopyrightList, &Lauf));
     while (Lauf)
-    {
-      WrConsoleLine(GetStringListNext(&Lauf), True);
-      NxtProc();
-    }
+      PrintProc(GetStringListNext(&Lauf));
   }
 }
 
@@ -1344,9 +1340,9 @@ void RemoveFromOutList(const char *OldName)
   RemoveStringList(&OutList, OldName);
 }
 
-char *GetFromOutList(void)
+char *MoveFromOutListFirst(void)
 {
-  return GetAndCutStringList(&OutList);
+  return MoveAndCutStringListFirst(&OutList);
 }
 
 void ClearShareOutList(void)
@@ -1364,9 +1360,9 @@ void RemoveFromShareOutList(const char *OldName)
   RemoveStringList(&ShareOutList, OldName);
 }
 
-char *GetFromShareOutList(void)
+char *MoveFromShareOutListFirst(void)
 {
-  return GetAndCutStringList(&ShareOutList);
+  return MoveAndCutStringListFirst(&ShareOutList);
 }
 
 void ClearListOutList(void)
@@ -1384,9 +1380,9 @@ void RemoveFromListOutList(const char *OldName)
   RemoveStringList(&ListOutList, OldName);
 }
 
-char *GetFromListOutList(void)
+char *MoveFromListOutListFirst(void)
 {
-  return GetAndCutStringList(&ListOutList);
+  return MoveAndCutStringListFirst(&ListOutList);
 }
 
 /****************************************************************************/

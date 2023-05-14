@@ -34,6 +34,7 @@
 #include "codepseudo.h"
 #include "nlmessages.h"
 #include "literals.h"
+#include "msg_level.h"
 #include "asmallg.h"
 
 #define LEAVE goto func_exit
@@ -843,7 +844,7 @@ static void CodeMESSAGE(Word Index)
     if (!OK) WrError(ErrNum_InvString);
     else
     {
-      if (!QuietMode)
+      if (msg_level >= e_msg_level_normal)
         WrConsoleLine(mess, True);
       if (strcmp(LstName, "/dev/null"))
         WrLstLine(mess);

@@ -23,6 +23,7 @@
 #include "chunks.h"
 #include "stringlists.h"
 #include "cmdarg.h"
+#include "msg_level.h"
 #include "toolutils.h"
 
 #define BinSuffix ".bin"
@@ -35,10 +36,8 @@ const char *FileName, LongWord Offset
 );
 
 
-static as_cmd_processed_t ParUnprocessed;
-
 static FILE *TargFile;
-static String SrcName, TargName;
+static String TargName;
 
 static LongWord StartAdr, StopAdr, EntryAdr, RealFileLen;
 static LongWord MaxGran, Dummy;
@@ -69,8 +68,9 @@ static void ChkIO_L(char *s, int line)
 
 static void ParamError(Boolean InEnv, char *Arg)
 {
-  fprintf(stderr, "%s%s\n%s\n", getmessage((InEnv)?Num_ErrMsgInvEnvParam:Num_ErrMsgInvParam), Arg, getmessage(Num_ErrMsgProgTerm));
-  exit(1);
+  fprintf(stderr, "%s%s\n%s\n",
+          getmessage(InEnv ? Num_ErrMsgInvEnvParam:Num_ErrMsgInvParam),
+          Arg, getmessage(Num_ErrMsgProgTerm));
 }
 
 #define BufferSize 4096
@@ -199,7 +199,7 @@ static void ProcessFile(const char *FileName, LongWord Offset)
     FormatError(FileName, getmessage(Num_FormatInvHeaderMsg));
 
   errno = 0;
-  if (!QuietMode)
+  if (msg_level >= e_msg_level_normal)
     printf("%s==>>%s", FileName, TargName);
   ChkIO(OutName);
 
@@ -295,7 +295,7 @@ static void ProcessFile(const char *FileName, LongWord Offset)
   }
   while (InpHeader != 0);
 
-  if (!QuietMode)
+  if (msg_level >= e_msg_level_normal)
   {
     errno = 0; printf("  ("); ChkIO(OutName);
     errno = 0; printf(Integ32Format, SumLen); ChkIO(OutName);
@@ -320,7 +320,7 @@ static void Callback(char *Name)
   CurrProcessor(Name, CurrOffset);
 }
 
-static void ProcessGroup(char *GroupName_O, ProcessProc Processor)
+static void ProcessGroup(const char *GroupName_O, ProcessProc Processor)
 {
   String Ext, GroupName;
 
@@ -328,7 +328,10 @@ static void ProcessGroup(char *GroupName_O, ProcessProc Processor)
   strmaxcpy(GroupName, GroupName_O, STRINGSIZE);
   strmaxcpy(Ext, GroupName, STRINGSIZE);
   if (!RemoveOffset(GroupName, &CurrOffset))
+  {
     ParamError(False, Ext);
+    exit(1);
+  }
   AddSuffix(GroupName, STRINGSIZE, getmessage(Num_Suffix));
 
   if (!DirScan(GroupName, Callback))
@@ -390,6 +393,8 @@ static void MeasureFile(const char *FileName, LongWord Offset)
   if (fclose(f) == EOF)
     ChkIO(FileName);
 }
+
+/* --------------------------------------------- */
 
 static as_cmd_result_t CMD_AdrRange(Boolean Negate, const char *Arg)
 {
@@ -553,16 +558,16 @@ static as_cmd_rec_t P2BINParams[] =
   { "e"        , CMD_EntryAdr },
   { "S"        , CMD_StartHeader },
   { "k"        , CMD_AutoErase },
-  { "q"        , CMD_QuietMode },
-  { "QUIET"    , CMD_QuietMode },
-  { "SEGMENT"  , CMD_ForceSegment },
+  cmds_msg_level,
+  { "SEGMENT"  , CMD_ForceSegment }
 };
 
 int main(int argc, char **argv)	
 {
-  int z;
-  char *ph1, *ph2;
-  String Ver;
+  as_cmd_results_t cmd_results;
+  char *p_target_name;
+  const char *p_src_name;
+  StringRecPtr p_src_run;
 
   nls_init();
   if (!NLS_Initialize(&argc, argv))
@@ -575,23 +580,10 @@ int main(int argc, char **argv)
   ioerrs_init(*argv);
   chunks_init();
   as_cmdarg_init(*argv);
+  msg_level_init();
   toolutils_init(*argv);
 
   InitChunk(&UsedList);
-
-  if (argc <= 1)
-  {
-    errno = 0;
-    printf("%s%s%s\n", getmessage(Num_InfoMessHead1), GetEXEName(argv[0]), getmessage(Num_InfoMessHead2));
-    ChkIO(OutName);
-    for (ph1 = getmessage(Num_InfoMessHelp), ph2 = strchr(ph1, '\n'); ph2; ph1 = ph2 + 1, ph2 = strchr(ph1, '\n'))
-    {
-      *ph2 = '\0';
-      printf("%s\n", ph1);
-      *ph2 = '\n';
-    }
-    exit(1);
-  }
 
   StartAdr = 0;
   StopAdr = 0x7fff;
@@ -606,35 +598,73 @@ int main(int argc, char **argv)
   AutoErase = False;
   StartHeader = 0;
   ValidSegment = SegCode;
-  as_cmd_process(argc, argv, P2BINParams, as_array_size(P2BINParams), ParUnprocessed, "P2BINCMD", ParamError);
 
-  if (!QuietMode)
+  if (e_cmd_err == as_cmd_process(argc, argv, P2BINParams, as_array_size(P2BINParams), "P2BINCMD", &cmd_results))
   {
-    as_snprintf(Ver, sizeof(Ver), "P2BIN/C V%s", Version);
+    ParamError(cmd_results.error_arg_in_env, cmd_results.error_arg);
+    exit(1);
+  }
+
+  if ((msg_level >= e_msg_level_verbose) || cmd_results.write_version_exit)
+  {
+    String Ver;
+
+    as_snprintf(Ver, sizeof(Ver), "P2BIN V%s", Version);
     WrCopyRight(Ver);
   }
 
-  if (as_cmd_processed_empty(ParUnprocessed))
+  if (cmd_results.write_help_exit)
   {
+    char *ph1, *ph2;
+
+    errno = 0;
+    printf("%s%s%s\n", getmessage(Num_InfoMessHead1), as_cmdarg_get_executable_name(), getmessage(Num_InfoMessHead2));
+    ChkIO(OutName);
+    for (ph1 = getmessage(Num_InfoMessHelp), ph2 = strchr(ph1, '\n'); ph2; ph1 = ph2 + 1, ph2 = strchr(ph1, '\n'))
+    {
+      *ph2 = '\0';
+      printf("%s\n", ph1);
+      *ph2 = '\n';
+    }
+  }
+
+  if (cmd_results.write_version_exit || cmd_results.write_help_exit)
+    exit(0);
+
+  if (StringListEmpty(cmd_results.file_arg_list))
+  {
+    fprintf(stderr, "%s: %s\n", as_cmdarg_get_executable_name(), getmessage(Num_ErrMessNoInputFiles));
+    exit(1);
+  }
+
+  p_target_name = MoveAndCutStringListLast(&cmd_results.file_arg_list);
+  if (!p_target_name || !*p_target_name)
+  {
+    if (p_target_name) free(p_target_name);
+    p_target_name = NULL;
     errno = 0;
     fprintf(stderr, "%s\n", getmessage(Num_ErrMsgTargMissing));
     ChkIO(OutName);
     exit(1);
   }
 
-  z = argc - 1;
-  while ((z > 0) && (!ParUnprocessed[z]))
-    z--;
-  strmaxcpy(TargName, argv[z], STRINGSIZE);
+  strmaxcpy(TargName, p_target_name, STRINGSIZE);
   if (!RemoveOffset(TargName, &Dummy))
-    ParamError(False, argv[z]);
-  ParUnprocessed[z] = False;
-  if (as_cmd_processed_empty(ParUnprocessed))
   {
-    strmaxcpy(SrcName, argv[z], STRINGSIZE);
+    strmaxcpy(TargName, p_target_name, STRINGSIZE);
+    free(p_target_name); p_target_name = NULL;
+    ParamError(False, TargName);
+  }
+
+  /* special case: only one argument <name> treated like <name>.p -> <name).bin */
+
+  if (StringListEmpty(cmd_results.file_arg_list))
+  {
+    AddStringListLast(&cmd_results.file_arg_list, p_target_name);
     DelSuffix(TargName);
   }
   AddSuffix(TargName, STRINGSIZE, BinSuffix);
+  free(p_target_name); p_target_name = NULL;
 
   MaxGran = 1;
   if ((StartAuto) || (StopAuto))
@@ -643,12 +673,10 @@ int main(int argc, char **argv)
       StartAdr = 0xfffffffful;
     if (StopAuto)
       StopAdr = 0;
-    if (as_cmd_processed_empty(ParUnprocessed))
-      ProcessGroup(SrcName, MeasureFile);
-    else
-      for (z = 1; z < argc; z++)
-        if (ParUnprocessed[z])
-          ProcessGroup(argv[z], MeasureFile);
+    for (p_src_name = GetStringListFirst(cmd_results.file_arg_list, &p_src_run);
+         p_src_name && *p_src_name;
+         p_src_name = GetStringListNext(&p_src_run))
+      ProcessGroup(p_src_name, MeasureFile);
     if (StartAdr > StopAdr)
     {
       errno = 0;
@@ -656,7 +684,7 @@ int main(int argc, char **argv)
       ChkIO(OutName);
       exit(1);
     }
-    if (!QuietMode)
+    if (msg_level >= e_msg_level_normal)
     {
       printf("%s: 0x%08lX-", getmessage(Num_InfoMessDeducedRange), LoDWord(StartAdr));
       printf("0x%08lX\n", LoDWord(StopAdr));
@@ -665,24 +693,20 @@ int main(int argc, char **argv)
 
   OpenTarget();
 
-  if (as_cmd_processed_empty(ParUnprocessed))
-    ProcessGroup(SrcName, ProcessFile);
-  else
-    for (z = 1; z < argc; z++)
-      if (ParUnprocessed[z])
-        ProcessGroup(argv[z], ProcessFile);
+  for (p_src_name = GetStringListFirst(cmd_results.file_arg_list, &p_src_run);
+       p_src_name && *p_src_name;
+       p_src_name = GetStringListNext(&p_src_run))
+    ProcessGroup(p_src_name, ProcessFile);
 
   CloseTarget();
 
   if (AutoErase)
-  {
-    if (as_cmd_processed_empty(ParUnprocessed))
-      ProcessGroup(SrcName, EraseFile);
-    else
-      for (z = 1; z < argc; z++)
-        if (ParUnprocessed[z])
-          ProcessGroup(argv[z], EraseFile);
-  }
+    for (p_src_name = GetStringListFirst(cmd_results.file_arg_list, &p_src_run);
+         p_src_name && *p_src_name;
+         p_src_name = GetStringListNext(&p_src_run))
+      ProcessGroup(p_src_name, EraseFile);
+
+  ClearStringList(&cmd_results.file_arg_list);
 
   return 0;
 }

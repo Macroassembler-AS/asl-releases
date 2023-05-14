@@ -134,7 +134,7 @@ extern LongWord StackRes(void);
 
 extern void AddCopyright(const char *NewLine);
 
-extern void WriteCopyrights(TSwitchProc NxtProc);
+extern void WriteCopyrights(void(*PrintProc)(const char *));
 
 
 extern char *ChkSymbNameUpTo(const char *pSym, const char *pUpTo);
@@ -157,7 +157,7 @@ extern void AddToOutList(const char *NewName);
 
 extern void RemoveFromOutList(const char *OldName);
 
-extern char *GetFromOutList(void);
+extern char *MoveFromOutListFirst(void);
 
 
 extern void ClearShareOutList(void);
@@ -166,7 +166,7 @@ extern void AddToShareOutList(const char *NewName);
 
 extern void RemoveFromShareOutList(const char *OldName);
 
-extern char *GetFromShareOutList(void);
+extern char *MoveFromShareOutListFirst(void);
 
 
 extern void ClearListOutList(void);
@@ -175,7 +175,7 @@ extern void AddToListOutList(const char *NewName);
 
 extern void RemoveFromListOutList(const char *OldName);
 
-extern char *GetFromListOutList(void);
+extern char *MoveFromListOutListFirst(void);
 
 
 extern void BookKeeping(void);

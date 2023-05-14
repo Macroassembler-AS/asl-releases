@@ -13,6 +13,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmallg.h"
+#include "cmdarg.h"
 #include "onoff_common.h"
 
 Boolean FPUAvail,    /* floating point co processor instructions allowed? */

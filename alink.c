@@ -28,6 +28,7 @@
 #include "nlmessages.h"
 #include "stringlists.h"
 #include "cmdarg.h"
+#include "msg_level.h"
 #include "toolutils.h"
 
 #include "ioerrs.h"
@@ -54,12 +55,9 @@ typedef struct sPart
 /* Variables */
 
 static Boolean DoubleErr;
-static int Verbose;
 static LongWord UndefErr;
 
 static String TargName;
-
-static as_cmd_processed_t ParUnprocessed;
 
 static PPart PartList, PartLast;
 
@@ -184,7 +182,7 @@ static void ReadSymbols(const char *pSrcName, int Index)
 
   strmaxcpy(SrcName, pSrcName, STRINGSIZE);
   DelSuffix(SrcName); AddSuffix(SrcName, STRINGSIZE, getmessage(Num_Suffix));
-  if (Verbose >= 2)
+  if (msg_level >= 3)
     printf("%s '%s'...\n", getmessage(Num_InfoMsgGetSyms), SrcName);
   f = fopen(SrcName, OPENRDMODE);
   if (!f)
@@ -306,9 +304,9 @@ static void ProcessFile(const char *pSrcName, int Index)
 
   strmaxcpy(SrcName, pSrcName, STRINGSIZE);
   DelSuffix(SrcName); AddSuffix(SrcName, STRINGSIZE, getmessage(Num_Suffix));
-  if (Verbose >= 2)
+  if (msg_level >= 3)
     printf("%s '%s'...", getmessage(Num_InfoMsgOpenSrc), SrcName);
-  else if (Verbose >= 1)
+  else if (msg_level >= e_msg_level_verbose)
     printf("%s", SrcName);
   f = fopen(SrcName, OPENRDMODE);
   if (!f)
@@ -387,7 +385,7 @@ static void ProcessFile(const char *pSrcName, int Index)
           Found = GetExport(PReloc->Name, &Value);
         if (Found)
         {
-          if (Verbose >= 2)
+          if (msg_level >= 3)
             printf("%s 0x%x...", getmessage(Num_InfoMsgReading), (int)PReloc->Addr);
           RelocVal = GetValue(PReloc->Type, PReloc->Addr - PartRun->CodeStart);
           NRelocVal = (PReloc->Type & RelocFlagSUB) ? RelocVal - Value : RelocVal + Value;
@@ -428,7 +426,7 @@ static void ProcessFile(const char *pSrcName, int Index)
       SkipRecord(Header, SrcName, f);
   }
 
-  if (Verbose >= 1)
+  if (msg_level >= e_msg_level_verbose)
   {
     printf("(");
     printf(Integ32Format, SumLen);
@@ -439,44 +437,23 @@ static void ProcessFile(const char *pSrcName, int Index)
 /****************************************************************************/
 /* command line processing */
 
-static as_cmd_result_t CMD_Verbose(Boolean Negate, const char *Arg)
-{
-  UNUSED(Arg);
-
-  if (Negate)
-  {
-    if (Verbose)
-      Verbose--;
-  }
-  else
-    Verbose++;
-
-  return e_cmd_ok;
-}
-
-static void ParamError(Boolean InEnv, char *Arg)
-{
-  printf("%s%s\n%s\n",
-         getmessage((InEnv) ? Num_ErrMsgInvEnvParam : Num_ErrMsgInvParam),
-         Arg, getmessage(Num_ErrMsgProgTerm));
-  exit(1);
-}
-
 static const as_cmd_rec_t ALINKParams[] =
 {
-  {"v", CMD_Verbose}
+  cmds_msg_level
 };
-
-/****************************************************************************/
 
 int main(int argc, char **argv)
 {
   String Ver;
-  int z;
+  int file_index;
   Word LMagic;
   Byte LHeader;
   PPart PartRun;
   LargeInt Diff;
+  as_cmd_results_t cmd_results;
+  char *p_target_name;
+  const char *p_src_name;
+  StringRecPtr p_src_run;
 
   /* the initialization orgy... */
 
@@ -497,17 +474,33 @@ int main(int argc, char **argv)
   as_cmdarg_init(*argv);
   toolutils_init(*argv);
 
-  as_snprintf(Ver, sizeof(Ver), "ALINK/C V%s", Version);
-  WrCopyRight(Ver);
+  /* process arguments */
 
-  /* no commandline arguments -->print help */
+  if (e_cmd_err == as_cmd_process(argc, argv, ALINKParams, as_array_size(ALINKParams), "ALINKCMD", &cmd_results))
+  {
+    printf("%s%s\n%s\n",
+           getmessage(cmd_results.error_arg_in_env ? Num_ErrMsgInvEnvParam : Num_ErrMsgInvParam),
+           cmd_results.error_arg, getmessage(Num_ErrMsgProgTerm));
+    exit(1);
+  }
 
-  if (argc <= 1)
+  if ((msg_level >= e_msg_level_verbose) && (argc > 1))
+   printf("\n");
+
+  if ((msg_level >= e_msg_level_verbose) || cmd_results.write_version_exit)
+  {
+    String Ver;
+
+    as_snprintf(Ver, sizeof(Ver), "ALINK V%s", Version);
+    WrCopyRight(Ver);
+  }
+
+  if (cmd_results.write_help_exit)
   {
     char *ph1, *ph2;
 
     errno = 0;
-    printf("%s%s%s\n", getmessage(Num_InfoMessHead1), GetEXEName(argv[0]),
+    printf("%s%s%s\n", getmessage(Num_InfoMessHead1), as_cmdarg_get_executable_name(),
            getmessage(Num_InfoMessHead2));
     ChkIO(OutName);
     for (ph1 = getmessage(Num_InfoMessHelp), ph2 = strchr(ph1,'\n'); ph2; ph1 = ph2+1, ph2 = strchr(ph1,'\n'))
@@ -516,40 +509,37 @@ int main(int argc, char **argv)
       printf("%s\n", ph1);
       *ph2 = '\n';
     }
+  }
+
+  if (cmd_results.write_version_exit || cmd_results.write_help_exit)
+    exit(0);
+
+  /* no command line arguments? */
+
+  if (StringListEmpty(cmd_results.file_arg_list))
+  {
+    fprintf(stderr, "%s: %s\n", as_cmdarg_get_executable_name(), getmessage(Num_ErrMessNoInputFiles));
     exit(1);
   }
 
-  /* preinit commandline variables */
-
-  Verbose = 0;
-
-  /* process arguments */
-
-  as_cmd_process(argc, argv, ALINKParams, as_array_size(ALINKParams), ParUnprocessed, "ALINKCMD", ParamError);
-
-  if ((Verbose >= 1) && (argc > 1))
-   printf("\n");
-
   /* extract target file */
 
-  if (as_cmd_processed_empty(ParUnprocessed))
+  p_target_name = MoveAndCutStringListLast(&cmd_results.file_arg_list);
+  strmaxcpy(TargName, p_target_name ? p_target_name : "", STRINGSIZE);
+  free(p_target_name); p_target_name = NULL;
+  if (!*TargName)
   {
     errno = 0;
     printf("%s\n", getmessage(Num_ErrMsgTargMissing));
     ChkIO(OutName);
     exit(1);
   }
-  for (z = argc - 1; z > 0; z--)
-    if (ParUnprocessed[z])
-      break;
-  strmaxcpy(TargName, argv[z], STRINGSIZE);
   DelSuffix(TargName);
   AddSuffix(TargName, STRINGSIZE, getmessage(Num_Suffix));
-  ParUnprocessed[z] = False;
 
   /* walk over source file(s): */
 
-  if (as_cmd_processed_empty(ParUnprocessed))
+  if (StringListEmpty(cmd_results.file_arg_list))
   {
     errno = 0;
     printf("%s\n", getmessage(Num_ErrMsgSrcMissing));
@@ -561,9 +551,10 @@ int main(int argc, char **argv)
 
   DoubleErr = False;
   PartList = NULL;
-  for (z = 1; z < argc; z++)
-    if (ParUnprocessed[z])
-      ReadSymbols(argv[z], z);
+  for (p_src_name = GetStringListFirst(cmd_results.file_arg_list, &p_src_run), file_index = 1;
+       p_src_name && *p_src_name;
+       p_src_name = GetStringListNext(&p_src_run), file_index++)
+    ReadSymbols(p_src_name, file_index);
 
   /* double-defined symbols? */
 
@@ -577,7 +568,7 @@ int main(int argc, char **argv)
     {
       Diff = SegStarts[PartRun->Segment] - PartRun->CodeStart;
       PartRun->CodeStart += Diff;
-      if (Verbose >= 2)
+      if (msg_level >= e_msg_level_verbose)
         printf("%s 0x%x\n", getmessage(Num_InfoMsgLocating), (int)PartRun->CodeStart);
       if (PartRun->RelocInfo)
       {
@@ -609,9 +600,10 @@ int main(int argc, char **argv)
   /* do relocations, underwhile write target file */
 
   UndefErr = 0;
-  for (z = 1; z < argc; z++)
-    if (ParUnprocessed[z])
-      ProcessFile(argv[z], z);
+  for (p_src_name = GetStringListFirst(cmd_results.file_arg_list, &p_src_run), file_index = 1;
+       p_src_name && *p_src_name;
+       p_src_name = GetStringListNext(&p_src_run), file_index++)
+    ProcessFile(p_src_name, file_index);
 
   /* write final creator record */
 
@@ -634,6 +626,8 @@ int main(int argc, char **argv)
     fprintf(stderr, " %s\n", getmessage((UndefErr == 1) ? Num_SumUndefSymbol : Num_SumUndefSymbols));
     return 1;
   }
+
+  ClearStringList(&cmd_results.file_arg_list);
 
   return 0;
 }

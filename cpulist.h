@@ -22,9 +22,9 @@ void *pUserData
 #endif
 );
 
-typedef void (*tPrintNextCPUProc)(
+typedef void (*tPrintLineCPUProc)(
 #ifdef __PROTOS__
-void
+const char *
 #endif
 );
 
@@ -66,7 +66,7 @@ extern const tCPUDef *LookupCPUDefByName(const char *pName);
 
 extern void IterateCPUList(tCPUListIterator Iterator, void *pUser);
 
-extern void PrintCPUList(tPrintNextCPUProc NxtProc);
+extern void PrintCPUList(tPrintLineCPUProc PrintProc);
 
 extern void ClearCPUList(void);
 

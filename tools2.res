@@ -13,7 +13,7 @@
 
 Message InfoMessHead1
  "Aufruf: "
- "calling convention: "
+ "usage: "
 
 ;-----------------------------------------------------------------------------
 ; Fehlermeldungen
@@ -39,12 +39,12 @@ Message ErrMsgNullMaskB
  " does not fit to any file!"
 
 Message ErrMsgInvEnvParam
- "Fehlerhafter Environment-Parameter : "
- "invalid environment parameter: "
+ "Fehlerhafter Environment-Parameter (-help f&uuml;r Hilfe): "
+ "invalid environment parameter (-help for help): "
 
 Message ErrMsgInvParam
- "Fehlerhafter Parameter : "
- "invalid parameter : "
+ "Fehlerhafter Parameter (-help f&uuml;r Hilfe): "
+ "invalid parameter (-help for help): "
 
 Message ErrMsgTargMissing
  "Zieldateiangabe fehlt!"
@@ -61,6 +61,10 @@ Message ErrMsgOverlap
 Message ErrMsgProgTerm
  "Programmabbruch"
  "program terminated"
+
+Message ErrMessNoInputFiles
+ "keine Quelldateien (-help f&uuml;r Hilfe)"
+ "no input files (-help for help)"
 
 ;---------------------------------------------------------------------------
 

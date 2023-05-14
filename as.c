@@ -26,6 +26,7 @@
 #include "strutil.h"
 #include "stringlists.h"
 #include "cmdarg.h"
+#include "msg_level.h"
 #include "asmitree.h"
 #include "trees.h"
 #include "chunks.h"
@@ -1027,9 +1028,11 @@ static void ExpandSHIFT(void)
       if (RunTag->Processor == MACRO_Processor)
         break;
 
-    if ((RunTag) && (RunTag->Params))
+    if (RunTag && RunTag->Params)
     {
-      GetAndCutStringList(&(RunTag->Params));
+      char *p_arg = MoveAndCutStringListFirst(&RunTag->Params);
+      if (p_arg)
+        free(p_arg);
       RunTag->ParCnt--;
       ComputeMacroStrings(RunTag);
     }
@@ -1926,7 +1929,7 @@ static void INCLUDE_Cleanup(PInputTag PInp)
      continuation lines: */
 
   LineSum += PInp->LineZ + PInp->ContLineCnt;
-  if ((*LstName != '\0') && !QuietMode)
+  if ((*LstName != '\0') && (msg_level >= e_msg_level_normal))
   {
     String Tmp;
 
@@ -2759,7 +2762,7 @@ static void ProcessFile(char *pFileName)
 
     /* Zeilenzaehler */
 
-    if (!QuietMode)
+    if (msg_level >= e_msg_level_normal)
     {
       NxtTime = GTime();
       if (((!ListToStdout) || ((ListMask&1) == 0)) && (DTime(ListTime, NxtTime) > 50))
@@ -3000,7 +3003,7 @@ static void AssembleFile_ExitPass(void)
 
 static void AssembleFile_WrSummary(const char *pStr)
 {
-  if (!QuietMode)
+  if (msg_level >= e_msg_level_normal)
     WrConsoleLine(pStr, True);
   if (ListMode == 2)
     WrLstLine(pStr);
@@ -3008,6 +3011,7 @@ static void AssembleFile_WrSummary(const char *pStr)
 
 static void AssembleFile(char *Name)
 {
+  char *p_out_name;
   String s, Tmp;
 
   dbgentry("AssembleFile");
@@ -3026,7 +3030,9 @@ static void AssembleFile(char *Name)
 
   /* Kommandozeilenoptionen verarbeiten */
 
-  strmaxcpy(OutName, GetFromOutList(), STRINGSIZE);
+  p_out_name = MoveFromOutListFirst();
+  strmaxcpy(OutName, p_out_name ? p_out_name : "", STRINGSIZE);
+  free(p_out_name);
   if (OutName[0] == '\0')
   {
     strmaxcpy(OutName, SourceFile, STRINGSIZE);
@@ -3051,7 +3057,11 @@ static void AssembleFile(char *Name)
       strmaxcpy(LstName, "!1", STRINGSIZE);
       break;
     case 2:
-      strmaxcpy(LstName, GetFromListOutList(), STRINGSIZE);
+    {
+      char *p_lst_name = MoveFromListOutListFirst();
+
+      strmaxcpy(LstName, p_lst_name ? p_lst_name : "", STRINGSIZE);
+      if (p_lst_name) free(p_lst_name);
       if (*LstName == '\0')
       {
         strmaxcpy(LstName, SourceFile, STRINGSIZE);
@@ -3059,13 +3069,18 @@ static void AssembleFile(char *Name)
         AddSuffix(LstName, LstSuffix);
       }
       break;
+    }
   }
   ListToStdout = !strcmp(LstName, "!1");
   ListToNull = !strcmp(LstName, NULLDEV);
 
   if (ShareMode != 0)
   {
-    strmaxcpy(ShareName, GetFromShareOutList(), STRINGSIZE);
+    char *p_share_name = MoveFromShareOutListFirst();
+
+    strmaxcpy(ShareName, p_share_name ? p_share_name : "", STRINGSIZE);
+    if (p_share_name)
+      free(p_share_name);
     if (*ShareName == '\0')
     {
       strmaxcpy(ShareName, SourceFile, STRINGSIZE);
@@ -3113,7 +3128,7 @@ static void AssembleFile(char *Name)
 
   /* Listdatei eroeffnen */
 
-  if (!QuietMode)
+  if (msg_level >= e_msg_level_normal)
     printf("%s%s\n", getmessage(Num_InfoMessAssembling), SourceFile);
 
   do
@@ -3123,7 +3138,7 @@ static void AssembleFile(char *Name)
     AssembleFile_InitPass();
     AsmSubPassInit();
     AsmErrPassInit();
-    if (!QuietMode)
+    if (msg_level >= e_msg_level_normal)
     {
       as_snprintf(Tmp, sizeof(Tmp), "%s", getmessage(Num_InfoMessPass));
       as_snprcatf(Tmp, sizeof(Tmp), IntegerFormat, PassNo);
@@ -3339,7 +3354,7 @@ static void AssembleFile(char *Name)
   StopTime = GTime();
   TWrite(DTime(StartTime, StopTime), s, sizeof(s));
   strmaxcat(s, getmessage(Num_InfoMessAssTime), STRINGSIZE);
-  if (!QuietMode)
+  if (msg_level >= e_msg_level_normal)
   {
     WrConsoleLine("", True);
     WrConsoleLine(s, True);
@@ -3395,7 +3410,7 @@ static void AssembleFile(char *Name)
     unsigned long Sum = (NumMemoSum * 100) / NumMemoCnt;
 
     as_snprintf(s, sizeof(s), "%4lu.%02lu%s", Sum / 100, Sum % 100, " Oppart Compares");
-    if (!QuietMode)
+    if (msg_level >= e_msg_level_normal)
       WrConsoleLine(s, True);
     if (ListMode == 2)
       WrLstLine(s);
@@ -3433,6 +3448,22 @@ static void AssembleGroup(const char *pFileMask)
 }
 
 /*-------------------------------------------------------------------------*/
+
+static int LineZ, screen_height = 0;
+static Boolean write_cpu_list_exit;
+
+static void write_console_next(const char *p_line)
+{
+  WrConsoleLine(p_line, True);
+  if (screen_height && (++LineZ >= screen_height))
+  {
+    LineZ = 0;
+    WrConsoleLine(getmessage(Num_KeyWaitMsg), False);
+    fflush(stdout);
+    while (getchar() != '\n');
+    printf("%s", CursUp);
+  }
+}
 
 static as_cmd_result_t CMD_SharePascal(Boolean Negate, const char *Arg)
 {
@@ -3549,8 +3580,6 @@ static as_cmd_result_t CMD_ListRadix(Boolean Negate, const char *Arg)
   Boolean OK;
   LargeWord NewListRadixBase;
 
-  UNUSED(Arg);
-
   if (Negate)
   {
     ListRadixBase = 16;
@@ -3560,6 +3589,23 @@ static as_cmd_result_t CMD_ListRadix(Boolean Negate, const char *Arg)
   if (!OK || (NewListRadixBase < 2) || (NewListRadixBase > 36))
     return e_cmd_err;
   ListRadixBase = NewListRadixBase;
+  return e_cmd_arg;
+}
+
+static as_cmd_result_t CMD_screen_height(Boolean negate, const char *p_arg)
+{
+  Boolean ok;
+  int new_screen_height;
+
+  if (negate)
+  {
+    screen_height = 0;
+    return e_cmd_ok;
+  }
+  new_screen_height = ConstLongInt(p_arg, &ok, 10);
+  if (!ok)
+    return e_cmd_err;
+  screen_height = new_screen_height;
   return e_cmd_arg;
 }
 
@@ -3754,14 +3800,6 @@ static as_cmd_result_t CMD_SplitByte(Boolean Negate, const char *Arg)
     SplitByteCharacter = '.';
     return e_cmd_ok;
   }
-}
-
-static as_cmd_result_t CMD_QuietMode(Boolean Negate, const char *Arg)
-{
-  UNUSED(Arg);
-
-  QuietMode = !Negate;
-  return e_cmd_ok;
 }
 
 static as_cmd_result_t CMD_ThrowErrors(Boolean Negate, const char *Arg)
@@ -4049,6 +4087,12 @@ static as_cmd_result_t CMD_SetCPU(Boolean Negate, const char *Arg)
     if (*Arg == '\0')
       return e_cmd_err;
 
+    if (!as_strcasecmp(Arg, "?") || !as_strcasecmp(Arg, "LIST"))
+    {
+      write_cpu_list_exit = True;
+      return e_cmd_arg;
+    }
+
     strmaxcpy(DefCPU, Arg, sizeof(DefCPU) - 1);
     NLS_UpString(DefCPU);
 
@@ -4115,13 +4159,13 @@ static as_cmd_result_t CMD_MaxErrors(Boolean Negate, const char *Arg)
  * \return exec result
  * ------------------------------------------------------------------------ */
 
-#define DEFAULT_MACINCLUDELEVEL 200
+#define DEFAULT_MAXINCLUDELEVEL 200
 
 static as_cmd_result_t CMD_MaxIncludeLevel(Boolean Negate, const char *pArg)
 {
   if (Negate)
   {
-    MaxErrors = DEFAULT_MACINCLUDELEVEL;
+    MaxErrors = DEFAULT_MAXINCLUDELEVEL;
     return e_cmd_ok;
   }
   else if (pArg[0] == '\0')
@@ -4146,16 +4190,10 @@ static as_cmd_result_t CMD_TreatWarningsAsErrors(Boolean Negate, const char *Arg
   return e_cmd_ok;
 }
 
-static void ParamError(Boolean InEnv, char *Arg)
-{
-  printf("%s%s\n", getmessage((InEnv) ? Num_ErrMsgInvEnvParam : Num_ErrMsgInvParam), Arg);
-  exit(4);
-}
-
 static const as_cmd_rec_t ASParams[] =
 {
   { "A"             , CMD_BalanceTree     },
-  { "ALIAS"         , CMD_CPUAlias        },
+  { "alias"         , CMD_CPUAlias        },
   { "a"             , CMD_ShareAssembler  },
   { "C"             , CMD_CrossList       },
   { "c"             , CMD_ShareC          },
@@ -4164,35 +4202,35 @@ static const as_cmd_rec_t ASParams[] =
   { "E"             , CMD_ErrorPath       },
   { "g"             , CMD_DebugMode       },
   { "G"             , CMD_CodeOutput      },
-  { "GNUERRORS"     , CMD_GNUErrors       },
+  { "gnuerrors"     , CMD_GNUErrors       },
   { "h"             , CMD_HexLowerCase    },
   { "i"             , CMD_IncludeList     },
   { "I"             , CMD_MakeIncludeList },
   { "L"             , CMD_ListFile        },
   { "l"             , CMD_ListConsole     },
-  { "LISTRADIX"     , CMD_ListRadix       },
-  { "SPLITBYTE"     , CMD_SplitByte       },
+  { "listradix"     , CMD_ListRadix       },
+  { "splitbyte"     , CMD_SplitByte       },
   { "M"             , CMD_MacroOutput     },
-  { "MAXERRORS"     , CMD_MaxErrors       },
-  { "MAXINCLEVEL"   , CMD_MaxIncludeLevel },
+  { "maxerrors"     , CMD_MaxErrors       },
+  { "maxinclevel"   , CMD_MaxIncludeLevel },
   { "n"             , CMD_NumericErrors   },
-  { "NOICEMASK"     , CMD_NoICEMask       },
+  { "noicemask"     , CMD_NoICEMask       },
   { "o"             , CMD_OutFile         },
   { "P"             , CMD_MacProOutput    },
   { "p"             , CMD_SharePascal     },
-  { "q"             , CMD_QuietMode       },
-  { "QUIET"         , CMD_QuietMode       },
+  cmds_msg_level,
   { "r"             , CMD_MsgIfRepass     },
   { RelaxedName     , CMD_Relaxed         },
   { "s"             , CMD_SectionList     },
-  { "SHAREOUT"      , CMD_ShareOutFile    },
-  { "OLIST"         , CMD_ListOutFile     },
+  { "screenheight"  , CMD_screen_height   },
+  { "shareout"      , CMD_ShareOutFile    },
+  { "olist"         , CMD_ListOutFile     },
   { "t"             , CMD_ListMask        },
   { "u"             , CMD_UseList         },
   { "U"             , CMD_CaseSensitive   },
   { "w"             , CMD_SuppWarns       },
-  { "WARNRANGES"    , CMD_HardRanges      },
-  { "WERROR"        , CMD_TreatWarningsAsErrors },
+  { "warnranges"    , CMD_HardRanges      },
+  { "werror"        , CMD_TreatWarningsAsErrors },
   { "x"             , CMD_ExtendErrors    },
   { "X"             , CMD_MakeDebug       },
   { "Y"             , CMD_ThrowErrors     }
@@ -4226,44 +4264,12 @@ static void GlobExitProc(void)
 
 #endif
 
-static int LineZ;
-
-static void NxtLine(void)
-{
-  if (++LineZ == 23)
-  {
-    LineZ = 0;
-    if (Redirected != NoRedir)
-      return;
-    WrConsoleLine(getmessage(Num_KeyWaitMsg), False);
-    fflush(stdout);
-    while (getchar() != '\n');
-    printf("%s", CursUp);
-  }
-}
-
-static void WrHead(void)
-{
-  if (!QuietMode)
-  {
-    String Tmp;
-
-    as_snprintf(Tmp, sizeof(Tmp), "%s%s", getmessage(Num_InfoMessMacroAss), Version);
-    WrConsoleLine(Tmp, True); NxtLine();
-    as_snprintf(Tmp, sizeof(Tmp), "(%s-%s)", ARCHPRNAME, ARCHSYSNAME);
-    WrConsoleLine(Tmp, True); NxtLine();
-    WrConsoleLine(InfoMessCopyright, True); NxtLine();
-    WriteCopyrights(NxtLine);
-    WrConsoleLine("\n", True); NxtLine();
-  }
-}
-
 int main(int argc, char **argv)
 {
-  char *Env, *ph1, *ph2;
+  char *Env;
   String Dummy;
   static Boolean First = TRUE;
-  as_cmd_processed_t ParUnprocessed;     /* bearbeitete Kommandozeilenparameter */
+  as_cmd_results_t cmd_results;
 
   if (First)
   {
@@ -4279,6 +4285,7 @@ int main(int argc, char **argv)
     nlmessages_init("as.msg", *argv, MsgId1, MsgId2);
     ioerrs_init(*argv);
     as_cmdarg_init(*argv);
+    msg_level_init();
     as_cmd_extend(&as_cmd_recs, &as_cmd_rec_cnt, ASParams, as_array_size(ASParams));
 
     asmfnums_init();
@@ -4460,7 +4467,6 @@ int main(int argc, char **argv)
   CodeOutput = True;
   strcpy(ErrorPath,  "!2");
   MsgIfRepass = False;
-  QuietMode = False;
   NumericErrors = False;
   DebugMode = DebugNone;
   CaseSensitive = False;
@@ -4471,35 +4477,57 @@ int main(int argc, char **argv)
   MaxErrors = 0;
   TreatWarningsAsErrors = False;
   ListRadixBase = 16;
-  MaxIncludeLevel = DEFAULT_MACINCLUDELEVEL;
+  MaxIncludeLevel = DEFAULT_MAXINCLUDELEVEL;
+  write_cpu_list_exit = False;
 
   LineZ = 0;
-
-  if (argc <= 1)
-  {
-    WrHead();
-    printf("%s%s%s\n", getmessage(Num_InfoMessHead1), GetEXEName(argv[0]), getmessage(Num_InfoMessHead2));
-    NxtLine();
-    for (ph1 = getmessage(Num_InfoMessHelp), ph2 = strchr(ph1, '\n'); ph2; ph1 = ph2 + 1, ph2 = strchr(ph1, '\n'))
-    {
-      *ph2 = '\0';
-      printf("%s\n", ph1);
-      NxtLine();
-      *ph2 = '\n';
-    }
-    PrintCPUList(NxtLine);
-    ClearCPUList();
-    exit(1);
-  }
+  screen_height = 0;
 
 #if defined(INCDIR)
   CMD_IncludeList(False, INCDIR);
 #endif
-  as_cmd_process(argc, argv, as_cmd_recs, as_cmd_rec_cnt, ParUnprocessed, EnvName, ParamError);
+  if (e_cmd_err == as_cmd_process(argc, argv, as_cmd_recs, as_cmd_rec_cnt, EnvName, &cmd_results))
+  {
+    printf("%s%s\n", getmessage(cmd_results.error_arg_in_env ? Num_ErrMsgInvEnvParam : Num_ErrMsgInvParam), cmd_results.error_arg);
+    exit(4);
+  }
 
-  /* wegen QuietMode dahinter */
+  if ((msg_level >= e_msg_level_verbose) || cmd_results.write_version_exit)
+  {
+    String Tmp;
 
-  WrHead();
+    as_snprintf(Tmp, sizeof(Tmp), "%s%s", getmessage(Num_InfoMessMacroAss), Version);
+    write_console_next(Tmp);
+    as_snprintf(Tmp, sizeof(Tmp), "(%s-%s)", ARCHPRNAME, ARCHSYSNAME);
+    write_console_next(Tmp);
+    write_console_next(InfoMessCopyright);
+    WriteCopyrights(write_console_next);
+    write_console_next("");
+  }
+
+  if (cmd_results.write_help_exit)
+  {
+    char *ph1, *ph2;
+    String tmp;
+    as_snprintf(tmp, sizeof(tmp), "%s%s%s", getmessage(Num_InfoMessHead1), as_cmdarg_get_executable_name(), getmessage(Num_InfoMessHead2));
+    write_console_next(tmp);
+    for (ph1 = getmessage(Num_InfoMessHelp), ph2 = strchr(ph1, '\n'); ph2; ph1 = ph2 + 1, ph2 = strchr(ph1, '\n'))
+    {
+      *ph2 = '\0';
+      write_console_next(ph1);
+      *ph2 = '\n';
+    }
+  }
+
+  if (write_cpu_list_exit)
+  {
+    write_console_next(getmessage(Num_InfoMessCPUList));
+    PrintCPUList(write_console_next);
+    ClearCPUList();
+  }
+
+  if (cmd_results.write_version_exit || write_cpu_list_exit || cmd_results.write_help_exit)
+    exit(0);
 
   /* ListRadixBase must have been set */
 
@@ -4512,28 +4540,23 @@ int main(int argc, char **argv)
     unlink(ErrorName);
   }
 
-  if (StringListEmpty(FileArgList))
+  if (StringListEmpty(cmd_results.file_arg_list))
   {
-    String FileMask;
-
-    printf("%s [%s] ", getmessage(Num_InvMsgSource), SrcSuffix);
-    fflush(stdout);
-    if (!fgets(FileMask, STRINGSIZE, stdin))
-      return 0;
-    if (*FileMask && (FileMask[strlen(FileMask) - 1] == '\n'))
-      FileMask[strlen(FileMask) - 1] = '\0';
-    AssembleGroup(FileMask);
+    fprintf(stderr, "%s: %s\n", as_cmdarg_get_executable_name(), getmessage(Num_ErrMessNoInputFiles));
+    exit(1);
   }
   else
   {
-    StringRecPtr Lauf;
-    const char *pFile;
+    char *pFile;
 
-    pFile = GetStringListFirst(FileArgList, &Lauf);
-    while (pFile && *pFile)
+    while (True)
     {
-      AssembleGroup(pFile);
-      pFile = GetStringListNext(&Lauf);
+      pFile = MoveAndCutStringListFirst(&cmd_results.file_arg_list);
+      if (!pFile)
+        break;
+      if (*pFile)
+        AssembleGroup(pFile);
+      free(pFile);
     }
   }
 

@@ -1358,6 +1358,10 @@ Message ListSecoName
 ;---------------------------------------------------------------------------
 ; Durchsagen...
 
+Message ErrMessNoInputFiles
+ "keine Quelldateien (-help f&uuml; Hilfe)"
+ "no input files (-help for help)"
+
 Message InfoMessAssembling
  "Assembliere "
  "Assembling "
@@ -1443,8 +1447,8 @@ Message InfoMessVar
  "Version"
 
 Message InfoMessHead1
- "Aufruf : "
- "Calling Convention : "
+ "Aufruf: "
+ "usage: "
 
 Message InfoMessHead2
  " [Optionen] [Datei] [Optionen] ..."
@@ -1455,99 +1459,119 @@ Message KeyWaitMsg
  "--- <ENTER> to go on ---"
 
 Message ErrMsgInvParam
- "ung&uuml;ltige Option: "
- "Invalid option: "
+ "ung&uuml;ltige Option (-help f&uuml; Hilfe): "
+ "Invalid option (-help for help): "
 
 Message ErrMsgInvEnvParam
- "ung&uuml;ltige Environment-Option: "
- "Invalid environment option: "
+ "ung&uuml;ltige Environment-Option (-help f&uuml; Hilfe): "
+ "Invalid environment option (-help for help): "
 
 Message InvMsgSource
  "Quelldatei?"
  "Source file?"
 
 Message InfoMessHelp
- "--------\n" \
  "\n" \
- "Optionen :\n" \
- "----------\n" \
+ "Optionen:\n" \
+ "  -p                   : Sharefile im Pascal-Format\n" \
+ "  -c                   : Sharefile im C-Format\n" \
+ "  -a                   : Sharefile im AS-Format\n" \
+ "  -o <Name>            : Namen der Code-Datei neu setzen\n" \
+ "  -olist <Name>        : Namen der Listdatei neu setzen\n" \
+ "  -shareout <Name>     : Namen des Sharefiles neu setzen\n" \
+ "  -q, -quiet           : Stiller Betrieb\n" \
+ "  -cpu <Name>          : Zielprozessor setzen\n" \
+ "                         ('?' oder 'list', um verf&uuml;gbare nur anzuzeigen)\n" \
+ "  -alias <neu>=<alt>   : Prozessor-Alias definieren\n" \
+ "  -l                   : Listing auf Konsole\n" \
+ "  -L                   : Listing auf Datei\n" \
+ "  -listradix <2...36>  : Zahlensystem im Listing\n" \
+ "  -i <Pfad>[:Pfad]...  : Pfadliste f&uuml;r Includedateien\n" \
+ "  -D <Symbol>[,Symbol] : Symbole vordefinieren\n" \
+ "  -gnuerrors           : Fehlermeldungen im GNU-Format\n" \
+ "  -maxerrors <Anzahl>  : Assemblierung nach <Anzahl> Fehlern abbrechen\n" \
+ "  -maxinclevel <Anzahl>: Include-Verschachtelungstiefe auf <Anzahl> begrenzen\n" \
+ "  -Werror              : Warnungen als Fehler behandeln\n" \
+ "  -version             : nur Versionsinfo ausgeben\n" \
+ "  -E [Name]            : Zieldatei f&uuml;r Fehlerliste,\n" \
+ "                         !0..!4 f&uuml;r Standardhandles\n" \
+ "                         Default <Quelldatei>.LOG\n" \
+ "  -r                   : Meldungen erzeugen, falls zus&auml;tzlicher Pass erforderlich\n" \
+ "  -relaxed             : beliebige Integer-Syntax im Default zulassen\n" \
+ "  -Y                   : Sprungfehlerunterdr&uuml;ckung (siehe Anleitung)\n" \
+ "  -v                   : wortreicher Betrieb\n" \
+ "  -w                   : Warnungen unterdr&uuml;cken\n" \
+ "  +G                   : Code-Erzeugung unterdr&uuml;cken\n" \
+ "  -s                   : Sektionsliste erzeugen\n" \
+ "  -t                   : Listing-Teile ein/ausblenden\n" \
+ "  -u                   : Belegungsliste erzeugen\n" \
+ "  -C                   : Querverweisliste erzeugen\n" \
+ "  -I                   : Include-Verschachtelungsliste ausgeben\n" \
+ "  -g [map|atmel|noice] : Debug-Informationen schreiben\n" \
+ "  -A                   : kompaktere Symbolablage\n" \
+ "  -U                   : case-sensitiv arbeiten\n" \
+ "  -x                   : erweiterte Fehlermeldungen\n" \
+ "  -n                   : Fehlermeldungen mit Nummer\n" \
+ "  -P                   : Makroprozessorausgabe erzeugen\n" \
+ "  -M                   : Makrodefinitionen extrahieren\n" \
+ "  -h                   : Hexadezimalzahlen mit Kleinbuchstaben\n" \
+ "  -help                : nur Hilfe ausgeben\n" \
+ "  -splitbyte [char]    : Split-Byte-Darstellung von Zahlen\n" \
+ "  -screenheight <#>    : Bildschirmh&ouml;he f&uuml;r Paging von '-help'\n" \
+ "                         und '-cpu list' setzen\n" \
  "\n" \
- "-p : Sharefile im Pascal-Format       -c : Sharefile im C-Format\n" \
- "-a : Sharefile im AS-Format\n" \
- "-o <Name> : Namen der Code-Datei neu setzen\n" \
- "-olist <Name> : Namen der Listdatei neu setzen\n" \
- "-shareout <Name> : Namen des Sharefiles neu setzen\n" \
- "-q, -quiet : Stille &Uuml;bersetzung\n" \
- "-cpu <Name> : Zielprozessor setzen\n" \
- "-alias <neu>=<alt> : Prozessor-Alias definieren\n" \
- "-l : Listing auf Konsole              -L : Listing auf Datei\n" \
- "-listradix <2...36>: Zahlensystem im Listing\n" \
- "-i <Pfad>[:Pfad]... : Pfadliste f&uuml;r Includedateien\n" \
- "-D <Symbol>[,Symbol]... : Symbole vordefinieren\n" \
- "-gnuerrors: Fehlermeldungen im GNU-Format\n" \
- "-maxerrors <Anzahl> : Assemblierung nach <Anzahl> Fehlern abbrechen\n" \
- "-maxinclevel <Anzahl>: Include-Verschachtelungstiefe auf <Anzahl> begrenzen\n" \
- "-Werror : Warnungen als Fehler behandeln\n" \
- "-E [Name] : Zieldatei f&uuml;r Fehlerliste,\n" \
- "            !0..!4 f&uuml;r Standardhandles\n" \
- "            Default <Quelldatei>.LOG\n" \
- "-r : Meldungen erzeugen, falls zus&auml;tzlicher Pass erforderlich\n" \
- "-relaxed : beliebige Integer-Syntax im Default zulassen\n" \
- "-Y : Sprungfehlerunterdr&uuml;ckung (siehe Anleitung)\n" \
- "-w : Warnungen unterdr&uuml;cken           +G : Code-Erzeugung unterdr&uuml;cken\n" \
- "-s : Sektionsliste erzeugen           -t : Listing-Teile ein/ausblenden\n" \
- "-u : Belegungsliste erzeugen          -C : Querverweisliste erzeugen\n" \
- "-I : Include-Verschachtelungsliste ausgeben\n" \
- "-g [map|atmel|noice] : Debug-Informationen schreiben\n" \
- "-A : kompaktere Symbolablage\n" \
- "-U : Case-sensitiv arbeiten\n" \
- "-x : erweiterte Fehlermeldungen       -n : Fehlermeldungen mit Nummer\n" \
- "-P : Makroprozessorausgabe erzeugen   -M : Makrodefinitionen extrahieren\n" \
- "-h : Hexadezimalzahlen mit Kleinbuchstaben\n" \
- "-splitbyte [Zeichen] : Split-Byte-Darstellung von Zahlen\n" \
+ "Quelldateiangabe darf Jokerzeichen enthalten\n"
  "\n" \
- "Quelldateiangabe darf Jokerzeichen enthalten\n" \
+ "options:\n" \
+ "  -p                   : share file formatted for Pascal\n" \
+ "  -c                   : share file formatted for C\n" \
+ "  -a                   : share file formatted for AS\n" \
+ "  -o <name>            : change name of code file\n" \
+ "  -olist <nname>       : change name of list file\n" \
+ "  -shareout <nname>    : change name of share file\n" \
+ "  -q, -quiet           : silent operation\n" \
+ "  -cpu <name>          : set target processor\n" \
+ "                         ('?' or 'list' to list available ones and exit)\n" \
+ "  -alias <new>=<old>   : define processor alias\n" \
+ "  -l                   : listing to console\n" \
+ "  -L                   : listing to file\n" \
+ "  -listradix <2...36>  : number system in listing\n" \
+ "  -i <path>[;path]...  : list of paths for include files\n" \
+ "  -D <symbol>[,symbol] : predefine symbols\n" \
+ "  -gnuerrors           : error messages in GNU format\n" \
+ "  -maxerrors <number>  : terminate assembly after <number> errors\n" \
+ "  -maxinclevel <number>: limit include nesting level to <number>\n" \
+ "  -Werror              : treat warnings as errors\n" \
+ "  -version             : print version info and exit\n" \
+ "  -E <name>            : target file for error list,\n" \
+ "                         !0..!4 for standard handles\n" \
+ "                         default is <srcname>.LOG\n" \
+ "  -r                   : generate messages if repassing necessary\n" \
+ "  -relaxed             : allow arbitrary integer syntax by default\n" \
+ "  -Y                   : branch error suppression (see manual)\n" \
+ "  -v                   : verbose operation\n" \
+ "  -w                   : suppress warnings\n" \
+ "  +G                   : suppress code generation\n" \
+ "  -s                   : generate section list\n" \
+ "  -t                   : enable/disable parts of listing\n" \
+ "  -u                   : generate usage list\n" \
+ "  -C                   : generate cross reference list\n" \
+ "  -I                   : generate include nesting list\n" \
+ "  -g [map|atmel|noice] : write debug info\n" \
+ "  -A                   : compact symbol table\n" \
+ "  -U                   : case-sensitive operation\n" \
+ "  -x                   : extended error messages\n" \
+ "  -n                   : add error #s to error messages\n" \
+ "  -P                   : write macro processor output\n" \
+ "  -M                   : extract macro definitions\n" \
+ "  -h                   : use lower case in hexadecimal output\n" \
+ "  -help                : print help and exit\n" \
+ "  -splitbyte [char]    : use split byte display of numbers\n" \
+ "  -screenheight <#>    : set screen height for paging of '-help'\n" \
+ "                         and '-cpu list'\n" \
  "\n" \
- "implementierte Prozessoren :\n"
- "--------------------\n" \
- "\n" \
- "options :\n" \
- "---------\n" \
- "\n" \
- "-p : share file formatted for Pascal  -c : share file formatted for C\n" \
- "-a : share file formatted for AS\n" \
- "-o <name> : change name of code file\n" \
- "-olist <nname> : change name of list file\n" \
- "-shareout <nname> : change name of share file\n" \
- "-q,  -quiet : silent compilation\n" \
- "-cpu <name> : set target processor\n" \
- "-alias <new>=<old> : define processor alias\n" \
- "-l : listing to console               -L : listing to file\n" \
- "-listradix <2...36>: number system in listing\n" \
- "-i <path>[;path]... : list of paths for include files\n" \
- "-D <symbol>[,symbol]... : predefine symbols\n" \
- "-gnuerrors: error messages in GNU format\n" \
- "-maxerrors <number>: terminate assembly after <number> errors\n" \
- "-maxinclevel <number>: limit include nesting level to <number>\n" \
- "-Werror : treat warnings as errors\n" \
- "-E <name> : target file for error list,\n" \
- "            !0..!4 for standard handles\n" \
- "            default is <srcname>.LOG\n" \
- "-r : generate messages if repassing necessary\n" \
- "-relaxed : allow arbitrary integer syntax by default\n" \
- "-Y : branch error suppression (see manual)\n" \
- "-w : suppress warnings                +G : suppress code generation\n" \
- "-s : generate section list            -t : enable/disable parts of listing\n" \
- "-u : generate usage list              -C : generate cross reference list\n" \
- "-I : generate include nesting list\n" \
- "-g [map|atmel|noice] : write debug info\n" \
- "-A : compact symbol table\n" \
- "-U : case-sensitive operation\n" \
- "-x : extended error messages          -n : add error #s to error messages\n" \
- "-P : write macro processor output     -M : extract macro definitions\n" \
- "-h : use lower case in hexadecimal output\n" \
- "-splitbyte [character] : use split byte display of numbers\n" \
- "\n" \
- "source file specification may contain wildcards\n" \
- "\n" \
- "implemented processors :\n"
+ "source file specification may contain wildcards\n"
+
+Message InfoMessCPUList
+ "implementierte Prozessoren :"
+ "implemented processors :"

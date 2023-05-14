@@ -15,6 +15,12 @@
 #include "strutil.h"
 #include "stringlists.h"
 
+/*!------------------------------------------------------------------------
+ * \fn     free_rec(StringRecPtr p_rec)
+ * \brief  free/destroy string list record
+ * \param  p_rec record to free
+ * ------------------------------------------------------------------------ */
+
 void InitStringList(StringList *List)
 {
   *List = NULL;
@@ -22,10 +28,13 @@ void InitStringList(StringList *List)
 
 void ClearStringEntry(StringRecPtr *Elem)
 {
-  if ((*Elem)->Content)
-    free((*Elem)->Content);
-  free(*Elem);
-  *Elem = NULL;
+  if (*Elem)
+  {
+    if ((*Elem)->Content)
+      free((*Elem)->Content);
+    free(*Elem);
+    *Elem = NULL;
+  }
 }
 
 void ClearStringList(StringList *List)
@@ -119,27 +128,74 @@ const char *GetStringListNext(StringRecPtr *Lauf)
   }
 }
 
-char *GetAndCutStringList(StringList *List)
-{
-  StringRecPtr Hilf;
-  static String Result;
+/*!------------------------------------------------------------------------
+ * \fn     MoveAndCutStringListFirst(StringList *p_list)
+ * \brief  cut off the head of the string list and return its content, which
+           must be freed afer use
+ * \param  p_list list to cut from
+ * \return * to former head's content or NULL
+ * ------------------------------------------------------------------------ */
 
-  if (!*List)
-    Result[0] = '\0';
+char *MoveAndCutStringListFirst(StringList *p_list)
+{
+  if (!*p_list)
+    return NULL;
   else
   {
-    Hilf = (*List);
-    *List = (*List)->Next;
-    strmaxcpy(Result, Hilf->Content, STRINGSIZE);
-    free(Hilf->Content);
-    free(Hilf);
+    StringRecPtr p_head;
+    char *p_ret;
+
+    p_head = *p_list;
+    *p_list = (*p_list)->Next;
+    p_ret = p_head->Content; p_head->Content = NULL;
+    ClearStringEntry(&p_head);
+    return p_ret;
   }
-  return Result;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     MoveAndCutStringListLast(StringList *p_list)
+ * \brief  cut off the tail of the string list and return its content, which
+           must be freed afer use
+ * \param  p_list list to cut from
+ * \return * to former head's content or NULL
+ * ------------------------------------------------------------------------ */
+
+char *MoveAndCutStringListLast(StringList *p_list)
+{
+  if (!*p_list)
+    return NULL;
+  else
+  {
+    StringRecPtr p_run, p_prev;
+    char *p_ret;
+
+    for (p_prev = NULL, p_run = *p_list; p_run->Next; p_prev = p_run, p_run = p_run->Next);
+    if (p_prev)
+      p_prev->Next = p_run->Next;
+    else
+      *p_list = p_run->Next;
+    p_ret = p_run->Content; p_run->Content = NULL;
+    ClearStringEntry(&p_run);
+    return p_ret;
+  }
 }
 
 Boolean StringListEmpty(StringList List)
 {
   return (!List);
+}
+
+unsigned StringListCount(StringList List)
+{
+  unsigned count = 0;
+
+  while (List)
+  {
+    List = List->Next;
+    count++;
+  }
+  return count;
 }
 
 StringList DuplicateStringList(StringList Src)

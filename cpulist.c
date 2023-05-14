@@ -120,7 +120,8 @@ typedef struct
   int cnt, perline;
   tCPUSwitchUserProc Proc;
   tCPUSwitchProc NoUserProc;
-  tPrintNextCPUProc NxtProc;
+  tPrintLineCPUProc PrintProc;
+  String line_buffer;
 } tPrintContext;
 
 static void PrintIterator(const tCPUDef *pCPUDef, void *pUser)
@@ -144,27 +145,27 @@ static void PrintIterator(const tCPUDef *pCPUDef, void *pUser)
     {
       pContext->Proc = pCPUDef->SwitchProc;
       pContext->NoUserProc = ThisNoUserProc;
-      printf("\n");
-      pContext->NxtProc();
+      pContext->PrintProc(pContext->line_buffer);
       pContext->cnt = 0;
+      pContext->line_buffer[0] = '\0';
     }
-    printf("%-*s", MaxNameLen + 1, pCPUDef->Name);
+    as_snprcatf(pContext->line_buffer, sizeof(pContext->line_buffer), "%-*s", MaxNameLen + 1, pCPUDef->Name);
     pContext->cnt++;
   }
 }
 
-void PrintCPUList(tPrintNextCPUProc NxtProc)
+void PrintCPUList(tPrintLineCPUProc PrintProc)
 {
   tPrintContext Context;
 
   Context.Proc = NULL;
   Context.NoUserProc = NULL;
   Context.cnt = 0;
-  Context.NxtProc = NxtProc;
+  Context.line_buffer[0] = '\0';
+  Context.PrintProc = PrintProc;
   Context.perline = 79 / (MaxNameLen + 1);
   IterateCPUList(PrintIterator, &Context);
-  printf("\n");
-  NxtProc();
+  PrintProc("");
 }
 
 void ClearCPUList(void)

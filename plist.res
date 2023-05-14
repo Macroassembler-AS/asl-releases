@@ -7,7 +7,7 @@
 ;* Historie: 31. 5.1996 Grundsteinlegung                                     *
 ;*            3.12.1996 Erweiterung um Segment-Spalte                        *
 ;*           21. 1.2000 Meldungen RelocInfo                                  *
-;*           26. 6.2000 Mendung ExportInfo                                   *
+;*           26. 6.2000 Meldung ExportInfo                                   *
 ;*                                                                           *
 ;*****************************************************************************
 
@@ -17,10 +17,6 @@ Include tools2.res
 
 ;-----------------------------------------------------------------------------
 ; Ansagen
-
-Message MessFileRequest
- "zu listende Programmdatei [.P] : "
- "program file to list [.P] : "
 
 Message MessHeaderLine1
  "Codetyp     Segment    Startadresse   L&auml;nge (Byte)  Endadresse"
@@ -67,9 +63,21 @@ Message MessExportInfo
  "<exported symbol>   "
 
 Message InfoMessHead2
- " [-q] [Programmdateiname(n)]"
- " [-q] [name of program file(s)]"
+ " [Optionen] [Programmdateiname(n)]"
+ " [options] [name of program file(s)]"
 
 Message InfoMessHelp
+ "\n" \
+ "Optionen:\n" \
+ "  -help      : nur Hilfe ausgeben\n" \
+ "  -q, -quiet : Stiller Betrieb\n" \
+ "  -v         : wortreicher Betrieb\n" \
+ "  -version   : nur Versionsinfo ausgeben\n" \
  "\n"
+ "\n" \
+ "options:\n" \
+ "  -help      : print help and exit\n" \
+ "  -q, -quiet : silent operation\n" \
+ "  -v         : verbose operation\n" \
+ "  -version   : print version info and exit\n" \
  "\n"

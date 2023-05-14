@@ -37,7 +37,7 @@ const char *OutName = "STDOUT";   /* Pseudoname Output */
 
 static TMsgCat MsgCat;
 
-Boolean QuietMode;
+Boolean QuietMode, Verbose;
 
 /****************************************************************************/
 
@@ -388,9 +388,9 @@ as_cmd_result_t CMD_FilterList(Boolean Negate, const char *Arg)
   return e_cmd_arg;
 }
 
-extern as_cmd_result_t CMD_Range(LongWord *pStartAddr, LongWord *pStopAddr,
-                           Boolean *pStartAuto, Boolean *pStopAuto,
-                           const char *Arg)
+as_cmd_result_t CMD_Range(LongWord *pStartAddr, LongWord *pStopAddr,
+                          Boolean *pStartAuto, Boolean *pStopAuto,
+                          const char *Arg)
 {
   const char *p;
   String StartStr;
@@ -427,6 +427,14 @@ as_cmd_result_t CMD_QuietMode(Boolean Negate, const char *Arg)
   UNUSED(Arg);
 
   QuietMode = !Negate;
+  return e_cmd_ok;
+}
+
+as_cmd_result_t CMD_Verbose(Boolean Negate, const char *Arg)
+{
+  UNUSED(Arg);
+
+  Verbose = !Negate;
   return e_cmd_ok;
 }
 

@@ -191,9 +191,13 @@ int main(int argc, char **argv)
       fprintf(pDestFile, "%s: %s", ArgsAreObj ? argv[z] : getobj(argv[z]), pSrcFileName);
       while (True)
       {
-        pIncFileName = GetAndCutStringList(&FileList);
-        if (*pIncFileName)
-          fprintf(pDestFile, " %s", pIncFileName);
+        pIncFileName = MoveAndCutStringListFirst(&FileList);
+        if (pIncFileName)
+        {
+          if (*pIncFileName)
+            fprintf(pDestFile, " %s", pIncFileName);
+          free(pIncFileName); pIncFileName = NULL;
+        }
         else
           break;
       }
@@ -208,9 +212,13 @@ int main(int argc, char **argv)
       fprintf(pDestFile, "%s:", pDestFileName);
       while (True)
       {
-        pIncFileName = GetAndCutStringList(&SrcList);
-        if (*pIncFileName)
-          fprintf(pDestFile, " %s", pIncFileName);
+        pIncFileName = MoveAndCutStringListFirst(&SrcList);
+        if (pIncFileName)
+        {
+          if (*pIncFileName)
+            fprintf(pDestFile, " %s", pIncFileName);
+          free(pIncFileName); pIncFileName = NULL;
+        }
         else
           break;
       }

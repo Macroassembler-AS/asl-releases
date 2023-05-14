@@ -36,8 +36,6 @@ extern Word FileID;
 
 extern const char *OutName;
 
-extern Boolean QuietMode;
-
 extern void WrCopyRight(const char *Msg);
 
 extern void DelSuffix(char *Name);
@@ -67,8 +65,6 @@ extern as_cmd_result_t CMD_FilterList(Boolean Negate, const char *Arg);
 extern as_cmd_result_t CMD_Range(LongWord *pStart, LongWord *pStop,
                            Boolean *pStartAuto, Boolean *pStopAuto,
                            const char *Arg);
-
-extern as_cmd_result_t CMD_QuietMode(Boolean Negate, const char *Arg);
 
 extern Boolean FilterOK(Byte Header);
 

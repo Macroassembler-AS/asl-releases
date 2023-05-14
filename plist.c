@@ -16,6 +16,7 @@
 #include "bpemu.h"
 #include "stringlists.h"
 #include "cmdarg.h"
+#include "msg_level.h"
 #include "nls.h"
 #include "nlmessages.h"
 #include "plist.rsc"
@@ -24,23 +25,17 @@
 #include "toolutils.h"
 #include "headids.h"
 
-static as_cmd_processed_t ParUnprocessed;
+/* --------------------------------------------------------------- */
+
+static unsigned num_files;
+LongWord Sums[SegCount];
+
+/* --------------------------------------------------------------- */
 
 static const as_cmd_rec_t PListParams[] =
 {
-  { "q"        , CMD_QuietMode },
-  { "QUIET"    , CMD_QuietMode },
+  cmds_msg_level
 };
-
-int NumFiles;
-LongWord Sums[SegCount];
-
-static void ParamError(Boolean InEnv, char *Arg)
-{
-   fprintf(stderr, "%s%s\n", getmessage(InEnv ? Num_ErrMsgInvEnvParam : Num_ErrMsgInvParam), Arg);
-   fprintf(stderr, "%s\n", getmessage(Num_ErrMsgProgTerm));
-   exit(1);
-}
 
 static void ProcessSingle(const char *pFileName)
 {
@@ -61,7 +56,7 @@ static void ProcessSingle(const char *pFileName)
   if (ID != FileMagic)
     FormatError(pFileName, getmessage(Num_FormatInvHeaderMsg));
 
-  if (NumFiles > 1)
+  if (num_files > 1)
     printf("%s\n", pFileName);
 
   do
@@ -70,7 +65,7 @@ static void ProcessSingle(const char *pFileName)
 
     HeadFnd = False;
 
-    if (NumFiles > 1)
+    if (num_files > 1)
       printf("%s", Blanks(strlen(getmessage(Num_MessHeaderLine1F))));
     if (Header == FileHeaderEnd)
     {
@@ -172,12 +167,10 @@ static void ProcessSingle(const char *pFileName)
 
 int main(int argc, char **argv)
 {
-  String ProgName;
   Word z;
-  int argz;
   Boolean FirstSeg;
-  char *ph1, *ph2;
-  String Ver;
+  as_cmd_results_t cmd_results;
+  char *p_file_name;
 
   nls_init();
   if (!NLS_Initialize(&argc, argv))
@@ -188,37 +181,31 @@ int main(int argc, char **argv)
   strutil_init();
   nlmessages_init("plist.msg", *argv, MsgId1, MsgId2); ioerrs_init(*argv);
   as_cmdarg_init(*argv);
+  msg_level_init();
   toolutils_init(*argv);
 
-  if (argc <= 1)
+  if (e_cmd_err == as_cmd_process(argc, argv, PListParams, as_array_size(PListParams), "PLISTCMD", &cmd_results))
   {
-    int l;
-
-    errno = 0;
-    printf("%s", getmessage(Num_MessFileRequest));
-    if (!fgets(ProgName, STRINGSIZE, stdin))
-      return 0;
-    l = strlen(ProgName);
-    if ((l > 0) && (ProgName[l - 1] == '\n'))
-      ProgName[--l] = '\0';
-    ChkIO(OutName);
+    fprintf(stderr, "%s%s\n", getmessage(cmd_results.error_arg_in_env ? Num_ErrMsgInvEnvParam : Num_ErrMsgInvParam), cmd_results.error_arg);
+    fprintf(stderr, "%s\n", getmessage(Num_ErrMsgProgTerm));
+    exit(1);
   }
-  else
-    *ProgName = '\0';
 
-  as_cmd_process(argc, argv, PListParams, as_array_size(PListParams), ParUnprocessed, "PLISTCMD", ParamError);
-
-  if (!QuietMode)
+  if ((msg_level >= e_msg_level_verbose) || cmd_results.write_version_exit)
   {
-    as_snprintf(Ver, sizeof(Ver), "PLIST/C V%s", Version);
+    String Ver;
+
+    as_snprintf(Ver, sizeof(Ver), "PLIST V%s", Version);
     WrCopyRight(Ver);
     errno = 0; printf("\n"); ChkIO(OutName);
   }
 
-  if (as_cmd_processed_empty(ParUnprocessed) && !*ProgName)
+  if (cmd_results.write_help_exit)
   {
+    char *ph1, *ph2;
+
     errno = 0;
-    printf("%s%s%s\n", getmessage(Num_InfoMessHead1), GetEXEName(argv[0]), getmessage(Num_InfoMessHead2));
+    printf("%s%s%s\n", getmessage(Num_InfoMessHead1), as_cmdarg_get_executable_name(), getmessage(Num_InfoMessHead2));
     ChkIO(OutName);
     for (ph1 = getmessage(Num_InfoMessHelp), ph2 = strchr(ph1, '\n'); ph2; ph1 = ph2 + 1, ph2 = strchr(ph1, '\n'))
     {
@@ -226,31 +213,37 @@ int main(int argc, char **argv)
       printf("%s\n", ph1);
       *ph2 = '\n';
     }
+  }
+
+  if (cmd_results.write_version_exit || cmd_results.write_help_exit)
+    exit(0);
+
+  num_files = StringListCount(cmd_results.file_arg_list);
+  if (!num_files)
+  {
+    fprintf(stderr, "%s: %s\n", as_cmdarg_get_executable_name(), getmessage(Num_ErrMessNoInputFiles));
     exit(1);
   }
 
-  NumFiles = !!*ProgName;
-  for (argz = 1; argz < argc; argz++)
-    NumFiles += !!ParUnprocessed[argz];
-
-  errno = 0; printf("%s%s\n", (NumFiles > 1) ? getmessage(Num_MessHeaderLine1F) : "", getmessage(Num_MessHeaderLine1)); ChkIO(OutName);
-  errno = 0; printf("%s%s\n", (NumFiles > 1) ? getmessage(Num_MessHeaderLine2F) : "", getmessage(Num_MessHeaderLine2)); ChkIO(OutName);
+  errno = 0; printf("%s%s\n", (num_files > 1) ? getmessage(Num_MessHeaderLine1F) : "", getmessage(Num_MessHeaderLine1)); ChkIO(OutName);
+  errno = 0; printf("%s%s\n", (num_files > 1) ? getmessage(Num_MessHeaderLine2F) : "", getmessage(Num_MessHeaderLine2)); ChkIO(OutName);
 
   for (z = 0; z < SegCount; Sums[z++] = 0);
 
-  if (*ProgName)
+  while (True)
   {
-    AddSuffix(ProgName, STRINGSIZE, getmessage(Num_Suffix));
-    ProcessSingle(ProgName);
-  }
-  for (argz = 1; argz < argc; argz++)
-  {
-    if (!ParUnprocessed[argz])
-      continue;
+    p_file_name = MoveAndCutStringListFirst(&cmd_results.file_arg_list);
+    if (!p_file_name)
+      break;
+    if (*p_file_name)
+    {
+      String exp_file_name;
 
-    strmaxcpy(ProgName, argv[argz], STRINGSIZE);
-    AddSuffix(ProgName, STRINGSIZE, getmessage(Num_Suffix));
-    ProcessSingle(ProgName);
+      strmaxcpy(exp_file_name, p_file_name, sizeof(exp_file_name));
+      AddSuffix(exp_file_name, sizeof(exp_file_name), getmessage(Num_Suffix));
+      ProcessSingle(exp_file_name);
+    }
+    free(p_file_name);
   }
 
   errno = 0; printf("\n"); ChkIO(OutName);

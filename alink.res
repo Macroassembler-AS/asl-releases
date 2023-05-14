@@ -77,6 +77,16 @@ Message InfoMessHead2
 
 Message InfoMessHelp
  "\n" \
- "Optionen: -v                : ausf&uuml;hrliche Meldungen\n"
+ "Optionen:\n" \
+ "-help      : nur Hilfe ausgeben\n" \
+ "-q, -quiet : Stiller Betrieb\n" \
+ "-v         : ausf&uuml;hrliche Meldungen\n" \
+ "-version   : nur Versionsinfo ausgeben\n" \
+ "\n"
  "\n" \
- "options:  -v                : verbose messages\n"
+ "options:\n" \
+ "-help      : print help and exit\n" \
+ "-q, -quiet : silent operation\n" \
+ "-v         : verbose messages\n" \
+ "-version   : print version info and exit\n" \
+ "\n"
