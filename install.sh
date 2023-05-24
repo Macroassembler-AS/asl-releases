@@ -36,9 +36,6 @@ if [ "${BINPATH}" != "" ]; then
    chmod 755 ${BINPATH}/$i${TARG_EXEXTENSION}
   fi
  done
- if test "${TARG_EXEXTENSION}" = ".exe"; then
-  mv ${BINPATH}/asl${TARG_EXEXTENSION} ${BINPATH}/asw${TARG_EXEXTENSION}
- fi
 fi
 
 if test "${TARG_EXEXTENSION}" = ".exe"; then

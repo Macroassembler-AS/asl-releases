@@ -4,10 +4,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
+#include "strutil.h"
 #include "stringlists.h"
 
 #define ObjExtension ".o"
+
+static StringRecPtr inc_path_list = NULL;
 
 static char *getobj(const char *pSrc)
 {
@@ -42,9 +48,10 @@ int MayRecurse(const char *pFileName)
 static void ParseFile(const char *pFileName, const char *pParentFileName, StringRecPtr *pFileList)
 {
   FILE *pFile;
-  int l;
+  int l, file_stat;
   char line[512], *pCmd, *pName;
-  String Str;
+  String raw_name, eff_name;
+  struct stat stat_buf;
 
   pFile = fopen(pFileName, "r");
   if (!pFile)
@@ -76,15 +83,36 @@ static void ParseFile(const char *pFileName, const char *pParentFileName, String
     if ((*pName != '"') || (pName[l - 1] != '"'))
       continue;
 
-    if (l - 1 < (int)sizeof(Str))
+    if (l - 1 < (int)sizeof(raw_name))
     {
-      memcpy(Str, pName + 1, l -2);
-      Str[l - 2] = '\0';
-      if (!StringListPresent(*pFileList, Str))
+      memcpy(raw_name, pName + 1, l - 2);
+      raw_name[l - 2] = '\0';
+      strmaxcpy(eff_name, raw_name, sizeof(eff_name));
+      file_stat = stat(eff_name, &stat_buf);
+      if (file_stat)
       {
-        AddStringListLast(pFileList, Str);
-        if (MayRecurse(Str))
-          ParseFile(Str, pFileName, pFileList);
+        StringRecPtr p_run;
+        const char *p_path;
+
+        for (p_path = GetStringListFirst(inc_path_list, &p_run);
+             p_path; p_path = GetStringListNext(&p_run))
+        {
+          size_t l = strlen(p_path);
+          Boolean term_path = (l > 0) && ((p_path[l -1] == '/') || (p_path[l -1] == '\\'));
+          as_snprintf(eff_name, sizeof(eff_name), "%s%s%s", p_path, term_path ? "" : "/", raw_name);
+          file_stat = stat(eff_name, &stat_buf);
+          if (!file_stat)
+            break;
+        }
+      }
+      /* If file is not present, it is created dynamically and expected to appear in the
+         object subdirectory, which is passed in as -I path.  Keep last generated eff_name
+         for the dependency list: */
+      if (!StringListPresent(*pFileList, eff_name))
+      {
+        AddStringListLast(pFileList, eff_name);
+        if (MayRecurse(eff_name))
+          ParseFile(eff_name, pFileName, pFileList);
       }
     }
   }
@@ -134,6 +162,19 @@ int main(int argc, char **argv)
       else if (!strcmp(argv[z] + 1, "r"))
       {
         ArgsAreObj = 1;
+      }
+      else if (!strcmp(argv[z] + 1, "I"))
+      {
+        if (z < argc - 1)
+        {
+          AddStringListLast(&inc_path_list, argv[z + 1]);
+          used[z + 1] = 1;
+        }
+      }
+      else
+      {
+        fprintf(stderr, "unknown option: %s\n", argv[z]);
+        exit(2);
       }
     }
 
@@ -226,6 +267,8 @@ int main(int argc, char **argv)
     }
     fclose(pDestFile);
   }
+
+  ClearStringList(&inc_path_list);
 
   return 0;
 }

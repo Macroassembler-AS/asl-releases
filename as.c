@@ -409,7 +409,10 @@ static void MACRO_OutProcessor(void)
 
     l = FirstOutputTag->ParamNames;
     for (z = 1; z <= FirstOutputTag->Mac->ParamCount; z++)
-      CompressLine(GetStringListNext(&l), z, &s, CaseSensitive);
+    {
+      const char *p_param_name = GetStringListNext(&l);
+      CompressLine(p_param_name ? p_param_name : "", z, &s, CaseSensitive);
+    }
 
     /* reserved argument names are never case-sensitive */
 
@@ -1169,7 +1172,6 @@ static Boolean IRP_GetPos(PInputTag PInp, char *dest, size_t DestSize, Boolean A
 static void IRP_OutProcessor(void)
 {
   POutputTag Tmp;
-  StringRecPtr Dummy;
 
   WasMACRO = True;
 
@@ -1185,9 +1187,11 @@ static void IRP_OutProcessor(void)
   if (FirstOutputTag->NestLevel > -1)
   {
     as_dynstr_t s;
+    StringRecPtr Dummy;
+    const char *p_first_param = GetStringListFirst(FirstOutputTag->ParamNames, &Dummy);
 
     as_dynstr_ini_clone(&s, &OneLine); KillCtrl(s.p_str);
-    CompressLine(GetStringListFirst(FirstOutputTag->ParamNames, &Dummy), 1, &s, CaseSensitive);
+    CompressLine(p_first_param ? p_first_param : "", 1, &s, CaseSensitive);
     AddStringListLast(&(FirstOutputTag->Tag->Lines), s.p_str);
     as_dynstr_free(&s);
     FirstOutputTag->Tag->LineCnt++;
@@ -4218,7 +4222,6 @@ static const as_cmd_rec_t ASParams[] =
   { "o"             , CMD_OutFile         },
   { "P"             , CMD_MacProOutput    },
   { "p"             , CMD_SharePascal     },
-  cmds_msg_level,
   { "r"             , CMD_MsgIfRepass     },
   { RelaxedName     , CMD_Relaxed         },
   { "s"             , CMD_SectionList     },
@@ -4286,7 +4289,7 @@ int main(int argc, char **argv)
     ioerrs_init(*argv);
     as_cmdarg_init(*argv);
     msg_level_init();
-    as_cmd_extend(&as_cmd_recs, &as_cmd_rec_cnt, ASParams, as_array_size(ASParams));
+    as_cmd_register(ASParams, as_array_size(ASParams));
 
     asmfnums_init();
     asminclist_init();
@@ -4486,7 +4489,7 @@ int main(int argc, char **argv)
 #if defined(INCDIR)
   CMD_IncludeList(False, INCDIR);
 #endif
-  if (e_cmd_err == as_cmd_process(argc, argv, as_cmd_recs, as_cmd_rec_cnt, EnvName, &cmd_results))
+  if (e_cmd_err == as_cmd_process(argc, argv, EnvName, &cmd_results))
   {
     printf("%s%s\n", getmessage(cmd_results.error_arg_in_env ? Num_ErrMsgInvEnvParam : Num_ErrMsgInvParam), cmd_results.error_arg);
     exit(4);

@@ -9,7 +9,7 @@
 /*****************************************************************************/
 
 #include "stdinc.h"
-#include "stddef.h"
+#include <stddef.h>
 #include <assert.h>
 #include <string.h>
 #include "strutil.h"

@@ -23,7 +23,6 @@
 #include "tempresult.h"
 #include "addrspace.h"
 #include "chartrans.h"
-#include "cmdarg.h"
 
 typedef struct _TCrossRef
 {
@@ -202,9 +201,6 @@ typedef struct _ASSUMERec
   LongInt NothingVal;
   void (*pPostProc)(void);
 } ASSUMERec;
-
-extern as_cmd_rec_t *as_cmd_recs;
-extern size_t as_cmd_rec_cnt;
 
 extern StringPtr SourceFile;
 

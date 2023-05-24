@@ -558,7 +558,6 @@ static as_cmd_rec_t P2BINParams[] =
   { "e"        , CMD_EntryAdr },
   { "S"        , CMD_StartHeader },
   { "k"        , CMD_AutoErase },
-  cmds_msg_level,
   { "SEGMENT"  , CMD_ForceSegment }
 };
 
@@ -599,7 +598,8 @@ int main(int argc, char **argv)
   StartHeader = 0;
   ValidSegment = SegCode;
 
-  if (e_cmd_err == as_cmd_process(argc, argv, P2BINParams, as_array_size(P2BINParams), "P2BINCMD", &cmd_results))
+  as_cmd_register(P2BINParams, as_array_size(P2BINParams));
+  if (e_cmd_err == as_cmd_process(argc, argv, "P2BINCMD", &cmd_results))
   {
     ParamError(cmd_results.error_arg_in_env, cmd_results.error_arg);
     exit(1);
@@ -674,9 +674,9 @@ int main(int argc, char **argv)
     if (StopAuto)
       StopAdr = 0;
     for (p_src_name = GetStringListFirst(cmd_results.file_arg_list, &p_src_run);
-         p_src_name && *p_src_name;
-         p_src_name = GetStringListNext(&p_src_run))
-      ProcessGroup(p_src_name, MeasureFile);
+         p_src_name; p_src_name = GetStringListNext(&p_src_run))
+      if (*p_src_name)
+        ProcessGroup(p_src_name, MeasureFile);
     if (StartAdr > StopAdr)
     {
       errno = 0;
@@ -694,17 +694,17 @@ int main(int argc, char **argv)
   OpenTarget();
 
   for (p_src_name = GetStringListFirst(cmd_results.file_arg_list, &p_src_run);
-       p_src_name && *p_src_name;
-       p_src_name = GetStringListNext(&p_src_run))
-    ProcessGroup(p_src_name, ProcessFile);
+       p_src_name; p_src_name = GetStringListNext(&p_src_run))
+    if (*p_src_name)
+      ProcessGroup(p_src_name, ProcessFile);
 
   CloseTarget();
 
   if (AutoErase)
     for (p_src_name = GetStringListFirst(cmd_results.file_arg_list, &p_src_run);
-         p_src_name && *p_src_name;
-         p_src_name = GetStringListNext(&p_src_run))
-      ProcessGroup(p_src_name, EraseFile);
+         p_src_name; p_src_name = GetStringListNext(&p_src_run))
+      if (*p_src_name)
+        ProcessGroup(p_src_name, EraseFile);
 
   ClearStringList(&cmd_results.file_arg_list);
 

@@ -34,9 +34,6 @@ char OBJSuffix[] = ".obj";
 const char *EnvName = "ASCMD";         /* Environment-Variable fuer Default-
                                           Parameter */
 
-as_cmd_rec_t *as_cmd_recs = NULL;
-size_t as_cmd_rec_cnt = 0;
-
 StringPtr SourceFile;                    /* Hauptquelldatei */
 
 StringPtr CursUp;		            /*   "     "  Cursor hoch */

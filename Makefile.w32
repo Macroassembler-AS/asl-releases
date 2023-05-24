@@ -1,0 +1,152 @@
+include Makefile.def
+
+CURRDIR=./
+RM=rm -f
+NULL=
+OBLANK=$(NULL) $(NULL)
+
+DATE=`date +"%d%m%Y"`
+
+ALLFLAGS = $(TARG_CFLAGS) -DINCDIR=\"$(INCDIR)\" -DLIBDIR=\"$(LIBDIR)\"
+
+include makedefs.files
+
+#---------------------------------------------------------------------------
+# Primary Targets
+
+binaries: $(ALLTARGETS)
+
+binaries-das: $(DASLTARGET) $(DASMSGTARGETS)
+
+all: binaries docs
+
+include makedefs.src
+
+docs: docs_DE_notex docs_EN_notex
+
+$(ASLTARGET): $(ASM_OBJECTS) $(AS_OBJECTS) $(ST_OBJECTS) $(CODE_OBJECTS) $(NLS_OBJECTS)
+	$(TARG_LD) -o $(ASLTARGET) $(ASM_OBJECTS) $(AS_OBJECTS) $(ST_OBJECTS) $(CODE_OBJECTS) $(NLS_OBJECTS) -lm $(TARG_LDFLAGS)
+
+$(DASLTARGET): $(DASM_OBJECTS) $(DAS_OBJECTS) $(ST_OBJECTS) $(DECODE_OBJECTS)  $(NLS_OBJECTS)
+	$(TARG_LD) -o $(DASLTARGET) $(DASM_OBJECTS) $(DAS_OBJECTS) $(ST_OBJECTS)  $(DECODE_OBJECTS) $(NLS_OBJECTS) $(TARG_LDFLAGS)
+
+$(PLISTTARGET): $(PLIST_OBJECTS) $(NLS_OBJECTS)
+	$(TARG_LD) -o $(PLISTTARGET) $(PLIST_OBJECTS) $(NLS_OBJECTS) -lm $(TARG_LDFLAGS)
+
+$(ALINKTARGET): $(ALINK_OBJECTS) $(NLS_OBJECTS)
+	$(TARG_LD) -o $(ALINKTARGET) $(ALINK_OBJECTS) $(NLS_OBJECTS) -lm $(TARG_LDFLAGS)
+
+$(PBINDTARGET): $(PBIND_OBJECTS) $(NLS_OBJECTS)
+	$(TARG_LD) -o $(PBINDTARGET) $(PBIND_OBJECTS) $(NLS_OBJECTS) -lm $(TARG_LDFLAGS)
+
+$(P2HEXTARGET): $(P2HEX_OBJECTS) $(NLS_OBJECTS)
+	$(TARG_LD) -o $(P2HEXTARGET) $(P2HEX_OBJECTS) $(NLS_OBJECTS) -lm $(TARG_LDFLAGS)
+
+$(P2BINTARGET): $(P2BIN_OBJECTS) $(NLS_OBJECTS)
+	$(TARG_LD) -o $(P2BINTARGET) $(P2BIN_OBJECTS) $(NLS_OBJECTS) -lm $(TARG_LDFLAGS)
+
+$(RESCOMPTARGET): $(RESCOMP_OBJECTS)
+	$(LD) -o $(RESCOMPTARGET) $(RESCOMP_OBJECTS) $(LDFLAGS)
+
+$(TEX2DOCTARGET): $(TEX2DOC_OBJECTS)
+	$(LD) -o $(TEX2DOCTARGET) $(TEX2DOC_OBJECTS) $(LDFLAGS) -lm
+
+$(TEX2HTMLTARGET): $(TEX2HTML_OBJECTS)
+	$(LD) -o $(TEX2HTMLTARGET) $(TEX2HTML_OBJECTS) $(LDFLAGS) -lm
+
+$(UMLAUTTARGET): $(UMLAUT_OBJECTS)
+	$(LD) -o $(UMLAUTTARGET) $(UMLAUT_OBJECTS) $(LDFLAGS)
+
+$(UNUMLAUTTARGET): $(UNUMLAUT_OBJECTS)
+	$(LD) -o $(UNUMLAUTTARGET) $(UNUMLAUT_OBJECTS) $(LDFLAGS)
+
+$(MKDEPENDTARGET): $(MKDEPEND_OBJECTS)
+	$(LD) -o $(MKDEPENDTARGET) $(MKDEPEND_OBJECTS) $(LDFLAGS)
+
+check_targ_cc:
+	@if test "$(TARG_CC)" = ""; then echo "TARG_CC is not set - please review Makefile.def"; exit 1; fi; exit 0
+
+#---------------------------------------------------------------------------
+# special rules for objects dependant on string resource files
+
+include makedefs.str
+
+binaries: $(ALLMSGTARGETS)
+
+include makedefs.abh
+
+#---------------------------------------------------------------------------
+# Documentation
+
+DOC_COM_DIR=doc_COM/
+include $(DOC_COM_DIR)makedefs.dok
+
+DOC_DE_DIR=doc_DE/
+include $(DOC_DE_DIR)makedefs.dok
+DOC_EN_DIR=doc_EN/
+include $(DOC_EN_DIR)makedefs.dok
+
+#---------------------------------------------------------------------------
+# Supplementary Targets
+
+test: binaries
+	cd tests; OBJDIR=$(TARG_OBJDIR) RUNCMD=$(TARG_RUNCMD) V=$(V) ./testall "$(TESTDIRS)"
+
+install: all
+	INSTROOT=$(INSTROOT) OBJDIR=$(OBJDIR) TARG_OBJDIR=$(TARG_OBJDIR) TARG_EXEXTENSION=$(TARG_EXEXTENSION) ./install.sh $(BINDIR) $(INCDIR) $(MANDIR) $(LIBDIR) $(DOCDIR)
+
+clean_doc: clean_doc_DE clean_doc_EN
+
+clean: clean_doc
+	if test "$(HOST_OBJEXTENSION)" != ""; then $(RM) *$(HOST_OBJEXTENSION) $(OBJDIR)*$(HOST_OBJEXTENSION); fi
+	if test "$(TARG_OBJEXTENSION)" != ""; then $(RM) *$(TARG_OBJEXTENSION) $(TARG_OBJDIR)*$(TARG_OBJEXTENSION); fi
+	$(RM) $(ALLTARGETS) $(HOSTTARGETS) $(OBJDIR)*.dep $(TARG_OBJDIR)*.dep *.p $(TARG_OBJDIR)*.msg *.rsc tests/testlog testlog
+
+#---------------------------------------------------------------------------
+# Create Distributions
+
+distrib: unjunk
+	@if test "$(VERSION)" = ""; then echo "VERSION is not set - please specify VERSION=... as argument"; exit 1; fi; exit 0
+	mkdir ../asl-$(VERSION)
+	tar cf - $(DISTARCHFILES) | (cd ../asl-$(VERSION); tar xvf -)
+	cd ..; tar cvf asl-$(VERSION).tar asl-$(VERSION)
+	mv ../asl-$(VERSION).tar ./
+	rm -rf ../asl-$(VERSION)
+	gzip -9 -f asl-$(VERSION).tar
+
+bindist: $(UNUMLAUTTARGET) all
+	@if test "$(VERSION)" = ""; then echo "VERSION is not set - please specify VERSION=... as argument"; exit 1; fi; exit 0
+	rm -rf as
+	mkdir as
+	cmd /cinstw32.cmd as\\bin as\\include as\\man as\\lib as\\doc
+	cd as; zip -9 -r ../as$(VERSION).zip *.*
+	zip -9 -r as$(VERSION).zip bin/cyg*
+	rm -rf as
+
+#---------------------------------------------------------------------------
+# for my own use only...
+
+archive: unjunk asport.tar.gz
+zarchive: unjunk asport.zip
+
+asport.tar.gz: $(ARCHFILES)
+	tar cvf asport.tar $(ARCHFILES)
+	gzip -9 -f asport.tar
+
+asport.zip: $(ARCHFILES)
+	zip -9 -r asport $(ARCHFILES)
+
+unjunk: clean_doc_DE clean_doc_EN
+	$(RM) `find . -name "testlog" -print` \
+	   `find . -name "*~" -print` \
+	   `find . -name "core" -print` \
+	   `find . -name "*.core" -print` \
+	   `find . -name "*.lst" -print` \
+	   `find . -name "lst" -print` \
+	   `find . -name "*.noi" -print`
+
+#---------------------------------------------------------------------------
+
+.SUFFIXES: .asm
+.asm.p:
+	./asl -L -q $*.asm

@@ -76,13 +76,11 @@ void AddCopyright(const char *NewLine)
 void WriteCopyrights(void(*PrintProc)(const char *))
 {
   StringRecPtr Lauf;
+  const char *p_line;
 
-  if (!StringListEmpty(CopyrightList))
-  {
-    PrintProc(GetStringListFirst(CopyrightList, &Lauf));
-    while (Lauf)
-      PrintProc(GetStringListNext(&Lauf));
-  }
+  for (p_line = GetStringListFirst(CopyrightList, &Lauf);
+       p_line; p_line = GetStringListNext(&Lauf))
+    PrintProc(p_line);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -493,7 +491,7 @@ void AddSuffix(char *s, const char *Suff)
 
   p = NULL;
   for (z = s; *z != '\0'; z++)
-    if (*z == '\\')
+    if (*z == PATHSEP)
       p = z;
   Part = p ? p : s;
   if (!strchr(Part, '.'))
@@ -510,7 +508,7 @@ void KillSuffix(char *s)
 
   p = NULL;
   for (z = s; *z != '\0'; z++)
-    if (*z == '\\')
+    if (*z == PATHSEP)
       p = z;
   Part = p ? p : s;
   Part = strchr(Part, '.');

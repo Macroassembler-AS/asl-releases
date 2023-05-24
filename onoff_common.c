@@ -199,7 +199,7 @@ static const as_cmd_rec_t onoff_params[] =
 
 extern void onoff_common_init(void)
 {
-  as_cmd_extend(&as_cmd_recs, &as_cmd_rec_cnt, onoff_params, as_array_size(onoff_params));
+  as_cmd_register(onoff_params, as_array_size(onoff_params));
   DefSupAllowed = False;
   DefBigEndian = False;
   DefCompMode = False;

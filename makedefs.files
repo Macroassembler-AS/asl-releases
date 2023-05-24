@@ -1,5 +1,5 @@
 BASEARCHFILES = *.c *.h *.hpp man/*.1 \
-            INSTALL README README.OS2 README.DOS README.LANGS README.KR TODO BENCHES Makefile Makefile.dos Makefile.os2 Makefile.def.tmpl \
+            INSTALL README README.OS2 README.DOS README.LANGS README.KR TODO BENCHES Makefile Makefile.w32 Makefile.dos Makefile.def.tmpl \
             COPYING install.sh install.bat install.cmd instw32.cmd marks.asm \
             *.res makedefs.src makedefs.files makedefs.str makedefs.abh rscdeps asl.def \
             include/*.inc include/avr/*.inc \
@@ -17,7 +17,7 @@ DISTARCHFILES = $(BASEARCHFILES) asl-$(VERSION).lsm changelog
 ARCHFILES = $(BASEARCHFILES) header.tmpl *.lsm changelog
 
 # set *EXEXTENSION im Makefile.def if you need a specific extension for 
-# the executables (e.g. .exe for OS/2 or Windows)
+# the executables (e.g. .exe for DOS Windows)
 
 ASLTARGET = $(TARG_OBJDIR)asl$(TARG_EXEXTENSION)
 DASLTARGET = $(TARG_OBJDIR)dasl$(TARG_EXEXTENSION)

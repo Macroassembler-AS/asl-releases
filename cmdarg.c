@@ -24,7 +24,14 @@
 #include "nlmessages.h"
 #include "cmdarg.rsc"
 
+/* --------------------------------------------------------------- */
+
 TMsgCat MsgCat;
+
+static as_cmd_rec_t *sum_cmd_recs = NULL;
+static size_t sum_cmd_rec_cnt = 0;
+
+/* --------------------------------------------------------------- */
 
 static as_cmd_result_t ProcessFile(const char *Name_O,
                                    const as_cmd_rec_t *p_cmd_recs, size_t cmd_rec_cnt,
@@ -263,40 +270,34 @@ static int cmd_compare(const void *p1, const void *p2)
 }
 
 /*!------------------------------------------------------------------------
- * \fn     as_cmd_extend(as_cmd_rec_t **p_cmd_recs, size_t *p_cmd_rec_cnt,
-                         const as_cmd_rec_t *p_add_recs, size_t add_rec_cnt)
+ * \fn     as_cmd_register(const as_cmd_rec_t *p_add_recs, size_t add_rec_cnt)
  * \brief  extend command record list
- * \param  p_cmd_recs, p_cmd_rec_cnt list to extend
  * \param  p_add_recs, add_rec_cnt records to add
  * ------------------------------------------------------------------------ */
 
-void as_cmd_extend(as_cmd_rec_t **p_cmd_recs, size_t *p_cmd_rec_cnt,
-                   const as_cmd_rec_t *p_add_recs, size_t add_rec_cnt)
+void as_cmd_register(const as_cmd_rec_t *p_add_recs, size_t add_rec_cnt)
 {
-  as_cmd_rec_t *p_new_recs;
+  as_cmd_rec_t *p_new_sum_recs;
 
-  if (p_cmd_recs)
-    p_new_recs = (as_cmd_rec_t*)realloc(*p_cmd_recs, sizeof(*p_new_recs) * (*p_cmd_rec_cnt + add_rec_cnt));
+  if (sum_cmd_recs)
+    p_new_sum_recs = (as_cmd_rec_t*)realloc(sum_cmd_recs, sizeof(*p_new_sum_recs) * (sum_cmd_rec_cnt + add_rec_cnt));
   else
-    p_new_recs = (as_cmd_rec_t*)malloc(sizeof(*p_new_recs) * (*p_cmd_rec_cnt + add_rec_cnt));
-  if (p_new_recs)
+    p_new_sum_recs = (as_cmd_rec_t*)malloc(sizeof(*p_new_sum_recs) * (sum_cmd_rec_cnt + add_rec_cnt));
+  if (p_new_sum_recs)
   {
-    memcpy(&p_new_recs[*p_cmd_rec_cnt], p_add_recs, sizeof(*p_new_recs) * add_rec_cnt);
-    *p_cmd_rec_cnt += add_rec_cnt;
-    *p_cmd_recs = p_new_recs;
-    qsort(p_new_recs, *p_cmd_rec_cnt, sizeof(*p_new_recs), cmd_compare);
+    memcpy(&p_new_sum_recs[sum_cmd_rec_cnt], p_add_recs, sizeof(*p_new_sum_recs) * add_rec_cnt);
+    sum_cmd_rec_cnt += add_rec_cnt;
+    sum_cmd_recs = p_new_sum_recs;
+    qsort(p_new_sum_recs, sum_cmd_rec_cnt, sizeof(*p_new_sum_recs), cmd_compare);
   }
 }
 
 /*!------------------------------------------------------------------------
  * \fn     as_cmd_process(int argc, char **argv,
-                          const as_cmd_rec_t *p_cmd_recs, size_t cmd_rec_cnt,
                           const char *p_env_name, as_cmd_results_t *p_results)
  * \brief  arguments from command line and environment
  * \param  argc command line arg count as handed to main()
  * \param  argv command line args as handed to main()
- * \param  p_cmd_recs command line switch descriptors
- * \param  cmd_rec_cnt # of command line switch descriptors
  * \param  p_env_name environment variable to draw additional args from
  * \param  p_file_arg_list gets populated with file arguments
  * \return e_cmd_ok, or e_cmd_err on faulty arg
@@ -305,7 +306,6 @@ void as_cmd_extend(as_cmd_rec_t **p_cmd_recs, size_t *p_cmd_rec_cnt,
 const char *argv0;
 
 as_cmd_result_t as_cmd_process(int argc, char **argv,
-                               const as_cmd_rec_t *p_cmd_recs, size_t cmd_rec_cnt,
                                const char *p_env_name, as_cmd_results_t *p_results)
 {
   int z;
@@ -324,12 +324,12 @@ as_cmd_result_t as_cmd_process(int argc, char **argv,
 
   if (EnvLine[0] == '@')
   {
-    if (e_cmd_err == ProcessFile(EnvLine + 1, p_cmd_recs, cmd_rec_cnt, p_results))
+    if (e_cmd_err == ProcessFile(EnvLine + 1, sum_cmd_recs, sum_cmd_rec_cnt, p_results))
       return e_cmd_err;
   }
   else
   {
-    if (e_cmd_err == DecodeLine(p_cmd_recs, cmd_rec_cnt, EnvLine, p_results))
+    if (e_cmd_err == DecodeLine(sum_cmd_recs, sum_cmd_rec_cnt, EnvLine, p_results))
       return e_cmd_err;
   }
 
@@ -343,7 +343,7 @@ as_cmd_result_t as_cmd_process(int argc, char **argv,
       skip_next = False;
       continue;
     }
-    switch (ProcessParam(p_cmd_recs, cmd_rec_cnt, argv[z], (z + 1 < argc) ? argv[z + 1] : "",
+    switch (ProcessParam(sum_cmd_recs, sum_cmd_rec_cnt, argv[z], (z + 1 < argc) ? argv[z + 1] : "",
                          True, p_results))
     {
       case e_cmd_err:

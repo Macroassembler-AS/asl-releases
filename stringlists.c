@@ -103,11 +103,19 @@ void RemoveStringList(StringList *List, const char *OldStr)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     GetStringListFirst(StringList List, StringRecPtr *Lauf)
+ * \brief  retrieve first item of string list & set run pointer
+ * \param  List list to iterate
+ * \param  Lauf run pointer
+ * \return content of head or NULL if list empty
+ * ------------------------------------------------------------------------ */
+
 const char *GetStringListFirst(StringList List, StringRecPtr *Lauf)
 {
   *Lauf = List;
   if (!*Lauf)
-    return "";
+    return NULL;
   else
   {
     char *tmp = (*Lauf)->Content;
@@ -116,10 +124,17 @@ const char *GetStringListFirst(StringList List, StringRecPtr *Lauf)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     GetStringListNext(StringRecPtr *Lauf)
+ * \brief  retrieve nextitem of string list & update run pointer
+ * \param  Lauf run pointer
+ * \return content of next item or NULL if end of list reached
+ * ------------------------------------------------------------------------ */
+
 const char *GetStringListNext(StringRecPtr *Lauf)
 {
   if (!*Lauf)
-    return "";
+    return NULL;
   else
   {
     char *tmp = (*Lauf)->Content;

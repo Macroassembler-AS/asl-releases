@@ -120,12 +120,6 @@ static void PrTabs(FILE *pDestFile, int TargetLen, int ThisLen)
   }
 }
 
-static void ParamError(Boolean InEnv, char *Arg)
-{
-  fprintf(stderr, "%s%s\n", getmessage((InEnv) ? Num_ErrMsgInvEnvParam : Num_ErrMsgInvParam), Arg);
-  exit(4);
-}
-
 static as_cmd_result_t ArgError(int MsgNum, const char *pArg)
 {
   if (pArg)
@@ -554,7 +548,6 @@ static as_cmd_rec_t DASParams[] =
   { "SYMBOL"          , CMD_Symbol          },
   { "h"               , CMD_HexLowerCase    },
   { "HELP"            , CMD_PrintHelp       },
-  { "v"               , cmd_msg_level_verbose },
   { "VERSION"         , CMD_PrintVersion    }
 };
 
@@ -638,7 +631,7 @@ int main(int argc, char **argv)
   unsigned z;
   tDisasmData Data;
   int ThisSrcLineLen;
-  StringRecPtr file_arg_list = NULL;
+  as_cmd_results_t cmd_results;
 
   strutil_init();
   nls_init();
@@ -652,7 +645,12 @@ int main(int argc, char **argv)
   deco4004_init();
   write_version_exit = write_help_exit = write_cpu_list_exit = False;
 
-  as_cmd_process(argc, argv, DASParams, as_array_size(DASParams), pEnvName, ParamError, &file_arg_list);
+  as_cmd_register(DASParams, as_array_size(DASParams));
+  if (e_cmd_err == as_cmd_process(argc, argv, pEnvName, &cmd_results))
+  {
+    fprintf(stderr, "%s%s\n", getmessage(cmd_results.error_arg_in_env ? Num_ErrMsgInvEnvParam : Num_ErrMsgInvParam), cmd_results.error_arg);
+    exit(4);
+  }
 
   if ((msg_level >= e_msg_level_verbose) || write_version_exit)
   {

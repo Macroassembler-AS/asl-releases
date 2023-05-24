@@ -2,7 +2,6 @@ md %1
 set binfiles=asl.exe plist.exe alink.exe pbind.exe p2hex.exe p2bin.exe
 rem for %%i in (%binfiles%) do strip %%i
 for %%i in (%binfiles%) do copy %%i %1
-ren %1\asl.exe asw.exe
 set binfiles=
 copy *.msg %1 
 

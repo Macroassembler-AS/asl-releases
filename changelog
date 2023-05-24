@@ -1,3 +1,9 @@
+2023-05-24 [1.42 Bld 246]
+
+- Change      : The binary's name is now 'asl' on all platforms.
+- Bugfix      : Use system-specific path separator when searching
+                for suffix
+
 2023-05-14 [1.42 Bld 245]
 
 - Change      : Rework command line output and operation:
@@ -10,9 +16,10 @@
                 - CPU list is printed if requested via '-cpu list'
                   or '-cpu ?'.
                 - paging of CPU list or help is off by default
-                  and may be re-enabled by 'screenheight' argument
+                  and may be re-enabled by '-screenheight' argument
 - Change      : Remove proposal for new program name (for the
                 moment)
+
 2023-05-07 [1.42 Bld 244]
 
 - Addition    : Make proposal for new program name

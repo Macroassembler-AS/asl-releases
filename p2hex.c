@@ -1117,7 +1117,6 @@ static const as_cmd_rec_t P2HEXParams[] =
   { "l"        , CMD_LineLen },
   { "k"        , CMD_AutoErase },
   { "M"        , CMD_MinMoto },
-  cmds_msg_level,
   { "SEGMENT"  , CMD_ForceSegment },
   { "AVRLEN"   , CMD_AVRLen },
   { "CFORMAT"  , CMD_CFormat }
@@ -1166,7 +1165,8 @@ int main(int argc, char **argv)
   ForceSegment = SegNone;
   strcpy(CFormat, DefaultCFormat);
 
-  if (e_cmd_err == as_cmd_process(argc, argv, P2HEXParams, as_array_size(P2HEXParams), "P2HEXCMD", &cmd_results))
+  as_cmd_register(P2HEXParams, as_array_size(P2HEXParams));
+  if (e_cmd_err == as_cmd_process(argc, argv, "P2HEXCMD", &cmd_results))
   {
     ParamError(cmd_results.error_arg_in_env, cmd_results.error_arg);
     exit(1);
@@ -1244,9 +1244,9 @@ int main(int argc, char **argv)
         StopAdr[z] = 0;
 
     for (p_src_name = GetStringListFirst(cmd_results.file_arg_list, &p_src_run);
-         p_src_name && *p_src_name;
-         p_src_name = GetStringListNext(&p_src_run))
-      ProcessGroup(p_src_name, MeasureFile);
+         p_src_name; p_src_name = GetStringListNext(&p_src_run))
+      if (*p_src_name)
+        ProcessGroup(p_src_name, MeasureFile);
 
     if (StartAdr[ChkSegment] > StopAdr[ChkSegment])
     {
@@ -1276,9 +1276,9 @@ int main(int argc, char **argv)
   }
 
   for (p_src_name = GetStringListFirst(cmd_results.file_arg_list, &p_src_run);
-       p_src_name && *p_src_name;
-       p_src_name = GetStringListNext(&p_src_run))
-    ProcessGroup(p_src_name, ProcessFile);
+       p_src_name; p_src_name = GetStringListNext(&p_src_run))
+    if (*p_src_name)
+      ProcessGroup(p_src_name, ProcessFile);
 
   if ((FormatOccured & eMotoOccured) && (!SepMoto))
   {
@@ -1443,9 +1443,9 @@ int main(int argc, char **argv)
   if (AutoErase)
   {
     for (p_src_name = GetStringListFirst(cmd_results.file_arg_list, &p_src_run);
-         p_src_name && *p_src_name;
-         p_src_name = GetStringListNext(&p_src_run))
-      ProcessGroup(p_src_name, EraseFile);
+         p_src_name; p_src_name = GetStringListNext(&p_src_run))
+      if (*p_src_name)
+        ProcessGroup(p_src_name, EraseFile);
   }
 
   ClearStringList(&cmd_results.file_arg_list);

@@ -34,6 +34,7 @@ include $(TARG_OBJDIR)code4500.dep
 include $(TARG_OBJDIR)codem16.dep
 include $(TARG_OBJDIR)codem16c.dep
 include $(TARG_OBJDIR)codepdp11.dep
+include $(TARG_OBJDIR)codevax.dep
 include $(TARG_OBJDIR)code4004.dep
 include $(TARG_OBJDIR)code8008.dep
 include $(TARG_OBJDIR)code48.dep
@@ -136,6 +137,12 @@ include $(TARG_OBJDIR)asminclist.dep
 include $(TARG_OBJDIR)symbolsize.dep
 include $(TARG_OBJDIR)asmitree.dep
 include $(TARG_OBJDIR)asmallg.dep
+include $(TARG_OBJDIR)onoff_common.dep
+include $(TARG_OBJDIR)intformat.dep
+include $(TARG_OBJDIR)addrspace.dep
+include $(TARG_OBJDIR)cpu2phys.dep
+include $(TARG_OBJDIR)chartrans.dep
+include $(TARG_OBJDIR)literals.dep
 include $(TARG_OBJDIR)version.dep
 include $(TARG_OBJDIR)endian.dep
 include $(TARG_OBJDIR)bpemu.dep

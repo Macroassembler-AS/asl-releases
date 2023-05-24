@@ -45,11 +45,9 @@ typedef struct
   Boolean error_arg_in_env;
 } as_cmd_results_t;
 
-extern void as_cmd_extend(as_cmd_rec_t **p_cmd_recs, size_t *p_cmd_rec_cnt,
-                          const as_cmd_rec_t *p_new_recs, size_t new_rec_cnt);
+extern void as_cmd_register(const as_cmd_rec_t *p_new_recs, size_t new_rec_cnt);
 
 extern as_cmd_result_t as_cmd_process(int argc, char **argv,
-                                      const as_cmd_rec_t *p_cmd_recs, size_t cmd_rec_cnt,
                                       const char *p_env_name,
                                       as_cmd_results_t *p_results);
 
