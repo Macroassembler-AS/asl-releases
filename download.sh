@@ -1,13 +1,13 @@
 #! /usr/bin/env bash
 set -e
+
 URL=http://john.ccac.rwth-aachen.de:8000/ftp/as/source/c_version/
 AUTHOR="Alfred Arnold <alfred@ccac.rwth-aachen.de>"
 
-git status --short | while read; do
-  echo "There are uncommitted changes in the repository, aborting.">&2
-  break
+[[ -z "$(git status --porcelain)" ]] || {
+  echo 1>&2 "There are uncommitted changes in the repository, aborting."
   exit 1
-done
+}
 
 echo "Getting revision list..."
 read revisions < <(
