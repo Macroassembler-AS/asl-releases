@@ -1,0 +1,19 @@
+# tell source files to not include .msh files
+
+MSH_FLAGS=
+
+# generate .msg files
+
+ALLMSGTARGETS=\
+ $(TARG_OBJDIR)./ioerrs.msg \
+ $(TARG_OBJDIR)./cmdarg.msg \
+ $(TARG_OBJDIR)./tools.msg \
+ $(TARG_OBJDIR)./as.msg \
+ $(TARG_OBJDIR)./plist.msg \
+ $(TARG_OBJDIR)./alink.msg \
+ $(TARG_OBJDIR)./pbind.msg \
+ $(TARG_OBJDIR)./p2hex.msg \
+ $(TARG_OBJDIR)./p2bin.msg
+
+DASMSGTARGETS=\
+ $(TARG_OBJDIR)./das.msg

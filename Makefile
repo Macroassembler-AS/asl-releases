@@ -7,7 +7,15 @@ OBLANK=$(NULL) $(NULL)
 
 DATE=`date +"%d%m%Y"`
 
-ALLFLAGS = $(TARG_CFLAGS) -DINCDIR=\"$(INCDIR)\" -DLIBDIR=\"$(LIBDIR)\"
+# targets built via this file use message catalogs compiled into binary:
+
+include makedefs.mi
+
+# -I option needed to include (dynamically created) *.msh/rsc files which are in the object subdirectory.
+# The weird ./ suffix is needed to keep things together if TARG_OBJDIR is empty, i.e. everything
+# ends up in the same directory:
+
+ALLFLAGS = $(TARG_CFLAGS) -I$(TARG_OBJDIR)./ $(MSH_FLAGS) -DINCDIR=\"$(INCDIR)\" -DLIBDIR=\"$(LIBDIR)\"
 
 include makedefs.files
 
@@ -90,7 +98,7 @@ include $(DOC_EN_DIR)makedefs.dok
 # Supplementary Targets
 
 test: binaries
-	cd tests; OBJDIR=$(TARG_OBJDIR) RUNCMD=$(TARG_RUNCMD) V=$(V) ./testall "$(TESTDIRS)"
+	cd tests; OBJDIR=$(TARG_OBJDIR) RUNCMD=$(TARG_RUNCMD) TARG_EXEXTENSION=$(TARG_EXEXTENSION) V=$(V) ./testall "$(TESTDIRS)"
 
 install: all
 	INSTROOT=$(INSTROOT) OBJDIR=$(OBJDIR) TARG_OBJDIR=$(TARG_OBJDIR) TARG_EXEXTENSION=$(TARG_EXEXTENSION) ./install.sh $(BINDIR) $(INCDIR) $(MANDIR) $(LIBDIR) $(DOCDIR)
@@ -100,7 +108,7 @@ clean_doc: clean_doc_DE clean_doc_EN
 clean: clean_doc
 	if test "$(HOST_OBJEXTENSION)" != ""; then $(RM) *$(HOST_OBJEXTENSION) $(OBJDIR)*$(HOST_OBJEXTENSION); fi
 	if test "$(TARG_OBJEXTENSION)" != ""; then $(RM) *$(TARG_OBJEXTENSION) $(TARG_OBJDIR)*$(TARG_OBJEXTENSION); fi
-	$(RM) $(ALLTARGETS) $(HOSTTARGETS) $(OBJDIR)*.dep $(TARG_OBJDIR)*.dep *.p $(TARG_OBJDIR)*.msg *.rsc tests/testlog testlog
+	$(RM) $(ALLTARGETS) $(HOSTTARGETS) $(OBJDIR)*.dep $(TARG_OBJDIR)*.dep *.p $(TARG_OBJDIR)*.msg *.rsc $(TARG_OBJDIR)*.msh $(TARG_OBJDIR)*.rsc tests/testlog testlog
 
 #---------------------------------------------------------------------------
 # Create Distributions
@@ -120,23 +128,25 @@ distdir: all $(UNUMLAUTTARGET)
 	chmod 755 asl-$(VERSION)
 	OBJDIR=$(OBJDIR) TARG_OBJDIR=$(TARG_OBJDIR) TARG_EXEXTENSION=$(TARG_EXEXTENSION) ./install.sh asl-$(VERSION)/bin asl-$(VERSION)/include asl-$(VERSION)/man asl-$(VERSION)/lib asl-$(VERSION)/doc
 
+win32-distdir: all $(UNUMLAUTTARGET)
+	rm -rf as
+	mkdir as
+	cmd /cinstw32.cmd as\\bin as\\include as\\man as\\lib as\\doc
+
 bindist-tgz: distdir
 	tar cvf asl-$(VERSION)-bin.tar asl-$(VERSION)
 	rm -rf asl-$(VERSION)
 	gzip -9 -f asl-$(VERSION)-bin.tar 
 
 bindist-zip: distdir
-	mv asl-$(VERSION)/lib/*.msg asl-$(VERSION)/bin/
+	-mv asl-$(VERSION)/lib/*.msg asl-$(VERSION)/bin/
 	rmdir asl-$(VERSION)/lib
 	mv asl-$(VERSION)/man/man1/* asl-$(VERSION)/man/
 	rmdir asl-$(VERSION)/man/man1/
 	cd asl-$(VERSION) && zip -9 -r ../asl-$(VERSION)-bin.zip .
 	rm -rf asl-$(VERSION)
 
-win32-bindist: $(UNUMLAUTTARGET)
-	rm -rf as
-	mkdir as
-	cmd /cinstw32.cmd as\\bin as\\include as\\man as\\lib as\\doc
+win32-bindist: win32-distdir
 	cd as; zip -9 -r ../as$(VERSION).zip *.*
 	zip -9 -r as$(VERSION).zip bin/cyg*
 	rm -rf as

@@ -8,6 +8,7 @@
 /*                                                                           */
 /*****************************************************************************/
 
+#include <stdio.h>
 #include <math.h>
 
 #include "stdinc.h"
@@ -198,7 +199,7 @@ static void PotOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
           Base *= Base;
           HVal >>= 1;
         }
-        as_tempres_set_float(pErg, Base);
+        as_tempres_set_float(pErg, Result);
       }
       else
       {

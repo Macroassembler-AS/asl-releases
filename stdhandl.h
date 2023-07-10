@@ -20,7 +20,7 @@ typedef enum {NoRedir,RedirToDevice,RedirToFile} TRedirected;  /* Umleitung von 
 
 extern TRedirected Redirected;
 
-extern void OpenWithStandard(FILE **ppFile, char *Path);
+extern void OpenWithStandard(FILE **ppFile, const char *Path);
 
 extern void CloseIfOpen(FILE **ppFile);
 

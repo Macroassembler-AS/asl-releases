@@ -57,6 +57,7 @@ ifeq ($(TARG_OBJDIR),i686-linux/)
 endif
 
 # PPC build to test big endian
+# install qemu-system-ppc, qemu-user-static, gcc-powerpc(64)-linux-gnu
 
 ifeq ($(TARG_OBJDIR),ppc-linux/)
  TARG_CC = powerpc-linux-gnu-gcc

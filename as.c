@@ -22,6 +22,9 @@
 #include "nls.h"
 #include "nlmessages.h"
 #include "as.rsc"
+#ifdef _USE_MSH
+# include "as.msh"
+#endif
 #include "ioerrs.h"
 #include "strutil.h"
 #include "stringlists.h"
@@ -4285,7 +4288,11 @@ int main(int argc, char **argv)
     if (!NLS_Initialize(&argc, argv))
       exit(4);
 
-    nlmessages_init("as.msg", *argv, MsgId1, MsgId2);
+#ifdef _USE_MSH
+    nlmessages_init_buffer(as_msh_data, sizeof(as_msh_data), MsgId1, MsgId2);
+#else
+    nlmessages_init_file("as.msg", *argv, MsgId1, MsgId2);
+#endif
     ioerrs_init(*argv);
     as_cmdarg_init(*argv);
     msg_level_init();

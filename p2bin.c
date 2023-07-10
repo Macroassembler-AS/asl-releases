@@ -19,6 +19,9 @@
 #include "nls.h"
 #include "nlmessages.h"
 #include "p2bin.rsc"
+#ifdef _USE_MSH
+# include "p2bin.msh"
+#endif
 #include "ioerrs.h"
 #include "chunks.h"
 #include "stringlists.h"
@@ -575,7 +578,11 @@ int main(int argc, char **argv)
   endian_init();
   strutil_init();
   bpemu_init();
-  nlmessages_init("p2bin.msg", *argv, MsgId1, MsgId2);
+#ifdef _USE_MSH
+  nlmessages_init_buffer(p2bin_msh_data, sizeof(p2bin_msh_data), MsgId1, MsgId2);
+#else
+  nlmessages_init_file("p2bin.msg", *argv, MsgId1, MsgId2);
+#endif
   ioerrs_init(*argv);
   chunks_init();
   as_cmdarg_init(*argv);

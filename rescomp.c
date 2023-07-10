@@ -41,6 +41,11 @@ typedef struct
   char *AbbString,*Character;
 } TransRec;
 
+#define IO_RETCODE_SRC 2
+#define IO_RETCODE_RSC 3
+#define IO_RETCODE_MSG 4
+#define IO_RETCODE_MSH 5
+
 /*****************************************************************************/
 
 #ifdef __TURBOC__
@@ -51,9 +56,10 @@ static char *IdentString = "AS Message Catalog - not readable\n\032\004";
 
 static LongInt MsgCounter;
 static PMsgCat MsgCats;
-static LongInt CatCount,DefCat;
-static FILE *SrcFile,*MsgFile,*HFile;
-static char *IncSym;
+static LongInt CatCount, DefCat;
+static const char *p_msg_file_name = NULL, *p_msh_file_name = NULL;
+static FILE *p_src_file, *p_msg_file, *p_rsc_file, *p_msh_file;
+static size_t bytes_written;
 
 static TransRec TransRecs[] =
 {
@@ -77,7 +83,7 @@ void WrError(Word Num)
 }
 
 static void fwritechk(const char *pArg, int retcode,
-                      void *pBuffer, size_t size, size_t nmemb, FILE *pFile)
+                      const void *pBuffer, size_t size, size_t nmemb, FILE *pFile)
 {
   size_t res;
 
@@ -106,21 +112,21 @@ static void GetLine(char *Dest)
 {
   PIncList OneFile;
 
-  ReadLn(SrcFile, Dest);
+  ReadLn(p_src_file, Dest);
   if (!as_strncasecmp(Dest, "INCLUDE", 7))
   {
     OneFile = (PIncList) malloc(sizeof(TIncList));
-    OneFile->Next = IncList; OneFile->Contents = SrcFile;
+    OneFile->Next = IncList; OneFile->Contents = p_src_file;
     IncList = OneFile;
     strmov(Dest, Dest + 7); KillPrefBlanks(Dest); KillPrefBlanks(Dest);
-    SrcFile = fopenchk(Dest, 2, "r");
+    p_src_file = fopenchk(Dest, 2, "r");
     GetLine(Dest);
   }
-  if ((feof(SrcFile)) && (IncList))
+  if (feof(p_src_file) && IncList)
   {
-    fclose(SrcFile);
+    fclose(p_src_file);
     OneFile = IncList; IncList = OneFile->Next;
-    SrcFile = OneFile->Contents; free(OneFile);
+    p_src_file = OneFile->Contents; free(OneFile);
   }
 }
 
@@ -221,7 +227,7 @@ static void Process_MESSAGE(char *Line)
   Boolean Cont;
 
   KillPrefBlanks(Line); KillPostBlanks(Line);
-  if (HFile) fprintf(HFile, "#define Num_%s %d\n", Line, MsgCounter);
+  if (p_rsc_file) fprintf(p_rsc_file, "#define Num_%s %d\n", Line, MsgCounter);
   MsgCounter++;
 
   for (z = MsgCats; z < MsgCats + CatCount; z++)
@@ -256,6 +262,67 @@ static void Process_MESSAGE(char *Line)
   }
 }
 
+static char *make_sym_name(const char *p_file_name, int include_guard)
+{
+  char *p_ret, *p_run;
+  const char *p_base;
+  size_t l;
+  Boolean no_replace;
+
+  if ((p_base = strrchr(p_file_name, PATHSEP)))
+    p_file_name = p_base + 1;
+  l = strlen(p_file_name);
+  p_run = p_ret = (char*)malloc(!!include_guard + l + 1);
+  if (include_guard)
+    *p_run++ = '_';
+  for (; *p_file_name; p_file_name++)
+  {
+    no_replace = (p_run == p_ret) ? as_isalpha(*p_file_name) : as_isalnum(*p_file_name);
+    *p_run++ = no_replace
+             ? (include_guard ? as_toupper(*p_file_name) : as_tolower(*p_file_name))
+             : '_';
+  }
+  *p_run++ = '\0';
+  return p_ret;
+}
+
+static void write_dual(const void *p_v_data, size_t data_len)
+{
+  if (p_msg_file)
+    fwritechk(p_msg_file_name, IO_RETCODE_MSG, p_v_data, 1, data_len, p_msg_file);
+
+  if (p_msh_file)
+  {
+    const unsigned char *p_data = (const unsigned char*)p_v_data;
+    size_t z;
+
+    for (z = 0; z < data_len; z++)
+    {
+      if (!(bytes_written & 15))
+      {
+        if (bytes_written > 0)
+          fprintf(p_msh_file, ",");
+        fprintf(p_msh_file, "\n  ");
+      }
+      else
+        fprintf(p_msh_file, ",");
+      fprintf(p_msh_file, "0x%02x", p_data[z]);
+      bytes_written++;
+    }
+  }
+  else
+    bytes_written += data_len;
+}
+
+static void write_dual_4_le(LongInt *p_lword)
+{
+  if (HostBigEndian)
+    DSwap(p_lword, 4);
+  write_dual(p_lword, 4);
+  if (HostBigEndian)
+    DSwap(p_lword, 4);
+}
+
 /*---------------------------------------------------------------------------*/
 
 int main(int argc, char **argv)
@@ -268,7 +335,8 @@ int main(int argc, char **argv)
   time_t stamp;
   LongInt Id1, Id2;
   LongInt RunPos, StrPos;
-  const char *pSrcName = NULL, *pHFileName = NULL, *pMsgFileName = NULL;
+  const char *pSrcName = NULL, *p_rsc_file_name = NULL;
+  char *p_rsc_file_incl_guard_sym = NULL, *p_msh_file_incl_guard_sym = NULL;
 
   endian_init(); strutil_init();
 
@@ -280,6 +348,8 @@ int main(int argc, char **argv)
       nextidx = 2;
     else if (!strcmp(argv[argz], "-m"))
       nextidx = 1;
+    else if (!strcmp(argv[argz], "-i"))
+      nextidx = 3;
     else
     {
       int thisidx;
@@ -296,48 +366,45 @@ int main(int argc, char **argv)
         case 0:
           pSrcName = argv[argz]; break;
         case 1:
-          pMsgFileName = argv[argz]; break;
+          p_msg_file_name = argv[argz]; break;
         case 2:
-          pHFileName = argv[argz]; break;
+          p_rsc_file_name = argv[argz]; break;
+        case 3:
+          p_msh_file_name = argv[argz]; break;
       }
     }
   }
 
   if (!pSrcName)
   {
-    fprintf(stderr, "usage: %s <input resource file> <[-m] output msg file> [[-h ]header file]\n", *argv);
+    fprintf(stderr, "usage: %s <input resource file> <[-m] output msg file> <[-i] output include file> [[-h ]header file]\n", *argv);
     exit(1);
   }
 
-  SrcFile = fopenchk(pSrcName, 2, "r");
+  p_src_file = fopenchk(pSrcName, IO_RETCODE_SRC, "r");
 
-  if (pHFileName)
+  if (p_rsc_file_name)
   {
-    HFile = fopenchk(pHFileName, 3, "w");
-    IncSym = as_strdup(pHFileName);
-    for (p = IncSym; *p; p++)
-     if (isalpha(((unsigned int) *p) & 0xff))
-       *p = as_toupper(*p);
-     else
-       *p = '_';
+    p_rsc_file = fopenchk(p_rsc_file_name, IO_RETCODE_RSC, "w");
+    p_rsc_file_incl_guard_sym = make_sym_name(p_rsc_file_name, 1);
   }
   else
-    HFile = NULL;
+    p_rsc_file = NULL;
 
   stamp = MyGetFileTime(argv[1]); Id1 = stamp & 0x7fffffff;
   Id2 = 0;
   for (c = 0; c < min((int)strlen(argv[1]), 4); c++)
    Id2 = (Id2 << 8) + ((Byte) argv[1][c]);
-  if (HFile)
+  if (p_rsc_file)
   {
-    fprintf(HFile, "#ifndef %s\n", IncSym);
-    fprintf(HFile, "#define %s\n", IncSym);
-    fprintf(HFile, "#define MsgId1 %ld\n", (long) Id1);
-    fprintf(HFile, "#define MsgId2 %ld\n", (long) Id2);
+    fprintf(p_rsc_file, "#ifndef %s\n", p_rsc_file_incl_guard_sym);
+    fprintf(p_rsc_file, "#define %s\n", p_rsc_file_incl_guard_sym);
+    fprintf(p_rsc_file, "#define MsgId1 %ld\n", (long) Id1);
+    fprintf(p_rsc_file, "#define MsgId2 %ld\n", (long) Id2);
   }
 
   MsgCounter = CatCount = 0; MsgCats = NULL; DefCat = -1;
-  while (!feof(SrcFile))
+  while (!feof(p_src_file))
   {
     GetLine(Line); KillPrefBlanks(Line); KillPostBlanks(Line);
     if ((*Line != ';') && (*Line != '#') && (*Line != '\0'))
@@ -349,22 +416,36 @@ int main(int argc, char **argv)
       else if (!as_strcasecmp(Cmd, "MESSAGE")) Process_MESSAGE(Line);
     }
   }
+  fclose(p_src_file);
 
-  fclose(SrcFile);
-  if (HFile)
+  if (p_rsc_file)
   {
-    fprintf(HFile, "#endif /* #ifndef %s */\n", IncSym);
-    fclose(HFile);
+    fprintf(p_rsc_file, "#endif /* #ifndef %s */\n", p_rsc_file_incl_guard_sym);
+    free(p_rsc_file_incl_guard_sym); p_rsc_file_incl_guard_sym = NULL;
+    fclose(p_rsc_file);
   }
 
-  if (pMsgFileName)
+  if (p_msg_file_name || p_msh_file_name)
   {
-    MsgFile = fopenchk(pMsgFileName, 4, OPENWRMODE);
+    if (p_msg_file_name)
+      p_msg_file = fopenchk(p_msg_file_name, IO_RETCODE_MSG, OPENWRMODE);
+    if (p_msh_file_name)
+    {
+      char *p_array_name = make_sym_name(p_msh_file_name, 0);
+
+      p_msh_file = fopenchk(p_msh_file_name, IO_RETCODE_MSH, "w");
+      p_msh_file_incl_guard_sym = make_sym_name(p_msh_file_name, 1);
+      fprintf(p_msh_file, "#ifndef %s\n", p_msh_file_incl_guard_sym);
+      fprintf(p_msh_file, "#define %s\n", p_msh_file_incl_guard_sym);
+      fprintf(p_msh_file, "static const unsigned char %s_data[] = {", p_array_name);
+      free(p_array_name); p_array_name = NULL;
+    }
+    bytes_written = 0;
 
     /* Magic-String */
 
-    fwritechk(pMsgFileName, 5, IdentString, 1, strlen(IdentString), MsgFile);
-    Write4(MsgFile, &Id1); Write4(MsgFile, &Id2);
+    write_dual(IdentString, strlen(IdentString));
+    write_dual_4_le(&Id1); write_dual_4_le(&Id2);
 
     /* Default nach vorne */
 
@@ -375,7 +456,7 @@ int main(int argc, char **argv)
 
     /* Startadressen String-Kataloge berechnen */
 
-    RunPos = ftell(MsgFile) + 1;
+    RunPos = bytes_written + 1;
     for (z = MsgCats; z < MsgCats + CatCount; z++)
       RunPos += (z->HeadLength = strlen(z->CtryName) + 1 + 4 + 4 + (4 * z->CtryCodeCnt) + 4);
     for (z = MsgCats; z < MsgCats + CatCount; z++)
@@ -387,13 +468,13 @@ int main(int argc, char **argv)
 
     for (z = MsgCats; z < MsgCats + CatCount; z++)
     {
-      fwritechk(pMsgFileName, 5, z->CtryName, 1, strlen(z->CtryName) + 1, MsgFile);
-      Write4(MsgFile, &(z->TotLength));
-      Write4(MsgFile, &(z->CtryCodeCnt));
-      for (c = 0; c < z->CtryCodeCnt; c++) Write4(MsgFile, z->CtryCodes + c);
-      Write4(MsgFile, &(z->FilePos));
+      write_dual(z->CtryName, strlen(z->CtryName) + 1);
+      write_dual_4_le(&(z->TotLength));
+      write_dual_4_le(&(z->CtryCodeCnt));
+      for (c = 0; c < z->CtryCodeCnt; c++) write_dual_4_le(z->CtryCodes + c);
+      write_dual_4_le(&(z->FilePos));
     }
-    Save = '\0'; fwritechk(pMsgFileName, 5, &Save, 1, 1, MsgFile);
+    Save = '\0'; write_dual(&Save, 1);
 
     /* Stringtabellen schreiben */
 
@@ -402,15 +483,26 @@ int main(int argc, char **argv)
       for (List = z->Messages; List; List = List->Next)
       {
         StrPos = z->FilePos + (4 * MsgCounter) + List->Position;
-        Write4(MsgFile, &StrPos);
+        write_dual_4_le(&StrPos);
       }
       for (List = z->Messages; List; List = List->Next)
-        fwritechk(pMsgFileName, 5, List->Contents, 1, strlen(List->Contents) + 1, MsgFile);
+        write_dual(List->Contents, strlen(List->Contents) + 1);
     }
 
     /* faeaedisch... */
 
-    fclose(MsgFile);
+    if (p_msg_file)
+    {
+      fclose(p_msg_file); p_msg_file = NULL;
+    }
+    if (p_msh_file)
+    {
+      fprintf(p_msh_file, "\n};\n");
+      fprintf(p_msh_file, "#endif /* %s */\n", p_msh_file_incl_guard_sym);
+      free(p_msh_file_incl_guard_sym); p_msh_file_incl_guard_sym = NULL;
+      fclose(p_msh_file);
+    }
+
   }
 
   return 0;

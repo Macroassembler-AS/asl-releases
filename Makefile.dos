@@ -4,7 +4,9 @@ CURRDIR=.\\
 RM=del
 OBLANK=
 
-ALLFLAGS = $(TARG_CFLAGS) -DINCDIR="$(INCDIR)" -DLIBDIR="$(LIBDIR)"
+!include makedefs.mx
+
+ALLFLAGS = $(TARG_CFLAGS) -I$(TARG_OBJDIR) $(MSH_FLAGS) -DINCDIR="$(INCDIR)" -DLIBDIR="$(LIBDIR)"
 
 !include makedefs.files
 
@@ -127,6 +129,7 @@ clean: clean_doc
 	$(RM) $(OBJDIR)*$(HOST_OBJEXTENSION)
 	$(RM) $(TARG_OBJDIR)*$(TARG_OBJEXTENSION)
         $(RM) $(TARG_OBJDIR)*.msg
+	$(RM) $(TARG_OBJDIR)*.msh
 	$(RM) *.p
 	$(RM) testlog
 	$(RM) *.rsc

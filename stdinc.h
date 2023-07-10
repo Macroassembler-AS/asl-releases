@@ -50,4 +50,8 @@
 #define M_PI 3.1415926535897932385E0
 #endif
 
+#ifdef __cplusplus
+# define register
+#endif
+
 #endif /* _STDINC_H */

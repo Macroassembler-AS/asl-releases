@@ -1306,7 +1306,7 @@ void RemoveIncludeList(char *RemPath)
   String Save;
   char *Part;
 
-  strmaxcpy(IncludeList, Save, STRINGSIZE);
+  strmaxcpy(Save, IncludeList, STRINGSIZE);
   IncludeList[0] = '\0';
   while (Save[0] != '\0')
   {

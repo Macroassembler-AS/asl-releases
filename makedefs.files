@@ -1,7 +1,7 @@
 BASEARCHFILES = *.c *.h *.hpp man/*.1 \
-            INSTALL README README.OS2 README.DOS README.LANGS README.KR TODO BENCHES Makefile Makefile.w32 Makefile.dos Makefile.def.tmpl \
+            INSTALL README README.OS2 README.DOS README.LANGS TODO BENCHES Makefile Makefile.dos Makefile.def.tmpl \
             COPYING install.sh install.bat install.cmd instw32.cmd marks.asm \
-            *.res makedefs.src makedefs.files makedefs.str makedefs.abh rscdeps asl.def \
+            *.res makedefs.src makedefs.files makedefs.str makedefs.abh makedefs.mi makedefs.mx rscdeps asl.def \
             include/*.inc include/avr/*.inc \
             include/s12z/*.inc include/s12z/vh/*.inc include/s12z/vca/*.inc include/s12z/vc/*.inc \
             include/coldfire/*.inc \

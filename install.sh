@@ -81,13 +81,15 @@ fi
 if [ "${LIBPATH}" != "" ]; then
  ${MKDIRHIER} ${LIBPATH}
  chmod 755 ${LIBPATH}
- for file in ${TARG_OBJDIR}*.msg; do
-  base=`basename ${file}`
-  #echo copy ${file} to ${LIBPATH}/${base} ...
-  if cp ${file} ${LIBPATH}/ ; then
-   chmod 644 ${LIBPATH}/${base}
-  fi
- done
+ if [ -f as.msg ]; then
+  for file in ${TARG_OBJDIR}*.msg; do
+   base=`basename ${file}`
+   #echo copy ${file} to ${LIBPATH}/${base} ...
+   if cp ${file} ${LIBPATH}/ ; then
+    chmod 644 ${LIBPATH}/${base}
+   fi
+  done
+ fi
 fi
 
 if [ "${DOCPATH}" != "" ]; then

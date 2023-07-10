@@ -60,7 +60,7 @@ static void AssignHandle(FILE **ppFile, Word Num)
 
 /* Eine Datei unter Beruecksichtigung der Standardkanaele oeffnen */
 
-void OpenWithStandard(FILE **ppFile, String Path)
+void OpenWithStandard(FILE **ppFile, const char *Path)
 {
   if ((strlen(Path) == 2) && (Path[0] == '!') && (Path[1] >= '0') && (Path[1] <= '2'))
     AssignHandle(ppFile, Path[1] - '0');

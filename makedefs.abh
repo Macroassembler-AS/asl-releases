@@ -26,6 +26,7 @@ include $(TARG_OBJDIR)codeh8_3.dep
 include $(TARG_OBJDIR)codeh8_5.dep
 include $(TARG_OBJDIR)code7000.dep
 include $(TARG_OBJDIR)code65.dep
+include $(TARG_OBJDIR)codeko09.dep
 include $(TARG_OBJDIR)codepps4.dep
 include $(TARG_OBJDIR)codeh16.dep
 include $(TARG_OBJDIR)code7700.dep
@@ -115,6 +116,9 @@ include $(TARG_OBJDIR)codexcore.dep
 include $(TARG_OBJDIR)code1750.dep
 include $(TARG_OBJDIR)codekenbak.dep
 include $(TARG_OBJDIR)codecp1600.dep
+include $(TARG_OBJDIR)codenano.dep
+include $(TARG_OBJDIR)code6100.dep
+include $(TARG_OBJDIR)coderx.dep
 include $(TARG_OBJDIR)as.dep
 include $(TARG_OBJDIR)asmdef.dep
 include $(TARG_OBJDIR)asmsub.dep

@@ -20,6 +20,9 @@
 #include "nls.h"
 #include "nlmessages.h"
 #include "plist.rsc"
+#ifdef _USE_MSH
+# include "plist.msh"
+#endif
 #include "ioerrs.h"
 #include "strutil.h"
 #include "toolutils.h"
@@ -174,7 +177,11 @@ int main(int argc, char **argv)
   endian_init();
   bpemu_init();
   strutil_init();
-  nlmessages_init("plist.msg", *argv, MsgId1, MsgId2); ioerrs_init(*argv);
+#ifdef _USE_MSH
+  nlmessages_init_buffer(plist_msh_data, sizeof(plist_msh_data), MsgId1, MsgId2);
+#else
+  nlmessages_init_file("plist.msg", *argv, MsgId1, MsgId2); ioerrs_init(*argv);
+#endif
   as_cmdarg_init(*argv);
   msg_level_init();
   toolutils_init(*argv);
