@@ -4,7 +4,7 @@
 /*                                                                           */
 /* AS                                                                        */
 /*                                                                           */
-/* Code Generator PDP-11                                                     */
+/* Code Generator VAX                                                        */
 /*                                                                           */
 /*****************************************************************************/
 
@@ -30,8 +30,6 @@ typedef struct
 {
   char name[15];
 } cpu_props_t;
-
-#define TwoOrderCnt 5
 
 typedef struct
 {
@@ -60,7 +58,7 @@ typedef struct
 
 static const cpu_props_t *p_curr_cpu_props;
 static tSymbolSize op_size;
-static order_t *two_op_orders;
+static order_t *two_op_orders, *three_op_orders;
 
 /*-------------------------------------------------------------------------*/
 /* Register Symbols */
@@ -332,6 +330,7 @@ static Boolean decode_adr(tStrComp *p_arg, adr_vals_t *p_result, LongWord pc_val
       case eIsReg:
         StrCompShorten(&arg, arg_len - split_pos);
         p_result->vals[p_result->count++] = (index_reg |= 0x40);
+        pc_value++;
         break;
       default:
         break;
@@ -718,6 +717,30 @@ static void decode_two_op(Word index)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     decode_three_op(Word index)
+ * \brief  handle instructions with three generic operands
+ * \param  index index into instruction table
+ * ------------------------------------------------------------------------ */
+
+static void decode_three_op(Word index)
+{
+  const order_t *p_order = &three_op_orders[index];
+  adr_vals_t src1_adr_vals, src2_adr_vals, dest_adr_vals;
+
+  op_size = p_order->op_size;
+  if (ChkArgCnt(3, 3)
+   && decode_adr(&ArgStr[1], &src1_adr_vals, EProgCounter() + code_len(p_order->code), MModImm | MModMem | MModReg)
+   && decode_adr(&ArgStr[2], &src2_adr_vals, EProgCounter() + code_len(p_order->code) + src1_adr_vals.count, MModImm | MModMem | MModReg)
+   && decode_adr(&ArgStr[3], &dest_adr_vals, EProgCounter() + code_len(p_order->code) + src1_adr_vals.count + src2_adr_vals.count, MModMem | MModReg))
+  {
+    append_opcode(p_order->code);
+    append_adr_vals(&src1_adr_vals);
+    append_adr_vals(&src2_adr_vals);
+    append_adr_vals(&dest_adr_vals);
+  }
+}
+
 /*--------------------------------------------------------------------------*/
 /* Instruction Lookup Table */
 
@@ -728,10 +751,18 @@ static void decode_two_op(Word index)
 
 static void add_two_op(const char *p_name, tSymbolSize op_size, Word code)
 {
-  if (InstrZ >= TwoOrderCnt) exit(255);
+  order_array_rsv_end(two_op_orders, order_t);
   two_op_orders[InstrZ].op_size = op_size;
   two_op_orders[InstrZ].code = code;
   AddInstTable(InstTable, p_name, InstrZ++, decode_two_op);
+}
+
+static void add_three_op(const char *p_name, tSymbolSize op_size, Word code)
+{
+  order_array_rsv_end(three_op_orders, order_t);
+  three_op_orders[InstrZ].op_size = op_size;
+  three_op_orders[InstrZ].code = code;
+  AddInstTable(InstTable, p_name, InstrZ++, decode_three_op);
 }
 
 static void init_fields(void)
@@ -741,12 +772,38 @@ static void init_fields(void)
   AddInstTable(InstTable, "HALT",  0x00   , decode_fixed);
   AddInstTable(InstTable, "NOP",   NOPCode, decode_fixed);
 
-  two_op_orders = (order_t*) malloc(TwoOrderCnt * sizeof(*two_op_orders)); InstrZ = 0;
+  InstrZ = 0;
   add_two_op("MOVB", eSymbolSize8Bit, 0x90);
   add_two_op("MOVW", eSymbolSize16Bit, 0xb0);
   add_two_op("MOVD", eSymbolSize32Bit, 0x70);
   add_two_op("MOVL", eSymbolSize64Bit, 0xd0);
   add_two_op("MOVO", eSymbolSize128Bit, 0x7dfd);
+  add_two_op("ADDB2", eSymbolSize8Bit, 0x80);
+  add_two_op("ADDW2", eSymbolSize16Bit, 0xa0);
+  add_two_op("ADDL2", eSymbolSize32Bit, 0xc0);
+  add_two_op("SUBB2", eSymbolSize8Bit, 0x82);
+  add_two_op("SUBW2", eSymbolSize16Bit, 0xa2);
+  add_two_op("SUBL2", eSymbolSize32Bit, 0xc2);
+  add_two_op("MULB2", eSymbolSize8Bit, 0x84);
+  add_two_op("MULW2", eSymbolSize16Bit, 0xa4);
+  add_two_op("MULL2", eSymbolSize32Bit, 0xc4);
+  add_two_op("DIVB2", eSymbolSize8Bit, 0x86);
+  add_two_op("DIVW2", eSymbolSize16Bit, 0xa6);
+  add_two_op("DIVL2", eSymbolSize32Bit, 0xc6);
+
+  InstrZ = 0;
+  add_three_op("ADDB3", eSymbolSize8Bit, 0x81);
+  add_three_op("ADDW3", eSymbolSize16Bit, 0xa1);
+  add_three_op("ADDL3", eSymbolSize32Bit, 0xc1);
+  add_three_op("SUBB3", eSymbolSize8Bit, 0x83);
+  add_three_op("SUBW3", eSymbolSize16Bit, 0xa3);
+  add_three_op("SUBL3", eSymbolSize32Bit, 0xc3);
+  add_three_op("MULB3", eSymbolSize8Bit, 0x85);
+  add_three_op("MULW3", eSymbolSize16Bit, 0xa5);
+  add_three_op("MULL3", eSymbolSize32Bit, 0xc5);
+  add_three_op("DIVB3", eSymbolSize8Bit, 0x87);
+  add_three_op("DIVW3", eSymbolSize16Bit, 0xa7);
+  add_three_op("DIVL3", eSymbolSize32Bit, 0xc7);
 }
 
 /*!------------------------------------------------------------------------
@@ -756,7 +813,8 @@ static void init_fields(void)
 
 static void deinit_fields(void)
 {
-  free(two_op_orders);
+  order_array_free(two_op_orders);
+  order_array_free(three_op_orders);
   DestroyInstTable(InstTable);
 }
 

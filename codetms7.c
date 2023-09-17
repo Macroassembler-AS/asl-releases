@@ -935,6 +935,7 @@ static void InitFields(void)
   InitRel8("JHS", 0xe3); InitRel8("JL" , 0xe7); InitRel8("JN" , 0xe1);
   InitRel8("JNC", 0xe7); InitRel8("JNE", 0xe6); InitRel8("JNZ", 0xe6);
   InitRel8("JP" , 0xe4); InitRel8("JPZ", 0xe5); InitRel8("JZ" , 0xe2);
+  InitRel8("JLT", 0xe1); InitRel8("JGT", 0xe4); InitRel8("JGE", 0xe5);
 
   InitALU1("ADC",  9); InitALU1("ADD",  8);
   InitALU1("DAC", 14); InitALU1("DSB", 15);

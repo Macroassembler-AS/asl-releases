@@ -75,16 +75,6 @@ typedef struct
 
 #define EXTPREFIX 0x1f
 
-#define FixedOrderCnt 20
-
-#define ALU2OrderCnt 11
-
-#define ALU1OrderCnt 15
-
-#define ALUXOrderCnt 11
-
-#define CondCnt 20
-
 #define mIsSuper8() (pCurrCPUProps->CoreFlags & eCoreSuper8)
 #define mIsZ8Encore() (pCurrCPUProps->CoreFlags & eCoreZ8Encore)
 
@@ -138,7 +128,7 @@ static BaseOrder *ALUXOrders;
 static ALU1Order *ALU1Orders;
 static Condition *Conditions;
 
-static int TrueCond;
+static int CondCnt, TrueCond;
 
 static const tCPUProps *pCurrCPUProps;
 
@@ -2446,8 +2436,7 @@ static void DecodeDEFBIT(Word Code)
 
 static void AddFixed(const char *NName, Word Code, tCoreFlags CoreFlags)
 {
-  if (InstrZ >= FixedOrderCnt)
-    exit(255);
+  order_array_rsv_end(FixedOrders, BaseOrder);
   FixedOrders[InstrZ].Code = Code;
   FixedOrders[InstrZ].CoreFlags = CoreFlags;
   AddInstTable(InstTable, NName, InstrZ++, DecodeFixed);
@@ -2455,8 +2444,7 @@ static void AddFixed(const char *NName, Word Code, tCoreFlags CoreFlags)
 
 static void AddALU2(const char *NName, Word Code, tCoreFlags CoreFlags)
 {
-  if (InstrZ >= ALU2OrderCnt)
-    exit(255);
+  order_array_rsv_end(ALU2Orders, BaseOrder);
   ALU2Orders[InstrZ].Code = Code;
   ALU2Orders[InstrZ].CoreFlags = CoreFlags;
   AddInstTable(InstTable, NName, InstrZ++, DecodeALU2);
@@ -2464,8 +2452,7 @@ static void AddALU2(const char *NName, Word Code, tCoreFlags CoreFlags)
 
 static void AddALUX(const char *NName, Word Code, tCoreFlags CoreFlags)
 {
-  if (InstrZ >= ALUXOrderCnt)
-    exit(255);
+  order_array_rsv_end(ALUXOrders, BaseOrder);
   ALUXOrders[InstrZ].Code = Code;
   ALUXOrders[InstrZ].CoreFlags = CoreFlags;
   AddInstTable(InstTable, NName, InstrZ++, DecodeALUX);
@@ -2473,8 +2460,7 @@ static void AddALUX(const char *NName, Word Code, tCoreFlags CoreFlags)
 
 static void AddALU1(const char *NName, Word Code, tCoreFlags CoreFlags, Boolean Is16)
 {
-  if (InstrZ >= ALU1OrderCnt)
-    exit(255);
+  order_array_rsv_end(ALU1Orders, ALU1Order);
   ALU1Orders[InstrZ].Code = Code;
   ALU1Orders[InstrZ].CoreFlags = CoreFlags;
   ALU1Orders[InstrZ].Is16 = Is16;
@@ -2483,8 +2469,7 @@ static void AddALU1(const char *NName, Word Code, tCoreFlags CoreFlags, Boolean 
 
 static void AddCondition(const char *NName, Byte NCode)
 {
-  if (InstrZ >= CondCnt)
-    exit(255);
+  order_array_rsv_end(Conditions, Condition);
   Conditions[InstrZ].Name = NName;
   Conditions[InstrZ++].Code = NCode;
 }
@@ -2493,7 +2478,6 @@ static void InitFields(void)
 {
   InstTable = CreateInstTable(201);
 
-  FixedOrders = (BaseOrder *) malloc(sizeof(*FixedOrders) * FixedOrderCnt);
   InstrZ = 0;
   AddFixed("CCF"  , 0xef   , eCoreZ8NMOS | eCoreZ8CMOS | eCoreSuper8 | eCoreZ8Encore);
   AddFixed("DI"   , 0x8f   , eCoreZ8NMOS | eCoreZ8CMOS | eCoreSuper8 | eCoreZ8Encore);
@@ -2516,7 +2500,6 @@ static void InitFields(void)
   AddFixed("SB1"  , 0x5f   ,                             eCoreSuper8                );
   AddFixed("WFI"  , 0x3f   ,                             eCoreSuper8                );
 
-  ALU2Orders = (BaseOrder *) malloc(sizeof(*FixedOrders) * ALU2OrderCnt);
   InstrZ = 0;
   AddALU2("ADD" , 0x0000, eCoreZ8NMOS | eCoreZ8CMOS | eCoreSuper8 | eCoreZ8Encore);
   AddALU2("ADC" , 0x0010, eCoreZ8NMOS | eCoreZ8CMOS | eCoreSuper8 | eCoreZ8Encore);
@@ -2530,7 +2513,6 @@ static void InitFields(void)
   AddALU2("XOR" , 0x00b0, eCoreZ8NMOS | eCoreZ8CMOS | eCoreSuper8 | eCoreZ8Encore);
   AddALU2("CPC" , (EXTPREFIX << 8) | 0xa0, eCoreZ8Encore);
 
-  ALUXOrders = (BaseOrder *) malloc(sizeof(*ALUXOrders) * ALUXOrderCnt);
   InstrZ = 0;
   AddALUX("ADDX", 0x0008, eCoreZ8Encore);
   AddALUX("ADCX", 0x0018, eCoreZ8Encore);
@@ -2544,7 +2526,6 @@ static void InitFields(void)
   AddALUX("XORX", 0x00b8, eCoreZ8Encore);
   AddALUX("CPCX", (EXTPREFIX << 8) | 0xa8, eCoreZ8Encore);
 
-  ALU1Orders = (ALU1Order *) malloc(sizeof(ALU1Order) * ALU1OrderCnt);
   InstrZ = 0;
   AddALU1("DEC" , (pCurrCPUProps->CoreFlags & eCoreZ8Encore) ? 0x0030 : 0x0000, eCoreZ8NMOS | eCoreZ8CMOS | eCoreSuper8 | eCoreZ8Encore, False);
   AddALU1("RLC" , 0x0010, eCoreZ8NMOS | eCoreZ8CMOS | eCoreSuper8 | eCoreZ8Encore, False);
@@ -2562,7 +2543,7 @@ static void InitFields(void)
   AddALU1("SWAP", 0x00f0, eCoreZ8NMOS | eCoreZ8CMOS | eCoreSuper8 | eCoreZ8Encore, False);
   AddALU1("SRL" , (EXTPREFIX << 8) | 0xc0, eCoreZ8NMOS | eCoreZ8CMOS | eCoreZ8Encore, False);
 
-  Conditions=(Condition *) malloc(sizeof(Condition) * CondCnt); InstrZ = 0;
+  InstrZ = 0;
   AddCondition("F"  , 0); TrueCond = InstrZ; AddCondition("T"  , 8);
   AddCondition("C"  , 7); AddCondition("NC" ,15);
   AddCondition("Z"  , 6); AddCondition("NZ" ,14);
@@ -2573,6 +2554,7 @@ static void InitFields(void)
   AddCondition("LE" , 2); AddCondition("GT" ,10);
   AddCondition("ULT", 7); AddCondition("UGE",15);
   AddCondition("ULE", 3); AddCondition("UGT",11);
+  CondCnt = InstrZ;
 
   AddInstTable(InstTable, "LD", 0, DecodeLD);
   AddInstTable(InstTable, "LDX", 0, DecodeLDX);
@@ -2646,11 +2628,11 @@ static void InitFields(void)
 
 static void DeinitFields(void)
 {
-  free(FixedOrders);
-  free(ALU2Orders);
-  free(ALU1Orders);
-  free(ALUXOrders);
-  free(Conditions);
+  order_array_free(FixedOrders);
+  order_array_free(ALU2Orders);
+  order_array_free(ALU1Orders);
+  order_array_free(ALUXOrders);
+  order_array_free(Conditions);
 
   DestroyInstTable(InstTable);
 }

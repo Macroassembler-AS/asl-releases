@@ -106,13 +106,9 @@ typedef struct
 
 typedef struct
 {
-  char Name[4];
+  const char *pName;
   Word Code;
 } tCondition;
-
-#define FixedOrderCnt 6
-#define CtlRegCnt 9
-#define ConditionCnt 28
 
 /* Auto-optimization of LD #imm4,Rn -> LDK disabled for the moment,
    until we find a syntax to control it: */
@@ -124,6 +120,7 @@ static const tCPUProps *pCurrCPUProps;
 static FixedOrder *FixedOrders;
 static tCtlReg *CtlRegs;
 static tCondition *Conditions;
+static int CtlRegCnt;
 
 static tSymbolSize OpSize;
 static ShortInt ImmOpSize;
@@ -1230,8 +1227,8 @@ static Boolean DecodeCondition(const tStrComp *pArg, Word *pCondition)
 {
   int z;
 
-  for (z = 0; z < ConditionCnt; z++)
-    if (!as_strcasecmp(pArg ? pArg->str.p_str : "", Conditions[z].Name))
+  for (z = 0; Conditions[z].pName; z++)
+    if (!as_strcasecmp(pArg ? pArg->str.p_str : "", Conditions[z].pName))
     {
       *pCondition = Conditions[z].Code;
       return True;
@@ -3097,8 +3094,7 @@ static void DecodeDEFBIT(Word Code)
 
 static void AddFixed(const char *NName, Word Code, Boolean Privileged)
 {
-  if (InstrZ >= FixedOrderCnt)
-    exit(255);
+  order_array_rsv_end(FixedOrders, FixedOrder);
   FixedOrders[InstrZ].Code = Code;
   FixedOrders[InstrZ].Privileged = Privileged;
   AddInstTable(InstTable, NName, InstrZ++, DecodeFixed);
@@ -3106,8 +3102,7 @@ static void AddFixed(const char *NName, Word Code, Boolean Privileged)
 
 static void AddCtl(const char *pName, Word Code, tCtlFlags Flags, tSymbolSize Size)
 {
-  if (InstrZ >= CtlRegCnt)
-    exit(255);
+  order_array_rsv_end(CtlRegs, tCtlReg);
   CtlRegs[InstrZ  ].pName = pName;
   CtlRegs[InstrZ  ].Code  = Code;
   CtlRegs[InstrZ  ].Flags = Flags;
@@ -3116,9 +3111,8 @@ static void AddCtl(const char *pName, Word Code, tCtlFlags Flags, tSymbolSize Si
 
 static void AddCondition(const char *pName, Word Code)
 {
-  if (InstrZ >= ConditionCnt)
-    exit(255);
-  strmaxcpy(Conditions[InstrZ].Name, pName, sizeof(Conditions[InstrZ].Name));
+  order_array_rsv_end(Conditions, tCondition);
+  Conditions[InstrZ].pName = pName;
   Conditions[InstrZ++].Code = Code;
 }
 
@@ -3144,7 +3138,6 @@ static void InitFields(void)
   InstTable = CreateInstTable(201);
   SetDynamicInstTable(InstTable);
 
-  FixedOrders = (FixedOrder *) malloc(sizeof(*FixedOrders) * FixedOrderCnt);
   InstrZ = 0;
   AddFixed("HALT" , 0x7a00 , True );
   AddFixed("IRET" , 0x7b00 , True );
@@ -3153,7 +3146,6 @@ static void InitFields(void)
   AddFixed("MSET" , 0x7b08 , True );
   AddFixed("NOP"  , NOPCode, False);
 
-  CtlRegs = (tCtlReg*)malloc(sizeof(*CtlRegs) * CtlRegCnt);
   InstrZ = 0;
   AddCtl("FCW"     , 2, ePrivileged | eSegMode | eNonSegMode , eSymbolSize16Bit);
   AddCtl("REFRESH" , 3, ePrivileged | eSegMode | eNonSegMode , eSymbolSize16Bit);
@@ -3164,8 +3156,8 @@ static void InitFields(void)
   AddCtl("NSPOFF"  , 7, ePrivileged | eSegMode | eNonSegMode , eSymbolSize16Bit);
   AddCtl("NSP"     , 7, ePrivileged            | eNonSegMode , eSymbolSize16Bit);
   AddCtl("FLAGS"   , 1,               eSegMode | eNonSegMode , eSymbolSize8Bit );
+  CtlRegCnt = InstrZ;
 
-  Conditions = (tCondition*)malloc(sizeof(*Conditions) * ConditionCnt);
   InstrZ = 0;
   AddCondition(""   , 0x08);
   AddCondition("F"  , 0x00);
@@ -3198,6 +3190,7 @@ static void InitFields(void)
   AddCondition("LLT", 0x07);
   AddCondition("LGT", 0x0b);
   AddCondition("LGE", 0x0f);
+  AddCondition(NULL , 0);
 
 
   AddSizeInstTable("LD"  , (1 << eSymbolSize8Bit) | (1 << eSymbolSize32Bit), 0, DecodeLD);
@@ -3314,9 +3307,9 @@ static void InitFields(void)
 
 static void DeinitFields(void)
 {
-  free(CtlRegs);
-  free(FixedOrders);
-  free(Conditions);
+  order_array_free(CtlRegs);
+  order_array_free(FixedOrders);
+  order_array_free(Conditions);
 
   DestroyInstTable(InstTable);
 }

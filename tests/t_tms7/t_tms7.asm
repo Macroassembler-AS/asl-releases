@@ -172,11 +172,14 @@
         jhs	$
         jl	$
         jn	$
+	jlt	$
         jnc	$
         jne	$
         jnz	$
         jp	$
+	jgt	$
         jpz	$
+	jge	$
         jz	$
 
         lda	@1234h

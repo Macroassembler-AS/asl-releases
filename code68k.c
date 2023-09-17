@@ -3037,10 +3037,18 @@ static void DecodeMOVEQ(Word Index)
       Value = EvalStrIntExpressionOffsWithFlags(&ArgStr[1], 1, Int32, &OK, &Flags);
       if (mFirstPassUnknown(Flags))
         Value &= 0x7f;
-      if ((Value > 0x7f) && (Value < 0xffffff80ul))
+      else if ((Value > 0xff) && (Value < 0xffffff80ul))
         WrStrErrorPos((Value & 0x80000000ul) ? ErrNum_UnderRange : ErrNum_OverRange, &ArgStr[1]);
       else
       {
+        if ((Value >= 0x80) && (Value <= 0xff))
+        {
+          char str[40];
+          LargeWord v1 = Value, v2 = Value | 0xffffff00ul;
+
+          as_snprintf(str, sizeof(str), "%llx -> %llx", v1, v2);
+          WrXErrorPos(ErrNum_SignExtension, str, &ArgStr[1].Pos);
+        }
         CodeLen = 2;
         WAsmCode[0] |= Value & 0xff;
       }

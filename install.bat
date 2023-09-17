@@ -54,4 +54,6 @@ for %%i in (%docdirs%) do copy doc_%%i\as.tex %5\as_%%i.tex
 for %%i in (%docdirs%) do copy doc_%%i\as.htm %5\as_%%i.htm
 copy doc_COM\taborg*.tex %5
 copy doc_COM\ps*.tex %5
+copy doc_COM\biblio.tex %5
+copy doc_COM\cp3finst.tex %5
 copy COPYING %5

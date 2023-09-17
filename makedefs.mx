@@ -1,6 +1,11 @@
-# tell source files to not include .msh files
+# Tell source files to not include .msh files,
+# and use provided LIBDIR for.msg files at runtime:
 
-MSH_FLAGS=
+MSX_FLAGS=-DLIBDIR=\"$(LIBDIR)\"
+
+# Borland MAKE for DOS expands a little different:
+
+DOS_MSX_FLAGS=-DLIBDIR="$(LIBDIR)"
 
 # generate .msg files
 

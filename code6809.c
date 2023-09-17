@@ -83,16 +83,6 @@ typedef struct
   Byte vals[5];
 } adr_vals_t;
 
-#define FixedOrderCnt 73
-#define RelOrderCnt 19
-#define ALUOrderCnt 65
-#define ALU2OrderCnt 8
-#define RMWOrderCnt 13
-#define FlagOrderCnt 3
-#define LEAOrderCnt 4
-#define ImmOrderCnt 4
-#define StackOrderCnt 4
-
 #define StackRegCnt 12
 static char StackRegNames[StackRegCnt][4] =
 {
@@ -1188,7 +1178,7 @@ static void DecodeBITMD_LDMD(Word Code)
 
 static void AddFixed(const char *NName, Word NCode, CPUVar NCPU)
 {
-  if (InstrZ >= FixedOrderCnt) exit(255);
+  order_array_rsv_end(FixedOrders, BaseOrder);
   FixedOrders[InstrZ].Code = NCode;
   FixedOrders[InstrZ].MinCPU = NCPU;
   AddInstTable(InstTable, NName, InstrZ++, DecodeFixed);
@@ -1198,7 +1188,7 @@ static void AddRel(const char *NName, Word NCode8, Word NCode16)
 {
   char LongName[30];
 
-  if (InstrZ >= RelOrderCnt) exit(255);
+  order_array_rsv_end(RelOrders, RelOrder);
   RelOrders[InstrZ].Code8 = NCode8;
   RelOrders[InstrZ].Code16 = NCode16;
   AddInstTable(InstTable, NName, InstrZ, DecodeRel);
@@ -1209,7 +1199,7 @@ static void AddRel(const char *NName, Word NCode8, Word NCode16)
 
 static void AddALU(const char *NName, Word NCode, tSymbolSize NSize, Boolean NImm, CPUVar NCPU)
 {
-  if (InstrZ >= ALUOrderCnt) exit(255);
+  order_array_rsv_end(ALUOrders, ALUOrder);
   ALUOrders[InstrZ].Code = NCode;
   ALUOrders[InstrZ].OpSize = NSize;
   ALUOrders[InstrZ].MayImm = NImm;
@@ -1229,7 +1219,7 @@ static void AddALU2(const char *NName)
 
 static void AddRMW(const char *NName, Word NCode, CPUVar NCPU)
 {
-  if (InstrZ >= RMWOrderCnt) exit(255);
+  order_array_rsv_end(RMWOrders, BaseOrder);
   RMWOrders[InstrZ].Code = NCode;
   RMWOrders[InstrZ].MinCPU = NCPU;
   AddInstTable(InstTable, NName, InstrZ++, DecodeRMW);
@@ -1237,7 +1227,7 @@ static void AddRMW(const char *NName, Word NCode, CPUVar NCPU)
 
 static void AddFlag(const char *NName, Word NCode, Boolean NInv, CPUVar NCPU)
 {
-  if (InstrZ >= FlagOrderCnt) exit(255);
+  order_array_rsv_end(FlagOrders, FlagOrder);
   FlagOrders[InstrZ].Code = NCode;
   FlagOrders[InstrZ].Inv = NInv;
   FlagOrders[InstrZ].MinCPU = NCPU;
@@ -1246,7 +1236,7 @@ static void AddFlag(const char *NName, Word NCode, Boolean NInv, CPUVar NCPU)
 
 static void AddLEA(const char *NName, Word NCode, CPUVar NCPU)
 {
-  if (InstrZ >= LEAOrderCnt) exit(255);
+  order_array_rsv_end(LEAOrders, BaseOrder);
   LEAOrders[InstrZ].Code = NCode;
   LEAOrders[InstrZ].MinCPU = NCPU;
   AddInstTable(InstTable, NName, InstrZ++, DecodeLEA);
@@ -1254,7 +1244,7 @@ static void AddLEA(const char *NName, Word NCode, CPUVar NCPU)
 
 static void AddImm(const char *NName, Word NCode, CPUVar NCPU)
 {
-  if (InstrZ >= ImmOrderCnt) exit(255);
+  order_array_rsv_end(ImmOrders, BaseOrder);
   ImmOrders[InstrZ].Code = NCode;
   ImmOrders[InstrZ].MinCPU = NCPU;
   AddInstTable(InstTable, NName, InstrZ++, DecodeImm);
@@ -1273,7 +1263,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "BITMD", 0x3c, DecodeBITMD_LDMD);
   AddInstTable(InstTable, "LDMD", 0x3d, DecodeBITMD_LDMD);
 
-  FixedOrders = (BaseOrder *) malloc(sizeof(BaseOrder) * FixedOrderCnt); InstrZ = 0;
+  InstrZ = 0;
   AddFixed("NOP"  , 0x0012, CPU6809); AddFixed("SYNC" , 0x0013, CPU6809);
   AddFixed("DAA"  , 0x0019, CPU6809); AddFixed("SEX"  , 0x001d, CPU6809);
   AddFixed("RTS"  , 0x0039, CPU6809); AddFixed("ABX"  , 0x003a, CPU6809);
@@ -1312,7 +1302,7 @@ static void InitFields(void)
   AddFixed("CLRV" , 0x1fd7, CPU6309); AddFixed("CLRX" , 0x1fd1, CPU6309);
   AddFixed("CLRY" , 0x1fd2, CPU6309);
 
-  RelOrders = (RelOrder *) malloc(sizeof(RelOrder) * RelOrderCnt); InstrZ = 0;
+  InstrZ = 0;
   AddRel("BRA", 0x0020, 0x0016); AddRel("BRN", 0x0021, 0x1021);
   AddRel("BHI", 0x0022, 0x1022); AddRel("BLS", 0x0023, 0x1023);
   AddRel("BHS", 0x0024, 0x1024); AddRel("BCC", 0x0024, 0x1024);
@@ -1324,7 +1314,7 @@ static void InitFields(void)
   AddRel("BGT", 0x002e, 0x102e); AddRel("BLE", 0x002f, 0x102f);
   AddRel("BSR", 0x008d, 0x0017);
 
-  ALUOrders = (ALUOrder *) malloc(sizeof(ALUOrder) * ALUOrderCnt); InstrZ = 0;
+  InstrZ = 0;
   AddALU("LDA" , 0x0086, eSymbolSize8Bit , True , CPU6809);
   AddALU("STA" , 0x0087, eSymbolSize8Bit , False, CPU6809);
   AddALU("CMPA", 0x0081, eSymbolSize8Bit , True , CPU6809);
@@ -1408,7 +1398,7 @@ static void InitFields(void)
   AddALU2("AND"); AddALU2("OR" );
   AddALU2("EOR"); AddALU2("CMP");
 
-  RMWOrders = (BaseOrder *) malloc(sizeof(BaseOrder) * RMWOrderCnt); InstrZ = 0;
+  InstrZ = 0;
   AddRMW("NEG", 0x00, CPU6809);
   AddRMW("COM", 0x03, CPU6809);
   AddRMW("LSR", 0x04, CPU6809);
@@ -1423,18 +1413,18 @@ static void InitFields(void)
   AddRMW("JMP", 0x0e, CPU6809);
   AddRMW("CLR", 0x0f, CPU6809);
 
-  FlagOrders = (FlagOrder *) malloc(sizeof(FlagOrder) * FlagOrderCnt); InstrZ = 0;
+  InstrZ = 0;
   AddFlag("CWAI" , 0x3c, True , CPU6809);
   AddFlag("ANDCC", 0x1c, True , CPU6809);
   AddFlag("ORCC" , 0x1a, False, CPU6809);
 
-  LEAOrders = (BaseOrder *) malloc(sizeof(BaseOrder) * LEAOrderCnt); InstrZ = 0;
+  InstrZ = 0;
   AddLEA("LEAX", 0x30, CPU6809);
   AddLEA("LEAY", 0x31, CPU6809);
   AddLEA("LEAS", 0x32, CPU6809);
   AddLEA("LEAU", 0x33, CPU6809);
 
-  ImmOrders = (BaseOrder *) malloc(sizeof(BaseOrder) * ImmOrderCnt); InstrZ = 0;
+  InstrZ = 0;
   AddImm("AIM", 0x02, CPU6309);
   AddImm("OIM", 0x01, CPU6309);
   AddImm("EIM", 0x05, CPU6309);
@@ -1461,13 +1451,13 @@ static void InitFields(void)
 static void DeinitFields(void)
 {
   DestroyInstTable(InstTable);
-  free(FixedOrders);
-  free(RelOrders);
-  free(ALUOrders);
-  free(RMWOrders);
-  free(FlagOrders);
-  free(LEAOrders);
-  free(ImmOrders);
+  order_array_free(FixedOrders);
+  order_array_free(RelOrders);
+  order_array_free(ALUOrders);
+  order_array_free(RMWOrders);
+  order_array_free(FlagOrders);
+  order_array_free(LEAOrders);
+  order_array_free(ImmOrders);
 }
 
 /*-------------------------------------------------------------------------*/

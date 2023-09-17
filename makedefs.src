@@ -337,7 +337,7 @@ MKDEPEND_OBJECTS = \
 # A 'standard' make does not support out-of-source builds for inference rules.  So we have to roll out everything:
 # Note the same trick to avoid an empty argument if TARG_OBJDIR is empty (no separate object directory)
 
-MKDEPEND_FLAGS = -r -I $(TARG_OBJDIR)./ $(MSH_FLAGS) -c $(TARG_OBJEXTENSION)
+MKDEPEND_FLAGS = -r -I $(TARG_OBJDIR)./ $(MSX_FLAGS) -c $(TARG_OBJEXTENSION)
 
 $(TARG_OBJDIR)codepseudo$(TARG_OBJEXTENSION) : codepseudo.c
 	$(TARG_CC) $(ALLFLAGS) -o$(OBLANK)$@ -c codepseudo.c

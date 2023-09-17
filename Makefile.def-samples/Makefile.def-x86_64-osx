@@ -27,5 +27,5 @@ TARG_EXEXTENSION = $(HOST_EXEXTENSION)
 BINDIR = /usr/local/bin
 INCDIR = /usr/local/include/asl
 MANDIR = /usr/local/share/man
-LIBDIR = /usr/local/lib/asl
+LIBDIR =
 DOCDIR = /usr/local/share/doc/asl

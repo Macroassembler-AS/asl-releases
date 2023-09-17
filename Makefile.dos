@@ -6,7 +6,7 @@ OBLANK=
 
 !include makedefs.mx
 
-ALLFLAGS = $(TARG_CFLAGS) -I$(TARG_OBJDIR) $(MSH_FLAGS) -DINCDIR="$(INCDIR)" -DLIBDIR="$(LIBDIR)"
+ALLFLAGS = $(TARG_CFLAGS) -I$(TARG_OBJDIR) $(DOS_MSX_FLAGS) -DINCDIR="$(INCDIR)"
 
 !include makedefs.files
 

@@ -69,7 +69,8 @@ is the file 'Makefile.def.tmpl'.  The settings to make include:
   to run the 'make test' target.
 
 - BINDIR, INCDIR, MANDIR, LIBDIR, DOCDIR: directiories where AS should be
-  placed after compilation.
+  placed after compilation.  LIBDIR is only needed if you are using external
+  (loaded at runtim) MSG files, which is currently only the case for DOS.
 
 - TEX2DOC_FLAGS: in case you are cross-building, you may want to generate
   the plaintext version of the manual in a character set appropriate for the

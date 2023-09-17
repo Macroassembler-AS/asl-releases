@@ -324,7 +324,7 @@ in Arbeit / Planung / "Uberlegung :
 \end{itemize}
 ungeliebt, aber {\it doch} vorhanden :
 \begin{itemize}
-\item{Intel 8086, 80186, NEC V30\&V35 inkl. Koprozessor 8087}
+\item{Intel 8086, 80186, NEC V30..V55 inkl. Koprozessor 8087}
 \end{itemize}
 Die Umschaltung des Codegenerators darf dabei auch mitten in der Datei
 erfolgen, und das beliebig oft!
@@ -530,14 +530,16 @@ PLIST.EXE         & listet Inhalt von Codedateien auf \\
 PBIND.EXE         & kopiert Codedateien zusammen \\
 P2HEX.EXE         & wandelt Code- in Hexdateien um \\
 P2BIN.EXE         & wandelt Code- in Bin"ardateien um \\
-AS.MSG            & Textresourcen zu AS \\
-PLIST.MSG         & Textresourcen zu PLIST \\
-PBIND.MSG         & Textresourcen zu PBIND \\
-P2HEX.MSG         & Textresourcen zu P2HEX \\
-P2BIN.MSG         & Textresourcen zu P2BIN \\
-TOOLS.MSG         & gemeinsame Textresourcen zu den Tools \\
-CMDARG.MSG        & gemeinsame Textresourcen zu allen Programmen \\
+AS.MSG            & Textresourcen zu \asname{} *) \\
+PLIST.MSG         & Textresourcen zu PLIST *) \\
+PBIND.MSG         & Textresourcen zu PBIND *) \\
+P2HEX.MSG         & Textresourcen zu P2HEX *) \\
+P2BIN.MSG         & Textresourcen zu P2BIN *) \\
+TOOLS.MSG         & gemeinsame Textresourcen zu den Tools *) \\
+CMDARG.MSG        & gemeinsame Textresourcen zu allen Programmen *) \\
 IOERRS.MSG        & \\
+\hline
+\multicolumn{2}{|l|}{*) nur DOS} \\
 \hline
 {\bf Verzeichnis DOC} & \\
 \hline
@@ -3567,15 +3569,23 @@ zus"atzliche, nicht von Intel dokumentierte Befehle ein.  Diese Befehle
 sind in Abschnitt \ref{8085Spec} dokumentiert.
 
 {\tt V30EMU} als Ziel schaltet gegen"uber einem 8080 die Befehle {\tt RETEM}
-und {\em CALLN} frei, mit denen die 8080-Emulation auf einem V20/V30
+und {\em CALLN} frei, mit denen die 8080-Emulation auf einem V20/V30/V40/V50
 verlassen bzw. unterbrochen werden kann.
 %%-----------
 \begin{quote}
-ag) 8086 $\rightarrow$ 80186 $\rightarrow$ V30 $\rightarrow$ V35
+ag) 8088,8086 \\
+$\rightarrow$ 80188,80186 \\
+$\rightarrow$ V20,V30,V40,V50 \\
+$\rightarrow$ V33,V53 \\
+$\rightarrow$ V25,V35 \\
+$\rightarrow$ V55 \\
+$\rightarrow$ V55SC \\
+$\rightarrow$ V55PI
 \end{quote}
-Hier kommen wieder nur neue Befehle dazu.  Die entsprechenden 8-Bitter sind
-wegen ihrer Befehlskompatibilit"at nicht aufgef"uhrt, f"ur ein 8088-System
-ist also z.B. 8086 anzugeben.
+Prozessoren in der gleichen Zeile verf"ugen "uber den gleichen CPU-Kern und
+damit den gleichen Befehlssatz.  Von Zeile zu Zeile kommen neue Befehle
+hinzu, wobei die NEC-CPUs ausgehend vom 'V20-Basisbefehlssatz' jeweils "uber
+unterschiedliche Erweiterungen verf"ugen.
 %%-----------
 \begin{quote}
 ah) 80960
@@ -5853,7 +5863,7 @@ Signalprozessoren zu verarbeiten ist:
 \begin{itemize}
 \item{\tty{EFLOAT}: Mantisse mit 16 Bit, Exponent mit 16 Bit}
 \item{\tty{BFLOAT}: Mantisse mit 32 Bit, Exponent mit 16 Bit}
-\item{\tty{DFLOAT}: Mantisse mit 64 Bit, Exponent mit 32 Bit}
+\item{\tty{TFLOAT}: Mantisse mit 64 Bit, Exponent mit 32 Bit}
 \end{itemize}
 Gemeinsam ist den Befehlen, da"s die Mantisse vor dem
 Exponenten abgelegt wird (Lo-Word jeweils zuerst) und
@@ -12383,6 +12393,14 @@ Angaben:
                 die aktuelle Anweisung l"anger als ein Maschinenwort
                 ist, w"urde der Skip mitten in die Anweisung springen.}
                {die fragliche Anweisung}
+\errentry{ 430}{implizite Vorzeichenerweiterung}
+               {Warnung}
+               {Der Prozessor f"uhrt bei diesem Befehl eine Vorzeichenerweiterung
+                auf die volle Registerbreite aus.  Das bedeutet, dass
+                die oberen Bits f"ur das gegebene Argument mit 1 und
+                nicht mit 0 gef"ullt werden.  Je nach folgender Nutzung
+                kann dies irrelevant sein, mu"s aber nicht.}
+               {der fragliche Wert}
 \errentry{1000}{Symbol doppelt definiert}
                {Fehler}
                {Einem Symbol wurde durch ein Label oder

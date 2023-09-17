@@ -382,84 +382,84 @@ void msg_catalog_open_file(PMsgCat p_catalog, const char *p_file_name, const cha
   /* find first valid message file: current directory has prio 1: */
 
   p_msg_raw = open_raw_file_and_check(p_file_name, msg_id1, msg_id2);
+
+  /* if executable path (argv[0]) is given and contains more than just the
+     plain name, try its path with next-highest prio: */
+
+  if (!p_msg_raw && p_exe_path && *p_exe_path)
+  {
+#ifdef __CYGWIN32__
+    for (ptr = (char*)p_exe_path; *ptr != '\0'; ptr++)
+      if (*ptr == '/') *ptr = '\\';
+#endif
+    pSep = strrchr(p_exe_path, PATHSEP);
+    if (pSep)
+    {
+      int path_len = pSep - p_exe_path;
+
+      as_snprintf(str, sizeof(str), "%*.*s%s%s", path_len, path_len, p_exe_path, SPATHSEP, p_file_name);
+      p_msg_raw = open_raw_file_and_check(str, msg_id1, msg_id2);
+    }
+  }
+
   if (!p_msg_raw)
   {
-    /* if executable path (argv[0]) is given and contains more than just the
-       plain name, try its path with next-highest prio: */
+    /* AS_MSGPATH has priority over.. */
 
-    if (p_exe_path && *p_exe_path)
+    ptr = getenv(MSGPATHNAME);
+    if (ptr)
     {
-#ifdef __CYGWIN32__
-      for (ptr = (char*)p_exe_path; *ptr != '\0'; ptr++)
-        if (*ptr == '/') *ptr = '\\';
-#endif
-      pSep = strrchr(p_exe_path, PATHSEP);
-      if (!pSep)
-        p_msg_raw = NULL;
-      else
-      {
-        int path_len = pSep - p_exe_path;
-
-        as_snprintf(str, sizeof(str), "%*.*s%s%s", path_len, path_len, p_exe_path, SPATHSEP, p_file_name);
-        p_msg_raw = open_raw_file_and_check(str, msg_id1, msg_id2);
-      }
+      as_snprintf(str, sizeof(str), "%s%c%s", ptr, PATHSEP, p_file_name);
+      p_msg_raw = open_raw_file_and_check(str, msg_id1, msg_id2);
     }
-    if (!p_msg_raw)
-    {
-      /* search in AS_MSGPATH next */
 
-      ptr = getenv(MSGPATHNAME);
+    /* ...PATH: */
+
+    else
+    {
+      ptr = getenv("PATH");
       if (ptr)
       {
-        as_snprintf(str, sizeof(str), "%s%c%s", ptr, PATHSEP, p_file_name);
-        p_msg_raw = open_raw_file_and_check(str, msg_id1, msg_id2);
-      }
-      else
-      {
-        /* if everything fails, search via PATH */
-
-        ptr = getenv("PATH");
-        if (!ptr)
-          p_msg_raw = NULL;
-        else
-        {
-          String Dest;
-          int Result;
+        String Dest;
+        int Result;
 
 #ifdef __CYGWIN32__
-          DeCygWinDirList(pCopy);
+        DeCygWinDirList(pCopy);
 #endif
-          Result = FSearch(Dest, sizeof(Dest), p_file_name, NULL, ptr);
-          p_msg_raw = Result ? NULL : open_raw_file_and_check(Dest, msg_id1, msg_id2);
+        Result = FSearch(Dest, sizeof(Dest), p_file_name, NULL, ptr);
+        p_msg_raw = Result ? NULL : open_raw_file_and_check(Dest, msg_id1, msg_id2);
 
-          /* absolutely last resort: if we were found via PATH (no slashes in argv[0]/p_exe_path), look up this
-             path and replace bin/ with lib/ for 'companion path': */
+        /* If we were found via PATH (no slashes in argv[0]/p_exe_path), look up this
+           path and replace bin/ with lib/ for 'companion path': */
 
-          if (!p_msg_raw && !strrchr(p_exe_path, PATHSEP) && !FSearch(Dest, sizeof(Dest), p_exe_path, NULL, ptr))
-          {
-            char *pSep2;
-
-            strreplace(Dest, SPATHSEP "bin", SPATHSEP "lib", 0, sizeof(Dest));
-            pSep2 = strrchr(Dest, PATHSEP);
-            if (pSep2)
-              *pSep2 = '\0';
-            strmaxcat(Dest, SPATHSEP, sizeof(Dest));
-            strmaxcat(Dest, p_file_name, sizeof(Dest));
-            p_msg_raw = open_raw_file_and_check(Dest, msg_id1, msg_id2);
-          }
-        }
-      }
-      if (!p_msg_raw)
-      {
-        as_snprintf(str, sizeof(str), "%s%c%s", LIBDIR, PATHSEP, p_file_name);
-        p_msg_raw = open_raw_file_and_check(str, msg_id1, msg_id2);
-        if (!p_msg_raw)
+        if (!p_msg_raw && !strrchr(p_exe_path, PATHSEP) && !FSearch(Dest, sizeof(Dest), p_exe_path, NULL, ptr))
         {
-          as_snprintf(str, sizeof(str), EOpenMsg, p_file_name);
-          error(str);
+          char *pSep2;
+
+          strreplace(Dest, SPATHSEP "bin", SPATHSEP "lib", 0, sizeof(Dest));
+          pSep2 = strrchr(Dest, PATHSEP);
+          if (pSep2)
+            *pSep2 = '\0';
+          strmaxcat(Dest, SPATHSEP, sizeof(Dest));
+          strmaxcat(Dest, p_file_name, sizeof(Dest));
+          p_msg_raw = open_raw_file_and_check(Dest, msg_id1, msg_id2);
         }
       }
     }
+  }
+
+#ifdef LIBDIR
+  if (!p_msg_raw)
+  {
+    as_snprintf(str, sizeof(str), "%s%c%s", LIBDIR, PATHSEP, p_file_name);
+    p_msg_raw = open_raw_file_and_check(str, msg_id1, msg_id2);
+  }
+#endif
+
+  if (!p_msg_raw)
+  {
+    as_snprintf(str, sizeof(str), EOpenMsg, p_file_name);
+    error(str);
   }
 
   parse_raw_file(p_catalog, p_msg_raw);

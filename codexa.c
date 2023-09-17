@@ -44,10 +44,6 @@
 
 #define REG_SP 7
 
-#define JBitOrderCnt 3
-#define RegOrderCnt 4
-#define RelOrderCount 17
-
 #define RETICode 0xd690
 
 #define eSymbolSize5Bit ((tSymbolSize)-4)
@@ -1979,7 +1975,7 @@ static void AddFixed(const char *NName, Word NCode)
 
 static void AddJBit(const char *NName, Word NCode)
 {
-  if (InstrZ >= JBitOrderCnt) exit(255);
+  order_array_rsv_end(JBitOrders, InvOrder);
   JBitOrders[InstrZ].Name = NName;
   JBitOrders[InstrZ].Inversion = 255;
   JBitOrders[InstrZ].Code = NCode;
@@ -1993,7 +1989,7 @@ static void AddStack(const char *NName, Word NCode)
 
 static void AddReg(const char *NName, Byte NMask, Byte NCode)
 {
-  if (InstrZ >= RegOrderCnt) exit(255);
+  order_array_rsv_end(RegOrders, RegOrder);
   RegOrders[InstrZ].Code = NCode;
   RegOrders[InstrZ].SizeMask = NMask;
   AddInstTable(InstTable, NName, InstrZ++, DecodeRegO);
@@ -2006,7 +2002,7 @@ static void AddRotate(const char *NName, Word NCode)
 
 static void AddRel(const char *NName, Word NCode)
 {
-  if (InstrZ >= RelOrderCount) exit(255);
+  order_array_rsv_end(RelOrders, InvOrder);
   RelOrders[InstrZ].Name = NName;
   RelOrders[InstrZ].Inversion = 255;
   RelOrders[InstrZ].Code = NCode;
@@ -2058,7 +2054,7 @@ static void InitFields(void)
   AddFixed("BKPT" , 0x00ff);
   AddFixed("RESET", 0xd610);
 
-  JBitOrders = (InvOrder *) malloc(sizeof(InvOrder) * JBitOrderCnt); InstrZ = 0;
+  InstrZ = 0;
   AddJBit("JB"  , 0x80);
   AddJBit("JBC" , 0xc0);
   AddJBit("JNB" , 0xa0);
@@ -2079,7 +2075,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "OR"  , InstrZ++, DecodeALU);
   AddInstTable(InstTable, "XOR" , InstrZ++, DecodeALU);
 
-  RegOrders = (RegOrder *) malloc(sizeof(RegOrder) * RegOrderCnt); InstrZ = 0;
+  InstrZ = 0;
   AddReg("NEG" , 3, 0x0b);
   AddReg("CPL" , 3, 0x0a);
   AddReg("SEXT", 3, 0x09);
@@ -2093,7 +2089,7 @@ static void InitFields(void)
   AddRotate("RR" , 0xb0); AddRotate("RL" , 0xd3);
   AddRotate("RRC", 0xb7); AddRotate("RLC", 0xd7);
 
-  RelOrders = (InvOrder *) malloc(sizeof(InvOrder) * RelOrderCount); InstrZ = 0;
+  InstrZ = 0;
   AddRel("BCC", 0xf0); AddRel("BCS", 0xf1); AddRel("BNE", 0xf2);
   AddRel("BEQ", 0xf3); AddRel("BNV", 0xf4); AddRel("BOV", 0xf5);
   AddRel("BPL", 0xf6); AddRel("BMI", 0xf7); AddRel("BG" , 0xf8);
@@ -2112,9 +2108,9 @@ static void InitFields(void)
 
 static void DeinitFields(void)
 {
-  free(JBitOrders);
-  free(RegOrders);
-  free(RelOrders);
+  order_array_free(JBitOrders);
+  order_array_free(RegOrders);
+  order_array_free(RelOrders);
 
   DestroyInstTable(InstTable);
 }

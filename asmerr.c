@@ -24,6 +24,7 @@
 #include "as.h"
 #include "as.rsc"
 #include "ioerrs.h"
+#include "cmdarg.h"
 #include "asmerr.h"
 
 typedef struct sExpectError
@@ -35,6 +36,8 @@ typedef struct sExpectError
 Word ErrorCount, WarnCount;
 static tExpectError *pExpectErrors = NULL;
 static Boolean InExpect = False;
+static Boolean treat_warnings_as_errors,
+               warn_sign_extension;
 
 static void ClearExpectErrors(void)
 {
@@ -267,6 +270,8 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
       msgno = Num_ErrMsgArgOutOfRange; break;
     case ErrNum_TrySkipMultiwordInstruction:
       msgno = Num_ErrMsgTrySkipMultiwordInstruction; break;
+    case ErrNum_SignExtension:
+      msgno = Num_ErrMsgSignExtension; break;
     case ErrNum_DoubleDef:
       msgno = Num_ErrMsgDoubleDef; break;
     case ErrNum_SymbolUndef:
@@ -732,7 +737,7 @@ void WrErrorString(const char *pMessage, const char *pAdd, Boolean Warning, Bool
   FILE *pErrFile;
   Boolean ErrorsWrittenToListing = False;
 
-  if (TreatWarningsAsErrors && Warning && !Fatal)
+  if (treat_warnings_as_errors && Warning && !Fatal)
     Warning = False;
 
   strcpy(ErrStr[ErrStrCount], pLeadIn);
@@ -842,6 +847,16 @@ void WrXErrorPos(tErrorNum Num, const char *pExtendError, const struct sLineComp
 
   if (SuppWarns && (Num < 1000))
     return;
+
+  switch (Num)
+  {
+    case ErrNum_SignExtension:
+      if (!warn_sign_extension)
+        return;
+      break;
+    default:
+      break;
+  }
 
   pErrorMsg = ErrorNum2String(Num, h, sizeof(h));
 
@@ -1028,4 +1043,51 @@ void AsmErrPassExit(void)
     WrError(ErrNum_MissingENDEXPECT);
   ClearExpectErrors();
   InExpect = False;
+}
+
+static as_cmd_result_t cmd_treat_warnings_as_errors(Boolean negate, const char *p_arg)
+{
+  UNUSED(p_arg);
+
+  treat_warnings_as_errors = !negate;
+  return e_cmd_ok;
+}
+
+static as_cmd_result_t cmd_warn_sign_extension(Boolean negate, const char *p_arg)
+{
+  UNUSED(p_arg);
+
+  if (negate)
+    return e_cmd_err;
+  warn_sign_extension = True;
+  return e_cmd_ok;
+}
+
+static as_cmd_result_t cmd_no_warn_sign_extension(Boolean negate, const char *p_arg)
+{
+  UNUSED(p_arg);
+
+  if (negate)
+    return e_cmd_err;
+  warn_sign_extension = False;
+  return e_cmd_ok;
+}
+
+static const as_cmd_rec_t cmd_params[] =
+{
+  { "werror"                     , cmd_treat_warnings_as_errors },
+  { "wimplicit-sign-extension"   , cmd_warn_sign_extension      },
+  { "wno-implicit-sign-extension", cmd_no_warn_sign_extension   }
+};
+
+/*!------------------------------------------------------------------------
+ * \fn     asmerr_init(void)
+ * \brief  module setup
+ * ------------------------------------------------------------------------ */
+
+void asmerr_init(void)
+{
+  treat_warnings_as_errors = False;
+  warn_sign_extension = True;
+  as_cmd_register(cmd_params, as_array_size(cmd_params));
 }

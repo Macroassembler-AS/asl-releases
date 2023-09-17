@@ -207,6 +207,10 @@ Message IoErr_ENOCSI
  "keine CSI-Struktur verf&uuml;gbar"
  "No CSI structure available"
 
+Message IoErr_READERROR
+ "Lesefehler"
+ "Read error"
+
 Message IoErrUnknown
  "unbekannter Fehler Nr."
  "unknown error no."

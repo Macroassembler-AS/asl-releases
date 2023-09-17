@@ -1033,7 +1033,7 @@ static void AddOne(const char *NName, Word NCode)
 static void AddSing(const char *NName, Word NCode, Byte Flags)
 {
   if (InstrZ >= SingOrderCnt)
-    exit(42);
+    exit(255);
   SingOrders[InstrZ].Code = NCode;
   SingOrders[InstrZ].Flags = Flags;
   AddInstTable(InstTable, NName, InstrZ++, DecodeSing);
@@ -1062,7 +1062,7 @@ static void AddShift(const char *NName, Word NCode)
 static void AddImm(const char *NName, Word NCode, Word Flags)
 {
   if (InstrZ >= ImmOrderCnt)
-    exit(42);
+    exit(255);
   ImmOrders[InstrZ].Code = NCode << 4;
   ImmOrders[InstrZ].Flags = Flags;
   AddInstTable(InstTable, NName, InstrZ++, DecodeImm);
@@ -1071,7 +1071,7 @@ static void AddImm(const char *NName, Word NCode, Word Flags)
 static void AddReg(const char *NName, Word NCode, Word Flags)
 {
   if (InstrZ >= RegOrderCnt)
-    exit(42);
+    exit(255);
   RegOrders[InstrZ].Code = NCode << 4;
   RegOrders[InstrZ].Flags = Flags;
   AddInstTable(InstTable, NName, InstrZ++, DecodeRegOrder);
@@ -1080,7 +1080,7 @@ static void AddReg(const char *NName, Word NCode, Word Flags)
 static void AddFixed(const char *NName, Word NCode, Word Flags)
 {
   if (InstrZ >= FixedOrderCnt)
-    exit(42);
+    exit(255);
   FixedOrders[InstrZ].Code = NCode;
   FixedOrders[InstrZ].Flags = Flags;
   AddInstTable(InstTable, NName, InstrZ++, DecodeFixed);
@@ -1089,7 +1089,7 @@ static void AddFixed(const char *NName, Word NCode, Word Flags)
 static void AddType11(const char *NName, Word NCode, Word Flags)
 {
   if (InstrZ >= Type11OrderCnt)
-    exit(42);
+    exit(255);
   Type11Orders[InstrZ].Code = NCode;
   Type11Orders[InstrZ].Flags = Flags;
   AddInstTable(InstTable, NName, InstrZ++, DecodeType11);
@@ -1098,7 +1098,7 @@ static void AddType11(const char *NName, Word NCode, Word Flags)
 static void AddType11a(const char *NName, Word NCode, Word Flags)
 {
   if (InstrZ >= Type11aOrderCnt)
-    exit(42);
+    exit(255);
   Type11aOrders[InstrZ].Code = NCode;
   Type11aOrders[InstrZ].Flags = Flags;
   AddInstTable(InstTable, NName, InstrZ++, DecodeType11a);
@@ -1107,7 +1107,7 @@ static void AddType11a(const char *NName, Word NCode, Word Flags)
 static void AddType12(const char *NName, Word NCode, Word Flags)
 {
   if (InstrZ >= Type12OrderCnt)
-    exit(42);
+    exit(255);
   Type12Orders[InstrZ].Code = NCode;
   Type12Orders[InstrZ].Flags = Flags;
   AddInstTable(InstTable, NName, InstrZ++, DecodeType12);
@@ -1116,7 +1116,7 @@ static void AddType12(const char *NName, Word NCode, Word Flags)
 static void AddType15(const char *NName, Word NCode, Word Flags)
 {
   if (InstrZ >= Type15OrderCnt)
-    exit(42);
+    exit(255);
   Type15Orders[InstrZ].Code = NCode;
   Type15Orders[InstrZ].Flags = Flags;
   AddInstTable(InstTable, NName, InstrZ++, DecodeType15);
@@ -1125,7 +1125,7 @@ static void AddType15(const char *NName, Word NCode, Word Flags)
 static void AddType16(const char *NName, Word NCode, Word Flags)
 {
   if (InstrZ >= Type16OrderCnt)
-    exit(42);
+    exit(255);
   Type16Orders[InstrZ].Code = NCode;
   Type16Orders[InstrZ].Flags = Flags;
   AddInstTable(InstTable, NName, InstrZ++, DecodeType16);
@@ -1134,7 +1134,7 @@ static void AddType16(const char *NName, Word NCode, Word Flags)
 static void AddType17(const char *NName, Word NCode, Word Flags)
 {
   if (InstrZ >= Type17OrderCnt)
-    exit(42);
+    exit(255);
   Type17Orders[InstrZ].Code = NCode;
   Type17Orders[InstrZ].Flags = Flags;
   AddInstTable(InstTable, NName, InstrZ++, DecodeType17);
@@ -1143,7 +1143,7 @@ static void AddType17(const char *NName, Word NCode, Word Flags)
 static void AddType20(const char *NName, Word NCode, Word Flags)
 {
   if (InstrZ >= Type20OrderCnt)
-    exit(42);
+    exit(255);
   Type20Orders[InstrZ].Code = NCode;
   Type20Orders[InstrZ].Flags = Flags;
   AddInstTable(InstTable, NName, InstrZ++, DecodeType20);

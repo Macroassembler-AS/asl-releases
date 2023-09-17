@@ -98,7 +98,6 @@ r_15		equ	r15
 		expect	1107
 		movb	s^*+444444,r5	; invalid attribute
 		endexpect
-
 		expect	1350
 		movb	r4[r6],r5	; not allowed
 		endexpect
@@ -108,3 +107,34 @@ r_15		equ	r15
 		movb	-(r4)[r6],r5	; 90 46 74 55
 		movb	@#444[r6],r5	; 90 46 9F BC 01 00 00 55
 		movb	@4(r4)[r6],r5	; 90 46 B4 04 55
+		movb	*+44[r6],r5	; 90 46 AF 28 55
+		movb	*+444[r6],r5	; 90 46 CF B7 01 55
+		movb	*+444444[r6],r5	; 90 46 EF 15 C8 06 00 55
+
+		movw	r4,r5		; B0 54 55
+		movw	@r4,r5		; B0 64 55
+		movw	(r4),r5		; B0 64 55
+		movw	@(r4),r5	; B0 B4 00 55
+		movw	-(r4),r5	; B0 74 55
+		movw	(r4)+,r5	; B0 84 55
+		movw	@(r4)+,r5	; B0 94 55
+		movw	4(r4),r5	; B0 A4 04 55
+		movw	@4(r4),r5	; B0 B4 04 55
+		movw	444(r4),r5	; B0 C4 BC 01 55
+		movw	@444(r4),r5	; B0 D4 BC 01 55
+		movw	444444(r4),r5	; B0 E4 1C C8 06 00 55
+		movw	@444444(r4),r5	; B0 F4 1C C8 06 00 55
+		movw	#4,r5		; B0 04 55
+		movw	#444,r5		; B0 8F BC 01 55
+		movw	@#444444,r5	; B0 9F 1C C8 06 00 55
+		movw	*+44,r5		; B0 AF 29 55
+		movw	*+444,r5	; B0 CF B8 01 55
+		movw	*+444444,r5	; B0 EF 16 C8 06 00 55
+		movw	(r4)[r6],r5	; B0 46 64 55
+		movw	(r4)+[r6],r5	; B0 46 84 55
+		movw	@(r4)+[r6],r5	; B0 46 94 55
+		movw	-(r4)[r6],r5	; B0 46 74 55
+		movw	@#444444[r6],r5	; B0 46 9F 1C C8 06 00 55
+		movw	@4(r4)[r6],r5	; B0 46 B4 04 55
+
+		addl3	(r3)[r4],737(r2),r1 ; C1 44 63 C2 E1 02 51

@@ -73,10 +73,6 @@ enum
 #define Page3Prefix 0x1a
 #define Page4Prefix 0xcd
 
-#define FixedOrderCnt 45
-#define RelOrderCnt   19
-#define ALU16OrderCnt 16
-
 
 static tSymbolSize OpSize;
 static Byte PrefCnt;           /* Anzahl Befehlspraefixe */
@@ -733,8 +729,7 @@ static void DecodePRWINS(Word Code)
 
 static void AddFixed(const char *NName, CPUVar NMin, CPUVar NMax, Word NCode)
 {
-  if (InstrZ >= FixedOrderCnt) exit(255);
-
+  order_array_rsv_end(FixedOrders, FixedOrder);
   FixedOrders[InstrZ].MinCPU = NMin;
   FixedOrders[InstrZ].MaxCPU = NMax;
   FixedOrders[InstrZ].Code = NCode;
@@ -743,8 +738,7 @@ static void AddFixed(const char *NName, CPUVar NMin, CPUVar NMax, Word NCode)
 
 static void AddRel(const char *NName, CPUVar NMin, Word NCode)
 {
-  if (InstrZ >= RelOrderCnt) exit(255);
-
+  order_array_rsv_end(RelOrders, RelOrder);
   RelOrders[InstrZ].MinCPU = NMin;
   RelOrders[InstrZ].Code = NCode;
   AddInstTable(InstTable, NName, InstrZ++, DecodeRel);
@@ -763,8 +757,7 @@ static void AddALU8(const char *NamePlain, const char *NameA, const char *NameB,
 
 static void AddALU16(const char *NName, Boolean NMay, CPUVar NMin, Byte NShift, Byte NCode)
 {
-  if (InstrZ >= ALU16OrderCnt) exit(255);
-
+  order_array_rsv_end(ALU16Orders, ALU16Order);
   ALU16Orders[InstrZ].MayImm = NMay;
   ALU16Orders[InstrZ].MinCPU = NMin;
   ALU16Orders[InstrZ].PageShift = NShift;
@@ -791,7 +784,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "BTST" , 6, DecodeBTxx);
   AddInstTable(InstTable, "BTGL" , 0, DecodeBTxx);
 
-  FixedOrders = (FixedOrder *) malloc(sizeof(FixedOrder) * FixedOrderCnt); InstrZ = 0;
+  InstrZ = 0;
   AddFixed("ABA"  ,CPU6800, CPU68HC11K4, 0x001b); AddFixed("ABX"  ,CPU6801, CPU68HC11K4, 0x003a);
   AddFixed("ABY"  ,CPU6811, CPU68HC11K4, 0x183a); AddFixed("ASLD" ,CPU6801, CPU68HC11K4, 0x0005);
   AddFixed("CBA"  ,CPU6800, CPU68HC11K4, 0x0011); AddFixed("CLC"  ,CPU6800, CPU68HC11K4, 0x000c);
@@ -817,7 +810,7 @@ static void InitFields(void)
   AddFixed("XGDX" ,CPU6301, CPU68HC11K4, (MomCPU == CPU6301) ? 0x0018 : 0x008f);
   AddFixed("XGDY" ,CPU6811, CPU68HC11K4, 0x188f);
 
-  RelOrders = (RelOrder *) malloc(sizeof(*RelOrders) * RelOrderCnt); InstrZ = 0;
+  InstrZ = 0;
   AddRel("BCC", CPU6800, 0x24);
   AddRel("BCS", CPU6800, 0x25);
   AddRel("BEQ", CPU6800, 0x27);
@@ -850,7 +843,7 @@ static void InitFields(void)
   AddALU8("STA", "STAA", "STAB", "STB", False, 0x87);
   AddALU8("SUB", "SUBA", "SUBB", NULL , True , 0x80);
 
-  ALU16Orders = (ALU16Order *) malloc(sizeof(ALU16Order) * ALU16OrderCnt); InstrZ = 0;
+  InstrZ = 0;
   AddALU16("ADDD", True , CPU6801, 0, 0xc3);
   AddALU16("CPD" , True , CPU6811, 1, 0x83);
   AddALU16("CMPD", True , CPU6811, 1, 0x83);
@@ -888,7 +881,6 @@ static void InitFields(void)
   AddInstTable(InstTable, "PULA", 0x32, DecodeSing8_Acc);
   AddInstTable(InstTable, "PULB", 0x33, DecodeSing8_Acc);
 
-
   AddInstTable(InstTable, "AIM", 0x61, DecodeBit63);
   AddInstTable(InstTable, "EIM", 0x65, DecodeBit63);
   AddInstTable(InstTable, "OIM", 0x62, DecodeBit63);
@@ -902,9 +894,9 @@ static void InitFields(void)
 static void DeinitFields(void)
 {
   DestroyInstTable(InstTable);
-  free(FixedOrders);
-  free(RelOrders);
-  free(ALU16Orders);
+  order_array_free(FixedOrders);
+  order_array_free(RelOrders);
+  order_array_free(ALU16Orders);
 }
 
 static Boolean DecodeAttrPart_68(void)

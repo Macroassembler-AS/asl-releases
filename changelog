@@ -1,3 +1,12 @@
+2023-09-17 [1.42 Bld 248]
+
+- Change      : Allow values between 0x80 and 0xff on 68K, but warn
+                about sign extension
+- Bugfix      : Correct encoding of V35 BRKS/BRKN instructions
+- Addition    : Add new NEC Vxx variants
+- Bugfix      : Add missing JLT, JGT, and JGE instructions for
+                TMS7000
+
 2023-07-10 [1.42 Bld 247]
 
 - Change      : No separate .msg files any more for most platforms

@@ -182,7 +182,7 @@ static ErrorDef ErrorDefs[] =
 
 char *hs;
 
-char *GetErrorMsg(int number)
+const char *GetErrorMsg(int number)
 {
   ErrorDef *z;
 
@@ -191,12 +191,17 @@ char *GetErrorMsg(int number)
       break;
 
   if (z->Msg != -1)
-    return catgetmessage(&MsgCat,z->Msg);
+    return catgetmessage(&MsgCat, z->Msg);
   else
   {
-    as_snprintf(hs, STRINGSIZE, "%s%d", catgetmessage(&MsgCat,Num_IoErrUnknown), number);
+    as_snprintf(hs, STRINGSIZE, "%s%d", catgetmessage(&MsgCat, Num_IoErrUnknown), number);
     return hs;
   }
+}
+
+const char *GetReadErrorMsg(void)
+{
+  return catgetmessage(&MsgCat, Num_IoErr_READERROR);
 }
 
 void ioerrs_init(char *ProgPath)

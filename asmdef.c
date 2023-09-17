@@ -64,7 +64,6 @@ Integer PassNo;                          /* Durchlaufsnummer */
 Integer JmpErrors;                       /* Anzahl fraglicher Sprungfehler */
 Boolean ThrowErrors;                     /* Fehler verwerfen bei Repass ? */
 LongWord MaxErrors;                      /* terminate upon n errors? */
-Boolean TreatWarningsAsErrors;           /* treat warnings like erros? */
 Boolean Repass;		                 /* noch ein Durchlauf erforderlich */
 Byte MaxSymPass;	                 /* Pass, nach dem Symbole definiert sein muessen */
 Byte ShareMode;                          /* 0=kein SHARED,1=Pascal-,2=C-Datei, 3=ASM-Datei */

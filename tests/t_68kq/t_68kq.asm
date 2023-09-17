@@ -2,7 +2,7 @@
 
 	moveq	#0,d1
 	moveq	#127,d2
-	expect	1320
+	expect	430
 	moveq	#128,d3
 	endexpect
 	moveq	#-128,d4

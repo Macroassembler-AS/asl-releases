@@ -15,7 +15,7 @@ include makedefs.mi
 # The weird ./ suffix is needed to keep things together if TARG_OBJDIR is empty, i.e. everything
 # ends up in the same directory:
 
-ALLFLAGS = $(TARG_CFLAGS) -I$(TARG_OBJDIR)./ $(MSH_FLAGS) -DINCDIR=\"$(INCDIR)\" -DLIBDIR=\"$(LIBDIR)\"
+ALLFLAGS = $(TARG_CFLAGS) -I$(TARG_OBJDIR)./ $(MSX_FLAGS) -DINCDIR=\"$(INCDIR)\"
 
 include makedefs.files
 

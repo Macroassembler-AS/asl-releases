@@ -219,6 +219,10 @@ Message ErrMsgTrySkipMultiwordInstruction
  "Versuch, eine Mehrwort-Instruktion zu &uuml;berspringen"
  "attempt to skip multiword instruction"
 
+Message ErrMsgSignExtension
+ "implizite Vorzeichenerweiterung"
+ "implicit sign extension"
+
 ;*****
 
 Message ErrMsgDoubleDef
@@ -1492,6 +1496,7 @@ Message InfoMessHelp
  "  -maxerrors <Anzahl>  : Assemblierung nach <Anzahl> Fehlern abbrechen\n" \
  "  -maxinclevel <Anzahl>: Include-Verschachtelungstiefe auf <Anzahl> begrenzen\n" \
  "  -Werror              : Warnungen als Fehler behandeln\n" \
+ "  -w[no-]implicit-sign-extension : Warnungen &uuml;ber Vorzeichen-Erweiterungen ein/ausschalten\n" \
  "  -version             : nur Versionsinfo ausgeben\n" \
  "  -E [Name]            : Zieldatei f&uuml;r Fehlerliste,\n" \
  "                         !0..!4 f&uuml;r Standardhandles\n" \
@@ -1542,6 +1547,7 @@ Message InfoMessHelp
  "  -maxerrors <number>  : terminate assembly after <number> errors\n" \
  "  -maxinclevel <number>: limit include nesting level to <number>\n" \
  "  -Werror              : treat warnings as errors\n" \
+ "  -w[no-]implicit-sign-extension : enable/disable sign extension warnings\n" \
  "  -version             : print version info and exit\n" \
  "  -E <name>            : target file for error list,\n" \
  "                         !0..!4 for standard handles\n" \

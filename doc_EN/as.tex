@@ -328,7 +328,7 @@ under work / planned / in consideration :
 \end{itemize}
 Unloved, but now, however, present :
 \begin{itemize}
-\item{Intel 80x86, 80186, Nec V30\&V35 incl. coprocessor 8087}
+\item{Intel 80x86, 80186, Nec V20..V55 incl. coprocessor 8087}
 \end{itemize}
 The switch to a different code generator is allowed even within one
 file, and as often as one wants!
@@ -523,14 +523,16 @@ PLIST.EXE         & lists contents of code files \\
 PBIND.EXE         & merges code files \\
 P2HEX.EXE         & converts code files to hex files \\
 P2BIN.EXE         & converts code files to binary files \\
-AS.MSG            & text resources for \asname{} \\
-PLIST.MSG         & text resources for PLIST \\
-PBIND.MSG         & text resources for PBIND \\
-P2HEX.MSG         & text resources for P2HEX \\
-P2BIN.MSG         & text resources for P2BIN \\
-TOOLS.MSG         & common text resources for all tools \\
-CMDARG.MSG        & common text resources for all programs \\
+AS.MSG            & text resources for \asname{} (DOS only) \\
+PLIST.MSG         & text resources for PLIST *) \\
+PBIND.MSG         & text resources for PBIND *) \\
+P2HEX.MSG         & text resources for P2HEX *) \\
+P2BIN.MSG         & text resources for P2BIN *) \\
+TOOLS.MSG         & common text resources for all tools *) \\
+CMDARG.MSG        & common text resources for all programs *) \\
 IOERRS.MSG        & \\
+\hline
+\multicolumn{2}{|l|}{*) DOS only} \\
 \hline
 {\bf Directory DOC} & \\
 \hline
@@ -1211,7 +1213,7 @@ impossible.
 
 Some signal processor families from Texas Instruments optionally use
 a double line (\verb!||!) in place of the label to signify the
-prallel execution with the previous instruction(s).  If these two
+parallel execution with the previous instruction(s).  If these two
 assembler instructions become a single instruction word at machine
 level (C3x/C4x), an additional label in front of the second
 instruction of course does not make sense and is not allowed.  The
@@ -2471,7 +2473,7 @@ always expects name and value as arguments.  For example:
 Symbols defined with \tty{SET} or \tty{EQU} are typeless by default, but
 optionally a segment name (\tty{CODE, DATA, IDATA, XDATA, YDATA, BITDATA,
 IO}, or \tty{REG}) or \tty{MOMSEGMENT} for the currently active segment
-may be given as a second or thirsd parameter, allowing to assign the symbol to a
+may be given as a second or third parameter, allowing to assign the symbol to a
 specific address space.  \asname{} does not check at this point if the used
 address space exists on the currently active target processor!
 
@@ -3467,15 +3469,22 @@ by Intel.  These instructions are documented in section \ref{8085Spec}.
 
 {\tt V30EMU} as target behaves like an 8080, with the addition of
 the instructions {\tt RETEM} and {\em CALLN}.  These allow to
-end or interrupt the 8080 emulation on a V20/V30.
+end or interrupt the 8080 emulation on a V20/V30/V40/V50.
 %%-----------
 \begin{quote}
-ag) 8086 $\rightarrow$ 80186 $\rightarrow$ V30 $\rightarrow$ V35
+ag) 8088,8086 \\
+$\rightarrow$ 80188,80186 \\
+$\rightarrow$ V20,V30,V40,V50 \\
+$\rightarrow$ V33,V53 \\
+$\rightarrow$ V25,V35 \\
+$\rightarrow$ V55 \\
+$\rightarrow$ V55SC \\
+$\rightarrow$ V55PI
 \end{quote}
-Only new instructions are added in this family.  The corresponding
-8-bit versions are not mentioned due to their instruction
-compatibility, so one e.g. has to choose 8086 for an 8088-based
-system.
+Processors listed in the same line feature an identical CPU core and therefore
+identical instruction set.  Going down the lines, new instructions are added, 
+with the NEC CPUs going different 'branches', coming from the 'V20 basic
+instruction set'.
 %%-----------
 \begin{quote}
 ah) 80960
@@ -5692,7 +5701,7 @@ formats, which should be easily applicable on signal processors:
 \begin{itemize}
 \item{\tty{EFLOAT}: mantissa with 16 bits, exponent with 16 bits}
 \item{\tty{BFLOAT}: mantissa with 32 bits, exponent with 16 bits}
-\item{\tty{DFLOAT}: mantissa with 64 bits, exponent with 32 bits}
+\item{\tty{TFLOAT}: mantissa with 64 bits, exponent with 32 bits}
 \end{itemize}
 The three commands share a common storage strategy.  In all cases the
 mantissa precedes the exponent in memory, both are stored as 2's
@@ -6146,7 +6155,7 @@ label's column to mark parallelism, like this:
 (since both instructions merge into a single word of machine code, you
 cannot branch to the second instruction - so occupying the label's
 position doesn't hurt).  The problem is however that some 'convenience
-instructions' are realized as macros.  A prallelization symbol written in
+instructions' are realized as macros.  A parallelization symbol written in
 front of a macro call normally would be assigned to the macro itself, {\it
 not to the macro body's first instruction}.  However, things work with
 this trick:
@@ -6659,8 +6668,8 @@ TreeRec endstruct
 
 A union is a special form of a structure whose elements are not laid out
 sequentially in memory.  Instead all elements occupy the {\em same}
-memory and are located at offset 0 in the structure.  Naturally, suich a
-defnition basically does nothing more than to assign the value of zero to
+memory and are located at offset 0 in the structure.  Naturally, such a
+definition basically does nothing more than to assign the value of zero to
 a couple of symbols.  It may however be useful to clarify the overlap in a
 program and therefore to make it more 'readable'.  The size of a union is
 the maximum of all elements' lengths.
@@ -6681,7 +6690,7 @@ id        dw         ?
         endstruct
 TreeRec endstruct
 \end{verbatim}
-generates the symbols {\tt TREEREC\_NAME} and {\em TREEREC\_ID}.
+generates the symbols {\tt TREEREC\_NAME} and {\tt TREEREC\_ID}.
 
 Futhermore, no symbol holding its length is generated for an
 unnamed structure or union.
@@ -9114,7 +9123,7 @@ as \tty{LD A,IM} resp. \tty{LD IM,A}.
 Similarly to the Z80 or 6502, Intel did not further specify the
 undocumented 8085 instructions.  This however means that other assemblers
 might use different mnemonics for the same function.  Therefore, I will
-list the nistructions in the following.  Once again, usage of these
+list the instructions in the following.  Once again, usage of these
 instructions is at one's own risk - even the Z80 which is principally
 upward compatible to the 8085 uses the opcodes for entirely different
 functions...
@@ -12114,6 +12123,14 @@ described by:
                 is longer than one word, so a skip would jump into the middle
                 of it.}
                {the multi-word instruction in question}
+\errentry{ 430}{implicit sign extension}
+               {warning}
+               {As part of executing this instruction, the processor will
+                perform a sign extension to the full register width.  For the
+                given argument, this means the register's upper bits will be
+                filled with ones and not zeros.  Depending on the usage that
+                follows, this may be irrelevant or not.}
+               {the value in question}
 \errentry{1000}{symbol double defined}
                {error}
                {A new value is assigned to a symbol, using a label or a

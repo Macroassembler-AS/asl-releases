@@ -230,10 +230,10 @@ static void ReadSymbols(const char *pSrcName, int Index)
       PNew->Gran = Gran;
       PNew->Segment = Segment;
       if (!Read4(f, &Addr))
-        ChkIO(SrcName);
+        chk_wr_read_error(SrcName);
       PNew->CodeStart = Addr;
       if (!Read2(f, &Len))
-        ChkIO(SrcName);
+        chk_wr_read_error(SrcName);
       PNew->CodeLen = Len;
       PNew->MustReloc = ((Header == FileHeaderRelocRec)
                       || (Header == FileHeaderRRelocRec));
@@ -327,7 +327,7 @@ static void ProcessFile(const char *pSrcName, int Index)
   /* check magic */
 
   if (!Read2(f, &Magic))
-    ChkIO(SrcName);
+    chk_wr_read_error(SrcName);
   if (Magic != FileMagic)
     FormatError(SrcName, getmessage(Num_FormatInvHeaderMsg));
 
@@ -355,12 +355,12 @@ static void ProcessFile(const char *pSrcName, int Index)
     if ((Header == FileHeaderDataRec) || (Header == FileHeaderRelocRec))
     {
       if (!Read4(f, &Addr))
-        ChkIO(SrcName);
+        chk_wr_read_error(SrcName);
       if (!Read2(f, &Len))
-        ChkIO(SrcName);
+        chk_wr_read_error(SrcName);
       BumpBuffer(Len);
       if (fread(Buffer, 1, Len, f) != Len)
-        ChkIO(SrcName);
+        chk_wr_read_error(SrcName);
       WriteRecordHeader(&Header, &CPU, &Segment, &Gran, TargName, TargFile);
       if (!Write4(TargFile, &Addr))
         ChkIO(TargName);
@@ -379,12 +379,12 @@ static void ProcessFile(const char *pSrcName, int Index)
     else if ((Header == FileHeaderRDataRec) || (Header == FileHeaderRRelocRec))
     {
       if (!Read4(f, &Addr))
-        ChkIO(SrcName);
+        chk_wr_read_error(SrcName);
       if (!Read2(f, &Len))
-        ChkIO(SrcName);
+        chk_wr_read_error(SrcName);
       BumpBuffer(Len);
       if (fread(Buffer, 1, Len, f) != Len)
-        ChkIO(SrcName);
+        chk_wr_read_error(SrcName);
 
       UndefFlag = False;
       for (z = 0; z < PartRun->RelocInfo->RelocCount; z++)

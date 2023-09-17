@@ -31,8 +31,6 @@ typedef struct
   LongInt Code;
 } BaseOrder;
 
-#define FixedOrderCnt 19
-
 enum
 {
   ModNone = -1,
@@ -356,7 +354,7 @@ static void DecodeSFR(Word Code)
 
 static void AddFixed(const char *NName, LongInt NCode)
 {
-  if (InstrZ >= FixedOrderCnt) exit(255);
+  order_array_rsv_end(FixedOrders, BaseOrder);
   FixedOrders[InstrZ].Code = NCode;
   AddInstTable(InstTable, NName, InstrZ++, DecodeFixed);
 }
@@ -389,7 +387,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "BRCLR", 0xc0, DecodeBRSET_BRCLR);
   AddInstTable(InstTable, "SFR", 0, DecodeSFR);
 
-  FixedOrders = (BaseOrder *) malloc(sizeof(BaseOrder) * FixedOrderCnt); InstrZ = 0;
+  InstrZ = 0;
   AddFixed("CLRA", 0x00fbff);
   AddFixed("CLRX", 0xb08000);
   AddFixed("CLRY", 0xb08100);
@@ -429,7 +427,7 @@ static void DeinitFields(void)
 {
   DestroyInstTable(InstTable);
 
-  free(FixedOrders);
+  order_array_free(FixedOrders);
 }
 
 /*--------------------------------------------------------------------------*/

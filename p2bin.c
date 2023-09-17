@@ -154,7 +154,7 @@ static void CloseTarget(void)
       Rest -= Trans;
       Read = fread(Buffer, 1, Trans, TargFile);
       if (Read != Trans)
-        ChkIO(TargName);
+        chk_wr_read_error(TargName);
       for (z = 0; z < Trans; Sum += Buffer[z++]);
     }
     errno = 0;
@@ -197,7 +197,7 @@ static void ProcessFile(const char *FileName, LongWord Offset)
     ChkIO(FileName);
 
   if (!Read2(SrcFile, &TestID))
-    ChkIO(FileName);
+    chk_wr_read_error(FileName);
   if (TestID != FileID)
     FormatError(FileName, getmessage(Num_FormatInvHeaderMsg));
 
@@ -215,7 +215,7 @@ static void ProcessFile(const char *FileName, LongWord Offset)
     if (InpHeader == FileHeaderStartAdr)
     {
       if (!Read4(SrcFile, &ErgStart))
-        ChkIO(FileName);
+        chk_wr_read_error(FileName);
       if (!EntryAdrPresent)
       {
         EntryAdr = ErgStart;
@@ -226,9 +226,9 @@ static void ProcessFile(const char *FileName, LongWord Offset)
     else if (InpHeader == FileHeaderDataRec)
     {
       if (!Read4(SrcFile, &InpStart))
-        ChkIO(FileName);
+        chk_wr_read_error(FileName);
       if (!Read2(SrcFile, &InpLen))
-        ChkIO(FileName);
+        chk_wr_read_error(FileName);
 
       NextPos = ftell(SrcFile) + InpLen;
       if (NextPos >= FileSize(SrcFile) - 1)
@@ -272,7 +272,7 @@ static void ProcessFile(const char *FileName, LongWord Offset)
         {
           TransLen = min(BufferSize, ErgLen);
           if (fread(Buffer, 1, TransLen, SrcFile) != TransLen)
-            ChkIO(FileName);
+            chk_wr_read_error(FileName);
           if (SizeDiv == 1) ResLen = TransLen;
           else
           {
@@ -354,7 +354,7 @@ static void MeasureFile(const char *FileName, LongWord Offset)
     ChkIO(FileName);
 
   if (!Read2(f, &TestID))
-    ChkIO(FileName);
+    chk_wr_read_error(FileName);
   if (TestID != FileMagic)
     FormatError(FileName, getmessage(Num_FormatInvHeaderMsg));
 
@@ -365,9 +365,9 @@ static void MeasureFile(const char *FileName, LongWord Offset)
     if (Header == FileHeaderDataRec)
     {
       if (!Read4(f, &Adr))
-        ChkIO(FileName);
+        chk_wr_read_error(FileName);
       if (!Read2(f, &Length))
-        ChkIO(FileName);
+        chk_wr_read_error(FileName);
       NextPos = ftell(f) + Length;
       if (NextPos > FileSize(f))
         FormatError(FileName, getmessage(Num_FormatInvRecordLenMsg));

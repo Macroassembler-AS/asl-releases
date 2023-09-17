@@ -29,5 +29,5 @@ TARG_EXEXTENSION = $(HOST_EXEXTENSION)
 BINDIR = c:\as\bin
 INCDIR = c:\as\include
 MANDIR = c:\as\man
-LIBDIR = c:\as\lib
+LIBDIR =
 DOCDIR = c:\as\doc

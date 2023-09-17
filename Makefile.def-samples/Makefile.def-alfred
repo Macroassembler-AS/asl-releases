@@ -104,5 +104,5 @@ endif
 BINDIR = /usr/local/bin
 INCDIR = /usr/local/include/asl
 MANDIR = /usr/local/man
-LIBDIR = /usr/local/lib/asl
+LIBDIR =
 DOCDIR = /usr/local/doc/asl

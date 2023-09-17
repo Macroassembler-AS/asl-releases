@@ -108,12 +108,6 @@ typedef enum
 #define MModNoImm (MModReg8 | MModReg16 | MModIndReg16 | MModAbs | MModRef | MModInt | MModSPRel)
 #define MModAll (MModReg8 | MModReg16 | MModIndReg16 | MModImm | MModAbs | MModRef | MModInt | MModSPRel)
 
-#define FixedOrderCnt 55
-#define AccOrderCnt 3
-#define HLOrderCnt 3
-#define ALUOrderCnt 5
-#define ConditionCnt 12
-
 #define IXPrefix 0xdd
 #define IYPrefix 0xfd
 
@@ -946,7 +940,7 @@ static Boolean DecodeCondition(const char *Name, int *Erg)
 {
   int z;
 
-  for (z = 0; (z < ConditionCnt) && Conditions[z].Name; z++)
+  for (z = 0; Conditions[z].Name; z++)
     if (!as_strcasecmp(Conditions[z].Name, Name))
     {
       *Erg = Conditions[z].Code;
@@ -3801,7 +3795,7 @@ static void check_cbar(void)
 
 static void AddFixed(const char *NewName, CPUVar NewMin, Byte NewLen, Word NewCode)
 {
-  if (InstrZ >= FixedOrderCnt) exit(255);
+  order_array_rsv_end(FixedOrders, BaseOrder);
   FixedOrders[InstrZ].MinCPU = NewMin;
   FixedOrders[InstrZ].Len = NewLen;
   FixedOrders[InstrZ].Code = NewCode;
@@ -3810,7 +3804,7 @@ static void AddFixed(const char *NewName, CPUVar NewMin, Byte NewLen, Word NewCo
 
 static void AddAcc(const char *NewName, CPUVar NewMin, Byte NewLen, Word NewCode)
 {
-  if (InstrZ >= AccOrderCnt) exit(255);
+  order_array_rsv_end(AccOrders, BaseOrder);
   AccOrders[InstrZ].MinCPU = NewMin;
   AccOrders[InstrZ].Len = NewLen;
   AccOrders[InstrZ].Code = NewCode;
@@ -3819,7 +3813,7 @@ static void AddAcc(const char *NewName, CPUVar NewMin, Byte NewLen, Word NewCode
 
 static void AddHL(const char *NewName, CPUVar NewMin, Byte NewLen, Word NewCode)
 {
-  if (InstrZ >= HLOrderCnt) exit(255);
+  order_array_rsv_end(HLOrders, BaseOrder);
   HLOrders[InstrZ].MinCPU = NewMin;
   HLOrders[InstrZ].Len = NewLen;
   HLOrders[InstrZ].Code = NewCode;
@@ -3846,7 +3840,7 @@ static void AddBit(const char *NName, Word Code)
 
 static void AddCondition(const char *NewName, Byte NewCode)
 {
-  if (InstrZ >= ConditionCnt) exit(255);
+  order_array_rsv_end(Conditions, Condition);
   Conditions[InstrZ].Name = NewName;
   Conditions[InstrZ++].Code = NewCode;
 }
@@ -3909,7 +3903,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "DEFB", 0, ModIntel);
   AddInstTable(InstTable, "DEFW", 0, ModIntel);
 
-  InstrZ = 0; Conditions = (Condition *) calloc(ConditionCnt, sizeof(Condition));
+  InstrZ = 0;
   AddCondition("NZ", 0); AddCondition("Z" , 1);
   AddCondition("NC", 2); AddCondition("C" , 3);
   if (!is_sharp())
@@ -3919,8 +3913,9 @@ static void InitFields(void)
     AddCondition("P" , 6); AddCondition("NS", 6);
     AddCondition("M" , 7); AddCondition("S" , 7);
   }
+  AddCondition(NULL, 0);
 
-  InstrZ = 0; FixedOrders = (BaseOrder *) calloc(FixedOrderCnt, sizeof(BaseOrder));
+  InstrZ = 0;
   AddFixed("EXX"  , CPUZ80   , 1, 0x00d9);
   if (is_sharp())
   {
@@ -3988,12 +3983,12 @@ static void InitFields(void)
   AddFixed("RETB" , CPUZ380  , 2, 0xed55);
   AddInstTable(InstTable, "STOP", 0x0010, DecodeSTOP);
 
-  InstrZ = 0; AccOrders = (BaseOrder *) malloc(sizeof(BaseOrder) * AccOrderCnt);
+  InstrZ = 0;
   AddAcc("CPL"  , CPUGBZ80 , 1, 0x002f);
   AddAcc("NEG"  , CPUZ80   , 2, 0xed44);
   AddAcc("EXTS" , CPUZ380  , 2, 0xed65);
 
-  InstrZ = 0; HLOrders = (BaseOrder *) malloc(sizeof(BaseOrder) * HLOrderCnt);
+  InstrZ = 0;
   AddHL("CPLW" , CPUZ380, 2, 0xdd2f);
   AddHL("NEGW" , CPUZ380, 2, 0xed54);
   AddHL("EXTSW", CPUZ380, 2, 0xed75);
@@ -4018,10 +4013,10 @@ static void InitFields(void)
 
 static void DeinitFields(void)
 {
-  free(Conditions);
-  free(FixedOrders);
-  free(AccOrders);
-  free(HLOrders);
+  order_array_free(Conditions);
+  order_array_free(FixedOrders);
+  order_array_free(AccOrders);
+  order_array_free(HLOrders);
 
   DestroyInstTable(InstTable);
 }

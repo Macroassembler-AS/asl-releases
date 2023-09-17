@@ -4189,14 +4189,6 @@ static as_cmd_result_t CMD_MaxIncludeLevel(Boolean Negate, const char *pArg)
   }
 }
 
-static as_cmd_result_t CMD_TreatWarningsAsErrors(Boolean Negate, const char *Arg)
-{
-  UNUSED(Arg);
-
-  TreatWarningsAsErrors = !Negate;
-  return e_cmd_ok;
-}
-
 static const as_cmd_rec_t ASParams[] =
 {
   { "A"             , CMD_BalanceTree     },
@@ -4236,7 +4228,6 @@ static const as_cmd_rec_t ASParams[] =
   { "U"             , CMD_CaseSensitive   },
   { "w"             , CMD_SuppWarns       },
   { "warnranges"    , CMD_HardRanges      },
-  { "werror"        , CMD_TreatWarningsAsErrors },
   { "x"             , CMD_ExtendErrors    },
   { "X"             , CMD_MakeDebug       },
   { "Y"             , CMD_ThrowErrors     }
@@ -4311,6 +4302,7 @@ int main(int argc, char **argv)
     asmmac_init();
     asmstruct_init();
     asmif_init();
+    asmerr_init();
     asmcode_init();
     asmlabel_init();
     asmdebug_init();
@@ -4485,7 +4477,6 @@ int main(int argc, char **argv)
   NoICEMask = 1 << SegCode;
   GNUErrors = False;
   MaxErrors = 0;
-  TreatWarningsAsErrors = False;
   ListRadixBase = 16;
   MaxIncludeLevel = DEFAULT_MAXINCLUDELEVEL;
   write_cpu_list_exit = False;

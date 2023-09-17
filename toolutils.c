@@ -88,26 +88,30 @@ void FormatError(const char *Name, const char *Detail)
   exit(3);
 }
 
-void ChkIO(const char *Name)
+static void wr_io_str(const char *p_name, const char *p_error_msg)
 {
-  int io;
-
-  io = errno;
-
-  if (io == 0)
-    return;
-
   fprintf(stderr, "%s%s%s\n",
           catgetmessage(&MsgCat, Num_IOErrAHeaderMsg),
-          Name,
+          p_name,
           catgetmessage(&MsgCat, Num_IOErrBHeaderMsg));
 
-  fprintf(stderr, "%s.\n", GetErrorMsg(io));
+  fprintf(stderr, "%s.\n", p_error_msg);
 
   fprintf(stderr, "%s\n",
           catgetmessage(&MsgCat, Num_ErrMsgTerminating));
 
   exit(2);
+}
+
+void ChkIO(const char *Name)
+{
+  if (errno)
+    wr_io_str(Name, GetErrorMsg(errno));
+}
+
+void chk_wr_read_error(const char *p_name)
+{
+  wr_io_str(p_name, errno ? GetErrorMsg(errno) : GetReadErrorMsg());
 }
 
 Word Granularity(Byte Header, Byte Segment)
@@ -155,18 +159,18 @@ void ReadRecordHeader(Byte *Header, Byte *CPU, Byte* Segment,
 #endif
 
   if (fread(Header, 1, 1, f) != 1)
-    ChkIO(Name);
+    chk_wr_read_error(Name);
   if ((*Header != FileHeaderEnd) && (*Header != FileHeaderStartAdr))
   {
     if ((*Header == FileHeaderDataRec) || (*Header == FileHeaderRDataRec) ||
         (*Header == FileHeaderRelocRec) || (*Header == FileHeaderRRelocRec))
     {
       if (fread(CPU, 1, 1, f) != 1)
-        ChkIO(Name);
+        chk_wr_read_error(Name);
       if (fread(Segment, 1, 1, f) != 1)
-        ChkIO(Name);
+        chk_wr_read_error(Name);
       if (fread(Gran, 1, 1, f) != 1)
-        ChkIO(Name);
+        chk_wr_read_error(Name);
     }
     else if (*Header <= 0x7f)
     {

@@ -34,8 +34,6 @@ typedef struct
   Word Code;
 } CondRec;
 
-#define ConditionCnt 20
-
 enum
 {
   ModNone = -1,
@@ -381,16 +379,22 @@ static void CodeMem(Byte Entry, Byte Opcode)
   BAsmCode[1 + AdrCnt] = Opcode;
 }
 
-static int DecodeCondition(char *pCondStr, int Start)
+static int DecodeCondition(char *pCondStr)
 {
   int Condition;
 
   NLS_UpString(pCondStr);
-  for (Condition = Start; Condition < ConditionCnt; Condition++)
+  for (Condition = 0; Conditions[Condition].Name; Condition++)
     if (!strcmp(ArgStr[1].str.p_str, Conditions[Condition].Name))
       break;
 
   return Condition;
+}
+
+static Boolean condition_tf(int condition)
+{
+  return (Conditions[condition].Code == 0xde)
+      || (Conditions[condition].Code == 0xdf);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1086,8 +1090,8 @@ static void DecodeJRS(Word Code)
     Boolean OK;
     tSymbolFlags Flags;
 
-    Condition = DecodeCondition(ArgStr[1].str.p_str, ConditionCnt - 2);
-    if ((Condition >= ConditionCnt) || (Condition < ConditionCnt - 2)) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]); /* only T/F allowed */
+    Condition = DecodeCondition(ArgStr[1].str.p_str); /* only T/F allowed */
+    if (!condition_tf(Condition)) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
     else
     {
       AdrInt = EvalStrIntExpressionWithFlags(&ArgStr[2], Int16, &OK, &Flags) - (EProgCounter() + 2);
@@ -1114,8 +1118,8 @@ static void DecodeJR(Word Code)
     Boolean OK;
     tSymbolFlags Flags;
 
-    Condition = (ArgCnt == 1) ? -1 : DecodeCondition(ArgStr[1].str.p_str, 0);
-    if (Condition >= ConditionCnt) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
+    Condition = (ArgCnt == 1) ? -1 : DecodeCondition(ArgStr[1].str.p_str);
+    if ((Condition >= 0) && !Conditions[Condition].Name) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
     else
     {
       int Delta = ((Condition < 0) || (!Hi(Conditions[Condition].Code))) ? 2 : 3;
@@ -1143,9 +1147,9 @@ static void DecodeJ(Word Code)
 
   if (ChkArgCnt(1, 2))
   {
-    int CondIndex = (ArgCnt == 1) ? -1 : DecodeCondition(ArgStr[1].str.p_str, 0);
+    int CondIndex = (ArgCnt == 1) ? -1 : DecodeCondition(ArgStr[1].str.p_str);
 
-    if (CondIndex >= ConditionCnt) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
+    if ((CondIndex >= 0) && !Conditions[CondIndex].Name) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
     else
     {
       Word CondCode = (CondIndex >= 0) ? Conditions[CondIndex].Code : 0;
@@ -1177,7 +1181,7 @@ static void DecodeJ(Word Code)
           Integer Dist = Adr - (EProgCounter() + 2);
           int Delta = ((CondIndex < 0) || (!Hi(CondCode))) ? 2 : 3;
 
-          if ((Dist >= -16) && (Dist < 15) && (CondIndex >= ConditionCnt - 2)) /* JRS T/F */
+          if ((Dist >= -16) && (Dist < 15) && (CondIndex >= 0) && condition_tf(CondIndex)) /* JRS T/F */
           {
             CodeLen = 1;
             BAsmCode[0] = 0x80 | ((CondCode - 0xde) << 5) | (Dist & 0x1f);
@@ -1281,7 +1285,7 @@ static void AddFixed(const char *NName, Word NCode)
 
 static void AddCond(const char *NName, Word NCode)
 {
-  if (InstrZ >= ConditionCnt) exit(255);
+  order_array_rsv_end(Conditions, CondRec);
   Conditions[InstrZ].Name = NName;
   Conditions[InstrZ++].Code = NCode;
 }
@@ -1330,7 +1334,7 @@ static void InitFields(void)
   AddFixed("SWI" , 0x00ff);
   AddFixed("NOP" , 0x0000);
 
-  Conditions = (CondRec *) malloc(sizeof(CondRec)*ConditionCnt); InstrZ = 0;
+  InstrZ = 0;
   AddCond("EQ" , 0x00d8); AddCond("Z"  , 0x00d8);
   AddCond("NE" , 0x00d9); AddCond("NZ" , 0x00d9);
   AddCond("CS" , 0x00da); AddCond("LT" , 0x00da);
@@ -1341,6 +1345,7 @@ static void InitFields(void)
   AddCond("SLE", 0xe8d4); AddCond("SGT", 0xe8d5);
   AddCond("VS" , 0xe8d6); AddCond("VC" , 0xe8d7);
   AddCond("T"  , 0x00de); AddCond("F"  , 0x00df);
+  AddCond(NULL , 0);
 
   AddReg("DAA" , 0xdae8);  AddReg("DAS" , 0xdbe8);
   AddReg("SHLC", 0xf4e8);  AddReg("SHRC", 0xf5e8);
@@ -1364,7 +1369,7 @@ static void DeinitFields(void)
 {
   DestroyInstTable(InstTable);
 
-  free(Conditions);
+  order_array_free(Conditions);
 }
 
 /*--------------------------------------------------------------------------*/

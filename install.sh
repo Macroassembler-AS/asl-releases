@@ -110,6 +110,8 @@ if [ "${DOCPATH}" != "" ]; then
  chmod 644 ${DOCPATH}/ps*.tex
  cp doc_COM/biblio.tex ${DOCPATH}
  chmod 644 ${DOCPATH}/biblio.tex
+ cp doc_COM/cp3finst.tex ${DOCPATH}
+ chmod 644 ${DOCPATH}/cp3finst.tex
  cp COPYING ${DOCPATH}
  chmod 644 ${DOCPATH}/COPYING
 fi

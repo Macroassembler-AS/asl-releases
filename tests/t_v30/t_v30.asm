@@ -73,4 +73,6 @@
 	cmp4s
 
 	brkem	23h
-	
+
+	repc	cmpsb
+	repnc	cmpsw

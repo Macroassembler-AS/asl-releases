@@ -47,11 +47,6 @@ typedef struct
   Word Mask;
 } RMWOrder;
 
-#define FixedOrderCnt 54
-#define RelOrderCnt 23
-#define ALUOrderCnt 16
-#define RMWOrderCnt 12
-
 enum
 {
   ModNone = -1,
@@ -861,7 +856,7 @@ static void decode_brset_brclr_3(Word code)
 
 static void AddFixed(const char *NName, CPUVar NMin, Byte NCode)
 {
-  if (InstrZ >= FixedOrderCnt) exit(255);
+  order_array_rsv_end(FixedOrders, BaseOrder);
   FixedOrders[InstrZ].MinCPU = NMin;
   FixedOrders[InstrZ].Code = NCode;
   AddInstTable(InstTable, NName, InstrZ++, DecodeFixed);
@@ -869,7 +864,7 @@ static void AddFixed(const char *NName, CPUVar NMin, Byte NCode)
 
 static void AddRel(const char *NName, CPUVar NMin, Byte NCode)
 {
-  if (InstrZ >= RelOrderCnt) exit(255);
+  order_array_rsv_end(RelOrders, BaseOrder);
   RelOrders[InstrZ].MinCPU = NMin;
   RelOrders[InstrZ].Code = NCode;
   AddInstTable(InstTable, NName, InstrZ++, DecodeRel);
@@ -877,7 +872,7 @@ static void AddRel(const char *NName, CPUVar NMin, Byte NCode)
 
 static void AddALU(const char *NName, CPUVar NMin, Byte NCode, Word NMask, tSymbolSize NSize)
 {
-  if (InstrZ >= ALUOrderCnt) exit(255);
+  order_array_rsv_end(ALUOrders, ALUOrder);
   ALUOrders[InstrZ].MinCPU = NMin;
   ALUOrders[InstrZ].Code = NCode;
   ALUOrders[InstrZ].Mask = NMask;
@@ -887,7 +882,7 @@ static void AddALU(const char *NName, CPUVar NMin, Byte NCode, Word NMask, tSymb
 
 static void AddRMW(const char *NName, CPUVar NMin, Byte NCode ,Word NMask)
 {
-  if (InstrZ >= RMWOrderCnt) exit(255);
+  order_array_rsv_end(RMWOrders, RMWOrder);
   RMWOrders[InstrZ].MinCPU = NMin;
   RMWOrders[InstrZ].Code = NCode;
   RMWOrders[InstrZ].Mask = NMask;
@@ -925,7 +920,7 @@ static void InitFields(void)
   InstTable = CreateInstTable(247);
   SetDynamicInstTable(InstTable);
 
-  FixedOrders = (BaseOrder *) malloc(sizeof(BaseOrder) * FixedOrderCnt); InstrZ = 0;
+  InstrZ = 0;
   AddFixed("RTI" , CPU6805   , 0x80); AddFixed("RTS" , CPU6805   , 0x81);
   AddFixed("SWI" , CPU6805   , 0x83); AddFixed("TAX" , CPU6805   , 0x97);
   AddFixed("CLC" , CPU6805   , 0x98); AddFixed("SEC" , CPU6805   , 0x99);
@@ -956,7 +951,7 @@ static void InitFields(void)
 
   AddInstTable(InstTable, "MOV", 0, DecodeMOV);
 
-  RelOrders = (BaseOrder *) malloc(sizeof(BaseOrder) * RelOrderCnt); InstrZ = 0;
+  InstrZ = 0;
   AddRel("BRA" , CPU6805   , 0x20); AddRel("BRN" , CPU6805   , 0x21);
   AddRel("BHI" , CPU6805   , 0x22); AddRel("BLS" , CPU6805   , 0x23);
   AddRel("BCC" , CPU6805   , 0x24); AddRel("BCS" , CPU6805   , 0x25);
@@ -977,7 +972,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "DBNZX", 0x10, DecodeDBNZx);
   AddInstTable(InstTable, "DBNZ", 0, DecodeDBNZ);
 
-  ALUOrders=(ALUOrder *) malloc(sizeof(ALUOrder) * ALUOrderCnt); InstrZ = 0;
+  InstrZ = 0;
   AddALU("SUB" , CPU6805   , 0x00, MModImm | MModDir | MModExt | MModIx | MModIx1 | MModIx2 | MModSP1 | MModSP2, eSymbolSize8Bit);
   AddALU("CMP" , CPU6805   , 0x01, MModImm | MModDir | MModExt | MModIx | MModIx1 | MModIx2 | MModSP1 | MModSP2, eSymbolSize8Bit);
   AddALU("SBC" , CPU6805   , 0x02, MModImm | MModDir | MModExt | MModIx | MModIx1 | MModIx2 | MModSP1 | MModSP2, eSymbolSize8Bit);
@@ -1002,7 +997,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "AIS", 0x00, DecodeAIx);
   AddInstTable(InstTable, "AIX", 0x08, DecodeAIx);
 
-  RMWOrders = (RMWOrder *) malloc(sizeof(RMWOrder) * RMWOrderCnt); InstrZ = 0;
+  InstrZ = 0;
   AddRMW("NEG", CPU6805, 0x00, MModDir |        MModIx | MModIx1 |         MModSP1        );
   AddRMW("COM", CPU6805, 0x03, MModDir |        MModIx | MModIx1 |         MModSP1        );
   AddRMW("LSR", CPU6805, 0x04, MModDir |        MModIx | MModIx1 |         MModSP1        );
@@ -1027,10 +1022,10 @@ static void InitFields(void)
 static void DeinitFields(void)
 {
   DestroyInstTable(InstTable);
-  free(FixedOrders);
-  free(RelOrders);
-  free(ALUOrders);
-  free(RMWOrders);
+  order_array_free(FixedOrders);
+  order_array_free(RelOrders);
+  order_array_free(ALUOrders);
+  order_array_free(RMWOrders);
 }
 
 /*--------------------------------------------------------------------------*/
