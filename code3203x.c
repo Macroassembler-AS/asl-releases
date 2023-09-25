@@ -31,11 +31,6 @@
 
 #include "code3203x.h"
 
-#define FixedOrderCount 3
-#define GenOrderCount 73
-#define ParOrderCount 8
-#define SingOrderCount 2
-
 typedef struct
 {
   LongWord Code;
@@ -51,7 +46,7 @@ typedef struct
   Boolean SwapOps;
   Boolean ImmFloat;
   Boolean Commutative;
-  Byte ParMask, Par3Mask;
+  ShortInt ParMask, Par3Mask;
   unsigned ParIndex, ParIndex3;
   Byte PCodes[8], P3Codes[8];
 } GenOrder;
@@ -534,9 +529,9 @@ static void SwapPart(Word *P1, Word *P2)
   *P2 = AdrPart;
 }
 
-static unsigned MatchParIndex(Byte Mask, unsigned Index)
+static int MatchParIndex(Byte Mask, int Index)
 {
-  return (Mask & (1 << Index)) ? Index : ParOrderCount;
+  return ((Index >= 0) && (Mask & (1 << Index))) ? Index : -1;
 }
 
 /*-------------------------------------------------------------------------*/
@@ -765,7 +760,8 @@ static void DecodeGen(Word Index)
 
   if (ThisPar)
   {
-    unsigned ParIndex, ARIndex;
+    int ParIndex;
+    unsigned ARIndex;
 
     if (!PrevGenInfo.pOrder)
     {
@@ -777,7 +773,7 @@ static void DecodeGen(Word Index)
 
     ParIndex = MatchParIndex(PrevGenInfo.Is3 ? PrevGenInfo.pOrder->Par3Mask : PrevGenInfo.pOrder->ParMask,
                              CurrGenInfo.Is3 ? CurrGenInfo.pOrder->ParIndex3 : CurrGenInfo.pOrder->ParIndex);
-    if (ParIndex < ParOrderCount)
+    if (ParIndex >= 0)
       JudgePar(PrevGenInfo.pOrder, ParIndex, &HReg, &HReg2);
 
     /* in gedrehter Reihenfolge suchen */
@@ -786,7 +782,7 @@ static void DecodeGen(Word Index)
     {
       ParIndex = MatchParIndex(CurrGenInfo.Is3 ? CurrGenInfo.pOrder->Par3Mask : CurrGenInfo.pOrder->ParMask,
                                PrevGenInfo.Is3 ? PrevGenInfo.pOrder->ParIndex3 : PrevGenInfo.pOrder->ParIndex);
-      if (ParIndex < ParOrderCount)
+      if (ParIndex >= 0)
       {
         JudgePar(CurrGenInfo.pOrder, ParIndex, &HReg, &HReg2);
         SwapMode(&CurrGenInfo.DestMode, &PrevGenInfo.DestMode);
@@ -1535,14 +1531,14 @@ static void AddCondition(const char *NName, Byte NCode)
 
 static void AddFixed(const char *NName, LongWord NCode)
 {
-  if (InstrZ >= FixedOrderCount) exit(255);
+  order_array_rsv_end(FixedOrders, FixedOrder);
   FixedOrders[InstrZ].Code = NCode;
   AddInstTable(InstTable, NName, InstrZ++, DecodeFixed);
 }
 
 static void AddSing(const char *NName, LongWord NCode, Byte NMask)
 {
-  if (InstrZ >= SingOrderCount) exit(255);
+  order_array_rsv_end(SingOrders, SingOrder);
   SingOrders[InstrZ].Code = NCode;
   SingOrders[InstrZ].Mask = NMask;
   AddInstTable(InstTable, NName, InstrZ++, DecodeSing);
@@ -1560,13 +1556,13 @@ static void AddGen(const char *NName, CPUVar NMin, Boolean NMay1, Boolean NMay3,
   char NName3[30];
   unsigned z;
 
-  if (InstrZ >= GenOrderCount) exit(255);
+  order_array_rsv_end(GenOrders, GenOrder);
 
   as_snprintf(NName3, sizeof(NName3), "%s3", NName);
 
   GenOrders[InstrZ].ParIndex =
-  GenOrders[InstrZ].ParIndex3 = ParOrderCount;
-  for (z = 0; z < ParOrderCount; z++)
+  GenOrders[InstrZ].ParIndex3 = -1;
+  for (z = 0; ParOrders[z]; z++)
   {
     if (!strcmp(ParOrders[z], NName))
       GenOrders[InstrZ].ParIndex = z;
@@ -1594,6 +1590,12 @@ static void AddGen(const char *NName, CPUVar NMin, Boolean NMay1, Boolean NMay3,
   AddInstTable(InstTable, NName, InstrZ, DecodeGen);
   AddInstTable(InstTable, NName3, InstrZ | 0x8000, DecodeGen);
   InstrZ++;
+}
+
+static void AddPar(const char *p_name)
+{
+  order_array_rsv_end(ParOrders, const char*);
+  ParOrders[InstrZ++] = p_name;
 }
 
 static void InitFields(void)
@@ -1625,7 +1627,7 @@ static void InitFields(void)
   AddCondition("NLUF", 0x12);AddCondition("LUF", 0x13);
   AddCondition("ZUF", 0x14); AddCondition(""   , 0x00);
 
-  FixedOrders = (FixedOrder *) malloc(sizeof(FixedOrder) * FixedOrderCount); InstrZ = 0;
+  InstrZ = 0;
   AddFixed("IDLE", 0x06000000); AddFixed("SIGI", 0x16000000);
   AddFixed("SWI" , 0x66000000);
 
@@ -1647,13 +1649,14 @@ static void InitFields(void)
   AddInstTable(InstTable, "LDPK", 0x003e, DecodeLDPK);
   AddInstTable(InstTable, "STIK", 0x002a, DecodeSTIK);
 
-  ParOrders = (const char **) malloc(sizeof(char *) * ParOrderCount); InstrZ = 0;
-  ParOrders[InstrZ++] = "LDF";   ParOrders[InstrZ++] = "LDI";
-  ParOrders[InstrZ++] = "STF";   ParOrders[InstrZ++] = "STI";
-  ParOrders[InstrZ++] = "ADDF3"; ParOrders[InstrZ++] = "SUBF3";
-  ParOrders[InstrZ++] = "ADDI3"; ParOrders[InstrZ++] = "SUBI3";
+  InstrZ = 0;
+  AddPar("LDF");   AddPar("LDI");
+  AddPar("STF");   AddPar("STI");
+  AddPar("ADDF3"); AddPar("SUBF3");
+  AddPar("ADDI3"); AddPar("SUBI3");
+  AddPar(NULL);
 
-  GenOrders = (GenOrder *) malloc(sizeof(GenOrder) * GenOrderCount); InstrZ = 0;
+  InstrZ = 0;
 /*        Name      MinCPU    May1   May3   Cd    Cd3   OnlyM  Swap   ImmF   Comm   PM1 PM3     */
   AddGen("ABSF"   , CPU32030, True , False, 0x00, 0xff, False, False, True , False, 4, 0,
          0xff, 0xff, 0x04, 0xff, 0xff, 0xff, 0xff, 0xff,  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff);
@@ -1802,7 +1805,7 @@ static void InitFields(void)
   AddGen("XOR"    , CPU32030, False, True , 0x35, 0x10, False, False, False, True,  0, 8,
          0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,  0xff, 0xff, 0xff, 0x17, 0xff, 0xff, 0xff, 0xff);
 
-  SingOrders = (SingOrder *) malloc(sizeof(SingOrder) * SingOrderCount); InstrZ = 0;
+  InstrZ = 0;
   AddSing("IACK", 0x1b000000, 6);
   AddSing("RPTS", 0x139b0000, 15);
 
@@ -1813,10 +1816,10 @@ static void DeinitFields(void)
 {
   DestroyInstTable(InstTable);
 
-  free(FixedOrders);
-  free(GenOrders);
-  free(ParOrders);
-  free(SingOrders);
+  order_array_free(FixedOrders);
+  order_array_free(GenOrders);
+  order_array_free(ParOrders);
+  order_array_free(SingOrders);
 }
 
 static void MakeCode_3203X(void)

@@ -97,10 +97,6 @@ typedef struct
   unsigned core_mask;
 } order_t;
 
-#define FixedOrderCnt 39
-#define Reg2OrderCnt 10
-#define IntFlagCnt 18
-
 static Boolean is_7807_781x;
 
 static LongInt WorkArea;
@@ -488,7 +484,7 @@ static Boolean Decode_sr4(const tStrComp *p_arg, ShortInt *p_res)
 
 static Boolean Decode_irf(const tStrComp *p_arg, ShortInt *p_res)
 {
-  for (*p_res = 0; (*p_res < IntFlagCnt) && int_flags[*p_res].p_name; (*p_res)++)
+  for (*p_res = 0; int_flags[*p_res].p_name; (*p_res)++)
     if (!as_strcasecmp(int_flags[*p_res].p_name, p_arg->str.p_str))
     {
       *p_res = int_flags[*p_res].code;
@@ -1609,7 +1605,7 @@ static void DecodeDEFBIT(Word code)
 
 static void AddFixed(const char *p_name, Word code, unsigned core_mask)
 {
-  if (InstrZ >= FixedOrderCnt) exit(255);
+  order_array_rsv_end(fixed_orders, order_t);
   fixed_orders[InstrZ].code = code;
   fixed_orders[InstrZ].core_mask = core_mask;
   AddInstTable(InstTable, p_name, InstrZ++, DecodeFixed);
@@ -1617,7 +1613,7 @@ static void AddFixed(const char *p_name, Word code, unsigned core_mask)
 
 static void AddIntFlag(const char *p_name, Byte code)
 {
-  if (InstrZ >= IntFlagCnt) exit(255);
+  order_array_rsv_end(int_flags, intflag_t);
   int_flags[InstrZ].p_name = p_name;
   int_flags[InstrZ++].code = code;
 }
@@ -1644,7 +1640,7 @@ static void AddAbs(const char *NName, Word NCode)
 
 static void AddReg2(const char *p_name, Word code, unsigned core_mask)
 {
-  if (InstrZ >= Reg2OrderCnt) exit(255);
+  order_array_rsv_end(reg2_orders, order_t);
   reg2_orders[InstrZ].code = code;
   reg2_orders[InstrZ].core_mask = core_mask;
   AddInstTable(InstTable, p_name, InstrZ++, DecodeReg2);
@@ -1702,7 +1698,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "SKIT" , (core_mask_no_low << 8) | (is_7807_781x ? 0x40 : 0x00), DecodeSKIT_SKNIT);
   AddInstTable(InstTable, "SKNIT", (core_mask_all    << 8) | (is_7807_781x ? 0x60 : 0x10), DecodeSKIT_SKNIT);
 
-  fixed_orders = (order_t*) calloc(sizeof(*fixed_orders), FixedOrderCnt); InstrZ = 0;
+  InstrZ = 0;
   AddFixed("EX"   , 0x0010                   , (1 << eCore7800High));
   AddFixed("PEN"  , 0x482c                   , (1 << eCore7800High));
   AddFixed("RCL"  , 0x4832                   , (1 << eCore7800High));
@@ -1761,7 +1757,7 @@ static void InitFields(void)
   {
   }
 
-  int_flags = (intflag_t*) calloc(IntFlagCnt, sizeof(*int_flags)); InstrZ = 0;
+  InstrZ = 0;
   if (is_7807_781x)
   {
     AddIntFlag("NMI" , 0);
@@ -1800,6 +1796,7 @@ static void InitFields(void)
       AddIntFlag("F2"  , 3);
     AddIntFlag("FS"  , 4);
   }
+  AddIntFlag(NULL, 0);
 
   AddALU(10, IsLow ?             ALUReg_Src : ALUImm_SR | ALUReg_Src | ALUReg_Dest, "ACI"  , "ADC"  , "DADC"  );
   AddALU( 4, IsLow ?             ALUReg_Src : ALUImm_SR | ALUReg_Src | ALUReg_Dest, "ADINC", "ADDNC", "DADDNC");
@@ -1828,7 +1825,7 @@ static void InitFields(void)
   AddAbs("SHLD", 0x703e);
   AddAbs("SSPD", 0x700e);
 
-  reg2_orders = (order_t*) calloc(sizeof(*reg2_orders), Reg2OrderCnt); InstrZ = 0;
+  InstrZ = 0;
   AddReg2("DCR" , 0x0050, core_mask_all);
   AddReg2("DIV" , 0x483c, core_mask_7807_7810);
   AddReg2("INR" , 0x0040, core_mask_all);
@@ -1876,9 +1873,9 @@ static void InitFields(void)
 static void DeinitFields(void)
 {
   DestroyInstTable(InstTable);
-  free(int_flags);
-  free(fixed_orders);
-  free(reg2_orders);
+  order_array_free(int_flags);
+  order_array_free(fixed_orders);
+  order_array_free(reg2_orders);
 }
 
 /*--------------------------------------------------------------------------*/

@@ -117,11 +117,6 @@ typedef struct
   Word Code;
 } PMMUReg;
 
-#define FixedOrderCnt 10
-#define CtRegCnt 29
-#define FPUOpCnt 47
-#define PMMURegCnt 13
-
 #define EMACAvailName  "HASEMAC"
 
 #define REG_SP 15
@@ -4938,15 +4933,14 @@ static Boolean DecodePMMUReg(char *Asc, Word *erg, tSymbolSize *pSize)
     return True;
   }
 
-  for (z = 0; z < PMMURegCnt; z++)
+  for (z = 0; PMMURegs[z].pName; z++)
     if (!as_strcasecmp(Asc, PMMURegs[z].pName))
-      break;
-  if (z < PMMURegCnt)
-  {
-    *pSize = PMMURegs[z].Size;
-    *erg = PMMURegs[z].Code << 10;
-  }
-  return (z < PMMURegCnt);
+    {
+      *pSize = PMMURegs[z].Size;
+      *erg = PMMURegs[z].Code << 10;
+      return True;
+    }
+  return False;
 }
 
 /*-------------------------------------------------------------------------*/
@@ -5948,7 +5942,7 @@ static void DecodeSTR(Word Index)
 
 static void AddFixed(const char *NName, Word NCode, Boolean NSup, unsigned NMask)
 {
-  if (InstrZ >= FixedOrderCnt) exit(255);
+  order_array_rsv_end(FixedOrders, FixedOrder);
   FixedOrders[InstrZ].Code = NCode;
   FixedOrders[InstrZ].MustSup = NSup;
   FixedOrders[InstrZ].FamilyMask = NMask;
@@ -5974,7 +5968,7 @@ static void AddCond(const char *NName, Byte NCode)
 
 static void AddFPUOp(const char *NName, Byte NCode, Boolean NDya, tSuppFlags NeedFlags)
 {
-  if (InstrZ >= FPUOpCnt) exit(255);
+  order_array_rsv_end(FPUOps, FPUOp);
   FPUOps[InstrZ].Code = NCode;
   FPUOps[InstrZ].Dya = NDya;
   FPUOps[InstrZ].NeedsSuppFlags = NeedFlags;
@@ -6012,7 +6006,7 @@ static void AddPMMUCond(const char *NName)
 
 static void AddPMMUReg(const char *Name, tSymbolSize Size, Word Code)
 {
-  if (InstrZ >= PMMURegCnt) exit(255);
+  order_array_rsv_end(PMMURegs, PMMUReg);
   PMMURegs[InstrZ].pName = Name;
   PMMURegs[InstrZ].Size = Size;
   PMMURegs[InstrZ++].Code = Code;
@@ -6125,7 +6119,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "CPUSHP" , 6, DecodeCache);
   AddInstTable(InstTable, "STR"    , 0, DecodeSTR);
 
-  FixedOrders = (FixedOrder *) malloc(sizeof(FixedOrder) * FixedOrderCnt); InstrZ = 0;
+  InstrZ = 0;
   AddFixed("NOP"    , 0x4e71, False, (1 << e68KGen1a) | (1 << e68KGen1b) | (1 << e68KGen2) | (1 << e68KGen3) | (1 << eCPU32) | (1 << eColdfire));
   AddFixed("RESET"  , 0x4e70, True,  (1 << e68KGen1a) | (1 << e68KGen1b) | (1 << e68KGen2) | (1 << e68KGen3) | (1 << eCPU32));
   AddFixed("ILLEGAL", 0x4afc, False, (1 << e68KGen1a) | (1 << e68KGen1b) | (1 << e68KGen2) | (1 << e68KGen3) | (1 << eCPU32) | (1 << eColdfire));
@@ -6146,7 +6140,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "BSR", 1, DecodeBcc);
   AddInstTable(InstTable, "DBRA", 1, DecodeDBcc);
 
-  FPUOps = (FPUOp *) malloc(sizeof(FPUOp) * FPUOpCnt); InstrZ = 0;
+  InstrZ = 0;
   AddFPUOp("FINT"   , 0x01, False, eFlagNone  );  AddFPUOp("FSINH"  , 0x02, False, eFlagExtFPU);
   AddFPUOp("FINTRZ" , 0x03, False, eFlagNone  );  AddFPUOp("FSQRT"  , 0x04, False, eFlagNone  );
   AddFPUOp("FSSQRT" , 0x41, False, eFlagIntFPU);  AddFPUOp("FDSQRT" , 0x45, False, eFlagIntFPU);
@@ -6250,7 +6244,6 @@ static void InitFields(void)
   AddInstTable(InstTable, "CP0NOP", 0xfc00, DecodeCPNOP);
   AddInstTable(InstTable, "CP1NOP", 0xfe00, DecodeCPNOP);
 
-  PMMURegs = (PMMUReg*) malloc(sizeof(PMMUReg) * PMMURegCnt);
   InstrZ = 0;
   AddPMMUReg("TC"   , eSymbolSize32Bit, 16); AddPMMUReg("DRP"  , eSymbolSize64Bit, 17);
   AddPMMUReg("SRP"  , eSymbolSize64Bit, 18); AddPMMUReg("CRP"  , eSymbolSize64Bit, 19);
@@ -6258,7 +6251,7 @@ static void InitFields(void)
   AddPMMUReg("SCC"  , eSymbolSize8Bit, 22);  AddPMMUReg("AC"   , eSymbolSize16Bit, 23);
   AddPMMUReg("PSR"  , eSymbolSize16Bit, 24); AddPMMUReg("PCSR" , eSymbolSize16Bit, 25);
   AddPMMUReg("TT0"  , eSymbolSize32Bit,  2); AddPMMUReg("TT1"  , eSymbolSize32Bit,  3);
-  AddPMMUReg("MMUSR", eSymbolSize16Bit, 24);
+  AddPMMUReg("MMUSR", eSymbolSize16Bit, 24); AddPMMUReg(NULL   , eSymbolSizeUnknown, 0);
 
   AddInstTable(InstTable, "REG", 0, CodeREG);
 }
@@ -6266,9 +6259,9 @@ static void InitFields(void)
 static void DeinitFields(void)
 {
   DestroyInstTable(InstTable);
-  free(FixedOrders);
-  free(FPUOps);
-  free(PMMURegs);
+  order_array_free(FixedOrders);
+  order_array_free(FPUOps);
+  order_array_free(PMMURegs);
 }
 
 /*-------------------------------------------------------------------------*/

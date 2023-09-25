@@ -12,6 +12,8 @@
 
 extern void MakeList(const char *pSrcLine);
 
+extern void as_list_set_max_pc(LargeWord max_pc);
+
 extern void asmlist_init(void);
 
 #endif /* _ASMLIST_H */

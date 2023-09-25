@@ -884,10 +884,13 @@ Momentan sind folgende Schalter definiert:
 \item{\tty{OLIST}: mit einem zus"atzlichen Argument legt einen anderen
       Pfad bzw. Namen f"ur die Listdatei fest.  Falls mehrere Dateien
       assembliert werden, kann diese Option auch mehrfach gegeben werden.}
-\item{\tty{LISTRADIX}: Defaultm"a"sig erfolgen alle Zahlenausgaben im Listing
+\item{\label{listradix}\tty{LISTRADIX}: Defaultm"a"sig erfolgen alle Zahlenausgaben im Listing
       (Adressen, erzeugter Code, Symboltabelle) im Hexadezimalsystem.  Mit
       diesem Schalter kann ein beliebiges anderes Zahlensystem im Bereich
-      2 bis 36 angegeben werden, z.B. '-listradix 8' f"ur oktale Ausgaben.}
+      2 bis 36 angegeben werden, z.B. '-listradix 8' f"ur oktale Ausgaben.
+      Wird der Zahlenwert mit f"uhrender Null geschrieben (also z.B. 08
+      anstelle 8), wird der Programmz"ahler im Listing mit f"uhrenden
+      Nullen geschrieben.}
 \item{\tty{SPLITBYTE [Zeichen]}: Zahlen im Listing werden Byte-weise
       dargestellt, mit dem angegebenen Zeichen als Trenner.  Ein Punkt wird
       als Trenner verwendet, wenn kein Zeichen angegeben wurde.  Diese Option
@@ -1348,7 +1351,9 @@ Tiefe 0, von dort aus eingebundene Dateien haben Tiefe 1 usw.  Die Tiefe
 Im Feld \tty{Zeile} wird die Zeilennummer bezogen auf die jeweilige Datei
 ausgegeben.  Die erste Zeile einer Datei hat dabei Nummer 1.  Die Adresse,
 an der der f"ur diese Zeile erzeugte Code abgelegt wurde, folgt hinter dem
-Schr"agstrich im Feld \tty{Adresse}.
+Schr"agstrich im Feld \tty{Adresse}.  Das daf"ur verwendete Zahlensystem
+wird durch den {\tt listradix}-Schalter festgelegt (\ref{listradix}), ebenso
+ob der Wert mit f"uhrenden Nullen angezeigt werden soll oder nicht.
 \par
 Der erzeugte Code selber steht dahinter im Feld \tty{Code} in
 hexadezimaler Schreibweise.  Je nach Prozessortyp und aktuellem Segment

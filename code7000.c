@@ -29,13 +29,6 @@
 
 #include "code7000.h"
 
-#define FixedOrderCount 13
-#define OneRegOrderCount 22
-#define TwoRegOrderCount 20
-#define MulRegOrderCount 3
-#define BWOrderCount 3
-#define SRegCnt 9
-
 enum
 {
   ModNone = -1,
@@ -258,10 +251,10 @@ static Boolean DecodeSReg(char *Asc, Word *Erg)
   int z;
   Boolean Result = FALSE;
 
-  for (z = 0; z < SRegCnt; z++)
+  for (z = 0; RegDefs[z].Name; z++)
     if (!as_strcasecmp(Asc, RegDefs[z].Name))
       break;
-  if (z < SRegCnt)
+  if (RegDefs[z].Name)
   {
     if (MomCPU < RegDefs[z].MinCPU);
     else if ((!DSPAvail) && RegDefs[z].NeedsDSP);
@@ -1204,7 +1197,7 @@ static void DecodeLTORG(Word Code)
 
 static void AddFixed(const char *NName, Word NCode, Boolean NPriv, CPUVar NMin)
 {
-  if (InstrZ >= FixedOrderCount) exit(255);
+  order_array_rsv_end(FixedOrders, FixedOrder);
   FixedOrders[InstrZ].Priv = NPriv;
   FixedOrders[InstrZ].MinCPU = NMin;
   FixedOrders[InstrZ].Code = NCode;
@@ -1213,7 +1206,7 @@ static void AddFixed(const char *NName, Word NCode, Boolean NPriv, CPUVar NMin)
 
 static void AddOneReg(const char *NName, Word NCode, CPUVar NMin, Boolean NPriv, Boolean NDel)
 {
-  if (InstrZ >= OneRegOrderCount) exit(255);
+  order_array_rsv_end(OneRegOrders, OneRegOrder);
   OneRegOrders[InstrZ].Code = NCode;
   OneRegOrders[InstrZ].MinCPU = NMin;
   OneRegOrders[InstrZ].Priv = NPriv;
@@ -1223,7 +1216,7 @@ static void AddOneReg(const char *NName, Word NCode, CPUVar NMin, Boolean NPriv,
 
 static void AddTwoReg(const char *NName, Word NCode, Boolean NPriv, CPUVar NMin, ShortInt NDef)
 {
-  if (InstrZ >= TwoRegOrderCount) exit(255);
+  order_array_rsv_end(TwoRegOrders, TwoRegOrder);
   TwoRegOrders[InstrZ].Priv = NPriv;
   TwoRegOrders[InstrZ].DefSize = NDef;
   TwoRegOrders[InstrZ].MinCPU = NMin;
@@ -1233,7 +1226,7 @@ static void AddTwoReg(const char *NName, Word NCode, Boolean NPriv, CPUVar NMin,
 
 static void AddMulReg(const char *NName, Word NCode, CPUVar NMin)
 {
-  if (InstrZ >= MulRegOrderCount) exit(255);
+  order_array_rsv_end(MulRegOrders, FixedMinOrder);
   MulRegOrders[InstrZ].Code = NCode;
   MulRegOrders[InstrZ].MinCPU = NMin;
   AddInstTable(InstTable, NName, InstrZ++, DecodeMulReg);
@@ -1241,14 +1234,14 @@ static void AddMulReg(const char *NName, Word NCode, CPUVar NMin)
 
 static void AddBW(const char *NName, Word NCode)
 {
-  if (InstrZ >= BWOrderCount) exit(255);
+  order_array_rsv_end(BWOrders, FixedOrder);
   BWOrders[InstrZ].Code = NCode;
   AddInstTable(InstTable, NName, InstrZ++, DecodeBW);
 }
 
 static void AddSReg(const char *NName, Word NCode, CPUVar NMin, Boolean NDSP)
 {
-  if (InstrZ >= SRegCnt) exit(255);
+  order_array_rsv_end(RegDefs, TRegDef);
   RegDefs[InstrZ].Name = NName;
   RegDefs[InstrZ].Code = NCode;
   RegDefs[InstrZ].MinCPU = NMin;
@@ -1282,7 +1275,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "DCF", 2, DecodeDCT_DCF);
   AddInstTable(InstTable, "LTORG", 0, DecodeLTORG);
 
-  FixedOrders = (FixedOrder *) malloc(sizeof(FixedOrder) * FixedOrderCount); InstrZ = 0;
+  InstrZ = 0;
   AddFixed("CLRT"  , 0x0008, False, CPU7000);
   AddFixed("CLRMAC", 0x0028, False, CPU7000);
   AddFixed("NOP"   , 0x0009, False, CPU7000);
@@ -1297,7 +1290,7 @@ static void InitFields(void)
   AddFixed("SETS"  , 0x0058, False, CPU7700);
   AddFixed("LDTLB" , 0x0038, True , CPU7700);
 
-  OneRegOrders = (OneRegOrder *) malloc(sizeof(OneRegOrder) * OneRegOrderCount); InstrZ = 0;
+  InstrZ = 0;
   AddOneReg("MOVT"  , 0x0029, CPU7000, False, False);
   AddOneReg("CMP/PZ", 0x4011, CPU7000, False, False);
   AddOneReg("CMP/PL", 0x4015, CPU7000, False, False);
@@ -1321,7 +1314,7 @@ static void InitFields(void)
   AddOneReg("BRAF"  , 0x0023, CPU7600, False, True );
   AddOneReg("BSRF"  , 0x0003, CPU7600, False, True );
 
-  TwoRegOrders = (TwoRegOrder *) malloc(sizeof(TwoRegOrder) * TwoRegOrderCount); InstrZ = 0;
+  InstrZ = 0;
   AddTwoReg("XTRCT" , 0x200d, False, CPU7000, 2);
   AddTwoReg("ADDC"  , 0x300e, False, CPU7000, 2);
   AddTwoReg("ADDV"  , 0x300f, False, CPU7000, 2);
@@ -1343,12 +1336,12 @@ static void InitFields(void)
   AddTwoReg("SHAD"  , 0x400c, False, CPU7700, 2);
   AddTwoReg("SHLD"  , 0x400d, False, CPU7700, 2);
 
-  MulRegOrders = (FixedMinOrder *) malloc(sizeof(FixedMinOrder) * MulRegOrderCount); InstrZ = 0;
+  InstrZ = 0;
   AddMulReg("MUL"   , 0x0007, CPU7600);
   AddMulReg("DMULU" , 0x3005, CPU7600);
   AddMulReg("DMULS" , 0x300d, CPU7600);
 
-  BWOrders = (FixedOrder *) malloc(sizeof(FixedOrder) * BWOrderCount); InstrZ = 0;
+  InstrZ = 0;
   AddBW("SWAP", 0x6008); AddBW("EXTS", 0x600e); AddBW("EXTU", 0x600c);
 
   InstrZ = 0;
@@ -1359,7 +1352,7 @@ static void InitFields(void)
 
   AddInstTable(InstTable, "REG", 0, CodeREG);
 
-  RegDefs = (TRegDef*) malloc(sizeof(TRegDef) * SRegCnt); InstrZ = 0;
+  InstrZ = 0;
   AddSReg("MACH",  0, CPU7000, FALSE);
   AddSReg("MACL",  1, CPU7000, FALSE);
   AddSReg("PR"  ,  2, CPU7000, FALSE);
@@ -1369,17 +1362,18 @@ static void InitFields(void)
   AddSReg("X1"  ,  9, CPU7000, TRUE );
   AddSReg("Y0"  , 10, CPU7000, TRUE );
   AddSReg("Y1"  , 11, CPU7000, TRUE );
+  AddSReg(NULL  ,  0, CPU7000, FALSE);
 }
 
 static void DeinitFields(void)
 {
   DestroyInstTable(InstTable);
-  free(FixedOrders);
-  free(OneRegOrders);
-  free(TwoRegOrders);
-  free(MulRegOrders);
-  free(BWOrders);
-  free(RegDefs);
+  order_array_free(FixedOrders);
+  order_array_free(OneRegOrders);
+  order_array_free(TwoRegOrders);
+  order_array_free(MulRegOrders);
+  order_array_free(BWOrders);
+  order_array_free(RegDefs);
 }
 
 /*-------------------------------------------------------------------------*/

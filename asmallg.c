@@ -26,6 +26,7 @@
 #include "function.h"
 #include "asmpars.h"
 #include "asmmac.h"
+#include "asmlist.h"
 #include "asmstructs.h"
 #include "asmcode.h"
 #include "asmrelocs.h"
@@ -35,6 +36,7 @@
 #include "nlmessages.h"
 #include "literals.h"
 #include "msg_level.h"
+#include "dyn_array.h"
 #include "asmallg.h"
 
 #define LEAVE goto func_exit
@@ -113,6 +115,24 @@ static void ParseCPUArgs(const tStrComp *pArgs, const tCPUArg *pCPUArgs)
   while (pNext);
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     SetNSeg(as_addrspace_t NSeg)
+ * \brief  preparations when segment was switched
+ * ------------------------------------------------------------------------ */
+
+static void SetNSeg(as_addrspace_t NSeg)
+{
+  if ((ActPC != NSeg) || !PCsUsed[ActPC])
+  {
+    ActPC = NSeg;
+    if (!PCsUsed[ActPC])
+      PCs[ActPC] = SegInits[ActPC];
+    PCsUsed[ActPC] = True;
+    DontPrint = True;
+    as_list_set_max_pc(SegLimits[ActPC]);
+  }
+}
+
 static void SetCPUCore(const tCPUDef *pCPUDef, const tStrComp *pCPUArgs)
 {
   LargeInt HCPU;
@@ -175,7 +195,10 @@ void SetCPUByType(CPUVar NewCPU, const tStrComp *pCPUArgs)
 
   pCPUDef = LookupCPUDefByVar(NewCPU);
   if (pCPUDef)
+  {
     SetCPUCore(pCPUDef, pCPUArgs);
+    SetNSeg(SegCode);
+  }
 }
 
 Boolean SetCPUByName(const tStrComp *pName)
@@ -198,6 +221,7 @@ Boolean SetCPUByName(const tStrComp *pName)
     }
     else
       SetCPUCore(pCPUDef, NULL);
+    SetNSeg(SegCode);
     return True;
   }
 }
@@ -215,18 +239,6 @@ void UnsetCPU(void)
     ClearONOFF();
     SwitchFrom();
     SwitchFrom = NULL;
-  }
-}
-
-static void SetNSeg(as_addrspace_t NSeg)
-{
-  if ((ActPC != NSeg) || (!PCsUsed[ActPC]))
-  {
-    ActPC = NSeg;
-    if (!PCsUsed[ActPC])
-      PCs[ActPC] = SegInits[ActPC];
-    PCsUsed[ActPC] = True;
-    DontPrint = True;
   }
 }
 
@@ -353,9 +365,7 @@ static void CodeCPU(Word Index)
   else
   {
     NLS_UpString(ArgStr[1].str.p_str);
-    if (SetCPUByName(&ArgStr[1]))
-      SetNSeg(SegCode);
-    else
+    if (!SetCPUByName(&ArgStr[1]))
       WrStrErrorPos(ErrNum_InvCPUType, &ArgStr[1]);
   }
 }
@@ -2066,15 +2076,14 @@ static void CodePPSyms(PForwardSymbol *Orig,
 
 /*------------------------------------------------------------------------*/
 
-#define ONOFFMax 32
-static int ONOFFCnt = 0;
 typedef struct
 {
   Boolean Persist, *FlagAddr;
   const char *FlagName;
   const char *InstName;
 } ONOFFTab;
-static ONOFFTab *ONOFFList;
+static ONOFFTab *ONOFFList = NULL;
+static size_t ONOFFCnt = 0;
 
 Boolean CheckONOFFArg(const tStrComp *pArg, Boolean *pResult)
 {
@@ -2103,7 +2112,7 @@ static void DecodeONOFF(Word Index)
 
 void AddONOFF(const char *InstName, Boolean *Flag, const char *FlagName, Boolean Persist)
 {
-  if (ONOFFCnt == ONOFFMax) exit(255);
+  dyn_array_rsv_end(ONOFFList, ONOFFTab, ONOFFCnt);
   ONOFFList[ONOFFCnt].Persist = Persist;
   ONOFFList[ONOFFCnt].FlagAddr = Flag;
   ONOFFList[ONOFFCnt].FlagName = FlagName;
@@ -2113,16 +2122,20 @@ void AddONOFF(const char *InstName, Boolean *Flag, const char *FlagName, Boolean
 
 void ClearONOFF(void)
 {
-  int z, z2;
+  size_t z, z2;
 
   for (z = 0; z < ONOFFCnt; z++)
     if (!ONOFFList[z].Persist)
       break;
 
-  for (z2 = ONOFFCnt - 1; z2 >= z; z2--)
-    RemoveInstTable(ONOFFTable, ONOFFList[z2].InstName);
+  if (z < ONOFFCnt)
+  {
+    for (z2 = ONOFFCnt - 1; z2 >= z; z2--)
+      RemoveInstTable(ONOFFTable, ONOFFList[z2].InstName);
 
-  ONOFFCnt = z;
+    dyn_array_realloc(ONOFFList, ONOFFTab, ONOFFCnt, z);
+    ONOFFCnt = z;
+  }
 }
 
 /*!------------------------------------------------------------------------
@@ -2364,8 +2377,6 @@ Boolean CodeGlobalPseudo(void)
 
 void codeallg_init(void)
 {
-  ONOFFList = (ONOFFTab*)calloc(ONOFFMax, sizeof(*ONOFFList));
-
   PseudoTable = CreateInstTable(201);
   AddInstTable(PseudoTable, "ALIGN",      0,  CodeALIGN     );
   AddInstTable(PseudoTable, "ASEG",       0,  CodeSEGTYPE   );

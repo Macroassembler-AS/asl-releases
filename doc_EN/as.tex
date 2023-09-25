@@ -880,10 +880,13 @@ At the moment, the following switches are defined:
       listing to a different file or a different path.  This option may
       be used multiple times in case multiple files are assembled with
       one execution.}
-\item{\tty{LISTRADIX}: By default, all numeric output in the listing
+\item{\label{listradix}\tty{LISTRADIX}: By default, all numeric output in the listing
       (addresses, generated code, symbol values) is written in hexadecimal
       notation.  This switch requests usage of a different number system in the
-      range of 2 to 36.  For instance, '-listradix 8' requests octal output.}
+      range of 2 to 36.  For instance, '-listradix 8' requests octal output.
+      If the radix value is written with a leading zero (e.g. 08 instead of 8),
+      the program counter's current value is prited with leading zeros in
+      the listing.}
 \item{\tty{SPLITBYTE [character]}: Display numbers in the listing in byte groups,
       separated by the given character.  A period is used as separator if
       no explicit character is given.  This option is usually used in conjunction
@@ -1311,9 +1314,11 @@ In the field \tty{n}, \asname{} displays the include nesting level.  The main fi
 file from there has depth 1 etc..  Depth 0 is not displayed.
 
 In the field \tty{line}, the source line number of the referenced file is
-issued. The first line of a file has the number 1.  The address at
+issued. The first line of a file has the number 1.  The address to
 which the code generated from this line is written follows after the
-slash in the field \tty{address}.
+slash in the field \tty{address}.  The number system used for the address
+is set via the {\tt listradix} command line option (\ref{listradix}), also
+whether the address is printed with leading zeros or not.
 
 The code produced is written behind \tty{address} in the field \tty{code},
 in hexadecimal notation. Depending on the processor type and actual

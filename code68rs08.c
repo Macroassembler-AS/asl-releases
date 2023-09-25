@@ -50,11 +50,6 @@ typedef struct
   Word Mask;
 } RMWOrder;
 
-#define FixedOrderCnt 23
-#define RelOrderCnt 9
-#define ALUOrderCnt 8
-#define RMWOrderCnt 7
-
 enum
 {
   ModNone = -1,
@@ -750,7 +745,7 @@ static void decode_brset_brclr_3(Word code)
 
 static void AddFixed(const char *NName, CPUVar NMin, Byte NCode)
 {
-  if (InstrZ >= FixedOrderCnt) exit(255);
+  order_array_rsv_end(FixedOrders, BaseOrder);
   FixedOrders[InstrZ].MinCPU = NMin;
   FixedOrders[InstrZ].Code = NCode;
   AddInstTable(InstTable, NName, InstrZ++, DecodeFixed);
@@ -758,7 +753,7 @@ static void AddFixed(const char *NName, CPUVar NMin, Byte NCode)
 
 static void AddRel(const char *NName, CPUVar NMin, Byte NCode)
 {
-  if (InstrZ >= RelOrderCnt) exit(255);
+  order_array_rsv_end(RelOrders, BaseOrder);
   RelOrders[InstrZ].MinCPU = NMin;
   RelOrders[InstrZ].Code = NCode;
   AddInstTable(InstTable, NName, InstrZ++, DecodeRel);
@@ -766,7 +761,7 @@ static void AddRel(const char *NName, CPUVar NMin, Byte NCode)
 
 static void AddALU(const char *NName, CPUVar NMin, Byte NCode, Word NMask)
 {
-  if (InstrZ >= ALUOrderCnt) exit(255);
+  order_array_rsv_end(ALUOrders, ALUOrder);
   ALUOrders[InstrZ].MinCPU = NMin;
   ALUOrders[InstrZ].Code = NCode;
   ALUOrders[InstrZ].Mask = NMask;
@@ -775,7 +770,7 @@ static void AddALU(const char *NName, CPUVar NMin, Byte NCode, Word NMask)
 
 static void AddRMW(const char *NName, CPUVar NMin, Byte NCode, Byte DCode, Word NMask)
 {
-  if (InstrZ >= RMWOrderCnt) exit(255);
+  order_array_rsv_end(RMWOrders, RMWOrder);
   RMWOrders[InstrZ].MinCPU = NMin;
   RMWOrders[InstrZ].Code = NCode;
   RMWOrders[InstrZ].DCode = DCode;
@@ -814,7 +809,7 @@ static void InitFields(void)
   InstTable = CreateInstTable(177);
   SetDynamicInstTable(InstTable);
 
-  FixedOrders = (BaseOrder *) malloc(sizeof(BaseOrder) * FixedOrderCnt); InstrZ = 0;
+  InstrZ = 0;
   AddFixed("SHA" , CPU68RS08, 0x45); AddFixed("SLA" , CPU68RS08, 0x42);
   AddFixed("RTS" , CPU68RS08, 0xbe); AddFixed("TAX" , CPU68RS08, 0xef);
   AddFixed("CLC" , CPU68RS08, 0x38); AddFixed("SEC" , CPU68RS08, 0x39);
@@ -828,14 +823,14 @@ static void InitFields(void)
   AddFixed("STOP", CPU68RS08, 0xae); AddFixed("WAIT", CPU68RS08, 0xaf);
   AddFixed("BGND", CPU68RS08, 0xbf);
 
-  RelOrders = (BaseOrder *) malloc(sizeof(BaseOrder) * RelOrderCnt); InstrZ = 0;
+  InstrZ = 0;
   AddRel("BRA" , CPU68RS08, 0x30); AddRel("BRN" , CPU68RS08, 0x00);
   AddRel("BCC" , CPU68RS08, 0x34); AddRel("BCS" , CPU68RS08, 0x35);
   AddRel("BHS" , CPU68RS08, 0x34); AddRel("BLO" , CPU68RS08, 0x35);
   AddRel("BNE" , CPU68RS08, 0x36); AddRel("BEQ" , CPU68RS08, 0x37);
   AddRel("BSR" , CPU68RS08, 0xad);
 
-  ALUOrders=(ALUOrder *) malloc(sizeof(ALUOrder) * ALUOrderCnt); InstrZ = 0;
+  InstrZ = 0;
   AddALU("ADC" , CPU68RS08, 0x09, MModImm | MModDir | MModIX  | MModX);
   AddALU("AND" , CPU68RS08, 0x04, MModImm | MModDir | MModIX  | MModX);
   AddALU("CMP" , CPU68RS08, 0x01, MModImm | MModDir | MModIX  | MModX);
@@ -845,7 +840,7 @@ static void InitFields(void)
   AddALU("JMP" , CPU68RS08, 0xbc, MModExt);
   AddALU("JSR" , CPU68RS08, 0xbd, MModExt);
 
-  RMWOrders = (RMWOrder *) malloc(sizeof(RMWOrder) * RMWOrderCnt); InstrZ = 0;
+  InstrZ = 0;
   AddRMW("ADD" , CPU68RS08, 0x0b, 0x60, MModImm | MModDir | MModTny           | MModIX | MModX );
   AddRMW("SUB" , CPU68RS08, 0x00, 0x70, MModImm | MModDir | MModTny           | MModIX | MModX );
   AddRMW("DEC" , CPU68RS08, 0x8a, 0x50,           MModDir | MModTny           | MModIX | MModX );
@@ -884,10 +879,10 @@ static void InitFields(void)
 static void DeinitFields(void)
 {
   DestroyInstTable(InstTable);
-  free(FixedOrders);
-  free(RelOrders);
-  free(ALUOrders);
-  free(RMWOrders);
+  order_array_free(FixedOrders);
+  order_array_free(RelOrders);
+  order_array_free(ALUOrders);
+  order_array_free(RMWOrders);
 }
 
 /*--------------------------------------------------------------------------*/

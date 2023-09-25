@@ -35,13 +35,6 @@
 #define REG_SP 0
 #define REG_LR 15
 
-#define FixedOrderCnt 7
-#define OneRegOrderCnt 32
-#define TwoRegOrderCnt 23
-#define UImm5OrderCnt 13
-#define LJmpOrderCnt 4
-#define CRegCnt 13
-
 typedef struct
 {
   Word Code;
@@ -208,7 +201,7 @@ static Boolean DecodeCReg(char *Asc, Word *Erg)
   char *endptr;
   int z;
 
-  for (z = 0; z < CRegCnt; z++)
+  for (z = 0; CRegs[z].Name; z++)
     if (!as_strcasecmp(Asc, CRegs[z].Name))
     {
       *Erg = CRegs[z].Code;
@@ -653,7 +646,7 @@ static void DecodeTrap(Word Index)
 
 static void AddFixed(const char *NName, Word NCode, Boolean NPriv)
 {
-  if (InstrZ >= FixedOrderCnt) exit(255);
+  order_array_rsv_end(FixedOrders, FixedOrder);
   FixedOrders[InstrZ].Code = NCode;
   FixedOrders[InstrZ].Priv = NPriv;
   AddInstTable(InstTable, NName, InstrZ++, DecodeFixed);
@@ -661,7 +654,7 @@ static void AddFixed(const char *NName, Word NCode, Boolean NPriv)
 
 static void AddOneReg(const char *NName, Word NCode, Boolean NPriv)
 {
-  if (InstrZ >= OneRegOrderCnt) exit(255);
+  order_array_rsv_end(OneRegOrders, FixedOrder);
   OneRegOrders[InstrZ].Code = NCode;
   OneRegOrders[InstrZ].Priv = NPriv;
   AddInstTable(InstTable, NName, InstrZ++, DecodeOneReg);
@@ -669,7 +662,7 @@ static void AddOneReg(const char *NName, Word NCode, Boolean NPriv)
 
 static void AddTwoReg(const char *NName, Word NCode, Boolean NPriv)
 {
-  if (InstrZ >= TwoRegOrderCnt) exit(255);
+  order_array_rsv_end(TwoRegOrders, FixedOrder);
   TwoRegOrders[InstrZ].Code = NCode;
   TwoRegOrders[InstrZ].Priv = NPriv;
   AddInstTable(InstTable, NName, InstrZ++, DecodeTwoReg);
@@ -677,16 +670,16 @@ static void AddTwoReg(const char *NName, Word NCode, Boolean NPriv)
 
 static void AddUImm5(const char *NName, Word NCode, Word NMin, Word NOfs)
 {
-   if (InstrZ >= UImm5OrderCnt) exit(255);
-   UImm5Orders[InstrZ].Code = NCode;
-   UImm5Orders[InstrZ].Min = NMin;
-   UImm5Orders[InstrZ].Ofs = NOfs;
-   AddInstTable(InstTable, NName, InstrZ++, DecodeUImm5);
+  order_array_rsv_end(UImm5Orders, ImmOrder);
+  UImm5Orders[InstrZ].Code = NCode;
+  UImm5Orders[InstrZ].Min = NMin;
+  UImm5Orders[InstrZ].Ofs = NOfs;
+  AddInstTable(InstTable, NName, InstrZ++, DecodeUImm5);
 }
 
 static void AddLJmp(const char *NName, Word NCode, Boolean NPriv)
 {
-  if (InstrZ >= LJmpOrderCnt) exit(255);
+  order_array_rsv_end(LJmpOrders, FixedOrder);
   LJmpOrders[InstrZ].Code = NCode;
   LJmpOrders[InstrZ].Priv = NPriv;
   AddInstTable(InstTable, NName, InstrZ++, DecodeLJmp);
@@ -694,7 +687,7 @@ static void AddLJmp(const char *NName, Word NCode, Boolean NPriv)
 
 static void AddCReg(const char *NName, Word NCode)
 {
-  if (InstrZ >= CRegCnt) exit(255);
+  order_array_rsv_end(CRegs, CReg);
   CRegs[InstrZ].Name = NName;
   CRegs[InstrZ++].Code = NCode;
 }
@@ -705,7 +698,7 @@ static void InitFields(void)
 
   AddInstTable(InstTable, "REG", 0, CodeREG);
 
-  InstrZ = 0; FixedOrders = (FixedOrder *) malloc(sizeof(FixedOrder) * FixedOrderCnt);
+  InstrZ = 0;
   AddFixed("BKPT" , 0x0000, False);
   AddFixed("DOZE" , 0x0006, True );
   AddFixed("RFI"  , 0x0003, True );
@@ -714,7 +707,7 @@ static void InitFields(void)
   AddFixed("SYNC" , 0x0001, False);
   AddFixed("WAIT" , 0x0005, True );
 
-  InstrZ = 0; OneRegOrders = (FixedOrder *) malloc(sizeof(FixedOrder) * OneRegOrderCnt);
+  InstrZ = 0;
   AddOneReg("ABS"   , 0x01e0, False);  AddOneReg("ASRC" , 0x3a00, False);
   AddOneReg("BREV"  , 0x00f0, False);  AddOneReg("CLRF" , 0x01d0, False);
   AddOneReg("CLRT"  , 0x01c0, False);  AddOneReg("DECF" , 0x0090, False);
@@ -732,7 +725,7 @@ static void InitFields(void)
   AddOneReg("XTRB2" , 0x0110, False);  AddOneReg("XTRB3", 0x0100, False);
   AddOneReg("ZEXTB" , 0x0140, False);  AddOneReg("ZEXTH", 0x0160, False);
 
-  InstrZ = 0; TwoRegOrders = (FixedOrder *) malloc(sizeof(FixedOrder) * TwoRegOrderCnt);
+  InstrZ = 0;
   AddTwoReg("ADDC" , 0x0600, False);  AddTwoReg("ADDU" , 0x1c00, False);
   AddTwoReg("AND"  , 0x1600, False);  AddTwoReg("ANDN" , 0x1f00, False);
   AddTwoReg("ASR"  , 0x1a00, False);  AddTwoReg("BGENR", 0x1300, False);
@@ -746,7 +739,7 @@ static void InitFields(void)
   AddTwoReg("SUBU" , 0x0500, False);  AddTwoReg("TST"  , 0x0e00, False);
   AddTwoReg("XOR"  , 0x1700, False);
 
-  InstrZ = 0; UImm5Orders = (ImmOrder *) malloc(sizeof(ImmOrder) * UImm5OrderCnt);
+  InstrZ = 0;
   AddUImm5("ADDI"  , 0x2000, 0, 1);  AddUImm5("ANDI"  , 0x2e00, 0, 0);
   AddUImm5("ASRI"  , 0x3a00, 1, 0);  AddUImm5("BCLRI" , 0x3000, 0, 0);
   AddUImm5("BSETI" , 0x3400, 0, 0);  AddUImm5("BTSTI" , 0x3600, 0, 0);
@@ -755,18 +748,18 @@ static void InitFields(void)
   AddUImm5("ROTLI" , 0x3800, 1, 0);  AddUImm5("RSUBI" , 0x2800, 0, 0);
   AddUImm5("SUBI"  , 0x2400, 0, 1);
 
-  InstrZ = 0; LJmpOrders = (FixedOrder *) malloc(sizeof(FixedOrder) * LJmpOrderCnt);
+  InstrZ = 0;
   AddLJmp("BF"   , 0xe800, False);  AddLJmp("BR"   , 0xf000, False);
   AddLJmp("BSR"  , 0xf800, False);  AddLJmp("BT"   , 0xe000, False);
 
-  InstrZ = 0; CRegs = (CReg *) malloc(sizeof(CReg) * CRegCnt);
+  InstrZ = 0;
   AddCReg("PSR" , 0); AddCReg("VBR" , 1);
   AddCReg("EPSR", 2); AddCReg("FPSR", 3);
   AddCReg("EPC" , 4); AddCReg("FPC",  5);
   AddCReg("SS0",  6); AddCReg("SS1",  7);
   AddCReg("SS2",  8); AddCReg("SS3",  9);
   AddCReg("SS4", 10); AddCReg("GCR", 11);
-  AddCReg("GSR", 12);
+  AddCReg("GSR", 12); AddCReg(NULL , 0);
 
   AddInstTable(InstTable, "BGENI" , 0, DecodeBGENI);
   AddInstTable(InstTable, "BMASKI", 0, DecodeBMASKI);
@@ -795,12 +788,12 @@ static void InitFields(void)
 static void DeinitFields(void)
 {
   DestroyInstTable(InstTable);
-  free(FixedOrders);
-  free(OneRegOrders);
-  free(TwoRegOrders);
-  free(UImm5Orders);
-  free(LJmpOrders);
-  free(CRegs);
+  order_array_free(FixedOrders);
+  order_array_free(OneRegOrders);
+  order_array_free(TwoRegOrders);
+  order_array_free(UImm5Orders);
+  order_array_free(LJmpOrders);
+  order_array_free(CRegs);
 }
 
 /*--------------------------------------------------------------------------*/

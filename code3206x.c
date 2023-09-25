@@ -93,12 +93,6 @@ static const char UnitNames[UnitCnt][3] =
 #define MaxParCnt 8
 #define FirstUnit L1
 
-#define LinAddCnt 6
-#define CmpCnt 5
-#define MemCnt 8
-#define MulCnt 20
-#define CtrlCnt 13
-
 enum
 {
   ModNone = -1,
@@ -336,7 +330,7 @@ static Boolean DecodeCtrlReg(char *Asc, LongWord *Erg, Boolean Write)
 {
   int z;
 
-  for (z = 0; z < CtrlCnt; z++)
+  for (z = 0; CtrlRegs[z].Name; z++)
     if (!as_strcasecmp(Asc, CtrlRegs[z].Name))
     {
       *Erg = CtrlRegs[z].Code;
@@ -2797,14 +2791,14 @@ static void MakeCode_3206X(void)
 
 static void AddLinAdd(const char *NName, LongInt NCode)
 {
-  if (InstrZ >= LinAddCnt) exit(255);
+  order_array_rsv_end(LinAddOrders, FixedOrder);
   LinAddOrders[InstrZ].Code = NCode;
   AddInstTable(InstTable, NName, InstrZ++, DecodeLinAdd);
 }
 
 static void AddCmp(const char *NName, LongInt NCode)
 {
-  if (InstrZ >= CmpCnt) exit(255);
+  order_array_rsv_end(CmpOrders, CmpOrder);
   CmpOrders[InstrZ].WithImm = NName[strlen(NName) - 1] != 'U';
   CmpOrders[InstrZ].Code = NCode;
   AddInstTable(InstTable, NName, InstrZ++, DecodeCmp);
@@ -2812,7 +2806,7 @@ static void AddCmp(const char *NName, LongInt NCode)
 
 static void AddMem(const char *NName, LongInt NCode, LongInt NScale)
 {
-  if (InstrZ >= MemCnt) exit(255);
+  order_array_rsv_end(MemOrders, MemOrder);
   MemOrders[InstrZ].Code = NCode;
   MemOrders[InstrZ].Scale = NScale;
   AddInstTable(InstTable,NName, InstrZ++, DecodeMemO);
@@ -2821,7 +2815,7 @@ static void AddMem(const char *NName, LongInt NCode, LongInt NScale)
 static void AddMul(const char *NName, LongInt NCode,
                    Boolean NDSign, Boolean NSSign1, Boolean NSSign2, Boolean NMay)
 {
-  if (InstrZ >= MulCnt) exit(255);
+  order_array_rsv_end(MulOrders, MulOrder);
   MulOrders[InstrZ].Code = NCode;
   MulOrders[InstrZ].DSign = NDSign;
   MulOrders[InstrZ].SSign1 = NSSign1;
@@ -2833,7 +2827,7 @@ static void AddMul(const char *NName, LongInt NCode,
 static void AddCtrl(const char *NName, LongInt NCode,
                     Boolean NWr, Boolean NRd)
 {
-  if (InstrZ >= CtrlCnt) exit(255);
+  order_array_rsv_end(CtrlRegs, CtrlReg);
   CtrlRegs[InstrZ].Name = NName;
   CtrlRegs[InstrZ].Code = NCode;
   CtrlRegs[InstrZ].Wr = NWr;
@@ -2883,20 +2877,20 @@ static void InitFields(void)
   AddInstTable(InstTable, "SSUB", 0, DecodeSSUB);
   AddInstTable(InstTable, "B", 0, DecodeB);
 
-  LinAddOrders = (FixedOrder *) malloc(sizeof(FixedOrder)*LinAddCnt); InstrZ = 0;
+  InstrZ = 0;
   AddLinAdd("ADDAB", 0x30); AddLinAdd("ADDAH", 0x34); AddLinAdd("ADDAW", 0x38);
   AddLinAdd("SUBAB", 0x31); AddLinAdd("SUBAH", 0x35); AddLinAdd("SUBAW", 0x39);
 
-  CmpOrders = (CmpOrder *) malloc(sizeof(CmpOrder)*CmpCnt); InstrZ = 0;
+  InstrZ = 0;
   AddCmp("CMPEQ", 0x50); AddCmp("CMPGT", 0x44); AddCmp("CMPGTU", 0x4c);
   AddCmp("CMPLT", 0x54); AddCmp("CMPLTU", 0x5c);
 
-  MemOrders = (MemOrder *) malloc(sizeof(MemOrder)*MemCnt); InstrZ = 0;
+  InstrZ = 0;
   AddMem("LDB", 2, 1);  AddMem("LDH", 4, 2);  AddMem("LDW", 6, 4);
   AddMem("LDBU", 1, 1); AddMem("LDHU", 0, 2); AddMem("STB", 3, 1);
   AddMem("STH", 5, 2);  AddMem("STW", 7, 4);
 
-  MulOrders = (MulOrder *) malloc(sizeof(MulOrder)*MulCnt); InstrZ = 0;
+  InstrZ = 0;
   AddMul("MPY"    , 0x19, True , True , True , True );
   AddMul("MPYU"   , 0x1f, False, False, False, False);
   AddMul("MPYUS"  , 0x1d, True , False, True , False);
@@ -2918,7 +2912,7 @@ static void InitFields(void)
   AddMul("SMPYLH" , 0x12, True , True , True , False);
   AddMul("SMPYH"  , 0x02, True , True , True , False);
 
-  CtrlRegs = (CtrlReg *) malloc(sizeof(CtrlReg)*CtrlCnt); InstrZ = 0;
+  InstrZ = 0;
   AddCtrl("AMR"    ,  0, True , True );
   AddCtrl("CSR"    ,  1, True , True );
   AddCtrl("IFR"    ,  2, False, True );
@@ -2932,16 +2926,17 @@ static void InitFields(void)
   AddCtrl("OUT"    ,  9, True , True );
   AddCtrl("PCE1"   , 16, False, True );
   AddCtrl("PDATA_O", 15, True , True );
+  AddCtrl(NULL     ,  0, False, False);
 }
 
 static void DeinitFields(void)
 {
   DestroyInstTable(InstTable);
-  free(LinAddOrders);
-  free(CmpOrders);
-  free(MemOrders);
-  free(MulOrders);
-  free(CtrlRegs);
+  order_array_free(LinAddOrders);
+  order_array_free(CmpOrders);
+  order_array_free(MemOrders);
+  order_array_free(MulOrders);
+  order_array_free(CtrlRegs);
 }
 
 /*------------------------------------------------------------------------*/

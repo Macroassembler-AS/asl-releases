@@ -40,10 +40,6 @@ typedef struct
 } ImmOrder;
 
 
-#define AdrShiftOrderCnt 5
-#define ImmOrderCnt 3
-
-
 static Word AdrMode;
 static Boolean AdrOK;
 
@@ -381,7 +377,7 @@ static void AddAdr(const char *NName, Word NCode, Word NMust1)
 
 static void AddAdrShift(const char *NName, Word NCode, Word NAllow)
 {
-  if (InstrZ >= AdrShiftOrderCnt) exit(255);
+  order_array_rsv_end(AdrShiftOrders, AdrShiftOrder);
   AdrShiftOrders[InstrZ].Code = NCode;
   AdrShiftOrders[InstrZ].AllowShifts = NAllow;
   AddInstTable(InstTable, NName, InstrZ++, DecodeAdrShift);
@@ -389,7 +385,7 @@ static void AddAdrShift(const char *NName, Word NCode, Word NAllow)
 
 static void AddImm(const char *NName, Word NCode, Integer NMin, Integer NMax, Word NMask)
 {
-  if (InstrZ >= ImmOrderCnt) exit(255);
+  order_array_rsv_end(ImmOrders, ImmOrder);
   ImmOrders[InstrZ].Code = NCode;
   ImmOrders[InstrZ].Min = NMin;
   ImmOrders[InstrZ].Max = NMax;
@@ -437,14 +433,14 @@ static void InitFields(void)
   AddAdr("XOR"   , 0x7800, False);  AddAdr("ZALH"  , 0x6500, False);
   AddAdr("ZALS"  , 0x6600, False);
 
-  AdrShiftOrders = (AdrShiftOrder *) malloc(sizeof(AdrShiftOrder) * AdrShiftOrderCnt); InstrZ = 0;
+  InstrZ = 0;
   AddAdrShift("ADD"   , 0x0000, 0xffff);
   AddAdrShift("LAC"   , 0x2000, 0xffff);
   AddAdrShift("SACH"  , 0x5800, 0x0013);
   AddAdrShift("SACL"  , 0x5000, 0x0001);
   AddAdrShift("SUB"   , 0x1000, 0xffff);
 
-  ImmOrders = (ImmOrder *) malloc(sizeof(ImmOrder)*ImmOrderCnt); InstrZ = 0;
+  InstrZ = 0;
   AddImm("LACK", 0x7e00,     0,  255,   0xff);
   AddImm("LDPK", 0x6e00,     0,    1,    0x1);
   AddImm("MPYK", 0x8000, -4096, 4095, 0x1fff);
@@ -454,8 +450,8 @@ static void DeinitFields(void)
 {
   DestroyInstTable(InstTable);
 
-  free(AdrShiftOrders);
-  free(ImmOrders);
+  order_array_free(AdrShiftOrders);
+  order_array_free(ImmOrders);
 }
 
 /*----------------------------------------------------------------------------*/

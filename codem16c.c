@@ -47,12 +47,6 @@
 #define ModSPRel 7
 #define MModSPRel (1 << ModSPRel)
 
-#define FixedOrderCnt 8
-#define Gen2OrderCnt 6
-#define DivOrderCnt 3
-#define ConditionCnt 18
-#define BCDOrderCnt 4
-
 typedef struct
 {
   Byte Code1,Code2,Code3;
@@ -2491,7 +2485,7 @@ static void AddGen1(const char *NName, Word NCode)
 
 static void AddGen2(const char *NName, Byte NCode1, Byte NCode2, Byte NCode3)
 {
-  if (InstrZ >= Gen2OrderCnt) exit(255);
+  order_array_rsv_end(Gen2Orders, Gen2Order);
   Gen2Orders[InstrZ].Code1 = NCode1;
   Gen2Orders[InstrZ].Code2 = NCode2;
   Gen2Orders[InstrZ].Code3 = NCode3;
@@ -2500,7 +2494,7 @@ static void AddGen2(const char *NName, Byte NCode1, Byte NCode2, Byte NCode3)
 
 static void AddDiv(const char *NName, Byte NCode1, Byte NCode2, Byte NCode3)
 {
-  if (InstrZ >= DivOrderCnt) exit(255);
+  order_array_rsv_end(DivOrders, Gen2Order);
   DivOrders[InstrZ].Code1 = NCode1;
   DivOrders[InstrZ].Code2 = NCode2;
   DivOrders[InstrZ].Code3 = NCode3;
@@ -2599,7 +2593,7 @@ static void InitFields(void)
   AddGen1("ROLC", 0x76a0);
   AddGen1("RORC", 0x76b0);
 
-  InstrZ = 0; Gen2Orders = (Gen2Order *) malloc(sizeof(Gen2Order) * Gen2OrderCnt);
+  InstrZ = 0;
   AddGen2("ADC" , 0xb0, 0x76, 0x60);
   AddGen2("SBB" , 0xb8, 0x76, 0x70);
   AddGen2("TST" , 0x80, 0x76, 0x00);
@@ -2607,7 +2601,7 @@ static void InitFields(void)
   AddGen2("MUL" , 0x78, 0x7c, 0x50);
   AddGen2("MULU", 0x70, 0x7c, 0x40);
 
-  InstrZ=0; DivOrders=(Gen2Order *) malloc(sizeof(Gen2Order)*DivOrderCnt);
+  InstrZ = 0;
   AddDiv("DIV" ,0xe1,0x76,0xd0);
   AddDiv("DIVU",0xe0,0x76,0xc0);
   AddDiv("DIVX",0xe3,0x76,0x90);
@@ -2645,8 +2639,8 @@ static void InitFields(void)
 static void DeinitFields(void)
 {
   free(Format);
-  free(Gen2Orders);
-  free(DivOrders);
+  order_array_free(Gen2Orders);
+  order_array_free(DivOrders);
 
   DestroyInstTable(InstTable);
 }

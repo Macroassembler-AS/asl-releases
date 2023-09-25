@@ -30,8 +30,6 @@ typedef struct
 } ConstOrder;
 
 
-#define ConstOrderCount 12
-
 static CPUVar CPU4500;
 
 static ConstOrder *ConstOrders;
@@ -224,7 +222,7 @@ static void AddFixed(const char *NName, Word NCode)
 
 static void AddConst(const char *NName, Word NCode, IntType NMax)
 {
-  if (InstrZ >= ConstOrderCount) exit(255);
+  order_array_rsv_end(ConstOrders, ConstOrder);
   ConstOrders[InstrZ].Code = NCode;
   ConstOrders[InstrZ].Max = NMax;
   AddInstTable(InstTable, NName, InstrZ++, DecodeConst);
@@ -275,7 +273,7 @@ static void InitFields(void)
   AddFixed("TW2A" , 0x20f);  AddFixed("TW3A" , 0x210);  AddFixed("TYA"  , 0x00c);
   AddFixed("WRST" , 0x2a0);
 
-  ConstOrders = (ConstOrder *) malloc(sizeof(ConstOrder) * ConstOrderCount); InstrZ = 0;
+  InstrZ = 0;
   AddConst("A"   , 0x060, UInt4);  AddConst("LA"  , 0x070, UInt4);
   AddConst("LZ"  , 0x048, UInt2);  AddConst("RB"  , 0x04c, UInt2);
   AddConst("SB"  , 0x05c, UInt2);  AddConst("SZB" , 0x020, UInt2);
@@ -288,7 +286,7 @@ static void DeinitFields(void)
 {
   DestroyInstTable(InstTable);
 
-  free(ConstOrders);
+  order_array_free(ConstOrders);
 }
 
 /*---------------------------------------------------------------------------*/

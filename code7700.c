@@ -85,10 +85,6 @@ enum
 #define MModIdxS8    (1l << ModIdxS8)
 #define MModIndS8    (1l << ModIndS8)
 
-#define RelOrderCnt 13
-
-#define XYOrderCnt 6
-
 #define PushRegCnt 10
 static const char PushRegNames[PushRegCnt][4] =
 {
@@ -1232,7 +1228,7 @@ static void AddFixed(const char *NName, Word NCode, Byte NAllowed)
 
 static void AddRel(const char *NName, Word NCode, ShortInt NDisp8, ShortInt NDisp16)
 {
-  if (InstrZ >= RelOrderCnt) exit(255);
+  order_array_rsv_end(RelOrders, RelOrder);
   RelOrders[InstrZ].Code = NCode;
   RelOrders[InstrZ].Disp8 = NDisp8;
   RelOrders[InstrZ].Disp16 = NDisp16;
@@ -1263,7 +1259,7 @@ static void AddXY(const char *NName, Byte NCodeImm, Byte NCodeAbs8, Byte NCodeAb
                   Byte NCodeIdxX8, Byte NCodeIdxX16, Byte NCodeIdxY8,
                   Byte NCodeIdxY16)
 {
-  if (InstrZ >= XYOrderCnt) exit(255);
+  order_array_rsv_end(XYOrders, XYOrder);
   XYOrders[InstrZ].CodeImm = NCodeImm;
   XYOrders[InstrZ].CodeAbs8 = NCodeAbs8;
   XYOrders[InstrZ].CodeAbs16 = NCodeAbs16;
@@ -1355,7 +1351,7 @@ static void InitFields(void)
   AddFixed("DEA", (MomCPU >= CPUM7700) ? 0x001a : 0x003a, 15);
   AddFixed("INA", (MomCPU >= CPUM7700) ? 0x003a : 0x001a, 15);
 
-  RelOrders = (RelOrder *) malloc(sizeof(RelOrder)*RelOrderCnt); InstrZ = 0;
+  InstrZ = 0;
   AddRel("BCC" , 0x0090,  2, -1);
   AddRel("BLT" , 0x0090,  2, -1);
   AddRel("BCS" , 0x00b0,  2, -1);
@@ -1394,7 +1390,7 @@ static void InitFields(void)
   AddImm8("RMPA", 0x89e2, 8);
   AddImm8("COP", 0x0002, 1);
 
-  XYOrders = (XYOrder *) malloc(sizeof(XYOrder)*XYOrderCnt); InstrZ = 0;
+  InstrZ = 0;
   AddXY("CPX", 0xe0, 0xe4, 0xec, 0xff, 0xff, 0xff, 0xff);
   AddXY("CPY", 0xc0, 0xc4, 0xcc, 0xff, 0xff, 0xff, 0xff);
   AddXY("LDX", 0xa2, 0xa6, 0xae, 0xff, 0xff, 0xb6, 0xbe);
@@ -1412,8 +1408,8 @@ static void DeinitFields(void)
 {
   DestroyInstTable(InstTable);
 
-  free(RelOrders);
-  free(XYOrders);
+  order_array_free(RelOrders);
+  order_array_free(XYOrders);
 }
 
 static void MakeCode_7700(void)

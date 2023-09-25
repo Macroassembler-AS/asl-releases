@@ -26,8 +26,6 @@
 
 /*---------------------------------------------------------------------------*/
 
-#define RegCnt 69
-
 typedef struct
 {
   const char *Name;
@@ -139,7 +137,7 @@ static Boolean DecodeReg(char *Name, LongWord *Result)
   Integer Mask = 1 << (MomCPU - CPU53C810);
   PReg Reg;
 
-  for (z = 0, Reg = Regs; z < RegCnt; z++, Reg++)
+  for (z = 0, Reg = Regs; Reg->Name; z++, Reg++)
     if (!(as_strcasecmp(Reg->Name, Name)) && (Mask & Reg->Mask))
     {
       *Result = Reg->Code;
@@ -975,7 +973,7 @@ static void DecodeWAIT(Word Index)
 
 static void AddReg(const char *NName, LargeWord Adr, Word Mask)
 {
-  if (InstrZ >= RegCnt) exit(255);
+  order_array_rsv_end(Regs, TReg);
   Regs[InstrZ].Name = NName;
   Regs[InstrZ].Code = Adr;
   Regs[InstrZ++].Mask = Mask;
@@ -1001,7 +999,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "SELECT"  , 1,    DecodeSELECT);
   AddInstTable(InstTable, "WAIT"    , 0,    DecodeWAIT);
 
-  Regs = (PReg) malloc(sizeof(TReg) * RegCnt); InstrZ = 0;
+  InstrZ = 0;
   AddReg("SCNTL0"   , 0x00, M_53C810 + M_53C815 + M_53C825 + M_53C860 + M_53C875 + M_53C895);
   AddReg("SCNTL1"   , 0x01, M_53C810 + M_53C815 + M_53C825 + M_53C860 + M_53C875 + M_53C895);
   AddReg("SCNTL2"   , 0x02, M_53C810 + M_53C815 + M_53C825 + M_53C860 + M_53C875 + M_53C895);
@@ -1071,12 +1069,13 @@ static void InitFields(void)
   AddReg("SCRATCHH" , 0x74,                                             M_53C875 + M_53C895);
   AddReg("SCRATCHI" , 0x78,                                             M_53C875 + M_53C895);
   AddReg("SCRATCHJ" , 0x7c,                                             M_53C875 + M_53C895);
+  AddReg(NULL       , 0x00, 0);
 }
 
 static void DeinitFields(void)
 {
   DestroyInstTable(InstTable);
-  free(Regs);
+  order_array_free(Regs);
 }
 
 /*---------------------------------------------------------------------------*/

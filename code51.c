@@ -21,6 +21,7 @@
 #include "asmallg.h"
 #include "onoff_common.h"
 #include "asmrelocs.h"
+#include "asmlist.h"
 #include "codepseudo.h"
 #include "intpseudo.h"
 #include "asmitree.h"
@@ -70,11 +71,6 @@ enum
 
 #define MMod51 (MModReg | MModIReg8 | MModImm | MModAcc | MModDir8)
 #define MMod251 (MModIReg | MModInd | MModImmEx | MModDir16)
-
-#define AccOrderCnt 6
-#define FixedOrderCnt 5
-#define CondOrderCnt 13
-#define BCondOrderCnt 3
 
 #define AccReg 11
 #define DPXValue 14
@@ -2417,7 +2413,6 @@ static void DecodeSFR(Word Index)
       else
         as_snprintf(ListLine, STRINGSIZE, "=%~02.*u%s",
                     ListRadixBase, (unsigned)AdrByte, GetIntConstIntelSuffix(ListRadixBase));
-      LimitListLine();
       PopLocHandle();
     }
   }
@@ -2438,7 +2433,6 @@ static void DecodeBIT(Word Index)
       PopLocHandle();
       *ListLine = '=';
       DissectBit_251(ListLine + 1, STRINGSIZE - 1, AdrLong);
-      LimitListLine();
     }
   }
   else
@@ -2450,7 +2444,6 @@ static void DecodeBIT(Word Index)
       PopLocHandle();
       as_snprintf(ListLine, STRINGSIZE, "=%~02.*u%s",
                   ListRadixBase, (unsigned)AdrLong, GetIntConstIntelSuffix(ListRadixBase));
-      LimitListLine();
     }
   }
 }
@@ -2468,7 +2461,7 @@ static void DecodePORT(Word Index)
 
 static void AddFixed(const char *NName, Word NCode, CPUVar NCPU)
 {
-  if (InstrZ >= FixedOrderCnt) exit(255);
+  order_array_rsv_end(FixedOrders, FixedOrder);
   FixedOrders[InstrZ].Code = NCode;
   FixedOrders[InstrZ].MinCPU = NCPU;
   AddInstTable(InstTable, NName, InstrZ++, DecodeFixed);
@@ -2476,7 +2469,7 @@ static void AddFixed(const char *NName, Word NCode, CPUVar NCPU)
 
 static void AddAcc(const char *NName, Word NCode, CPUVar NCPU)
 {
-  if (InstrZ >= AccOrderCnt) exit(255);
+  order_array_rsv_end(AccOrders, FixedOrder);
   AccOrders[InstrZ].Code = NCode;
   AccOrders[InstrZ].MinCPU = NCPU;
   AddInstTable(InstTable, NName, InstrZ++, DecodeAcc);
@@ -2484,7 +2477,7 @@ static void AddAcc(const char *NName, Word NCode, CPUVar NCPU)
 
 static void AddCond(const char *NName, Word NCode, CPUVar NCPU)
 {
-  if (InstrZ >= CondOrderCnt) exit(255);
+  order_array_rsv_end(CondOrders, FixedOrder);
   CondOrders[InstrZ].Code = NCode;
   CondOrders[InstrZ].MinCPU = NCPU;
   AddInstTable(InstTable, NName, InstrZ++, DecodeCond);
@@ -2492,7 +2485,7 @@ static void AddCond(const char *NName, Word NCode, CPUVar NCPU)
 
 static void AddBCond(const char *NName, Word NCode, CPUVar NCPU)
 {
-  if (InstrZ >= BCondOrderCnt) exit(255);
+  order_array_rsv_end(BCondOrders, FixedOrder);
   BCondOrders[InstrZ].Code = NCode;
   BCondOrders[InstrZ].MinCPU = NCPU;
   AddInstTable(InstTable, NName, InstrZ++, DecodeBCond);
@@ -2545,7 +2538,6 @@ static void InitFields(void)
   AddInstTable(InstTable, "BIT"  , 0, DecodeBIT);
   AddInstTable(InstTable, "PORT" , 0, DecodePORT);
 
-  FixedOrders = (FixedOrder *) malloc(FixedOrderCnt*sizeof(FixedOrder));
   InstrZ = 0;
   AddFixed("NOP" , 0x0000, CPU87C750);
   AddFixed("RET" , 0x0022, CPU87C750);
@@ -2553,7 +2545,6 @@ static void InitFields(void)
   AddFixed("ERET", 0x01aa, CPU80251);
   AddFixed("TRAP", 0x01b9, CPU80251);
 
-  AccOrders = (FixedOrder *) malloc(AccOrderCnt*sizeof(FixedOrder));
   InstrZ = 0;
   AddAcc("DA"  , 0x00d4, CPU87C750);
   AddAcc("RL"  , 0x0023, CPU87C750);
@@ -2562,7 +2553,6 @@ static void InitFields(void)
   AddAcc("RRC" , 0x0013, CPU87C750);
   AddAcc("SWAP", 0x00c4, CPU87C750);
 
-  CondOrders = (FixedOrder *) malloc(CondOrderCnt*sizeof(FixedOrder));
   InstrZ = 0;
   AddCond("JC"  , 0x0040, CPU87C750);
   AddCond("JE"  , 0x0168, CPU80251);
@@ -2578,7 +2568,6 @@ static void InitFields(void)
   AddCond("JZ"  , 0x0060, CPU87C750);
   AddCond("SJMP", 0x0080, CPU87C750);
 
-  BCondOrders = (FixedOrder *) malloc(BCondOrderCnt*sizeof(FixedOrder));
   InstrZ = 0;
   AddBCond("JB" , 0x0020, CPU87C750);
   AddBCond("JBC", 0x0010, CPU87C750);
@@ -2590,10 +2579,10 @@ static void InitFields(void)
 static void DeinitFields(void)
 {
   DestroyInstTable(InstTable);
-  free(FixedOrders);
-  free(AccOrders);
-  free(CondOrders);
-  free(BCondOrders);
+  order_array_free(FixedOrders);
+  order_array_free(AccOrders);
+  order_array_free(CondOrders);
+  order_array_free(BCondOrders);
 }
 
 /*-------------------------------------------------------------------------*/

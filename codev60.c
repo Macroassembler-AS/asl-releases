@@ -38,8 +38,6 @@
 #define CODE_FLAG_OP2_IMM (1 << 14)
 #define CODE_FLAG_LIM32 (1 << 13)
 
-#define ConditionCnt 20
-
 typedef enum
 {
   ModReg = 0,
@@ -216,7 +214,7 @@ static Boolean DecodeCondition(const char *p_arg, LongWord *p_result)
 {
   int z;
 
-  for (z = 0; z < ConditionCnt; z++)
+  for (z = 0; Conditions[z].name[0]; z++)
     if (!as_strcasecmp(p_arg, Conditions[z].name))
     {
       *p_result = Conditions[z].code;
@@ -2617,16 +2615,18 @@ static void AddCondition(const char *p_name, Word code)
 {
   char name[10];
 
-  if (InstrZ >= ConditionCnt)
-    exit(255);
+  order_array_rsv_end(Conditions, tCondition);
   strmaxcpy(Conditions[InstrZ].name, p_name, sizeof(Conditions[InstrZ].name));
   Conditions[InstrZ].code = code;
   InstrZ++;
 
-  as_snprintf(name, sizeof(name), "B%s", p_name);
-  AddInstTable(InstTable, name, 0x70 | code, Decode_4);
-  as_snprintf(name, sizeof(name), "DB%s", p_name);
-  AddInstTable(InstTable, name, 0xc6 | (code & 1) | ((code << 7) & 0x0700), Decode_6);
+  if (*p_name)
+  {
+    as_snprintf(name, sizeof(name), "B%s", p_name);
+    AddInstTable(InstTable, name, 0x70 | code, Decode_4);
+    as_snprintf(name, sizeof(name), "DB%s", p_name);
+    AddInstTable(InstTable, name, 0xc6 | (code & 1) | ((code << 7) & 0x0700), Decode_6);
+  }
 }
 
 static void InitFields(void)
@@ -2724,7 +2724,7 @@ static void InitFields(void)
 
   AddInstTable(InstTable, "MOV"    , 0x00, DecodeMOV);
 
-  Conditions = (tCondition*) calloc(sizeof(*Conditions), ConditionCnt); InstrZ = 0;
+  InstrZ = 0;
   AddCondition("GT", 0xf);
   AddCondition("GE", 0xd);
   AddCondition("LT", 0xc);
@@ -2743,6 +2743,7 @@ static void InitFields(void)
   AddCondition("NC", 0x3);
   AddCondition("Z" , 0x4);
   AddCondition("NZ", 0x5);
+  AddCondition(""  , 0);
   AddInstTable(InstTable, "BR", 0x7a, Decode_4);
   AddInstTable(InstTable, "DBR", 0x05c6, Decode_6);
   AddInstTable(InstTable, "TB", 0x05c7, Decode_6);
@@ -2814,7 +2815,7 @@ static void InitFields(void)
 
 static void DeinitFields(void)
 {
-  free(Conditions);
+  order_array_free(Conditions);
   DestroyInstTable(InstTable);
 }
 

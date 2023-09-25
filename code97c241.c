@@ -45,10 +45,6 @@ typedef struct
 } GAOrder;
 
 
-#define ConditionCount 20
-#define RMWOrderCount 14
-
-
 static CPUVar CPU97C241;
 
 static int OpSize, OpSize2;
@@ -900,7 +896,7 @@ static Boolean DecodeCondition(const char *pAsc, Word *pCondition)
 {
   int z;
 
-  for (z = 0; z < ConditionCount; z++)
+  for (z = 0; Conditions[z]; z++)
     if (!as_strcasecmp(pAsc, Conditions[z]))
     {
       *pCondition = z;
@@ -2288,10 +2284,16 @@ static void AddFixed(const char *NName, Word NCode)
 
 static void AddRMW(const char *NName, Byte NCode, Byte NMask)
 {
-  if (InstrZ >= RMWOrderCount) exit(255);
+  order_array_rsv_end(RMWOrders, RMWOrder);
   RMWOrders[InstrZ].Mask = NMask;
   RMWOrders[InstrZ].Code = NCode;
   AddInstTable(InstTable, NName, InstrZ++, DecodeRMW);
+}
+
+static void AddCondition(const char *NName)
+{
+  order_array_rsv_end(Conditions, const char *);
+  Conditions[InstrZ++] = NName;
 }
 
 static void AddGAEq(const char *NName, Word NCode)
@@ -2356,7 +2358,7 @@ static void InitFields(void)
   AddFixed("SZF" , 0x7f8b);
   AddFixed("UNLK", 0x7fa2);
 
-  RMWOrders = (RMWOrder *) malloc(sizeof(RMWOrder) * RMWOrderCount); InstrZ = 0;
+  InstrZ = 0;
   AddRMW("CALL" , 0x35, 0x36);
   AddRMW("CLR"  , 0x2b, 0x17);
   AddRMW("CPL"  , 0x28, 0x17);
@@ -2442,25 +2444,26 @@ static void InitFields(void)
   AddInstTable(InstTable, "CPSN", 1, DecodeString);
   AddInstTable(InstTable, "LDS" , 3, DecodeString);
 
-  Conditions = (const char **) malloc(sizeof(char *)*ConditionCount); InstrZ = 0;
-  Conditions[InstrZ++] = "C";   Conditions[InstrZ++] = "NC";
-  Conditions[InstrZ++] = "Z";   Conditions[InstrZ++] = "NZ";
-  Conditions[InstrZ++] = "OV";  Conditions[InstrZ++] = "NOV";
-  Conditions[InstrZ++] = "MI";  Conditions[InstrZ++] = "PL";
-  Conditions[InstrZ++] = "LE";  Conditions[InstrZ++] = "GT";
-  Conditions[InstrZ++] = "LT";  Conditions[InstrZ++] = "GE";
-  Conditions[InstrZ++] = "ULE"; Conditions[InstrZ++] = "UGT";
-  Conditions[InstrZ++] = "N";   Conditions[InstrZ++] = "A";
-  Conditions[InstrZ++] = "ULT"; Conditions[InstrZ++] = "UGE";
-  Conditions[InstrZ++] = "EQ";  Conditions[InstrZ++] = "NE";
+  InstrZ = 0;
+  AddCondition("C");   AddCondition("NC");
+  AddCondition("Z");   AddCondition("NZ");
+  AddCondition("OV");  AddCondition("NOV");
+  AddCondition("MI");  AddCondition("PL");
+  AddCondition("LE");  AddCondition("GT");
+  AddCondition("LT");  AddCondition("GE");
+  AddCondition("ULE"); AddCondition("UGT");
+  AddCondition("N");   AddCondition("A");
+  AddCondition("ULT"); AddCondition("UGE");
+  AddCondition("EQ");  AddCondition("NE");
+  AddCondition(NULL);
 }
 
 static void DeinitFields(void)
 {
   DestroyInstTable(InstTable);
 
-  free(RMWOrders);
-  free(Conditions);
+  order_array_free(RMWOrders);
+  order_array_free(Conditions);
 }
 
 static Boolean DecodeAttrPart_97C241(void)

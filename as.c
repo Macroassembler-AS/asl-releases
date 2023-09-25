@@ -3590,12 +3590,14 @@ static as_cmd_result_t CMD_ListRadix(Boolean Negate, const char *Arg)
   if (Negate)
   {
     ListRadixBase = 16;
+    ListPCZeroPad = False;
     return e_cmd_ok;
   }
   NewListRadixBase = ConstLongInt(Arg, &OK, 10);
   if (!OK || (NewListRadixBase < 2) || (NewListRadixBase > 36))
     return e_cmd_err;
   ListRadixBase = NewListRadixBase;
+  ListPCZeroPad = (*Arg == '0');
   return e_cmd_arg;
 }
 
@@ -4478,6 +4480,7 @@ int main(int argc, char **argv)
   GNUErrors = False;
   MaxErrors = 0;
   ListRadixBase = 16;
+  ListPCZeroPad = False;
   MaxIncludeLevel = DEFAULT_MAXINCLUDELEVEL;
   write_cpu_list_exit = False;
 

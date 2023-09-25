@@ -12,16 +12,7 @@
 /*                                                                           */
 /*****************************************************************************/
 
-#define ORDER_ARRAY_INCR 16
-
-#define order_array_rsv_end(orders, decl_type) \
-  do { \
-    if (!(InstrZ % ORDER_ARRAY_INCR)) { \
-      size_t s = sizeof(*orders) * (InstrZ + ORDER_ARRAY_INCR); \
-      orders = (decl_type*) (orders ? realloc(orders, s) : malloc(s)); \
-      memset(&orders[InstrZ], 0, sizeof(*orders) * ORDER_ARRAY_INCR); \
-    } \
-  } while (0)
+#include "dyn_array.h"
 
 #define order_array_free(orders) \
   do { \

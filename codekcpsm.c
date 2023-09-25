@@ -39,9 +39,9 @@ typedef struct
 
 #define WorkOfs 0xe0
 
+#define COND_CODE_TRUE 0
 
 #define IOopCnt 2
-#define CondCnt 5
 
 #define ModNone  (-1)
 #define ModWReg   0
@@ -59,7 +59,6 @@ static ShortInt AdrType;
 static Word AdrMode,AdrIndex;
 
 static Condition *Conditions;
-static int TrueCond;
 
 static CPUVar CPUKCPSM;
 
@@ -219,14 +218,17 @@ chk:
   }
 }
 
-static int DecodeCond(char *Asc)
+static Boolean DecodeCond(char *Asc, Word *p_code)
 {
-  int Cond = 0;
+  int Cond;
 
-  NLS_UpString(Asc);
-  while ((Cond < CondCnt) && (strcmp(Conditions[Cond].Name, Asc)))
-    Cond++;
-  return Cond;
+   for (Cond = 0; Conditions[Cond].Name; Cond++)
+     if (!strcmp(Conditions[Cond].Name, Asc))
+     {
+       *p_code = Conditions[Cond].Code;
+       return True;
+     }
+  return False;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -334,20 +336,24 @@ static void DecodeCALL(Word Code)
 
   if (ChkArgCnt(1, 2))
   {
-    int Cond = (ArgCnt == 1) ? TrueCond : DecodeCond(ArgStr[1].str.p_str);
+    Word cond_code;
 
-    if (Cond >= CondCnt) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
-    else
+    if (ArgCnt == 1)
+      cond_code = COND_CODE_TRUE;
+    else if (!DecodeCond(ArgStr[1].str.p_str, &cond_code))
     {
-      DecodeAdr(&ArgStr[ArgCnt], MModAbs | ModImm, SegCode);
-      switch (AdrType)
-      {
-        case ModAbs:
-        case ModImm:
-          WAsmCode[0] = 0x8300 | (Conditions[Cond].Code << 10) | Lo(AdrMode);
-          CodeLen = 1;
-          break;
-      }
+      WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
+      return;
+    }
+
+    DecodeAdr(&ArgStr[ArgCnt], MModAbs | ModImm, SegCode);
+    switch (AdrType)
+    {
+      case ModAbs:
+      case ModImm:
+        WAsmCode[0] = 0x8300 | (cond_code << 10) | Lo(AdrMode);
+        CodeLen = 1;
+        break;
     }
   }
 }
@@ -358,20 +364,24 @@ static void DecodeJUMP(Word Code)
 
   if (ChkArgCnt(1, 2))
   {
-    int Cond = (ArgCnt == 1) ? TrueCond : DecodeCond(ArgStr[1].str.p_str);
+    Word cond_code;
 
-    if (Cond >= CondCnt) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
-    else
+    if (ArgCnt == 1)
+       cond_code= COND_CODE_TRUE;
+    else if (!DecodeCond(ArgStr[1].str.p_str, &cond_code))
     {
-      DecodeAdr(&ArgStr[ArgCnt], MModAbs | MModImm, SegCode);
-      switch (AdrType)
-      {
-        case ModAbs:
-        case ModImm:
-          WAsmCode[0] = 0x8100 | (Conditions[Cond].Code << 10) | Lo(AdrMode);
-          CodeLen = 1;
-          break;
-      }
+      WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
+      return;
+    }
+
+    DecodeAdr(&ArgStr[ArgCnt], MModAbs | MModImm, SegCode);
+    switch (AdrType)
+    {
+      case ModAbs:
+      case ModImm:
+        WAsmCode[0] = 0x8100 | (cond_code << 10) | Lo(AdrMode);
+        CodeLen = 1;
+        break;
     }
   }
 }
@@ -382,14 +392,18 @@ static void DecodeRETURN(Word Code)
 
   if (ChkArgCnt(0, 1))
   {
-    int Cond = (ArgCnt == 0) ? TrueCond : DecodeCond(ArgStr[1].str.p_str);
+    Word cond_code;
 
-    if (Cond >= CondCnt) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
-    else
+    if (ArgCnt == 0)
+      cond_code = COND_CODE_TRUE;
+    else if (!DecodeCond(ArgStr[1].str.p_str, &cond_code))
     {
-      WAsmCode[0] = 0x8080 | (Conditions[Cond].Code << 10);
-      CodeLen = 1;
+      WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
+      return ;
     }
+
+    WAsmCode[0] = 0x8080 | (cond_code << 10);
+    CodeLen = 1;
   }
 }
 
@@ -504,7 +518,7 @@ static void AddIOop(const Char *NName, Word NCode)
 
 static void AddCondition(const char *NName, Word NCode)
 {
-  if (InstrZ >= CondCnt) exit(255);
+  order_array_rsv_end(Conditions, Condition);
   Conditions[InstrZ].Name = NName;
   Conditions[InstrZ++].Code = NCode;
 }
@@ -549,16 +563,17 @@ static void InitFields(void)
   AddIOop("INPUT"  , 0xa0);
   AddIOop("OUTPUT" , 0xe0);
 
-  Conditions = (Condition *) malloc(sizeof(Condition) * CondCnt); InstrZ = 0;
-  TrueCond = InstrZ; AddCondition("T"  , 0);
+  InstrZ = 0;
+  AddCondition("T"  , COND_CODE_TRUE);
   AddCondition("C"  , 6); AddCondition("NC" , 7);
   AddCondition("Z"  , 4); AddCondition("NZ" , 5);
+  AddCondition(NULL , 0);
 }
 
 static void DeinitFields(void)
 {
   DestroyInstTable(InstTable);
-  free(Conditions);
+  order_array_free(Conditions);
 }
 
 /*---------------------------------------------------------------------*/

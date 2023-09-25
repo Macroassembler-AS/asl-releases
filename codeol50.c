@@ -42,48 +42,42 @@ typedef struct
   Word CPUMask;
 } tAriOrder;
 static tAriOrder *AriOrders;
-#define AriOrderCnt 7
 
 typedef struct
 {
   Word Code, CPUMask;
 } tAPOrder;
 static tAPOrder *APOrders;
-#define APOrderCnt 48
 
 typedef struct
 {
   Word APCode, AXCode, CPUMask;
 } tAPAXOrder;
 static tAPAXOrder *APAXOrders;
-#define APAXOrderCnt 3
 
 typedef struct
 {
   Word Code, CPUMask;
 } tFixedOrder;
 static tFixedOrder *FixedOrders;
-#define FixedOrderCnt 29
 
 typedef struct
 {
   Word Code, CPUMask;
 } tImmOrder;
 static tImmOrder *ImmOrders;
-#define ImmOrderCnt 2
 
 typedef struct
 {
   Word Code, PlusCPUMask, MinusCPUMask;
 } tRelOrder;
 static tRelOrder *RelOrders;
-#define RelOrderCnt 10
+
 typedef struct
 {
   Word Code, CPUMask;
 } tDSPOrder;
 static tDSPOrder *DSPOrders;
-#define DSPOrderCnt 4
 
 typedef struct
 {
@@ -92,7 +86,6 @@ typedef struct
   Word CPUMask;
 } tONOFFOrder;
 static tONOFFOrder *ONOFFOrders;
-#define ONOFFOrderCnt 3
 
 typedef struct
 {
@@ -101,7 +94,6 @@ typedef struct
   Word CPUMask;
 } tCtrlOrder;
 static tCtrlOrder *CtrlOrders;
-#define CtrlOrderCnt 4
 
 typedef struct
 {
@@ -109,7 +101,6 @@ typedef struct
   Word CPUMask;
 } tMemOrder;
 static tMemOrder *MemOrders;
-#define MemOrderCnt 2
 
 #define MModACC (1 << ModACC)
 #define MModAP (1 << ModAP)
@@ -726,7 +717,7 @@ static void DecodeSFR(Word Code)
 
 static void AddAri(const char *pName, Word ACCCode, Word ImmCode, Word CPUMask)
 {
-  if (InstrZ >= AriOrderCnt) exit(255);
+  order_array_rsv_end(AriOrders, tAriOrder);
   AriOrders[InstrZ].ACCCode = ACCCode;
   AriOrders[InstrZ].ImmCode = ImmCode;
   AriOrders[InstrZ].CPUMask = CPUMask;
@@ -735,7 +726,7 @@ static void AddAri(const char *pName, Word ACCCode, Word ImmCode, Word CPUMask)
 
 static void AddAP(const char *pName, Word Code, Word CPUMask)
 {
-  if (InstrZ >= APOrderCnt) exit(255);
+  order_array_rsv_end(APOrders, tAPOrder);
   APOrders[InstrZ].Code = Code;
   APOrders[InstrZ].CPUMask = CPUMask;
   AddInstTable(InstTable, pName, InstrZ++, DecodeAP);
@@ -743,7 +734,7 @@ static void AddAP(const char *pName, Word Code, Word CPUMask)
 
 static void AddImm(const char *pName, Word Code, Word CPUMask)
 {
-  if (InstrZ >= ImmOrderCnt) exit(255);
+  order_array_rsv_end(ImmOrders, tImmOrder);
   ImmOrders[InstrZ].Code = Code;
   ImmOrders[InstrZ].CPUMask = CPUMask;
   AddInstTable(InstTable, pName, InstrZ++, DecodeImm);
@@ -751,7 +742,7 @@ static void AddImm(const char *pName, Word Code, Word CPUMask)
 
 static void AddAPAX(const char *pName, Word APCode, Word AXCode, Word CPUMask)
 {
-  if (InstrZ >= APAXOrderCnt) exit(255);
+  order_array_rsv_end(APAXOrders, tAPAXOrder);
   APAXOrders[InstrZ].APCode = APCode;
   APAXOrders[InstrZ].AXCode = AXCode;
   APAXOrders[InstrZ].CPUMask = CPUMask;
@@ -760,7 +751,7 @@ static void AddAPAX(const char *pName, Word APCode, Word AXCode, Word CPUMask)
 
 static void AddFixed(const char *pName, Word Code, Word CPUMask)
 {
-  if (InstrZ >= FixedOrderCnt) exit(255);
+  order_array_rsv_end(FixedOrders, tFixedOrder);
   FixedOrders[InstrZ].Code = Code;
   FixedOrders[InstrZ].CPUMask = CPUMask;
   AddInstTable(InstTable, pName, InstrZ++, DecodeFixed);
@@ -768,7 +759,7 @@ static void AddFixed(const char *pName, Word Code, Word CPUMask)
 
 static void AddRel(const char *pName, Word Code, Word PlusCPUMask, Word MinusCPUMask)
 {
-  if (InstrZ >= RelOrderCnt) exit(255);
+  order_array_rsv_end(RelOrders, tRelOrder);
   RelOrders[InstrZ].Code = Code;
   RelOrders[InstrZ].PlusCPUMask = PlusCPUMask;
   RelOrders[InstrZ].MinusCPUMask = MinusCPUMask;
@@ -777,7 +768,7 @@ static void AddRel(const char *pName, Word Code, Word PlusCPUMask, Word MinusCPU
 
 static void AddCtrl(const char *pName, Word APCode, Word ImmCode, Boolean AllowAP, Word CPUMask)
 {
-  if (InstrZ >= CtrlOrderCnt) exit(255);
+  order_array_rsv_end(CtrlOrders, tCtrlOrder);
   CtrlOrders[InstrZ].APCode = APCode;
   CtrlOrders[InstrZ].ImmCode = ImmCode;
   CtrlOrders[InstrZ].AllowAP = AllowAP;
@@ -787,7 +778,7 @@ static void AddCtrl(const char *pName, Word APCode, Word ImmCode, Boolean AllowA
 
 static void AddDSP(const char *pName, Word Code, Word CPUMask)
 {
-  if (InstrZ >= DSPOrderCnt) exit(255);
+  order_array_rsv_end(DSPOrders, tDSPOrder);
   DSPOrders[InstrZ].Code = Code;
   DSPOrders[InstrZ].CPUMask = CPUMask;
   AddInstTable(InstTable, pName, InstrZ++, DecodeDSP);
@@ -795,7 +786,7 @@ static void AddDSP(const char *pName, Word Code, Word CPUMask)
 
 static void AddONOFFInstr(const char *pName, Word Code, Word Shift, Word CPUMask)
 {
-  if (InstrZ >= ONOFFOrderCnt) exit(255);
+  order_array_rsv_end(ONOFFOrders, tONOFFOrder);
   ONOFFOrders[InstrZ].Code = Code;
   ONOFFOrders[InstrZ].CPUMask = CPUMask;
   ONOFFOrders[InstrZ].Shift = Shift;
@@ -804,7 +795,7 @@ static void AddONOFFInstr(const char *pName, Word Code, Word Shift, Word CPUMask
 
 static void AddMem(const char *pName, Word Code, Word CPUMask)
 {
-  if (InstrZ >= MemOrderCnt) exit(255);
+  order_array_rsv_end(MemOrders, tMemOrder);
   MemOrders[InstrZ].Code = Code;
   MemOrders[InstrZ].CPUMask = CPUMask;
   AddInstTable(InstTable, pName, InstrZ++, DecodeMem);
@@ -818,7 +809,6 @@ static void InitFields(void)
   InstTable = CreateInstTable(201);
   SetDynamicInstTable(InstTable);
 
-  AriOrders = (tAriOrder*) calloc(AriOrderCnt, sizeof(*AriOrders));
   InstrZ = 0;
   AddAri("ADD", 0x0040, 0x1800, M_5054 | M_5055 | M_5056 | M_6051 | M_6052);
   AddAri("SUB", 0x0240, 0x1a00, M_5054 | M_5055 | M_5056 | M_6051 | M_6052);
@@ -828,7 +818,6 @@ static void InitFields(void)
   AddAri("BIS", 0x0060, 0x1000, M_5054 | M_5055 | M_5056 | M_6051 | M_6052);
   AddAri("BIC", 0x0260, 0x1200, M_5054 | M_5055 | M_5056 | M_6051 | M_6052);
 
-  RelOrders = (tRelOrder*) calloc(RelOrderCnt, sizeof(*RelOrders));
   InstrZ = 0;
   if (CheckCPU(M_6052))
   {
@@ -857,27 +846,23 @@ static void InitFields(void)
     AddRel("BLE", (MomCPU == CPU5056) ? 0x0660 : 0x06a0, M_5056 | M_6051, M_6051);
   }
 
-  CtrlOrders = (tCtrlOrder*) calloc(CtrlOrderCnt, sizeof(*CtrlOrders));
   InstrZ = 0;
   AddCtrl("MATRIX", 0x3620, 0x0420, True,  M_5054 | M_5055 | M_6051);
   AddCtrl("FORMAT", 0x3630, 0x0430, True,  M_5054 | M_5055 | M_6051);
   AddCtrl("PAGE",   0x3650, 0x0450, False, M_5054 | M_5055 | M_6051);
   AddCtrl("ADRS",   0x3660, 0x0460, True,  M_5055 | M_6051);
 
-  DSPOrders = (tDSPOrder*) calloc(DSPOrderCnt, sizeof(*DSPOrders));
   InstrZ = 0;
   AddDSP("DSP",   0x0800,  M_5054 | M_5055 | M_5056 | M_6051);
   AddDSP("DSPH",  0x0a00,  M_5055 | M_6051);
   AddDSP("DSPF",  0x0c00,  M_5054 | M_5055 | M_5056 | M_6051);
   AddDSP("DSPFH", 0x0e00,  M_5055 | M_6051);
 
-  ONOFFOrders = (tONOFFOrder*) calloc(ONOFFOrderCnt, sizeof(*ONOFFOrders));
   InstrZ = 0;
   AddONOFFInstr("LAMP",   0x0410, 0, M_5054 | M_5055 | M_6051);
   AddONOFFInstr("BACKUP", 0x0410, 2, M_5054 | M_5055 | M_6051);
   AddONOFFInstr("XTCP",   0x0480, 0, M_5055 | M_6051);
 
-  APOrders = (tAPOrder*) calloc(APOrderCnt, sizeof(*APOrders));
   InstrZ = 0;
   if (CheckCPU(M_5054 | M_5055 | M_5056))
   {
@@ -906,7 +891,6 @@ static void InitFields(void)
     AddAP(Op, 0x3200 | (N << 4), M_6051);
   }
 
-  APAXOrders = (tAPAXOrder*) calloc(APAXOrderCnt, sizeof(*APAXOrders));
   InstrZ = 0;
   AddAPAX("CHG", 0x3800, 0x3800, M_5056 | M_6052);
   if (CheckCPU(M_6051))
@@ -915,7 +899,6 @@ static void InitFields(void)
     AddAPAX("DEC" , 0x3a00, 0x3a00, M_6051);
   }
 
-  FixedOrders = (tFixedOrder*)calloc(FixedOrderCnt, sizeof(*FixedOrders));
   InstrZ = 0;
   AddFixed("CLZ"     , 0x00a0, M_5054 | M_5055 | M_5056 | M_6051 | M_6052);
   AddFixed("CLC"     , 0x0090, M_5054 | M_5055 | M_5056 | M_6051 | M_6052);
@@ -947,12 +930,10 @@ static void InitFields(void)
   AddFixed("IM"      , 0x0e71, M_6052);
   AddFixed("RST"     , 0x0e90, M_6052);
 
-  ImmOrders = (tImmOrder*)calloc(ImmOrderCnt, sizeof(*ImmOrders));
   InstrZ = 0;
   AddImm("FREQ",  0x04d0, M_5055);
   AddImm("PITCH", 0x04c0, M_6051);
 
-  MemOrders = (tMemOrder*)calloc(MemOrderCnt, sizeof(*MemOrders));
   InstrZ = 0;
   AddMem("RDAR",  0x3000, M_6052);
   AddMem("MVAR",  0x3400, M_6052);
@@ -979,16 +960,16 @@ static void InitFields(void)
 static void DeinitFields(void)
 {
   DestroyInstTable(InstTable);
-  free(AriOrders);
-  free(APOrders);
-  free(APAXOrders);
-  free(FixedOrders);
-  free(RelOrders);
-  free(CtrlOrders);
-  free(DSPOrders);
-  free(ONOFFOrders);
-  free(ImmOrders);
-  free(MemOrders);
+  order_array_free(AriOrders);
+  order_array_free(APOrders);
+  order_array_free(APAXOrders);
+  order_array_free(FixedOrders);
+  order_array_free(RelOrders);
+  order_array_free(CtrlOrders);
+  order_array_free(DSPOrders);
+  order_array_free(ONOFFOrders);
+  order_array_free(ImmOrders);
+  order_array_free(MemOrders);
 }
 
 /*-------------------------------------------------------------------------*/

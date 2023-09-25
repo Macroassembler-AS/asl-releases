@@ -39,9 +39,7 @@ typedef struct
   Byte Code;
 } Condition;
 
-
-#define FixedOrderCount 10
-#define ConditionCount 20
+#define COND_CODE_TRUE 0x0
 
 #define DPPCount 4
 static const char RegNames[6][5] = { "DPP0", "DPP1", "DPP2", "DPP3", "CP", "SP" };
@@ -590,15 +588,17 @@ static ShortInt DecodeAdr(const tStrComp *pArg, Word Mask, tAdrResult *pResult)
   return pResult->Type;
 }
 
-static int DecodeCondition(char *Name)
+static Boolean DecodeCondition(const char *Name, Byte *p_cond_code)
 {
   int z;
 
-  NLS_UpString(Name);
-  for (z = 0; z < ConditionCount; z++)
-    if (!strcmp(Conditions[z].Name, Name))
-      break;
-  return z;
+  for (z = 0; Conditions[z].Name; z++)
+    if (!as_strcasecmp(Conditions[z].Name, Name))
+    {
+      *p_cond_code = Conditions[z].Code;
+      return True;
+    }
+  return False;
 }
 
 static Boolean DecodeBitAddr(const tStrComp *pArg, Word *Adr, Byte *Bit, Boolean MayBeOut)
@@ -1429,55 +1429,59 @@ static void DecodeJMP(Word Code)
 
   if (ChkArgCnt(1, 2))
   {
-    int Cond = (ArgCnt == 1) ? TrueCond : DecodeCondition(ArgStr[1].str.p_str);
-    if (Cond >= ConditionCount) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
-    else
+    Byte cond_code;
+    tAdrResult Result;
+
+    if (ArgCnt == 1)
+      cond_code = TrueCond;
+    else if (!DecodeCondition(ArgStr[1].str.p_str, &cond_code))
     {
-      tAdrResult Result;
+      WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
+      return;
+    }
 
-      switch (DecodeAdr(&ArgStr[ArgCnt], MModAbs | MModLAbs | MModIReg | M_InCode, &Result))
-      {
-        case ModLAbs:
-          if (Cond != TrueCond) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
-          else
-          {
-            CodeLen = 2 + Result.Cnt;
-            BAsmCode[0] = 0xfa;
-            BAsmCode[1] = Result.Mode;
-            memcpy(BAsmCode + 2, Result.Vals, Result.Cnt);
-          }
-          break;
-        case ModAbs:
+    switch (DecodeAdr(&ArgStr[ArgCnt], MModAbs | MModLAbs | MModIReg | M_InCode, &Result))
+    {
+      case ModLAbs:
+        if (cond_code != COND_CODE_TRUE) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
+        else
         {
-          LongInt AdrDist = WordVal(&Result) - (EProgCounter() + 2);
-          Boolean IsShort = (AdrDist <= 254) && (AdrDist >= -256) && ((AdrDist & 1) == 0);
+          CodeLen = 2 + Result.Cnt;
+          BAsmCode[0] = 0xfa;
+          BAsmCode[1] = Result.Mode;
+          memcpy(BAsmCode + 2, Result.Vals, Result.Cnt);
+        }
+        break;
+      case ModAbs:
+      {
+        LongInt AdrDist = WordVal(&Result) - (EProgCounter() + 2);
+        Boolean IsShort = (AdrDist <= 254) && (AdrDist >= -256) && ((AdrDist & 1) == 0);
 
-          if (!Result.ForceSize)
-            Result.ForceSize = IsShort ? eForceShort : eForceLong;
-          if (Result.ForceSize == eForceShort)
-          {
-            if (!IsShort && !mSymbolQuestionable(Result.SymFlags)) WrStrErrorPos(ErrNum_JmpDistTooBig, &ArgStr[ArgCnt]);
-            else
-            {
-              CodeLen = 2;
-              BAsmCode[0] = 0x0d + (Conditions[Cond].Code << 4);
-              BAsmCode[1] = (AdrDist / 2) & 0xff;
-            }
-          }
+        if (!Result.ForceSize)
+          Result.ForceSize = IsShort ? eForceShort : eForceLong;
+        if (Result.ForceSize == eForceShort)
+        {
+          if (!IsShort && !mSymbolQuestionable(Result.SymFlags)) WrStrErrorPos(ErrNum_JmpDistTooBig, &ArgStr[ArgCnt]);
           else
           {
-            CodeLen = 2 + Result.Cnt;
-            BAsmCode[0] = 0xea;
-            BAsmCode[1] = Conditions[Cond].Code << 4;
-            memcpy(BAsmCode + 2, Result.Vals, Result.Cnt);
+            CodeLen = 2;
+            BAsmCode[0] = 0x0d + (cond_code << 4);
+            BAsmCode[1] = (AdrDist / 2) & 0xff;
           }
-          break;
         }
-        case ModIReg:
-          CodeLen = 2; BAsmCode[0] = 0x9c;
-          BAsmCode[1] = (Conditions[Cond].Code << 4) + Result.Mode;
-          break;
+        else
+        {
+          CodeLen = 2 + Result.Cnt;
+          BAsmCode[0] = 0xea;
+          BAsmCode[1] = cond_code << 4;
+          memcpy(BAsmCode + 2, Result.Vals, Result.Cnt);
+        }
+        break;
       }
+      case ModIReg:
+        CodeLen = 2; BAsmCode[0] = 0x9c;
+        BAsmCode[1] = (cond_code << 4) + Result.Mode;
+        break;
     }
   }
 }
@@ -1488,56 +1492,60 @@ static void DecodeCALL(Word Code)
 
   if (ChkArgCnt(1, 2))
   {
-    int Cond = (ArgCnt == 1) ? TrueCond : DecodeCondition(ArgStr[1].str.p_str);
-    if (Cond >= ConditionCount) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
-    else
+    Byte cond_code;
+    tAdrResult Result;
+
+    if (ArgCnt == 1)
+      cond_code = COND_CODE_TRUE;
+    else if (!DecodeCondition(ArgStr[1].str.p_str, &cond_code))
     {
-      tAdrResult Result;
+      WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
+      return;
+    }
 
-      switch (DecodeAdr(&ArgStr[ArgCnt], MModAbs | MModLAbs | MModIReg | M_InCode, &Result))
-      {
-        case ModLAbs:
-          if (Cond != TrueCond) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
-          else
-          {
-            CodeLen = 2 + Result.Cnt;
-            BAsmCode[0] = 0xda;
-            BAsmCode[1] = Result.Mode;
-            memcpy(BAsmCode + 2, Result.Vals, Result.Cnt);
-          }
-          break;
-        case ModAbs:
+    switch (DecodeAdr(&ArgStr[ArgCnt], MModAbs | MModLAbs | MModIReg | M_InCode, &Result))
+    {
+      case ModLAbs:
+        if (cond_code != COND_CODE_TRUE) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
+        else
         {
-          LongInt AdrLong = WordVal(&Result) - (EProgCounter() + 2);
-          Boolean IsShort = (AdrLong <= 254) && (AdrLong >= -256) && ((AdrLong & 1) == 0);
+          CodeLen = 2 + Result.Cnt;
+          BAsmCode[0] = 0xda;
+          BAsmCode[1] = Result.Mode;
+          memcpy(BAsmCode + 2, Result.Vals, Result.Cnt);
+        }
+        break;
+      case ModAbs:
+      {
+        LongInt AdrLong = WordVal(&Result) - (EProgCounter() + 2);
+        Boolean IsShort = (AdrLong <= 254) && (AdrLong >= -256) && ((AdrLong & 1) == 0);
 
-          if (!Result.ForceSize && (Cond == TrueCond))
-            Result.ForceSize = IsShort ? eForceShort : eForceLong;
-          if (Result.ForceSize == eForceShort)
-          {
-            if (!IsShort && !mSymbolQuestionable(Result.SymFlags)) WrStrErrorPos(ErrNum_JmpDistTooBig, &ArgStr[ArgCnt]);
-            else
-            {
-              CodeLen = 2;
-              BAsmCode[0] = 0xbb;
-              BAsmCode[1] = (AdrLong / 2) & 0xff;
-            }
-          }
+        if (!Result.ForceSize && (cond_code == COND_CODE_TRUE))
+          Result.ForceSize = IsShort ? eForceShort : eForceLong;
+        if (Result.ForceSize == eForceShort)
+        {
+          if (!IsShort && !mSymbolQuestionable(Result.SymFlags)) WrStrErrorPos(ErrNum_JmpDistTooBig, &ArgStr[ArgCnt]);
           else
           {
-            CodeLen = 2 + Result.Cnt;
-            BAsmCode[0] = 0xca;
-            BAsmCode[1] = 0x00 + (Conditions[Cond].Code << 4);
-            memcpy(BAsmCode + 2, Result.Vals, Result.Cnt);
+            CodeLen = 2;
+            BAsmCode[0] = 0xbb;
+            BAsmCode[1] = (AdrLong / 2) & 0xff;
           }
-          break;
         }
-        case ModIReg:
-          CodeLen = 2;
-          BAsmCode[0] = 0xab;
-          BAsmCode[1] = (Conditions[Cond].Code << 4) + Result.Mode;
-          break;
+        else
+        {
+          CodeLen = 2 + Result.Cnt;
+          BAsmCode[0] = 0xca;
+          BAsmCode[1] = 0x00 + (cond_code << 4);
+          memcpy(BAsmCode + 2, Result.Vals, Result.Cnt);
+        }
+        break;
       }
+      case ModIReg:
+        CodeLen = 2;
+        BAsmCode[0] = 0xab;
+        BAsmCode[1] = (cond_code << 4) + Result.Mode;
+        break;
     }
   }
 }
@@ -1548,24 +1556,29 @@ static void DecodeJMPR(Word Code)
 
   if (ChkArgCnt(1, 2))
   {
-    int Cond = (ArgCnt == 1) ? TrueCond : DecodeCondition(ArgStr[1].str.p_str);
-    if (Cond >= ConditionCount) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
-    else
-    {
-      Boolean OK;
-      tSymbolFlags Flags;
-      LongInt AdrLong = EvalStrIntExpressionWithFlags(&ArgStr[ArgCnt], MemInt, &OK, &Flags) - (EProgCounter() + 2);
+    Byte cond_code;
+    Boolean OK;
+    tSymbolFlags Flags;
+    LongInt AdrLong;
 
-      if (OK)
+    if (ArgCnt == 1)
+      cond_code = COND_CODE_TRUE;
+    else if (!DecodeCondition(ArgStr[1].str.p_str, &cond_code))
+    {
+      WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
+      return;
+    }
+
+    AdrLong = EvalStrIntExpressionWithFlags(&ArgStr[ArgCnt], MemInt, &OK, &Flags) - (EProgCounter() + 2);
+    if (OK)
+    {
+      if (AdrLong & 1) WrError(ErrNum_DistIsOdd);
+      else if (!mSymbolQuestionable(Flags) && ((AdrLong > 254) || (AdrLong < -256))) WrError(ErrNum_JmpDistTooBig);
+      else
       {
-        if (AdrLong & 1) WrError(ErrNum_DistIsOdd);
-        else if (!mSymbolQuestionable(Flags) && ((AdrLong > 254) || (AdrLong < -256))) WrError(ErrNum_JmpDistTooBig);
-        else
-        {
-          CodeLen = 2;
-          BAsmCode[0] = 0x0d + (Conditions[Cond].Code << 4);
-          BAsmCode[1] = (AdrLong / 2) & 0xff;
-        }
+        CodeLen = 2;
+        BAsmCode[0] = 0x0d + (cond_code << 4);
+        BAsmCode[1] = (AdrLong / 2) & 0xff;
       }
     }
   }
@@ -1598,23 +1611,27 @@ static void DecodeJMPA_CALLA(Word Code)
 {
   if (ChkArgCnt(1, 2))
   {
-    int Cond = (ArgCnt == 1) ? TrueCond : DecodeCondition(ArgStr[1].str.p_str);
-    if (Cond >= ConditionCount) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
-    else
-    {
-      Boolean OK;
-      LongInt AdrLong;
-      tSymbolFlags Flags;
+    Byte cond_code;
+    Boolean OK;
+    LongInt AdrLong;
+    tSymbolFlags Flags;
 
-      AdrLong = EvalStrIntExpressionWithFlags(&ArgStr[ArgCnt], MemInt, &OK, &Flags);
-      if (OK && ChkSamePage(AdrLong, EProgCounter(), 16, Flags))
-      {
-        CodeLen = 4;
-        BAsmCode[0] = Code;
-        BAsmCode[1] = 0x00 + (Conditions[Cond].Code << 4);
-        BAsmCode[2] = Lo(AdrLong);
-        BAsmCode[3] = Hi(AdrLong);
-      }
+    if (ArgCnt == 1)
+      cond_code = COND_CODE_TRUE;
+    else if (!DecodeCondition(ArgStr[1].str.p_str, &cond_code))
+    {
+      WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
+      return;
+    }
+
+    AdrLong = EvalStrIntExpressionWithFlags(&ArgStr[ArgCnt], MemInt, &OK, &Flags);
+    if (OK && ChkSamePage(AdrLong, EProgCounter(), 16, Flags))
+    {
+      CodeLen = 4;
+      BAsmCode[0] = Code;
+      BAsmCode[1] = 0x00 + (cond_code << 4);
+      BAsmCode[2] = Lo(AdrLong);
+      BAsmCode[3] = Hi(AdrLong);
     }
   }
 }
@@ -1654,20 +1671,24 @@ static void DecodeJMPI_CALLI(Word Code)
 {
   if (ChkArgCnt(1, 2))
   {
-    int Cond = (ArgCnt == 1) ? TrueCond : DecodeCondition(ArgStr[1].str.p_str);
-    if (Cond >= ConditionCount) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
-    else
-    {
-      tAdrResult Result;
+    Byte cond_code;
+    tAdrResult Result;
 
-      switch (DecodeAdr(&ArgStr[ArgCnt], MModIReg | M_InCode, &Result))
-      {
-        case ModIReg:
-          CodeLen = 2;
-          BAsmCode[0] = Code;
-          BAsmCode[1] = Result.Mode + (Conditions[Cond].Code << 4);
-          break;
-      }
+    if (ArgCnt == 1)
+      cond_code = COND_CODE_TRUE;
+    else if (!DecodeCondition(ArgStr[1].str.p_str, &cond_code))
+    {
+      WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
+      return;
+    }
+
+    switch (DecodeAdr(&ArgStr[ArgCnt], MModIReg | M_InCode, &Result))
+    {
+      case ModIReg:
+        CodeLen = 2;
+        BAsmCode[0] = Code;
+        BAsmCode[1] = Result.Mode + (cond_code << 4);
+        break;
     }
   }
 }
@@ -1894,7 +1915,7 @@ static void AddBInstTable(const char *NName, Word NCode, InstProc Proc)
 
 static void AddFixed(const char *NName, CPUVar NMin, Word NCode1, Word NCode2)
 {
-  if (InstrZ >= FixedOrderCount) exit(255);
+  order_array_rsv_end(FixedOrders, BaseOrder);
   FixedOrders[InstrZ].MinCPU = NMin;
   FixedOrders[InstrZ].Code1 = NCode1;
   FixedOrders[InstrZ].Code2 = NCode2;
@@ -1918,7 +1939,7 @@ static void AddLoop(const char *NName, Byte NCode)
 
 static void AddCondition(const char *NName, Byte NCode)
 {
-  if (InstrZ >= ConditionCount) exit(255);
+  order_array_rsv_end(Conditions, Condition);
   Conditions[InstrZ].Name = NName;
   Conditions[InstrZ++].Code = NCode;
 }
@@ -1959,7 +1980,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "EXTS", 0x00, DecodeEXTS_EXTSR);
   AddInstTable(InstTable, "EXTSR", 0x80, DecodeEXTS_EXTSR);
 
-  FixedOrders = (BaseOrder *) malloc(FixedOrderCount * sizeof(BaseOrder)); InstrZ = 0;
+  InstrZ = 0;
   AddFixed("DISWDT", CPU80C166, 0x5aa5, 0xa5a5);
   AddFixed("EINIT" , CPU80C166, 0x4ab5, 0xb5b5);
   AddFixed("IDLE"  , CPU80C166, 0x7887, 0x8787);
@@ -1971,8 +1992,8 @@ static void InitFields(void)
   AddFixed("SRST"  , CPU80C166, 0x48b7, 0xb7b7);
   AddFixed("SRVWDT", CPU80C166, 0x58a7, 0xa7a7);
 
-  Conditions = (Condition *) malloc(sizeof(Condition) * ConditionCount); InstrZ = 0;
-  TrueCond = InstrZ; AddCondition("UC" , 0x0); AddCondition("Z"  , 0x2);
+  InstrZ = 0;
+  AddCondition("UC" , COND_CODE_TRUE); AddCondition("Z"  , 0x2);
   AddCondition("NZ" , 0x3); AddCondition("V"  , 0x4);
   AddCondition("NV" , 0x5); AddCondition("N"  , 0x6);
   AddCondition("NN" , 0x7); AddCondition("C"  , 0x8);
@@ -1982,6 +2003,7 @@ static void InitFields(void)
   AddCondition("UGT", 0xe); AddCondition("SLT", 0xc);
   AddCondition("SLE", 0xb); AddCondition("SGE", 0xd);
   AddCondition("SGT", 0xa); AddCondition("NET", 0x1);
+  AddCondition(NULL, 0);
 
   InstrZ = 0;
   AddBInstTable("ADD" , InstrZ++, DecodeALU2);
@@ -2028,8 +2050,8 @@ static void InitFields(void)
 static void DeinitFields(void)
 {
   DestroyInstTable(InstTable);
-  free(FixedOrders);
-  free(Conditions);
+  order_array_free(FixedOrders);
+  order_array_free(Conditions);
 }
 
 static void MakeCode_166(void)

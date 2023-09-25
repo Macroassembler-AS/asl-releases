@@ -66,7 +66,6 @@ static ASSUMERec ASSUMEMN1613[ASSUMEMN1613Count] =
   { "TSR1", BaseRegVals + 3, 0, 15, 16, NULL }
 };
 
-#define FixedOrderCnt 6
 static tFixedOrder *FixedOrders;
 
 /*--------------------------------------------------------------------------*/
@@ -1138,31 +1137,25 @@ static void DecodeDS(Word Index)
 /*--------------------------------------------------------------------------*/
 /* Codetabellen */
 
-static tFixedOrder *AddFixed(tFixedOrder *pOrder, const char *pName, Word Code, CPUVar MinCPU)
+static void AddFixed(const char *pName, Word Code, CPUVar MinCPU)
 {
-  Word Index = pOrder - FixedOrders;
-
-  if (Index >= FixedOrderCnt)
-    exit(255);
-  pOrder->Code = Code;
-  pOrder->MinCPU = MinCPU;
-  AddInstTable(InstTable, pName, Index, DecodeFixed);
-  return pOrder + 1;
+  order_array_rsv_end(FixedOrders, tFixedOrder);
+  FixedOrders[InstrZ].Code = Code;
+  FixedOrders[InstrZ].MinCPU = MinCPU;
+  AddInstTable(InstTable, pName, InstrZ++, DecodeFixed);
 }
 
 static void InitFields(void)
 {
-  tFixedOrder *pOrder;
-
-  FixedOrders = pOrder = (tFixedOrder*)malloc(sizeof(*FixedOrders) * FixedOrderCnt);
   InstTable = CreateInstTable(201);
 
-  pOrder = AddFixed(pOrder, "H"   , 0x2000 , CPUMN1610);
-  pOrder = AddFixed(pOrder, "RET" , 0x2003 , CPUMN1610);
-  pOrder = AddFixed(pOrder, "NOP" , NOPCode, CPUMN1610);
-  pOrder = AddFixed(pOrder, "PSHM", 0x170f , CPUMN1613);
-  pOrder = AddFixed(pOrder, "POPM", 0x1707 , CPUMN1613);
-  pOrder = AddFixed(pOrder, "RETL", 0x3f07 , CPUMN1613);
+  InstrZ = 0;
+  AddFixed("H"   , 0x2000 , CPUMN1610);
+  AddFixed("RET" , 0x2003 , CPUMN1610);
+  AddFixed("NOP" , NOPCode, CPUMN1610);
+  AddFixed("PSHM", 0x170f , CPUMN1613);
+  AddFixed("POPM", 0x1707 , CPUMN1613);
+  AddFixed("RETL", 0x3f07 , CPUMN1613);
 
   AddInstTable(InstTable, "PUSH", 0x2001, DecodeOneReg);
   AddInstTable(InstTable, "POP" , 0x2002, DecodeOneReg);
@@ -1298,7 +1291,7 @@ static void InitFields(void)
 static void DeinitFields(void)
 {
   DestroyInstTable(InstTable);
-  free(FixedOrders);
+  order_array_free(FixedOrders);
 }
 
 /*--------------------------------------------------------------------------*/

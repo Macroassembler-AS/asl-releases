@@ -27,9 +27,6 @@
 
 #include "codeimp16.h"
 
-#define condition_cnt 16
-#define status_flag_cnt  14
-
 /*-------------------------------------------------------------------------*/
 /* Types */
 
@@ -443,18 +440,17 @@ parse_abs:
 }
 
 /*!------------------------------------------------------------------------
- * \fn     decode_symbol(const tStrComp *p_arg, Word *p_code, const symbol_t *p_symbols, size_t symbol_cnt)
+ * \fn     decode_symbol(const tStrComp *p_arg, Word *p_code, const symbol_t *p_symbols)
  * \brief  handle condition or status flag
  * \param  p_arg source argument
  * \param  p_code resulting code
  * \param  p_symbols array of available symbols
- * \param  symbol_cnt size of symbol array
  * \return True if success
  * ------------------------------------------------------------------------ */
 
-static Boolean decode_symbol(const tStrComp *p_arg, Word *p_code, const symbol_t *p_symbols, size_t symbol_cnt)
+static Boolean decode_symbol(const tStrComp *p_arg, Word *p_code, const symbol_t *p_symbols)
 {
-  for (*p_code = 0; *p_code < symbol_cnt; (*p_code)++)
+  for (*p_code = 0; p_symbols[*p_code].p_name; (*p_code)++)
   {
     if (!as_strcasecmp(p_symbols[*p_code].p_name, p_arg->str.p_str))
     {
@@ -465,8 +461,8 @@ static Boolean decode_symbol(const tStrComp *p_arg, Word *p_code, const symbol_t
   return False;
 }
 
-#define decode_condition(p_arg, p_code) decode_symbol(p_arg, p_code, conditions, condition_cnt)
-#define decode_status_flag(p_arg, p_code) decode_symbol(p_arg, p_code, status_flags, status_flag_cnt)
+#define decode_condition(p_arg, p_code) decode_symbol(p_arg, p_code, conditions)
+#define decode_status_flag(p_arg, p_code) decode_symbol(p_arg, p_code, status_flags)
 
 /*---------------------------------------------------------------------------*/
 /* Coding Helpers */
@@ -1076,16 +1072,14 @@ static void decode_ltorg(Word code)
 
 static void add_condition(const char *p_name, Word code)
 {
-  if (InstrZ >= condition_cnt)
-    exit(255);
+  order_array_rsv_end(conditions, symbol_t);
   conditions[InstrZ].p_name = p_name;
   conditions[InstrZ++].code = code;
 }
 
 static void add_status_flag(const char *p_name, Word code)
 {
-  if (InstrZ >= status_flag_cnt)
-    exit(255);
+  order_array_rsv_end(status_flags, symbol_t);
   status_flags[InstrZ].p_name = p_name;
   status_flags[InstrZ++].code = code;
 }
@@ -1186,7 +1180,7 @@ static void init_fields(Boolean is_pace)
   AddInstTable(InstTable, "WORD" , eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString, DecodeIntelDW);
   AddInstTable(InstTable, "LTORG", 0, decode_ltorg);
 
-  conditions = (symbol_t*) calloc(condition_cnt, sizeof(*conditions)); InstrZ = 0;
+  InstrZ = 0;
   add_condition("REQ0", 1);
   add_condition("PSIGN", 2);
   add_condition("BIT0", 3);
@@ -1220,8 +1214,9 @@ static void init_fields(Boolean is_pace)
       add_condition("SEL", 13);
     }
   }
+  add_condition(NULL, 0);
 
-  status_flags = (symbol_t*) calloc(status_flag_cnt, sizeof(*status_flags)); InstrZ = 0;
+  InstrZ = 0;
   if (is_pace)
   {
     add_status_flag("IE1", 1);
@@ -1252,6 +1247,7 @@ static void init_fields(Boolean is_pace)
       add_status_flag("IEN0", 0);
     }
   }
+  add_status_flag(NULL, 0);
 }
 
 /*!------------------------------------------------------------------------
@@ -1261,8 +1257,8 @@ static void init_fields(Boolean is_pace)
 
 static void deinit_fields(void)
 {
-  free(conditions);
-  free(status_flags);
+  order_array_free(conditions);
+  order_array_free(status_flags);
   DestroyInstTable(InstTable);
 }
 

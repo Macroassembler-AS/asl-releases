@@ -82,9 +82,6 @@ typedef struct
 #include "codens32k.hpp"
 #endif
 
-#define CtlRegCnt 13
-#define MMURegCnt 18
-
 #define MAllowImm (1 << 0)
 #define MAllowReg (1 << 1)
 #define MAllowRegPair (1 << 2)
@@ -405,7 +402,7 @@ static Boolean DecodeCtlReg(const tStrComp *pArg, Word *pResult)
 {
   unsigned z;
 
-  for (z = 0; z < CtlRegCnt; z++)
+  for (z = 0; CtlRegs[z].pName; z++)
     if (!as_strcasecmp(pArg->str.p_str, CtlRegs[z].pName))
     {
       *pResult = CtlRegs[z].Code;
@@ -427,7 +424,7 @@ static Boolean DecodeMMUReg(const tStrComp *pArg, Word *pResult)
 {
   unsigned z;
 
-  for (z = 0; z < MMURegCnt; z++)
+  for (z = 0; MMURegs[z].pName; z++)
     if (!as_strcasecmp(pArg->str.p_str, MMURegs[z].pName))
     {
       if (!((MMURegs[z].Mask >> MomPMMU) & 1))
@@ -2675,8 +2672,7 @@ static void AddCondition(const char *pCondition, Word Code)
 
 static void AddCtl(const char *pName, Word Code, Boolean Privileged)
 {
-  if (InstrZ >= CtlRegCnt)
-    exit(255);
+  order_array_rsv_end(CtlRegs, tCtlReg);
   CtlRegs[InstrZ  ].pName      = pName;
   CtlRegs[InstrZ  ].Code       = Code;
   CtlRegs[InstrZ++].Privileged = Privileged;
@@ -2684,8 +2680,7 @@ static void AddCtl(const char *pName, Word Code, Boolean Privileged)
 
 static void AddMMU(const char *pName, Word Code, Word Mask, Boolean Privileged)
 {
-  if (InstrZ >= MMURegCnt)
-    exit(255);
+  order_array_rsv_end(MMURegs, tCtlReg);
   MMURegs[InstrZ  ].pName      = pName;
   MMURegs[InstrZ  ].Code       = Code;
   MMURegs[InstrZ  ].Mask       = Mask;
@@ -2697,7 +2692,6 @@ static void InitFields(void)
   InstTable = CreateInstTable(605);
   SetDynamicInstTable(InstTable);
 
-  CtlRegs = (tCtlReg*)calloc(CtlRegCnt, sizeof(*CtlRegs));
   InstrZ = 0;
   AddCtl("UPSR"   , 0x00, True );
   AddCtl("DCR"    , 0x01, True );
@@ -2712,8 +2706,8 @@ static void InitFields(void)
   AddCtl("PSR"    , 0x0d, False);
   AddCtl("INTBASE", 0x0e, True );
   AddCtl("MOD"    , 0x0f, False);
+  AddCtl(NULL     , 0   , False);
 
-  MMURegs = (tCtlReg*)calloc(MMURegCnt, sizeof(*MMURegs));
   InstrZ = 0;
   AddMMU("BPR0"   , 0x00, (1 << ePMMU16082) | (1 << ePMMU32082)                                        , True );
   AddMMU("BPR1"   , 0x01, (1 << ePMMU16082) | (1 << ePMMU32082)                                        , True );
@@ -2733,6 +2727,7 @@ static void InitFields(void)
   AddMMU("MCR"    , 0x09,                                                             (1 << ePMMU32532), True );
   AddMMU("IVAR0"  , 0x0e,                                         (1 << ePMMU32382) | (1 << ePMMU32532), True );/* w/o */
   AddMMU("IVAR1"  , 0x0f,                                         (1 << ePMMU32382) | (1 << ePMMU32532), True );/* w/o */
+  AddMMU(NULL     , 0, 0, False);
 
   AddCondition("EQ",  0);
   AddCondition("NE",  1);
@@ -3008,8 +3003,8 @@ static void InitFields(void)
 static void DeinitFields(void)
 {
   DestroyInstTable(InstTable);
-  free(CtlRegs);
-  free(MMURegs);
+  order_array_free(CtlRegs);
+  order_array_free(MMURegs);
 }
 
 /*--------------------------------------------------------------------------*/

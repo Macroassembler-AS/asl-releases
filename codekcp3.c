@@ -29,9 +29,6 @@
 
 #include "codekcp3.h"
 
-#define RegOrderCnt 10
-#define ALUOrderCnt 10
-
 typedef struct
 {
   LongWord Code;
@@ -40,7 +37,6 @@ typedef struct
 static FixedOrder *RegOrders, *ALUOrders;
 
 static CPUVar CPUKCPSM3;
-
 
 /*--------------------------------------------------------------------------
  * Address Expression Parsing
@@ -378,20 +374,16 @@ static void DecodeNop(Word Index)
 
 static void AddReg(const char *NName, LongWord NCode)
 {
-   if (InstrZ >= RegOrderCnt)
-    exit(255);
-
-   RegOrders[InstrZ].Code = NCode;
-   AddInstTable(InstTable, NName, InstrZ++, DecodeOneReg);
+  order_array_rsv_end(RegOrders, FixedOrder);
+  RegOrders[InstrZ].Code = NCode;
+  AddInstTable(InstTable, NName, InstrZ++, DecodeOneReg);
 }
 
 static void AddALU(const char *NName, LongWord NCode)
 {
-   if (InstrZ >= ALUOrderCnt)
-    exit(255);
-
-   ALUOrders[InstrZ].Code = NCode;
-   AddInstTable(InstTable, NName, InstrZ++, DecodeALU);
+  order_array_rsv_end(ALUOrders, FixedOrder);
+  ALUOrders[InstrZ].Code = NCode;
+  AddInstTable(InstTable, NName, InstrZ++, DecodeALU);
 }
 
 static void InitFields(void)
@@ -399,7 +391,6 @@ static void InitFields(void)
   InstTable = CreateInstTable(97);
 
   InstrZ = 0;
-  RegOrders = (FixedOrder*) malloc(sizeof(FixedOrder) * RegOrderCnt);
   AddReg("RL" , 0x20002);
   AddReg("RR" , 0x2000c);
   AddReg("SL0", 0x20006);
@@ -412,7 +403,6 @@ static void InitFields(void)
   AddReg("SRX", 0x2000a);
 
   InstrZ = 0;
-  ALUOrders = (FixedOrder*) malloc(sizeof(FixedOrder) * ALUOrderCnt);
   AddALU("ADD"    , 0x18000);
   AddALU("ADDCY"  , 0x1a000);
   AddALU("AND"    , 0x0a000);
@@ -446,8 +436,8 @@ static void InitFields(void)
 static void DeinitFields(void)
 {
   DestroyInstTable(InstTable);
-  free(RegOrders);
-  free(ALUOrders);
+  order_array_free(RegOrders);
+  order_array_free(ALUOrders);
 }
 
 /*--------------------------------------------------------------------------

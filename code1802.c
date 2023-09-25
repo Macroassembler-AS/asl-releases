@@ -27,16 +27,6 @@
 /*-------------------------------------------------------------------------*/
 /* Variables */
 
-#define FixedOrderCnt 55
-#define RegOrderCnt 14
-#define RegNoZeroOrderCnt 1
-#define RegImm16OrderCnt 1
-#define RegLBranchOrderCnt 2
-#define ImmOrderCnt 14
-#define SBranchOrderCnt 22
-#define LBranchOrderCnt 12
-#define IOOrderCnt 2
-
 typedef struct
 {
   Word Code;
@@ -277,7 +267,7 @@ static void DecodeIO(Word Index)
 
 static void AddFixed(const char *pName, Word Code, CPUVar MinCPU)
 {
-  if (InstrZ >= FixedOrderCnt) exit(255);
+  order_array_rsv_end(FixedOrders, tOrder);
   FixedOrders[InstrZ].Code = Code;
   FixedOrders[InstrZ].MinCPU = MinCPU;
   AddInstTable(InstTable, pName, InstrZ++, DecodeFixed);
@@ -285,7 +275,7 @@ static void AddFixed(const char *pName, Word Code, CPUVar MinCPU)
 
 static void AddReg(const char *pName, Word Code, CPUVar MinCPU)
 {
-  if (InstrZ >= RegOrderCnt) exit(255);
+  order_array_rsv_end(RegOrders, tOrder);
   RegOrders[InstrZ].Code = Code;
   RegOrders[InstrZ].MinCPU = MinCPU;
   AddInstTable(InstTable, pName, InstrZ++, DecodeReg);
@@ -293,7 +283,7 @@ static void AddReg(const char *pName, Word Code, CPUVar MinCPU)
 
 static void AddRegNoZero(const char *pName, Word Code, CPUVar MinCPU)
 {
-  if (InstrZ >= RegNoZeroOrderCnt) exit(255);
+  order_array_rsv_end(RegNoZeroOrders, tOrder);
   RegNoZeroOrders[InstrZ].Code = Code;
   RegNoZeroOrders[InstrZ].MinCPU = MinCPU;
   AddInstTable(InstTable, pName, InstrZ++, DecodeRegNoZero);
@@ -301,7 +291,7 @@ static void AddRegNoZero(const char *pName, Word Code, CPUVar MinCPU)
 
 static void AddRegImm16(const char *pName, Word Code, CPUVar MinCPU)
 {
-  if (InstrZ >= RegImm16OrderCnt) exit(255);
+  order_array_rsv_end(RegImm16Orders, tOrder);
   RegImm16Orders[InstrZ].Code = Code;
   RegImm16Orders[InstrZ].MinCPU = MinCPU;
   AddInstTable(InstTable, pName, InstrZ++, DecodeRegImm16);
@@ -309,7 +299,7 @@ static void AddRegImm16(const char *pName, Word Code, CPUVar MinCPU)
 
 static void AddImm(const char *pName, Word Code, CPUVar MinCPU)
 {
-  if (InstrZ >= ImmOrderCnt) exit(255);
+  order_array_rsv_end(ImmOrders, tOrder);
   ImmOrders[InstrZ].Code = Code;
   ImmOrders[InstrZ].MinCPU = MinCPU;
   AddInstTable(InstTable, pName, InstrZ++, DecodeImm);
@@ -317,7 +307,7 @@ static void AddImm(const char *pName, Word Code, CPUVar MinCPU)
 
 static void AddRegLBranch(const char *pName, Word Code, CPUVar MinCPU)
 {
-  if (InstrZ >= RegLBranchOrderCnt) exit(255);
+  order_array_rsv_end(RegLBranchOrders, tOrder);
   RegLBranchOrders[InstrZ].Code = Code;
   RegLBranchOrders[InstrZ].MinCPU = MinCPU;
   AddInstTable(InstTable, pName, InstrZ++, DecodeRegLBranch);
@@ -325,7 +315,7 @@ static void AddRegLBranch(const char *pName, Word Code, CPUVar MinCPU)
 
 static void AddLBranch(const char *pName, Word Code, CPUVar MinCPU)
 {
-  if (InstrZ >= LBranchOrderCnt) exit(255);
+  order_array_rsv_end(LBranchOrders, tOrder);
   LBranchOrders[InstrZ].Code = Code;
   LBranchOrders[InstrZ].MinCPU = MinCPU;
   AddInstTable(InstTable, pName, InstrZ, DecodeLBranch);
@@ -344,7 +334,7 @@ static void AddLBranch(const char *pName, Word Code, CPUVar MinCPU)
 
 static void AddSBranch(const char *pName, Word Code, CPUVar MinCPU)
 {
-  if (InstrZ >= SBranchOrderCnt) exit(255);
+  order_array_rsv_end(SBranchOrders, tOrder);
   SBranchOrders[InstrZ].Code = Code;
   SBranchOrders[InstrZ].MinCPU = MinCPU;
   AddInstTable(InstTable, pName, InstrZ++, DecodeSBranch);
@@ -352,7 +342,7 @@ static void AddSBranch(const char *pName, Word Code, CPUVar MinCPU)
 
 static void AddIO(const char *pName, Word Code, CPUVar MinCPU)
 {
-  if (InstrZ >= IOOrderCnt) exit(255);
+  order_array_rsv_end(IOOrders, tOrder);
   IOOrders[InstrZ].Code = Code;
   IOOrders[InstrZ].MinCPU = MinCPU;
   AddInstTable(InstTable, pName, InstrZ++, DecodeIO);
@@ -364,7 +354,7 @@ static void InitFields(void)
 
   AddInstTable(InstTable, "PORT", 0, DecodePORT);
 
-  FixedOrders = (tOrder*)calloc(FixedOrderCnt, sizeof(*FixedOrders)); InstrZ = 0;
+  InstrZ = 0;
   AddFixed("LDX"  , 0x00f0, CPU1802);
   AddFixed("LDXA" , 0x0072, CPU1802);
   AddFixed("STXD" , 0x0073, CPU1802);
@@ -421,7 +411,7 @@ static void InitFields(void)
   AddFixed("CID"  , 0x680d, CPU1804);
   AddFixed("DSAV" , 0x6876, CPU1804A);
 
-  RegOrders = (tOrder*)calloc(RegOrderCnt, sizeof(*RegOrders)); InstrZ = 0;
+  InstrZ = 0;
   AddReg("LDA"  , 0x0040, CPU1802);
   AddReg("STR"  , 0x0050, CPU1802);
   AddReg("RLXA" , 0x6860, CPU1804);
@@ -437,13 +427,13 @@ static void InitFields(void)
   AddReg("SEX"  , 0x00e0, CPU1802);
   AddReg("SRET" , 0x6890, CPU1804);
 
-  RegNoZeroOrders = (tOrder*)calloc(RegNoZeroOrderCnt, sizeof(*RegNoZeroOrders)); InstrZ = 0;
+  InstrZ = 0;
   AddRegNoZero("LDN"  , 0x0000, CPU1802);
 
-  RegImm16Orders = (tOrder*)calloc(RegImm16OrderCnt, sizeof(*RegImm16Orders)); InstrZ = 0;
+  InstrZ = 0;
   AddRegImm16("RLDI" , 0x68c0, CPU1804);
 
-  ImmOrders = (tOrder*)calloc(ImmOrderCnt, sizeof(*ImmOrders)); InstrZ = 0;
+  InstrZ = 0;
   AddImm("LDI"  , 0x00f8, CPU1802);
   AddImm("ORI"  , 0x00f9, CPU1802);
   AddImm("XRI"  , 0x00fb, CPU1802);
@@ -459,11 +449,11 @@ static void InitFields(void)
   AddImm("DSMI" , 0x68ff, CPU1804A);
   AddImm("DSBI" , 0x687f, CPU1804A);
 
-  RegLBranchOrders = (tOrder*)calloc(RegLBranchOrderCnt, sizeof(*RegLBranchOrders)); InstrZ = 0;
+  InstrZ = 0;
   AddRegLBranch("DBNZ" , 0x6820, CPU1804A);
   AddRegLBranch("SCAL" , 0x6880, CPU1804);
 
-  LBranchOrders = (tOrder*)calloc(LBranchOrderCnt, sizeof(*LBranchOrders)); InstrZ = 0;
+  InstrZ = 0;
   AddLBranch("LBR"  , 0x00c0, CPU1802);
   AddLBranch("NLBR" , 0x00c8, CPU1802);
   AddLBranch("LBZ"  , 0x00c2, CPU1802);
@@ -477,7 +467,7 @@ static void InitFields(void)
   AddLBranch("LBQ"  , 0x00c1, CPU1802);
   AddLBranch("LBNQ" , 0x00c9, CPU1802);
 
-  SBranchOrders = (tOrder*)calloc(SBranchOrderCnt, sizeof(*SBranchOrders)); InstrZ = 0;
+  InstrZ = 0;
   AddSBranch("BR"   , 0x0030, CPU1802);
   AddSBranch("NBR"  , 0x0038, CPU1802);
   AddSBranch("BZ"   , 0x0032, CPU1802);
@@ -501,22 +491,22 @@ static void InitFields(void)
   AddSBranch("BCI"  , 0x683e, CPU1804);
   AddSBranch("BXI"  , 0x683f, CPU1804);
 
-  IOOrders = (tOrder*)calloc(IOOrderCnt, sizeof(*IOOrders)); InstrZ = 0;
+  InstrZ = 0;
   AddIO("OUT"  , 0x0060, CPU1802);
   AddIO("INP"  , 0x0068, CPU1802);
 }
 
 static void DeinitFields(void)
 {
-  free(FixedOrders);
-  free(RegOrders);
-  free(RegNoZeroOrders);
-  free(RegImm16Orders);
-  free(RegLBranchOrders);
-  free(ImmOrders);
-  free(SBranchOrders);
-  free(LBranchOrders);
-  free(IOOrders);
+  order_array_free(FixedOrders);
+  order_array_free(RegOrders);
+  order_array_free(RegNoZeroOrders);
+  order_array_free(RegImm16Orders);
+  order_array_free(RegLBranchOrders);
+  order_array_free(ImmOrders);
+  order_array_free(SBranchOrders);
+  order_array_free(LBranchOrders);
+  order_array_free(IOOrders);
 
   DestroyInstTable(InstTable);
 }

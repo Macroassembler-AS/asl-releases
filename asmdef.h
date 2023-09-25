@@ -327,6 +327,7 @@ extern char MomCPUIdent[20],
             MomPMMUIdent[20];
 
 extern int OutRadixBase, ListRadixBase;
+extern Boolean ListPCZeroPad;
 extern const char *pCommentLeadIn;
 
 extern tStrComp *ArgStr;

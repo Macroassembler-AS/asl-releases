@@ -72,10 +72,6 @@ typedef struct
   Byte AdrVals[2];
 } tAdrResult;
 
-#define FixedOrderCount 77
-#define NormOrderCount 71
-#define CondOrderCount 11
-
 /* NOTE: keep in the same order as in registration in code65_init()! */
 
 #define M_6502      (1 << 0)
@@ -954,7 +950,7 @@ static void DecodeTransfer(Word Code)
 
 static void AddFixed(const char *NName, Word NFlag, Byte NCode)
 {
-  if (InstrZ >= FixedOrderCount) exit(255);
+  order_array_rsv_end(FixedOrders, FixedOrder);
   FixedOrders[InstrZ].CPUFlag = NFlag;
   FixedOrders[InstrZ].Code = NCode;
   AddInstTable(InstTable, NName, InstrZ++, DecodeFixed);
@@ -965,7 +961,7 @@ static void AddNorm(const char *NName, LongWord ZACode, LongWord ACode, LongWord
                     LongWord IndOXCode, LongWord IndOYCode, LongWord IndOZCode, LongWord Ind16Code, LongWord ImmCode, LongWord AccCode,
                     LongWord NoneCode, LongWord Ind8Code, LongWord IndSPYCode, LongWord SpecCode)
 {
-  if (InstrZ >= NormOrderCount) exit(255);
+  order_array_rsv_end(NormOrders, NormOrder);
   NormOrders[InstrZ].Codes[ModZA] = ZACode;
   NormOrders[InstrZ].Codes[ModA] = ACode;
   NormOrders[InstrZ].Codes[ModZIX] = ZIXCode;
@@ -988,7 +984,7 @@ static void AddNorm(const char *NName, LongWord ZACode, LongWord ACode, LongWord
 
 static void AddCond(const char *NName, Word NFlag, Byte NCodeShort, Byte NCodeLong)
 {
-  if (InstrZ >= CondOrderCount) exit(255);
+  order_array_rsv_end(CondOrders, CondOrder);
   CondOrders[InstrZ].CPUFlag = NFlag;
   CondOrders[InstrZ].CodeShort = NCodeShort;
   CondOrders[InstrZ].CodeLong = NCodeLong;
@@ -1041,7 +1037,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "TII"  , 0x73, DecodeTransfer);
   AddInstTable(InstTable, "TIN"  , 0xd3, DecodeTransfer);
 
-  FixedOrders = (FixedOrder *) malloc(sizeof(FixedOrder) * FixedOrderCount); InstrZ = 0;
+  InstrZ = 0;
   AddFixed("RTS", M_6502 | M_65SC02 | M_65C02 | M_65CE02 | M_W65C02S | M_65C19 | M_MELPS740 | M_HUC6280 | M_6502U, 0x60);
   AddFixed("RTI", M_6502 | M_65SC02 | M_65C02 | M_65CE02 | M_W65C02S | M_65C19 | M_MELPS740 | M_HUC6280 | M_6502U, 0x40);
   AddFixed("TAX", M_6502 | M_65SC02 | M_65C02 | M_65CE02 | M_W65C02S | M_65C19 | M_MELPS740 | M_HUC6280 | M_6502U, 0xaa);
@@ -1117,7 +1113,7 @@ static void InitFields(void)
   AddFixed("SAY",                                                                             M_HUC6280          , 0x42);
   AddFixed("SXY",                                                                             M_HUC6280          , 0x02);
 
-  NormOrders = (NormOrder *) malloc(sizeof(NormOrder) * NormOrderCount); InstrZ = 0;
+  InstrZ = 0;
   AddNorm("NOP",
   /* ZA    */ MkMask(                                                                                        M_6502U, 0x04),
   /* A     */ MkMask(                                                                                        M_6502U, 0x0c),
@@ -2361,7 +2357,7 @@ static void InitFields(void)
   /*(n,SP),y*/    -1,
   /* spec  */     -1);
 
-  CondOrders = (CondOrder *) malloc(sizeof(CondOrder) * CondOrderCount); InstrZ = 0;
+  InstrZ = 0;
   AddCond("BEQ", M_6502 | M_65SC02 | M_65C02 | M_65CE02 | M_W65C02S | M_65C19 | M_MELPS740 | M_HUC6280 | M_6502U, 0xf0, 0xf3);
   AddCond("BNE", M_6502 | M_65SC02 | M_65C02 | M_65CE02 | M_W65C02S | M_65C19 | M_MELPS740 | M_HUC6280 | M_6502U, 0xd0, 0xd3);
   AddCond("BPL", M_6502 | M_65SC02 | M_65C02 | M_65CE02 | M_W65C02S | M_65C19 | M_MELPS740 | M_HUC6280 | M_6502U, 0x10, 0x13);
@@ -2383,9 +2379,9 @@ static void DeinitFields(void)
 {
   DestroyInstTable(InstTable);
 
-  free(FixedOrders);
-  free(NormOrders);
-  free(CondOrders);
+  order_array_free(FixedOrders);
+  order_array_free(NormOrders);
+  order_array_free(CondOrders);
 }
 
 /*---------------------------------------------------------------------------*/
