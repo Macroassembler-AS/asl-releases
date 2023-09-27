@@ -1,4 +1,9 @@
-2023-09-15 [1.42 Bld 249]
+2023-09-27 [1.42 Bld 250]
+
+- Bugfix      : Settig field length of PC in listing also works
+                if target is given via CPU statement in source file
+
+2023-09-25 [1.42 Bld 249]
 
 - Addition    : Allow zero-padded PC in listing by setting a list
                 radix with leading zero

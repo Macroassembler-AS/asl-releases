@@ -3584,7 +3584,7 @@ static as_cmd_result_t CMD_ListConsole(Boolean Negate, const char *Arg)
 
 static as_cmd_result_t CMD_ListRadix(Boolean Negate, const char *Arg)
 {
-  Boolean OK;
+  Boolean OK, new_zero_pad = False;
   LargeWord NewListRadixBase;
 
   if (Negate)
@@ -3593,11 +3593,17 @@ static as_cmd_result_t CMD_ListRadix(Boolean Negate, const char *Arg)
     ListPCZeroPad = False;
     return e_cmd_ok;
   }
+
+  if (*Arg == '0')
+  {
+    new_zero_pad = True;
+    Arg++;
+  }
   NewListRadixBase = ConstLongInt(Arg, &OK, 10);
   if (!OK || (NewListRadixBase < 2) || (NewListRadixBase > 36))
     return e_cmd_err;
   ListRadixBase = NewListRadixBase;
-  ListPCZeroPad = (*Arg == '0');
+  ListPCZeroPad = new_zero_pad;
   return e_cmd_arg;
 }
 
