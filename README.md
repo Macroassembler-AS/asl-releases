@@ -33,7 +33,8 @@ Building ASL
 The detailed instructions are with the ASL code itself in the `upstream`
 branch. However, as a quick guide for Linux:
 
-    sudo apt-get install build-essential texlive    # Debian packages
+    #   Debian/Ubuntu package manager and package names: tweak for your distro.
+    sudo apt-get install build-essential texlive texlive-lang-german
     git checkout upstream
     cp Makefile.def-samples/Makefile.def-x86_64-unknown-linux Makefile.def
     #   edit Makefile.def to set install path
