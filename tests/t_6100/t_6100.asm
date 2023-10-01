@@ -53,6 +53,10 @@ TOP:
 	STA
 	CLA CLL
 
+	BSW IAC
+	bsw IAC
+	bsw iac
+
 	;; Operate Instruction (Group 2)
 	;; NOP
 	HLT
@@ -78,6 +82,9 @@ TOP:
 	SNA CLA
 	SMA CLA
 	SPA CLA
+	OSR HLT		; 0xF06 / 07406
+	SNL OSR HLT	; 0xF16 / 07426
+	SZL OSR HLT	; 0xF1E / 07436
 
 	;; Operate Instruction (Group 3)
 	;; NOP
