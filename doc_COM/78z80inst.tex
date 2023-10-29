@@ -1,0 +1,254 @@
+{\tt LD r1,A}         & {\tt MOV r1,A}       & r1$\gets$A                  & 1,2,3,4 \\
+                      &                      &                             & (r1$\neq$EAx) \\
+                      &                      &                             & 3,4 \\
+                      &                      &                             & (r1$=$EAx) \\
+{\tt LD A,r1}         & {\tt MOV A,r1}       & A$\gets$r1                  & 1,2,3,4 \\
+                      &                      &                             & (r1$\neq$EAx) \\
+                      &                      &                             & 3,4 \\
+                      &                      &                             & (r1$=$EAx) \\
+{\tt LD sr,A}         & {\tt MOV sr,A}       & sr$\gets$A                  & 1,2,3,4 \\
+{\tt LD A,sr1}        & {\tt MOV A,sr1}      & A$\gets$sr1                 & 1,2,3,4 \\
+{\tt LD r,(word)}     & {\tt MOV r,word}     & r$\gets$(word)              & 1,2,3,4 \\
+                      &                      &                             & (r1$\neq$V) \\
+                      &                      &                             & 2,3,4 \\
+                      &                      &                             & (r1$=$V) \\
+{\tt LD (word),r}     & {\tt MOV word,r}     & (word)$\gets$r              & 1,2,3,4 \\
+                      &                      &                             & (r1$\neq$V) \\
+                      &                      &                             & 2,3,4 \\
+                      &                      &                             & (r1$=$V) \\
+{\tt LD r,byte}       & {\tt MVI r,byte}     & r$\gets$byte                & 1,2,3,4 \\
+                      &                      &                             & (r1$\neq$V) \\
+                      &                      &                             & 2,3,4 \\
+                      &                      &                             & (r1$=$V) \\
+{\tt LD sr2,byte}     & {\tt MVI sr2,byte}   & sr2$\gets$byte              & 2,3,4 \\
+{\tt LD (wa),byte}    & {\tt MVIW wa,byte}   & (wa)$\gets$byte             & 2,3,4 \\
+{\tt LD (rpa1),byte}  & {\tt MVIX rpa1,byte} & (rpa1)$\gets$byte           & 2,3,4 \\
+{\tt LD (wa),a}       & {\tt STAW wa}        & (wa)$\gets$A                & 1,2,3,4 \\
+{\tt LD A,(wa)}       & {\tt LDAW wa}        & A$\gets$(wa)                & 1,2,3,4 \\
+{\tt LD (rpa),a}      & {\tt STAX rpa}       & (rpa)$\gets$(wa)            & 1,2 \\
+{\tt LD (rpa2),a}     & {\tt STAX rpa2}      & (rpa2)$\gets$(wa)           & 3,4 \\
+{\tt LD A,(rpa)}      & {\tt LDAX rpa}       & (wa)$\gets$(rpa)            & 1,2 \\
+{\tt LD A,(rpa2)}     & {\tt LDAX rpa2}      & (wa)$\gets$(rpa2)           & 3,4 \\
+{\tt LD rp3,EA}       & {\tt DMOV rp3,EA}    & rp3$\gets$EA                & 3,4 \\
+{\tt LD sr3,EA}       & {\tt DMOV sr3,EA}    & sr3$\gets$EA                & 3,4 \\
+{\tt LD EA,sr4}       & {\tt DMOV EA,sr4}    & EA$\gets$sr4                & 3,4 \\
+{\tt LD EA,rp3}       & {\tt DMOV EA,rp3}    & EA$\gets$rp3                & 3,4 \\
+{\tt LD (word),BC}    & {\tt SBCD word}      & (word)$\gets$BC             & 1,2,3,4 \\
+{\tt LD (word),DE}    & {\tt SDED word}      & (word)$\gets$DE             & 1,2,3,4 \\
+{\tt LD (word),HL}    & {\tt SHLD word}      & (word)$\gets$HL             & 1,2,3,4 \\
+{\tt LD (word),SP}    & {\tt SSPD word}      & (word)$\gets$SP             & 1,2,3,4 \\
+{\tt LD (rpa3),EA}    & {\tt STEAX rpa3}     & (rpa3)$\gets$EA             & 3,4 \\
+{\tt LD BC,(word)}    & {\tt LBCD word}      & BC$\gets$(word)             & 1,2,3,4 \\
+{\tt LD DE,(word)}    & {\tt LDED word}      & DE$\gets$(word)             & 1,2,3,4 \\
+{\tt LD HL,(word)}    & {\tt LHLD word}      & HL$\gets$(word)             & 1,2,3,4 \\
+{\tt LD SP,(word)}    & {\tt LSPD word}      & SP$\gets$(word)             & 1,2,3,4 \\
+{\tt LD EA,(rpa3)}    & {\tt LDEAX rpa3}     & EA$\gets$(word)             & 3,4 \\
+{\tt LD rp,word}      & {\tt LXI rp,word}    & rp$\gets$word               & 1,2,3,4 \\
+{\tt LD EA,word}      & {\tt LXI EA,word}    & EA$\gets$word               & 3,4 \\
+\hline
+{\tt ADD A,(rpa)}     & {\tt ADDX rpa}       & A$\gets$A+(rpa)             & 1,2,3,4 \\
+{\tt ADD A,byte}      & {\tt ADI A,byte}     & A$\gets$A+byte              & 1,2,3,4 \\
+{\tt ADD r,byte}      & {\tt ADI r,byte}     & r$\gets$r+byte              & 2,3,4 \\
+{\tt ADD sr2,byte}    & {\tt ADI sr2,byte}   & sr2$\gets$A+sr2             & 2,3,4 \\
+{\tt ADD A,(wa)}      & {\tt ADDW wa}        & A$\gets$A+(wa)              & 2,3,4 \\
+{\tt ADD EA,r2}       & {\tt EADD EA,r2}     & EA$\gets$EA+r2              & 3,4 \\
+{\tt ADD EA,rp3}      & {\tt DADD EA,rp3}    & EA$\gets$EA+rp3             & 3,4 \\
+\hline
+{\tt ADC A,(rpa)}     & {\tt ADCX rpa}       & A$\gets$A+(rpa)+CY          & 1,2,3,4 \\
+{\tt ADC A,byte}      & {\tt ACI A,byte}     & A$\gets$A+byte+CY           & 1,2,3,4 \\
+{\tt ADC r,byte}      & {\tt ACI r,byte}     & r$\gets$r+A+CY              & 2,3,4 \\
+{\tt ADC sr2,byte}    & {\tt ACI sr2,byte}   & sr2$\gets$A+sr2+CY          & 2,3,4 \\
+{\tt ADC A,(wa)}      & {\tt ADCW wa}        & A$\gets$A+(wa)+CY           & 2,3,4 \\
+{\tt ADC EA,rp3}      & {\tt DADC EA,rp3}    & EA$\gets$EA+rp3+CY          & 3,4 \\
+\hline
+{\tt ADDNC A,(rpa)}   & {\tt ADDNCX rpa}     & A$\gets$A+(rpa)             & 1,2,3,4 \\
+                      &                      & skip if !CY                 & \\
+{\tt ADDNC A,byte}    & {\tt ADINC A,byte}   & A$\gets$A+byte              & 1,2,3,4 \\
+                      &                      & skip if !CY                 & \\
+{\tt ADDNC r,byte}    & {\tt ADINC r,byte}   & r$\gets$r+A                 & 2,3,4 \\
+                      &                      & skip if !CY                 & \\
+{\tt ADDNC sr2,byte}  & {\tt ADINC sr2,byte} & sr2$\gets$A+sr2             & 2,3,4 \\
+                      &                      & skip if !CY                 & \\
+{\tt ADDNC A,(wa)}    & {\tt ADDNCW wa}      & A$\gets$A+(wa)              & 2,3,4 \\
+                      &                      & skip if !CY                 & \\
+{\tt ADDNC EA,rp3}    & {\tt DADDNC EA,rp3}  & EA$\gets$EA+rp3             & 3, 4\\
+                      &                      & skip if !CY                 & \\
+\hline
+{\tt SUB A,(rpa)}     & {\tt SUBX rpa}       & A$\gets$A-(rpa)             & 1,2,3,4 \\
+{\tt SUB A,byte}      & {\tt SUI A,byte}     & A$\gets$A-byte              & 1,2,3,4 \\
+{\tt SUB r,byte}      & {\tt SUI r,byte}     & r$\gets$r-A                 & 2,3,4 \\
+{\tt SUB sr2,byte}    & {\tt SUI sr2,byte}   & sr2$\gets$A-sr2             & 2,3,4 \\
+{\tt SUB A,(wa)}      & {\tt SUBW wa}        & A$\gets$A-(wa)              & 2,3,4 \\
+{\tt SUB EA,r2}       & {\tt ESUB EA,r2}     & EA$\gets$EA-r2              & 3,4 \\
+{\tt SUB EA,rp3}      & {\tt DSUB EA,rp3}    & EA$\gets$EA-rp3             & 3,4 \\
+\hline
+{\tt SBB A,(rpa)}     & {\tt SBBX rpa}       & A$\gets$A-(rpa)-CY          & 1,2,3,4 \\
+{\tt SBB A,byte}      & {\tt SBI A,byte}     & A$\gets$A-byte-CY           & 1,2,3,4 \\
+{\tt SBB r,byte}      & {\tt SBI r,byte}     & r$\gets$r-A-CY              & 2,3,4 \\
+{\tt SBB sr2,byte}    & {\tt SBI sr2,byte}   & sr2$\gets$A-sr2-CY          & 2,3,4 \\
+{\tt SBB A,(wa)}      & {\tt SBBW wa}        & A$\gets$A-(wa)-CY           & 2,3,4 \\
+{\tt SBB EA,rp3}      & {\tt DSBB EA,rp3}    & EA$\gets$EA-rp3-CY          & 3,4 \\
+\hline
+{\tt SUBNB A,(rpa)}   & {\tt SUBNBX rpa}     & A$\gets$A-(rpa)             & 1,2,3,4 \\
+                      &                      & skip if !CY                 & \\
+{\tt SUBNB A,byte}    & {\tt SUINB A,byte}   & A$\gets$A-byte              & 1,2,3,4 \\
+                      &                      & skip if !CY                 & \\
+{\tt SUBNB r,byte}    & {\tt SUINB r,byte}   & r$\gets$r-A                 & 2,3,4 \\
+                      &                      & skip if !CY                 & \\
+{\tt SUBNB sr2,byte}  & {\tt SUINB sr2,byte} & sr2$\gets$A-sr2             & 2,3,4 \\
+                      &                      & skip if !CY                 & \\
+{\tt SUBNB A,(wa)}    & {\tt SUBNBW wa}      & A$\gets$A-(wa)              & 2,3,4 \\
+                      &                      & skip if !CY                 & \\
+{\tt SUBNB EA,rp3}    & {\tt DSUBNB EA,rp3}  & EA$\gets$EA-rp3             & 3,4 \\
+                      &                      & skip if !CY                 & \\
+\hline
+{\tt AND A,r}         & {\tt ANA A,r}        & A$\gets$A$\land$r           & 1,2,3,4 \\
+                      &                      &                             & (r$\neq$V) \\
+                      &                      &                             & 2,3,4 \\
+                      &                      &                             & (r$=$V) \\
+{\tt AND r,A}         & {\tt ANA r,A}        & r$\gets$A$\land$r           & 1,2,3,4 \\
+                      &                      &                             & (r$\neq$V) \\
+                      &                      &                             & 2,3,4 \\
+                      &                      &                             & (r$=$V) \\
+{\tt AND A,(rpa)}     & {\tt ANAX rpa}       & A$\gets$A$\land$(rpa)       & 1,2,3,4 \\
+{\tt AND A,byte}      & {\tt ANI A,byte}     & A$\gets$A$\land$byte        & 1,2,3,4 \\
+{\tt AND r,byte}      & {\tt ANI r,byte}     & r$\gets$r$\land$byte        & 2,3,4 \\
+{\tt AND sr2,byte}    & {\tt ANI sr2,byte}   & sr2$\gets$sr2$\land$byte    & 1,2,3,4 \\
+{\tt AND A,(wa)}      & {\tt ANAW wa}        & A$\gets$A$\land$(wa)        & 2,3,4 \\
+{\tt AND (wa),byte}   & {\tt ANIW wa,byte}   & (wa)$\gets$(wa)$\land$byte  & 1,2,3,4 \\
+{\tt AND EA,rp3}      & {\tt DAN EA,rp3}     & EA$\gets$EA$\land$rp3       & 3,4 \\
+\hline
+{\tt OR A,r}          & {\tt ORA A,r}        & A$\gets$A$\lor$r            & 1,2,3,4 \\
+                      &                      &                             & (r$\neq$V) \\
+                      &                      &                             & 2,3,4 \\
+                      &                      &                             & (r$=$V) \\
+{\tt OR r,A}          & {\tt ORA r,A}        & r$\gets$A$\lor$r            & 1,2,3,4 \\
+                      &                      &                             & (r$\neq$V) \\
+                      &                      &                             & 2,3,4 \\
+                      &                      &                             & (r$=$V) \\
+{\tt OR A,(rpa)}      & {\tt ORAX rpa}       & A$\gets$A$\lor$(rpa)        & 1,2,3,4 \\
+{\tt OR A,byte}       & {\tt ORI A,byte}     & A$\gets$A$\lor$byte         & 1,2,3,4 \\
+{\tt OR r,byte}       & {\tt ORI r,byte}     & r$\gets$r$\lor$byte         & 2,3,4 \\
+{\tt OR sr2,byte}     & {\tt ORI sr2,byte}   & sr2$\gets$sr2$\lor$byte     & 1,2,3,4 \\
+{\tt OR A,(wa)}       & {\tt ORAW wa}        & A$\gets$A$\lor$(wa)         & 2,3,4 \\
+{\tt OR (wa),byte}    & {\tt ORIW wa,byte}   & (wa)$\gets$(wa)$\lor$byte   & 1,2,3,4 \\
+{\tt OR EA,rp3}       & {\tt DOR EA,rp3}     & EA$\gets$EA$\lor$rp3        & 3,4 \\
+\hline
+{\tt XOR A,r}         & {\tt XRA A,r}        & A$\gets$A$\oplus$r          & 1,2,3,4 \\
+                      &                      &                             & (r$\neq$V) \\
+                      &                      &                             & 2,3,4 \\
+                      &                      &                             & (r$=$V) \\
+{\tt XOR r,A}         & {\tt XRA r,A}        & r$\gets$A$\oplus$r          & 1,2,3,4 \\
+                      &                      &                             & (r$\neq$V) \\
+                      &                      &                             & 2,3,4 \\
+                      &                      &                             & (r$=$V) \\
+{\tt XOR A,(rpa)}     & {\tt XRAX rpa}       & A$\gets$A$\oplus$(rpa)      & 1,2,3,4 \\
+{\tt XOR A,byte}      & {\tt XRI A,byte}     & A$\gets$A$\oplus$byte       & 2,3,4 \\
+{\tt XOR r,byte}      & {\tt XRI r,byte}     & r$\gets$r$\oplus$byte       & 2,3,4 \\
+{\tt XOR sr2,byte}    & {\tt XRI sr2,byte}   & sr2$\gets$sr2$\oplus$byte   & 2,3,4 \\
+{\tt XOR A,(wa)}      & {\tt XRAW wa}        & A$\gets$A$\oplus$(wa)       & 2,3,4 \\
+{\tt XOR EA,rp3}      & {\tt DXR EA,rp3}     & EA$\gets$EA$\oplus$rp3      & 3,4 \\
+\hline
+{\tt SKGT A,r}        & {\tt GTA A,r}        & skip if A$>$r               & 1,2,3,4 \\
+                      &                      &                             & (r$\neq$V) \\
+                      &                      &                             & 2,3,4 \\
+                      &                      &                             & (r$=$V) \\
+{\tt SKGT r,A}        & {\tt GTA r,A}        & skip if r$>$A               & 1,2,3,4 \\
+                      &                      &                             & (r$\neq$V) \\
+                      &                      &                             & 2,3,4 \\
+                      &                      &                             & (r$=$V) \\
+{\tt SKGT A,(rpa)}    & {\tt GTAX rpa}       & skip if A$>$(rpa)           & 1,2,3,4 \\
+{\tt SKGT A,byte}     & {\tt GTI A,byte}     & skip if A$>$byte            & 1,2,3,4 \\
+{\tt SKGT r,byte}     & {\tt GTI r,byte}     & skip if r$>$byte            & 2,3,4 \\
+{\tt SKGT sr2,byte}   & {\tt GTI sr2,byte}   & skip if sr2$>$byte          & 2,3,4 \\
+{\tt SKGT A,(wa)}     & {\tt GTAW wa}        & skip if A$>$(wa)            & 2,3,4 \\
+{\tt SKGT (wa),byte}  & {\tt GTIW wa,byte}   & skip if (wa)$>$byte         & 1,2,3,4 \\
+{\tt SKGT EA,rp3}     & {\tt DGT EA,rp3}     & skip if EA$>$rp3            & 3,4 \\
+\hline
+{\tt SKLT A,r}        & {\tt LTA A,r}        & skip if A$<$r               & 1,2,3,4 \\
+                      &                      &                             & (r$\neq$V) \\
+                      &                      &                             & 2,3,4 \\
+                      &                      &                             & (r$=$V) \\
+{\tt SKLT r,A}        & {\tt LTA r,A}        & skip if r$<$A               & 1,2,3,4 \\
+                      &                      &                             & (r$\neq$V) \\
+                      &                      &                             & 2,3,4 \\
+                      &                      &                             & (r$=$V) \\
+{\tt SKLT A,(rpa)}    & {\tt LTAX rpa}       & skip if A$<$(rpa)           & 1,2,3,4 \\
+{\tt SKLT A,byte}     & {\tt LTI A,byte}     & skip if A$<$byte            & 1,2,3,4 \\
+{\tt SKLT r,byte}     & {\tt LTI r,byte}     & skip if r$<$byte            & 2,3,4 \\
+{\tt SKLT sr2,byte}   & {\tt LTI sr2,byte}   & skip if sr2$<$byte          & 2,3,4 \\
+{\tt SKLT A,(wa)}     & {\tt LTAW wa}        & skip if A$<$(wa)            & 2,3,4 \\
+{\tt SKLT (wa),byte}  & {\tt LTIW wa,byte}   & skip if (wa)$<$byte         & 1,2,3,4 \\
+{\tt SKLT EA,rp3}     & {\tt DLT EA,rp3}     & skip if EA$<$rp3            & 3,4 \\
+\hline
+{\tt SKNE A,r}        & {\tt NEA A,r}        & skip if A$\neq$r            & 1,2,3,4 \\
+                      &                      &                             & (r$\neq$V) \\
+                      &                      &                             & 2,3,4 \\
+                      &                      &                             & (r$=$V) \\
+{\tt SKNE r,A}        & {\tt NEA r,A}        & skip if r$\neq$A            & 1,2,3,4 \\
+                      &                      &                             & (r$\neq$V) \\
+                      &                      &                             & 2,3,4 \\
+                      &                      &                             & (r$=$V) \\
+{\tt SKNE A,(rpa)}    & {\tt NEAX rpa}       & skip if A$\neq$(rpa)        & 1,2,3,4 \\
+{\tt SKNE A,byte}     & {\tt NEI A,byte}     & skip if A$\neq$byte         & 1,2,3,4 \\
+{\tt SKNE r,byte}     & {\tt NEI r,byte}     & skip if r$\neq$byte         & 2,3,4 \\
+{\tt SKNE sr2,byte}   & {\tt NEI sr2,byte}   & skip if sr2$\neq$byte       & 2,3,4 \\
+{\tt SKNE A,(wa)}     & {\tt NEAW wa}        & skip if A$\neq$(wa)         & 2,3,4 \\
+{\tt SKNE (wa),byte}  & {\tt NEIW wa,byte}   & skip if (wa)$\neq$byte      & 1,2,3,4 \\
+{\tt SKNE EA,rp3}     & {\tt DNE EA,rp3}     & skip if EA$\neq$rp3         & 3,4 \\
+\hline
+{\tt SKEQ A,r}        & {\tt EQA A,r}        & skip if A$=$r               & 1,2,3,4 \\
+                      &                      &                             & (r$\neq$V) \\
+                      &                      &                             & 2,3,4 \\
+                      &                      &                             & (r$=$V) \\
+{\tt SKEQ r,A}        & {\tt EQA r,A}        & skip if r$=$A               & 1,2,3,4 \\
+                      &                      &                             & (r$\neq$V) \\
+                      &                      &                             & 2,3,4 \\
+                      &                      &                             & (r$=$V) \\
+{\tt SKEQ A,(rpa)}    & {\tt EQAX rpa}       & skip if A$=$(rpa)           & 1,2,3,4 \\
+{\tt SKEQ A,byte}     & {\tt EQI A,byte}     & skip if A$=$byte            & 1,2,3,4 \\
+{\tt SKEQ r,byte}     & {\tt EQI r,byte}     & skip if r$=$byte            & 2,3,4 \\
+{\tt SKEQ sr2,byte}   & {\tt EQI sr2,byte}   & skip if sr2$=$byte          & 2,3,4 \\
+{\tt SKEQ A,(wa)}     & {\tt EQAW wa}        & skip if A$=$(wa)            & 2,3,4 \\
+{\tt SKEQ (wa),byte}  & {\tt EQIW wa,byte}   & skip if (wa)$=$byte         & 1,2,3,4 \\
+{\tt SKEQ EA,rp3}     & {\tt DEQ EA,rp3}     & skip if AEA$=$rp3           & 3,4 \\
+\hline
+{\tt SKON A,r}        & {\tt ONA A,r}        & skip if (A$\land$r)$\neq$0  & 1,2,3,4 \\
+                      &                      &                             & (r$\neq$V) \\
+                      &                      &                             & 2,3,4 \\
+                      &                      &                             & (r$=$V) \\
+{\tt SKON r,A}        & {\tt ONA r,A}        & skip if (r$\land$A)$\neq$0  & 1,2,3,4 \\
+                      &                      &                             & (r$\neq$V) \\
+                      &                      &                             & 2,3,4 \\
+                      &                      &                             & (r$=$V) \\
+{\tt SKON A,(rpa)}    & {\tt ONAX rpa}       & skip if (A$\land$(rpa))$\neq$0 & 1,2,3,4 \\
+{\tt SKON A,byte}     & {\tt ONI A,byte}     & skip if (A$\land$byte)$\neq$0 & 1,2,3,4 \\
+{\tt SKON r,byte}     & {\tt ONI r,byte}     & skip if (r$\land$byte)$\neq$0 & 2,3,4 \\
+{\tt SKON sr2,byte}   & {\tt ONI sr2,byte}   & skip if (sr2$\land$byte)$\neq$0 & 2,3,4 \\
+{\tt SKON A,(wa)}     & {\tt ONAW wa}        & skip if (A$\land$(wa))$\neq$0 & 2,3,4 \\
+{\tt SKON (wa),byte}  & {\tt ONIW wa,byte}   & skip if (wa)$\land$byte$\neq$0 & 1,2,3,4 \\
+{\tt SKON EA,rp3}     & {\tt DON EA,rp3}     & skip if (EA$\land$rp3)$\neq$0 & 3,4 \\
+\hline
+{\tt SKOFF A,r}       & {\tt OFFA A,r}       & skip if (A$\land$r)$=$0     & 1,2,3,4 \\
+                      &                      &                             & (r$\neq$V) \\
+                      &                      &                             & 2,3,4 \\
+                      &                      &                             & (r$=$V) \\
+{\tt SKOFF r,A}       & {\tt OFFA r,A}       & skip if (r$\land$A)$=$0     & 1,2,3,4 \\
+                      &                      &                             & (r$\neq$V) \\
+                      &                      &                             & 2,3,4 \\
+                      &                      &                             & (r$=$V) \\
+{\tt SKOFF A,(rpa)}   & {\tt OFFAX rpa}      & skip if (A$\land$(rpa))$=$0 & 1,2,3,4 \\
+{\tt SKOFF A,byte}    & {\tt OFFI A,byte}    & skip if (A$\land$byte)$=$0  & 1,2,3,4 \\
+{\tt SKOFF r,byte}    & {\tt OFFI r,byte}    & skip if (r$\land$byte)$=$0  & 2,3,4 \\
+{\tt SKOFF sr2,byte}  & {\tt OFFI sr2,byte}  & skip if (sr2$\land$byte)$=$0 & 2,3,4 \\
+{\tt SKOFF A,(wa)}    & {\tt OFFAW wa}       & skip if (A$\land$(wa))$=$0  & 2,3,4 \\
+{\tt SKOFF (wa),byte} & {\tt OFFIW wa,byte}  & skip if (wa)$\land$byte$=$0 & 1,2,3,4 \\
+{\tt SKOFF EA,rp3}    & {\tt DOFF EA,rp3}    & skip if (EA$\land$rp3)$=$0  & 3,4 \\
+\hline
+{\tt INC r2}          & {\tt INR r2}         & r2$\gets$r2+1               & 1,2,3,4 \\
+{\tt INC (wa)}        & {\tt INRW wa}        & (wa)$\gets$(wa)+1           & 1,2,3,4 \\
+{\tt INC rp}          & {\tt INX rp}         & rp$\gets$rp+1               & 1,2,3,4 \\
+\hline
+{\tt DEC r2}          & {\tt DCR r2}         & r2$\gets$r2-1               & 1,2,3,4 \\
+{\tt DEC (wa)}        & {\tt DCRW wa}        & (wa)$\gets$(wa)-1           & 1,2,3,4 \\
+{\tt DEC rp}          & {\tt DCX rp}         & rp$\gets$rp-1               & 1,2,3,4 

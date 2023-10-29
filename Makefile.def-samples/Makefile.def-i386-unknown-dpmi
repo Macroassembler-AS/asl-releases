@@ -1,4 +1,15 @@
 # -------------------------------------------------------------------------
+# Override some Makefile defaults to match DOS environment:
+
+RM=del
+OOBJ=-o
+EOBJ=-e
+TARG_OOBJ=$(OOBJ)
+TARG_EOBJ=$(EOBJ)
+CURRDIR=.\\
+LIBM=
+
+# -------------------------------------------------------------------------
 # choose your compiler (must be ANSI-compliant!) and linker command, plus
 # any additionally needed flags
 
@@ -8,7 +19,7 @@ CFLAGS =-WX -ml -Oe -k- -Z -d -dc
 HOST_OBJEXTENSION = .obj
 LD = bcc -WX
 LDFLAGS =
-HOST_EXEXTENSION = .exe 
+HOST_EXEXTENSION = .exe
 
 # no cross build
 
@@ -27,5 +38,5 @@ TARG_EXEXTENSION = $(HOST_EXEXTENSION)
 BINDIR = c:\as\bin
 INCDIR = c:\as\include
 MANDIR = c:\as\man
-LIBDIR =
+LIBDIR = c:\as\lib
 DOCDIR = c:\as\doc

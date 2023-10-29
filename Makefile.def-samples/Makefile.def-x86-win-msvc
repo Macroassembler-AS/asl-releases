@@ -1,27 +1,31 @@
 # -------------------------------------------------------------------------
-# Override some Makefile defaults to match DOS environment:
+# Override some Makefile defaults to match MSVC environment:
 
-RM=del
-OOBJ=-o
-EOBJ=-e
+RM=del/q
+OOBJ=/Fo
+EOBJ=/Fe
 TARG_OOBJ=$(OOBJ)
 TARG_EOBJ=$(EOBJ)
 CURRDIR=.\\
-LIBM=
 
 # -------------------------------------------------------------------------
 # choose your compiler (must be ANSI-compliant!) and linker command, plus
-# any additionally needed flags
+# any additionally needed flags.  Also set target directory and file extensions:
+#
+# Makefile.def for using Visual Studio on Windows.
+
+
+# ...for host-side build tools:
 
 OBJDIR =
-CC = bcc
-CFLAGS =-WX -ml -Oe -k- -Z -d -dc
+CC = cl /nologo
+CFLAGS = /O2
 HOST_OBJEXTENSION = .obj
-LD = bcc -WX
+LD = cl /nologo
 LDFLAGS =
 HOST_EXEXTENSION = .exe
 
-# no cross build
+# ...for the actual build targets.  This is the simple case for no cross-build:
 
 TARG_OBJDIR = $(OBJDIR)
 TARG_CC = $(CC)
@@ -35,8 +39,8 @@ TARG_EXEXTENSION = $(HOST_EXEXTENSION)
 # directories where binaries, includes, and manpages should go during
 # installation
 
-BINDIR = c:\as\bin
-INCDIR = c:\as\include
-MANDIR = c:\as\man
-LIBDIR = c:\as\lib
-DOCDIR = c:\as\doc
+BINDIR = C:/ASL/bin
+INCDIR = C:/ASL/include
+MANDIR = C:/ASL/man
+LIBDIR =
+DOCDIR = C:/ASL/doc

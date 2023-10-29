@@ -1,0 +1,8 @@
++----------------------- Test Application Z80SYNTAX -------------------------+
+|                                                                            |
+|    This (synthetic) test enumerates all 78(C)xx instructions that have a   |
+|    (different) equivalent in Z80 syntax.  Optionally, the 78(C)xx target   |
+|    allows to write them in the (better readable) Z80 syntax., similar to   |
+|    the switch of same name on 8080/8085.                                   |
+|                                                                            |
++----------------------------------------------------------------------------+

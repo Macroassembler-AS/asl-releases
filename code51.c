@@ -400,62 +400,72 @@ static void DecodeAdr(tStrComp *pArg, Word Mask)
       *PPos = '\0';
       IndirComp.Pos.Len = PPos - IndirComp.str.p_str;
     }
-    if (DecodeReg(&IndirComp, &AdrPart, &HSize, False) == eIsReg)
+    switch (DecodeReg(&IndirComp, &AdrPart, &HSize, False))
     {
-      if (!PPos)
+      case eIsReg:
       {
-        H32 = 0;
-        OK = True;
-      }
-      else
-      {
-        tStrComp DispComp;
-
-        *PPos = Save;
-        StrCompRefRight(&DispComp, &IndirComp, PPos - IndirComp.str.p_str + !!(Save == '+'));
-        H32 = EvalStrIntExpression(&DispComp, SInt16, &OK);
-      }
-      if (OK)
-        switch (HSize)
+        if (!PPos)
         {
-          case eSymbolSize8Bit:
-            if ((AdrPart>1) || (H32 != 0)) WrError(ErrNum_InvAddrMode);
-            else
-              AdrMode = ModIReg8;
-            break;
-          case eSymbolSize16Bit:
-            if (H32 == 0)
-            {
-              AdrMode = ModIReg;
-              AdrSize = 0;
-            }
-            else
-            {
-              AdrMode = ModInd;
-              AdrSize = 0;
-              AdrVals[1] = H32 & 0xff;
-              AdrVals[0] = (H32 >> 8) & 0xff;
-              AdrCnt = 2;
-            }
-            break;
-          case eSymbolSize32Bit:
-            if (H32 == 0)
-            {
-              AdrMode = ModIReg;
-              AdrSize = 2;
-            }
-            else
-            {
-              AdrMode = ModInd;
-              AdrSize = 2;
-              AdrVals[1] = H32 & 0xff;
-              AdrVals[0] = (H32 >> 8) & 0xff;
-              AdrCnt = 2;
-            }
-            break;
-          default:
-            break;
+          H32 = 0;
+          OK = True;
         }
+        else
+        {
+          tStrComp DispComp;
+
+          *PPos = Save;
+          StrCompRefRight(&DispComp, &IndirComp, PPos - IndirComp.str.p_str + !!(Save == '+'));
+          H32 = EvalStrIntExpression(&DispComp, SInt16, &OK);
+        }
+        if (OK)
+          switch (HSize)
+          {
+            case eSymbolSize8Bit:
+              if ((AdrPart>1) || (H32 != 0)) WrError(ErrNum_InvAddrMode);
+              else
+                AdrMode = ModIReg8;
+              break;
+            case eSymbolSize16Bit:
+              if (H32 == 0)
+              {
+                AdrMode = ModIReg;
+                AdrSize = 0;
+              }
+              else
+              {
+                AdrMode = ModInd;
+                AdrSize = 0;
+                AdrVals[1] = H32 & 0xff;
+                AdrVals[0] = (H32 >> 8) & 0xff;
+                AdrCnt = 2;
+              }
+              break;
+            case eSymbolSize32Bit:
+              if (H32 == 0)
+              {
+                AdrMode = ModIReg;
+                AdrSize = 2;
+              }
+              else
+              {
+                AdrMode = ModInd;
+                AdrSize = 2;
+                AdrVals[1] = H32 & 0xff;
+                AdrVals[0] = (H32 >> 8) & 0xff;
+                AdrCnt = 2;
+              }
+              break;
+            default:
+              break;
+          }
+        break;
+      }
+      case eIsNoReg:
+        WrStrErrorPos(ErrNum_InvReg, &IndirComp);
+        break;
+      case eRegAbort:
+        /* will go to function end anyway after restoring separator */
+        break;
     }
     if (PPos)
       *PPos = Save;

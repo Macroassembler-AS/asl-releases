@@ -5378,20 +5378,20 @@ Feature daher mit Vorsicht einsetzen!
 \subsection{Z80SYNTAX}
 \ttindex{Z80SYNTAX}
 
-{\em G"ultigkeit: 8008, 8080/8085}
+{\em G"ultigkeit: 8008, 8080/8085, $\mu$PD78xx}
 
-Mit \tty{ON} als Argument kann man (fast) alle 8008/8080-Befehle wahlweise
+Mit \tty{ON} als Argument kann man Assmebler-Befehle wahlweise
 auch in der Form schreiben, wie sie Zilog f"ur den Z80 definiert hat.
 Zum Beispiel benutzt man einfach nur noch \tty{LD} mit sich selbst
-erkl"arenden Operanden, wo man in der originalen 8080-Syntax (bzw.
+erkl"arenden Operanden, wo man in der originalen Syntax (bzw.
 neueren 8008-Syntax) je nach Operanden \tty{MVI, LXI, MOV, STA, LDA,
 SHLD, LHLD, LDAX, STAX} oder \tty{SPHL} schreiben mu"s.
 
-Weil einige Mnemonics in der 8008/8080- und Z80-Syntax unterschiedliche
+Weil einige Mnemonics in der originalen und Z80-Syntax unterschiedliche
 Bedeutung haben, kann man nicht zu 100\% im 'Z80-Stil' programmieren.
-Alternativ schaltet man mit einem \tty{EXCLUSIVE} als Argument die
-''8080-Syntax'' ganz ab.  Details zu dieser Betriebsart kann man 
-im Abschnitt \ref{8080Spec} nachlesen.
+Alternativ schaltet man f"ur 8080/8085 mit einem \tty{EXCLUSIVE} als
+Argument die originale Syntax ganz ab.  Details zu dieser Betriebsart
+kann man im Abschnitt \ref{8080Spec} nachlesen.
 
 Ein eingebautes Symbol mit gleichem Namen gestattet es, die aktuelle
 Betriebsart auszulesen.  Es gilt \tty{0=OFF}, \tty{1=ON} und
@@ -11062,6 +11062,36 @@ scheinen solche Notationen ebenfalls zu benutzen:
       \tty{EA+HL}, \tty{(H+EA)}, \tty{(HL+EA)}, \tty{(EA+H)}
       oder \tty{(EA+HL)} geschrieben werden.}
 \end{itemize}
+
+Da Architektur und Befehlssatz so ,,8080-artig''
+sind, lag es auch nahe, den Schalter {\tt Z80SYNTAX} zu
+unterst"utzen, so da"s sich viele Befehle in einer eing"angigeren
+und vertrauteren Art und Weise schreiben lassen.  Da die
+Architektur und der Original-Befehlssatz der uCOM87-Familie 
+sich jedoch in einigen Punkten von 8080 unterscheiden, ist hier
+keine eins-zu-eins Abbildung m"oglich: Nicht alle Originalbefehle
+haben ein ,,Z80-"Aquivalent'', und einge vom 8080/Z80 bekannten
+Befehle haben kein Pendant beim uCOM87.  Deshalb ergibt ein
+{\tt Z80SYNTAX EXCLUSIVE} hier auch keinen Sinn.
+
+Die folgende Tabelle listet alle im {\tt Z80SYNTAX}-Modus
+definierten Befehle und ihre "Aquivalente in der Original-Syntax:
+
+\begin{longtable}{|l|l|l|l|}
+\hline
+{\tt Z80SYNTAX} & Original & Operation & CPUs \\
+\hline
+\hline
+\endhead
+\input{../doc_COM/78z80inst.tex}
+\\ \hline
+\multicolumn{4}{|l|}{CPU-Gruppe 1: 78C05, 78C06} \\
+\multicolumn{4}{|l|}{CPU-Gruppe 2: 7800, 7801, 7802} \\
+\multicolumn{4}{|l|}{CPU-Gruppe 3: 7807, 7808, 7809, 7810} \\
+\multicolumn{4}{|l|}{CPU-Gruppe 4: 7810, 78C1x} \\
+\hline
+\caption{Befehlsvarianten im {\tt Z80SYNTAX}-Modus}
+\end{longtable}
 
 %%---------------------------------------------------------------------------
 

@@ -1,3 +1,15 @@
+2023-10-29 [1.42 Bld 252]
+
+- Change      : Add $(EOBJ), $(OOBJ), $(TARG_EOBJ), and $(TARG_OOBJ)
+                variables to Makefiles, which may be overridden by
+                Makefile.def for non-'UNIX-style' compilers that do
+                not use '-o'
+- Addition    : 78(C)xx: Implement 'Z80-style' instructions for
+                a couple of machine instructions
+- Bugfix      : 78(C)xx: Do not accept undefined instructions:
+                ADIW, ACIW, ADINCW, SUIW, SBIW, SUINBW
+- Bugfix      : MCS-51: flag invalid addressing mode '@DPTR+disp'
+
 2023-10-01 [1.42 Bld 251]
 
 - Bugfix      : IM6100: Operand combination SZL OSR HLT did not work

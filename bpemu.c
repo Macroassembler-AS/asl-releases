@@ -295,7 +295,7 @@ Boolean DirScan(const char *Mask, charcallback callback)
 #ifdef __MSDOS__
   struct ffblk blk;
   int res;
-  char *pos;
+  const char *pos;
 
   res = findfirst(Mask, &blk, FA_RDONLY | FA_HIDDEN | FA_SYSTEM | FA_LABEL | FA_DIREC | FA_ARCH);
   if (res < 0)

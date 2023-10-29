@@ -43,7 +43,7 @@ typedef struct
 
 typedef struct
 {
-  const char name[5];
+  const char *p_name;
   Byte code, flags, core_mask;
 } sreg_t;
 
@@ -79,8 +79,17 @@ enum
   eFlagCMOS = 1 << 1,
   eFlagSR   = 1 << 2, /* sr  -> may be written from A */
   eFlagSR1  = 1 << 3, /* sr1 -> may be read to A */
-  eFlagSR2  = 1 << 4  /* sr2 -> load or read/modify/write with immediate */
+  eFlagSR2  = 1 << 4, /* sr2 -> load or read/modify/write with immediate */
+  eFlagSR3  = 1 << 5, /* sr3 -> may be written from EA */
+  eFlagSR4  = 1 << 6  /* sr4 -> may be read to EA */
 };
+
+/* Flags in high byte of ALU operations: */
+
+#define ALUImm_SR (1 << 0)
+#define ALUReg_Src (1 << 1)
+#define ALUReg_Dest (1 << 2)
+#define ALUReg_MayZ80 (1 << 3)
 
 typedef struct
 {
@@ -97,6 +106,48 @@ typedef struct
   unsigned core_mask;
 } order_t;
 
+typedef enum
+{
+  e_mod_none = -1,
+  e_mod_reg8 = 0,
+  e_mod_reg16 = 1,
+  e_mod_imm = 2,
+  e_mod_indir = 3,
+  e_mod_wa = 4,
+  e_mod_abs = 5,
+  e_mod_sreg8 = 6,
+  e_mod_sreg16 = 7
+} z80_adr_mode_t;
+
+#define MModReg8 (1 << e_mod_reg8)
+#define MModReg16 (1 << e_mod_reg16)
+#define MModImm (1 << e_mod_imm)
+#define MModIndir (1 << e_mod_indir)
+#define MModWA (1 << e_mod_wa)
+#define MModAbs (1 << e_mod_abs)
+#define MModSReg8 (1 << e_mod_sreg8)
+#define MModSReg16 (1 << e_mod_sreg16)
+
+#define REG_V 0
+#define REG_A 1
+#define REG_B 2
+#define REG_C 3
+#define REG_D 4
+#define REG_H 6
+#define REG_EAH 8
+#define REG_BC 1
+#define REG_DE 2
+#define REG_HL 3
+#define REG_EA 4
+
+typedef struct
+{
+  z80_adr_mode_t mode;
+  unsigned count;
+  Boolean force_long;
+  Byte val, vals[2];
+} z80_adr_vals_t;
+
 static Boolean is_7807_781x;
 
 static LongInt WorkArea;
@@ -104,62 +155,18 @@ static LongInt WorkArea;
 static const tCPUProps *pCurrCPUProps;
 
 static order_t *fixed_orders, *reg2_orders;
+static sreg_t *s_regs8, *s_regs16;
 static intflag_t *int_flags;
-
-static const sreg_t s_regs[] =
-{
-  { "PA"  , 0x00, eFlagSR | eFlagSR1 | eFlagSR2, core_mask_all },
-  { "PB"  , 0x01, eFlagSR | eFlagSR1 | eFlagSR2, core_mask_all },
-  { "PC"  , 0x02, eFlagSR | eFlagSR1 | eFlagSR2, core_mask_7807_7810 },
-  { "PD"  , 0x03, eFlagSR | eFlagSR1 | eFlagSR2, core_mask_7807_7810 },
-  { "PF"  , 0x05, eFlagSR | eFlagSR1 | eFlagSR2, core_mask_7807_7810 },
-  { "MKH" , 0x06, eFlagSR | eFlagSR1 | eFlagSR2, core_mask_7807_7810 },
-  { "MKL" , 0x07, eFlagSR | eFlagSR1 | eFlagSR2, core_mask_7807_7810 },
-  { "SMH" , 0x09, eFlagSR | eFlagSR1 | eFlagSR2, core_mask_7807_7810 },
-  { "SML" , 0x0a, eFlagSR                      , core_mask_7807_7810 },
-  { "EOM" , 0x0b, eFlagSR | eFlagSR1 | eFlagSR2, core_mask_7807_7810 },
-  { "ETMM", 0x0c, eFlagSR                      , core_mask_7807_7810 },
-  { "TMM" , 0x0d, eFlagSR | eFlagSR1 | eFlagSR2, core_mask_7807_7810 },
-  { "MM"  , 0x10, eFlagSR                      , core_mask_7807_7810 },
-  { "MCC" , 0x11, eFlagSR                      , core_mask_7807_7810 },
-  { "MA"  , 0x12, eFlagSR                      , core_mask_7807_7810 },
-  { "MB"  , 0x13, eFlagSR                      , core_mask_7807_7810 },
-  { "MC"  , 0x14, eFlagSR                      , core_mask_7807_7810 },
-  { "MF"  , 0x17, eFlagSR                      , core_mask_7807_7810 },
-  { "TXB" , 0x18, eFlagSR                      , core_mask_7807_7810 },
-  { "RXB" , 0x19, eFlagSR1                     , core_mask_7807_7810 },
-  { "TM0" , 0x1a, eFlagSR                      , core_mask_7807_7810 },
-  { "TM1" , 0x1b, eFlagSR                      , core_mask_7807_7810 },
-  { "ZCM" , 0x28, eFlagSR                      , core_mask_7807_7810 | core_mask_cmos },
-  { "ANM" , 0x08, eFlagSR | eFlagSR1 | eFlagSR2, core_mask_7810      },
-  { "CR0" , 0x20, eFlagSR1                     , core_mask_7810      },
-  { "CR1" , 0x21, eFlagSR1                     , core_mask_7810      },
-  { "CR2" , 0x22, eFlagSR1                     , core_mask_7810      },
-  { "CR3" , 0x23, eFlagSR1                     , core_mask_7810      },
-  { "PT"  , 0x0e, eFlagSR | eFlagSR1 | eFlagSR2, core_mask_7807      },
-  { "WDM" , 0x20, eFlagSR | eFlagSR1           , core_mask_7807      },
-  { "MT"  , 0x21, eFlagSR | eFlagSR1           , core_mask_7807      },
-  { "MK"  , 0x03, eFlagSR | eFlagSR1 | eFlagSR2, core_mask_7800      },
-  { "MB"  , 0x04, eFlagSR                      , core_mask_7800      },
-  { "PC"  , 0x02, eFlagSR | eFlagSR1 | eFlagSR2, core_mask_7800_high },
-  { "PC"  , 0x02, eFlagSR1 | eFlagSR2          , core_mask_7800_low  },
-  { "MC"  , 0x05, eFlagSR                      , core_mask_7800_high },
-  { "MC"  , 0x05, 0                            , core_mask_7800_low  },
-  { "TM0" , 0x06, eFlagSR                      , core_mask_7800_high },
-  { "TM0" , 0x06, 0                            , core_mask_7800_low  },
-  { "TM1" , 0x07, eFlagSR                      , core_mask_7800_high },
-  { "TM1" , 0x07, 0                            , core_mask_7800_low  },
-  { "TM"  , 0x06, eFlagSR                      , core_mask_7800_low  },
-  { "TM"  , 0x06, 0                            , core_mask_7800_high },
-  { "SM"  , 0x0a, eFlagSR | eFlagSR1           , core_mask_7800_low  },
-  { "SM"  , 0x0a, 0                            , core_mask_7800_high },
-  { "SC"  , 0x0b, eFlagSR | eFlagSR1           , core_mask_7800_low  },
-  { "SC"  , 0x0b, 0                            , core_mask_7800_high },
-  { "S"   , 0x08, eFlagSR | eFlagSR1           , core_mask_7800      },
-  { "TMM" , 0x09, eFlagSR | eFlagSR1           , core_mask_7800      }
-};
+static tSymbolSize z80_op_size, z80_def_op_size;
 
 /*--------------------------------------------------------------------------------*/
+
+/*!------------------------------------------------------------------------
+ * \fn     check_core(unsigned core_mask)
+ * \brief  check whether active target uses given core
+ * \param  core_mask list of allowed cores
+ * \return True if OK
+ * ------------------------------------------------------------------------ */
 
 static Boolean check_core(unsigned core_mask)
 {
@@ -169,27 +176,101 @@ static Boolean check_core(unsigned core_mask)
 }
 
 /*!------------------------------------------------------------------------
- * \fn     decode_r(const tStrComp *p_arg, ShortInt *p_res)
+ * \fn     decode_reg8(const char *p_arg, Byte *p_res)
+ * \brief  decode 8 bit register
+ * \param  p_arg source argument
+ * \param  p_res encoded name
+ * \return True if valid name
+ * ------------------------------------------------------------------------ */
+
+static Boolean decode_reg8(const char *p_arg, Byte *p_res)
+{
+  switch (strlen(p_arg))
+  {
+    case 1:
+    {
+      static const char names[] = "VABCDEHL";
+      const char *p;
+      int no_v = !(pCurrCPUProps->Flags & eFlagHasV);
+
+      p = strchr(&names[no_v], as_toupper(*p_arg));
+      if (!p)
+        return False;
+      *p_res = p - names;
+      return True;
+    }
+    case 3:
+      if (!is_7807_781x
+       || (as_toupper(p_arg[0]) != 'E')
+       || (as_toupper(p_arg[1]) != 'A'))
+        return False;
+      if (as_toupper(p_arg[2]) == 'L')
+        *p_res = REG_EAH + 1;
+      else if (as_toupper(p_arg[2]) == 'H')
+        *p_res = REG_EAH;
+      else
+        return False;
+      return True;
+    default:
+      return False;
+  }
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     decode_r(const tStrComp *p_arg, Byte *p_res)
  * \brief  decode name of 8 bit register
  * \param  p_arg source argument
  * \param  p_res return buffer
  * \return e_decode_reg_ok -> register known & OK
  * ------------------------------------------------------------------------ */
 
-static decode_reg_res_t decode_r(const tStrComp *p_arg, ShortInt *p_res)
+static decode_reg_res_t decode_r(const tStrComp *p_arg, Byte *p_res)
 {
-  static const char Names[] = "VABCDEHL";
-  const char *p;
-
-  if (strlen(p_arg->str.p_str) != 1)
+  if (!decode_reg8(p_arg->str.p_str, p_res))
     return e_decode_reg_unknown;
+  if (*p_res >= 8)
+  {
+    WrStrErrorPos(ErrNum_InvReg, p_arg);
+    return e_decode_reg_error;
+  }
+  else
+    return e_decode_reg_ok;
+}
 
-  p = strchr(Names, as_toupper(p_arg->str.p_str[0]));
-  if (!p)
+/*!------------------------------------------------------------------------
+ * \fn     decode_r1(const tStrComp *p_arg, Byte *p_res)
+ * \brief  decode name of 8 bit register, plus EAL/H on 78C1x
+ * \param  p_arg source argument
+ * \param  p_res return buffer
+ * \return e_decode_reg_ok -> register known & OK
+ * ------------------------------------------------------------------------ */
+
+static decode_reg_res_t decode_r1(const tStrComp *p_arg, Byte *p_res)
+{
+  if (!decode_reg8(p_arg->str.p_str, p_res))
     return e_decode_reg_unknown;
+  if (*p_res < 2)
+  {
+    WrStrErrorPos(ErrNum_InvReg, p_arg);
+    return e_decode_reg_error;
+  }
+  *p_res &= 7;
+  return e_decode_reg_ok;
+}
 
-  *p_res = p - Names;
-  if ((0 == *p_res) && !(pCurrCPUProps->Flags & eFlagHasV))
+/*!------------------------------------------------------------------------
+ * \fn     decode_r2(const tStrComp *p_arg, Byte *p_res)
+ * \brief  decode name of 8 bit register A, B, or C
+ * \param  p_arg source argument
+ * \param  p_res return buffer
+ * \return e_decode_reg_ok -> register known & OK
+ * ------------------------------------------------------------------------ */
+
+static decode_reg_res_t decode_r2(const tStrComp *p_arg, Byte *p_res)
+{
+  if (!decode_reg8(p_arg->str.p_str, p_res))
+    return e_decode_reg_unknown;
+  if ((*p_res == 0) || (*p_res >= 4))
   {
     WrStrErrorPos(ErrNum_InvReg, p_arg);
     return e_decode_reg_error;
@@ -198,74 +279,76 @@ static decode_reg_res_t decode_r(const tStrComp *p_arg, ShortInt *p_res)
 }
 
 /*!------------------------------------------------------------------------
- * \fn     decode_r1(const tStrComp *p_arg, ShortInt *p_res)
- * \brief  decode name of 8 bit register, plus EAL/H on 78C1x
+ * \fn     decode_reg16(char *p_arg, Byte *p_res, Boolean allow_single_letter)
+ * \brief  decode 16 bit register argument
  * \param  p_arg source argument
- * \param  p_res return buffer
- * \return e_decode_reg_ok -> register known & OK
+ * \param  p_res result value
+ * \param  allow_single_letter allow register names with single letters (not for Z80 syntax)
+ * \return True if success
  * ------------------------------------------------------------------------ */
 
-static decode_reg_res_t decode_r1(const tStrComp *p_arg, ShortInt *p_res)
-{
-  if (is_7807_781x && !as_strcasecmp(p_arg->str.p_str, "EAL")) *p_res = 1;
-  else if (is_7807_781x && !as_strcasecmp(p_arg->str.p_str, "EAH")) *p_res = 0;
-  else
-  {
-    decode_reg_res_t ret = decode_r(p_arg, p_res);
-
-    if ((e_decode_reg_ok == ret) && (*p_res < 2))
-    {
-      WrStrErrorPos(ErrNum_InvReg, p_arg);
-      return e_decode_reg_error;
-    }
-    return ret;
-  }
-  return e_decode_reg_ok;
-}
-
-static decode_reg_res_t decode_r2(const tStrComp *p_arg, ShortInt *p_res)
-{
-  decode_reg_res_t ret = decode_r(p_arg, p_res);
-
-  if ((e_decode_reg_ok == ret) && ((*p_res == 0) || (*p_res >= 4)))
-  {
-    WrStrErrorPos(ErrNum_InvReg, p_arg);
-    return e_decode_reg_error;
-  }
-  return ret;
-}
-
-static Boolean Decode_rp2(char *p_arg, ShortInt *p_res)
+static Boolean decode_reg16(char *p_arg, Byte *p_res, Boolean allow_single_letter)
 {
   static const reg_t regs[] =
   {
     { "SP" , 0, 0 },
-    { "B"  , 1, 0 },
-    { "BC" , 1, 0 },
-    { "D"  , 2, 0 },
-    { "DE" , 2, 0 },
-    { "H"  , 3, 0 },
-    { "HL" , 3, 0 },
-    { "EA" , 4, 0 },
+    { "B"  , REG_BC, 0 },
+    { "BC" , REG_BC, 0 },
+    { "D"  , REG_DE, 0 },
+    { "DE" , REG_DE, 0 },
+    { "H"  , REG_HL, 0 },
+    { "HL" , REG_HL, 0 },
+    { "EA" , REG_EA, 0 },
     { ""   , 0, 0 },
   };
 
   for (*p_res = 0; regs[*p_res].name[0]; (*p_res)++)
     if (!as_strcasecmp(p_arg, regs[*p_res].name))
     {
+      if (!p_arg[1] && !allow_single_letter)
+        return False;
       *p_res = regs[*p_res].code;
       return True;
     }
   return False;
 }
 
-static Boolean Decode_rp(char *Asc, ShortInt *Erg)
+/*!------------------------------------------------------------------------
+ * \fn     Decode_rp(char *Asc, Byte *Erg)
+ * \brief  decode rp2 argument (SP/BC/DE/HL/EA)
+ * \param  Asc source argument
+ * \param  Erg resulting register #
+ * \return True if success
+ * ------------------------------------------------------------------------ */
+
+static Boolean Decode_rp2(char *p_arg, Byte *p_res)
+{
+  return decode_reg16(p_arg, p_res, True);
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     Decode_rp(char *Asc, Byte *Erg)
+ * \brief  decode rp argument (SP/BC/DE/HL)
+ * \param  Asc source argument
+ * \param  Erg resulting register #
+ * \return True if success
+ * ------------------------------------------------------------------------ */
+
+static Boolean Decode_rp(char *Asc, Byte *Erg)
 {
   if (!Decode_rp2(Asc, Erg)) return False;
   return (*Erg < 4);
 }
 
-static Boolean Decode_rp1(char *Asc, ShortInt *Erg)
+/*!------------------------------------------------------------------------
+ * \fn     Decode_rp1(char *Asc, Byte *Erg)
+ * \brief  decode rp1 argument (VA/BC/DE/HL/EA)
+ * \param  Asc source argument
+ * \param  Erg resulting register #
+ * \return True if success
+ * ------------------------------------------------------------------------ */
+
+static Boolean Decode_rp1(char *Asc, Byte *Erg)
 {
   if (!as_strcasecmp(Asc, "V")) *Erg = 0;
   else
@@ -276,142 +359,447 @@ static Boolean Decode_rp1(char *Asc, ShortInt *Erg)
   return True;
 }
 
-static Boolean Decode_rp3(char *Asc, ShortInt *Erg)
+/*!------------------------------------------------------------------------
+ * \fn     Decode_rp3(char *Asc, Byte *Erg)
+ * \brief  decode rp3 argument (BC/DE/HL)
+ * \param  Asc source argument
+ * \param  Erg resulting register #
+ * \return True if success
+ * ------------------------------------------------------------------------ */
+
+static Boolean Decode_rp3(char *Asc, Byte *Erg)
 {
   if (!Decode_rp2(Asc, Erg)) return False;
   return ((*Erg < 4) && (*Erg > 0));
 }
 
-static Boolean DecodeAdrMode(char *pAsc, const tAdrMode pModes[],
-                             ShortInt *pErg, Boolean *pWasIndirect)
+/*!------------------------------------------------------------------------
+ * \fn     parse_rpa(const tStrComp *p_arg, z80_adr_vals_t *p_vals, unsigned mode_mask, int *p_auto_val, Boolean force)
+ * \brief  parse indirect address expression
+ * \param  p_arg source argument
+ * \param  p_vals buffer for parse result
+ * \param  mode_mask allowed addressing modes
+ * \param  p_auto_val returns auto-in/decrement value
+ * \param  force assume expression is indirect, even without outer (...) 
+ * \return True if expression was detected as indirect (parsing may still have failed)
+ * ------------------------------------------------------------------------ */
+
+static int split_auto_val(tStrComp *p_arg)
 {
-  int z;
+  int l = strlen(p_arg->str.p_str);
 
-  if (!*pWasIndirect && (IsIndirect(pAsc)))
+  if (l >= 2)
   {
-    strmov(pAsc, pAsc + 1);
-    pAsc[strlen(pAsc) - 1] = '\0';
-    *pWasIndirect = True;
-  }
-
-  for (z = 0; pModes[z].pName; z++)
-  {
-    if (*pWasIndirect && !pModes[z].MayIndirect)
-      continue;
-    if (!as_strcasecmp(pAsc, pModes[z].pName))
+    if (!strcmp(p_arg->str.p_str + l - 2, "--"))
     {
-      *pErg = pModes[z].Code;
-      return True;
+      StrCompShorten(p_arg, 2);
+      return - 2;
+    }
+    if (!strcmp(p_arg->str.p_str + l - 2, "++"))
+    {
+      StrCompShorten(p_arg, 2);
+      return + 2;
     }
   }
-  return False;
-}
 
-static Boolean Decode_rpa2(const tStrComp *pArg, Boolean *pWasIndirect, ShortInt *Erg, ShortInt *Disp)
-{
-  static const tAdrMode AdrModes[] =
+  if (l >= 1)
   {
-    { "B"   ,  1  , True  },
-    { "BC"  ,  1  , True  },
-    { "D"   ,  2  , True  },
-    { "DE"  ,  2  , True  },
-    { "H"   ,  3  , True  },
-    { "HL"  ,  3  , True  },
-    { "D+"  ,  4  , True  },
-    { "DE+" ,  4  , True  },
-    { "(DE)+", 4  , False },
-    { "H+"   , 5  , True  },
-    { "HL+"  , 5  , True  },
-    { "(HL)+", 5  , False },
-    { "D-"   , 6  , True  },
-    { "DE-"  , 6  , True  },
-    { "(DE)-", 6  , False },
-    { "H-"   , 7  , True  },
-    { "HL-"  , 7  , True  },
-    { "(HL)-", 7  , False },
-    { "H+A"  , 12 , True  },
-    { "HL+A" , 12 , True  },
-    { "A+H"  , 12 , True  },
-    { "A+HL" , 12 , True  },
-    { "H+B"  , 13 , True  },
-    { "HL+B" , 13 , True  },
-    { "B+H"  , 13 , True  },
-    { "B+HL" , 13 , True  },
-    { "H+EA" , 14 , True  },
-    { "HL+EA", 14 , True  },
-    { "EA+H" , 14 , True  },
-    { "EA+HL", 14 , True  },
-    { NULL  , 0   , False },
-  };
-
-  char *p, Save;
-  Boolean OK;
-  ShortInt BaseReg;
-  tStrComp Left, Right;
-
-  if (DecodeAdrMode(pArg->str.p_str, AdrModes, Erg, pWasIndirect))
-  {
-    *Disp = 0;
-    return True;
+    if (p_arg->str.p_str[l - 1] == '-')
+    {
+      StrCompShorten(p_arg, 1);
+      return -1;
+    }
+    if (p_arg->str.p_str[l - 1] == '+')
+    {
+      StrCompShorten(p_arg, 1);
+      return +1;
+    }
   }
 
-  p = QuotMultPos(pArg->str.p_str, "+-");
-  if (!p) return False;
-
-  Save = StrCompSplitRef(&Left, &Right, pArg, p);
-  OK = (Decode_rp2(Left.str.p_str, &BaseReg));
-  *p = Save;
-  if (!OK || ((BaseReg != 2) && (BaseReg != 3)))
-    return False;
-  *Erg = (BaseReg == 3) ? 15 : 11;
-  *Disp = EvalStrIntExpressionOffs(pArg, p - pArg->str.p_str, SInt8, &OK);
-  return OK;
+  return 0;
 }
 
-static Boolean Decode_rpa(const tStrComp *pArg, ShortInt *Erg)
+static void parse_indirect_list(z80_adr_vals_t *p_vals, const tStrComp *p_arg, unsigned mode_mask, int auto_val)
 {
-  ShortInt Dummy;
-  Boolean WasIndirect = False;
+  char *p;
+  tStrComp rem, arg;
+  Byte reg, base = 0, index = 0;
+  LongInt disp_acc = 0;
+  Boolean bad_reg, first_unknown = False, this_minus, next_minus;
 
-  if (!Decode_rpa2(pArg, &WasIndirect, Erg, &Dummy)) return False;
-  return (*Erg <= 7);
-}
-
-static Boolean Decode_rpa1(const tStrComp *pArg, ShortInt *Erg)
-{
-  ShortInt Dummy;
-  Boolean WasIndirect = False;
-
-  if (!Decode_rpa2(pArg, &WasIndirect, Erg, &Dummy)) return False;
-  return (*Erg <= 3);
-}
-
-static Boolean Decode_rpa3(const tStrComp *pArg, ShortInt *Erg, ShortInt *Disp)
-{
-  static const tAdrMode AdrModes[] =
+  StrCompRefRight(&arg, p_arg, 0);
+  this_minus = False;
+  do
   {
-    { "D++"   , 4 , True  },
-    { "DE++"  , 4 , True  },
-    { "(DE)++", 4 , False },
-    { "H++"   , 5 , True  },
-    { "HL++"  , 5 , True  },
-    { "(HL)++", 5 , False },
-    { NULL    , 0 , False },
-  };
-  Boolean WasIndirect = False;
+    /* split off one component */
 
-  if (DecodeAdrMode(pArg->str.p_str, AdrModes, Erg, &WasIndirect))
+    KillPrefBlanksStrCompRef(&arg);
+    next_minus = False;
+    p = QuotMultPos(arg.str.p_str, "+-"); /* TODO: parentheses */
+    if (p)
+    {
+      next_minus = (*p == '-');
+      StrCompSplitRef(&arg, &rem, &arg, p);
+      KillPostBlanksStrComp(&arg);
+    }
+    bad_reg = False;
+
+    /* 8 bit register? Note that a B/D/H may actually mean BC/DE/HL
+       in 'old syntax': */
+
+    if (decode_reg8(arg.str.p_str, &reg))
+    {
+      if (this_minus)
+        bad_reg = True;
+      else switch (reg)
+      {
+        case REG_A:
+          if (index)
+            bad_reg = True;
+          else
+            index = reg;
+          break;
+        case REG_B:
+          if (!index)
+            index = reg;
+          else if (!base)
+            base = REG_BC;
+          else
+            bad_reg = True;
+          break;
+        case REG_D:
+          if (!base)
+            base = REG_DE;
+          else
+            bad_reg = True;
+          break;
+        case REG_H:
+          if (!base)
+            base = REG_HL;
+          else
+            bad_reg = True;
+          break;
+        default:
+          bad_reg = True;
+      }
+    }
+
+    /* 16 bit register? */
+
+    else if (decode_reg16(arg.str.p_str, &reg, False))
+    {
+      if (this_minus)
+        bad_reg = True;
+      else switch (reg)
+      {
+        case REG_EA:
+          if (index)
+            bad_reg = True;
+          else
+            index = reg;
+          break;
+        case REG_BC:
+        case REG_DE:
+        case REG_HL:
+          if (base)
+            bad_reg = True;
+          else
+            base = reg;
+          break;
+        default:
+          bad_reg = True;
+      }
+    }
+    else
+    {
+      tEvalResult eval_result;
+      Word value;
+
+      value = EvalStrIntExpressionWithResult(&arg, UInt16, &eval_result);
+      if (!eval_result.OK)
+        return;
+      if (mFirstPassUnknownOrQuestionable(eval_result.Flags))
+        first_unknown = True;
+      disp_acc = this_minus ? (disp_acc - value) : (disp_acc + value);
+    }
+
+    if (bad_reg)
+    {
+      WrStrErrorPos(ErrNum_InvReg, &arg);
+      return;
+    }
+
+    if (p)
+    {
+      arg = rem;
+      this_minus = next_minus;
+    }
+  }
+  while (p);
+
+  /* Dissolve ambiguities */
+
+  if ((index == REG_B) && !base)
   {
-    *Disp = 0;
-    return True;
+    index = 0;
+    base = REG_BC;
   }
 
-  if (!Decode_rpa2(pArg, &WasIndirect, Erg, Disp))
-    return False;
-  return ((*Erg == 2) || (*Erg == 3) || (*Erg >= 8));
+  /* For auto-in/decrement, only a plain base register DE/HL is allowed.
+     Furthermore, (..)-- is not implemented: */ 
+
+  if (auto_val)
+  {
+    if (index || (base < REG_BC) || (base > REG_HL) || disp_acc || (auto_val == -2))
+      WrStrErrorPos(ErrNum_InvAddrMode, p_arg);
+    else
+    {
+      p_vals->val = (base + 2) + (2 * !!(auto_val < 0));
+      p_vals->mode = e_mod_indir;
+    }
+  }
+  else
+  {
+    /* (BC) (DE) (HL) */
+    if ((base >= REG_BC) && (base <= REG_HL) && !index && !disp_acc)
+    {
+      p_vals->val = base;
+      p_vals->mode = e_mod_indir;
+    }
+    /* (DE+byte) (HL+byte) */
+    else if ((base >= REG_DE) && (base <= REG_HL) && !index)
+    {
+      if (first_unknown)
+        disp_acc &= 0xff;
+      if ((disp_acc > 0xff) || (disp_acc < -0x80))
+      {
+        WrStrErrorPos(ErrNum_OverRange, p_arg);
+        return;
+      }
+      p_vals->val = (base << 2) + 3;
+      p_vals->mode = e_mod_indir;
+      p_vals->vals[p_vals->count++] = Lo(disp_acc);
+    }
+    /* (HL+A) (HL+B) */
+    else if ((base == REG_HL) && (index >= REG_A) && (index <= REG_B) && !disp_acc)
+    {
+      p_vals->val = index + 11;
+      p_vals->mode = e_mod_indir;
+    }
+    /* (HL+EA) */
+    else if ((base == REG_HL) && (index == REG_EA) && !disp_acc)
+    {
+      p_vals->val = 14;
+      p_vals->mode = e_mod_indir;
+    }
+    /* abs/wa */
+    else if (!base && !index)
+    {
+      Boolean is_wa = (Hi(disp_acc) == WorkArea),
+              may_wa = !!(mode_mask & MModWA);
+
+      p_vals->vals[p_vals->count++] = Lo(disp_acc);
+      if ((may_wa && is_wa) || (!may_wa && first_unknown))
+        p_vals->mode = e_mod_wa;
+      else
+      {
+        p_vals->vals[p_vals->count++] = Hi(disp_acc);
+        p_vals->mode = e_mod_abs;
+      }
+    }
+    else
+      WrStrErrorPos(ErrNum_InvAddrMode, p_arg);
+  }
 }
 
-static Boolean Decode_f(char *Asc, ShortInt *Erg)
+static Boolean parse_rpa(const tStrComp *p_arg, z80_adr_vals_t *p_vals, unsigned mode_mask, int *p_auto_val, Boolean force)
+{
+  tStrComp arg;
+  Boolean is_indirect;
+
+  /* split off auto-in/decrement */
+
+  StrCompRefRight(&arg, p_arg, 0);
+  *p_auto_val = split_auto_val(&arg);
+
+  /* Indirect? */
+
+  is_indirect = IsIndirect(arg.str.p_str);
+  if (is_indirect)
+  {
+    StrCompIncRefLeft(&arg, 1);
+    StrCompShorten(&arg, 1);
+    KillPostBlanksStrComp(&arg);
+    if (!*p_auto_val)
+      *p_auto_val = split_auto_val(&arg);
+  }
+
+  /* Auto-in/decrement enforces indirect parsing: */
+
+  if (is_indirect || *p_auto_val || force)
+  {
+    parse_indirect_list(p_vals, &arg, mode_mask, *p_auto_val);
+    return True;
+  }
+  else
+    return False;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     reset_z80_adr_vals(z80_adr_vals_t *p_vals)
+ * \brief  clear encoded addressing mode container
+ * \param  p_vals container to clear
+ * ------------------------------------------------------------------------ */
+
+static void reset_z80_adr_vals(z80_adr_vals_t *p_vals)
+{
+  p_vals->mode = e_mod_none;
+  p_vals->force_long = 0;
+  p_vals->val = 0;
+  p_vals->count = 0;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     Decode_rpa2(const tStrComp *pArg, Byte *Erg, Byte *Disp)
+ * \brief  Decode rpa2 argument (indirect 8 bit argument in memory)
+ * \param  pArg source argument
+ * \param  Erg resulting addressing mode
+ * \param  Disp resulting addressing displacement
+ * \return True if success
+ * ------------------------------------------------------------------------ */
+
+static Boolean Decode_rpa2(const tStrComp *pArg, Byte *Erg, Byte *Disp)
+{
+  z80_adr_vals_t vals;
+  int auto_val;
+
+  /* We force parsing as indirect, so the return value is always true: */
+
+  reset_z80_adr_vals(&vals);
+  (void)parse_rpa(pArg, &vals, MModIndir, &auto_val, True);
+  switch (vals.mode)
+  {
+    case e_mod_indir:
+      if ((auto_val < -1) || (auto_val > 1))
+        goto bad_mode;
+      *Erg = vals.val;
+      *Disp = (vals.count > 0) ? vals.vals[0] : 0;
+      return True;
+    case e_mod_wa:
+    case e_mod_abs:
+    bad_mode:
+      WrStrErrorPos(ErrNum_InvAddrMode, pArg);
+      return False;
+    default:
+      return False;
+  }
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     Decode_rpa(const tStrComp *pArg, Byte *Erg)
+ * \brief  Decode rpa argument (indirect 8 bit argument in memory, without index)
+ * \param  pArg source argument
+ * \param  Erg resulting addressing mode
+ * \return True if success
+ * ------------------------------------------------------------------------ */
+
+static Boolean is_rpa(Byte value)
+{
+  return (value >= 1) && (value <= 7);
+}
+
+static Boolean Decode_rpa(const tStrComp *pArg, Byte *Erg)
+{
+  Byte Dummy;
+
+  if (!Decode_rpa2(pArg, Erg, &Dummy)) return False;
+  if (!is_rpa(*Erg))
+  {
+    WrStrErrorPos(ErrNum_InvAddrMode, pArg);
+    return False;
+  }
+  return True;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     Decode_rpa1(const tStrComp *pArg, Byte *Erg)
+ * \brief  Decode rpa1 argument (indirect 8 bit argument in memory, without index or auto-in/decrement)
+ * \param  pArg source argument
+ * \param  Erg resulting addressing mode
+ * \return True if success
+ * ------------------------------------------------------------------------ */
+
+static Boolean is_rpa1(Byte value)
+{
+  return (value >= 1) && (value <= 3);
+}
+
+static Boolean Decode_rpa1(const tStrComp *pArg, Byte *Erg)
+{
+  Byte Dummy;
+
+  if (!Decode_rpa2(pArg, Erg, &Dummy)) return False;
+  if (!is_rpa1(*Erg))
+  {
+    WrStrErrorPos(ErrNum_InvAddrMode, pArg);
+    return False;
+  }
+  return True;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     Decode_rpa3(const tStrComp *pArg, Byte *Erg, ShortInt *Disp)
+ * \brief  Decode rpa3 argument (indirect 16 bit argument in memory)
+ * \param  pArg source argument
+ * \param  Erg resulting addressing mode
+ * \param  Disp resulting addressing displacement
+ * \return True if success
+ * ------------------------------------------------------------------------ */
+
+static Boolean is_rpa3(Byte value)
+{
+  return ((value >= 2) && (value <= 5))
+      || ((value >= 11) && (value <= 15));
+}
+
+static Boolean Decode_rpa3(const tStrComp *pArg, Byte *Erg, Byte *Disp)
+{
+  z80_adr_vals_t vals;
+  int auto_val;
+
+  /* We force parsing as indirect, so the return value is always true: */
+
+  reset_z80_adr_vals(&vals);
+  (void)parse_rpa(pArg, &vals, MModIndir, &auto_val, True);
+  switch (vals.mode)
+  {
+    case e_mod_indir:
+      if ((auto_val != -2) && (auto_val != 0) && (auto_val != 2))
+        goto bad_mode;
+      if (!is_rpa3(vals.val))
+        goto bad_mode;
+      *Erg = vals.val;
+      *Disp = (vals.count > 0) ? vals.vals[0] : 0;
+      return True;
+    case e_mod_wa:
+    case e_mod_abs:
+    bad_mode:
+      WrStrErrorPos(ErrNum_InvAddrMode, pArg);
+      return False;
+    default:
+      return False;
+  }
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     Decode_f(char *Asc, Byte *Erg)
+ * \brief  descode status flag
+ * \param  Asc source argument
+ * \param  Erg returns encoded flag
+ * \return True if success
+ * ------------------------------------------------------------------------ */
+
+static Boolean Decode_f(char *Asc, Byte *Erg)
 {
 #define FlagCnt 3
   static const char Flags[FlagCnt][3] = {"CY", "HC", "Z"};
@@ -421,66 +809,68 @@ static Boolean Decode_f(char *Asc, ShortInt *Erg)
   *Erg += 2; return (*Erg <= 4);
 }
 
-static const sreg_t *decode_sr_core(const tStrComp *p_arg)
-{
-  size_t z;
+/*!------------------------------------------------------------------------
+ * \fn     decode_sr_core(const tStrComp *p_arg)
+ * \brief  core register list decode
+ * \param  p_arg source argument
+ * \return * to record of decoded register
+ * ------------------------------------------------------------------------ */
 
-  for (z = 0; z < sizeof(s_regs) / sizeof(*s_regs); z++)
-    if (check_core(s_regs[z].core_mask) && !as_strcasecmp(p_arg->str.p_str, s_regs[z].name))
-      return &s_regs[z];
+static const sreg_t *decode_sr_core(const sreg_t *p_sregs, const tStrComp *p_arg)
+{
+  for (; p_sregs->p_name; p_sregs++)
+    if (check_core(p_sregs->core_mask) && !as_strcasecmp(p_arg->str.p_str, p_sregs->p_name))
+      return p_sregs;
   return NULL;
 }
 
-static decode_reg_res_t decode_sr_flag(const tStrComp *p_arg, ShortInt *p_res, Byte flag)
+/*!------------------------------------------------------------------------
+ * \fn     check_sr_flag(Byte reg_flags, Byte req_flag, const tStrComp *p_arg)
+ * \brief  check whether special register's flags fulfill requirement, and
+           issue error if not
+ * \param  reg_flags register's suppoerted flags
+ * \param  req_flag required flag
+ * \param  p_arg source argument
+ * \return True if OK
+ * ------------------------------------------------------------------------ */
+
+static Boolean check_sr_flag(Byte reg_flags, Byte req_flag, const tStrComp *p_arg)
 {
-  const sreg_t *p_reg = decode_sr_core(p_arg);
+  if (reg_flags & req_flag)
+    return True;
+  WrStrErrorPos(reg_flags ? ErrNum_InvOpOnReg : ErrNum_InvReg, p_arg);
+  return False;
+}
+
+static decode_reg_res_t decode_sr_flag(const tStrComp *p_arg, const sreg_t *p_sregs, Byte *p_res, Byte flag)
+{
+  const sreg_t *p_reg = decode_sr_core(p_sregs, p_arg);
 
   if (p_reg)
   {
-    if (p_reg->flags & flag)
+    if (check_sr_flag(p_reg->flags, flag, p_arg))
     {
       *p_res = p_reg->code;
       return e_decode_reg_ok;
     }
     else
-    {
-      WrStrErrorPos(p_reg->flags ? ErrNum_InvOpOnReg : ErrNum_InvReg, p_arg);
       return e_decode_reg_error;
-    }
   }
   else
     return e_decode_reg_unknown;
 }
 
-#define decode_sr1(p_arg, p_res) decode_sr_flag(p_arg, p_res, eFlagSR1)
-#define decode_sr(p_arg, p_res) decode_sr_flag(p_arg, p_res, eFlagSR)
-#define decode_sr2(p_arg, p_res) decode_sr_flag(p_arg, p_res, eFlagSR2)
+#define decode_sr1(p_arg, p_res) decode_sr_flag(p_arg, s_regs8, p_res, eFlagSR1)
+#define decode_sr(p_arg, p_res) decode_sr_flag(p_arg, s_regs8, p_res, eFlagSR)
+#define decode_sr2(p_arg, p_res) decode_sr_flag(p_arg, s_regs8, p_res, eFlagSR2)
 
-static Boolean Decode_sr3(const tStrComp *p_arg, ShortInt *p_res)
-{
-  if (!as_strcasecmp(p_arg->str.p_str, "ETM0")) *p_res = 0;
-  else if (!as_strcasecmp(p_arg->str.p_str, "ETM1")) *p_res = 1;
-  else
-  {
-    WrStrErrorPos(ErrNum_InvCtrlReg, p_arg);
-    return False;
-  }
-  return True;
-}
-
-static Boolean Decode_sr4(const tStrComp *p_arg, ShortInt *p_res)
-{
-  if (!as_strcasecmp(p_arg->str.p_str, "ECNT")) *p_res = 0;
-  else if ((pCurrCPUProps->Core == eCore7810) && !as_strcasecmp(p_arg->str.p_str, "ECPT")) *p_res = 1;
-  else if ((pCurrCPUProps->Core == eCore7807) && !as_strcasecmp(p_arg->str.p_str, "ECPT0")) *p_res = 1;
-  else if ((pCurrCPUProps->Core == eCore7807) && !as_strcasecmp(p_arg->str.p_str, "ECPT1")) *p_res = 2;
-  else
-  {
-    WrStrErrorPos(ErrNum_InvCtrlReg, p_arg);
-    return False;
-  }
-  return True;
-}
+/*!------------------------------------------------------------------------
+ * \fn     Decode_irf(const tStrComp *p_arg, ShortInt *p_res)
+ * \brief  decode interrupt flag argument
+ * \param  p_arg source argument
+ * \param  p_res resulting flag #
+ * \return True if success
+ * ------------------------------------------------------------------------ */
 
 static Boolean Decode_irf(const tStrComp *p_arg, ShortInt *p_res)
 {
@@ -493,6 +883,15 @@ static Boolean Decode_irf(const tStrComp *p_arg, ShortInt *p_res)
   WrStrErrorPos(ErrNum_UnknownInt, p_arg);
   return False;
 }
+
+/*!------------------------------------------------------------------------
+ * \fn     Decode_wa(const tStrComp *pArg, Byte *Erg, Byte max_address)
+ * \brief  decode working area address argument
+ * \param  pArg source argument
+ * \param  Erg resulting (short) address
+ * \param  max_address range limit
+ * \return True if success
+ * ------------------------------------------------------------------------ */
 
 static Boolean Decode_wa(const tStrComp *pArg, Byte *Erg, Byte max_address)
 {
@@ -516,6 +915,175 @@ static Boolean Decode_wa(const tStrComp *pArg, Byte *Erg, Byte max_address)
 static Boolean HasDisp(ShortInt Mode)
 {
   return ((Mode & 11) == 11);
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     set_op_size(tSymbolSize new_op_size, const tStrComp *p_arg)
+ * \brief  Set operand size and throw error in case of conflict
+ * \param  new_op_size operand size to set
+ * \param  p_arg source argument carrying this size
+ * ------------------------------------------------------------------------ */
+
+static Boolean set_op_size(tSymbolSize new_op_size, const tStrComp *p_arg)
+{
+  if (z80_op_size == eSymbolSizeUnknown)
+    z80_op_size = new_op_size;
+  else if (z80_op_size != new_op_size)
+  {
+    WrStrErrorPos(ErrNum_ConfOpSizes, p_arg);
+    return False;
+  }
+  return True;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     decode_z80_adr(const tStrComp *p_arg, z80_adr_vals_t *p_vals, unsigned mode_mask)
+ * \brief  decode Z80 style address expression
+ * \param  p_arg source argument
+ * \param  p_vals encoded values
+ * \param  mode_mask bit mask of allowe daddressing modes
+ * \return resulting addressing mode
+ * ------------------------------------------------------------------------ */
+
+static z80_adr_mode_t decode_z80_adr(const tStrComp *p_arg, z80_adr_vals_t *p_vals, unsigned mode_mask)
+{
+  Boolean ok;
+  int auto_val;
+  const sreg_t *p_sreg;
+
+  reset_z80_adr_vals(p_vals);
+
+  /* Registers: */
+
+  if (!as_strcasecmp(p_arg->str.p_str, ">A"))
+  {
+    if (set_op_size(eSymbolSize8Bit, p_arg))
+    {
+      p_vals->force_long = True;
+      p_vals->val = REG_A;
+      p_vals->mode = e_mod_reg8;
+    }
+    goto found;
+  }
+
+  if (decode_reg8(p_arg->str.p_str, &p_vals->val))
+  {
+    /* No V register on low function core */
+    if ((pCurrCPUProps->Core == eCore7800Low) && (p_vals->val == REG_V));
+    /* EA register only on 7807++ */
+    else if ((pCurrCPUProps->Core < eCore7807) && (p_vals->val >= REG_EAH));
+    else
+    {
+      if (set_op_size(eSymbolSize8Bit, p_arg))
+        p_vals->mode = e_mod_reg8;
+      goto found;
+    }
+  }
+
+  if (decode_reg16(p_arg->str.p_str, &p_vals->val, False))
+  {
+    /* EA register only on 7807++ */
+    if ((pCurrCPUProps->Core < eCore7807) && (p_vals->val >= REG_EA));
+    else
+    {
+      if (set_op_size(eSymbolSize16Bit, p_arg))
+        p_vals->mode = e_mod_reg16;
+      goto found;
+    }
+  }
+
+  if ((p_sreg = decode_sr_core(s_regs8, p_arg)))
+  {
+    if (set_op_size(eSymbolSize8Bit, p_arg))
+    {
+      p_vals->mode = e_mod_sreg8;
+      p_vals->val = p_sreg->code;
+      p_vals->vals[0] = p_sreg->flags;
+    }
+    goto found;
+  }
+
+  if ((p_sreg = decode_sr_core(s_regs16, p_arg)))
+  {
+    if (set_op_size(eSymbolSize16Bit, p_arg))
+    {
+      p_vals->mode = e_mod_sreg16;
+      p_vals->val = p_sreg->code;
+      p_vals->vals[0] = p_sreg->flags;
+    }
+    goto found;
+  }
+
+  /* indirect stuff: */
+
+  if (parse_rpa(p_arg, p_vals, mode_mask, &auto_val, False))
+  {
+    /* single or double auto-in/decrement implicitly describes operand size: */
+
+    if (auto_val)
+    {
+      if (!set_op_size(((auto_val == 1) || (auto_val == -1)) ? eSymbolSize8Bit : eSymbolSize16Bit, p_arg))
+        reset_z80_adr_vals(p_vals);
+    }
+    goto found;
+  }
+
+  /* Immediate: */
+
+  if (!(mode_mask & MModImm))
+  {
+    WrStrErrorPos(ErrNum_InvAddrMode, p_arg);
+    goto found;
+  }
+  if (z80_op_size == eSymbolSizeUnknown)
+  {
+    z80_op_size = z80_def_op_size;
+    z80_def_op_size = eSymbolSizeUnknown;
+  }
+  switch (z80_op_size)
+  {
+    case eSymbolSize8Bit:
+      p_vals->vals[0] = EvalStrIntExpression(p_arg, Int8, &ok);
+      if (ok)
+      {
+        p_vals->count = 1;
+        p_vals->mode = e_mod_imm;
+      }
+      break;
+    case eSymbolSize16Bit:
+    {
+      Word tmp = EvalStrIntExpression(p_arg, Int16, &ok);
+      if (ok)
+      {
+        p_vals->vals[p_vals->count++] = Lo(tmp);
+        p_vals->vals[p_vals->count++] = Hi(tmp);
+        p_vals->mode = e_mod_imm;
+      }
+      break;
+    }
+    default:
+      WrStrErrorPos(ErrNum_UndefOpSizes, p_arg);
+  }
+
+found:
+  if ((p_vals->mode != e_mod_none) && !((mode_mask >> p_vals->mode) & 1))
+  {
+    WrStrErrorPos(ErrNum_InvAddrMode, p_arg);
+    reset_z80_adr_vals(p_vals);
+  }
+  return p_vals->mode;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     append_adr_vals(const z80_adr_vals_t *p_vals)
+ * \brief  append encoded addess extension bytes to instruction
+ * \param  p_vals contains bytes to append
+ * ------------------------------------------------------------------------ */
+
+static void append_adr_vals(const z80_adr_vals_t *p_vals)
+{
+  memcpy(&BAsmCode[CodeLen], p_vals->vals, p_vals->count);
+  CodeLen += p_vals->count;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -577,15 +1145,15 @@ static Boolean decode_bit_arg_2(LongWord *p_result, const tStrComp *p_reg_arg, c
   LongWord addr;
   Boolean is_io;
   Byte bit_pos;
-  ShortInt s_reg;
+  Byte s_reg;
 
   bit_pos = eval_bit_position(p_bit_arg, &ok);
   if (!ok)
     return False;
 
-  if (decode_sr_flag(p_reg_arg, &s_reg, eFlagSR2) == e_decode_reg_ok)
+  if (decode_sr_flag(p_reg_arg, s_regs8, &s_reg, eFlagSR2) == e_decode_reg_ok)
   {
-    if ((s_reg > 0x0f) || (s_reg < 0))
+    if (s_reg > 0x0f)
     {
       WrStrErrorPos(ErrNum_InvReg, p_reg_arg);
       return False;
@@ -695,15 +1263,15 @@ static void dissect_bit_7807(char *p_dest, size_t dest_size, LargeWord inp)
 
   if (is_io)
   {
-    size_t z;
+    const sreg_t *p_sreg;
 
-    for (z = 0; z < sizeof(s_regs) / sizeof(*s_regs); z++)
+    for (p_sreg = s_regs8; p_sreg->p_name; p_sreg++)
     {
-      if (!((s_regs[z].core_mask >> core) & 1))
+      if (!((p_sreg->core_mask >> core) & 1))
         continue;
-      if (address == s_regs[z].code)
+      if (address == p_sreg->code)
       {
-        as_snprintf(p_dest, dest_size, "%s.%u", s_regs[z].name, (unsigned)bit_pos);
+        as_snprintf(p_dest, dest_size, "%s.%u", p_sreg->p_name, (unsigned)bit_pos);
         return;
       }
     }
@@ -798,6 +1366,12 @@ static void decode_bit_7807_core(int arg_idx, Byte code)
   CodeLen = 2;
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     DecodeFixed(Word Code)
+ * \brief  Handle instructions without arguments
+ * \param  index index into instruction table
+ * ------------------------------------------------------------------------ */
+
 static void DecodeFixed(Word index)
 {
   const order_t *p_order = &fixed_orders[index];
@@ -806,10 +1380,15 @@ static void DecodeFixed(Word index)
     PutCode(p_order->code);
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     DecodeMOV(Word Code)
+ * \brief  handle MOV instruction
+ * ------------------------------------------------------------------------ */
+
 static void DecodeMOV(Word Code)
 {
   Boolean OK;
-  ShortInt HReg;
+  Byte HReg;
   Integer AdrInt;
   decode_reg_res_t res1;
 
@@ -918,9 +1497,17 @@ static void DecodeMOV(Word Code)
       }
     }
   }
+
+  /* Cannot say in this case if src or dest is invalid register: */
+
   else
-    WrError(ErrNum_InvAddrMode);
+    WrError(ErrNum_InvReg);
 }
+
+/*!------------------------------------------------------------------------
+ * \fn     DecodeMVI(Word Code)
+ * \brief  handle MVI instruction
+ * ------------------------------------------------------------------------ */
 
 static void DecodeMVI(Word Code)
 {
@@ -928,7 +1515,7 @@ static void DecodeMVI(Word Code)
 
   if (ChkArgCnt(2, 2))
   {
-    ShortInt HReg;
+    Byte HReg;
     Boolean OK;
 
     BAsmCode[1] = EvalStrIntExpression(&ArgStr[2], Int8, &OK);
@@ -958,10 +1545,15 @@ static void DecodeMVI(Word Code)
           }
         }
       }
-      else WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
+      else WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
     }
   }
 }
+
+/*!------------------------------------------------------------------------
+ * \fn     DecodeMVIW(Word Code)
+ * \brief  handle MVIW instruction
+ * ------------------------------------------------------------------------ */
 
 static void DecodeMVIW(Word Code)
 {
@@ -981,16 +1573,20 @@ static void DecodeMVIW(Word Code)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     DecodeMVIX(Word Code)
+ * \brief  handle MVIX instruction
+ * ------------------------------------------------------------------------ */
+
 static void DecodeMVIX(Word Code)
 {
   Boolean OK;
-  ShortInt HReg;
+  Byte HReg;
 
   UNUSED(Code);
 
   if (!ChkArgCnt(2, 2) || !check_core_and_error(core_mask_no_low));
-  else if (!Decode_rpa1(&ArgStr[1], &HReg)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
-  else
+  else if (Decode_rpa1(&ArgStr[1], &HReg))
   {
     BAsmCode[1] = EvalStrIntExpression(&ArgStr[2], Int8, &OK);
     if (OK)
@@ -1001,19 +1597,23 @@ static void DecodeMVIX(Word Code)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     DecodeLDAX_STAX(Word Code)
+ * \brief  handle LDAX/STAX instructions
+ * \param  Code machine code
+ * ------------------------------------------------------------------------ */
+
 static void DecodeLDAX_STAX(Word Code)
 {
-  ShortInt HReg;
-  Boolean WasIndirect = False;
+  Byte HReg;
 
   if (ChkArgCnt(1, 1))
   {
     Boolean ok = is_7807_781x
-               ? Decode_rpa2(&ArgStr[1], &WasIndirect, &HReg, (ShortInt *) &BAsmCode[1])
+               ? Decode_rpa2(&ArgStr[1], &HReg, &BAsmCode[1])
                : Decode_rpa(&ArgStr[1], &HReg);
 
-    if (!ok) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
-    else
+    if (ok)
     {
       CodeLen = 1 + Ord(HasDisp(HReg));
       BAsmCode[0] = Code + ((HReg & 8) << 4) + (HReg & 7);
@@ -1021,13 +1621,19 @@ static void DecodeLDAX_STAX(Word Code)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     DecodeLDEAX_STEAX(Word Code)
+ * \brief  handle LDEAX/STEAX instructions
+ * \param  Code machine code
+ * ------------------------------------------------------------------------ */
+
 static void DecodeLDEAX_STEAX(Word Code)
 {
-  ShortInt HReg;
+  Byte HReg;
 
-  if (!ChkArgCnt(1, 1) || !check_core_and_error(core_mask_7807_7810));
-  else if (!Decode_rpa3(&ArgStr[1], &HReg, (ShortInt *) &BAsmCode[2])) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
-  else
+  if (ChkArgCnt(1, 1)
+   && check_core_and_error(core_mask_7807_7810)
+   && Decode_rpa3(&ArgStr[1], &HReg, &BAsmCode[2]))
   {
     CodeLen = 2 + Ord(HasDisp(HReg));
     BAsmCode[0] = 0x48;
@@ -1035,16 +1641,26 @@ static void DecodeLDEAX_STEAX(Word Code)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     DecodeLXI(Word Code)
+ * \brief  Handle LXI instruction
+ * \param  Code machine code
+ * ------------------------------------------------------------------------ */
+
 static void DecodeLXI(Word Code)
 {
-  ShortInt HReg;
+  Byte HReg;
   Integer AdrInt;
   Boolean OK;
 
   UNUSED(Code);
 
-  if (!ChkArgCnt(2, 2));
-  else if (!Decode_rp2(ArgStr[1].str.p_str, &HReg)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
+  if (!ChkArgCnt(2, 2))
+    return;
+  OK = (pCurrCPUProps->Core >= eCore7807)
+     ? Decode_rp2(ArgStr[1].str.p_str, &HReg)
+     : Decode_rp(ArgStr[1].str.p_str, &HReg);
+  if (!OK) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
   else
   {
     AdrInt = EvalStrIntExpression(&ArgStr[2], Int16, &OK);
@@ -1058,9 +1674,15 @@ static void DecodeLXI(Word Code)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     DecodePUSH_POP(Word Code)
+ * \brief  Handle PUSH/POP instruction
+ * \param  Code machine code
+ * ------------------------------------------------------------------------ */
+
 static void DecodePUSH_POP(Word Code)
 {
-  ShortInt HReg;
+  Byte HReg;
 
   if (!ChkArgCnt(1, 1));
   else if (!Decode_rp1(ArgStr[1].str.p_str, &HReg)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
@@ -1068,9 +1690,14 @@ static void DecodePUSH_POP(Word Code)
     PutCode(Code | (HReg << (Hi(Code) ? 4 : 0)));
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     DecodeDMOV(Word Code)
+ * \brief  Handle DMOV instruction
+ * ------------------------------------------------------------------------ */
+
 static void DecodeDMOV(Word Code)
 {
-  ShortInt HReg;
+  Byte HReg, SReg;
 
   UNUSED(Code);
 
@@ -1088,27 +1715,180 @@ static void DecodeDMOV(Word Code)
       if (Swap)
         BAsmCode[0] += 0x10;
     }
-    else if ((Swap && Decode_sr3(pArg2, &HReg))
-          || (!Swap && Decode_sr4(pArg2, &HReg)))
+    else switch (decode_sr_flag(pArg2, s_regs16, &SReg, Swap ? eFlagSR3 : eFlagSR4))
     {
-      CodeLen = 2;
-      BAsmCode[0] = 0x48;
-      BAsmCode[1] = 0xc0 + HReg;
-      if (Swap)
-        BAsmCode[1] += 0x12;
+      case e_decode_reg_ok:
+        CodeLen = 2;
+        BAsmCode[0] = 0x48;
+        BAsmCode[1] = 0xc0 + SReg;
+        if (Swap)
+          BAsmCode[1] += 0x12;
+        break;
+      case e_decode_reg_error:
+        WrStrErrorPos(ErrNum_InvCtrlReg, pArg2);
+        break;
+      default:
+        WrStrErrorPos(ErrNum_InvAddrMode, pArg2);
     }
-    else
-      WrStrErrorPos(ErrNum_InvAddrMode, pArg2);
   }
 }
 
-#define ALUImm_SR (1 << 0)
-#define ALUReg_Src (1 << 1)
-#define ALUReg_Dest (1 << 2)
+/*!------------------------------------------------------------------------
+ * \fn     decode_alu_z80(Word code)
+ * \brief  handle ALU instruction, Z80-style
+ * \param  code machine code & flags
+ * ------------------------------------------------------------------------ */
+
+static void decode_alu_z80(Word code)
+{
+  if (ChkArgCnt(2, 2)
+   && ChkZ80Syntax(eSyntaxZ80))
+  {
+    const Byte flags = Hi(code);
+    z80_adr_vals_t src_adr_vals, dest_adr_vals;
+    code = Lo(code);
+
+    switch (decode_z80_adr(&ArgStr[1], &dest_adr_vals,
+                           MModReg8 | MModReg16 | MModSReg8
+                         | ((code & 1) ? MModWA : 0)))
+    {
+      case e_mod_reg8:
+        switch (decode_z80_adr(&ArgStr[2], &src_adr_vals,
+                               MModReg8
+                             | MModImm
+                             | ((dest_adr_vals.val == REG_A) ? MModIndir : 0)
+                             | (((dest_adr_vals.val == REG_A) && (pCurrCPUProps->Core >= eCore7800High)) ? MModWA : 0)))
+        {
+          case e_mod_reg8:
+            if ((dest_adr_vals.val == REG_A) && !dest_adr_vals.force_long && (src_adr_vals.val < 8) && (flags & ALUReg_Src))
+            {
+              BAsmCode[CodeLen++] = 0x60;
+              BAsmCode[CodeLen++] = 0x80 | (code << 3) | src_adr_vals.val;
+            }
+            else if ((src_adr_vals.val == REG_A) && !src_adr_vals.force_long && (dest_adr_vals.val  < 8) && (flags & ALUReg_Dest))
+            {
+              BAsmCode[CodeLen++] = 0x60;
+              BAsmCode[CodeLen++] = (code << 3) | dest_adr_vals.val;
+              /* ONA/OFFA only exist as A,r, but since binary AND is commutative, we can just swap operands: */
+              if ((code == 9) || (code == 11))
+                BAsmCode[CodeLen - 1] |= 0x80;
+            }
+            else
+              WrError(ErrNum_InvAddrMode);
+            break;
+          case e_mod_imm:
+            if ((dest_adr_vals.val == REG_A) && !dest_adr_vals.force_long)
+              BAsmCode[CodeLen++] = 0x06 | ((code & 14) << 3) | (code & 1);
+            else if (pCurrCPUProps->Core < eCore7800High) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
+            else
+            {
+              BAsmCode[CodeLen++] = 0x74;
+              BAsmCode[CodeLen++] = (code << 3) | dest_adr_vals.val;
+            }
+            if (CodeLen > 0)
+              BAsmCode[CodeLen++] = src_adr_vals.vals[0];
+            break;
+          case e_mod_indir:
+            if (!is_rpa(src_adr_vals.val)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[2]);
+            else
+            {
+              BAsmCode[CodeLen++] = 0x70;
+              BAsmCode[CodeLen++] = 0x80 | (code << 3) | src_adr_vals.val;
+            }
+            break;
+          case e_mod_wa:
+            BAsmCode[CodeLen++] = 0x74;
+            BAsmCode[CodeLen++] = 0x80 | (code << 3);
+            BAsmCode[CodeLen++] = src_adr_vals.vals[0];
+            break;
+          default:
+            break;
+        }
+        break;
+      case e_mod_reg16:
+      {
+        unsigned mask = MModReg16;
+
+        if (dest_adr_vals.val != REG_EA)
+        {
+          WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
+          return;
+        }
+        if ((code == 8) || (code == 12))
+        {
+          mask |= MModReg8;
+          z80_op_size = eSymbolSizeUnknown;
+        }
+        switch (decode_z80_adr(&ArgStr[2], &src_adr_vals, mask))
+        {
+          case e_mod_reg8:
+            if ((src_adr_vals.val < REG_A) || (src_adr_vals.val > REG_C)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[2]);
+            else
+            {
+              BAsmCode[CodeLen++] = 0x70;
+              BAsmCode[CodeLen++] = (code << 3) | src_adr_vals.val;
+            }
+            break;
+          case e_mod_reg16:
+            if ((src_adr_vals.val < REG_BC) || (src_adr_vals.val > REG_HL)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[2]);
+            else
+            {
+              BAsmCode[CodeLen++] = 0x74;
+              BAsmCode[CodeLen++] = 0x84 | (code << 3) | src_adr_vals.val;
+            }
+            break;
+          default:
+            break;
+        }
+        break;
+      }
+      case e_mod_sreg8:
+        switch (decode_z80_adr(&ArgStr[2], &src_adr_vals, (flags & ALUImm_SR) ? MModImm : 0))
+        {
+          case e_mod_imm:
+            if (check_sr_flag(dest_adr_vals.vals[0], eFlagSR2, &ArgStr[1]))
+            {
+              BAsmCode[CodeLen++] = 0x64;
+              BAsmCode[CodeLen++] = (code << 3)
+                                  | ((pCurrCPUProps->Core < eCore7800High) ? 0x80 : 0x00)
+                                  | (dest_adr_vals.val & 7)
+                                  | ((dest_adr_vals.val & 8) << 4);
+              BAsmCode[CodeLen++] = src_adr_vals.vals[0];
+            }
+            break;
+          default:
+            break;
+        }
+        break;
+      case e_mod_wa:
+        z80_def_op_size = eSymbolSize8Bit;
+        switch (decode_z80_adr(&ArgStr[2], &src_adr_vals, MModImm))
+        {
+          case e_mod_imm:
+            BAsmCode[CodeLen++] = ((code & 0x0e) << 3) | 0x05;
+            BAsmCode[CodeLen++] = dest_adr_vals.vals[0];
+            BAsmCode[CodeLen++] = src_adr_vals.vals[0];
+            break;
+          default:
+            break;
+        }
+        break;
+      default:
+        break;
+    }
+  }
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     DecodeALUImm(Word Code)
+ * \brief  handle 8 Bit ALU instructions with immediate source
+ * \param  Code machine code
+ * ------------------------------------------------------------------------ */
 
 static void DecodeALUImm(Word Code)
 {
-  ShortInt HVal8, HReg;
+  ShortInt HVal8;
+  Byte HReg;
   Boolean OK;
   Byte Flags;
 
@@ -1157,32 +1937,48 @@ static void DecodeALUImm(Word Code)
           BAsmCode[2] = HVal8;
         }
       }
-      else WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
+      else WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
     }
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     DecodeALUReg(Word Code)
+ * \brief  Handle ALU instructions with A and register as argument
+ * \param  Code machine code
+ * ------------------------------------------------------------------------ */
+
 static void DecodeALUReg(Word Code)
 {
-  ShortInt HReg;
+  Byte HReg;
   Byte Flags;
 
   Flags = Hi(Code);
+  if ((CurrZ80Syntax & eSyntaxZ80) && (Flags & ALUReg_MayZ80))
+  {
+    decode_alu_z80(Code);
+    return;
+  }
   Code = Lo(Code);
 
   if (ChkArgCnt(2, 2))
   {
     Boolean NoSwap = !as_strcasecmp(ArgStr[1].str.p_str, "A");
     tStrComp *pArg1 = NoSwap ? &ArgStr[1] : &ArgStr[2],
-             *pArg2 = NoSwap ? &ArgStr[2] : &ArgStr[1];
+             *pArg2 = NoSwap ? &ArgStr[2] : &ArgStr[1],
+             Arg2;
     decode_reg_res_t res;
 
+    /* allow >A to enforce <op> r,A instrad of <op> A,r */
+
+    StrCompRefRight(&Arg2, pArg2, as_strcasecmp(pArg2->str.p_str, ">A") ? 0 : 1);
+
     if (as_strcasecmp(pArg1->str.p_str, "A")) WrStrErrorPos(ErrNum_InvAddrMode, pArg1);
-    else if ((res = decode_r(pArg2, &HReg)) == e_decode_reg_unknown) WrStrErrorPos(ErrNum_InvAddrMode, pArg2);
+    else if ((res = decode_r(&Arg2, &HReg)) == e_decode_reg_unknown) WrStrErrorPos(ErrNum_InvReg, &Arg2);
     else if (res == e_decode_reg_ok)
     {
-      if (NoSwap && !(Flags & ALUReg_Src)) WrStrErrorPos(ErrNum_InvAddrMode, pArg2);
-      else if (!NoSwap && !(Flags & ALUReg_Dest)) WrStrErrorPos(ErrNum_InvAddrMode, pArg2);
+      if (NoSwap && !(Flags & ALUReg_Src)) WrStrErrorPos(ErrNum_InvAddrMode, &Arg2);
+      else if (!NoSwap && !(Flags & ALUReg_Dest)) WrStrErrorPos(ErrNum_InvAddrMode, &Arg2);
       else
       {
         CodeLen = 2;
@@ -1209,11 +2005,10 @@ static void DecodeALURegW(Word Code)
 
 static void DecodeALURegX(Word Code)
 {
-  ShortInt HReg;
+  Byte HReg;
 
   if (!ChkArgCnt(1, 1));
-  else if (!Decode_rpa(&ArgStr[1], &HReg)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
-  else
+  else if (Decode_rpa(&ArgStr[1], &HReg))
   {
     CodeLen = 2;
     BAsmCode[0] = 0x70;
@@ -1223,9 +2018,10 @@ static void DecodeALURegX(Word Code)
 
 static void DecodeALUEA(Word Code)
 {
-  ShortInt HReg;
+  Byte HReg;
 
   if (!ChkArgCnt(2, 2));
+  else if (!check_core_and_error(core_mask_7807_7810));
   else if (as_strcasecmp(ArgStr[1].str.p_str, "EA")) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
   else if (!Decode_rp3(ArgStr[2].str.p_str, &HReg)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[2]);
   else
@@ -1252,6 +2048,12 @@ static void DecodeALUImmW(Word Code)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     DecodeAbs(Word Code)
+ * \brief  Handle instructions with absolute address as argument
+ * \param  Code machine code
+ * ------------------------------------------------------------------------ */
+
 static void DecodeAbs(Word Code)
 {
   if (!ChkArgCnt(1, 1));
@@ -1270,10 +2072,16 @@ static void DecodeAbs(Word Code)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     DecodeReg2(Word index)
+ * \brief  Handle instructions with r2 as argument
+ * \param  index index into instruction table
+ * ------------------------------------------------------------------------ */
+
 static void DecodeReg2(Word index)
 {
   const order_t *p_order = &reg2_orders[index];
-  ShortInt HReg;
+  Byte HReg;
   decode_reg_res_t res;
 
   if (!ChkArgCnt(1, 1) || !check_core_and_error(p_order->core_mask));
@@ -1281,6 +2089,12 @@ static void DecodeReg2(Word index)
   else if (res == e_decode_reg_ok)
     PutCode(p_order->code + HReg);
 }
+
+/*!------------------------------------------------------------------------
+ * \fn     DecodeWA(Word Code)
+ * \brief  Handle instructions with work area address as argument
+ * \param  Code machine code
+ * ------------------------------------------------------------------------ */
 
 static void DecodeWork(Word Code)
 {
@@ -1292,6 +2106,12 @@ static void DecodeWork(Word Code)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     DecodeA(Word Code)
+ * \brief  Handle instructions with A as argument
+ * \param  Code machine code
+ * ------------------------------------------------------------------------ */
+
 static void DecodeA(Word Code)
 {
   if (!ChkArgCnt(1, 1));
@@ -1299,6 +2119,12 @@ static void DecodeA(Word Code)
   else
     PutCode(Code);
 }
+
+/*!------------------------------------------------------------------------
+ * \fn     DecodeEA(Word Code)
+ * \brief  Handle instructions with EA as argument
+ * \param  Code machine code
+ * ------------------------------------------------------------------------ */
 
 static void DecodeEA(Word Code)
 {
@@ -1312,12 +2138,18 @@ static void DecodeEA(Word Code)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     DecodeDCX_INX(Word Code)
+ * \brief  Handle INX/DCX Instructions
+ * \param  Code machine code
+ * ------------------------------------------------------------------------ */
+
 static void DecodeDCX_INX(Word Code)
 {
-  ShortInt HReg;
+  Byte HReg;
 
   if (!ChkArgCnt(1, 1));
-  else if (!as_strcasecmp(ArgStr[1].str.p_str, "EA"))
+  else if (check_core(core_mask_7807_7810) && !as_strcasecmp(ArgStr[1].str.p_str, "EA"))
   {
     CodeLen = 1;
     BAsmCode[0] = 0xa8 + Code;
@@ -1331,9 +2163,44 @@ static void DecodeDCX_INX(Word Code)
     WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     decode_inc_dec(word code)
+ * \brief  Handle Z80-style INC/DEC instructions
+ * \param  code machine code
+ * ------------------------------------------------------------------------ */
+
+static void decode_inc_dec(Word code)
+{
+  if (ChkArgCnt(1, 1)
+   && ChkZ80Syntax(eSyntaxZ80))
+  {
+    z80_adr_vals_t adr_vals;
+
+    switch (decode_z80_adr(&ArgStr[1], &adr_vals, MModReg8 | MModReg16 | MModWA))
+    {
+      case e_mod_reg8:
+        if ((adr_vals.val < REG_A) || (adr_vals.val > REG_C)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
+        else
+          BAsmCode[CodeLen++] = 0x40 | (code << 4) | adr_vals.val;
+        break;
+      case e_mod_reg16:
+        BAsmCode[CodeLen++] = (adr_vals.val == REG_EA)
+                            ? 0xa8 | code
+                            : 0x02 | code | (adr_vals.val << 4);
+        break;
+      case e_mod_wa:
+        BAsmCode[CodeLen++] = 0x20 | (code << 4);
+        BAsmCode[CodeLen++] = adr_vals.vals[0];
+        break;
+      default:
+        break;
+    }
+  }
+}
+
 static void DecodeEADD_ESUB(Word Code)
 {
-  ShortInt HReg;
+  Byte HReg;
   decode_reg_res_t res;
 
   if (!ChkArgCnt(2, 2) || !check_core_and_error(core_mask_7807_7810));
@@ -1455,7 +2322,7 @@ static void DecodeBIT(Word Code)
 
 static void DecodeSK_SKN(Word Code)
 {
-  ShortInt HReg;
+  Byte HReg;
 
   if (!ChkArgCnt(1, 1) || !check_core_and_error(Hi(Code)));
   else if (Decode_f(ArgStr[1].str.p_str, &HReg))
@@ -1522,20 +2389,35 @@ static void DecodeIN_OUT(Word Code)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     DecodeBLOCK_7807(Word code)
+ * \brief  Handle 7807-style BLOCK instruction
+ * \param  code machine code
+ * ------------------------------------------------------------------------ */
+
 static void DecodeBLOCK_7807(Word code)
 {
   if (ChkArgCnt(1, 1))
   {
-    ShortInt mode;
+    Byte mode;
 
-    if (!Decode_rpa(&ArgStr[1], &mode) || ((mode != 4) && (mode != 6))) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
-    else
+    if (Decode_rpa(&ArgStr[1], &mode))
     {
-      BAsmCode[0] = code | ((mode >> 1) & 1);
-      CodeLen = 1;
+      if ((mode != 4) && (mode != 6)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
+      else
+      {
+        BAsmCode[0] = code | ((mode >> 1) & 1);
+        CodeLen = 1;
+      }
     }
   }
 }
+
+/*!------------------------------------------------------------------------
+ * \fn     DecodeBit1_7807(Word code)
+ * \brief  handle 7807-specific bit operations with one operand
+ * \param  code machine code
+ * ------------------------------------------------------------------------ */
 
 static void DecodeBit1_7807(Word code)
 {
@@ -1545,18 +2427,37 @@ static void DecodeBit1_7807(Word code)
     decode_bit_7807_core(1, code);
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     DecodeBit2_7807(Word code)
+ * \brief  handle 7807-specific bit operations with two operands,
+           and Z80-style logical instructions
+ * \param  code machine code
+ * ------------------------------------------------------------------------ */
+
 static void DecodeBit2_7807(Word code)
 {
   if (!ChkArgCnt(2, 2));
-  else if (!check_core_and_error(core_mask_7807));
-  else if (as_strcasecmp(ArgStr[1].str.p_str, "CY")) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
+  else if (!as_strcasecmp(ArgStr[1].str.p_str, "CY"))
+  {
+    if (check_core_and_error(core_mask_7807))
+      decode_bit_7807_core(2, Lo(code));
+  }
+  else if (CurrZ80Syntax & eSyntaxZ80)
+  {
+    Word Flags = ALUReg_Src;
+    if (pCurrCPUProps->Core != eCore7800Low)
+      Flags |= ALUReg_Dest | ALUImm_SR;
+    else if (Hi(code) != 2)
+      Flags |= ALUImm_SR;
+    decode_alu_z80((Flags << 8) | Hi(code));
+  }
   else
-    decode_bit_7807_core(2, code);
+    WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
 }
 
 /*!------------------------------------------------------------------------
  * \fn     DecodeDEFBIT(Word code)
- * \brief  handle DEBIT instruction (7807...7809 only)
+ * \brief  handle DEFBIT instruction (7807...7809 only)
  * ------------------------------------------------------------------------ */
 
 static void DecodeDEFBIT(Word code)
@@ -1601,7 +2502,266 @@ static void DecodeDEFBIT(Word code)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     decode_ld(Word code)
+ * \brief  handle LD (Z80 style) instruction
+ * ------------------------------------------------------------------------ */
+
+static void decode_ld(Word code)
+{
+  UNUSED(code);
+
+  if (ChkArgCnt(2, 2)
+   && ChkZ80Syntax(eSyntaxZ80))
+  {
+    z80_adr_vals_t dest_adr_vals, src_adr_vals;
+
+    switch (decode_z80_adr(&ArgStr[1], &dest_adr_vals, MModReg8 | MModReg16 | MModAbs | MModWA | MModIndir | MModSReg8 | MModSReg16))
+    {
+      case e_mod_reg8:
+        switch (decode_z80_adr(&ArgStr[2], &src_adr_vals,
+                               MModReg8
+                             | ((dest_adr_vals.val < 8) ? MModImm : 0)
+                             | ((dest_adr_vals.val < 8) ? MModAbs : 0)
+                             | ((dest_adr_vals.val == REG_A) ? MModWA : 0)
+                             | ((dest_adr_vals.val == REG_A) ? MModIndir : 0)
+                             | ((dest_adr_vals.val == REG_A) ? MModSReg8 : 0)))
+        {
+          case e_mod_imm:
+            BAsmCode[CodeLen++] = 0x68 + dest_adr_vals.val;
+            BAsmCode[CodeLen++] = src_adr_vals.vals[0];
+            break;
+          case e_mod_abs:
+            BAsmCode[CodeLen++] = 0x70;
+            BAsmCode[CodeLen++] = 0x68 + dest_adr_vals.val;
+            BAsmCode[CodeLen++] = src_adr_vals.vals[0];
+            BAsmCode[CodeLen++] = src_adr_vals.vals[1];
+            break;
+          case e_mod_wa:
+            BAsmCode[CodeLen++] = (pCurrCPUProps->Core >= eCore7800High) ? 0x01 : 0x28;
+            BAsmCode[CodeLen++] = src_adr_vals.vals[0];
+            break;
+          case e_mod_reg8:
+            if ((src_adr_vals.val == REG_A) && (dest_adr_vals.val >= 2))
+              BAsmCode[CodeLen++] = 0x18 | (dest_adr_vals.val & 7);
+            else if ((dest_adr_vals.val == REG_A) && (src_adr_vals.val >= 2))
+              BAsmCode[CodeLen++] = 0x08 | (src_adr_vals.val & 7);
+            else
+              WrError(ErrNum_InvAddrMode);
+            break;
+          case e_mod_indir:
+            if ((pCurrCPUProps->Core <= eCore7800High) && !is_rpa(src_adr_vals.val)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[2]);
+            else
+            {
+              BAsmCode[CodeLen++] = 0x28 | (src_adr_vals.val & 0x07) | ((src_adr_vals.val & 0x08) << 4);
+              append_adr_vals(&src_adr_vals);
+            }
+            break;
+          case e_mod_sreg8:
+            if (check_sr_flag(src_adr_vals.vals[0], eFlagSR1, &ArgStr[2]))
+            {
+              BAsmCode[CodeLen++] = 0x4c;
+              BAsmCode[CodeLen++] = 0xc0 | src_adr_vals.val;
+            }
+            break;
+          default:
+            break;
+        }
+        break;
+      case e_mod_reg16:
+        switch (decode_z80_adr(&ArgStr[2], &src_adr_vals, 
+                               MModImm
+                             | MModReg16
+                             | ((dest_adr_vals.val < REG_EA) ? MModAbs : 0)
+                             | ((dest_adr_vals.val == REG_EA) ? MModIndir : 0)
+                             | ((dest_adr_vals.val == REG_EA) ? MModSReg16 : 0)))
+        {
+          case e_mod_imm:
+            BAsmCode[CodeLen++] = 0x04 | (dest_adr_vals.val << 4);
+            BAsmCode[CodeLen++] = src_adr_vals.vals[0];
+            BAsmCode[CodeLen++] = src_adr_vals.vals[1];
+            break;
+          case e_mod_reg16:
+            if ((dest_adr_vals.val == REG_EA) && (src_adr_vals.val >= REG_BC) && (src_adr_vals.val <= REG_HL))
+              BAsmCode[CodeLen++] = 0xa4 | src_adr_vals.val;
+            else if ((src_adr_vals.val == REG_EA) && (dest_adr_vals.val >= REG_BC) && (dest_adr_vals.val <= REG_HL))
+              BAsmCode[CodeLen++] = 0xb4 | dest_adr_vals.val;
+            else
+              WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[2]);
+            break;
+          case e_mod_abs:
+            BAsmCode[CodeLen++] = 0x70;
+            BAsmCode[CodeLen++] = 0x0f | (dest_adr_vals.val << 4);
+            BAsmCode[CodeLen++] = src_adr_vals.vals[0];
+            BAsmCode[CodeLen++] = src_adr_vals.vals[1];
+            break;
+          case e_mod_indir:
+            if (!is_rpa3(src_adr_vals.val)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[2]);
+            else
+            {
+              BAsmCode[CodeLen++] = 0x48;
+              BAsmCode[CodeLen++] = 0x80 | src_adr_vals.val;
+              append_adr_vals(&src_adr_vals);
+            }
+            break;
+          case e_mod_sreg16:
+            if (check_sr_flag(src_adr_vals.vals[0], eFlagSR4, &ArgStr[2]))
+            {
+              BAsmCode[CodeLen++] = 0x48;
+              BAsmCode[CodeLen++] = 0xc0 | src_adr_vals.val;
+            }
+            break;
+          default:
+            break;
+        }
+        break;
+      case e_mod_abs:
+        switch (decode_z80_adr(&ArgStr[2], &src_adr_vals, MModReg8 | MModReg16))
+        {
+          case e_mod_reg8:
+            if (src_adr_vals.val > 7) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[2]);
+            else
+            {
+              BAsmCode[CodeLen++] = 0x70;
+              BAsmCode[CodeLen++] = 0x78 | src_adr_vals.val;
+              append_adr_vals(&dest_adr_vals);
+            }
+            break;
+          case e_mod_reg16:
+            if (src_adr_vals.val >= REG_EA) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[2]);
+            else
+            {
+              BAsmCode[CodeLen++] = 0x70;
+              BAsmCode[CodeLen++] = 0x0e | (src_adr_vals.val << 4);
+              append_adr_vals(&dest_adr_vals);
+            }
+            break;
+          default:
+            break;
+        }
+        break;
+      case e_mod_wa:
+        z80_def_op_size = eSymbolSize8Bit;
+        switch (decode_z80_adr(&ArgStr[2], &src_adr_vals, MModReg8 | MModReg16
+                               | ((pCurrCPUProps->Core >= eCore7800High) ? MModImm : 0)
+                              ))
+        {
+          case e_mod_reg8:
+            if (src_adr_vals.val == REG_A)
+            {
+              BAsmCode[CodeLen++] = (pCurrCPUProps->Core >= eCore7800High) ? 0x63 : 0x38;
+              BAsmCode[CodeLen++] = dest_adr_vals.vals[0];
+            }
+            else if (src_adr_vals.val <= 7) /* map to absolute addressing */
+            {
+              BAsmCode[CodeLen++] = 0x70;
+              BAsmCode[CodeLen++] = 0x78 | src_adr_vals.val;
+              BAsmCode[CodeLen++] = dest_adr_vals.vals[0];
+              BAsmCode[CodeLen++] = WorkArea;
+            }
+            else
+              WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[2]);
+            break;
+          case e_mod_reg16: /* map to absolute addressing */
+            if (src_adr_vals.val >= REG_EA) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[2]);
+            else
+            {
+              BAsmCode[CodeLen++] = 0x70;
+              BAsmCode[CodeLen++] = 0x0e | (src_adr_vals.val << 4);
+              BAsmCode[CodeLen++] = dest_adr_vals.vals[0];
+              BAsmCode[CodeLen++] = WorkArea;
+            }
+            break;
+          case e_mod_imm:
+            BAsmCode[CodeLen++] = 0x71;
+            BAsmCode[CodeLen++] = dest_adr_vals.vals[0];
+            BAsmCode[CodeLen++] = src_adr_vals.vals[0];
+            break;
+          default:
+            break;
+        }
+        break;
+      case e_mod_indir:
+        z80_def_op_size = eSymbolSize8Bit;
+        switch (decode_z80_adr(&ArgStr[2], &src_adr_vals, MModReg8 | MModReg16
+                            | ((pCurrCPUProps->Core >= eCore7800High) ? MModImm : 0)))
+        {
+          case e_mod_reg8:
+            if (src_adr_vals.val != REG_A) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[2]);
+            else if ((pCurrCPUProps->Core <= eCore7800High) && !is_rpa(dest_adr_vals.val)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
+            else
+            {
+              BAsmCode[CodeLen++] = 0x38 | (dest_adr_vals.val & 0x07) | ((dest_adr_vals.val & 0x08) << 4);
+              append_adr_vals(&dest_adr_vals);
+            }
+            break;
+          case e_mod_reg16:
+            if (src_adr_vals.val != REG_EA) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[2]);
+            else if (!is_rpa3(dest_adr_vals.val)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
+            else
+            {
+              BAsmCode[CodeLen++] = 0x48;
+              BAsmCode[CodeLen++] = 0x90 | dest_adr_vals.val;
+              append_adr_vals(&dest_adr_vals);
+            }
+            break;
+          case e_mod_imm:
+            if (!is_rpa1(dest_adr_vals.val)) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
+            else
+            {
+              BAsmCode[CodeLen++] = 0x48 | dest_adr_vals.val;
+              BAsmCode[CodeLen++] = src_adr_vals.vals[0];
+            }
+            break;
+          default:
+            break;
+        }
+        break;
+      case e_mod_sreg8:
+        switch (decode_z80_adr(&ArgStr[2], &src_adr_vals, MModReg8 | MModImm))
+        {
+          case e_mod_reg8:
+            if (src_adr_vals.val != REG_A) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[2]);
+            else if (check_sr_flag(dest_adr_vals.vals[0], eFlagSR, &ArgStr[1]))
+            {
+              BAsmCode[CodeLen++] = 0x4d;
+              BAsmCode[CodeLen++] = 0xc0 | dest_adr_vals.val;
+            }
+            break;
+          case e_mod_imm:
+            if (check_sr_flag(dest_adr_vals.vals[0], eFlagSR2, &ArgStr[1]))
+            {
+              BAsmCode[CodeLen++] = 0x64;
+              BAsmCode[CodeLen++] = (dest_adr_vals.val & 0x07) | ((dest_adr_vals.val & 0x08) << 4);
+              BAsmCode[CodeLen++] = src_adr_vals.vals[0];
+            }
+          default:
+            break;
+        }
+        break;
+      case e_mod_sreg16:
+        switch (decode_z80_adr(&ArgStr[2], &src_adr_vals, MModReg16))
+        {
+          case e_mod_reg16:
+            if (src_adr_vals.val != REG_EA) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[2]);
+            else if (check_sr_flag(dest_adr_vals.vals[0], eFlagSR3, &ArgStr[1]))
+            {
+              BAsmCode[CodeLen++] = 0x48;
+              BAsmCode[CodeLen++] = 0xd2 | dest_adr_vals.val;
+            }
+            break;
+          default:
+            break;
+        }
+        break;
+      default:
+        break;
+    }
+  }
+}
+
 /*--------------------------------------------------------------------------------*/
+/* Dynamic Code Table Handling */
 
 static void AddFixed(const char *p_name, Word code, unsigned core_mask)
 {
@@ -1618,19 +2778,29 @@ static void AddIntFlag(const char *p_name, Byte code)
   int_flags[InstrZ++].code = code;
 }
 
-static void AddALU(Byte NCode, Word Flags, const char *NNameI, const char *NNameReg, const char *NNameEA)
+static void AddALU(Byte NCode, Word Flags, const char *NNameI, const char *NNameReg, const char *NNameEA, const char *NNameZ80)
 {
   char Name[20];
 
   AddInstTable(InstTable, NNameI, ((Flags & ALUImm_SR) << 8) | NCode, DecodeALUImm);
-  AddInstTable(InstTable, NNameReg, ((Flags & (ALUReg_Src | ALUReg_Dest)) << 8) | NCode, DecodeALUReg);
+  AddInstTable(InstTable, NNameReg, ((Flags & (ALUReg_Src | ALUReg_Dest | ALUImm_SR | ALUReg_MayZ80)) << 8) | NCode, DecodeALUReg);
   AddInstTable(InstTable, NNameEA, NCode, DecodeALUEA);
   as_snprintf(Name, sizeof(Name), "%sW", NNameReg);
   AddInstTable(InstTable, Name, NCode, DecodeALURegW);
   as_snprintf(Name, sizeof(Name), "%sX", NNameReg);
   AddInstTable(InstTable, Name, NCode, DecodeALURegX);
-  as_snprintf(Name, sizeof(Name), "%sW", NNameI);
-  AddInstTable(InstTable, Name, NCode, DecodeALUImmW);
+  if (NCode & 1)
+  {
+    as_snprintf(Name, sizeof(Name), "%sW", NNameI);
+    AddInstTable(InstTable, Name, NCode, DecodeALUImmW);
+  }
+  if (NNameZ80)
+    AddInstTable(InstTable, NNameZ80, NCode, decode_alu_z80);
+}
+
+static void add_alu_z80(const char *p_name, Byte code, Word flags)
+{
+  AddInstTable(InstTable, p_name, (flags << 8) | code, decode_alu_z80);
 }
 
 static void AddAbs(const char *NName, Word NCode)
@@ -1644,6 +2814,26 @@ static void AddReg2(const char *p_name, Word code, unsigned core_mask)
   reg2_orders[InstrZ].code = code;
   reg2_orders[InstrZ].core_mask = core_mask;
   AddInstTable(InstTable, p_name, InstrZ++, DecodeReg2);
+}
+
+static void add_sreg8(const char *p_name, Byte code, Byte flags, Byte core_mask)
+{
+  order_array_rsv_end(s_regs8, sreg_t);
+  s_regs8[InstrZ].p_name = p_name;
+  s_regs8[InstrZ].code = code;
+  s_regs8[InstrZ].flags = flags;
+  s_regs8[InstrZ].core_mask = core_mask;
+  InstrZ++;
+}
+
+static void add_sreg16(const char *p_name, Byte code, Byte flags, Byte core_mask)
+{
+  order_array_rsv_end(s_regs16, sreg_t);
+  s_regs16[InstrZ].p_name = p_name;
+  s_regs16[InstrZ].code = code;
+  s_regs16[InstrZ].flags = flags;
+  s_regs16[InstrZ].core_mask = core_mask;
+  InstrZ++;
 }
 
 static void AddWork(const char *NName, Word NCode)
@@ -1798,21 +2988,21 @@ static void InitFields(void)
   }
   AddIntFlag(NULL, 0);
 
-  AddALU(10, IsLow ?             ALUReg_Src : ALUImm_SR | ALUReg_Src | ALUReg_Dest, "ACI"  , "ADC"  , "DADC"  );
-  AddALU( 4, IsLow ?             ALUReg_Src : ALUImm_SR | ALUReg_Src | ALUReg_Dest, "ADINC", "ADDNC", "DADDNC");
-  AddALU( 8, IsLow ?             ALUReg_Src : ALUImm_SR | ALUReg_Src | ALUReg_Dest, "ADI"  , "ADD"  , "DADD"  );
-  AddALU( 1, IsLow ? ALUImm_SR | ALUReg_Src : ALUImm_SR | ALUReg_Src | ALUReg_Dest, "ANI"  , "ANA"  , "DAN"   );
-  AddALU(15, IsLow ?             ALUReg_Src : ALUImm_SR | ALUReg_Src | ALUReg_Dest, "EQI"  , "EQA"  , "DEQ"   );
-  AddALU( 5, IsLow ?             ALUReg_Src : ALUImm_SR | ALUReg_Src | ALUReg_Dest, "GTI"  , "GTA"  , "DGT"   );
-  AddALU( 7, IsLow ?             ALUReg_Src : ALUImm_SR | ALUReg_Src | ALUReg_Dest, "LTI"  , "LTA"  , "DLT"   );
-  AddALU(13, IsLow ?             ALUReg_Src : ALUImm_SR | ALUReg_Src | ALUReg_Dest, "NEI"  , "NEA"  , "DNE"   );
-  AddALU(11, IsLow ? ALUImm_SR              : ALUImm_SR | ALUReg_Src | ALUReg_Dest, "OFFI" , "OFFA" , "DOFF"  );
-  AddALU( 9, IsLow ? ALUImm_SR              : ALUImm_SR | ALUReg_Src | ALUReg_Dest, "ONI"  , "ONA"  , "DON"   );
-  AddALU( 3, IsLow ? ALUImm_SR | ALUReg_Src : ALUImm_SR | ALUReg_Src | ALUReg_Dest, "ORI"  , "ORA"  , "DOR"   );
-  AddALU(14, IsLow ?             ALUReg_Src : ALUImm_SR | ALUReg_Src | ALUReg_Dest, "SBI"  , "SBB"  , "DSBB"  );
-  AddALU( 6, IsLow ?             ALUReg_Src : ALUImm_SR | ALUReg_Src | ALUReg_Dest, "SUINB", "SUBNB", "DSUBNB");
-  AddALU(12, IsLow ?             ALUReg_Src : ALUImm_SR | ALUReg_Src | ALUReg_Dest, "SUI"  , "SUB"  , "DSUB"  );
-  AddALU( 2, IsLow ?             ALUReg_Src : ALUImm_SR | ALUReg_Src | ALUReg_Dest, "XRI"  , "XRA"  , "DXR"   );
+  AddALU(10, IsLow ?             ALUReg_Src | ALUReg_MayZ80 : ALUImm_SR | ALUReg_Src | ALUReg_Dest | ALUReg_MayZ80, "ACI"  , "ADC"  , "DADC"  , NULL );
+  AddALU( 4, IsLow ?             ALUReg_Src | ALUReg_MayZ80 : ALUImm_SR | ALUReg_Src | ALUReg_Dest | ALUReg_MayZ80, "ADINC", "ADDNC", "DADDNC", NULL );
+  AddALU( 8, IsLow ?             ALUReg_Src | ALUReg_MayZ80 : ALUImm_SR | ALUReg_Src | ALUReg_Dest | ALUReg_MayZ80, "ADI"  , "ADD"  , "DADD"  , NULL );
+  AddALU( 1, IsLow ? ALUImm_SR | ALUReg_Src                 : ALUImm_SR | ALUReg_Src | ALUReg_Dest                , "ANI"  , "ANA"  , "DAN"   , NULL );
+  AddALU(15, IsLow ?             ALUReg_Src                 : ALUImm_SR | ALUReg_Src | ALUReg_Dest                , "EQI"  , "EQA"  , "DEQ"   , NULL );
+  AddALU( 5, IsLow ?             ALUReg_Src                 : ALUImm_SR | ALUReg_Src | ALUReg_Dest                , "GTI"  , "GTA"  , "DGT"   , NULL );
+  AddALU( 7, IsLow ?             ALUReg_Src                 : ALUImm_SR | ALUReg_Src | ALUReg_Dest                , "LTI"  , "LTA"  , "DLT"   , NULL );
+  AddALU(13, IsLow ?             ALUReg_Src                 : ALUImm_SR | ALUReg_Src | ALUReg_Dest                , "NEI"  , "NEA"  , "DNE"   , NULL );
+  AddALU(11, IsLow ? ALUImm_SR                              : ALUImm_SR | ALUReg_Src | ALUReg_Dest                , "OFFI" , "OFFA" , "DOFF"  , NULL );
+  AddALU( 9, IsLow ? ALUImm_SR                              : ALUImm_SR | ALUReg_Src | ALUReg_Dest                , "ONI"  , "ONA"  , "DON"   , NULL );
+  AddALU( 3, IsLow ? ALUImm_SR | ALUReg_Src                 : ALUImm_SR | ALUReg_Src | ALUReg_Dest                , "ORI"  , "ORA"  , "DOR"   , NULL );
+  AddALU(14, IsLow ?             ALUReg_Src | ALUReg_MayZ80 : ALUImm_SR | ALUReg_Src | ALUReg_Dest | ALUReg_MayZ80, "SBI"  , "SBB"  , "DSBB"  , NULL );
+  AddALU( 6, IsLow ?             ALUReg_Src | ALUReg_MayZ80 : ALUImm_SR | ALUReg_Src | ALUReg_Dest | ALUReg_MayZ80, "SUINB", "SUBNB", "DSUBNB", NULL );
+  AddALU(12, IsLow ?             ALUReg_Src | ALUReg_MayZ80 : ALUImm_SR | ALUReg_Src | ALUReg_Dest | ALUReg_MayZ80, "SUI"  , "SUB"  , "DSUB"  , NULL );
+  AddALU( 2, IsLow ?             ALUReg_Src                 : ALUImm_SR | ALUReg_Src | ALUReg_Dest                , "XRI"  , "XRA"  , "DXR"   , NULL );
 
   AddAbs("CALL", is_7807_781x ? 0x0040 : 0x0044);
   AddAbs("JMP" , 0x0054);
@@ -1859,15 +3049,95 @@ static void InitFields(void)
     AddInstTable(InstTable, "OUT", 0x4d, DecodeIN_OUT);
   }
 
-  AddInstTable(InstTable, "AND" , 0x31, DecodeBit2_7807);
-  AddInstTable(InstTable, "OR"  , 0x5c, DecodeBit2_7807);
-  AddInstTable(InstTable, "XOR" , 0x5e, DecodeBit2_7807);
+  AddInstTable(InstTable, "AND" , 0x0131, DecodeBit2_7807);
+  AddInstTable(InstTable, "OR"  , 0x035c, DecodeBit2_7807);
+  AddInstTable(InstTable, "XOR" , 0x025e, DecodeBit2_7807);
   AddInstTable(InstTable, "SETB", 0x58, DecodeBit1_7807);
   AddInstTable(InstTable, "CLR" , 0x5b, DecodeBit1_7807);
   AddInstTable(InstTable, "NOT" , 0x59, DecodeBit1_7807);
 
+  /* Array with special regs is created upon first usage and remains
+     allocated, because we need it in dissect_bit_7807(), which may
+     be called after we switched away fro mtarget (e.g. when printing
+     symbol table: */
+
+  if (!s_regs8)
+  {
+    InstrZ = 0;
+    add_sreg8("PA"  , 0x00, eFlagSR | eFlagSR1 | eFlagSR2, core_mask_all);
+    add_sreg8("PB"  , 0x01, eFlagSR | eFlagSR1 | eFlagSR2, core_mask_all);
+    add_sreg8("PC"  , 0x02, eFlagSR | eFlagSR1 | eFlagSR2, core_mask_7807_7810);
+    add_sreg8("PD"  , 0x03, eFlagSR | eFlagSR1 | eFlagSR2, core_mask_7807_7810);
+    add_sreg8("PF"  , 0x05, eFlagSR | eFlagSR1 | eFlagSR2, core_mask_7807_7810);
+    add_sreg8("MKH" , 0x06, eFlagSR | eFlagSR1 | eFlagSR2, core_mask_7807_7810);
+    add_sreg8("MKL" , 0x07, eFlagSR | eFlagSR1 | eFlagSR2, core_mask_7807_7810);
+    add_sreg8("SMH" , 0x09, eFlagSR | eFlagSR1 | eFlagSR2, core_mask_7807_7810);
+    add_sreg8("SML" , 0x0a, eFlagSR                      , core_mask_7807_7810);
+    add_sreg8("EOM" , 0x0b, eFlagSR | eFlagSR1 | eFlagSR2, core_mask_7807_7810);
+    add_sreg8("ETMM", 0x0c, eFlagSR                      , core_mask_7807_7810);
+    add_sreg8("TMM" , 0x0d, eFlagSR | eFlagSR1 | eFlagSR2, core_mask_7807_7810);
+    add_sreg8("MM"  , 0x10, eFlagSR                      , core_mask_7807_7810);
+    add_sreg8("MCC" , 0x11, eFlagSR                      , core_mask_7807_7810);
+    add_sreg8("MA"  , 0x12, eFlagSR                      , core_mask_7807_7810);
+    add_sreg8("MB"  , 0x13, eFlagSR                      , core_mask_7807_7810);
+    add_sreg8("MC"  , 0x14, eFlagSR                      , core_mask_7807_7810);
+    add_sreg8("MF"  , 0x17, eFlagSR                      , core_mask_7807_7810);
+    add_sreg8("TXB" , 0x18, eFlagSR                      , core_mask_7807_7810);
+    add_sreg8("RXB" , 0x19, eFlagSR1                     , core_mask_7807_7810);
+    add_sreg8("TM0" , 0x1a, eFlagSR                      , core_mask_7807_7810);
+    add_sreg8("TM1" , 0x1b, eFlagSR                      , core_mask_7807_7810);
+    add_sreg8("ZCM" , 0x28, eFlagSR                      , core_mask_7807_7810 | core_mask_cmos);
+    add_sreg8("ANM" , 0x08, eFlagSR | eFlagSR1 | eFlagSR2, core_mask_7810     );
+    add_sreg8("CR0" , 0x20, eFlagSR1                     , core_mask_7810     );
+    add_sreg8("CR1" , 0x21, eFlagSR1                     , core_mask_7810     );
+    add_sreg8("CR2" , 0x22, eFlagSR1                     , core_mask_7810     );
+    add_sreg8("CR3" , 0x23, eFlagSR1                     , core_mask_7810     );
+    add_sreg8("PT"  , 0x0e, eFlagSR | eFlagSR1 | eFlagSR2, core_mask_7807     );
+    add_sreg8("WDM" , 0x20, eFlagSR | eFlagSR1           , core_mask_7807     );
+    add_sreg8("MT"  , 0x21, eFlagSR | eFlagSR1           , core_mask_7807     );
+    add_sreg8("MK"  , 0x03, eFlagSR | eFlagSR1 | eFlagSR2, core_mask_7800     );
+    add_sreg8("MB"  , 0x04, eFlagSR                      , core_mask_7800     );
+    add_sreg8("PC"  , 0x02, eFlagSR | eFlagSR1 | eFlagSR2, core_mask_7800_high);
+    add_sreg8("PC"  , 0x02, eFlagSR1 | eFlagSR2          , core_mask_7800_low );
+    add_sreg8("MC"  , 0x05, eFlagSR                      , core_mask_7800_high);
+    add_sreg8("MC"  , 0x05, 0                            , core_mask_7800_low );
+    add_sreg8("TM0" , 0x06, eFlagSR                      , core_mask_7800_high);
+    add_sreg8("TM0" , 0x06, 0                            , core_mask_7800_low );
+    add_sreg8("TM1" , 0x07, eFlagSR                      , core_mask_7800_high);
+    add_sreg8("TM1" , 0x07, 0                            , core_mask_7800_low );
+    add_sreg8("TM"  , 0x06, eFlagSR                      , core_mask_7800_low );
+    add_sreg8("TM"  , 0x06, 0                            , core_mask_7800_high);
+    add_sreg8("SM"  , 0x0a, eFlagSR | eFlagSR1           , core_mask_7800_low );
+    add_sreg8("SM"  , 0x0a, 0                            , core_mask_7800_high);
+    add_sreg8("SC"  , 0x0b, eFlagSR | eFlagSR1           , core_mask_7800_low );
+    add_sreg8("SC"  , 0x0b, 0                            , core_mask_7800_high);
+    add_sreg8("S"   , 0x08, eFlagSR | eFlagSR1           , core_mask_7800     );
+    add_sreg8("TMM" , 0x09, eFlagSR | eFlagSR1           , core_mask_7800     );
+    add_sreg8(NULL  , 0x00, 0                            , 0                  );
+  }
+
+  InstrZ = 0;
+  add_sreg16("ETM0" , 0x00, eFlagSR3, core_mask_all );
+  add_sreg16("ETM1" , 0x01, eFlagSR3, core_mask_all );
+  add_sreg16("ECNT" , 0x00, eFlagSR4, core_mask_all );
+  add_sreg16("ECPT" , 0x01, eFlagSR4, core_mask_7810);
+  add_sreg16("ECPT0", 0x01, eFlagSR4, core_mask_7807);
+  add_sreg16("ECPT1", 0x02, eFlagSR4, core_mask_7807);
+  add_sreg16(NULL   , 0x00, 0       , 0             );
+
   if (Is7807)
     AddInstTable(InstTable, "DEFBIT", 0, DecodeDEFBIT);
+
+  AddZ80Syntax(InstTable);
+  AddInstTable(InstTable, "LD", 0, decode_ld);
+  AddInstTable(InstTable, "INC", 0, decode_inc_dec);
+  AddInstTable(InstTable, "DEC", 1, decode_inc_dec);
+  add_alu_z80("SKGT", 5, IsLow ? ALUReg_Src : ALUImm_SR | ALUReg_Src | ALUReg_Dest);
+  add_alu_z80("SKLT", 7, IsLow ? ALUReg_Src : ALUImm_SR | ALUReg_Src | ALUReg_Dest);
+  add_alu_z80("SKNE",13, IsLow ? ALUReg_Src : ALUImm_SR | ALUReg_Src | ALUReg_Dest);
+  add_alu_z80("SKEQ",15, IsLow ? ALUReg_Src : ALUImm_SR | ALUReg_Src | ALUReg_Dest);
+  add_alu_z80("SKON", 9, IsLow ? ALUImm_SR  : ALUImm_SR | ALUReg_Src | ALUReg_Dest);
+  add_alu_z80("SKOFF",11, IsLow ? ALUImm_SR  : ALUImm_SR | ALUReg_Src | ALUReg_Dest);
 }
 
 static void DeinitFields(void)
@@ -1876,14 +3146,24 @@ static void DeinitFields(void)
   order_array_free(int_flags);
   order_array_free(fixed_orders);
   order_array_free(reg2_orders);
+  /* See above why s_regs8 does not get freed upon deinit: */
+  /*order_array_free(s_regs8);*/
+  order_array_free(s_regs16);
 }
 
 /*--------------------------------------------------------------------------*/
+
+/*!------------------------------------------------------------------------
+ * \fn     MakeCode_78C10(void)
+ * \brief  generate code from source code line
+ * ------------------------------------------------------------------------ */
 
 static void MakeCode_78C10(void)
 {
   CodeLen = 0;
   DontPrint = False;
+  z80_op_size =
+  z80_def_op_size = eSymbolSizeUnknown;
 
   /* zu ignorierendes */
 
@@ -1897,20 +3177,42 @@ static void MakeCode_78C10(void)
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     InitCode_78C10(void)
+ * \brief  target-specific initializations at begin of pass
+ * ------------------------------------------------------------------------ */
+
 static void InitCode_78C10(void)
 {
   WorkArea = 0x100;
 }
+
+/*!------------------------------------------------------------------------
+ * \fn     IsDef_78C10(void)
+ * \brief  check whether instruction consumes label field itself
+ * \return True if yes
+ * ------------------------------------------------------------------------ */
 
 static Boolean IsDef_78C10(void)
 {
   return (pCurrCPUProps->Core == eCore7807) && Memo("DEFBIT");
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     SwitchFrom_78C10(void)
+ * \brief  cleanups when switching away from target
+ * ------------------------------------------------------------------------ */
+
 static void SwitchFrom_78C10(void)
 {
   DeinitFields();
 }
+
+/*!------------------------------------------------------------------------
+ * \fn     SwitchTo_78C10(void *pUser)
+ * \brief  initializations when switching to target
+ * \param  pUser * to target details
+ * ------------------------------------------------------------------------ */
 
 static void SwitchTo_78C10(void *pUser)
 {
@@ -1947,6 +3249,11 @@ static void SwitchTo_78C10(void *pUser)
     DissectBit = dissect_bit_7807;
   InitFields();
 }
+
+/*!------------------------------------------------------------------------
+ * \fn     code78c10_init(void)
+ * \brief  Attach 78Cxx target
+ * ------------------------------------------------------------------------ */
 
 static const tCPUProps CPUProps[] =
 {

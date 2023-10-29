@@ -60,7 +60,7 @@
 {\large Alfred Arnold, Stefan Hilse, Stephan Kanthak, Oliver
  Sellke, Vittorio De Tomasi}
 \vspace{1cm}\par
-{\huge Macro Assembler \asname{} V1.42\\ (''ACASM'')}\\
+{\huge Macro Assembler \asname{} V1.42}\\
 \rule{9.5cm}{0.3mm}\\
 \vspace{2mm}\par
 {\huge User's Manual}
@@ -5237,10 +5237,10 @@ should therefore use this feature with caution!
 \subsection{Z80SYNTAX}
 \ttindex{Z80SYNTAX}
 
-{\em G"ultigkeit: 8008, 8080/8085}
+{\em G"ultigkeit: 8008, 8080/8085, $\mu$PD78xx}
 
-With \tty{ON} as argument, one can optionally write (almost) all
-8008/8080 instructions in the form Zilog defined them for the Z80.
+With \tty{ON} as argument, one can optionally write machine
+assembler instructions in the form Zilog defined them for the Z80.
 For instance, you simply use \tty{LD} with self-explaining
 operands instead of \tty{MVI, LXI, MOV, STA, LDA, SHLD, LHLD,
 LDAX, STAX} or \tty{SPHL}.
@@ -10815,6 +10815,35 @@ tools like disassemblers seem to use these notations either:
       \tty{(H+EA)}, \tty{(HL+EA)}, \tty{(EA+H)}, or \tty{(EA+HL)}
       instead of \tty{H+EA}.}
 \end{itemize}
+
+Since architecture and instruction set are so ''8080-like'', it was
+straightforward to support the {\tt Z80SYNTAX} statement, which
+allows to write many machine instructions in a more intuitive and
+better-known way.  However, since both the uCON87 family's architecture
+and instruction set differ from the 8080 in a couple of details, it
+is not possible to provide a complete one-to-one mapping.  Not all
+original instructions have a ''Z80 equivalent'', and some instructions
+known from 8080 and Z80 do not exist on the uCOM87.  It therefore
+does not make sense to support {\tt Z80SYNTAX EXCLUSIVE}.
+
+The following table lists all instructions defined in {\tt Z80SYNTAX}
+mode and their equivalents in original syntax:
+
+\begin{longtable}{|l|l|l|l|}
+\hline
+{\tt Z80SYNTAX} & Original & Operation  & CPUs \\
+\hline
+\hline
+\endhead
+\input{../doc_COM/78z80inst.tex}
+\\ \hline
+\multicolumn{4}{|l|}{CPU Group 1: 78C05, 78C06} \\
+\multicolumn{4}{|l|}{CPU Group 2: 7800, 7801, 7802} \\
+\multicolumn{4}{|l|}{CPU Group 3: 7807, 7808, 7809, 7810} \\
+\multicolumn{4}{|l|}{CPU Group 4: 7810, 78C1x} \\
+\hline
+\caption{Instruction Variants in {\tt Z80SYNTAX} Mode}
+\end{longtable}
 
 %%---------------------------------------------------------------------------
 
