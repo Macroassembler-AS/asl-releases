@@ -274,3 +274,41 @@ void div64(t64 *pRes, const t64 *pA, const t64 *pB)
   divmnu(q, NULL, u, v, m, n);
   from16(pRes, q);
 }
+
+/*!------------------------------------------------------------------------
+ * \fn     mod64(t64 *pRes, const t64 *pA, const t64 *pB)
+ * \brief  modulo-divide two values
+ * \param  pRes remainder buffer
+ * \param  pA, pB values to divide
+ * ------------------------------------------------------------------------ */
+
+void mod64(t64 *pRes, const t64 *pA, const t64 *pB)
+{
+  Word u[4], v[4], q[4], r[4];
+  int m = to16(u, pA),
+      n = to16(v, pB);
+
+  q[0] = q[1] = q[2] = q[3] = 0;
+  divmnu(q, r, u, v, m, n);
+  from16(pRes, r);
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     mod_div64(t64 *pQuot, t64 *pRem, const t64 *pA, const t64 *pB)
+ * \brief  divide two values, and return also remainder
+ * \param  pQuot quotient buffer
+ * \param  pRem remainder buffer
+ * \param  pA, pB values to divide
+ * ------------------------------------------------------------------------ */
+
+void mod_div64(t64 *pQuot, t64 *pRem, const t64 *pA, const t64 *pB)
+{
+  Word u[4], v[4], q[4], r[4];
+  int m = to16(u, pA),
+      n = to16(v, pB);
+
+  q[0] = q[1] = q[2] = q[3] = 0;
+  divmnu(q, r, u, v, m, n);
+  from16(pQuot, q);
+  from16(pRem, r);
+}

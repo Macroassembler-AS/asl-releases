@@ -94,6 +94,10 @@ typedef struct
   Word Code1,Code2;
 } BitOrder;
 
+typedef struct
+{
+  const char *p_name;
+} condition_t;
 
 static CPUVar CPUM16;
 
@@ -112,7 +116,7 @@ static BitOrder *FixedLongOrders;
 static OneOrder *OneOrders;
 static GE2Order *GE2Orders;
 static BitOrder *BitOrders;
-static const char **Conditions;
+static condition_t *Conditions;
 
 /*------------------------------------------------------------------------*/
 
@@ -1031,8 +1035,8 @@ static Boolean DecodeCondition(const char *Asc, Word *Erg)
 {
   int z;
 
-  for (z = 0; Conditions[z]; z++)
-    if (!as_strcasecmp(Asc, Conditions[z]))
+  for (z = 0; Conditions[z].p_name; z++)
+    if (!as_strcasecmp(Asc, Conditions[z].p_name))
     {
       *Erg = z;
       return True;
@@ -2915,12 +2919,12 @@ static void AddGetPut(const char *NName, Byte NSize, Word NCode, Boolean NTurn)
   AddInstTable(InstTable, NName, NCode | NSize | (NTurn << 7), DecodeGetPut);
 }
 
-static void Addcc(const char *BName)
+static void Addcc(const char *p_branch_name)
 {
-  order_array_rsv_end(Conditions, const char*);
-  Conditions[InstrZ] = BName + 1;
-  if (BName)
-    AddInstTable(InstTable, BName, InstrZ << 10, DecodeBcc);
+  order_array_rsv_end(Conditions, condition_t);
+  Conditions[InstrZ].p_name = p_branch_name + 1;
+  if (p_branch_name)
+    AddInstTable(InstTable, p_branch_name, InstrZ << 10, DecodeBcc);
   InstrZ++;
 }
 

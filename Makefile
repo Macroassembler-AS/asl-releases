@@ -10,6 +10,7 @@ TARG_OOBJ=$(OOBJ)
 TARG_EOBJ=$(EOBJ)
 CURRDIR=./
 LIBM=-lm
+CHECK_TARG_CC=check_targ_cc_unix
 
 include Makefile.def
 
@@ -79,7 +80,7 @@ $(UNUMLAUTTARGET): $(UNUMLAUT_OBJECTS)
 $(MKDEPENDTARGET): $(MKDEPEND_OBJECTS)
 	$(LD) $(EOBJ)$(MKDEPENDTARGET) $(MKDEPEND_OBJECTS) $(LDFLAGS)
 
-check_targ_cc:
+check_targ_cc_unix:
 	@if test "$(TARG_CC)" = ""; then echo "TARG_CC is not set - please review Makefile.def"; exit 1; fi; exit 0
 
 #---------------------------------------------------------------------------

@@ -11,7 +11,7 @@
 #include "stdinc.h"
 #include <errno.h>
 
-#include "endian.h"
+#include "be_le.h"
 #include "ieeefloat.h"
 #include "decfloat.h"
 

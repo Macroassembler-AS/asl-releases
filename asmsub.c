@@ -15,7 +15,7 @@
 #include <stdarg.h>
 
 #include "version.h"
-#include "endian.h"
+#include "be_le.h"
 #include "stdhandl.h"
 #include "console.h"
 #include "nls.h"
@@ -1258,56 +1258,78 @@ void ClearUseList(void)
 /****************************************************************************/
 /* Include-Pfadlistenverarbeitung */
 
-static char *GetPath(char *Acc)
-{
-  char *p;
-  static String tmp;
+/*!------------------------------------------------------------------------
+ * \fn     get_first_path_from_list(const char *p_path_list, char *p_first_path, size_t first_path_size)
+ * \brief  extract first path from list of paths
+ * \param  p_path_list path list
+ * \param  p_first_path where to put component
+ * \param  first_path_size buffer size
+ * \return p_path_list for next call of get_first_path_from_list()
+ * ------------------------------------------------------------------------ */
 
-  p = strchr(Acc, DIRSEP);
+static const char *get_first_path_from_list(const char *p_path_list, char *p_first_path, size_t first_path_size)
+{
+  const char *p;
+
+  p = strchr(p_path_list, DIRSEP);
   if (!p)
   {
-    strmaxcpy(tmp, Acc, STRINGSIZE);
-    Acc[0] = '\0';
+    strmaxcpy(p_first_path, p_path_list, first_path_size);
+    return "";
   }
   else
   {
-    *p = '\0';
-    strmaxcpy(tmp, Acc, STRINGSIZE);
-    strmov(Acc, p + 1);
+    strmemcpy(p_first_path, first_path_size, p_path_list, p - p_path_list);
+    return p + 1;
   }
-  return tmp;
 }
 
-void AddIncludeList(char *NewPath)
-{
-  String Test;
+/*!------------------------------------------------------------------------
+ * \fn     AddIncludeList(const char *p_new_path)
+ * \brief  add path to include list
+ * \param  p_new_path path to add
+ * ------------------------------------------------------------------------ */
 
-  strmaxcpy(Test, IncludeList, STRINGSIZE);
-  while (*Test != '\0')
-    if (!strcmp(GetPath(Test), NewPath))
+void AddIncludeList(const char *p_new_path)
+{
+  const char *p_list_run = IncludeList;
+  String one_path;
+
+  /* path already present in list? */
+
+  while (*p_list_run)
+  {
+    p_list_run = get_first_path_from_list(p_list_run, one_path, sizeof(one_path));
+    if (!strcmp(one_path, p_new_path))
       return;
+  }
+
+  /* no -> prepend */
+
   if (*IncludeList != '\0')
     strmaxprep(IncludeList, SDIRSEP, STRINGSIZE);
-  strmaxprep(IncludeList, NewPath, STRINGSIZE);
+  strmaxprep(IncludeList, p_new_path, STRINGSIZE);
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     RemoveIncludeList(const char *p_rem_path)
+ * \brief  remove one path from include list
+ * \param  p_rem_path path to remove
+ * ------------------------------------------------------------------------ */
 
-void RemoveIncludeList(char *RemPath)
+void RemoveIncludeList(const char *p_rem_path)
 {
-  String Save;
-  char *Part;
+  String one_path;
+  const char *p_list_run, *p_list_next;
 
-  strmaxcpy(Save, IncludeList, STRINGSIZE);
-  IncludeList[0] = '\0';
-  while (Save[0] != '\0')
+  p_list_run = IncludeList;
+  while (*p_list_run)
   {
-    Part = GetPath(Save);
-    if (strcmp(Part, RemPath))
-    {
-      if (IncludeList[0] != '\0')
-        strmaxcat(IncludeList, SDIRSEP, STRINGSIZE);
-      strmaxcat(IncludeList, Part, STRINGSIZE);
-    }
+    p_list_next = get_first_path_from_list(p_list_run, one_path, sizeof(one_path));
+    if (!strcmp(one_path, p_rem_path))
+      strmov((char*)p_list_run, p_list_next);
+    else
+      p_list_run = p_list_next;
   }
 }
 
@@ -1552,8 +1574,11 @@ void AddClearUpProc(SimpProc NewProc)
   pClearUpProcStore = pNewStore;
 }
 
-/*--------------------------------------------------------------------------*/
-/* Zeit holen */
+/*!------------------------------------------------------------------------
+ * \fn     GTime(void)
+ * \brief  fetch time of day in units of 10 ms
+ * \return time of day
+ * ------------------------------------------------------------------------ */
 
 #ifdef __MSDOS__
 
@@ -1572,7 +1597,10 @@ long GTime(void)
   return result;
 }
 
-#elif __IBMC__
+# define GTIME_DEFINED
+#endif /* __MSDOS__ */
+
+#ifdef __IBMC__
 
 #include <time.h>
 #define INCL_DOSDATETIME
@@ -1593,53 +1621,61 @@ long GTime(void)
   return (mktime(&ts) * 100) + (dt.hundredths);
 }
 
-#elif __MINGW32__
+# define GTIME_DEFINED
+#endif /* __IBMC__ */
 
-/* distribution by Gunnar Wallmann */
+#ifdef _WIN32
 
-#include <sys/time.h>
-#include "math64.h"
+# include <windows.h>
 
-/*time from 1 Jan 1601 to 1 Jan 1970 in 100ns units */
-
-typedef struct _FILETIME
-{
-  unsigned long dwLowDateTime;
-  unsigned long dwHighDateTime;
-} FILETIME;
-
-void __stdcall GetSystemTimeAsFileTime(FILETIME*);
+# ifdef NOLONGLONG
+#  include "math64.h"
+# endif
 
 long GTime(void)
 {
-  union
-  {
-#ifndef NOLONGLONG
-    long long ns100; /*time since 1 Jan 1601 in 100ns units */
-#endif
-    FILETIME ft;
-  } _now;
+  FILETIME ft;
 
-  GetSystemTimeAsFileTime(&(_now.ft));
-#ifdef NOLONGLONG
+  GetSystemTimeAsFileTime(&ft);
+# ifdef NOLONGLONG
   {
     static const t64 offs = { 0xd53e8000, 0x019db1de },
-                     div = { 100000, 0 };
+                     div = { 100000, 0 },
+                     mod = { 8640000, 0 };
     t64 acc;
 
-    acc.low = _now.ft.dwLowDateTime;
-    acc.high = _now.ft.dwHighDateTime;
+    /* time since 1 Jan 1601 in 100ns units */
+    acc.low = ft.dwLowDateTime;
+    acc.high = ft.dwHighDateTime;
+    /* -> time since 1 Jan 1970 in 100ns units */
     sub64(&acc, &acc, &offs);
+    /* -> time since 1 Jan 1970 in 10ms units */
     div64(&acc, &acc, &div);
+    /* -> time since 0:00:00.0 in 10ms units */
+    mod64(&acc, &acc, &mod);
     return acc.low;
   }
-#else
-# define _W32_FT_OFFSET (116444736000000000LL)
-  return (_now.ns100 - _W32_FT_OFFSET) / 100000LL;
-#endif
+# else /* !NOLONGLONG */
+#  define _W32_FT_OFFSET (116444736000000000ULL)
+  unsigned long long time_tot;
+  /* time since 1 Jan 1601 in 100ns units */
+  time_tot =  ((unsigned long long)ft.dwLowDateTime )      ;
+  time_tot += ((unsigned long long)ft.dwHighDateTime) << 32;
+
+  /* -> time since 1 Jan 1970 in 100ns units */
+  time_tot -= _W32_FT_OFFSET;
+  /* -> time since 1 Jan 1970 in 10ms units */
+  time_tot /= 100000ULL;
+  /* -> time since 0:00:00.0 in 10ms units */
+  time_tot %= 8640000ULL;
+  return time_tot;
+# endif /* NOLONGLONG */
 }
 
-#else
+# define GTIME_DEFINED
+#endif /* _WIN32 */
+
+#ifndef GTIME_DEFINED
 
 #include <sys/time.h>
 
@@ -1648,10 +1684,11 @@ long GTime(void)
   struct timeval tv;
 
   gettimeofday(&tv, NULL);
-  return (tv.tv_sec*100) + (tv.tv_usec/10000);
+  tv.tv_sec %= 86400;
+  return (tv.tv_sec * 100) + (tv.tv_usec/10000);
 }
 
-#endif
+#endif /* GTIME_DEFINED */
 
 /*-------------------------------------------------------------------------*/
 /* Stackfehler abfangen - bis auf DOS nur Dummies */

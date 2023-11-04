@@ -26,7 +26,7 @@
 #include "ieeefloat.h"
 #include "onoff_common.h"
 #include "intpseudo.h"
-#include "endian.h"
+#include "be_le.h"
 
 #include "coderx.h"
 

@@ -44,6 +44,10 @@
 	ld	e(pc)
         st	@e(p2)
 	st	@e(2)
+	ld	-127(pc)
+	expect	1445
+	ld	@-127(pc)
+	endexpect
         and	10(p1)
 	and	10(1)
         or	@-20(p3)
@@ -70,3 +74,8 @@ vari:	dad	-30(p2)
 ;        org     0xfff
 ;        ldi     0x20
 
+	org	256
+
+	expect	1330		; would result in a displacement
+	ld	$-127		; of -128, which means using the
+	endexpect		; E register's contents

@@ -13,7 +13,7 @@
 #include <ctype.h>
 
 #include "strutil.h"
-#include "endian.h"
+#include "be_le.h"
 #include "bpemu.h"
 #include "nls.h"
 #include "chunks.h"

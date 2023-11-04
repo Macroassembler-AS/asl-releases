@@ -9,7 +9,7 @@
 /*****************************************************************************/
 
 #include "stdinc.h"
-#include "endian.h"
+#include "be_le.h"
 #include <string.h>
 
 #include "strutil.h"

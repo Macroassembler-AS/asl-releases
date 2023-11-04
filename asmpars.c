@@ -13,7 +13,7 @@
 #include <ctype.h>
 #include <assert.h>
 
-#include "endian.h"
+#include "be_le.h"
 #include "bpemu.h"
 #include "nls.h"
 #include "nlmessages.h"

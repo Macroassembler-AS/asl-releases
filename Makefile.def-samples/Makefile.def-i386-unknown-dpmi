@@ -8,6 +8,7 @@ TARG_OOBJ=$(OOBJ)
 TARG_EOBJ=$(EOBJ)
 CURRDIR=.\\
 LIBM=
+CHECK_TARG_CC=
 
 # -------------------------------------------------------------------------
 # choose your compiler (must be ANSI-compliant!) and linker command, plus

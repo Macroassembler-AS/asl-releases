@@ -1,6 +1,6 @@
-#ifndef _MYENDIAN_H
-#define _MYENDIAN_H
-/* endian.h */
+#ifndef _BE_LE_H
+#define _BE_LE_H
+/* be_le.h */
 /*****************************************************************************/
 /* SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only                     */
 /*                                                                           */
@@ -86,5 +86,5 @@ extern void MWrite8L(Byte *Buffer, QuadWord Value);
 extern void MWrite8B(Byte *Buffer, QuadWord Value);
 #endif
 
-extern void endian_init(void);
-#endif /* _MYENDIAN_H */
+extern void be_le_init(void);
+#endif /* _BE_LE_H */

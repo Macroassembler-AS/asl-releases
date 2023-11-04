@@ -1,40 +1,32 @@
 # -------------------------------------------------------------------------
-# Override some Makefile defaults to match MSVC environment:
+# Override some Makefile defaults:
 
-RM = del /q
-OOBJ = /Fo
-EOBJ = /Fe
-TARG_OOBJ=$(OOBJ)
-TARG_EOBJ=$(EOBJ)
-CURRDIR=.\\
-LIBM =
+LIBM  =
 CHECK_TARG_CC =
 
 # -------------------------------------------------------------------------
-# choose your compiler (must be ANSI-compliant!) and linker command, plus
-# any additionally needed flags.  Also set target directory and file extensions:
 #
-# Makefile.def for using Visual Studio on Windows.
-
+# choose your compiler (must be ANSI-compliant!) and linker command, plus
+# any additionally needed flags
+#
+# Makefile.def for TinyC running on Windows.
 
 # ...for host-side build tools:
 
 OBJDIR =
-CC = cl /nologo
-CFLAGS = /O2
-HOST_OBJEXTENSION = .obj
-LD = cl /nologo
+CC = tcc
+CFLAGS = -O2 -Wall 
+HOST_OBJEXTENSION = .o
+LD = $(CC)
 LDFLAGS =
 HOST_EXEXTENSION = .exe
-
-# ...for the actual build targets.  This is the simple case for no cross-build:
 
 TARG_OBJDIR = $(OBJDIR)
 TARG_CC = $(CC)
 TARG_CFLAGS = $(CFLAGS)
-TARG_OBJEXTENSION = $(HOST_OBJEXTENSION)
 TARG_LD = $(LD)
 TARG_LDFLAGS = $(LDFLAGS)
+TARG_OBJEXTENSION = .o
 TARG_EXEXTENSION = $(HOST_EXEXTENSION)
 
 # -------------------------------------------------------------------------

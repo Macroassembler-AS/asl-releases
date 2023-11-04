@@ -11,7 +11,7 @@
 #include "stdinc.h"
 #include <string.h>
 #include <ctype.h>
-#include "endian.h"
+#include "be_le.h"
 
 #include "strutil.h"
 #include "bpemu.h"

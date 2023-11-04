@@ -21,7 +21,7 @@
 
 #include "version.h"
 
-#include "endian.h"
+#include "be_le.h"
 #include "bpemu.h"
 #include "strutil.h"
 #include "nls.h"
@@ -472,7 +472,7 @@ int main(int argc, char **argv)
   if (!NLS_Initialize(&argc, argv))
     exit(4);
 
-  endian_init();
+  be_le_init();
   bpemu_init();
   strutil_init();
 

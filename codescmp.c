@@ -30,6 +30,8 @@
 
 /*---------------------------------------------------------------------------*/
 
+#define REG_PC 0
+
 static CPUVar CPUSCMP;
 
 /*---------------------------------------------------------------------------*/
@@ -63,12 +65,22 @@ static Boolean DecodeReg(const char *pArg, Byte *pResult)
           *pResult = *pArg - '0';
           return True;
         case 'C':
-          *pResult = 0;
+          *pResult = REG_PC;
           return (l == 2);
       }
   }
   return False;
 }
+
+/*!------------------------------------------------------------------------
+ * \fn     DecodeAdr(const tStrComp *pArg, Boolean MayInc, Byte PCDisp, Byte *Arg)
+ * \brief  decode address expression
+ * \param  pArg source argument
+ * \param  MayInc allow auto-increment?
+ * \param  PCDisp additional offset to take into account for PC-relative addressing
+ * \param  Arg returns m|ptr for opcode byte
+ * \return True if success
+ * ------------------------------------------------------------------------ */
 
 static Boolean DecodeAdr(const tStrComp *pArg, Boolean MayInc, Byte PCDisp, Byte *Arg)
 {
@@ -76,12 +88,16 @@ static Boolean DecodeAdr(const tStrComp *pArg, Boolean MayInc, Byte PCDisp, Byte
   Boolean OK;
   int l, SplitPos;
   tSymbolFlags Flags;
+  String ArgStr;
+  tStrComp ArgCopy;
 
-  if (((SplitPos = FindDispBaseSplit(pArg->str.p_str, &l)) >= 0) && (l >= 4))
+  StrCompMkTemp(&ArgCopy, ArgStr, sizeof(ArgStr));
+  StrCompCopy(&ArgCopy, pArg);
+  if (((SplitPos = FindDispBaseSplit(ArgCopy.str.p_str, &l)) >= 0) && (l >= 4))
   {
     tStrComp Left, Right;
 
-    StrCompSplitRef(&Left, &Right, pArg, pArg->str.p_str + SplitPos);
+    StrCompSplitRef(&Left, &Right, &ArgCopy, ArgCopy.str.p_str + SplitPos);
     StrCompShorten(&Right, 1);
     if (DecodeReg(Right.str.p_str, Arg))
     {
@@ -97,7 +113,8 @@ static Boolean DecodeAdr(const tStrComp *pArg, Boolean MayInc, Byte PCDisp, Byte
       }
       if (!as_strcasecmp(Left.str.p_str, "E"))
         BAsmCode[1] = 0x80;
-      else if (*Arg == 0)
+      /* Programmer's manual says that 'Auto-indexing requires ..., and a pointer register (other than PC)...' : */
+      else if (*Arg == (4 | REG_PC))
       {
         WrStrErrorPos(ErrNum_InvReg, &Right);
         return False;
@@ -110,7 +127,6 @@ static Boolean DecodeAdr(const tStrComp *pArg, Boolean MayInc, Byte PCDisp, Byte
       }
       return True;
     }
-    else pArg->str.p_str[l - 1] = ')';
   }
 
   /* no carry in PC from bit 11 to 12; additionally handle preincrement */
@@ -125,7 +141,11 @@ static Boolean DecodeAdr(const tStrComp *pArg, Boolean MayInc, Byte PCDisp, Byte
       Target = PCVal;
 
     if (!ChkSamePage(Target, PCVal, 12, Flags));
-    else if ((Disp > 0x7f) && (Disp < 0xf80)) WrError(ErrNum_JmpDistTooBig);
+
+    /* Since a displacement of 0x80 (-128) signifies usage of E register,
+       do not allow sich a displacement here: */
+
+    else if ((Disp > 0x7f) && (Disp < 0xf81)) WrError(ErrNum_DistTooBig);
     else
     {
       BAsmCode[1] = Disp & 0xff;

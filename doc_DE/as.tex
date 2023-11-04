@@ -49,7 +49,7 @@
 
 \vspace{1cm}\par
 
-{\large Stand September 2023}
+{\large Stand November 2023}
 \end{raggedright}
 
 \clearpage
@@ -121,7 +121,7 @@ error''-Verfahren gelernt.
 %%Namen zu machen.  Es ist in der OpenSource-Szene ja gute Tradition, da"s die
 %%Abk"urzungen mehrere Deutungen gestatten.  Ein paar Vorschl"age:
 %%\begin{itemize}
-%%\item{,,AC'' k"onnte einfach für meine Heimatstadt Aachen stehen, denn dies
+%%\item{,,AC'' k"onnte einfach f"ur meine Heimatstadt Aachen stehen, denn dies
 %%      ist Aachens KFZ-Kennzeichen;}
 %%\item{,,Another CPU'', wenn (mal wieder) ein neues Target dazugekommen ist;}
 %%\item{,,All Crap'', wenn man sich dar"uber ge"argert hat...}
@@ -1771,13 +1771,13 @@ Die beiden Schreibweisen:
 A'ABCD'
 \end{verbatim}
 sind also identisch, das vorangestellte 'A' ist eigentlich redundant.  Man
-kann diese Schreibweise aber für existierenden Code erlauben, weil einige "altere
+kann diese Schreibweise aber f"ur existierenden Code erlauben, weil einige "altere
 Original-Assembler (z.B. Signetics 2650) diese Schreibweise unterst"utzen.
 
 Multi-Character-Konstanten sind bei \asname{} grunds"atzlich immer Big-Endian,
 d.h. 'ABCD' ergibt den Zahlenwert 0x41424344.  Warum das so ist? Naja,
 das erste \asname{}-Target war der Motorola 68000, und es hat sich nie jemand
-darüber beklagt...die einzige Ausnahme von
+dar"uber beklagt...die einzige Ausnahme von
 dieser Regel ist die PDP-11 (und der einen LSI-11 nutzende WD16):  zwecks
 besserer Kompatibilit"at zum MACRO-11 von DEC sind solche Konstanten
 ausnahmsweise Little-Endian, 'AB' ergibt also den Zahlenwert 0x4241.
@@ -2942,7 +2942,7 @@ Aus dieser Datei liest \asname{} dann die ersten 256 Bytes aus und kopiert sie i
 erzeugte Tabellen mit einer Anweisung laden.
 
 In allen anderen Varianten wird ein einzelner Eintrag oder ein ganzer
-Bereich von Einträgen in der Tabelle modifiziert.  Mit zwei (Integer-)Argumenten
+Bereich von Eintr"agen in der Tabelle modifiziert.  Mit zwei (Integer-)Argumenten
 kann ein einzelner Eintrag neu gesetzt werden.  Ein
 \begin{quote}{\tt
         CHARSET '"a',128
@@ -7127,7 +7127,7 @@ Zeilenbreite 0; letztere Wert wird auch angenommen, wenn \tty{PAGE} nur mit
 einem Argument aufgerufen wird.
 \par
 Falls \tty{PAGE} auf dem gew"ahlten Target bereits ein Maschinenbefehl ist,
-benutzt man stattdessen \tty{PAGESIZE}.  Alternativ ist es immer möglich,
+benutzt man stattdessen \tty{PAGESIZE}.  Alternativ ist es immer m"oglich,
 durch Voranstellen eines Punktes (\tty{.PAGE} anstelle \tty{PAGE}) explizit
 den Pseudobefehl anzusprechen.
 \par
@@ -14067,13 +14067,24 @@ it is because I stood in the footsteps of giants.'' \\
 \hspace{2cm} --unknown}
 \end{quote}
 \par
-Wenn man sich entschlie"st, ein solches Kapitel neu zu schreiben,
-nachdem es eigentlich schon zwei Jahre veraltet ist, l"auft man
-automatisch Gefahr, da"s dabei der eine oder andere gute Geist, der
-etwas zum bisherigen Gelingen dieses Projektes beigetragen hat,
-vergessen wird.  Der
-allererste  Dank geb"uhrt daher allen Personen, die ich in der
-folgenden Aufz"ahlung unfreiwillig unterschlagen habe!
+Es hei"st ja bisweilen, die Programme, die man schreibe, w"aren so
+etwas wie eigene Kinder, die man in die Welt setzt.  Ich arbeite an
+diesem Assembler seit "uber 30 Jahren, und bin mittlerweile der
+Ansicht, so ein Projekt ist viel mehr eine Reise, auf die man sich
+begibt: Die Begegnungen mit Menschen, die man auf den Stationen
+dieses Weges trifft, sind mindestens eben so wichtig wie das
+vermeintliche Ziel selber.  Man lernt Neues kennen, und versteht im
+besten Falle, da"s man Dinge auch aus einer ganz anderen Warte sehen
+kann.  Wenn es gut l"auft, bringt das dann beide Seiten weiter.
+\par
+Einige Menschen sind mir auf diesem Weg besonders in Erinnerung
+geblieben, weil sie auf ihre Weise dazu beigetragen haben, dieses
+Projekt dorthin zu bringen, wo es jetzt ist.  Die folgende Aufz"ahlung
+ist notwendigerweise unvollst"andig, einfach weil ich mich nach den
+Jahren nicht mehr an jede Begebenheit erinnere.  Der zuvorderste Dank
+gent daher an all die Personen, deren Namen ich in diesem Kapitel
+unabsichtlich unterschlagen habe.  Die Reise geht immer noch weiter,
+und vielleicht kreuzen sich die Wege wieder!
 \par
 \asname{} als Universalassembler, wie er jetzt besteht, ist auf Anregung von
 Bernhard (C.) Zschocke entstanden, der einen ,,studentenfreundlichen'',
@@ -14092,40 +14103,46 @@ hat sich sehr engagiert, um eine praxisnahe L"osung im ZAM zu
 finden.
 \par
 Ach ja, wo wir schon im ZAM sind: Wolfgang E. Nagel hat zwar nichts
-direkt mit \asname{} zu tun, immerhin ist er aber mein Chef und wirft
+direkt mit \asname{} zu tun, immerhin war er aber mein Betreuer und
+Vorgesetzter und warf
 st"andig vier Augen auf das, was ich tue.  Bei \asname{} scheint zumindest
 ein lachendes dabei zu sein...
 \par
-Ohne Datenb"ucher und Unterlagen zu Prozessoren ist ein Programm wie
-\asname{} nicht zu machen.  Ich habe von einer enormen Anzahl von Leuten
-Informationen bekommen, die von einem kleinen Tip bis zu ganzen
-Datenb"uchern reichen.  Hier eine Aufz"ahlung (wie oben gesagt, ohne
-Garantie auf Vollst"andigkeit!):
+Ein Projekt wie \asname{} ist ohne Input und Informationen nicht zu
+leisten, sei es zu den unterst"utzten Prozessoren selber, zu
+Programmiertechniken oder wie Dinge implementiert werden sollten.
+Ich habe von einer enormen Anzahl von Menschen R"uckmeldungen
+bekommen, die von einem kleinen Tip bis zu ganzen Datenb"uchern
+reichen.  Hier eine Aufz"ahlung (wie wie oben gesagt, mit Sicherheit
+unvollst"andig ist!):
 \par
-Ernst Ahlers, Charles Altmann, Marco Awater, Len Bayles,
-Andreas Bolsch, Rolf Buchholz, Bernd Casimir, Nils Eilers,
-Gunther Ewald, Michael Haardt, Stephan Hruschka, Peter Kliegelh"ofer,
-Ulf Meinke, Udo M"oller, Matthias Paul, Norbert Rosch, Curt J. Sampson,
-Steffen Schmid, Leonhard Schneider, Ernst Schwab, Michael Schwingen,
-Oliver Sellke, Christian Stelter, Patrik Str"omdahl,
-Tadashi G. Takaoka, Oliver Thamm, Thorsten Thiele, Leszek Ulman,
-Rob Warmelink, Andreas Wassatsch, John Weinrich.
+Ernst Ahlers, Charles Altmann, Marco Awater, Len Bayles, Andreas
+Bolsch, Rolf Buchholz, Bernd Casimir, Nils Eilers, Gunther Ewald,
+Michael Haardt, Stephan Hruschka, Fred van Kempen, Peter
+Kliegelh"ofer, Ulf Meinke, Udo M"oller, Matthias Paul, Norbert Rosch,
+Curt J.  Sampson, Steffen Schmid, Leonhard Schneider, Ernst Schwab,
+Michael Schwingen, Oliver Sellke, Christian Stelter, Patrik
+Str"omdahl, Tadashi G.  Takaoka, Oliver Thamm, Thorsten Thiele,
+Leszek Ulman, Rob Warmelink, Andreas Wassatsch, John Weinrich.
 \par
-...und ein geh"assiger Dank an Rolf-Dieter-Klein und Tobias Thiel, die
-mit ihren ASM68K demonstrierten, wie man es \bb{nicht} machen sollte und
-mich damit indirekt dazu angeregt haben, etwas besseres zu schreiben!
+...und ein leicht ironischer Dank geht an Rolf-Dieter-Klein und Tobias Thiel, die
+mich mit ihren ASM68K dazu angeregt haben, "uberhaupt einen eigenen
+Assembler zu schreiben.  einige Dinge darin funktionierten nicht so,
+wie ich es mir vorgestellt hatte, und das war der Anlass, es besser
+oder zumindest anders zu machen.
 \par
-So ganz allein habe ich \asname{} nicht verzapft.  Die DOS-Version von \asname{} enthielt
-die OverXMS-Routinen von Wilbert van Leijen, um die Overlay-Module ins
-Extended Memory verlagern zu k"onnen.  Eine wirklich feine Sache,
-einfach und problemlos anzuwenden!
+So ganz allein habe ich \asname{} auch nicht geschrieben.  Die DOS-Version
+von \asname{} enthielt die OverXMS-Routinen von Wilbert van Leijen,
+um die Overlay-Module ins Extended Memory verlagern zu k"onnen.  Eine
+wirklich feine Sache, einfach und problemlos anzuwenden!
 \par
 Die TMS320C2x/5x-Codegeneratoren sowie die Datei \tty{STDDEF2x.INC}
 stammen von Thomas Sailer, ETH Z"urich.  Erstaunlich, an einem Wochenende
 hat er es geschafft, durch meinen Code durchzusteigen und den neuen
 Generator zu implementieren.  Entweder waren das reichliche Nachtschichten
-oder ich werde langsam alt...gleiches Lob geb"uhrt Haruo Asano f"ur den
-MN1610/MN1613-Codegenerator.
+oder ich werde langsam alt...gleiches Lob geb"uhrt Haruo Asano f"ur
+die Targets MN1610/MN1613, IM6100, CP1600, Renesas RX und HP
+NanoProcessor.
 
 %%===========================================================================
 

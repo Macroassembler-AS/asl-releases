@@ -10,6 +10,7 @@
 
 #include "stdinc.h"
 #include "bpemu.h"
+#include <string.h>
 #include <ctype.h>
 #include "nonzstring.h"
 #include "strutil.h"

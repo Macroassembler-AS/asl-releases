@@ -18,7 +18,7 @@
 #include <math.h>
 
 #include "bpemu.h"
-#include "endian.h"
+#include "be_le.h"
 #include "strutil.h"
 #include "asmdef.h"
 #include "asmsub.h"

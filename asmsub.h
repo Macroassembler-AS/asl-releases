@@ -142,9 +142,9 @@ extern Boolean ChkMacSymbName(const char *pSym);
 extern unsigned visible_strlen(const char *pSym);
 
 
-extern void AddIncludeList(char *NewPath);
+extern void AddIncludeList(const char *NewPath);
 
-extern void RemoveIncludeList(char *RemPath);
+extern void RemoveIncludeList(const char *RemPath);
 
 
 extern void ClearOutList(void);

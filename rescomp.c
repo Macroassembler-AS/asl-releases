@@ -15,7 +15,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "endian.h"
+#include "be_le.h"
 #include "strutil.h"
 #include "bpemu.h"
 
@@ -338,7 +338,7 @@ int main(int argc, char **argv)
   const char *pSrcName = NULL, *p_rsc_file_name = NULL;
   char *p_rsc_file_incl_guard_sym = NULL, *p_msh_file_incl_guard_sym = NULL;
 
-  endian_init(); strutil_init();
+  be_le_init(); strutil_init();
 
   curridx = 0;
   nextidx = -1;

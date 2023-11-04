@@ -11,7 +11,7 @@
 #include "stdinc.h"
 #include <string.h>
 #include <assert.h>
-#include "endian.h"
+#include "be_le.h"
 #include "strutil.h"
 #include "dynstr.h"
 #include "asmdef.h"

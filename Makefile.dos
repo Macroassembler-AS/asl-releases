@@ -10,6 +10,7 @@ TARG_OOBJ=$(OOBJ)
 TARG_EOBJ=$(EOBJ)
 CURRDIR=./
 LIBM=-lm
+CHECK_TARG_CC=
 
 !include Makefile.def
 
@@ -91,9 +92,6 @@ $(UMLAUTTARGET): $(UMLAUT_OBJECTS)
 
 $(UNUMLAUTTARGET): $(UNUMLAUT_OBJECTS)
 	$(LD) -ml $(EOBJ)$(UNUMLAUTTARGET) $(UNUMLAUT_OBJECTS) $(LDFLAGS)
-
-check_targ_cc:
-	echo "" > check_targ_cc
 
 #---------------------------------------------------------------------------
 # special rules for objects dependant on string resource files

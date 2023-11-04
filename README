@@ -8,7 +8,7 @@ a bit faster than the original Pascal version.
 
 LICENSING
 
-AS is based upon the Gnu General Public License (GPL); read the file
+AS is based upon the GNU General Public License (GPL); read the file
 COPYING for its details.  You should have received a copy of this file
 together with AS; if not, someone sneaked in!
 
@@ -34,6 +34,18 @@ of AS on the following machines:
 - Solaris 2.5/Sparc with Sun-C 3.0.1
 - IBM RS/6000 AIX 4.1 with IBM XLC 
 
+Additionally, you can now build and run AS on Windows, using
+
+- Microsoft Visual Studio (2019 and up tested)
+- MSYS2:MinGW-64 (GCC 13.1.0 [and up] tested)
+- TinyC (I use this a lot, and it builds fine with it)
+
+and it seems to run fine on Windows XP (32b), Windows 7 (32/64b),
+Windows 8.1 (ARM), Windows 10/11 (x64 and ARM64.) The Windows ARM
+binaries had to be signed, of course, and soon, so will the Windows
+11 ones have to be.  See README.MSVC for instructions.
+ 
+ 
 DIFFERENCES / THINGS TO DO
 
 The portable C version of AS has the following, known differences to
@@ -82,4 +94,7 @@ See the file 'INSTALL'
 
 FEEDBACK
 
-In case of problems or questions, send them to alfred@ccac.rwth-aachen.de .
+In case of problems or questions, send them to alfred@ccac.rwth-aachen.de.
+
+For questions regarding building on Windows with MSVC, please see the
+file README.MSVC and contact Fred N. van Kempen (waltje@varcem.com).

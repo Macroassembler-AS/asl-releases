@@ -13,7 +13,7 @@
 #include <string.h>
 #include "strutil.h"
 
-#include "endian.h"
+#include "be_le.h"
 #include "chunks.h"
 #include "asmdef.h"
 #include "asmsub.h"

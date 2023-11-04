@@ -1,4 +1,4 @@
-/* endian.c */
+/* be_le.c */
 /*****************************************************************************/
 /* SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only                     */
 /*                                                                           */
@@ -12,7 +12,7 @@
 
 #include <string.h>
 
-#include "endian.h"
+#include "be_le.h"
 
 /*****************************************************************************/
 
@@ -384,7 +384,7 @@ static void AssignFormats(void)
   LargeHIntFormat = AssignHSingle(sizeof(LargeInt));
 }
 
-void endian_init(void)
+void be_le_init(void)
 {
   union
   {

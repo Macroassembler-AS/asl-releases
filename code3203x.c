@@ -13,7 +13,7 @@
 #include <string.h>
 
 #include "nls.h"
-#include "endian.h"
+#include "be_le.h"
 #include "bpemu.h"
 #include "strutil.h"
 #include "chunks.h"
@@ -75,10 +75,17 @@ static tGenOrderInfo PrevGenInfo;
 
 static FixedOrder *FixedOrders;
 static GenOrder *GenOrders;
-static const char **ParOrders;
 static SingOrder *SingOrders;
 
 static LongInt DPValue;
+
+static const char ParOrders[][6] =
+{
+  "LDF",   "LDI",
+  "STF",   "STI",
+  "ADDF3", "SUBF3",
+  "ADDI3", "SUBI3"
+};
 
 /*-------------------------------------------------------------------------*/
 /* Adressparser */
@@ -1554,7 +1561,7 @@ static void AddGen(const char *NName, CPUVar NMin, Boolean NMay1, Boolean NMay3,
                    Byte C37)
 {
   char NName3[30];
-  unsigned z;
+  size_t z;
 
   order_array_rsv_end(GenOrders, GenOrder);
 
@@ -1562,7 +1569,7 @@ static void AddGen(const char *NName, CPUVar NMin, Boolean NMay1, Boolean NMay3,
 
   GenOrders[InstrZ].ParIndex =
   GenOrders[InstrZ].ParIndex3 = -1;
-  for (z = 0; ParOrders[z]; z++)
+  for (z = 0; z < as_array_size(ParOrders); z++)
   {
     if (!strcmp(ParOrders[z], NName))
       GenOrders[InstrZ].ParIndex = z;
@@ -1590,12 +1597,6 @@ static void AddGen(const char *NName, CPUVar NMin, Boolean NMay1, Boolean NMay3,
   AddInstTable(InstTable, NName, InstrZ, DecodeGen);
   AddInstTable(InstTable, NName3, InstrZ | 0x8000, DecodeGen);
   InstrZ++;
-}
-
-static void AddPar(const char *p_name)
-{
-  order_array_rsv_end(ParOrders, const char*);
-  ParOrders[InstrZ++] = p_name;
 }
 
 static void InitFields(void)
@@ -1648,13 +1649,6 @@ static void InitFields(void)
   AddInstTable(InstTable, "LDHI", 0x007f, DecodeRegImm);
   AddInstTable(InstTable, "LDPK", 0x003e, DecodeLDPK);
   AddInstTable(InstTable, "STIK", 0x002a, DecodeSTIK);
-
-  InstrZ = 0;
-  AddPar("LDF");   AddPar("LDI");
-  AddPar("STF");   AddPar("STI");
-  AddPar("ADDF3"); AddPar("SUBF3");
-  AddPar("ADDI3"); AddPar("SUBI3");
-  AddPar(NULL);
 
   InstrZ = 0;
 /*        Name      MinCPU    May1   May3   Cd    Cd3   OnlyM  Swap   ImmF   Comm   PM1 PM3     */
@@ -1818,7 +1812,6 @@ static void DeinitFields(void)
 
   order_array_free(FixedOrders);
   order_array_free(GenOrders);
-  order_array_free(ParOrders);
   order_array_free(SingOrders);
 }
 

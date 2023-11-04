@@ -21,7 +21,7 @@
 #include "codevars.h"
 #include "codepseudo.h"
 #include "tipseudo.h"
-#include "endian.h"
+#include "be_le.h"
 #include "errmsg.h"
 
 #include "code3202x.h"

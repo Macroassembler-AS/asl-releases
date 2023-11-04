@@ -148,7 +148,7 @@ include $(TARG_OBJDIR)cpu2phys.dep
 include $(TARG_OBJDIR)chartrans.dep
 include $(TARG_OBJDIR)literals.dep
 include $(TARG_OBJDIR)version.dep
-include $(TARG_OBJDIR)endian.dep
+include $(TARG_OBJDIR)be_le.dep
 include $(TARG_OBJDIR)bpemu.dep
 include $(TARG_OBJDIR)math64.dep
 include $(TARG_OBJDIR)chunks.dep
@@ -199,7 +199,7 @@ include $(OBJDIR)h_texfonts.dep
 include $(OBJDIR)h_chardefs.dep
 include $(OBJDIR)h_nls.dep
 include $(OBJDIR)h_bpemu.dep
-include $(OBJDIR)h_endian.dep
+include $(OBJDIR)h_be_le.dep
 include $(OBJDIR)h_stringlists.dep
 include $(OBJDIR)ushyph.dep
 include $(OBJDIR)ushyph.dep

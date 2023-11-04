@@ -12,7 +12,7 @@
 #include <string.h>
 
 #include "version.h"
-#include "endian.h"
+#include "be_le.h"
 #include "bpemu.h"
 #include "stringlists.h"
 #include "cmdarg.h"
@@ -174,7 +174,7 @@ int main(int argc, char **argv)
   if (!NLS_Initialize(&argc, argv))
     exit(4);
 
-  endian_init();
+  be_le_init();
   bpemu_init();
   strutil_init();
 #ifdef _USE_MSH

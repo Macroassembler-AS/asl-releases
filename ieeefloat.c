@@ -12,7 +12,7 @@
 #include <math.h>
 #include <string.h>
 
-#include "endian.h"
+#include "be_le.h"
 #ifdef HOST_DECFLOAT
 # include "decfloat.h"
 #endif

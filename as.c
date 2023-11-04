@@ -15,7 +15,7 @@
 #include <assert.h>
 
 #include "version.h"
-#include "endian.h"
+#include "be_le.h"
 #include "bpemu.h"
 
 #include "stdhandl.h"
@@ -4278,7 +4278,7 @@ int main(int argc, char **argv)
 
   if (First)
   {
-    endian_init();
+    be_le_init();
     nls_init();
     bpemu_init();
     stdhandl_init();
