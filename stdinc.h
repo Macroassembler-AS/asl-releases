@@ -33,9 +33,15 @@
 # endif
 #endif
 
-#include "pascstyle.h"
 #include "datatypes.h"
 #include "chardefs.h"
+
+#ifndef False
+#define False 0
+#define True 1
+#endif
+
+#define Ord(b) ((b) ? 1L : 0L)
 
 #ifndef min
 # define min(a,b) ((a<b)?(a):(b))

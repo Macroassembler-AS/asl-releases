@@ -992,7 +992,8 @@ static z80_adr_mode_t decode_z80_adr(const tStrComp *p_arg, z80_adr_vals_t *p_va
     }
   }
 
-  if ((p_sreg = decode_sr_core(s_regs8, p_arg)))
+  p_sreg = decode_sr_core(s_regs8, p_arg);
+  if (p_sreg)
   {
     if (set_op_size(eSymbolSize8Bit, p_arg))
     {
@@ -1003,7 +1004,8 @@ static z80_adr_mode_t decode_z80_adr(const tStrComp *p_arg, z80_adr_vals_t *p_va
     goto found;
   }
 
-  if ((p_sreg = decode_sr_core(s_regs16, p_arg)))
+  p_sreg = decode_sr_core(s_regs16, p_arg);
+  if (p_sreg)
   {
     if (set_op_size(eSymbolSize16Bit, p_arg))
     {

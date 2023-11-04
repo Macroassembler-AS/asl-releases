@@ -899,7 +899,7 @@ static Boolean DecodeCondition(const char *pAsc, Word *pCondition)
 {
   size_t z;
 
-  for (z = 0; as_array_size(Conditions); z++)
+  for (z = 0; z < as_array_size(Conditions); z++)
     if (!as_strcasecmp(pAsc, Conditions[z]))
     {
       *pCondition = z;

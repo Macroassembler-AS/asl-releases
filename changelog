@@ -1,3 +1,7 @@
+2023-11-04 [1.42 Bld 254]
+
+- Bugfix      : TLCS-9000: correct condition parsing
+
 2023-11-04 [1.42 Bld 253]
 
 - Bugfix      : SC/MP: Allow PC with displacement as address argument,

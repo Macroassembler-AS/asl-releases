@@ -483,7 +483,6 @@ static Word GetMult(const tStrComp *pArg, Boolean *pOK)
     case eIsReg:
       *pOK = True;
       return Result | 0x0080;
-      break;
     case eIsNoReg:
       break;
     case eRegAbort:

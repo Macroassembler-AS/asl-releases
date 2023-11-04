@@ -430,7 +430,7 @@ static Boolean IsRegCurrent(Byte No, Byte Size, Byte *Erg)
 
 static const char Sizes[] = "124";
 
-static int GetPostInc(const char *pArg, int ArgLen, ShortInt *pOpSize)
+static Boolean GetPostInc(const char *pArg, int ArgLen, ShortInt *pOpSize, int *pCutoffRight)
 {
   const char *pPos;
 
@@ -439,7 +439,8 @@ static int GetPostInc(const char *pArg, int ArgLen, ShortInt *pOpSize)
   if ((ArgLen > 2) && (pArg[ArgLen - 1] == '+'))
   {
     *pOpSize = eSymbolSizeUnknown;
-    return 1;
+    *pCutoffRight = 1;
+    return True;
   }
 
   /* <reg>++n, <reg>+:n */
@@ -450,7 +451,8 @@ static int GetPostInc(const char *pArg, int ArgLen, ShortInt *pOpSize)
     if (pPos)
     {
       *pOpSize = pPos - Sizes;
-      return 3;
+      *pCutoffRight = 3;
+      return True;
     }
   }
   return False;
@@ -562,7 +564,7 @@ static void DecodeAdrMem(const tStrComp *pArg)
   /* post-increment */
 
   if ((ArgLen > 2)
-   && (CutoffRight = GetPostInc(pArg->str.p_str, ArgLen, &IncOpSize)))
+   && GetPostInc(pArg->str.p_str, ArgLen, &IncOpSize, &CutoffRight))
   {
     String Reg;
     tStrComp RegComp;
