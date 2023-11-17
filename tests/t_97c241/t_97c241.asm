@@ -28,6 +28,9 @@ Targ:		jr	Targ
 		jr	$+1002h
 
 		jrc	z,Targ
+		expect	1360
+		jrc	zz,Targ
+		endexpect
 		jrc	ult,Targ
 		jrc	ge,Targ
 

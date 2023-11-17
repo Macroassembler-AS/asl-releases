@@ -1,5 +1,5 @@
 # Tell source files to not include .msh files,
-# and use provided LIBDIR for.msg files at runtime:
+# and use provided LIBDIR for .msg files at runtime:
 
 MSX_FLAGS=-DLIBDIR=\"$(LIBDIR)\"
 

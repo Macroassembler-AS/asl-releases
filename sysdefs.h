@@ -1440,6 +1440,8 @@ typedef unsigned int Card64;
 #define malloc(s) ckmalloc(s)
 #define realloc(p,s) ckrealloc(p,s)
 
+#include <stddef.h>
+
 extern void *ckmalloc(size_t s);
 
 extern void *ckrealloc(void *p, size_t s);

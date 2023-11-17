@@ -3026,7 +3026,7 @@ static void MakeCode_NS32K(void)
 
   /* Pseudo Instructions */
 
-  if (DecodeIntelPseudo(True))
+  if (DecodeIntelPseudo(TargetBigEndian))
     return;
 
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
@@ -3122,6 +3122,7 @@ static void SwitchTo_NS32K(void *pUser)
   QualifyQuote = QualifyQuote_SingleQuoteConstant;
   InitFields();
   onoff_supmode_add();
+  onoff_bigendian_add();
   if (!onoff_test_and_set(e_onoff_reg_custom))
     SetFlag(&CustomAvail, CustomAvailSymName, False);
   AddONOFF(CustomAvailCmdName, &CustomAvail, CustomAvailSymName, False);

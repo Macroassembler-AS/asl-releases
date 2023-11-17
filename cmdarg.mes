@@ -1,4 +1,4 @@
-;* decodecmd.res
+;* decodecmd.mes
 ;*****************************************************************************
 ;* AS-Portierung                                                             *
 ;*                                                                           *
@@ -9,7 +9,7 @@
 ;*                                                                           *
 ;*****************************************************************************
 
-Include header.res
+Include header.mes
 
 Message ErrMsgKeyFileNotFound
  "Key-Datei nicht gefunden"

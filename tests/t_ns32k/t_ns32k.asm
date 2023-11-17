@@ -516,3 +516,14 @@ table:	db	x'0a, x'1a, x'3a, x'5a, x'7a, x'6a, x'4a
 	ccal6q	@100,4(r4)	; F6 30 AB 80 64 04
 	cmov5d	100,4(sb)	; F6 B5 A6 00 00 00 64 04
 	cmov5q	100,4(sb)	; F6 B4 A6 00 00 00 00 00 00 00 64 04
+
+	; NS32K is little endian, regarding data storage...
+
+	dw	1,2,3		; 01 00 02 00 03 00
+	dd	1,2,3		; 01 00 00 00 02 00 00 00 03 00 00 00
+
+	; ...but if you want it different:
+
+	bigendian on
+	dw	1,2,3		; 00 01 00 02 00 03
+	dd	1,2,3		; 00 00 00 01 00 00 00 02 00 00 00 03

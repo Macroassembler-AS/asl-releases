@@ -1,4 +1,4 @@
-;* tools.res
+;* tools.mes
 ;*****************************************************************************
 ;* AS-Portierung                                                             *
 ;*                                                                           *
@@ -8,7 +8,7 @@
 ;*                                                                           *
 ;*****************************************************************************
 
-Include header.res
+Include header.mes
 
 Message FormatErr1aMsg
  "Das Format der Datei ""
