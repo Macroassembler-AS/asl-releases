@@ -31,45 +31,160 @@
 /*---------------------------------------------------------------------------*/
 
 #define REG_PC 0
+#define REG_E 0x80
 
 static CPUVar CPUSCMP;
 
 /*---------------------------------------------------------------------------*/
 
 /*!------------------------------------------------------------------------
- * \fn     DecodeReg(const char *pArg, Byte *pResult)
+ * \fn     DecodeRegCore(const char *p_arg, tRegInt *p_result, tSymbolSize *p_size)
  * \brief  check whether argument is a CPU register
- * \param  pArg source argument
- * \param  pResult resulting register # if yes
+ * \param  p_arg source argument
+ * \param  p_result resulting register #
+ * \param  p_size register's size
  * \return True if argument is a register
  * ------------------------------------------------------------------------ */
 
-static Boolean DecodeReg(const char *pArg, Byte *pResult)
+static Boolean DecodeRegCore(const char *p_arg, tRegInt *p_result, tSymbolSize *p_size)
 {
-  int l = strlen(pArg);
+  int l = strlen(p_arg);
 
   switch (l)
   {
     case 2:
-      if (as_toupper(*pArg) != 'P')
+      if (as_toupper(*p_arg) != 'P')
         return False;
-      pArg++;
-      /* fall-through */
-    case 1:
-      switch (as_toupper(*pArg))
+      p_arg++;
+      switch (as_toupper(*p_arg))
       {
         case '0':
         case '1':
         case '2':
         case '3':
-          *pResult = *pArg - '0';
+          *p_result = *p_arg - '0';
+          *p_size = eSymbolSize16Bit;
           return True;
         case 'C':
-          *pResult = REG_PC;
-          return (l == 2);
+          *p_result = REG_PC | REGSYM_FLAG_ALIAS;
+          *p_size = eSymbolSize16Bit;
+          return True;
+        default:
+          break;
       }
+      break;
+    case 1:
+      if (as_toupper(*p_arg) == 'E')
+      {
+        *p_result = REG_E;
+        *p_size = eSymbolSize8Bit;
+        return True;
+      }
+      break;
   }
   return False;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     DecodeReg(const tStrComp *p_arg, Byte *p_value, tSymbolSize *p_size, tSymbolSize req_size, Boolean must_be_reg)
+ * \brief  check whether argument is a CPU register
+ * \param  p_arg source argument
+ * \param  p_value resulting register # if yes
+ * \param  p_size resulting register's size
+ * \param  req_size size of requested register
+ * \param  must_be_reg is a register argument expected?
+ * \return eval result
+ * ------------------------------------------------------------------------ */
+
+static Boolean ChkRegSize(tSymbolSize req_size, tSymbolSize act_size)
+{
+  return (req_size == eSymbolSizeUnknown)
+      || (req_size == act_size);
+}
+
+static tRegEvalResult DecodeReg(const tStrComp *p_arg, Byte *p_value, tSymbolSize *p_size, tSymbolSize req_size, Boolean must_be_reg)
+{
+  tRegDescr reg_descr;
+  tEvalResult eval_result;
+  tRegEvalResult reg_eval_result;
+
+  if (DecodeRegCore(p_arg->str.p_str, &reg_descr.Reg, &eval_result.DataSize))
+    reg_eval_result = eIsReg;
+  else
+    reg_eval_result = EvalStrRegExpressionAsOperand(p_arg, &reg_descr, &eval_result, eSymbolSizeUnknown, must_be_reg);
+
+  if (reg_eval_result == eIsReg)
+  {
+    if (!ChkRegSize(req_size, eval_result.DataSize))
+    {
+      WrStrErrorPos(ErrNum_InvOpSize, p_arg);
+      reg_eval_result = must_be_reg ? eIsNoReg : eRegAbort;
+    }
+  }
+
+  *p_value = reg_descr.Reg;
+  if (eval_result.DataSize == eSymbolSize16Bit)
+    *p_value &= ~REGSYM_FLAG_ALIAS;
+  if (p_size) *p_size = eval_result.DataSize;
+  return reg_eval_result;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     decode_ptr_reg(const tStrComp *p_arg, Byte *p_result)
+ * \brief  parse pointer register expression
+ * \param  p_arg source argument
+ * \param  p_result result buffer
+ * \return eIsReg/eRegAbort
+ * ------------------------------------------------------------------------ */
+
+static tRegEvalResult decode_ptr_reg(const tStrComp *p_arg, Byte *p_result)
+{
+  tRegEvalResult result = DecodeReg(p_arg, p_result, NULL, eSymbolSize16Bit, False);
+
+  /* Pointer register may be named or plain number from 0..3: */
+
+  if (eIsNoReg == result)
+  {
+    Boolean ok;
+
+    *p_result = EvalStrIntExpression(p_arg, UInt2, &ok);
+    result = ok ? eIsReg : eRegAbort;
+  }
+
+  return result;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     DissectReg_SCMP(char *p_dest, size_t dest_dize, tRegInt value, tSymbolSize inp_size)
+ * \brief  dissect register symbols - SC/MP variant
+ * \param  p_dest destination buffer
+ * \param  dest_size destination buffer size
+ * \param  value numeric register value
+ * \param  inp_size register size
+ * ------------------------------------------------------------------------ */
+
+static void DissectReg_SCMP(char *p_dest, size_t dest_size, tRegInt value, tSymbolSize inp_size)
+{
+  switch (inp_size)
+  {
+    case eSymbolSize8Bit:
+      if (value == REG_E)
+      {
+        strmaxcpy(p_dest, "E", dest_size);
+        break;
+      }
+      else
+        goto unknown;
+    case eSymbolSize16Bit:
+      if (value == (REG_PC | REGSYM_FLAG_ALIAS))
+        strmaxcpy(p_dest, "PC", dest_size);
+      else
+        as_snprintf(p_dest, dest_size, "P%u", (unsigned)value);
+      break;
+    unknown:
+    default:
+      as_snprintf(p_dest, dest_size, "%d-%u", (int)inp_size, (unsigned)value);
+  }
 }
 
 /*!------------------------------------------------------------------------
@@ -99,34 +214,50 @@ static Boolean DecodeAdr(const tStrComp *pArg, Boolean MayInc, Byte PCDisp, Byte
 
     StrCompSplitRef(&Left, &Right, &ArgCopy, ArgCopy.str.p_str + SplitPos);
     StrCompShorten(&Right, 1);
-    if (DecodeReg(Right.str.p_str, Arg))
+
+    if (decode_ptr_reg(&Right, Arg) != eIsReg)
+      return False;
+
+    if (*Left.str.p_str == '@')
     {
-      if (*Left.str.p_str == '@')
+      if (!MayInc)
       {
-        if (!MayInc)
-        {
-          WrError(ErrNum_InvAddrMode);
-          return False;
-        }
-        StrCompIncRefLeft(&Left, 1);
-        *Arg += 4;
-      }
-      if (!as_strcasecmp(Left.str.p_str, "E"))
-        BAsmCode[1] = 0x80;
-      /* Programmer's manual says that 'Auto-indexing requires ..., and a pointer register (other than PC)...' : */
-      else if (*Arg == (4 | REG_PC))
-      {
-        WrStrErrorPos(ErrNum_InvReg, &Right);
+        WrError(ErrNum_InvAddrMode);
         return False;
       }
-      else
-      {
-        BAsmCode[1] = EvalStrIntExpression(&Left, SInt8, &OK);
-        if (!OK)
-          return False;
-      }
-      return True;
+      StrCompIncRefLeft(&Left, 1);
+      *Arg += 4;
     }
+    /* Programmer's manual says that 'Auto-indexing requires ..., and a pointer register (other than PC)...' : */
+    if (*Arg == (4 | REG_PC))
+    {
+      WrStrErrorPos(ErrNum_InvReg, &Right);
+      return False;
+    }
+    switch (DecodeReg(&Left, &BAsmCode[1], NULL, eSymbolSize8Bit, False))
+    {
+      case eIsReg:
+        /* 0x80 -> use E register only applies if pointer register is not P0(PC): */
+        if (*Arg == REG_PC)
+        {
+          WrStrErrorPos(ErrNum_InvAddrMode, &Left);
+          return False;
+        }
+        break;
+      case eRegAbort:
+        return False;
+      default:
+      {
+        tEvalResult result;
+        BAsmCode[1] = EvalStrIntExpressionWithResult(&Left, SInt8, &result);
+        if (!result.OK)
+          return False;
+        /* Depending on pointer register, valid range is -128...+127 or -127...+127: */
+        if ((*Arg != REG_PC) && (BAsmCode[1] == 0x80) && !mFirstPassUnknownOrQuestionable(result.Flags))
+          WrStrErrorPos(ErrNum_MeansE, &Left);
+      }
+    }
+    return True;
   }
 
   /* no carry in PC from bit 11 to 12; additionally handle preincrement */
@@ -142,14 +273,15 @@ static Boolean DecodeAdr(const tStrComp *pArg, Boolean MayInc, Byte PCDisp, Byte
 
     if (!ChkSamePage(Target, PCVal, 12, Flags));
 
-    /* Since a displacement of 0x80 (-128) signifies usage of E register,
-       do not allow sich a displacement here: */
+    /* Since the pointer register is P0(PC) in this case, a displacement of 0x80
+       (-128) does not signify usage of E register, and can be used at
+       this place: */
 
-    else if ((Disp > 0x7f) && (Disp < 0xf81)) WrError(ErrNum_DistTooBig);
+    else if ((Disp > 0x7f) && (Disp < 0xf80)) WrError(ErrNum_DistTooBig);
     else
     {
       BAsmCode[1] = Disp & 0xff;
-      *Arg = 0;
+      *Arg = REG_PC;
       return True;
     }
   }
@@ -189,7 +321,7 @@ static void DecodeImm(Word Index)
 static void DecodeRegOrder(Word Index)
 {
   if (!ChkArgCnt(1, 1));
-  else if (!DecodeReg(ArgStr[1].str.p_str, BAsmCode + 0)) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
+  else if (decode_ptr_reg(&ArgStr[1], BAsmCode + 0) != eIsReg) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
   else
   {
     BAsmCode[0] |= Index; CodeLen = 1;
@@ -277,6 +409,7 @@ static void InitFields(void)
 
   AddInstTable(InstTable, "ILD", 0xa8, DecodeLD);
   AddInstTable(InstTable, "DLD", 0xb8, DecodeLD);
+  AddInstTable(InstTable, "REG" , 0, CodeREG);
 }
 
 static void DeinitFields(void)
@@ -285,6 +418,23 @@ static void DeinitFields(void)
 }
 
 /*---------------------------------------------------------------------------*/
+
+/*!------------------------------------------------------------------------
+ * \fn     InternSymbol_SCMP(char *pArg, TempResult *pResult)
+ * \brief  handle built-in (register) symbols for SC/MP
+ * \param  pArg source argument
+ * \param  pResult result buffer
+ * ------------------------------------------------------------------------ */
+
+static void InternSymbol_SCMP(char *pArg, TempResult *pResult)
+{
+  if (DecodeRegCore(pArg, &pResult->Contents.RegDescr.Reg, &pResult->DataSize))
+  {
+    pResult->Typ = TempReg;
+    pResult->Contents.RegDescr.Dissect = DissectReg_SCMP;
+    pResult->Contents.RegDescr.compare = NULL;
+  }
+}
 
 static void MakeCode_SCMP(void)
 {
@@ -304,7 +454,7 @@ static void MakeCode_SCMP(void)
 
 static Boolean IsDef_SCMP(void)
 {
-  return False;
+  return Memo("REG");
 }
 
 static void SwitchTo_SCMP(void)
@@ -325,6 +475,9 @@ static void SwitchTo_SCMP(void)
   onoff_bigendian_add();
 
   QualifyQuote = QualifyQuote_SingleQuoteConstant;
+  DissectReg = DissectReg_SCMP;
+  InternSymbol = InternSymbol_SCMP;
+
   IntConstModeIBMNoTerm = True;
 }
 

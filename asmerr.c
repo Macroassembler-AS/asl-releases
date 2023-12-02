@@ -272,6 +272,8 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
       msgno = Num_ErrMsgTrySkipMultiwordInstruction; break;
     case ErrNum_SignExtension:
       msgno = Num_ErrMsgSignExtension; break;
+    case ErrNum_MeansE:
+      msgno = Num_ErrMsgMeansE; break;
     case ErrNum_DoubleDef:
       msgno = Num_ErrMsgDoubleDef; break;
     case ErrNum_SymbolUndef:

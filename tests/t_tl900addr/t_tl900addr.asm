@@ -1,0 +1,28 @@
+	CPU	96C141
+
+	LDA	BC,(XIX+1)
+	LDA	HL,(HL+A)
+
+	LDA	BC,XIX+1
+	LDA	HL,HL+A
+
+	JP	z,BC
+	JP	z,(BC)
+	JP	z,XIX-5
+	JP	z,(XIX-5)
+	JP	z,HL+A
+	JP	z,(HL+A)
+	JP	z,1234H
+	JP	z,(1234H)
+	JP	z,123456H
+	JP	z,(123456H)
+	CALL	z,BC
+	CALL	z,(BC)
+	CALL	z,XIX-5
+	CALL	z,(XIX-5)
+	CALL	z,HL+A
+	CALL	z,(HL+A)
+	CALL	z,1234H
+	CALL	z,(1234H)
+	CALL	z,123456H
+	CALL	z,(123456H)

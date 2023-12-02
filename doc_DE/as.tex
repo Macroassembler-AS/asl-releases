@@ -2357,7 +2357,7 @@ einmal sein.  Was sollte man als Erkenntnis aus diesem Abschnitt mitnehmen?
 
 {\em G"ultigkeit: PowerPC, M-Core, XGate, 4004/4040, MCS-48/(2)51, 80C16x,
      AVR, XS1, Z8, KCPSM, Mico8, MSP430(X), ST9, M16, M16C, H8/300,
-     H8/500, SH7x00, H16, i960, XA, 29K, TLCS-9000, KANBAK}
+     H8/500, SH7x00, H16, i960, XA, 29K, TLCS-9000, KENBAK, SC/MP}
 
 Manchmal ist es erw"unscht, nicht nur einer Speicheradresse oder einer
 Konstanten, sondern auch einem Register einen symbolischen Namen zuzuweisen,
@@ -10885,15 +10885,51 @@ effiziente Variante ist).
 
 %%---------------------------------------------------------------------------
 
-\section{COP8 \& SC/MP}
+\section{COP8}
 \label{COP8Spec}
 
 Leider Gottes hat sich auch National dazu entschieden, als
 Schreibweise f"ur nichtdezimale Integer-Konstanten die von
-IBM-Gro"srechnern bekannte (und von mir vielgeha"ste) Variante
+IBM-Gro"srechnern bekannte (und von mir nicht geliebte) Variante
 \verb!X'...! zu benutzen.  Das geht nat"urlich (wie immer) nicht.
 Zum Gl"uck scheint der ASMCOP aber auch die C-Variante zuzulassen,
 und diese wurde deshalb der Default f"ur die COPs...
+
+%%---------------------------------------------------------------------------
+
+\section{SC/MP}
+
+Benutzt man beim SC/MP indirekte Adressierung mit Displacement, und
+ist das benutzte Basis- bzw. Pointer-Register nicht P0 bzw. PC, dann
+hat ein Displacement von -128 (80 hex) eine Sonderbedeutung: Anstelle
+eben dieses Werts wird der Inhalt des E-Registers als Displacement
+verwendet. Im 'klassischen' NS-Assembler mu"s der Programmierer um
+diesen Umstand wissen bzw. ihn explizit benutzen, z.B. so:
+\begin{verbatim}
+ereg   equ -128
+       ld  ereg(p1)
+\end{verbatim}
+Dies birgt aber das Risiko, da"s sich der Wert -128 auch einmal
+'versehentlich' als Teil einer Berechnung ergeben kann, und man
+sucht erst einmal, warum das Programm nicht tut, was erwartet
+wurde.  Ich habe mich deshalb entschlossen, diesen Sonderwert
+etwas expliziter zu machen:
+
+Wird ein Displacement von -128 verwendet, so erfolgt eine Warnung.
+Diese Warnung kann man ignorieren; will man sie los werden, so
+verwende man das eingebaute Literal \verb!E!, das eben dieses Register
+referenziert:
+\begin{verbatim}
+       ld e(p1)
+\end{verbatim} 
+Da das SC/MP-Target Registersymbole unterstützt, ist es auch möglich,
+das 'eigene Symbol' passend zu definieren:
+\begin{verbatim}
+ereg   reg e
+       ld  ereg(p1)
+\end{verbatim}
+Dies sollte die Anzahl notwendiger Anpassungen in existierendem
+Code auf ein Minimum reduzieren.
 
 %%---------------------------------------------------------------------------
 
@@ -12436,6 +12472,16 @@ Angaben:
                 nicht mit 0 gef"ullt werden.  Je nach folgender Nutzung
                 kann dies irrelevant sein, mu"s aber nicht.}
                {der fragliche Wert}
+\errentry{ 440}{numerischer Wert -128 bedeutet Nutzung des E-Registers (Literal 'E' verwenden, um diese Warnung zu vermeiden)}
+               {Warnung}
+               {Ein Displacement von -128 bedeutet beim SC/MP in diesem Fall, dass
+                das Displacement aus dem E-Register genommen wird.  Der Assembler
+                kann in diesem Fall nicht sicher entscheiden, ob das gewollt ist
+                oder der Wert -128 sich unbeabsichtigt aus einer Berechnung ergeben
+                hat.  Verwenden Sie stattdessen das Literal 'E' oder ein auf 'E'
+                definiertes Registersymbol, um die Absicht klar zu machen und die
+                Warnung zu vermeiden.}
+               {das fragliche Displacement-Argument}
 \errentry{1000}{Symbol doppelt definiert}
                {Fehler}
                {Einem Symbol wurde durch ein Label oder

@@ -1,5 +1,16 @@
+2023-12-02 [1.42 Bld 256]
+
+- Bugfix      : TLCS-90(0): Allow arguments of LDA, JP amd CALL to be
+                written without enclosing parentheses.
+- Addition    : Support register symbols for SC/MP
+- Change      : On SC/MP, Usage of -128 as displacement with P1...P3
+                emits a warning instead of an error 
+
 2023-11-17 [1.42 Bld 255]
 
+- Bugfix      : SC/MP: Allow PC-relative addressing with displacement
+                of -128, but disallow using E.  Likewise, allow E and
+                forbid -128 if pointer register is P1...P3.
 - Change      : Message source files now have the extension '.mes'
                 instead of '.res' to avoid extension conflicts with
                 resource files on some systems
@@ -15,7 +26,7 @@
 - Bugfix      : SC/MP: Allow PC with displacement as address argument,
                 as long as no auto-increment is used
 - Bugfix      : SC/MP: Check whether PC-relative addressing would result
-                in a displacement of -128 
+                in a displacement of -128
 - Change      : Incorporate a couple of changes to compile with MSVC,
                 provided by Fred N. van Kempen
 

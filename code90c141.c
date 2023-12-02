@@ -58,6 +58,7 @@ enum
 #define MModDir    (1 << ModDir)
 #define MModMem    (1 << ModMem)
 #define MModImm    (1 << ModImm)
+#define MAssumeInd (1 << 12)
 
 static ShortInt AdrType;
 static Byte AdrMode;
@@ -83,7 +84,7 @@ static void SetOpSize(ShortInt New)
   }
 }
 
-static void DecodeAdr(const tStrComp *pArg, Byte Erl)
+static void DecodeAdr(const tStrComp *pArg, Word Erl)
 {
   static const char Reg8Names[][2] = { "B", "C", "D", "E", "H", "L", "A" };
   static const int Reg8Cnt = sizeof(Reg8Names) / sizeof(*Reg8Names);
@@ -96,7 +97,7 @@ static void DecodeAdr(const tStrComp *pArg, Byte Erl)
   char *p;
   LongInt DispAcc, DispVal;
   Byte OccFlag, BaseReg;
-  Boolean ok, fnd, NegFlag, NNegFlag, Unknown;
+  Boolean ok, fnd, NegFlag, NNegFlag, Unknown, is_indirect;
 
   AdrType = ModNone; AdrCnt = 0;
 
@@ -127,18 +128,22 @@ static void DecodeAdr(const tStrComp *pArg, Byte Erl)
 
   /* 3. 16-Bit-Register, normal */
 
-  for (z = 0; z < Reg16Cnt; z++)
-   if (!as_strcasecmp(pArg->str.p_str, Reg16Names[z]))
-   {
-     AdrType = ModReg16;
-     AdrMode = z;
-     SetOpSize(1);
-     goto chk;
-   }
+  if (Erl & MModReg16)
+  {
+    for (z = 0; z < Reg16Cnt; z++)
+     if (!as_strcasecmp(pArg->str.p_str, Reg16Names[z]))
+     {
+       AdrType = ModReg16;
+       AdrMode = z;
+       SetOpSize(1);
+       goto chk;
+     }
+  }
 
   /* Speicheradresse */
 
-  if (IsIndirect(pArg->str.p_str))
+  is_indirect = IsIndirect(pArg->str.p_str);
+  if (is_indirect || (Erl & MAssumeInd))
   {
     tStrComp Arg, Remainder;
 
@@ -148,8 +153,9 @@ static void DecodeAdr(const tStrComp *pArg, Byte Erl)
     ok = True;
     NegFlag = False;
     Unknown = False;
-    StrCompRefRight(&Arg, pArg, 1);
-    StrCompShorten(&Arg, 1);
+    StrCompRefRight(&Arg, pArg, !!is_indirect);
+    if (is_indirect)
+      StrCompShorten(&Arg, 1);
 
     do
     {
@@ -868,7 +874,7 @@ static void DecodeLDA(Word Code)
     if (AdrType == ModReg16)
     {
       HReg = 0x38 + AdrMode;
-      DecodeAdr(&ArgStr[2], MModIndReg | MModIdxReg);
+      DecodeAdr(&ArgStr[2], MModIndReg | MModIdxReg | MAssumeInd);
       switch (AdrType)
       {
         case ModIndReg:
@@ -1157,9 +1163,7 @@ static void DecodeCALL_JP(Word Code)
     }
 
     OpSize = 1;
-    DecodeAdr(&ArgStr[ArgCnt], MModIndReg | MModIdxReg | MModMem |MModImm);
-    if (AdrType == ModImm)
-      AdrType = ModMem;
+    DecodeAdr(&ArgStr[ArgCnt], MModIndReg | MModIdxReg | MModMem | MAssumeInd);
     switch (AdrType)
     {
       case ModIndReg:

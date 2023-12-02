@@ -223,6 +223,10 @@ Message ErrMsgSignExtension
  "implizite Vorzeichenerweiterung"
  "implicit sign extension"
 
+Message ErrMsgMeansE
+ "numerischer Wert -128 bedeutet Nutzung des E-Registers (Literal 'E' verwenden, um diese Warnung zu vermeiden)"
+ "numeric value -128 means usage of E register's content (use literal 'E' to avoid this warning)"
+
 ;*****
 
 Message ErrMsgDoubleDef

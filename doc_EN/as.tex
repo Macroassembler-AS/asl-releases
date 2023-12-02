@@ -2287,11 +2287,11 @@ necessary.  Which is the essence you should learn from this section?
 %%---------------------------------------------------------------------------
 
 \section{Register Symbols}
-\label{SectRegSyms} \ttindex{register symbols}
+\label{SectRegSyms} \ttindex{Register Symbols}
 
 {\em valid for: PowerPC, M-Core, XGate, 4004/4040, MCS-48/(2)51, 80C16x,
      AVR, XS1, Z8, KCPSM, Mico8, MSP430(X), ST9, M16, M16C, H8/300,
-     H8/500, SH7x00, H16, i960, XA, 29K, TLCS-9000, KENBAK}
+     H8/500, SH7x00, H16, i960, XA, 29K, TLCS-9000, KENBAK, SC/MP}
 
 Sometimes it is desirable not only to assign symbolic names to memory
 addresses or constants, but also to a register, to emphasize its function
@@ -10643,7 +10643,7 @@ variant.
 
 %%---------------------------------------------------------------------------
 
-\section{COP8 \& SC/MP}
+\section{COP8}
 \label{COP8Spec}
 
 National unfortunately also decided to use the syntax well known from
@@ -10652,6 +10652,41 @@ constants.  Just like with other processors, this does not work with
 \asname{}'s parser.  ASMCOP however fortunately also seems to allow the C
 syntax, which is why this became the default for the COP series and
 the SC/MP...
+
+%%---------------------------------------------------------------------------
+
+\section{SC/MP}
+
+If indirect addressing with displacement is used on the SC/MP, and
+if the base or pointer register is not P0/PC, a displacement of -128
+(80 hex) has a special meaning: the contents of the E register is
+used as displacement instead of this value.  If using the 'classic NS
+assembler', the programmer has to know about this, and even explicitly
+use it:
+\begin{verbatim}
+ereg   equ -128
+       ld  ereg(p1)
+\end{verbatim}
+This however bears the risk that -128 may accidentally be the result of
+a computed displacement, and you might have a hard time finding out
+why the program does not do what was indented. I therefore decided to
+make this special value more explicit:
+
+If a displacement of -128 is used, a warning is issued.  One may
+simply ignore this warning.  If you want to get rid of it, use
+the built-in literal \verb!E!, which explicitly references the
+register of same name:
+\begin{verbatim}
+       ld e(p1)
+\end{verbatim} 
+Since the SC/MP target supports register symbols, it is also possible
+to define the 'own symbol' in a proper way:
+\begin{verbatim}
+ereg   reg e
+       ld  ereg(p1)
+\end{verbatim}
+This should reduce the amount of necessary changes in existing code
+to a minimum.
 
 %%---------------------------------------------------------------------------
 
@@ -12165,6 +12200,16 @@ described by:
                 filled with ones and not zeros.  Depending on the usage that
                 follows, this may be irrelevant or not.}
                {the value in question}
+\errentry{ 440}{numeric value -128 means usage of E register's content (use literal 'E' to avoid this warning)}
+               {warning}
+               {On the SC/MP, a displacement of -128 means in this case that
+                the actual displacement is not -128, but instead taken from
+                the E register.  The assembler cannot decide for sure whether
+                this was intended or the accidental result of a computation,
+                and therefore warns.  Use the literal value 'E' or a register
+                symbol defined to be 'E' to clarify your intent and avoid
+                this warning.}
+               {the displacement argument in question}
 \errentry{1000}{symbol double defined}
                {error}
                {A new value is assigned to a symbol, using a label or a

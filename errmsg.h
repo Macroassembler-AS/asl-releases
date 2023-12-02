@@ -64,6 +64,7 @@ typedef enum
   ErrNum_ArgOutOfRange = 410,
   ErrNum_TrySkipMultiwordInstruction = 420,
   ErrNum_SignExtension = 430,
+  ErrNum_MeansE = 440,
   ErrNum_DoubleDef = 1000,
   ErrNum_SymbolUndef = 1010,
   ErrNum_InvSymName = 1020,

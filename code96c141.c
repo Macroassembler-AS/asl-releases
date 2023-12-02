@@ -1075,28 +1075,10 @@ static void DecodeJPCALL(Word Index)
       return;
     }
 
-    OpSize = 2;
-    DecodeAdr(&ArgStr[ArgCnt], MModMem | MModImm);
-    if (AdrType == ModImm)
-    {
-      if (AdrVals[3] != 0)
-      {
-        WrError(ErrNum_OverRange);
-        AdrType=ModNone;
-      }
-      else if (AdrVals[2] != 0)
-      {
-        AdrType = ModMem;
-        AdrMode = 0x42;
-        AdrCnt = 3;
-      }
-      else
-      {
-        AdrType = ModMem;
-        AdrMode = 0x41;
-        AdrCnt = 2;
-      }
-    }
+    if (IsIndirect(ArgStr[ArgCnt].str.p_str))
+      DecodeAdr(&ArgStr[ArgCnt], MModMem);
+    else
+      DecodeAdrMem(&ArgStr[ArgCnt]);
     if (AdrType == ModMem)
     {
       if ((cond_code == COND_CODE_TRUE) && ((AdrMode == 0x41) || (AdrMode == 0x42)))

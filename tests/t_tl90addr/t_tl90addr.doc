@@ -1,0 +1,9 @@
++----------------------- Test Application TL90ADDR ---------------------------+
+|                                                                             |
+|  The LDA, JP and CALL instructions on TLCS-90 only use the address of an    |
+|  operand, namely load it into the program counter or another register.      |
+|  Since direct register and immediate operation is not allowed, the ()       |
+|  parentheses to signify indirect operation are not needed with these        |
+|  instructions.                                                              |
+|                                                                             |
++-----------------------------------------------------------------------------+

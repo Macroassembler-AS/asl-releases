@@ -395,39 +395,30 @@ static Boolean DecodeIndirectL(const tStrComp *pArg, Byte *reg, LongInt *disp, t
 	return result;
 }
 
-static Boolean DecodeAttrSize(Byte *size)
+static tSymbolSize DecodeAttrSize(void)
 {
-	const int len = strlen(AttrPart.str.p_str);
-
-	if (len > 1)
+	switch (strlen(AttrPart.str.p_str))
 	{
-		WrStrErrorPos(ErrNum_TooLongAttr, &AttrPart);
-		return False;
-	}
-
-	if (len)
-	{
-		switch (AttrPart.str.p_str[0])
-		{
-		case 'B':
-			*size = 0x00;
-			break;
-		case 'W':
-			*size = 0x01;
-			break;
-		case 'L':
-			*size = 0x02;
-			break;
-		default:
+		case 0:
 			WrStrErrorPos(ErrNum_UndefAttr, &AttrPart);
-			return False;
+			return eSymbolSizeUnknown;
+		case 1:
+			switch (AttrPart.str.p_str[0])
+			{
+				case 'B':
+					return eSymbolSize8Bit;
+				case 'W':
+					return eSymbolSize16Bit;
+				case 'L':
+					return eSymbolSize32Bit;
+				default:
+					WrStrErrorPos(ErrNum_UndefAttr, &AttrPart);
+					return eSymbolSizeUnknown;
+			}
+		default:
+			WrStrErrorPos(ErrNum_TooLongAttr, &AttrPart);
+			return eSymbolSizeUnknown;
 		}
-
-		return True;
-	}
-
-	WrStrErrorPos(ErrNum_UndefAttr, &AttrPart);
-	return False;
 }
 
 static Boolean DecodeRelative(const tStrComp *pArg, Byte *reg, LongInt *disp, tSymbolFlags *flags)
@@ -1695,7 +1686,7 @@ static void DecodeMACHI(Word Index)
 
 static void DecodeMOV(Word Index)
 {
-	Byte size;
+	tSymbolSize size;
 	Byte regs;
 	Byte regd;
 	LongInt imm;
@@ -1710,7 +1701,8 @@ static void DecodeMOV(Word Index)
 
 	UNUSED(Index);
 
-	if (!DecodeAttrSize(&size)) return;
+	size = DecodeAttrSize();
+	if (size == eSymbolSizeUnknown) return;
 	scale = Size2Scale(size);
 	
 	if (DecodeReg(&ArgStr[1], &regs, eRn) && regs < 8 &&
@@ -1793,25 +1785,28 @@ static void DecodeMOV(Word Index)
 		{	/* (8) */
 			switch (size)
 			{
-			case 0x00:	/* B */
-				if (imm < -128 || imm > 255)
-				{
-					WrStrErrorPos(ErrNum_OverRange, &ArgStr[1]);
+				case 0x00:	/* B */
+					if (imm < -128 || imm > 255)
+					{
+						WrStrErrorPos(ErrNum_OverRange, &ArgStr[1]);
+						return;
+					}
+					isize = 0x01;
+					break;
+				case 0x01:	/* W */
+					if (imm < -32768 || imm > 65535)
+					{
+						WrStrErrorPos(ErrNum_OverRange, &ArgStr[1]);
+						return;
+					}
+					isize = ImmSize16(imm, flags);
+					break;
+				case 0x02:	/* L */
+					isize = ImmSize32(imm, flags);
+					break;
+				default:
+					WrError(ErrNum_InternalError);
 					return;
-				}
-				isize = 0x01;
-				break;
-			case 0x01:	/* W */
-				if (imm < -32768 || imm > 65535)
-				{
-					WrStrErrorPos(ErrNum_OverRange, &ArgStr[1]);
-					return;
-				}
-				isize = ImmSize16(imm, flags);
-				break;
-			case 0x02:	/* L */
-				isize = ImmSize32(imm, flags);
-				break;
 			}
 
 			dsize = DispSize(disp, flags2, scale);
@@ -1915,7 +1910,7 @@ static void DecodeMOV(Word Index)
 
 static void DecodeMOVU(Word Index)
 {
-	Byte size;
+	tSymbolSize size;
 	Byte regs;
 	Byte regd;
 	Byte scale;
@@ -1927,7 +1922,8 @@ static void DecodeMOVU(Word Index)
 
 	UNUSED(Index);
 
-	if (!DecodeAttrSize(&size) || size == 0x02) return;
+	size = DecodeAttrSize();
+	if (size == eSymbolSizeUnknown || size == eSymbolSize32Bit) return;
 	scale = Size2Scale(size);
 
 	if (DecodeReg(&ArgStr[2], &regd, eRn))
@@ -2294,7 +2290,7 @@ static void DecodePOPM(Word Index)
 
 static void DecodePUSH(Word Index)
 {
-	Byte size;
+	tSymbolSize size;
 	Byte reg;
 	LongInt disp;
 	tSymbolFlags flags;
@@ -2303,7 +2299,8 @@ static void DecodePUSH(Word Index)
 
 	UNUSED(Index);
 
-	if (!DecodeAttrSize(&size)) return;
+	size = DecodeAttrSize();
+	if (size == eSymbolSizeUnknown) return;
 	if (!ChkArgCnt(1,1)) return;
 
 	scale = Size2Scale(size);
@@ -2381,9 +2378,10 @@ static void DecodeRACW(Word Index)
 
 static void DecodeRMPA(Word Index)
 {
-	Byte size;
+	tSymbolSize size;
 
-	if (!DecodeAttrSize(&size)) return;
+	size = DecodeAttrSize();
+	if (size == eSymbolSizeUnknown) return;
 	if (!ChkArgCnt(0,0)) return;
 
 	BAsmCode[0] = 0x7F;
@@ -2505,14 +2503,15 @@ static void DecodeRTSD(Word Index)
 
 static void DecodeSCCnd(Word Index)
 {
-	Byte size;
+	tSymbolSize size;
 	Byte reg;
 	LongInt disp;
 	tSymbolFlags flags;
 	Byte dsize;
 	Byte scale;
 
-	if (!DecodeAttrSize(&size)) return;
+	size = DecodeAttrSize();
+	if (size == eSymbolSizeUnknown) return;
 	if (!ChkArgCnt(1,1)) return;
 
 	scale = Size2Scale(size);

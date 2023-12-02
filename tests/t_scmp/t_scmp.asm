@@ -2,6 +2,13 @@
 	page	0
 	relaxed on
 
+ptr0	reg	p0
+ptr1	equ	1
+ptr2	equ	p2
+ptr3	equ	p3
+ereg	reg	e
+pcnt	equ	pc
+
         lde
         xae
         ane
@@ -41,12 +48,19 @@
         xppc	p1
 	xppc	1
 
-	ld	e(pc)
+	expect	1350		; E cannot be used as displacement if
+	ld	e(pc)		; pointer register is PC
+	endexpect
         st	@e(p2)
-	st	@e(2)
+	st	@ereg(2)
 	ld	-127(pc)
+	ld	-128(pc)	; 0x80 as displacement is allowed for PC...
+	ld	-127(p1)
+	expect	440
+	ld	-128(p2)	; ...but not on P1...P3
+	endexpect
 	expect	1445
-	ld	@-127(pc)
+	ld	@-127(pc)	; no auto-increment with PC
 	endexpect
         and	10(p1)
 	and	10(1)
@@ -74,8 +88,10 @@ vari:	dad	-30(p2)
 ;        org     0xfff
 ;        ldi     0x20
 
-	org	256
+	org	384
+
+	ld	$-127		; displacement of -128 is allowed if pointer reg is PC
 
 	expect	1330		; would result in a displacement
-	ld	$-127		; of -128, which means using the
-	endexpect		; E register's contents
+	ld	$-128		; of -129, which is out of range
+	endexpect

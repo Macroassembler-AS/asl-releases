@@ -1,4 +1,4 @@
-BASEARCHFILES = *.c *.h *.hpp man/*.1 \
+BASEARCHFILES = *.c *.h *.hpp *.ico man/*.1 \
             INSTALL README README.OS2 README.DOS README.LANGS TODO BENCHES Makefile Makefile.dos Makefile.def.tmpl \
             COPYING install.sh install.bat install.cmd instw32.cmd marks.asm \
             *.mes makedefs.src makedefs.files makedefs.str makedefs.abh makedefs.mi makedefs.mx rscdeps asl.def \
