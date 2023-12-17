@@ -133,11 +133,10 @@ static Boolean DecodePhase(char *Name, LongWord *Result)
 
 static Boolean DecodeReg(char *Name, LongWord *Result)
 {
-  int z;
   Integer Mask = 1 << (MomCPU - CPU53C810);
   PReg Reg;
 
-  for (z = 0, Reg = Regs; Reg->Name; z++, Reg++)
+  for (Reg = Regs; Reg->Name; Reg++)
     if (!(as_strcasecmp(Reg->Name, Name)) && (Mask & Reg->Mask))
     {
       *Result = Reg->Code;

@@ -1,3 +1,10 @@
+2023-12-17 [1.42 Bld 257]
+
+- Change      : On F8, I/O accesses to addresses 0 to 3 via IN or
+                OUT now result in a warning, since they are
+                only accessible via INS and OUTS.
+- Bugfix      : correct several 8087 instructions
+
 2023-12-02 [1.42 Bld 256]
 
 - Bugfix      : TLCS-90(0): Allow arguments of LDA, JP amd CALL to be

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+for i in {1..100}; do
+  ../../x86_64-linux/asl -qc -i ../../include t_mic51
+done

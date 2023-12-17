@@ -227,6 +227,10 @@ Message ErrMsgMeansE
  "numerischer Wert -128 bedeutet Nutzung des E-Registers (Literal 'E' verwenden, um diese Warnung zu vermeiden)"
  "numeric value -128 means usage of E register's content (use literal 'E' to avoid this warning)"
 
+Message ErrMsgNeedShortIO
+ "I/O-Adresse mu&szlig; mit INS/OUTS angesprochen werden"
+ "I/O address must be accessed via INS/OUTS"
+
 ;*****
 
 Message ErrMsgDoubleDef

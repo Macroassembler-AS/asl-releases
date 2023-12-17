@@ -4063,7 +4063,7 @@ void PopLocHandle(void)
   free(OldLocHandle);
 }
 
-void ClearLocStack()
+void ClearLocStack(void)
 {
   while (MomLocHandle != -1)
     PopLocHandle();

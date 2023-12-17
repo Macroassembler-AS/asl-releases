@@ -75,6 +75,14 @@
 	out	55h
 	outs	7
 
+	; I/O addresses within the CPU module (0..3) may only
+	; be accessed via INS and OUTS:
+
+	expect	450,450
+	out	1
+	in	0
+	endexpect
+
 	pi	55aah
 	pk
 	pop

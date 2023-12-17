@@ -101,7 +101,11 @@ static void DecodeImm8(Word Code)
     if (EvalResult.OK)
     {
       if (IsIO)
+      {
         ChkSpace(SegIO, EvalResult.AddrSpaceMask);
+        if (BAsmCode[1] < 4)
+          WrStrErrorPos(ErrNum_NeedShortIO, &ArgStr[1]);
+      }
       BAsmCode[0] = Lo(Code);
       CodeLen = 2;
     }

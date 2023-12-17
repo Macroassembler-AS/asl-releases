@@ -9718,7 +9718,7 @@ LLT        & ULT   & C = 1 \\
 \hline
 \end{tabular}\end{center}
 
-\subsection{Conditions}
+\subsection{Flags}
 
 \tty{SETFLG}, \tty{COMFLG} und \tty{RESFLG} accept the following alternate names
 as arguments:
@@ -10659,7 +10659,7 @@ the SC/MP...
 
 If indirect addressing with displacement is used on the SC/MP, and
 if the base or pointer register is not P0/PC, a displacement of -128
-(80 hex) has a special meaning: the contents of the E register is
+(80 hex) has a special meaning: the contents of the E register are
 used as displacement instead of this value.  If using the 'classic NS
 assembler', the programmer has to know about this, and even explicitly
 use it:
@@ -12210,6 +12210,12 @@ described by:
                 symbol defined to be 'E' to clarify your intent and avoid
                 this warning.}
                {the displacement argument in question}
+\errentry{ 450}{I/O address must be accessed via INS/OUTS}
+               {warning}
+               {I/O addresses in the range of 0 to 3 are located in the
+                processor module and can only be accessed via the {\tt INS}
+                and {\tt OUTS} instructios, not via {\tt IN} or {\tt OUT}.}
+               {the address argument in question}
 \errentry{1000}{symbol double defined}
                {error}
                {A new value is assigned to a symbol, using a label or a
