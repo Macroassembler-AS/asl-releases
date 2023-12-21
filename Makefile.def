@@ -1,0 +1,42 @@
+#   Macroassembler AS Makefile.def for asl-releases `upstream` branch.
+#   This attempts to extract the version from the source and use that
+#   for the install directory, /opt/asl-$VER.
+
+# -------------------------------------------------------------------------
+# choose your compiler (must be ANSI-compliant!) and linker command, plus
+# any additionally needed flags
+
+OBJDIR =
+CC = gcc
+CFLAGS = -g -O3 -march=athlon64 -fomit-frame-pointer -Wall
+HOST_OBJEXTENSION = .o
+LD = $(CC)
+LDFLAGS =
+HOST_EXEXTENSION =
+
+# no cross build
+
+TARG_OBJDIR = $(OBJDIR)
+TARG_CC = $(CC)
+TARG_CFLAGS = $(CFLAGS)
+TARG_OBJEXTENSION = $(HOST_OBJEXTENSION)
+TARG_LD = $(LD)
+TARG_LDFLAGS = $(LDFLAGS)
+TARG_EXEXTENSION = $(HOST_EXEXTENSION)
+
+# -------------------------------------------------------------------------
+# directories where binaries, includes, and manpages should go during
+# installation
+
+VER != sed -n -e 's/";.*//' -e 's/-[0-9]$$//' -e 's/.*DebVersion = "//p' version.c
+__INSTDIR=/opt/asl-${VER}
+
+BINDIR = ${__INSTDIR}/bin
+INCDIR = ${__INSTDIR}/include/asl
+MANDIR = ${__INSTDIR}/man
+LIBDIR = ${__INSTDIR}/lib/asl
+DOCDIR = ${__INSTDIR}/doc/asl
+
+paths:
+	@echo VER=${VER}
+	@echo BINDIR=${BINDIR}

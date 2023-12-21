@@ -41,6 +41,11 @@ branch. However, as a quick guide for Linux:
     make -j8        # does not build docs
     make install    # optional, but needed for it to find libary include files
 
+There is also a `Makefile.def` on the `master` branch that should work with
+most Linux systems and will install ASL under `/opt/asl-$VER`. However, it
+may or may not determine the version nubmer correctly as ASL has changed
+how it defines version numbers over time.
+
 
 Importing New ASL Releases
 --------------------------
