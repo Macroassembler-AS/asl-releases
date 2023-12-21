@@ -28,7 +28,16 @@ TARG_EXEXTENSION = $(HOST_EXEXTENSION)
 # directories where binaries, includes, and manpages should go during
 # installation
 
-VER != sed -n -e 's/";.*//' -e 's/-[0-9]$$//' -e 's/.*DebVersion = "//p' version.c
+#   Versions ≤ 1.42bld254 define a *DebVersion string in version.c from
+#   which we can extract the version number. If we don't find this, we
+#   instead extract the build number from AS_VERSION{MAJOR,MINOR,BUILD}
+#   in version.h, where it moved from bld255 onwards. Use `make paths`
+#   (target below) to show the extracted version number and install path.
+VER != \
+    sed -n -e 's/";.*//' -e 's/-[0-9]$$//' -e 's/.*DebVersion = "//p' version.c
+VER := $(or $(VER),\
+    bld$(shell sed -n -e 's/^\#define AS_VERSION_BUILD //p' version.h))
+VER := $(or $(VER),$(error Cannot extract ASL version number.))
 __INSTDIR=/opt/asl-${VER}
 
 BINDIR = ${__INSTDIR}/bin
@@ -37,6 +46,6 @@ MANDIR = ${__INSTDIR}/man
 LIBDIR = ${__INSTDIR}/lib/asl
 DOCDIR = ${__INSTDIR}/doc/asl
 
-paths:
+paths:  # Display the extracted version number and install path
 	@echo VER=${VER}
 	@echo BINDIR=${BINDIR}
