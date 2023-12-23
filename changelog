@@ -1,3 +1,8 @@
+2023-12-23 [1.42 Bld 258]
+
+- Bugfix      : disallow a few addressing modes for TST on 68K
+- Bugfix      : reduce size of icon resource for Windows binaries
+
 2023-12-17 [1.42 Bld 257]
 
 - Change      : On F8, I/O accesses to addresses 0 to 3 via IN or

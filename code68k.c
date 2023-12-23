@@ -2760,9 +2760,7 @@ static void DecodePEA(Word Index)
   }
 }
 
-/* 0=CLR 1=TST */
-
-static void DecodeCLRTST(Word Index)
+static void DecodeCLRTST(Word IsTST)
 {
   if (OpSize > eSymbolSize32Bit) WrError(ErrNum_InvOpSize);
   else if (ChkArgCnt(1, 1))
@@ -2775,16 +2773,20 @@ static void DecodeCLRTST(Word Index)
       case eCPU32:
       case e68KGen2:
       case e68KGen3:
-        w1 |= MModPC | MModPCIdx | MModImm;
-        if (OpSize != eSymbolSize8Bit)
-          w1 |= MModAdr;
+        if (IsTST)
+        {
+          w1 |= MModPC | MModPCIdx | MModImm;
+          if (OpSize != eSymbolSize8Bit)
+            w1 |= MModAdr;
+        }
+        break;
       default:
         break;
     }
     if (DecodeAdr(&ArgStr[1], w1, &AdrResult))
     {
       CodeLen = 2 + AdrResult.Cnt;
-      WAsmCode[0] = 0x4200 | (Index << 11) | (OpSize << 6) | AdrResult.Mode;
+      WAsmCode[0] = 0x4200 | (IsTST << 11) | (OpSize << 6) | AdrResult.Mode;
       CopyAdrVals(WAsmCode + 1, &AdrResult);
     }
   }
