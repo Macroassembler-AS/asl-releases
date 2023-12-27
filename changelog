@@ -1,3 +1,8 @@
+2023-12-27 [1.42 Bld 259]
+
+- Bugfix      : On 68K, correctly skip spaces in indirect
+                addressing argument lists
+
 2023-12-23 [1.42 Bld 258]
 
 - Bugfix      : disallow a few addressing modes for TST on 68K

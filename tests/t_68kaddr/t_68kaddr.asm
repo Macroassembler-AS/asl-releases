@@ -65,8 +65,8 @@ rega3	equ	a3
 
 	; base displacement
 	move.l	(10000,a3,d4.l*4),d7	; all components
-	move.l	(10000.l,a3,d4.l*4),d7
-	move.l	(10000,a3,d4.l*1),d7	; ->scale field zero
+	move.l	(10000.l, a3,d4.l*4),d7
+	move.l	(10000,a3,d4.l*1 ),d7	; ->scale field zero
 	move.l	(10000.l,a3,d4.l*1),d7
 	move.l	(10000,a3,d4.w*1),d7	; ->word instead of longword index
 	move.l	(10000.l,a3,d4.w*1),d7
@@ -78,12 +78,12 @@ rega3	equ	a3
 	; no index (post/pre-indexed setting in I/IS irrelevant?)
 	move.l	([10000]),d7
 	move.l	([10000.l]),d7
-	move.l	([a3]),d7
-	move.l	([a3,10000]),d7
-	move.l	([a3,10000.l]),d7
+	move.l	([ a3]),d7
+	move.l	([a3, 10000]),d7
+	move.l	([ a3,10000.l]),d7
 	move.l	([10000],20000),d7
 	move.l	([10000.l],20000.l),d7
-	move.l	([a3],20000),d7
+	move.l	([ a3 ],20000),d7
 	move.l	([a3],20000.l),d7
 	move.l	([10000,a3],20000),d7
 	move.l	([10000.l,a3],20000.l),d7
