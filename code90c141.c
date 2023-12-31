@@ -19,6 +19,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmitree.h"
+#include "asmcode.h"
 #include "codepseudo.h"
 #include "intpseudo.h"
 #include "codevars.h"
@@ -156,10 +157,14 @@ static void DecodeAdr(const tStrComp *pArg, Word Erl)
     StrCompRefRight(&Arg, pArg, !!is_indirect);
     if (is_indirect)
       StrCompShorten(&Arg, 1);
+    KillPrefBlanksStrCompRef(&Arg);
+    KillPostBlanksStrComp(&Arg);
 
     do
     {
-      p = QuotMultPos(Arg.str.p_str, "+-");
+      /* Split off one component: */
+
+      p = indir_split_pos(Arg.str.p_str);
       NNegFlag = p && (*p == '-');
       if (p)
         StrCompSplitRef(&Arg, &Remainder, &Arg, p);

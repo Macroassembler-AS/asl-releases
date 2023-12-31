@@ -393,6 +393,23 @@ void InsertPadding(unsigned NumBytes, Boolean OnlyReserve)
   DontPrint = SaveDontPrint;
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     indir_split_pos(const char * p_arg)
+ * \brief  find separator for next component in a (x+y-z..) construct
+ * \param  p_arg (remaining) source argument
+ * \return split position for next component or NULL if no more split character
+ * ------------------------------------------------------------------------ */
+
+char *indir_split_pos(const char *p_arg)
+{
+  char *p_split_pos = QuotMultPos(p_arg, "+-");
+
+  /* Single +/- has special meaning for local symbols: */
+
+  return ((p_split_pos == p_arg) && !p_split_pos[1])
+       ? NULL : p_split_pos;
+}
+
 void asmcode_init(void)
 {
   PatchList = PatchLast = NULL;

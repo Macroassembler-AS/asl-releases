@@ -20,6 +20,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmitree.h"
+#include "asmcode.h"
 #include "codepseudo.h"
 #include "intpseudo.h"
 #include "codevars.h"
@@ -87,10 +88,12 @@ static Boolean DecodeRegDisp(tStrComp *pArg, Byte *pRegFlag, LongInt *pDispAcc, 
   *pFirstFlag = False;
   do
   {
-    EPos = QuotMultPos(pArg->str.p_str, "+-");
+    KillPrefBlanksStrCompRef(pArg);
+    EPos = indir_split_pos(pArg->str.p_str);
     NNegFlag = EPos && (*EPos == '-');
     if (EPos)
       StrCompSplitRef(pArg, &Remainder, pArg, EPos);
+    KillPostBlanksStrComp(pArg);
 
     for (z = 0; z < AdrRegCnt; z++)
       if (!as_strcasecmp(pArg->str.p_str, AdrRegs[z]))

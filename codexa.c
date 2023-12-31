@@ -21,6 +21,7 @@
 #include "asmallg.h"
 #include "onoff_common.h"
 #include "asmitree.h"
+#include "asmcode.h"
 #include "codepseudo.h"
 #include "intpseudo.h"
 #include "motpseudo.h"
@@ -257,11 +258,11 @@ static Boolean DecodeAdrIndirect(tStrComp *pArg, Word Mask)
     AdrPart = 0xff;
     do
     {
-      pSplit = QuotMultPos(ThisComp.str.p_str, "+-");
+      KillPrefBlanksStrComp(&ThisComp);
+      pSplit = indir_split_pos(ThisComp.str.p_str);
       NextNegFlag = (pSplit && (*pSplit == '-'));
       if (pSplit)
         StrCompSplitRef(&ThisComp, &RemComp, &ThisComp, pSplit);
-      KillPrefBlanksStrComp(&ThisComp);
       KillPostBlanksStrComp(&ThisComp);
 
       switch (DecodeReg(&ThisComp, &NSize, &Reg, False))

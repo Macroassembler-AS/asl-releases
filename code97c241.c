@@ -22,6 +22,7 @@
 #include "asmpars.h"
 #include "asmallg.h"
 #include "asmitree.h"
+#include "asmcode.h"
 #include "codepseudo.h"
 #include "intpseudo.h"
 #include "codevars.h"
@@ -368,13 +369,13 @@ static void DecodeAdr(const tStrComp *pArg, Byte PrefInd, tImmAllow MayImm, Bool
     {
       /* I.4.a. Trennzeichen suchen */
 
-      PMPos = QuotMultPos(Arg.str.p_str, "-+");
+      KillPrefBlanksStrCompRef(&Arg);
+      PMPos = indir_split_pos(Arg.str.p_str);
       NMinFlag = (PMPos && (*PMPos == '-'));
       if (PMPos)
       {
         StrCompSplitRef(&Arg, &Remainder, &Arg, PMPos);
         KillPostBlanksStrComp(&Arg);
-        KillPrefBlanksStrCompRef(&Remainder);
       }
 
       /* I.4.b. Indexregister mit Skalierung */

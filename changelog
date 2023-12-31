@@ -1,3 +1,11 @@
+2023-12-31 [1.42 Bld 260]
+
+- Bugfix      : On Z80-like targets, do not parse single -/+ as
+                indirect expression
+- Bugfix      : If address overflow occured, the code that triggered
+                it was displayed anyway in the listing, and with
+                a wrong start address.
+
 2023-12-27 [1.42 Bld 259]
 
 - Bugfix      : On 68K, correctly skip spaces in indirect

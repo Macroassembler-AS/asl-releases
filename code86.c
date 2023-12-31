@@ -22,6 +22,7 @@
 #include "codepseudo.h"
 #include "intpseudo.h"
 #include "asmitree.h"
+#include "asmcode.h"
 #include "symbolsize.h"
 #include "codevars.h"
 #include "nlmessages.h"
@@ -536,11 +537,13 @@ static tAdrType DecodeAdr(const tStrComp *pArg, unsigned type_mask)
       do
       {
         NegFlag = False;
-        pSep = QuotMultPos(IndirArg.str.p_str, "+-");
+        KillPrefBlanksStrComp(&IndirArg);
+        pSep = indir_split_pos(IndirArg.str.p_str);
         NegFlag = pSep && (*pSep == '-');
 
         if (pSep)
           StrCompSplitRef(&IndirArg, &IndirArgRemainder, &IndirArg, pSep);
+        KillPostBlanksStrComp(&IndirArg);
 
         if (!as_strcasecmp(IndirArg.str.p_str, "BX"))
         {

@@ -198,6 +198,7 @@
 	pop	bc		; c1
 	jp	nz,1234h	; c2 34 12
 	jp	1234h		; c3 34 12
+-	jp	-		; c3 xx xx
 	call	nz,1234h	; c4 34 12
 	push	bc		; c5
 	add	a,12h		; c6 12
@@ -235,7 +236,7 @@
 	and	12h		; e6 12
 	rst	20h		; e7
 	ret	pe		; e8
-	jp	(hl)		; e9
+	jp	( hl )		; e9
 	jp	pe,1234h	; ea 34 12
 	ex	de,hl		; eb
 	exd			; eb

@@ -27,6 +27,7 @@
 #include "codepseudo.h"
 #include "intpseudo.h"
 #include "asmitree.h"
+#include "asmcode.h"
 #include "codevars.h"
 #include "errmsg.h"
 
@@ -626,7 +627,9 @@ static void DecodeAdrMem(const tStrComp *pArg)
   DispSize = eSymbolSizeUnknown;
   do
   {
-    EPos = QuotMultPos(Arg.str.p_str, "+-");
+    /* Split off one component: */
+
+    EPos = indir_split_pos(Arg.str.p_str);
     NNegFlag = EPos && (*EPos == '-');
     if ((EPos == Arg.str.p_str) || (EPos == Arg.str.p_str + strlen(Arg.str.p_str) - 1))
     {
@@ -903,6 +906,8 @@ static void DecodeAdr(const tStrComp *pArg, Byte Erl)
 
     StrCompRefRight(&Arg, pArg, 1);
     StrCompShorten(&Arg, 1);
+    KillPrefBlanksStrCompRef(&Arg);
+    KillPostBlanksStrComp(&Arg);
     DecodeAdrMem(&Arg);
     ChkAdr(Erl); return;
   }

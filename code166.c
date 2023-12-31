@@ -19,6 +19,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmitree.h"
+#include "asmcode.h"
 #include "asmallg.h"
 #include "codepseudo.h"
 #include "intpseudo.h"
@@ -493,6 +494,8 @@ static ShortInt DecodeAdr(const tStrComp *pArg, Word Mask, tAdrResult *pResult)
 
     StrCompRefRight(&Arg, pArg, 1);
     StrCompShorten(&Arg, 1);
+    KillPrefBlanksStrCompRef(&Arg);
+    KillPostBlanksStrComp(&Arg);
     ArgLen = strlen(Arg.str.p_str);
 
     /* Predekrement ? */
@@ -525,7 +528,7 @@ static ShortInt DecodeAdr(const tStrComp *pArg, Word Mask, tAdrResult *pResult)
       pResult->Mode = 0xff;
       do
       {
-        pSplitPos = QuotMultPos(Arg.str.p_str, "-+");
+        pSplitPos = indir_split_pos(Arg.str.p_str);
         if (pSplitPos)
         {
           NNegFlag = *pSplitPos == '-';

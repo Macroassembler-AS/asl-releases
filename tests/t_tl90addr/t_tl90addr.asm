@@ -21,4 +21,8 @@
 	CALL	z,HL+A
 	CALL	z,(HL+A)
 	CALL	z,1234H
-	CALL	z,(1234H)
+-	CALL	z,(1234H)
+	CALL	z,( - )
+	CALL	z,(- )
+	CALL	z,( -)
+	CALL	z,(-)

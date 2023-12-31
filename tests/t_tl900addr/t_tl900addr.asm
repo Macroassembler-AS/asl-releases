@@ -26,3 +26,7 @@
 	CALL	z,(1234H)
 	CALL	z,123456H
 	CALL	z,(123456H)
+-	CALL	z,(-)
+	CALL	z,( -)
+	CALL	z,(- )
+	CALL	z,( - )

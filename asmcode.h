@@ -33,6 +33,8 @@ extern void RetractWords(Word Cnt);
 
 extern void InsertPadding(unsigned NumBytes, Boolean OnlyReserve);
 
+extern char *indir_split_pos(const char *p_arg);
+
 extern void asmcode_init(void);
 
 #endif /* _ASMCODE_H */
