@@ -404,10 +404,22 @@ char *indir_split_pos(const char *p_arg)
 {
   char *p_split_pos = QuotMultPos(p_arg, "+-");
 
-  /* Single +/- has special meaning for local symbols: */
+  /* Sequence of up to three +/- has special meaning for local symbols: */
 
-  return ((p_split_pos == p_arg) && !p_split_pos[1])
-       ? NULL : p_split_pos;
+  if (p_split_pos == p_arg)
+  {
+    int z;
+    Boolean same = True;
+    for (z = 1; p_split_pos[z] && (z < LOCSYMSIGHT); z++)
+      if (p_split_pos[z] != p_split_pos[0])
+      {
+        same = False;
+        break;
+      }
+    if (!p_split_pos[z] && same)
+      p_split_pos = NULL;
+  }
+  return p_split_pos;
 }
 
 void asmcode_init(void)

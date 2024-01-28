@@ -78,60 +78,76 @@ Boolean IsIndirect(const char *Asc)
  * \return index to opening parenthese or -1 if not like pattern
  * ------------------------------------------------------------------------ */
 
+typedef struct
+{
+  as_quoted_iterator_cb_data_t data;
+  int nest, split_pos, last_nonspace_pos;
+  char last_nonspace;
+  tDispBaseSplitQualifier qualifier;
+  const char *p_bracks;
+} disp_base_split_cb_data_t;
+
+/* We are looking for expressions of the form xxx(yyy),
+   but we want to avoid false positives on things like
+   xxx+(yyy*zzz).  So we look at the (non-blank) character
+   right before the opening parenthese in question.  If it is
+   something that might be the last letter of an identifier,
+   or another parenthized expression, and not an operator,
+   it might be OK...
+
+   We generally look for the last candidate in the string,
+   i.e. we continue to search after a finding.
+ */
+
+static Boolean disp_base_split_cb(const char *p_pos, as_quoted_iterator_cb_data_t *p_cb_data)
+{
+  disp_base_split_cb_data_t *p_data = (disp_base_split_cb_data_t*)p_cb_data;
+  int pos = p_pos - p_cb_data->p_str;
+
+  if (*p_pos == p_data->p_bracks[0])
+  {
+    if (!p_data->nest)
+    {
+      if ((p_data->last_nonspace_pos < 0) || as_isalnum(p_data->last_nonspace) || (p_data->last_nonspace == ')') || (p_data->last_nonspace == '\'') || (p_data->last_nonspace == '"'))
+        p_data->split_pos = pos;
+      else if (p_data->qualifier)
+      {
+        int qual = p_data->qualifier(p_cb_data->p_str, p_data->last_nonspace_pos, pos);
+        if (qual >= 0)
+          p_data->split_pos = qual;
+      }
+    }
+    p_data->nest++;
+  }
+  else if (*p_pos == p_data->p_bracks[1])
+    p_data->nest--;
+  if (!as_isspace(*p_pos))
+  {
+    p_data->last_nonspace_pos = pos;
+    p_data->last_nonspace = *p_pos;
+  }
+  return True;
+}
+
 int FindDispBaseSplitWithQualifier(const char *pArg, int *pArgLen, tDispBaseSplitQualifier Qualifier, const char *pBracks)
 {
-  int Nest = 0, Start, SplitPos = -1;
-  Boolean InSgl = False, InDbl = False;
+  disp_base_split_cb_data_t data;
 
   *pArgLen = strlen(pArg);
 
   if (!*pArgLen || (pArg[*pArgLen - 1] != pBracks[1]))
     return -1;
 
-  /* We are looking for expressions of the form xxx(yyy),
-     but we want to avoid false positives on things like
-     xxx+(yyy*zzz).  So we look at the (non-blank) character
-     right before opening parenthese in question.  If it is
-     something that might be the last letter of an identifier,
-     or another parenthized expression, and not an operator,
-     it might be OK... */
+  data.nest = 0;
+  data.split_pos = -1;
+  data.last_nonspace_pos = -1;
+  data.last_nonspace = ' ';
+  data.qualifier = Qualifier;
+  data.p_bracks = pBracks;
 
-  for (Start = *pArgLen - 1; Start >= 0; Start--)
-  {
-    if (pArg[Start] == pBracks[1])
-    {
-      if (!InSgl && !InDbl) Nest++;
-    }
-    else if (pArg[Start] == pBracks[0])
-    {
-      if (!InSgl && !InDbl) Nest--;
-    }
-    switch (pArg[Start])
-    {
-      case '\'':
-        if (!InDbl) InSgl = !InSgl;
-        break;
-      case '"':
-        if (!InSgl) InDbl = !InDbl;
-        break;
-      default:
-        break;
-    }
-    if (!Nest && (SplitPos < 0))
-      SplitPos = Start;
-    else if (SplitPos >= 0)
-    {
-      if (as_isspace(pArg[Start])); /* delay decision to to next non-blank */
-      else if (as_isalnum(pArg[Start]) || (pArg[Start] == ')') || (pArg[Start] == '\'') || (pArg[Start] == '"'))
-        return SplitPos;
-      else
-        return Qualifier ? Qualifier(pArg, Start, SplitPos) : -1;
-    }
-  }
+  as_iterate_str_quoted(pArg, disp_base_split_cb, &data.data);
 
-  /* if SplitPos >= 0, and we end up here, xxx is empty string or only consists of spaces: */
-
-  return SplitPos;
+  return data.split_pos;
 }
 
 /*****************************************************************************

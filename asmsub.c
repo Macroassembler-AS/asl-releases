@@ -388,40 +388,102 @@ func_exit:
 }
 
 /*!------------------------------------------------------------------------
+ * \fn     as_iterate_str_quoted(const char *p_str, as_quoted_iterator_cb_t callback, as_quoted_iterator_cb_data_t *p_cb_data)
+ * \brief  iterate through string, skipping quoted areas
+ * \param  p_str string to iterate through
+ * \param  callback is called for all characters outside quoted areas
+ * \param  p_cb_data callback data
+ * ------------------------------------------------------------------------ */
+
+void as_iterate_str_quoted(const char *p_str, as_quoted_iterator_cb_t callback, as_quoted_iterator_cb_data_t *p_cb_data)
+{
+  const char *p_run;
+  Boolean this_escaped, next_escaped;
+
+  p_cb_data->p_str = p_str;
+  p_cb_data->in_single_quote =
+  p_cb_data->in_double_quote = False;
+
+  for (p_run = p_str, this_escaped = False;
+       *p_run;
+       p_run++, this_escaped = next_escaped)
+  {
+    next_escaped = False;
+
+    switch(*p_run)
+    {
+      case '\\':
+        if ((p_cb_data->in_single_quote || p_cb_data->in_double_quote) && !this_escaped)
+          next_escaped = True;
+        break;
+      case '\'':
+        if (p_cb_data->in_double_quote) { }
+        else if (!p_cb_data->in_single_quote && (!QualifyQuote || QualifyQuote(p_str, p_run)))
+          p_cb_data->in_single_quote = True;
+        else if (!this_escaped) /* skip escaped ' in '...' */
+          p_cb_data->in_single_quote = False;
+        break;
+      case '"':
+        if (p_cb_data->in_single_quote) { }
+        else if (!p_cb_data->in_double_quote)
+          p_cb_data->in_double_quote = True;
+        else if (!this_escaped) /* skip escaped " in "..." */
+          p_cb_data->in_double_quote = False;
+        break;
+      default:
+        if (!p_cb_data->in_single_quote && !p_cb_data->in_double_quote)
+        {
+          if (!callback(p_run, p_cb_data))
+            return;
+        }
+    }
+  }
+}
+
+/*!------------------------------------------------------------------------
  * \fn     FindClosingParenthese(const char *pStr)
  * \brief  find matching closing parenthese
  * \param  pStr * to string right after opening parenthese
  * \return * to closing parenthese or NULL
  * ------------------------------------------------------------------------ */
 
+typedef struct
+{
+  as_quoted_iterator_cb_data_t data;
+  int nest;
+  const char *p_ret;
+} close_par_cb_data_t;
+
+static Boolean close_par_cb(const char *p_pos, as_quoted_iterator_cb_data_t *p_cb_data)
+{
+  close_par_cb_data_t *p_data = (close_par_cb_data_t*)p_cb_data;
+
+  switch(*p_pos)
+  {
+    case '(':
+      p_data->nest++;
+      break;
+    case ')':
+      if (!--p_data->nest)
+      {
+        p_data->p_ret = p_pos;
+        return False;
+      }
+      break;
+  }
+  return True;
+}
+
 char *FindClosingParenthese(const char *pStr)
 {
-  int Nest = 1;
-  Boolean InSgl = False, InDbl = False;
+  close_par_cb_data_t data;
 
-  for (; *pStr; pStr++)
-  {
-    switch (*pStr)
-    {
-      case '\'':
-        if (!InDbl) InSgl = !InSgl;
-        break;
-      case '"':
-        if (!InSgl) InDbl = !InDbl;
-        break;
-      case '(':
-        if (!InSgl && !InDbl) Nest++;
-        break;
-      case ')':
-        if (!InSgl && !InDbl) Nest--;
-        if (!Nest)
-          return (char*)pStr;
-        break;
-      default:
-        break;
-    }
-  }
-  return NULL;
+  data.nest = 1;
+  data.p_ret = NULL;
+
+  as_iterate_str_quoted(pStr, close_par_cb,&data.data);
+
+  return (char*)data.p_ret;
 }
 
 /*!------------------------------------------------------------------------
@@ -433,36 +495,46 @@ char *FindClosingParenthese(const char *pStr)
  * \return * to opening parenthese or NULL if not found
  * ------------------------------------------------------------------------ */
 
+typedef struct
+{
+  as_quoted_iterator_cb_data_t data;
+  int nest;
+  const char *p_str_end;
+  const char *p_ret;
+  const char *p_bracks;
+} open_par_cb_data_t;
+
+static Boolean open_par_cb(const char *p_pos, as_quoted_iterator_cb_data_t *p_cb_data)
+{
+  open_par_cb_data_t *p_data = (open_par_cb_data_t*)p_cb_data;
+
+  if (*p_pos == p_data->p_bracks[0])
+  {
+    if (!p_data->nest)
+      p_data->p_ret = p_pos;
+    p_data->nest++;
+  }
+  else if (*p_pos == p_data->p_bracks[1])
+    p_data->nest--;
+
+  /* We are interested in the opening parenthese that is nearest to the closing
+     one and on same level, so continue searching: */
+
+  return ((p_pos + 1) < p_data->p_str_end);
+}
+
 char *FindOpeningParenthese(const char *pStrBegin, const char *pStrEnd, const char Bracks[2])
 {
-  int Nest = 1;
-  Boolean InSgl = False, InDbl = False;
+  open_par_cb_data_t data;
 
-  for (; pStrEnd >= pStrBegin; pStrEnd--)
-  {
-    if (*pStrEnd == Bracks[1])
-    {
-      if (!InSgl && !InDbl) Nest++;
-    }
-    else if (*pStrEnd == Bracks[0])
-    {
-      if (!InSgl && !InDbl) Nest--;
-      if (!Nest)
-        return (char*)pStrEnd;
-    }
-    else switch (*pStrEnd)
-    {
-      case '\'':
-        if (!InDbl) InSgl = !InSgl;
-        break;
-      case '"':
-        if (!InSgl) InDbl = !InDbl;
-        break;
-      default:
-        break;
-    }
-  }
-  return NULL;
+  data.nest = 0;
+  data.p_ret = NULL;
+  data.p_bracks = Bracks;
+  data.p_str_end = pStrEnd;
+
+  as_iterate_str_quoted(pStrBegin, open_par_cb, &data.data);
+
+  return (char*)data.p_ret;
 }
 
 /****************************************************************************/

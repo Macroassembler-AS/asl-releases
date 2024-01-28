@@ -11,6 +11,7 @@
 /*****************************************************************************/
 
 #include <stddef.h>
+#include "datatypes.h"
 
 struct sLineComp;
 struct sStrComp;
@@ -48,6 +49,14 @@ extern ShortInt StrCaseCmp(const char *s1, const char *s2, LongInt Hand1, LongIn
 
 extern char *MatchChars(const char *pStr, const char *pPattern, ...);
 extern char *MatchCharsRev(const char *pStr, const char *pPattern, ...);
+
+typedef struct as_quoted_iterator_cb_data
+{
+  const char *p_str;
+  Boolean in_single_quote, in_double_quote;
+} as_quoted_iterator_cb_data_t;
+typedef Boolean (*as_quoted_iterator_cb_t)(const char *p_pos, as_quoted_iterator_cb_data_t *p_cb_data);
+extern void as_iterate_str_quoted(const char *p_str, as_quoted_iterator_cb_t callback, as_quoted_iterator_cb_data_t *p_cb_data);
 
 extern char *FindClosingParenthese(const char *pStr);
 

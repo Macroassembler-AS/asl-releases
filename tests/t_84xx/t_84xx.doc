@@ -1,6 +1,6 @@
 +------------------------- Test Application 84XX ----------------------------+
 |                                                                            |
 | This is a (synthetic) test of the MAB84xx instruction set, which is an     |
-| MCS_48 core with Philips-specific additions and removals.                  |
+| MCS-48 core with Philips-specific additions and removals.                  |
 |                                                                            |
 +----------------------------------------------------------------------------+

@@ -17,9 +17,9 @@ LongInt VerNo = (AS_VERSION_MAJOR * 4096)
               | ((AS_VERSION_MINOR % 10) * 16)
               | 15;
 
-const char *InfoMessCopyright = "(C) 1992,2023 Alfred Arnold";
+const char *InfoMessCopyright = "(C) 1992,2024 Alfred Arnold";
 
-LongInt Magic = 0x12372f46;
+LongInt Magic = 0x12372846;
 
 void version_init(void)
 {

@@ -128,6 +128,8 @@ extern LongWord MaxCodeLen;
 
 #define DEF_NESTMAX 256
 
+#define LOCSYMSIGHT 3       /* max. sight for nameless temporary symbols */
+
 typedef void (*SimpProc)(
 #ifdef __PROTOS__
 void

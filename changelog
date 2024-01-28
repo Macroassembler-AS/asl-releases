@@ -1,3 +1,10 @@
+2024-01-28 [1.42 Bld 261]
+
+- Bugfix      : On Z80-like targets, also do not parse double/triple
+                -/+ as indirect expression
+- Bugfix      : On NS32K, make parsing of address expressions more
+                robust against  arguments like '\'' or X'xx
+
 2023-12-31 [1.42 Bld 260]
 
 - Bugfix      : On Z80-like targets, do not parse single -/+ as
