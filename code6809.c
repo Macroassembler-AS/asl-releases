@@ -25,8 +25,12 @@
 #include "motpseudo.h"
 #include "codevars.h"
 #include "errmsg.h"
+#include "cmdarg.h"
 
 #include "code6809.h"
+
+#define plain_base_mode_sym_name "PLAINBASE"
+#define plain_base_mode_cmd_name "PLAINBASE"
 
 typedef struct
 {
@@ -96,6 +100,11 @@ static Byte StackRegMasks[StackRegCnt] =
 static const char FlagChars[] = "CVZNIHFE";
 
 static LongInt DPRValue;
+
+static Boolean target_used,
+               plain_base_mode,
+               def_plain_base_mode,
+               def_plain_base_mode_set;
 
 static BaseOrder  *FixedOrders;
 static RelOrder   *RelOrders;
@@ -172,6 +181,27 @@ static void reset_adr_vals(adr_vals_t *p_vals)
 {
   p_vals->mode = e_adr_mode_none;
   p_vals->cnt = 0;
+}
+
+static Boolean check_plain_base_arg(int adr_arg_cnt, const tStrComp *p_start_arg)
+{
+  switch (adr_arg_cnt)
+  {
+    case 1:
+      if (!plain_base_mode)
+        WrStrErrorPos(ErrNum_WrongArgCnt, p_start_arg);
+      return plain_base_mode;
+    case 2:
+    {
+      Boolean ret = IsZeroOrEmpty(p_start_arg);
+      if (!ret)
+        WrStrErrorPos(ErrNum_InvAddrMode, p_start_arg);
+      return ret;
+    }
+    default:
+      WrError(ErrNum_WrongArgCnt);
+      return False;
+  }
 }
 
 static adr_mode_t DecodeAdr(int ArgStartIdx, int ArgEndIdx,
@@ -268,8 +298,7 @@ static adr_mode_t DecodeAdr(int ArgStartIdx, int ArgEndIdx,
 
   if ((AdrArgCnt >= 1) && (AdrArgCnt <= 2) && (strlen(pEndArg->str.p_str) == 2) && (*pEndArg->str.p_str == '-') && (CodeReg(pEndArg->str.p_str + 1, &EReg)))
   {
-    if ((AdrArgCnt == 2) && !IsZeroOrEmpty(pStartArg)) WrError(ErrNum_InvAddrMode);
-    else
+    if (check_plain_base_arg(AdrArgCnt, pStartArg))
     {
       p_vals->cnt = 1;
       p_vals->vals[0] = 0x82 + (EReg << 5) + (Ord(IndFlag) << 4);
@@ -280,8 +309,7 @@ static adr_mode_t DecodeAdr(int ArgStartIdx, int ArgEndIdx,
 
   if ((AdrArgCnt >= 1) && (AdrArgCnt <= 2) && (strlen(pEndArg->str.p_str) == 3) && (!strncmp(pEndArg->str.p_str, "--", 2)) && (CodeReg(pEndArg->str.p_str + 2, &EReg)))
   {
-    if ((AdrArgCnt == 2) && !IsZeroOrEmpty(pStartArg)) WrError(ErrNum_InvAddrMode);
-    else
+    if (check_plain_base_arg(AdrArgCnt, pStartArg))
     {
       p_vals->cnt = 1;
       p_vals->vals[0] = 0x83 + (EReg << 5) + (Ord(IndFlag) << 4);
@@ -292,7 +320,7 @@ static adr_mode_t DecodeAdr(int ArgStartIdx, int ArgEndIdx,
 
   if ((AdrArgCnt >= 1) && (AdrArgCnt <= 2) && (!as_strcasecmp(pEndArg->str.p_str, "--W")))
   {
-    if ((AdrArgCnt == 2) && !IsZeroOrEmpty(pStartArg)) WrError(ErrNum_InvAddrMode);
+    if (!check_plain_base_arg(AdrArgCnt, pStartArg));
     else if (!allow_6309) WrError(ErrNum_AddrModeNotSupported);
     else
     {
@@ -311,8 +339,7 @@ static adr_mode_t DecodeAdr(int ArgStartIdx, int ArgEndIdx,
     temp[1] = '\0';
     if (CodeReg(temp, &EReg))
     {
-      if ((AdrArgCnt == 2) && !IsZeroOrEmpty(pStartArg)) WrError(ErrNum_InvAddrMode);
-      else
+      if (check_plain_base_arg(AdrArgCnt, pStartArg))
       {
         p_vals->cnt = 1;
         p_vals->vals[0] = 0x80 + (EReg << 5) + (Ord(IndFlag) << 4);
@@ -328,8 +355,7 @@ static adr_mode_t DecodeAdr(int ArgStartIdx, int ArgEndIdx,
     temp[1] = '\0';
     if (CodeReg(temp, &EReg))
     {
-      if ((AdrArgCnt == 2) && !IsZeroOrEmpty(pStartArg)) WrError(ErrNum_InvAddrMode);
-      else
+      if (check_plain_base_arg(AdrArgCnt, pStartArg))
       {
         p_vals->cnt = 1;
         p_vals->vals[0] = 0x81 + (EReg << 5) + (Ord(IndFlag) << 4);
@@ -341,7 +367,7 @@ static adr_mode_t DecodeAdr(int ArgStartIdx, int ArgEndIdx,
 
   if ((AdrArgCnt >= 1) && (AdrArgCnt <= 2) && (!as_strcasecmp(pEndArg->str.p_str, "W++")))
   {
-    if ((AdrArgCnt == 2) && !IsZeroOrEmpty(pStartArg)) WrError(ErrNum_InvAddrMode);
+    if (!check_plain_base_arg(AdrArgCnt, pStartArg));
     else if (!allow_6309) WrError(ErrNum_AddrModeNotSupported);
     else
     {
@@ -362,9 +388,13 @@ static adr_mode_t DecodeAdr(int ArgStartIdx, int ArgEndIdx,
 
     if (AdrArgCnt == 1)
     {
-      p_vals->cnt = 1;
-      p_vals->vals[0] += 0x84;
-      p_vals->mode = e_adr_mode_ind;
+      if (!plain_base_mode) WrStrErrorPos(ErrNum_WrongArgCnt, pEndArg);
+      else
+      {
+        p_vals->cnt = 1;
+        p_vals->vals[0] += 0x84;
+        p_vals->mode = e_adr_mode_ind;
+      }
       goto chk_mode;
     }
 
@@ -490,8 +520,12 @@ static adr_mode_t DecodeAdr(int ArgStartIdx, int ArgEndIdx,
 
     if (AdrArgCnt == 1)
     {
-      p_vals->cnt = 1;
-      p_vals->mode = e_adr_mode_ind;
+      if (!plain_base_mode) WrStrErrorPos(ErrNum_WrongArgCnt, pEndArg);
+      else
+      {
+        p_vals->cnt = 1;
+        p_vals->mode = e_adr_mode_ind;
+      }
       goto chk_mode;
     }
 
@@ -524,7 +558,7 @@ static adr_mode_t DecodeAdr(int ArgStartIdx, int ArgEndIdx,
 
   /* PC-relativ ? */
 
-  if ((AdrArgCnt == 2) && ((!as_strcasecmp(pEndArg->str.p_str, "PCR")) || (!as_strcasecmp(pEndArg->str.p_str, "PC"))))
+  if ((AdrArgCnt == 2) && (!as_strcasecmp(pEndArg->str.p_str, "PCR") || !as_strcasecmp(pEndArg->str.p_str, "PC")))
   {
     p_vals->vals[0] = Ord(IndFlag) << 4;
     Offset = ChkZero(pStartArg->str.p_str, &ZeroMode);
@@ -1500,6 +1534,7 @@ static void MakeCode_6809(void)
 static void InitCode_6809(void)
 {
   DPRValue = 0;
+  target_used = False;
 }
 
 static Boolean IsDef_6809(void)
@@ -1536,15 +1571,33 @@ static void SwitchTo_6809(void)
   SwitchFrom = DeinitFields;
   InitFields();
   AddMoto16PseudoONOFF(False);
+  if (!target_used)
+    SetFlag(&plain_base_mode, plain_base_mode_sym_name, def_plain_base_mode_set ? def_plain_base_mode : False);
+  AddONOFF(plain_base_mode_cmd_name, &plain_base_mode, plain_base_mode_sym_name, False);
+  target_used = True;
 
   pASSUMERecs = ASSUME09s;
   ASSUMERecCnt = ASSUME09Count;
 }
+
+static as_cmd_result_t cmd_plain_base(Boolean negate, const char *p_arg)
+{
+  UNUSED(p_arg);
+  def_plain_base_mode = !negate;
+  def_plain_base_mode_set = True;
+  return e_cmd_ok;
+}
+
+static const as_cmd_rec_t onoff_params[] =
+{
+  { plain_base_mode_cmd_name, cmd_plain_base }
+};
 
 void code6809_init(void)
 {
   CPU6809 = AddCPU("6809", SwitchTo_6809);
   CPU6309 = AddCPU("6309", SwitchTo_6809);
 
+  as_cmd_register(onoff_params, as_array_size(onoff_params));
   AddInitPassProc(InitCode_6809);
 }

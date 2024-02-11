@@ -1,0 +1,6 @@
++----------------------- Test Application ALIGN -----------------------------+
+|                                                                            |
+|      Test correct operation of 'DS 0' to align program counter if          |
+|      address is beyond 2 GByte.                                            |
+|                                                                            |
++----------------------------------------------------------------------------+

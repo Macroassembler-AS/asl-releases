@@ -147,6 +147,7 @@ extern Boolean ChkSymbName(const char *pSym);
 
 extern char *ChkMacSymbNameUpTo(const char *pSym, const char *pUpTo);
 extern Boolean ChkMacSymbName(const char *pSym);
+extern Boolean ChkMacSymbChar(char ch);
 
 extern unsigned visible_strlen(const char *pSym);
 

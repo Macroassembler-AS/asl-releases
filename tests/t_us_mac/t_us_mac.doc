@@ -1,0 +1,7 @@
++----------------------- Test Application US_MAC ----------------------------+
+|                                                                            |
+|     This test demonstrates the optional use of underscores in macro        |
+|     parameter names.  Use the switch with caution, since it breaks some    |
+|     of the include files shipped with AS.                                  |
+|                                                                            |
++----------------------------------------------------------------------------+

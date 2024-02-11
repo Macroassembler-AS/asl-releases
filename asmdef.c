@@ -64,13 +64,13 @@ Integer PassNo;                          /* Durchlaufsnummer */
 Integer JmpErrors;                       /* Anzahl fraglicher Sprungfehler */
 Boolean ThrowErrors;                     /* Fehler verwerfen bei Repass ? */
 LongWord MaxErrors;                      /* terminate upon n errors? */
-Boolean Repass;		                 /* noch ein Durchlauf erforderlich */
-Byte MaxSymPass;	                 /* Pass, nach dem Symbole definiert sein muessen */
+Boolean Repass;		                       /* noch ein Durchlauf erforderlich */
+Byte MaxSymPass;	                       /* Pass, nach dem Symbole definiert sein muessen */
 Byte ShareMode;                          /* 0=kein SHARED,1=Pascal-,2=C-Datei, 3=ASM-Datei */
 DebugType DebugMode;                     /* Ausgabeformat Debug-Datei */
 Word NoICEMask;                          /* which symbols to use in NoICE dbg file */
 Byte ListMode;                           /* 0=kein Listing,1=Konsole,2=auf Datei */
-Byte ListOn;		    	         /* Listing erzeugen ? */
+Byte ListOn;		    	                   /* Listing erzeugen ? */
 Integer MaxIncludeLevel;                 /* maximum include nesting level */
 Boolean MakeUseList;                     /* Belegungsliste ? */
 Boolean MakeCrossList;	                 /* Querverweisliste ? */
@@ -109,7 +109,7 @@ LongInt NOPCode;                         /* Maschinenbefehl NOP zum Stopfen */
 Boolean TurnWords;                       /* TRUE  = Motorola-Wortformat */
                                          /* FALSE = Intel-Wortformat */
 Byte HeaderID;	                         /* Kennbyte des Codeheaders */
-const char *PCSymbol;	                 /* Symbol, womit Programmzaehler erreicht wird. Inhalt Read Only! */
+const char *PCSymbol;	                   /* Symbol, womit Programmzaehler erreicht wird. Inhalt Read Only! */
 Boolean (*SetIsOccupiedFnc)(void),       /* TRUE: SET instr, to be parsed by code generator */
         (*SaveIsOccupiedFnc)(void),      /* ditto for SAVE */
         (*RestoreIsOccupiedFnc)(void);   /* ditto for RESTORE */

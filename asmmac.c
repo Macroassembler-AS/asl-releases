@@ -196,11 +196,6 @@ void Preprocess(void)
   CodeLen = 0;
 }
 
-static Boolean ExpandDefines_NErl(char inp)
-{
-  return (((inp >= '0') && (inp <= '9')) || ((inp >= 'A') && (inp <= 'Z')) || ((inp >= 'a') && (inp <= 'z')));
-}
-
 #define t_toupper(ch) ((CaseSensitive) ? (ch) : (as_toupper(ch)))
 
 void ExpandDefines(char *Line)
@@ -240,8 +235,8 @@ void ExpandDefines(char *Line)
         }
         if (z2 == -1)
         {
-          if (((p2 == 0) || (!ExpandDefines_NErl(Line[p2 - 1])))
-           && ((p2 + FromLen == p) || (!ExpandDefines_NErl(Line[p2 + FromLen]))))
+          if (((p2 == 0) || !ChkMacSymbChar(Line[p2 - 1]))
+           && ((p2 + FromLen == p) || !ChkMacSymbChar(Line[p2 + FromLen])))
           {
             if (Diff != 0)
               memmove(Line + p2 + ToLen, Line + p2 + FromLen, strlen(Line) - p2 - FromLen + 1);

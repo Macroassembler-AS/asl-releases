@@ -49,7 +49,7 @@
 
 \vspace{1cm}\par
 
-{\large Stand Dezember 2023}
+{\large Stand Februar 2024}
 \end{raggedright}
 
 \clearpage
@@ -1047,6 +1047,11 @@ bzw. \ref{ChapShareOrder}.
       Programms die Ablage von Werten im Speicher im Big Endian Modus ein,
       sofern die Zielarchitektur den gleichnamigen Pseudobefehl unterst"utzt
       (siehe Abschnitt \ref{SectBIGENDIAN}).}
+\item{\tty{plainbase}: Mit diesem Schalter erlaubt man vom Beginn des
+      Programms an das Fortlassen eines leeren Indexarguments (siehe Abschnitt
+      \ref{SectPLAINBASE}).}
+\item{\tty{underscore-macroargs}: Erlaubt die Verwendung von Unterstrichen in
+      Namen von Makro-Argumenten (siehe \ref{SectMacros}).}
 \item{\tty{relaxed}: Mit diesem Schalter aktiviert man den RELAXED-Modus
       vom Beginn des Programms an, der ansonsten erst durch die gleichnamige
       Pseudoanweisung (siehe Abschnitt \ref{SectRELAXED}) eingeschaltet
@@ -4559,6 +4564,33 @@ kann man aus der Variablen \tty{INSRCMODE} auslesen.  Der Default ist
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+\subsection{PLAINBASE}
+\ttindex{PLAINBASE}\label{SectPLAINBASE}
+
+{\em G"ultigkeit: 6809}
+
+Historisch erlaubt \asname{}, bei indizierten Adressierungsausdr"ucken ein
+leeres, erstes Argument wegzulassen.  Ein
+\begin{verbatim}
+  lda  x
+\end{verbatim}
+zum Beispiel war also "aquivalent zu
+\begin{verbatim}
+  lda  ,x
+\end{verbatim}
+Obwohl als Feature gedacht, wurde dies jedoch gelegentlich eher als Bug
+angesehen.  Deshalb darf ein leeres Index-Argument nicht mehr weggelassen werden
+bzw. wird mit einer Fehlermeldung "uber eine falsche Anzahl Argumente quittiert.
+Falls die Funktion gew"unscht ist bzw. f"ur existierenden Code gebraucht wird,
+kann sie mit einem
+\begin{verbatim}
+  plainbase on
+\end{verbatim}
+wieder eingeschaltet werden.  Die aktuelle Einstellung kann aus dem gleichnamigen
+Symbol ausgelesen werden.
+
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 \subsection{BIGENDIAN}
 \ttindex{ENDIAN}\ttindex{BIGENDIAN}\label{SectBIGENDIAN}
 
@@ -6150,9 +6182,15 @@ definiert. Diese Definition alleine erzeugt noch keinen Code!  Daf"ur kann
 fortan die Befehlsfolge einfach durch den Namen abgerufen werden, das Ganze
 stellt also eine Schreiberleichterung dar.  Um die ganze Sache etwas
 n"utzlicher zu machen, kann man der Makrodefinition eine Parameterliste
-mitgeben.  Die Parameternamen werden wie "ublich durch Kommas getrennt
-und m"ussen --- wie der Makroname selber --- den Konventionen f"ur
-Symbolnamen (\ref{SectSymConv}) gen"ugen.
+mitgeben.
+\par
+W"ahrend der Makroname selber nur den "ublichen Regeln f"ur Symbolnamen
+(\ref{SectSymConv}) gen"ugen mu"s, gilt f"ur die Namen der (kommaseparierten)
+Parameternamen die weitere Einschr"ankung, da"s sie keine Unterstriche
+enthalten d"urfen.  Dies kann durch den Kommandozeilen-Parameter
+\tty{-underscore-macroargs} aufgehoben werden, hat aber Nebenwirkungen
+bei der Expansion von Makros und sollte nur eingesetzt werden, wenn
+unbedingt n"otig.
 \par
 Sowohl Makronamen als auch -parameter sind von einer Umschaltung
 von \asname{} in den case-sensitiven Modus betroffen.
@@ -6264,6 +6302,23 @@ Parameternamen im case-sensitiven Modus in Gro"sbuchstaben
 umsetzt, in Strings aber nie eine Umwandlung in Gro"sbuchstaben
 erfolgt. Die Makroparameternamen m"ussen in den Stringkonstanten
 daher gro"s geschrieben werden.
+\par
+Des weiteren wird die Parameter-Ersetzung davon beeinflusst, ob
+Unterstriche im Parameternamen erlaubt sind oder nicht.  Falls
+nicht --- was der Default ist --- wirken Unterstriche auch
+als 'Begrenzungszeichen', um Parameternamen im Makrorumpf zu
+erkennen.  Im Default w"urde also im folgenden Beispiel
+\begin{verbatim}
+setled  macro led,value
+        out   led,value
+        ld    led_shadow,value
+        endm
+\end{verbatim}
+der Parameter 'led' in beiden Zeilen ersetzt, mit dem Schalter
+\tty{underscore-macroargs} jedoch nur in der ersten.  Diverse
+der mitgelieferten Include-Dateien setzen das Default-Verhalten
+voraus, weshalb dieser Schalter nur wenn unbedingt n"otig genutzt
+werden sollte.
 \par
 Argumente an ein Makro k"onnen in zwei Formen angegeben werden:
 als {\em Positionsargumente} oder als {\em
@@ -10922,7 +10977,7 @@ referenziert:
 \begin{verbatim}
        ld e(p1)
 \end{verbatim} 
-Da das SC/MP-Target Registersymbole unterstützt, ist es auch möglich,
+Da das SC/MP-Target Registersymbole unterst"utzt, ist es auch m"oglich,
 das 'eigene Symbol' passend zu definieren:
 \begin{verbatim}
 ereg   reg e
@@ -12484,7 +12539,7 @@ Angaben:
                {das fragliche Displacement-Argument}
 \errentry{ 450}{I/O-Adresse mu"s mit INS/OUTS angesprochen werden}
                {Warnung}
-               {I/O-Adressen im Bereich des Prozessormoduls (0..3) können nur
+               {I/O-Adressen im Bereich des Prozessormoduls (0..3) k"onnen nur
                 "uber die Befehle {\tt INS} und {\tt OUTS} erreicht werden,
                 nicht "uber {\tt IN} und {\tt OUT}.}
                {das fragliche Adress-Argument}

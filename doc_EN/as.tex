@@ -67,7 +67,7 @@
 
 \vspace{1cm}\par
 
-{\large Edition Dezember 2023}
+{\large Edition Februar 2024}
 \end{raggedright}
 
 \clearpage
@@ -1032,6 +1032,10 @@ chapters \ref{ChapShareMain} resp. \ref{ChapShareOrder}.
       in memory right from the program's beginning, given the target
       architecture supports the pseudo instruction of same name (see
       \ref{SectBIGENDIAN}).}
+\item{\tty{plainbase}: This switch enables omission of an empty index
+      argument right from the program's beginning (see \ref{SectPLAINBASE}).}
+\item{\tty{underscrore-macroargs}: This switch enables usage of underscore characters
+      in macro argument names (see \ref{SectMacros}).}
 \item{\tty{relaxed}: this switch enables the RELAXED mode right from the
       beginning of the program, which otherwise has to be enabled by the
       pseudo instruction of sane name(see section \ref{SectRELAXED}).}
@@ -4432,6 +4436,30 @@ required.  The current setting may be read from the variable
 \tty{INSRCMODE}.  The default is \tty{OFF}.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+\subsection{PLAINBASE}
+\ttindex{PLAINBASE}\label{SectPLAINBASE}
+
+{\em valid for: 6809}
+
+Historically, \asname{} allows to omit an empty first argument on indexed
+address expressions.  An
+\begin{verbatim}
+  lda  x
+\end{verbatim}
+for instance was equivalent to
+\begin{verbatim}
+  lda  ,x
+\end{verbatim}
+Though meant as a feature, this wa occasionally rather seen as a bug.  Current
+versios therefore no longer allow to omit an empty index argument and will
+instead emit a wrong argument count error message.  If this feature is still
+desired or needed for existing code, it may be enabled via a
+\begin{verbatim}
+  plainbase on
+\end{verbatim}
+statement.  The current setting may be read from a symbol of same name.
+
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 \subsection{BIGENDIAN}
 \ttindex{ENDIAN}\ttindex{BIGENDIAN}\label{SectBIGENDIAN}
@@ -5974,10 +6002,15 @@ This definition by itself does not generate any code!  In turn, from
 now on the instruction sequence can simply be called by the name, the
 whole construct therefore shortens and simplifies programs.  A
 parameter list may be added to the macro definition to make things
-even more useful.  The parameters' names have to be separated by
-commas (as usual) and have to conform to the conventions for symbol
-names (see section \ref{SectSymConv}) - like the macro name itself.
-
+even more useful.
+\par
+While a macro's name only has to conform to the usual rules for symbol
+names (see section \ref{SectSymConv}), there is the additional restriction
+that parameter names may not contain underscore characters.  This may
+be changed via the \tty{-underscore-macroargs} command line argument,
+but sinve it has additional side effects, it should only be used if
+absolutely necessary.
+\par
 A switch to case-sensitive mode influences both macro names and
 parameters.
 
@@ -6080,6 +6113,23 @@ parameter names to upper case when operating in case-insensitive
 mode, but this conversion never takes place inside of string constants.
 Macro parameter names therefore have to be written in upper case when
 they appear in string constants.
+
+Macro parameter expansion furthermore depends on whether
+parameter names may contain underscores or not.  If not
+(the default), underscores in the macro body also have
+a function of 'limiters' to detect parameter names.  So
+in the following example:
+\begin{verbatim}
+setled  macro led,value
+        out   led,value
+        ld    led_shadow,value
+        endm
+\end{verbatim}
+the parameter 'led' would be replaced in both source lines, whereas
+only in the first one if the command line switch \tty{underscore-macroargs}
+is used.  Several of the include files shipped with \asname{}
+rely on the default behaviour.  This switch should therefore only
+be used if absolutely necessary.
 
 Macro arguments may be given in either of two forms: {\em
 positional} or {\em keyword} arguments.

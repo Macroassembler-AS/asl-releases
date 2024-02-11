@@ -1346,7 +1346,7 @@ func_exit:
 
 Boolean DecodeMoto16Pseudo(tSymbolSize OpSize, Boolean BigEndian)
 {
-  LongInt NewPC, HVal;
+  LongInt HVal;
   Boolean ValOK;
   tSymbolFlags Flags;
   Boolean PadBeforeStart;
@@ -1389,7 +1389,7 @@ Boolean DecodeMoto16Pseudo(tSymbolSize OpSize, Boolean BigEndian)
 
         if ((HVal == 0) && !OddSize)
         {
-          NewPC = EProgCounter() + WSize - 1;
+          LongWord NewPC = EProgCounter() + WSize - 1;
           NewPC -= NewPC % WSize;
           CodeLen = NewPC - EProgCounter();
           if (CodeLen == 0)
