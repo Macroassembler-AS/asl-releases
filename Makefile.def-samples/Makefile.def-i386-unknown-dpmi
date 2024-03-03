@@ -16,7 +16,7 @@ CHECK_TARG_CC=
 
 OBJDIR =
 CC = bcc
-CFLAGS =-WX -ml -Oe -k- -Z -d -dc
+CFLAGS =-WX -w-stu -ml -Oe -k- -Z -d -dc
 HOST_OBJEXTENSION = .obj
 LD = bcc -WX
 LDFLAGS =

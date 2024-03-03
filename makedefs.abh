@@ -119,6 +119,8 @@ include $(TARG_OBJDIR)codecp1600.dep
 include $(TARG_OBJDIR)codenano.dep
 include $(TARG_OBJDIR)code6100.dep
 include $(TARG_OBJDIR)coderx.dep
+include $(TARG_OBJDIR)code61860.dep
+include $(TARG_OBJDIR)code62015.dep
 include $(TARG_OBJDIR)as.dep
 include $(TARG_OBJDIR)asmdef.dep
 include $(TARG_OBJDIR)asmsub.dep

@@ -33,7 +33,7 @@ STKSEL		__z8bit	EMT,1		;  Stack Select
 DATAWS		__z8bFIELD EMT,2,2	;  Data Memory Automatic Waits
 PROGWS		__z8bfield EMT,4,2	;  Program Memory Automatic Waits
 SLOW		__z8bit	EMT,6		;  Slow Memory Timing
-EWI		__z8bfield EMT,7	;  External Wait Input
+EWI		__z8bit EMT,7		;  External Wait Input
 WUMCH		sfr	0feh		; Wakeup Match Register
 WUMSK		sfr	0ffh		; Wakeup Mask Register
 

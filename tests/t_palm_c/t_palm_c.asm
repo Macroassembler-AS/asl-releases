@@ -82,14 +82,14 @@ var2	equ	x'ac'
 	move	dest,(ptr)+		; 'ldhi dest,ptr,2' in IBM syntax
 	move	dest,(ptr)+'		; 'ldhi dest,ptr,3' in IBM syntax
 	move	dest,(ptr)++		; 'ldhi dest,ptr,4' in IBM syntax
-	expect	1110
+	expect	1350
 	move	dest,(ptr)+++		; too much...
 	endexpect
 	move	dest,(ptr)~		; 'ldhi dest,ptr,-1' in IBM syntax
 	move	dest,(ptr)-		; 'ldhi dest,ptr,-2' in IBM syntax
 	move	dest,(ptr)-~		; 'ldhi dest,ptr,-3' in IBM syntax
 	move	dest,(ptr)--		; 'ldhi dest,ptr,-4' in IBM syntax
-	expect	1110
+	expect	1350
 	move	dest,(ptr)---		; too much...
 	endexpect
 
@@ -98,14 +98,14 @@ var2	equ	x'ac'
 	move	(ptr)+,dest		; 'sthi dest,ptr,2' in IBM syntax
 	move	(ptr)+',dest		; 'sthi dest,ptr,3' in IBM syntax
 	move	(ptr)++,dest		; 'sthi dest,ptr,4' in IBM syntax
-	expect	1110
+	expect	1350
 	move	(ptr)+++,dest		; too much...
 	endexpect
 	move	(ptr)~,dest		; 'sthi dest,ptr,-1' in IBM syntax
 	move	(ptr)-,dest		; 'sthi dest,ptr,-2' in IBM syntax
 	move	(ptr)-~,dest		; 'sthi dest,ptr,-3' in IBM syntax
 	move	(ptr)--,dest		; 'sthi dest,ptr,-4' in IBM syntax
-	expect	1110
+	expect	1350
 	move	(ptr)---,dest		; too much...
 	endexpect
 
@@ -114,14 +114,14 @@ var2	equ	x'ac'
 	movb	dest,(ptr)++		; 'ldbi dest,ptr,2' in IBM syntax
 	movb	dest,(ptr)+++		; 'ldbi dest,ptr,3' in IBM syntax
 	movb	dest,(ptr)++++		; 'ldbi dest,ptr,4' in IBM syntax
-	expect	1110
+	expect	1350
 	movb	dest,(ptr)+++++		; too much...
 	endexpect
 	movb	dest,(ptr)-		; 'ldbi dest,ptr,-1' in IBM syntax
 	movb	dest,(ptr)--		; 'ldbi dest,ptr,-2' in IBM syntax
 	movb	dest,(ptr)---		; 'ldbi dest,ptr,-3' in IBM syntax
 	movb	dest,(ptr)----		; 'ldbi dest,ptr,-4' in IBM syntax
-	expect	1110
+	expect	1350
 	movb	dest,(ptr)-----		; too much...
 	endexpect
 
@@ -130,14 +130,14 @@ var2	equ	x'ac'
 	movb	(ptr)++,dest		; 'stbi dest,ptr,2' in IBM syntax
 	movb	(ptr)+++,dest		; 'stbi dest,ptr,3' in IBM syntax
 	movb	(ptr)++++,dest		; 'stbi dest,ptr,4' in IBM syntax
-	expect	1110
+	expect	1350
 	movb	(ptr)+++++,dest		; too much...
 	endexpect
 	movb	(ptr)-,dest		; 'stbi dest,ptr,-1' in IBM syntax
 	movb	(ptr)--,dest		; 'stbi dest,ptr,-2' in IBM syntax
 	movb	(ptr)---,dest		; 'stbi dest,ptr,-3' in IBM syntax
 	movb	(ptr)----,dest		; 'stbi dest,ptr,-4' in IBM syntax
-	expect	1110
+	expect	1350
 	movb	(ptr)-----,dest		; too much...
 	endexpect
 
@@ -180,14 +180,14 @@ var2	equ	x'ac'
 	putb	dev2,(ptr)++		; 'putb dev2,ptr,2' in IBM syntax
 	putb	dev2,(ptr)+++		; 'putb dev2,ptr,3' in IBM syntax
 	putb	dev2,(ptr)++++		; 'putb dev2,ptr,4' in IBM syntax
-	expect	1110
+	expect	1350
 	putb	dev2,(ptr)+++++		; too much :-)
 	endexpect
 	putb	dev2,(ptr)-		; 'putb dev2,ptr,-1' in IBM syntax
 	putb	dev2,(ptr)--		; 'putb dev2,ptr,-2' in IBM syntax
 	putb	dev2,(ptr)---		; 'putb dev2,ptr,-3' in IBM syntax
 	putb	dev2,(ptr)----		; 'putb dev2,ptr,-4' in IBM syntax
-	expect	1110
+	expect	1350
 	putb	dev2,(ptr)-----		; too much :-)
 	endexpect
 
@@ -196,14 +196,14 @@ var2	equ	x'ac'
 	getb	(ptr)++,dev1		; 'getb dev1,ptr,2' in IBM syntax
 	getb	(ptr)+++,dev1		; 'getb dev1,ptr,3' in IBM syntax
 	getb	(ptr)++++,dev1		; 'getb dev1,ptr,4' in IBM syntax
-	expect	1110
+	expect	1350
 	getb	(ptr)+++++,dev1		; too much :-)
 	endexpect
 	getb	(ptr)-,dev1		; 'getb dev1,ptr,-1' in IBM syntax
 	getb	(ptr)--,dev1		; 'getb dev1,ptr,-2' in IBM syntax
 	getb	(ptr)---,dev1		; 'getb dev1,ptr,-3' in IBM syntax
 	getb	(ptr)----,dev1		; 'getb dev1,ptr,-4' in IBM syntax
-	expect	1110
+	expect	1350
 	getb	(ptr)-----,dev1		; too much :-)
 	endexpect
 

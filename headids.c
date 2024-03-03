@@ -136,6 +136,8 @@ static const TFamilyDescr Descrs[] =
   { "NANO"         , 0x000b, eHexFormatIntel   },
   { "IM6100"       , 0x000c, eHexFormatIntel   },
   { "RX"           , 0x001e, eHexFormatIntel32 },
+  { "SC61860"      , 0x001f, eHexFormatMotoS   },
+  { "SC62015"      , 0x0020, eHexFormatMotoS   },
   { NULL           , 0xffff, eHexFormatDefault }
 };
 

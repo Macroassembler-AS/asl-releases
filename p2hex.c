@@ -695,7 +695,7 @@ static void ProcessFile(const char *FileName, LongWord Offset)
 
   if (msg_level >= e_msg_level_normal)
   {
-    errno = 0; printf("  ("); ChkIO(OutName);
+    errno = 0; printf(" ("); ChkIO(OutName);
     errno = 0; printf(Integ32Format, SumLen); ChkIO(OutName);
     errno = 0; printf(" %s)\n", getmessage((SumLen == 1) ? Num_Byte : Num_Bytes)); ChkIO(OutName);
   }

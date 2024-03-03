@@ -165,6 +165,8 @@
 #include "codenano.h"
 #include "code6100.h"
 #include "coderx.h"
+#include "code61860.h"
+#include "code62015.h"
 /**          Code21xx};**/
 
 static long StartTime, StopTime;
@@ -4432,6 +4434,8 @@ int main(int argc, char **argv)
     codenano_init();
     code6100_init();
     coderx_init();
+	code61860_init();
+	code62015_init();
     First = FALSE;
   }
 

@@ -289,37 +289,6 @@ static void reset_adr_vals(adr_vals_t *p_vals)
 }
 
 /*!------------------------------------------------------------------------
- * \fn     decode_adr(tStrComp *p_arg, tSymbolSize op_size, unsigned mode_mask)
- * \brief  decode address expression
- * \param  p_arg source argument
- * \param  op_size operand size (8/16 bit)
- * \param  mode_mask bit mask of allowed modes
- * \return register evaluation result: pattern match if eIsReg
- * ------------------------------------------------------------------------ */
-
-static tRegEvalResult is_auto_increment(const tStrComp *p_arg, size_t arg_len, Word *p_result, const char *p_suffix, size_t suffix_len)
-{
-  String reg;
-  tStrComp reg_comp;
-
-  /* matches pattern at all? */
-
-  if ((arg_len < 3 + suffix_len)
-   || (p_arg->str.p_str[0] != '(')
-   || (p_arg->str.p_str[arg_len - suffix_len - 1] != ')')
-   || strcmp(&p_arg->str.p_str[arg_len - suffix_len], p_suffix))
-    return eIsNoReg;
-
-  /* if yes, see if part in () is a register */
-
-  StrCompMkTemp(&reg_comp, reg, sizeof(reg));
-  StrCompCopySub(&reg_comp, p_arg, 1, arg_len - (2 + suffix_len));
-  KillPrefBlanksStrComp(&reg_comp);
-  KillPostBlanksStrComp(&reg_comp);
-  return decode_reg(&reg_comp, p_result, False);
-}
-
-/*!------------------------------------------------------------------------
  * \fn     chk_auto_increment(const tStrComp *p_arg, tSymbolSize op_size, adr_vals_t *p_result)
  * \brief  iterate over all auto-increment/decrement modes
  * \param  p_arg source argument
@@ -330,58 +299,104 @@ static tRegEvalResult is_auto_increment(const tStrComp *p_arg, size_t arg_len, W
 
 static tRegEvalResult chk_auto_increment(const tStrComp *p_arg, tSymbolSize op_size, adr_vals_t *p_result)
 {
-  /* The addressing modes are sorted in the packed strings
-     according to the modifier value (0..8): */
+  size_t arg_len = strlen(p_arg->str.p_str);
+  Word reg_num;
+  String reg_str;
+  tStrComp reg_comp;
+  int dir, n_half, n_full, pos;
 
-  static const char suffixes_8[] =
-  {
-    '+', '\0',
-    '+', '+', '\0',
-    '+', '+', '+', '\0',
-    '+', '+', '+', '+', '\0',
-    '-', '\0',
-    '-', '-', '\0',
-    '-', '-', '-', '\0',
-    '-', '-', '-', '-', '\0',
-    '\0'
-  },
-  suffixes_16[] =
-  {
-    '\'', '\0',
-    '+', '\0',
-    '+', '\'', '\0',
-    '+', '+', '\0',
-    '~', '\0',
-    '-', '\0',
-    '-', '~', '\0',
-    '-', '-', '\0',
-    '\0'
-  };
-  size_t arg_len = strlen(p_arg->str.p_str), suffix_len;
-  const char *p_suffix = (op_size == eSymbolSize16Bit) ? suffixes_16 : suffixes_8;
-  Word reg;
+  /* Expression is (reg)+...+{'} or (reg)-...-{~}
+     Check for opening parenthese and minimum plausible length: */
 
-  p_result->value = 0;
-  do
-  {
-    suffix_len = strlen(p_suffix);
+  if ((arg_len < 4) || (p_arg->str.p_str[0] != '('))
+    return eIsNoReg;
 
-    switch (is_auto_increment(p_arg, arg_len, &reg, p_suffix, suffix_len))
+  /* Now walk backwards through string as a little state machine: */
+
+  n_full = n_half = dir = 0;
+  for (pos = arg_len - 1; p_arg->str.p_str[pos] != ')'; pos--)
+  {
+    /* Latest pos for closing parenthese */
+    if (pos < 2)
+      return eIsNoReg;
+    switch (p_arg->str.p_str[pos])
     {
-      case eRegAbort:
-        return eRegAbort;
-      case eIsReg:
-        p_result->value |= reg << 4;
-        p_result->mode = ModIReg;
-        return eIsReg;
+      case '\'':
+        if (dir)
+          return eIsNoReg;
+        dir = 1; n_half++;
+        break;
+      case '~':
+        if (dir)
+          return eIsNoReg;
+        dir = 2; n_half++;
+        break;
+      case '+':
+        if (dir == 2)
+          return eIsNoReg;
+        dir = 1; n_full++;
+        break;
+      case '-':
+        if (dir == 1)
+          return eIsNoReg;
+        dir = 2; n_full++;
+        break;
       default:
-        p_result->value++;
-        p_suffix += suffix_len + 1;
+        return eIsNoReg;
     }
   }
-  while (suffix_len > 0);
-  return eIsNoReg;
+
+  /* Impossible combinations: */
+
+  switch (op_size)
+  {
+    case eSymbolSize8Bit:
+      if (n_half || (n_full > 4))
+        goto too_much;
+      break;
+    case eSymbolSize16Bit:
+      if (n_full > 2 - n_half)
+        goto too_much;
+      /* convert word to byte count */
+      n_full = (n_full * 2) + n_half;
+      break;
+    default:
+    too_much:
+      WrStrErrorPos(ErrNum_InvAddrMode, p_arg);
+      return eRegAbort;
+  }
+
+  /* Encode found increment/decrement */
+
+  p_result->value = n_full ? (((dir - 1) << 2) | (n_full - 1)) : 8;
+
+  /* Test register */
+
+  StrCompMkTemp(&reg_comp, reg_str, sizeof(reg_str));
+  StrCompCopySub(&reg_comp, p_arg, 1, pos - 1);
+  KillPrefBlanksStrComp(&reg_comp);
+  KillPostBlanksStrComp(&reg_comp);
+  switch (decode_reg(&reg_comp, &reg_num, False))
+  {
+    case eRegAbort:
+      return eRegAbort;
+    case eIsReg:
+      p_result->value |= reg_num << 4;
+      p_result->mode = ModIReg;
+      return eIsReg;
+    default:
+      return eIsNoReg;
+  }
 }
+
+/*!------------------------------------------------------------------------
+ * \fn     decode_adr(tStrComp *p_arg, tSymbolSize op_size, unsigned mode_mask)
+ * \brief  decode address expression
+ * \param  p_arg source argument
+ * \param  op_size operand size (8/16 bit)
+ * \param  mode_mask bit mask of allowed modes
+ * \return register evaluation result: pattern match if eIsReg
+ * ------------------------------------------------------------------------ */
 
 static adr_mode_t decode_adr(tStrComp *p_arg, tSymbolSize op_size, unsigned mode_mask, adr_vals_t *p_result)
 {

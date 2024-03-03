@@ -1,3 +1,8 @@
+2024-03-03 [1.42 Bld 263]
+
+- Addition    : Add support for Sharp SC62015/SC61860 (contribution
+                by Haruo Asano)
+
 2024-02-11 [1.42 Bld 262]
 
 - Addition    : New command line switch '-underscore-macroargs' to

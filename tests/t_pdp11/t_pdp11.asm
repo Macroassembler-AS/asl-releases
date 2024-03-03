@@ -69,10 +69,16 @@ dest	equ	r5
 	adc	(pc)+
 	adc	(src)+
 	adc	(dest)+
-	expect	1110
-	; without defined register, gets interpreted as addition with missing second operand
+	; Without defined register, we get undefined register error in
+        ; second pass, since (...)+ cannot be an arbitrary arithmetic
+        ; expression:
+	if	mompass > 1
+	expect	1445
+	endif
 	adc	(undefined)+
+	if	mompass > 1
 	endexpect
+	endif
 
 	; -> autoincrement deferred (3n)
 
@@ -81,10 +87,16 @@ dest	equ	r5
 	adc	@ ( pc )+
 	adc	@(src)+
 	adc	@(dest)+
-	expect	1110
-	; without defined register, gets interpreted as addition with missing second operand
+	; Without defined register, we get undefined register error in
+        ; second pass, since (...)+ cannot be an arbitrary arithmetic
+        ; expression:
+	if	mompass > 1
+	expect	1445
+	endif
 	adc	@(undefined)+
+	if	mompass > 1
 	endexpect
+	endif
 
 	; -> autodecrement (4n)
 
@@ -93,10 +105,12 @@ dest	equ	r5
 	adc	-(pc)
 	adc	-(src)
 	adc	-(dest)
+	; without defined register, we get undefined symbol error in
+        ; second pass, since -(...) may be an arbitrary arithmetic
+        ; expression (sign toggle)
 	if	mompass > 1
 	expect	1010
 	endif
-	; without defined register, gets interpreted as negation
 	adc	-(undefined)
 	if	mompass > 1
 	endexpect
@@ -109,10 +123,12 @@ dest	equ	r5
 	adc	@ -( pc )
 	adc	@-(src)
 	adc	@-(dest)
+	; without defined register, we get undefined symbol error in
+        ; second pass, since -(...) may be an arbitrary arithmetic
+        ; expression (sign toggle)
 	if	mompass > 1
 	expect	1010
 	endif
-	; without defined register, gets interpreted as negation
 	adc	@-(undefined)
 	if	mompass > 1
 	endexpect

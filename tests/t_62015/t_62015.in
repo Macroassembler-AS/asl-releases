@@ -1,0 +1,655 @@
+;;; -*- asm -*-
+;;;
+
+	CPU	SC62015
+	ORG	0000H
+
+	;; a1 MV (Immediate)
+	MV	A,0
+# 08 00
+	MV	BA,1024
+# 0A 00 04
+	MV	X,131072
+# 0C 00 00 02
+	MV	(00H),10
+# 30 CC 00 0A
+	MVW	(BP+10H),1034
+# CD 10 0A 04
+	MVP	(PX-10H),131082
+# 34 DC F0 0A 00 02
+
+	;; a2 MV (Inter-Register)
+	MV	B,A
+# 75
+	MV	A,B
+# 74
+	MV	BA,I
+# FD 23
+	MV	X,Y
+# FD 45
+
+	;; a3 MV (Internal RAM Direct / Indirect)
+	MV	IL,(BP+PX)
+# 24 81 00
+	MV	I,(08H)
+# 30 83 08
+	MV	U,(BP+20H)
+# 86 20
+	MV	(PX-20H),A
+# 34 A0 E0
+	MV	(BP+PX),BA
+# 24 A2 00
+	MV	(18H),S
+# 30 A7 18
+	MV	(BP+30H),(PY-30H)
+# 23 C8 30 D0
+	MVW	(BP+PX),(20H)
+# 26 C9 00 20
+	MVP	(PX+40H),(BP+PY)
+# 35 CA 40 00
+	MVL	(28H),(30H)
+# 32 CB 28 30
+	MVLD	(BP-40H),(BP+50H)
+# CF C0 50
+
+	;; a4 MV (Direct)
+	MV	IL,[12345H]
+# 89 45 23 01
+	MV	I,[23456H]
+# 8B 56 34 02
+	MV	X,[34567H]
+# 8C 67 45 03
+	MV	[45678H],A
+# A8 78 56 04
+	MV	[56789H],BA
+# AA 89 67 05
+	MV	[6789AH],Y
+# AD 9A 78 06
+	MV	(38H),[789ABH]
+# 30 D0 38 AB 89 07
+	MVW	(BP-50H),[89ABCH]
+# D1 B0 BC 9A 08
+	MVP	(PX+60H),[9ABCDH]
+# 34 D2 60 CD AB 09
+	MVL	(BP+PX),[54321H]
+# 24 D3 00 21 43 05
+	MV	[65432H],(40H)
+# 30 D8 32 54 06 40
+	MVW	[76543H],(BP-60H)
+# D9 43 65 07 A0
+	MVP	[87654H],(PX+70H)
+# 34 DA 54 76 08 70
+	MVL	[98765H],(BP+PX)
+# 24 DB 65 87 09 00
+
+	;; a5 Register Indirect
+	MV	IL,[U]
+# 91 06
+	MV	I,[S]
+# 93 07
+	MV	X,[Y]
+# 94 05
+	MV	[U],A
+# B0 06
+	MV	[S],BA
+# B2 07
+	MV	[X],Y
+# B5 04
+	MV	(48H),[U]
+# 30 E0 06 48
+	MVW	(BP-70H),[S]
+# E1 07 90
+	MVP	(PX-80H),[X]
+# 34 E2 04 80
+	MV	[Y],(BP+PX)
+# 24 E8 05 00
+	MVW	[U],(50H)
+# 30 E9 06 50
+	MVP	[S],(BP+0)
+# EA 07 00
+
+	;; a6 MV (with Post Increment)
+	MV	IL,[X++]
+# 91 24
+	MV	I,[Y++]
+# 93 25
+	MV	U,[S++]
+# 96 27
+	MV	[X++],A
+# B0 24
+	MV	[Y++],BA
+# B2 25
+	MV	[U++],X
+# B4 26
+	MV	(PX+8),[S++]
+# 34 E0 27 08
+	MVW	(BP+PX),[X++]
+# 24 E1 24 00
+	MVP	(58H),[Y++]
+# 30 E2 25 58
+	MVL	(BP+16),[U++]
+# E3 26 10
+	MV	[S++],(PX+24)
+# 34 E8 27 18
+	MVW	[X++],(BP+PX)
+# 24 E9 24 00
+	MVP	[Y++],(60H)
+# 30 EA 25 60
+	MVL	[U++],(BP+32)
+# EB 26 20
+
+	;; a7 MV (with Pre Decrement)
+	MV	IL,[--S]
+# 91 37
+	MV	I,[--X]
+# 93 34
+	MV	Y,[--U]
+# 95 36
+	MV	[--S],A
+# B0 37
+	MV	[--X],BA
+# B2 34
+	MV	[--Y],U
+# B6 35
+	MV	(PX+40),[--S]
+# 34 E0 37 28
+	MVW	(BP+PX),[--X]
+# 24 E1 34 00
+	MVP	(68H),[--Y]
+# 30 E2 35 68
+	MVL	(BP+48),[--U]
+# E3 36 30
+	MV	[--S],(PX+56)
+# 34 E8 37 38
+	MVW	[--X],(BP+PX)
+# 24 E9 34 00
+	MVP	[--Y],(70H)
+# 30 EA 35 70
+	MVL	[--U],(BP+64)
+# EB 36 40
+
+	;; a8 MV (Register Base)
+	MV	IL,[S+1]
+# 91 87 01
+	MV	I,[X-2]
+# 93 C4 02
+	MV	Y,[U+3]
+# 95 86 03
+	MV	[S-4],A
+# B0 C7 04
+	MV	[X+5],BA
+# B2 84 05
+	MV	[Y-6],U
+# B6 C5 06
+
+	MV	(78H),[S+7]
+# 30 E0 87 78 07
+	MVW	(BP+64),[X-8]
+# E1 C4 40 08
+	MVP	(PX+72),[Y+9]
+# 34 E2 85 48 09
+	MVL	(BP+PX),[U-10]
+# 24 56 C6 00 0A
+	MV	[S+11],(80H)
+# 30 E8 87 80 0B
+	MVW	[X-12],(BP+80)
+# E9 C4 50 0C
+	MVP	[Y+13],(PX+88)
+# 34 EA 85 58 0D
+	MVL	[U-14],(BP+PX)
+# 24 5E C6 00 0E
+
+	;; a9 MV (Internal RAM Indirect)
+	MV	IL,[(88H)]
+# 30 99 00 88
+	MV	I,[(BP+96)]
+# 9B 00 60
+	MV	X,[(PX+104)]
+# 34 9C 00 68
+	MV	[(BP+PX)],A
+# 24 B8 00 00
+	MV	[(90H)],BA
+# 30 BA 00 90
+	MV	[(BP+112)],Y
+# BD 00 70
+	MV	(PX+120),[(BP+PY)]
+# 35 F0 00 78 00
+	MVW	(98H),[(00H)]
+# 32 F1 00 98 00
+	MVP	(BP-128),[(PY-120)]
+# 23 F2 00 80 88
+	MVL	(BP+PX),[(04H)]
+# 26 F3 00 00 04
+	MV	[(BP-112)],(PY-104)
+# 23 F8 00 90 98
+	MVW	[(BP+PX)],(BP+PY)
+# 25 F9 00 00 00
+	MVP	[(08H)],(BP-96)
+# 30 FA 00 08 A0
+	MVL	[(PX-88)],(BP+PY)
+# 35 FB 00 A8 00
+
+	;; a10 MV (Internal RAM Base)
+	MV	A,[(0CH)+16]
+# 30 98 80 0C 10
+	MV	I,[(BP-80)-32]
+# 9B C0 B0 20
+	MV	U,[(PX-72)+48]
+# 34 9E 80 B8 30
+	MV	[(BP+PX)-64],IL
+# 24 B9 C0 00 40
+	MV	[(10H)+80],BA
+# 30 BA 80 10 50
+	MV	[(BP-64)-96],X
+# BC C0 C0 60
+	MV	(PX-56),[(BP+PY)+112]
+# 35 F0 80 C8 00 70
+	MVW	(14H),[(18H)-128]
+# 32 F1 C0 14 18 80
+	MVP	(BP-48),[(BP-40)+144]
+# F2 80 D0 D8 90
+	MVL	(PX-32),[(PY-24)-160]
+# 37 F3 C0 E0 E8 A0
+	MV	[(BP+PX)+176],(BP+PY)
+# 25 F8 80 00 B0 00
+	MVW	[(1CH)-192],(BP-16)
+# 30 F9 C0 1C C0 F0
+	MVP	[(PX-8)+208],(BP+PY)
+# 35 FA 80 F8 D0 00
+	MVL	[(20H)-224],(BP-0)
+# 30 FB C0 20 E0 00
+
+	;; b1 EX instruction
+	EX	A,B
+# DD
+	EX	BA,I
+# ED 23
+	EX	X,Y
+# ED 45
+	EX	(00H),(BP+10)
+# 30 C0 00 0A
+	EXW	(PX-10),(BP+PY)
+# 35 C1 F6 00
+	EXP	(BP+20),(PY-20)
+# 23 C2 14 EC
+	EXL	(BP+PX),(10H)
+# 26 C3 00 10
+
+	;; b2 SWAP instruction
+	SWAP	A
+# EE
+
+	;; c1 ADD instruction
+	ADD	A,20
+# 40 14
+	ADD	(BP+30),30
+# 41 1E 1E
+	ADD	(PX-30),A
+# 34 43 E2
+	ADD	A,(BP+PX)
+# 24 42 00
+	ADD	A,IL
+# 46 01
+	ADD	BA,A
+# 44 20
+	ADD	I,BA
+# 44 32
+	ADD	X,IL
+# 45 41
+
+	;; c2 ADC
+	ADC	A,40
+# 50 28
+	ADC	(20H),50
+# 30 51 20 32
+	ADC	(BP+40),A
+# 53 28
+	ADC	A,(PX-40)
+# 34 52 D8
+
+	;; c3 SUB
+	SUB	A,60
+# 48 3C
+	SUB	(BP+PX),70
+# 24 49 00 46
+	SUB	(30H),A
+# 30 4B 30
+	SUB	A,(BP+50)
+# 4A 32
+	SUB	IL,A
+# 4E 10
+	SUB	I,IL
+# 4C 31
+	SUB	BA,I
+# 4C 23
+	SUB	Y,BA
+# 4D 52
+
+	;; c4 SBC
+	SBC	A,60
+# 58 3C
+	SBC	(PX-50),70
+# 34 59 CE 46
+	SBC	(BP+PX),A
+# 24 5B 00
+	SBC	A,(40H)
+# 30 5A 40
+
+	;;  c5 ADCL
+	ADCL	(BP+60),(PY-60)
+# 23 54 3C C4
+	ADCL	(BP+PX),A
+# 24 55 00
+
+	;; c6 SBCL
+	SBCL	(BP+PX),(50H)
+# 26 5C 00 50
+	SBCL	(BP+70),A
+# 5D 46
+
+	;; c7 DADL
+	DADL	(PX-70),(BP+PY)
+# 35 C4 BA 00
+	DADL	(60H),A
+# 30 C5 60
+
+	;; c8 DSBL
+	DSBL	(BP+80),(PY-80)
+# 23 D4 50 B0
+	DSBL	(BP+PX),A
+# 24 D5 00
+
+	;; c9 PMDF
+	PMDF	(70H),80
+# 30 47 70 50
+	PMDF	(BP+90),A
+# 57 5A
+
+	;; d1 AND
+	AND	A,90
+# 70 5A
+	AND	(PX-90),100
+# 34 71 A6 64
+	AND	[12345H],110
+# 72 45 23 01 6E
+	AND	(BP+PX),A
+# 24 73 00
+	AND	A,(80H)
+# 30 77 80
+	AND	(BP+100),(PY-100)
+# 23 76 64 9C
+
+	;; d2 OR
+	OR	A,120
+# 78 78
+	OR	(BP+PX),130
+# 24 79 00 82
+	OR	[23456H],140
+# 7A 56 34 02 8C
+	OR	(90H),A
+# 30 7B 90
+	OR	A,(BP+110)
+# 7F 6E
+	OR	(PX-110),(BP+PY)
+# 35 7E 92 00
+
+	;; d3 XOR
+	XOR	A,150
+# 68 96
+	XOR	(08H),160
+# 30 69 08 A0
+	XOR	[34567H],170
+# 6A 67 45 03 AA
+	XOR	(BP+120),A
+# 6B 78
+	XOR	A,(PX-120)
+# 34 6F 88
+	XOR	(BP+PX),(18H)
+# 26 6E 00 18
+
+	;; e1 INC
+	INC	A
+# 6C 00
+	INC	(BP+0)
+# 6D 00
+
+	;; e2 DEC
+	DEC	BA
+# 7C 02
+	DEC	(PX+8)
+# 34 7D 08
+
+	;; f1 ROR
+	ROR	A
+# E4
+	ROR	(BP+PX)
+# 24 E5 00
+
+	;; f2 ROL
+	ROL	A
+# E6
+	ROL	(18H)
+# 30 E7 18
+
+	;; f3 SHR
+	SHR	A
+# F4
+	SHR	(BP-8)
+# F5 F8
+
+	;; f4 SHL
+	SHL	A
+# F6
+	SHL	(PX+16)
+# 34 F7 10
+
+	;; f5 DSRL
+	DSRL	(BP+PX)
+# 24 FC 00
+	DSLL	(28H)
+# 30 EC 28
+
+	;; g1 CMP
+	CMP	A,180
+# 60 B4
+	CMP	(BP+24),190
+# 61 18 BE
+	CMP	[45678H],200
+# 62 78 56 04 C8
+	CMP	(PX+32),A
+# 34 63 20
+	CMP	(BP+PX),(30H)
+# 26 B7 00 30
+	CMPW	(BP+40),(PY+48)
+# 23 C6 28 30
+	CMPW	(BP+PX),I
+# 24 D6 03 00
+	CMPP	(38H),(BP+56)
+# 30 C7 38 38
+	CMPP	(PX+64),U
+# 34 D7 06 40
+
+	;; g2 TEST
+	TEST	A,210
+# 64 D2
+	TEST	(BP+PX),220
+# 24 65 00 DC
+	TEST	[56789H],230
+# 66 89 67 05 E6
+	TEST	(40H),A
+# 30 67 40
+
+	;; h1 JP/JPF (Direct)
+	JP	1234H
+# 02 34 12
+	JPF	12345H
+# 03 45 23 01
+
+	;; h2 JP (Indirect)
+	JP	(BP+72)
+# 10 48
+	JP	S
+# 11 07
+
+	;; h3 JR
+L1:	JR	L1
+# 13 02
+
+	;; h4 JPcc
+	JPZ	2345H
+# 14 45 23
+	JPNZ	3456H
+# 15 56 34
+	JPC	4567H
+# 16 67 45
+	JPNC	5678H
+# 17 78 56
+
+	;; h5 JRcc
+L2:	JRZ	L2
+# 19 02
+	JRNZ	L4
+# 1A 02
+L3:	JRC	L2
+# 1D 06
+L4:	JRNC	L4
+# 1F 02
+
+	;; i1 CALL/CALLF
+	CALL	6789H
+# 04 89 67
+	CALLF	23456H
+# 05 56 34 02
+
+	;; i2 RET
+	RET
+# 06
+	RETF
+# 07
+
+	;;  j1 PUSH
+	PUSHS	A
+# B0 37
+	PUSHS	BA
+# B2 37
+	PUSHS	X
+# B4 37
+	PUSHS	F
+# 4F
+	PUSHS	IMR
+# 30 E8 37 FB
+	PUSHU	IL
+# 29
+	PUSHU	I
+# 2B
+	PUSHU	Y
+# 2D
+	PUSHU	F
+# 2E
+	PUSHU	IMR
+# 2F
+
+	;; j2 POP
+	POPS	IL
+# 91 37
+	POPS	I
+# 93 37
+	POPS	Y
+# 95 37
+	POPS	F
+# 5F
+	POPS	IMR
+# 30 E0 27 FB
+	POPU	A
+# 38
+	POPU	BA
+# 3A
+	POPU	X
+# 3C
+	POPU	F
+# 3E
+	POPU	IMR
+# 3F
+
+	;; k1 NOP
+	NOP
+# 00
+
+	;; k2 WAIT
+	WAIT
+# EF
+
+	;; k3 SC/RC
+	SC
+# 97
+	RC
+# 9F
+
+	;; k4 RETI
+	RETI
+# 01
+
+	;; k5 HALT/OFF
+	HALT
+# DE
+	OFF
+# DF
+
+	;; k6 TCL/IR/RESET
+	TCL
+# CE
+	IR
+# FE
+	RESET
+# FF
+
+	;; Internal RAM Direct by name
+	MV	BP,0		; MV   (0ECH),0
+# 30 CC EC 00
+	MV	PX,1
+# 30 CC ED 01
+	MV	PY,2
+# 30 CC EE 02
+	MV	AMC,3
+# 30 CC EF 03
+	MV	KOL,4
+# 30 CC F0 04
+	MV	KOH,5
+# 30 CC F1 05
+	MV	KI.6
+# 30 CC F2 06
+	MV	EOL,7
+# 30 CC F3 07
+	MV	EOH,8
+# 30 CC F4 08
+	MV	EIL,9
+# 30 CC F5 09
+	MV	EIH,10
+# 30 CC F6 0A
+	MV	UCR,11
+# 30 CC F7 0B
+	MV	USR,12
+# 30 CC F8 0C
+	MV	RXD,13
+# 30 CC F9 0D
+	MV	TXD,14
+# 30 CC FA 0E
+	MV	IMR,15
+# 30 CC FB 0F
+	MV	ISR,16
+# 30 CC FC 10
+	MV	SCR,17
+# 30 CC FD 11
+	MV	LCC,18
+# 30 CC FE 12
+	MV	SSR,19
+# 30 CC FF 13
+	
+
+	;;
+	DB	100,50H
+# 64 50
+	DB	'AB'
+# 41 42
+	DW	1234H
+# 34 12

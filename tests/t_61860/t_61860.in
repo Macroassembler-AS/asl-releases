@@ -1,0 +1,311 @@
+;;; -*- asm -*-
+;;;
+
+	CPU	SC61860
+	ORG	$0000
+
+	ADB
+# 14
+	ADCM
+# C4
+	ADIA	0
+# 74 00
+	ADIM	10
+# 70 0A
+	ADM
+# 44
+	ADN
+# 0C
+	ADW
+# 0E
+	ANIA	20
+# 64 14
+	ANID	30
+# D4 1E
+	ANIM	40
+# 60 28
+	ANMA
+# 46
+	CAL	$0000
+# E0 00
+	CAL	$1FFF
+# FF FF
+	CALL	$2000
+# 78 20 00
+	CPIA	50
+# 67 32
+	CPIM	60
+# 63 3C
+	CPMA
+# C7
+	DECA
+# 43
+	DECB
+# C3
+	DECI
+# 41
+	DECJ
+# C1
+	DECK
+# 49
+	DECL
+# C9
+	DECP
+# 51
+	DX
+# 05
+	DXL
+# 25
+	DY
+# 07
+	DYS
+# 27
+	EXAB
+# DA
+	EXAM
+# DB
+	EXB
+# 0B
+	EXBD
+# 1B
+	EXW
+# 09
+	EXWD
+# 19
+	FILD
+# 1F
+	FILM
+# 1E
+	INA
+# 4C
+	INB
+# CC
+	INCA
+# 42
+	INCB
+# C2
+	INCI
+# 40
+	INCJ
+# C0
+	INCK
+# 48
+	INCL
+# C8
+	INCP
+# 50
+	IY
+# 06
+	IYS
+# 26
+	IX
+# 04
+	IXL
+# 24
+	JP	$1234
+# 79 12 34
+	JPC	$2345
+# 7F 23 45
+	JPNC	$3456
+# 7D 34 56
+	JPNZ	$4567
+# 7C 45 67
+	JPZ	$5678
+# 7E 56 78
+L1:	JRCM	L1
+# 3B 01
+	JRCP	L2
+# 3A 01
+L2:	JRC	L1
+# 3B 05
+	JRM	L2
+# 2D 03
+L3:	JRNCM	L3
+# 2B 01
+	JRNCP	L4
+# 2A 01
+L4:	JRNZM	L3
+# 29 05
+	JRNZP	L5
+# 28 03
+	JRP	L5
+# 2C 01
+L5:	JR	L6
+# 2C 03
+	JRZM	L5
+# 39 03
+L6:	JRZP	L7
+# 38 01
+L7:	LEAVE
+# D8
+	LDD
+# 57
+	LDM
+# 59
+	LDP
+# 20
+	LDQ
+# 21
+	LDR
+# 22
+	LIA	70
+# 02 46
+	LIB	80
+# 03 50
+	LIDL	90
+# 11 5A
+	LIDP	100
+# 10 00 64
+	LII	110
+# 00 6E
+	LIJ	120
+# 01 78
+	LIP	130
+# 12 82
+L8:	LIQ	140
+# 13 8C
+	LOOP	L8
+# 2F 03
+	LP	0
+# 80
+	LP	$3F
+# BF
+	MVB
+# 0A
+	MVBD
+# 1A
+	MVDM
+# 53
+	MVMD
+# 55
+	MVW
+# 08
+	MVWD
+# 18
+	NOPT
+# CE
+	NOPW
+# 4D
+	ORIA	150
+# 65 96
+	ORID	160
+# D5 A0
+	ORIM	170
+# 61 AA
+	ORMA
+# 47
+	OUTA
+# 5D
+	OUTB
+# DD
+	OUTF
+# 5F
+	OUTC
+# DF
+	POP
+# 5B
+	PUSH
+# 34
+	RC
+# D1
+	RTN
+# 37
+	SBB
+# 15
+	SBCM
+# C5
+	SBIA	180
+# 75 B4
+	SBIM	190
+# 71 BE
+	SBM
+# 45
+	SBN
+# 0D
+	SBW
+# 0F
+	SC
+# D0
+	SL
+# 5A
+	SLW
+# 1D
+	SR
+# D2
+	SRW
+# 1C
+	STD
+# 52
+	STP
+# 30
+	STQ
+# 31
+	STR
+# 32
+	SWP
+# 58
+	TEST	200
+# 6B C8
+	TSIA	210
+# 66 D2
+	TSID	220
+# D6 DC
+	TSIM	230
+# 62 E6
+	WAIT	240
+# 4E F0
+	
+	
+	LIDP	-1
+# 10 FF FF
+	LIDP	$ffff
+# 10 FF FF
+	FCB	$A5
+# A5
+	DB	100
+# 64
+
+	;; Undocumented (Used in ROM)
+
+	INCM			; PMB
+# 4A
+	DECM			; PMB
+# 4B
+	INCN			; PMB
+# CA
+	DECN			; PMB
+# CB
+	MVWP			; PMB
+# 35
+	RST			; JP3TLC
+# 35
+	IPXL			; PMB
+# 4F
+	IPXH			; PMB
+# 6F
+
+	PTC			;
+# 7A	
+	DTC			;
+# 69
+	TSMA			; PMB
+# C6
+
+	;; Undocumented (Other)
+	CLRA			; PMB
+# 23
+	MVMP			; PMB
+# 54
+	LDPC			; PMB
+# 56
+	
+	;; From PC-1350 Machine Language Reference Manual
+	CASE1
+# 7A
+	CASE2
+# 69
+	CUP
+# 4F
+	CDN
+# 6F
+	

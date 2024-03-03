@@ -67,7 +67,7 @@
 
 \vspace{1cm}\par
 
-{\large Edition Februar 2024}
+{\large Edition March 2024}
 \end{raggedright}
 
 \clearpage
@@ -252,6 +252,8 @@ following processor families have been implemented:
 \item{Siemens 80C166/167}
 \item{Zilog Z80 (including undocumented instructions), Z180, Z380}
 \item{Sharp LR35902 (,,Gameboy Z80'')}
+\item{Sharp SC61860}
+\item{Sharp SC62015}
 \item{Zilog Z8, Super8, Z8 Encore}
 \item{Zilog Z8000}
 \item{Xilinx KCPSM/KCPSM3 ('PicoBlaze')}
@@ -5325,7 +5327,7 @@ number of parameters which are being processed from left to right.
 \ttindex{DC}
 
 {\em valid for: 680x0, M*Core, 68xx, H8, SH7x00, DSP56xxx, XA,
-  ST7/STM8, MN161x, IM61x0, CP-3F}
+  ST7/STM8, MN161x, IM61x0, CP-3F, SC61860}
 
 This instruction places one or several constants of the type
 specified by the attribute into memory.  The attributes are the same ones as
@@ -5375,7 +5377,7 @@ constants in a single statement.
 \ttindex{DS}
 
 {\em valid for: 680x0, M*Core, 68xx, H8, SH7x00, DSP56xxx, XA, ST7/STM8,
-  MN161x, IM61x0, CP-3F, PPS-4}
+  MN161x, IM61x0, CP-3F, PPS-4, SC61860}
 
 On the one hand, this instruction enables to reserve memory space for
 the specified count of numbers of the type given by the attribute.
@@ -5430,7 +5432,7 @@ valid for: \= Intel (except for 4004/4040), Zilog, Toshiba,\\
            \> NEC, TMS370, Siemens, AMD, MELPS7700/65816,\\
            \> M16(C), National, ST9, Atmel, TMS70Cxx, TMS1000,\\
            \> Signetics, $\mu$PD77230, Fairchild, Intersil,\\
-           \> XS1
+           \> XS1, SC62015
 \end{tabbing}}
 
 These commands are - one could say - the Intel counterpart to \tty{DS} and
@@ -5562,7 +5564,7 @@ number.
 \subsection{BYT or FCB}
 \ttindex{BYT}\ttindex{FCB}
 
-{\em valid for: 6502, 68xx}
+{\em valid for: 6502, 68xx, SC61860}
 
 By this instruction, byte constants or ASCII strings are placed in
 65xx/68xx-mode, it therefore corresponds to \tty{DC.B} on the 68000 or
@@ -5605,7 +5607,7 @@ constants or strings to memory.
 \subsection{ADR or FDB}
 \ttindex{ADR}\ttindex{FDB}
 
-{\em valid for: 6502, 68xx}
+{\em valid for: 6502, 68xx, SC61860}
 
 \tty{ADR} resp. \tty{FDB} stores word constants when in 65xx/68xx mode.
 It is therefore the equivalent to \tty{DC.W} on the 68000 or \tty{DW} on
@@ -13262,6 +13264,10 @@ described by:
                {error}
                {These instructions may not be combined with each other.}
                {none}
+\errentry{2300}{unmapped character}
+               {error}
+               {The character string contains a charater that cannot be mapped.}
+               {The string in question}
 \errentry{10001}{error in opening file}
                {fatal}
                {An error was detected while trying to open a file for input.}
