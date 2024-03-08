@@ -1396,6 +1396,39 @@ typedef unsigned long long Card64;
 #endif /* __arm */
 
 /*===========================================================================*/
+/* RISC-V platform */
+
+#ifdef __riscv
+
+#define ARCHPRNAME "riscv"
+
+/*---------------------------------------------------------------------------*/
+/* RISC-V linux with GCC */
+
+#ifdef __linux__
+#define ARCHSYSNAME "unknown-linux-riscv"
+#define DEFSMADE
+#define OPENRDMODE "r"
+#define OPENWRMODE "w"
+#define OPENUPMODE "r+"
+#define IEEEFLOAT
+typedef signed char Integ8;
+typedef unsigned char Card8;
+typedef signed short Integ16;
+typedef unsigned short Card16;
+#define HAS16
+typedef signed int Integ32;
+#define PRIInteg32 "d"
+typedef unsigned int Card32;
+typedef signed long long Integ64;
+typedef unsigned long long Card64;
+#define HAS64
+#define LOCALE_NLS
+#endif /* __linux__ */
+
+#endif /* __riscv */
+
+/*===========================================================================*/
 /* Misc... */
 
 /*---------------------------------------------------------------------------*/

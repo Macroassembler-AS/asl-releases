@@ -62,7 +62,7 @@ static CPUVar CPUSC62015;
 
 typedef struct
 {
-	const char *name;
+	const char name[4];
 	Byte addr;
 } tIntReg;
 
@@ -92,7 +92,7 @@ static const tIntReg IntRegs[] =
 
 static Boolean DecodeReg(const tStrComp *arg, Byte *pReg)
 {
-	const char *rtable[] = { "A", "IL", "BA", "I", "X", "Y", "U", "S", "B", "IH", "PS", "PC", "F", "IMR" };
+	const char rtable[][4] = { "A", "IL", "BA", "I", "X", "Y", "U", "S", "B", "IH", "PS", "PC", "F", "IMR" };
 	const char *str = arg->str.p_str;
 	size_t i;
 
@@ -242,7 +242,7 @@ static Boolean DecodeInternal(const tStrComp *pArg, Byte *pMode, Byte *pDisp, co
 
 static void PreByte(Byte mode1, Byte mode2)
 {
-	const Byte ptable[] = {
+	static const Byte ptable[] = {
 		0x32, 0x30, 0x33, 0x31,
 		0x22, 0x00, 0x23, 0x21,
 		0x36, 0x34, 0x37, 0x35,
