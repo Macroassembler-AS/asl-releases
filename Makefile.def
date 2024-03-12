@@ -33,8 +33,9 @@ TARG_EXEXTENSION = $(HOST_EXEXTENSION)
 #   instead extract the build number from AS_VERSION{MAJOR,MINOR,BUILD}
 #   in version.h, where it moved from bld255 onwards. Use `make paths`
 #   (target below) to show the extracted version number and install path.
-VER != \
-    sed -n -e 's/";.*//' -e 's/-[0-9]$$//' -e 's/.*DebVersion = "//p' version.c
+VER != sed -n \
+    -e 's/1.42//' -e 's/";.*//' -e 's/-[0-9]$$//' -e 's/.*DebVersion = "//p' \
+    version.c
 VER := $(or $(VER),\
     bld$(shell sed -n -e 's/^\#define AS_VERSION_BUILD //p' version.h))
 VER := $(or $(VER),$(error Cannot extract ASL version number.))
