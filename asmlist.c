@@ -85,10 +85,17 @@ void MakeList(const char *pSrcLine)
     /* Zeilennummer / Programmzaehleradresse: */
 
     as_sdprintf(&list_buf, "");
-    if (IncDepth != 0)
+    if (MaxIncDepth > 0)
     {
-      as_snprintf(Tmp, sizeof(Tmp), IntegerFormat, IncDepth);
-      as_sdprcatf(&list_buf, "(%s)", Tmp);
+      int digits = (MaxIncDepth > 99) ? 3 : ((MaxIncDepth > 9) ? 2 : 1);
+
+      if (IncDepth > 0)
+      {
+        as_snprintf(Tmp, sizeof(Tmp), IntegerFormat, IncDepth);
+        as_sdprcatf(&list_buf, "(%*s)", digits, Tmp);
+      }
+      else
+        as_sdprcatf(&list_buf, Blanks(2 + digits));
     }
     if (ListMask & ListMask_LineNums)
     {

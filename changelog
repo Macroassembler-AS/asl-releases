@@ -1,3 +1,10 @@
+2024-03-15 [1.42 Bld 265]
+
+- Change      : Learn maximum include level in first pass, so
+                include nesting field in listing has fixed length
+                in subsequent passes.
+- Bugfix      : Correct address range checking for TLCS-900 and Z380.
+
 2024-03-08 [1.42 Bld 264]
 
 - Bugfix      : On Zx80, do not use indexed mode with extended
@@ -102,7 +109,7 @@
 
 2023-09-27 [1.42 Bld 250]
 
-- Bugfix      : Settig field length of PC in listing also works
+- Bugfix      : Setting field length of PC in listing also works
                 if target is given via CPU statement in source file
 
 2023-09-25 [1.42 Bld 249]

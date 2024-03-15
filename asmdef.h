@@ -311,7 +311,7 @@ extern DissectRegProc DissectReg;
 extern tQualifyQuoteFnc QualifyQuote;
 
 extern StringPtr IncludeList;
-extern Integer IncDepth,NextIncDepth;
+extern Integer IncDepth, NextIncDepth, MaxIncDepth;
 extern FILE *ErrorFile;
 extern FILE *LstFile;
 extern FILE *ShareFile;

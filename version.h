@@ -14,7 +14,7 @@
 
 #define AS_VERSION_MAJOR 1
 #define AS_VERSION_MINOR 42
-#define AS_VERSION_BUILD 264
+#define AS_VERSION_BUILD 265
 
 /* The standard C stringification magic: */
 

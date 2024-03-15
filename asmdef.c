@@ -137,7 +137,8 @@ DissectRegProc DissectReg;
 tQualifyQuoteFnc QualifyQuote;
 
 StringPtr IncludeList;	                /* Suchpfade fuer Includedateien */
-Integer IncDepth, NextIncDepth;         /* Verschachtelungstiefe INCLUDEs */
+Integer IncDepth, NextIncDepth,         /* Verschachtelungstiefe INCLUDEs */
+        MaxIncDepth;
 FILE *ErrorFile = NULL;                 /* Fehlerausgabe */
 FILE *LstFile = NULL;                   /* Listdatei */
 FILE *ShareFile = NULL;                 /* Sharefile */

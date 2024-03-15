@@ -970,16 +970,6 @@ static Boolean DecodeSFR(char *Inp, Byte *Erg)
 /*==========================================================================*/
 /* Adressbereiche */
 
-static LargeWord CodeEnd(void)
-{
-  IntType Type;
-
-  if (ExtFlag) Type = UInt32;
-  else if (MomCPU == CPUZ180) Type = UInt19;
-  else Type = UInt16;
-  return (LargeWord)IntTypeDefs[Type].Max;
-}
-
 static LargeWord PortEnd(void)
 {
   return (LargeWord)IntTypeDefs[ExtFlag ? UInt32 : UInt16].Max;
@@ -4210,6 +4200,17 @@ static Boolean ChkMoreOneArg(void)
   return (ArgCnt > 1);
 }
 
+static Boolean chk_pc_z380(LargeWord addr)
+{
+  switch (ActPC)
+  {
+    case SegCode:
+      return (addr < (ExtFlag ? 0xfffffffful : 0xffffu));
+    default:
+      return True;
+  }
+}
+
 static void SwitchTo_Z80(void)
 {
   TurnWords = False;
@@ -4221,7 +4222,15 @@ static void SwitchTo_Z80(void)
 
   ValidSegs = 1 << SegCode;
   Grans[SegCode] = 1; ListGrans[SegCode] = 1; SegInits[SegCode] = 0;
-  SegLimits[SegCode] = CodeEnd();
+  if (MomCPU == CPUZ380)
+  {
+    SegLimits[SegCode] = 0xfffffffful;
+    ChkPC = chk_pc_z380;
+  }
+  else if (MomCPU == CPUZ180)
+    SegLimits[SegCode] = 0x7fffful;
+  else
+    SegLimits[SegCode] = 0xffffu;
 
   /* Gameboy Z80 does not have I/O space, and no IX/IY, do not test for them and allow as normal symbols: */
 
