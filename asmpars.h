@@ -136,7 +136,7 @@ extern IntType GetSmallestUIntType(LargeWord MaxValue);
 
 extern IntType GetUIntTypeByBits(unsigned Bits);
 
-extern int NonZString2Int(const struct as_nonz_dynstr *p_str, LargeInt *p_result);
+extern tErrorNum NonZString2Int(const struct as_nonz_dynstr *p_str, LargeInt *p_result);
 
 extern Boolean Int2NonZString(struct as_nonz_dynstr *p_str, LargeInt Src);
 

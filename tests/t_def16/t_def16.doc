@@ -1,0 +1,7 @@
++----------------------  Test Application DEF16  ----------------------------+
+|                                                                            |
+|  This is one of the programs from the 'Programming Examples' chapter in    |
+|  the manual.  It demonstrates how a macro can define another macro, and    |
+|  how macro arguments can be converted to strings and be examined.          |
+|                                                                            |
++----------------------------------------------------------------------------+

@@ -1045,6 +1045,14 @@ Message ErrMsgUnmappedChar
  "nicht-gemapptes Zeichen"
  "unmapped character"
 
+Message ErrMsgNoTarget
+ "kein Target gesetzt ('CPU ...' oder '-cpu ...', um eines zu setzen)"
+ "no target set (use 'CPU ...' or '-cpu ...' to set one)"
+
+Message ErrMsgMultiCharInvLength
+ "Multi-Zeichenkonstante mit ung&uuml;ltiger L&auml;nge"
+ "invalid length of multi character constant"
+
 Message ErrMsgInternalError
  "interner Fehler"
  "internal error"

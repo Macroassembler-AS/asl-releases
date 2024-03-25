@@ -1,3 +1,11 @@
+2024-03-25 [1.42 Bld 266]
+
+- Bugfix      : Add missing error message about invalid length
+                of multi character constants.
+- Bugfix      : Regard questionable forward references for Z80.
+- Change      : The default target is now NONE instead of 68008.
+                A target has to be set explicitly to generate code.
+
 2024-03-15 [1.42 Bld 265]
 
 - Change      : Learn maximum include level in first pass, so

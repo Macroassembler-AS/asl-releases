@@ -3283,42 +3283,49 @@ static void DecodeJR(Word Code)
     AdrLInt = EvalAbsAdrExpression(&ArgStr[ArgCnt], &EvalResult);
     if (EvalResult.OK)
     {
+      IntType dist_type;
+
       AdrLInt -= EProgCounter() + 2;
-      if ((AdrLInt <= 0x7fl) && (AdrLInt >= -0x80l))
-      {
-        CodeLen = 2;
-        BAsmCode[0] = Condition << 3;
-        BAsmCode[1] = AdrLInt & 0xff;
-      }
+
+      if ((MomCPU < CPUZ380) || RangeCheck(AdrLInt, SInt8))
+        dist_type = SInt8;
       else
       {
-        if (MomCPU < CPUZ380) WrError(ErrNum_JmpDistTooBig);
+        AdrLInt -= 2;
+        if (RangeCheck(AdrLInt, SInt16))
+          dist_type = SInt16;
         else
         {
-          AdrLInt -= 2;
-          if ((AdrLInt <= 0x7fffl) && (AdrLInt >= -0x8000l))
-          {
-            CodeLen = 4;
-            BAsmCode[0] = 0xdd;
-            BAsmCode[1] = Condition << 3;
-            BAsmCode[2] = AdrLInt & 0xff;
-            BAsmCode[3] = (AdrLInt >> 8) & 0xff;
-          }
-          else
-          {
-            AdrLInt--;
-            if ((AdrLInt <= 0x7fffffl) && (AdrLInt >= -0x800000l))
-            {
-              CodeLen = 5;
-              BAsmCode[0] = 0xfd;
-              BAsmCode[1] = Condition << 3;
-              BAsmCode[2] = AdrLInt & 0xff;
-              BAsmCode[3] = (AdrLInt >> 8) & 0xff;
-              BAsmCode[4] = (AdrLInt >> 16) & 0xff;
-            }
-            else WrError(ErrNum_JmpDistTooBig);
-          }
+          AdrLInt--;
+          dist_type = SInt24;
         }
+      }
+
+      if (!mFirstPassUnknownOrQuestionable(EvalResult.Flags) && !RangeCheck(AdrLInt, dist_type)) WrError(ErrNum_JmpDistTooBig);
+      else switch (dist_type)
+      {
+        case SInt8:
+          CodeLen = 2;
+          BAsmCode[0] = Condition << 3;
+          BAsmCode[1] = AdrLInt & 0xff;
+          break;
+        case SInt16:
+          CodeLen = 4;
+          BAsmCode[0] = 0xdd;
+          BAsmCode[1] = Condition << 3;
+          BAsmCode[2] = AdrLInt & 0xff;
+          BAsmCode[3] = (AdrLInt >> 8) & 0xff;
+          break;
+        case SInt24:
+          CodeLen = 5;
+          BAsmCode[0] = 0xfd;
+          BAsmCode[1] = Condition << 3;
+          BAsmCode[2] = AdrLInt & 0xff;
+          BAsmCode[3] = (AdrLInt >> 8) & 0xff;
+          BAsmCode[4] = (AdrLInt >> 16) & 0xff;
+          break;
+        default:
+          break;
       }
     }
   }

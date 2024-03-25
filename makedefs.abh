@@ -9,6 +9,7 @@ include $(TARG_OBJDIR)ieeefloat.dep
 include $(TARG_OBJDIR)decfloat.dep
 include $(TARG_OBJDIR)aplfloat.dep
 include $(TARG_OBJDIR)codevars.dep
+include $(TARG_OBJDIR)codenone.dep
 include $(TARG_OBJDIR)code68k.dep
 include $(TARG_OBJDIR)code56k.dep
 include $(TARG_OBJDIR)code601.dep

@@ -1901,8 +1901,17 @@ fdest	reg	ac5
 	subp
 	subpi	0123456,0123462,0123466
 
-	; 68K inherited a lot from PDP-11, so padding is on by
-        ; default:
+	; Padding is *not* on by default for PDP-11.  It
+        ; used to be on if the target was set by a 'CPU'
+	; statement, because then 68K was selected as
+	; default target, and 68K introduces this flag with
+	; ON as default.  However, if one selects PDP-11
+	; as target via a command line argument, there is
+	; no intermediate selection of 68K as target and
+	; padding is introduced with the PDP-11 default
+	; (OFF):
+
+	padding	on
 
 	byte	1,2,3
 	nop			; padding byte is inserted before machine instruction

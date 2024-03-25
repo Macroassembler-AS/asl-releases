@@ -699,6 +699,10 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
       msgno = Num_ErrMsgInvCombination; break;
     case ErrNum_UnmappedChar:
       msgno = Num_ErrMsgUnmappedChar; break;
+    case ErrNum_NoTarget:
+      msgno = Num_ErrMsgNoTarget; break;
+    case ErrNum_MultiCharInvLength:
+      msgno = Num_ErrMsgMultiCharInvLength; break;
     case ErrNum_InternalError:
       msgno = Num_ErrMsgInternalError; break;
     case ErrNum_OpeningFile:

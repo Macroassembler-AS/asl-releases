@@ -429,10 +429,10 @@ static Boolean ProcessBk(char **Start, char *Erg)
  * \brief  convert string to its "ASCII representation"
  * \param  p_str string containing characters
  * \param  p_result dest buffer
- * \return 0 or error code
+ * \return 0 or error message
  * ------------------------------------------------------------------------ */
 
-int NonZString2Int(const struct as_nonz_dynstr *p_str, LargeInt *p_result)
+tErrorNum NonZString2Int(const struct as_nonz_dynstr *p_str, LargeInt *p_result)
 {
   if ((p_str->len > 0) && (p_str->len <= 4))
   {
@@ -451,9 +451,9 @@ int NonZString2Int(const struct as_nonz_dynstr *p_str, LargeInt *p_result)
       else
         *p_result = (*p_result << 8) | (digit & 0xff);
     /* ENOMEM -> regular end of string */
-    return (ret == ENOMEM) ? 0 : ret;
+    return (ret == ENOMEM) ? ErrNum_None : ErrNum_UnmappedChar;
   }
-  return EBADF;
+  return ErrNum_MultiCharInvLength;
 }
 
 Boolean Int2NonZString(struct as_nonz_dynstr *p_str, LargeInt src)
@@ -489,6 +489,8 @@ Boolean Int2NonZString(struct as_nonz_dynstr *p_str, LargeInt src)
 
 int TempResultToInt(TempResult *pResult)
 {
+  int ret = 0;
+
   switch (pResult->Typ)
   {
     case TempInt:
@@ -496,27 +498,23 @@ int TempResultToInt(TempResult *pResult)
     case TempString:
     {
       LargeInt Result;
-      int ret = NonZString2Int(&pResult->Contents.str, &Result);
-      switch (ret)
+      tErrorNum error_num = NonZString2Int(&pResult->Contents.str, &Result);
+
+      if (error_num == ErrNum_None)
+        as_tempres_set_int(pResult, Result);
+      else
       {
-        case 0:
-          as_tempres_set_int(pResult, Result);
-          break;
-        case ENOENT:
-          WrError(ErrNum_UnmappedChar);
-        /* fall-through */
-        default:
-          as_tempres_set_none(pResult);
-          return -1;
+        WrError(error_num);
+        as_tempres_set_none(pResult);
+        ret = -1;
       }
       break;
     }
-    /* fall-through */
     default:
       as_tempres_set_none(pResult);
-      return -1;
+      ret = -1;
   }
-  return 0;
+  return ret;
 }
 
 /*!------------------------------------------------------------------------
@@ -1772,9 +1770,9 @@ func_exit2:
     }
     for (z1 = 0; z1 < cnt; z1++)
     {
-      if ((InVals[z1].Typ == TempInt) && (!(pFunction->ArgTypes[z1] & (1 << TempInt))))
+      if ((InVals[z1].Typ == TempInt) && !(pFunction->ArgTypes[z1] & TempInt))
         TempResultToFloat(&InVals[z1]);
-      if (!(pFunction->ArgTypes[z1] & (1 << InVals[z1].Typ)))
+      if (!(pFunction->ArgTypes[z1] & InVals[z1].Typ))
       {
         WrStrErrorPos(DeduceExpectTypeErrMsgMask(pFunction->ArgTypes[z1], InVals[z1].Typ), &InArgs[z1]);
         LEAVE;

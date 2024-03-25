@@ -1,7 +1,7 @@
-                include         parsys.inc
-
                 page            60
                 cpu             68000
+
+                include         parsys.inc
 
 ;-----------------------------------------------------------------------------
 ; Die Exceptionvektoren:

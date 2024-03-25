@@ -37,6 +37,7 @@
 #include "literals.h"
 #include "msg_level.h"
 #include "dyn_array.h"
+#include "codenone.h"
 #include "asmallg.h"
 
 #define LEAVE goto func_exit
@@ -187,6 +188,9 @@ static void SetCPUCore(const tCPUDef *pCPUDef, const tStrComp *pCPUArgs)
 
   ParseCPUArgs(pCPUArgs, pCPUDef->pArgs);
   pCPUDef->SwitchProc(pCPUDef->pUserData);
+
+  if (pCPUDef->Number)
+    none_target_seglimit = SegLimits[SegCode];
 
   DontPrint = True;
 }

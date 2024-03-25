@@ -55,6 +55,7 @@
 #include "codepseudo.h"
 #include "as.h"
 
+#include "codenone.h"
 #include "code68k.h"
 #include "code56k.h"
 #include "code601.h"
@@ -4332,6 +4333,9 @@ int main(int argc, char **argv)
     onoff_common_init();
     literals_init();
 
+#if 1
+    codenone_init();
+#endif
     code68k_init();
     code56k_init();
     code601_init();
@@ -4442,8 +4446,8 @@ int main(int argc, char **argv)
     codenano_init();
     code6100_init();
     coderx_init();
-	code61860_init();
-	code62015_init();
+    code61860_init();
+    code62015_init();
     First = FALSE;
   }
 

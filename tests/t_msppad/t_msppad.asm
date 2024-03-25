@@ -1,5 +1,10 @@
 	cpu	msp430x
 
+	; do not assume padding to be on by default
+	; for anything but 68K:
+
+	padding	on
+
 mynop	macro
 	nop
 	endm

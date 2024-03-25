@@ -1068,7 +1068,7 @@ bzw. \ref{ChapShareOrder}.
       nachlesen.}
 \item{\tty{cpu $<$Name$>$}: Hiermit kann man man den Zielprozessor
       vorgeben, f"ur den \asname{} Code erzeugen soll, wenn die Quelldatei keinen
-      {\tt CPU}-Befehl enth"alt und es sich nicht um 68008-Code handelt.
+      {\tt CPU}-Befehl enth"alt.
       Falls das gew"ahlte Ziel CPU-Argumente unterst"utzt (siehe Abschnitt
       \ref{SectCPU}), k"onnen diese auch hier angegeben werden.  Ein Aufruf
       mit \verb!?! oder {\tt list} als Argument listet alle implementierten
@@ -1353,14 +1353,23 @@ des erzeugten Codes auf.  Eine Zeile in diesem Listing hat dabei folgende Form:
 Im Feld $n$ zeigt \asname{} die Include-Verschachtelungstiefe an.  Die
 Hauptdatei (die Datei, mit der die Assemblierung begann), hat dabei die
 Tiefe 0, von dort aus eingebundene Dateien haben Tiefe 1 usw.  Die Tiefe
-0 wird dabei nicht angezeigt.
+0 wird dabei nicht angezeigt: F"ur Zeilen der Hauptdatei wird dieses Feld
+durch eine passende Zahl von Leerzeichen ersetzt, oder g"anzlich fortgelassen,
+falls es bisher gar keine Include-Anweisungen gegeben hat.  Das 'Ged"achtnis',
+ob es Include-Anweisungen gegeben hat, und bis zu welcher Tiefe, reicht
+"uber den einzelnen Pass hinaus.  Auf diese Weise 'lernt' der Assembler im
+ersten Pass die maximale Tiefe und kann in folgenden Durchl"aufen dieses
+Feld mit durchgehend gleicher Breite ausgeben.
 \par
 Im Feld \tty{Zeile} wird die Zeilennummer bezogen auf die jeweilige Datei
 ausgegeben.  Die erste Zeile einer Datei hat dabei Nummer 1.  Die Adresse,
 an der der f"ur diese Zeile erzeugte Code abgelegt wurde, folgt hinter dem
 Schr"agstrich im Feld \tty{Adresse}.  Das daf"ur verwendete Zahlensystem
 wird durch den {\tt listradix}-Schalter festgelegt (\ref{listradix}), ebenso
-ob der Wert mit f"uhrenden Nullen angezeigt werden soll oder nicht.
+ob der Wert mit f"uhrenden Nullen angezeigt werden soll oder nicht.  Das
+gerade aktuell verwendete Target mit der Gr"o"se seines Adre"sraumes bestimmt
+die Breite des Feldes: F"ur einen Prozessor mit 64 KByte Adre"sraum sind
+nur 4 Hex-Stellen erforderlich, bei 4 GByte dagegen acht.
 \par
 Der erzeugte Code selber steht dahinter im Feld \tty{Code} in
 hexadezimaler Schreibweise.  Je nach Prozessortyp und aktuellem Segment
@@ -4190,7 +4199,7 @@ cr) RXV1, RX110, RX111, RX113, RX130, RX210,\\
     RX631 $\longrightarrow$ \\
     RXV2, RX140, RX230, RX231, RX64M,\\
     RX651 $\longrightarrow$ \\
-    RXV3, RX660, RX671, RX72M, RX72N.\\
+    RXV3, RX660, RX671, RX72M, RX72N
 \end{quote}
 Die Controller der RX-Serie k"onnen grob in drei
 Gruppen bzw. Generationen eingeteilt werden, wobei
@@ -4259,6 +4268,17 @@ db) SC62015
 \end{quote}
 Dies ist der im Sharp PC-E500 verbaute Prozessor.
 
+Ein spezielles, bisher hier nicht aufgelistetes Target ist
+NONE.  Es ist als Default eingestellt, wenn kein Target
+per {\tt -cpu} Argument auf der Kommandozeile vorgegeben
+wurde, und auch bisher keine {\tt CPU}-Anweisung assembliert
+wurde.  Target-unabh"angige Pseudo-Befehle sind in diesem
+Zustand weiter m"oglich, aber es kann kein Code erzeugt
+werden, weder durch Maschinenbefehle noch durch Datenablage.
+Prinzipiell ist es auch m"oglich, dieses Target per {\tt -cpu}
+oder {\tt CPU} auszuw"ahlen, aber der praktische Nutzen davon
+ist nat"urlich beschr"ankt.
+
 Beim CPU-Befehl mu"s der Prozessortyp als einfaches Literal
 angegeben werden, eine Berechnung \`a la
 \begin{verbatim}
@@ -4311,8 +4331,13 @@ Implizit schaltet der Assembler mit dem \tty{CPU}-Befehl das aktuelle Segment
 wieder auf Code zur"uck, da dies das einzige Segment ist, das alle
 Prozessoren definieren.
 \par
-Default f"ur den Prozessortyp ist \tty{68008}, sofern dieser "uber die
-gleichnamige Kommandozeilenoption nicht ver"andert wurde.
+Eine wichtige "Anderung: Das Default-Target ist nich mehr der 68008.  Falls
+kein {\tt -cpu} Kommandozeilen-Argument gegeben wurde, dann ist bis zur
+ersten \tty{CPU}-Anweisung das reservierte Target \tty{NONE} gesetzt.  Vom
+Target unabh"angig verf"ugbare Pseudo-Anweisungen sind in dieser Situation
+weiterhin erlaubt, zum Beispiel um Konstanten oder Makros zu definieren.
+Es ist aber nicht m"oglich, irgendwelchen Code zu definieren, weder "uber
+Maschinenbefehle, noch durch Ablegen von Daten im Speicher.
 
 F"ur einige Ziele sind Optionen bzw. Varianten definiert, die so grundlegend
 sind, da"s sie direkt zusammen mit dem \tty{CPU}-Befehl gew"ahlt werden m"ussen.
@@ -6327,8 +6352,8 @@ setled  macro led,value
         ld    led_shadow,value
         endm
 \end{verbatim}
-der Parameter 'led' in beiden Zeilen ersetzt, mit dem Schalter
-\tty{underscore-macroargs} jedoch nur in der ersten.  Diverse
+der Parameter 'led' in beiden Zeilen ersetzt, mit dem Kommandozeilen-Schalter
+\tty{-underscore-macroargs} jedoch nur in der ersten.  Diverse
 der mitgelieferten Include-Dateien setzen das Default-Verhalten
 voraus, weshalb dieser Schalter nur wenn unbedingt n"otig genutzt
 werden sollte.
@@ -13621,6 +13646,15 @@ Angaben:
                {Fehler}
                {Die Zeichenkette enth"alt einen nicht abbildbares Zeichen.}
                {die fragliche Zeichenkette}
+\errentry{2310}{Multi-Zeichenkonstante mit ung"ultiger L"ange}
+               {Fehler}
+               {Multi-Zeichenkonstanten m"ussen zwischen ein und vier Zeichen lang sein.}
+               {keines}
+\errentry{2320}{kein Target gesetzt ('CPU ...' oder '-cpu ...', um eines zu setzen)}
+               {fatal}
+               {Es wurde noch kein Target gesetzt, der Assembler wei"s daher
+                nicht, f"ur welche CPU Code erzeugt werden soll.}
+               {keines}
 \errentry{10001}{Fehler bein "Offnen der Datei}
                {fatal}
                {Beim Versuch, eine Datei zu "offnen, ist ein
@@ -13772,6 +13806,105 @@ liegen.  Melden Sie dies unbedingt!!
            Hier ist der Ger"atetreiber v"ollig ratlos, was passiert
            sein k"onnte.}
 \end{description}
+
+%%===========================================================================
+
+\cleardoublepage
+\chapter{Programmierbeispiele}
+
+Manche Fragen, wie man dieses oder jenes realisiert, werden h"aufiger gestellt,
+und es ist vielleicht wert, sie in einer 'Tipps und Tricks' Ecke zu
+dokumentieren.  Hier in diesem Kapitel werde ich sie sammeln und vorstellen:
+
+\section{16-Bit-Befehle per Makro}
+
+Viele 8-Bit-Prozessoren k"onnen - wie der Name schon sagt - immer nur acht Bit
+auf einmal verarbeiten.  Oft sind jedoch genug Register vorhanden, um zwei
+davon zu einem virtuellen '16 Bit Akkumulator' zusammenzufassen.  Nun soll dieser
+per Makro definierte Befehlssatz m"oglichst die gleichen Adressierungsarten
+wie die Hardware-Befehle unterst"utzen.  Dazu m"u"ste man die Makro-Argumente
+irgendwie parsen - aber wie?
+
+Der Motorola 6800 hat zum Beispiel zwei Akkumulatoren A und B, und es liegt
+nahe, diese als einem 16-Bit-Akku zu behandeln.  Die Adressierungsarten
+sollten die gleichen sein wie bei 8-Bit-Operationen:
+\begin{itemize}
+\item{immediate}
+\item{direkt (Adresse innerhalb der ersten 256 Byte)}
+\item{erweitert (beliebige Adresse)}
+\item{indiziert}
+\end{itemize}
+Ein Makro, das so einen virtuellen 16-Bit-Befehl implementiert, mu"s die ein oder
+zwei Argumente also analysieren:
+\begin{enumerate}
+\item{Indizierte Adressierung hat als einzige zwei Argumente.}
+\item{Immediate-Adressierung ist am f"uhrenden Hash-Zeichen zu erkennen.}
+\item{Ob eine Adresse in den ersten 256 Byte liegt oder nicht, kann man
+      wieder dem Assembler "uberlassen.}
+\end{enumerate}
+Um Punkt 2 auszuf"uhren, mu"s ein Argument in einen String "uberf"uhrt werden.  Von
+diesem kann das f"uhrend Hash-Zeichen dann auch entfernt werden, um den eigentlichen
+Wert zu evaluieren.  Komplett ausgeschrieben sieht das Makro dann so aus:
+\begin{verbatim}
+subd    macro   ARG1,ARG2
+  if      "ARG2" != ""            ; indexed?
+   suba    (ARG1)+1,ARG2
+   sbcb    ARG1,ARG2
+  elseif                          ; not indexed?
+_SARG1   set     "ARG1"           ; convert to string
+  if      substr(_SARG1,0,1)='#' ; immediate?
+_SARG1    set     substr(_SARG1,1,strlen(_SARG1)-1) ; yes->remove #
+   suba    #lo(VAL(_SARG1))      ; ...and subtract lo/hi bytes
+   sbcb    #hi(VAL(_SARG1))
+  elseif                         ; no immediate->ext. or direct
+   suba    (ARG1)+1              ; and subtract lo/hi bytes
+   sbcb    ARG1
+  endif
+  endif
+  endm
+\end{verbatim}
+Makroargumente wurden bewusst in Gro"sbuchstaben geschrieben, so dass das Makro
+unabh"angig davon funktioniert, ob der case-sensitve Modus eingeschaltet ist
+oder nicht.  Verwendet werden kann das Makro z.B. so:
+\begin{verbatim}
+        subd    $0007                   ; direct
+        subd    $1234                   ; absolute
+        subd    #$55aa                  ; immediate
+        subd    $12,x                   ; indexed
+\end{verbatim}
+Jetzt ist es aber so, dass man nicht nur 16-bittig subtrahieren möchte.  Man
+k"onnte f"ur jede Operation eine eigene Version des Makros hinschreiben, es
+geht aber auch eleganter.  Ein Makro kann selber wieder eine Makro-Definition
+enthalten.  Man kann also ein 'Meta-Makro' definieren, das die Befehlsnamen
+als Argumente erh"alt:
+\begin{verbatim}
+def16   macro   NEWINST,LOINST,HIINST
+NEWINST macro   ARG1,ARG2
+  if      "ARG2" != ""            ; indexed?
+   LOINST  (ARG1)+1,ARG2
+   HIINST  ARG1,ARG2
+  elseif                          ; not indexed?
+_SARG1   set     "ARG1"                 ; convert to string
+  if      substr(_SARG1,0,1)='#' ; immediate?
+_SARG1    set     substr(_SARG1,1,strlen(_SARG1)-1) ; yes->remove #
+   LOINST  #lo(VAL(_SARG1))      ; ...and subtract lo/hi bytes
+   HIINST  #hi(VAL(_SARG1))
+  elseif                         ; no immediate->ext. or direct
+   LOINST  (ARG1)+1              ; ...and subtract lo/hi bytes
+   HIINST  ARG1
+  endif
+  endif
+  endm
+  endm
+\end{verbatim}
+Dann sind die restlichen Definitionen Einzeiler:
+\begin{verbatim}
+        def16   addd,adda,adcb
+        def16   subd,suba,sbcb
+        def16   andd,anda,andb
+        def16   ord,ora,orb
+        def16   eord,eora,eorb
+\end{verbatim}
 
 %%===========================================================================
 

@@ -1,5 +1,10 @@
 	cpu	atmega8:codesegsize=0
 
+	; Do not assume padding to be on by default
+	; for anything but 68K!
+
+	padding	on
+
 	nop
 	nop
 	nop

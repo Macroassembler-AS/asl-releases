@@ -273,12 +273,15 @@ static void AddOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
         case TempString:
         {
           LargeInt RIntVal;
+          tErrorNum error_num = NonZString2Int(&pRVal->Contents.str, &RIntVal);
 
-          if (!NonZString2Int(&pRVal->Contents.str, &RIntVal))
+          if (ErrNum_None == error_num)
           {
             as_tempres_set_c_str(pErg, "");
             Int2NonZString(&pErg->Contents.str, RIntVal + pLVal->Contents.Int);
           }
+          else
+            WrError(error_num);
           break;
         }
         default:
@@ -300,12 +303,15 @@ static void AddOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
         case TempInt:
         {
           LargeInt LIntVal;
+          tErrorNum error_num = NonZString2Int(&pLVal->Contents.str, &LIntVal);
 
-          if (!NonZString2Int(&pLVal->Contents.str, &LIntVal))
+          if (ErrNum_None == error_num)
           {
             as_tempres_set_c_str(pErg, "");
             Int2NonZString(&pErg->Contents.str, LIntVal + pRVal->Contents.Int);
           }
+          else
+            WrError(error_num);
           break;
         }
         default:

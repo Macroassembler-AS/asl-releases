@@ -278,6 +278,8 @@ typedef enum
   ErrNum_TargInDiffField = 2281,
   ErrNum_InvCombination = 2290,
   ErrNum_UnmappedChar = 2300,
+  ErrNum_MultiCharInvLength = 2310,
+  ErrNum_NoTarget = 2320,
   ErrNum_UserError = 9990,
   ErrNum_InternalError = 10000,
   ErrNum_OpeningFile = 10001,

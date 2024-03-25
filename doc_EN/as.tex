@@ -1050,7 +1050,7 @@ chapters \ref{ChapShareMain} resp. \ref{ChapShareOrder}.
       use of this switch necessary.}
 \item{\tty{cpu $<$name$>$}: this switch allows to set the target processor
       \asname{} shall generate code for, in case the source file does not contain
-      a {\tt CPU} instruction and is not 68008 code.  If the selected target
+      a {\tt CPU} instruction.  If the selected target
       supports CPU arguments (see section \ref{SectCPU}), they may be used
       on the command line as well.  Using this switch with \verb!?! or {\tt list}
       as argument lists all implemented targets.}
@@ -1317,14 +1317,24 @@ form:
 \end{verbatim}
 In the field \tty{n}, \asname{} displays the include nesting level.  The main file
 (the file where assembly was started) has the depth 0, an included
-file from there has depth 1 etc..  Depth 0 is not displayed.
+file from there has depth 1 etc..  Depth 0 is not displayed: for source lines
+in the main file, this field is replaced by an appropriate amount of spaces,
+or is omitted entirely if no include statements have been used so far.  The
+'memory' whether there have been include statements and up to which level,
+spans more than one pass.  This way, the assembler 'learns' the maximum
+include depth in the first pass and is able to print this field with
+consistent width throughout the whole listing.
 
 In the field \tty{line}, the source line number of the referenced file is
 issued. The first line of a file has the number 1.  The address to
 which the code generated from this line is written follows after the
 slash in the field \tty{address}.  The number system used for the address
 is set via the {\tt listradix} command line option (\ref{listradix}), also
-whether the address is printed with leading zeros or not.
+whether the address is printed with leading zeros or not.  The currently
+used target defines the width of this field by the size of the address
+space: for a processor with a 64K address space, four hex digits are
+sufficient, while eight digits are needed if the address space's size
+is 4 GBytes.
 
 The code produced is written behind \tty{address} in the field \tty{code},
 in hexadecimal notation. Depending on the processor type and actual
@@ -4075,7 +4085,7 @@ cr) RXV1, RX110, RX111, RX113, RX130, RX210,\\
     RX631 $\longrightarrow$ \\
     RXV2, RX140, RX230, RX231, RX64M,\\
     RX651 $\longrightarrow$ \\
-    RXV3, RX660, RX671, RX72M, RX72N.\\
+    RXV3, RX660, RX671, RX72M, RX72N
 \end{quote}
 Controllers of the RX series can coarsely be classified
 into three groups or generations.  From generation to 
@@ -4142,6 +4152,15 @@ db) SC62015
 \end{quote}
 This is the processor used in the  Sharp PC-E500.
 
+NONE is a special target that has not been mentioned so far.  This is the
+default target if no target has been defined on the command line via
+{\tt -cpu}, and if no {\tt CPU} statement has been encountered so far.
+target independent pseudo instructions are still possible in this situation,
+however it is not possible to create any code, neither via machine
+instructions, nor via placing data in memory.  In principle, it is
+also possible to explicitly select this target via {\tt -cpu} or
+{\tt CPU}.  The practical use of this is however limited.
+
 The \tty{CPU} instruction needs the processor type as a simple literal, a
 calculation like:
 \begin{verbatim}
@@ -4193,8 +4212,12 @@ The assembler implicitly switches back to the \tty{CODE} segment when a
 \tty{CPU} instruction is executed.  This is done because \tty{CODE} is the
 only segment all processors support.
 
-The default processor type is 68008, unless it has been changed via the
-command line option with same name.
+Note that 68008 is no longer the default target.  If no {\tt -cpu}
+command line argument has been given, the target is set to the reserved
+value \tty{NONE} up to the first \tty{CPU} statement.  Target-independent
+pseudo instructions are still allowed in this situation, like defining
+constants or macros.  It is however not possible to generate any code,
+neither by machine instructions nor by disposing data in memory.
 
 Some targets define options or variants that are so fundamental for
 operation, that they have to be selected with the \tty{CPU} instruction.
@@ -13277,6 +13300,15 @@ described by:
                {error}
                {The character string contains a charater that cannot be mapped.}
                {The string in question}
+\errentry{2310}{invalid length of multi character constant}
+               {error}
+               {multi character constants must be between one and four characters long.}
+               {none}
+\errentry{2320}{no target set (use 'CPU ...' or '-cpu ...' to set one)}
+               {fatal}
+               {No target has been set so far.  The assembler therefore does
+                not know which target to generate code for.}
+               {none}
 \errentry{10001}{error in opening file}
                {fatal}
                {An error was detected while trying to open a file for input.}
@@ -13388,6 +13420,105 @@ immediately about this!!
          The operating system has absolutely no idea of what happened to the
          device.}
 \end{description}
+
+%%===========================================================================
+
+\cleardoublepage
+\chapter{Programmierbeispiele}
+
+I often get questions about how to realize certain things. Some of those are
+asked frequently, and it might be worth documenting the solutions in a 'Tips
+and Tricks' corner.  This chapter is meant to collect and document them:
+
+\section{16 Bit Instructions via Macros}
+
+AMany 8 bit processors can only process eight bits at once (as the name already
+implies...).  They however often contain enough registers to virtuall concatenate
+two of them to a virtual '16 bit accumulator'.  If we define macros to operate
+on this virtual accumulator, they ideally should provide the same addressing
+modes as the 8 bit instructions implemented by the hardware.  To achieve this,
+macros somehow have to 'parse' their arguments.  How can this be accomplished?
+
+As an examplr, the Motorola 6800 contains two accumulators named A an B.  It
+is straightforward to treat them also as a 16 bit accumulator.  Addressing modes
+should be the same as for 8 bit arithmetic instructions, namely:
+\begin{itemize}
+\item{immediate}
+\item{direct (address within first 256 bytes)}
+\item{extended (arbitrary address)}
+\item{indexed}
+\end{itemize}
+Therefore, a macro implementing a virtual 16 bit instruction has to analyze
+the one or two arguments passsed to it:
+\begin{enumerate}
+\item{Indexed addressing is the only mode using two arguments.}
+\item{Immediate addressing is recognized by the leading hash character.}
+\item{Checking whether an address is within the first 256 bytes or not
+      may be left to the assembler.}
+\end{enumerate}
+The (single) argument has to be transformed into a string to perform step 2.
+This string can then also be used to strip the leading hash character, to evaluate
+the actual immediate value.  The complete macro looks like this:
+\begin{verbatim}
+subd    macro   ARG1,ARG2
+  if      "ARG2" != ""            ; indexed?
+   suba    (ARG1)+1,ARG2
+   sbcb    ARG1,ARG2
+  elseif                          ; not indexed?
+_SARG1   set     "ARG1"           ; convert to string
+  if      substr(_SARG1,0,1)='#' ; immediate?
+_SARG1    set     substr(_SARG1,1,strlen(_SARG1)-1) ; y->del #
+   suba    #lo(VAL(_SARG1))      ; ...and subtract lo/hi bytes
+   sbcb    #hi(VAL(_SARG1))
+  elseif                         ; no immediate->ext. or direct
+   suba    (ARG1)+1              ; and subtract lo/hi bytes
+   sbcb    ARG1
+  endif
+  endif
+  endm
+\end{verbatim}
+Macro arguments hav deliberately been written in all-uppercase.  This way,
+the macro works both in case-sensitive and non-case-sensitive mode.  The
+usage of the macro looks like this:
+\begin{verbatim}
+        subd    $0007                   ; direct
+        subd    $1234                   ; absolute
+        subd    #$55aa                  ; immediate
+        subd    $12,x                   ; indexed
+\end{verbatim}
+Of course, we want to have more 16 bit operations than just subtraction.  One
+could write a similar macro for every type of operation. However, there is a
+more elegant method.  A macro may itself contain a macro definition.  So we
+can define a sort of 'meta macro' which gets the instruction names as arguments:
+\begin{verbatim}
+def16   macro   NEWINST,LOINST,HIINST
+NEWINST macro   ARG1,ARG2
+  if      "ARG2" != ""            ; indexed?
+   LOINST  (ARG1)+1,ARG2
+   HIINST  ARG1,ARG2
+  elseif                          ; not indexed?
+_SARG1   set     "ARG1"                 ; convert to string
+  if      substr(_SARG1,0,1)='#' ; immediate?
+_SARG1    set     substr(_SARG1,1,strlen(_SARG1)-1) ; y->del #
+   LOINST  #lo(VAL(_SARG1))      ; ...and subtract lo/hi bytes
+   HIINST  #hi(VAL(_SARG1))
+  elseif                         ; no immediate->ext. or direct
+   LOINST  (ARG1)+1              ; ...and subtract lo/hi bytes
+   HIINST  ARG1
+  endif
+  endif
+  endm
+  endm
+\end{verbatim}
+The remaining definitions now become one-liners:
+\begin{verbatim}
+        def16   addd,adda,adcb
+        def16   subd,suba,sbcb
+        def16   andd,anda,andb
+        def16   ord,ora,orb
+        def16   eord,eora,eorb
+\end{verbatim}
+
 
 %%===========================================================================
 
