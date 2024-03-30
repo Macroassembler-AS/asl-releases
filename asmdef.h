@@ -18,6 +18,7 @@
 #include "dynstr.h"
 #include "intformat.h"
 #include "strcomp.h"
+#include "striter.h"
 #include "lstmacroexp.h"
 #include "cpulist.h"
 #include "tempresult.h"
@@ -141,8 +142,6 @@ typedef void (*DissectBitProc)(
 char *pDest, size_t DestSize, LargeWord Inp
 #endif
 );
-
-typedef Boolean (*tQualifyQuoteFnc)(const char *pStart, const char *pQuotePos);
 
 typedef Word WordField[6];          /* fuer Zahlenumwandlung */
 typedef struct _TTransTable
@@ -308,7 +307,7 @@ extern void (*SwitchFrom)(void);
 extern void (*InternSymbol)(char *Asc, TempResult *Erg);
 extern DissectBitProc DissectBit;
 extern DissectRegProc DissectReg;
-extern tQualifyQuoteFnc QualifyQuote;
+extern as_qualify_quote_fnc_t QualifyQuote;
 
 extern StringPtr IncludeList;
 extern Integer IncDepth, NextIncDepth, MaxIncDepth;

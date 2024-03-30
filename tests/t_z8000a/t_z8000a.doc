@@ -1,5 +1,5 @@
-+------------------------- Test Application PDP11MMU ------------------------+
++------------------------- Test Application Z8000A --------------------------+
 |                                                                            |
-|     This tests the MMU remapping on PDP-11                                 |
+|    This is a (synthetic) test of the Z8000 instruction set (AMD syntax)    |
 |                                                                            |
 +----------------------------------------------------------------------------+

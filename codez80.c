@@ -27,6 +27,7 @@
 #include "codevars.h"
 #include "cpu2phys.h"
 #include "function.h"
+#include "onoff_common.h"
 #include "errmsg.h"
 
 #include "codez80.h"
@@ -119,7 +120,8 @@ typedef enum
 /*-------------------------------------------------------------------------*/
 
 static Byte PrefixCnt;
-static Byte AdrPart,OpSize;
+static Byte AdrPart, OpSize;
+static LongWord AdrVal;
 static Byte AdrVals[4];
 static ShortInt AdrMode;
 
@@ -457,6 +459,66 @@ static Boolean IsSym(char ch)
        || ((ch >= 'a') && (ch <= 'z')));
 }
 
+typedef struct
+{
+  as_eval_cb_data_t cb_data;
+  Byte addr_reg;
+  tSymbolSize addr_reg_size;
+} z80_eval_cb_data_t;
+
+DECLARE_AS_EVAL_CB(z80_eval_cb)
+{
+  z80_eval_cb_data_t *p_z80_eval_cb_data = (z80_eval_cb_data_t*)p_data;
+  tSymbolSize this_reg_size;
+  Byte this_reg;
+
+  /* special case for GameBoy/Sharp: FF00 always allowed, independent of radix: */
+
+  if (!as_strcasecmp(p_arg->str.p_str, "FF00"))
+  {
+    as_tempres_set_int(p_res, 0xff00);
+    return e_eval_ok;
+  }
+
+  switch (DecodeReg(p_arg, &this_reg, &this_reg_size, eSymbolSizeUnknown, False))
+  {
+    case eIsReg:
+      if ((p_z80_eval_cb_data->addr_reg != 0xff)
+       || !as_eval_cb_data_stack_plain_add(p_data->p_stack))
+      {
+        WrStrErrorPos(ErrNum_InvAddrMode, p_arg);
+        return e_eval_fail;
+      }
+      p_z80_eval_cb_data->addr_reg = this_reg;
+      p_z80_eval_cb_data->addr_reg_size = this_reg_size;
+      as_tempres_set_int(p_res, 0);
+      return e_eval_ok;
+    case eRegAbort:
+      return e_eval_fail;
+    default:
+       return e_eval_none;
+  }
+}
+
+static void abs_2_adrvals(LongWord address)
+{
+  AdrVal = address;
+  AdrVals[0] = address & 0xff;
+  AdrVals[1] = (address >> 8) & 0xff;
+  AdrCnt = 2;
+  if (address > 0xfffful)
+  {
+    AdrVals[AdrCnt++] = (address >> 16) & 0xff;
+    if (address <= 0xfffffful)
+      ChangeDDPrefix(ePrefixIB);
+    else
+    {
+      AdrVals[AdrCnt++] = ((address >> 24) & 0xff);
+      ChangeDDPrefix(ePrefixIW);
+    }
+  }
+}
+
 static ShortInt DecodeAdr(const tStrComp *pArg, unsigned ModeMask)
 {
   Integer AdrInt;
@@ -522,13 +584,10 @@ static ShortInt DecodeAdr(const tStrComp *pArg, unsigned ModeMask)
   is_indirect = IsIndirect(pArg->str.p_str);
   if (is_indirect || (ModeMask & MModImmIsAbs))
   {
-    tStrComp arg, remainder;
-    char *p_split_pos;
-    Boolean neg_flag, next_neg_flag;
+    tStrComp arg;
     tEvalResult disp_eval_result;
     LongInt disp_acc;
-    Byte addr_reg, this_reg;
-    tSymbolSize addr_reg_size, this_reg_size;
+    z80_eval_cb_data_t z80_eval_cb_data;
 
     /* strip outer braces and spaces */
  
@@ -552,81 +611,16 @@ static ShortInt DecodeAdr(const tStrComp *pArg, unsigned ModeMask)
 
     /* otherwise, walk through the components : */
 
-    disp_eval_result.Flags = eSymbolFlag_None;
-    disp_eval_result.AddrSpaceMask = 0;
-    disp_acc = 0;
-    neg_flag = False;
-    addr_reg = 0xff;
-    addr_reg_size = eSymbolSizeUnknown;
-    do
-    {
-      /* Split off one component: */
-
-      p_split_pos = indir_split_pos(arg.str.p_str);
-      next_neg_flag = p_split_pos && (*p_split_pos == '-');
-      if ((p_split_pos == arg.str.p_str) || (p_split_pos == arg.str.p_str + strlen(arg.str.p_str) - 1))
-      {
-        WrStrErrorPos(ErrNum_InvAddrMode, pArg);
-        return AdrMode;
-      }
-      if (p_split_pos)
-        StrCompSplitRef(&arg, &remainder, &arg, p_split_pos);
-      KillPrefBlanksStrCompRef(&arg);
-      KillPostBlanksStrComp(&arg);
-
-      /* register or displacement? */
-
-      switch (DecodeReg(&arg, &this_reg, &this_reg_size, eSymbolSizeUnknown, False))
-      {
-        case eIsReg:
-          if (addr_reg != 0xff)
-          {
-            WrStrErrorPos(ErrNum_InvAddrMode, pArg);
-            return AdrMode;
-          }
-          addr_reg = this_reg;
-          addr_reg_size = this_reg_size;
-          break;
-        case eRegAbort:
-          return AdrMode;
-        default:
-        {
-          tEvalResult eval_result;
-          LongInt this_disp;
-
-          /* special case for GameBoy/Sharp: FF00 always allowed, independent of radix: */
-
-          if (!as_strcasecmp(arg.str.p_str, "FF00"))
-          {
-            this_disp = 0xff00;
-            eval_result.OK = True;
-            eval_result.Flags = eSymbolFlag_None;
-            eval_result.AddrSpaceMask = 0;
-          }
-          else
-            this_disp = EvalStrIntExpressionWithResult(&arg, Int32, &eval_result);
-          if (!eval_result.OK)
-            return AdrMode;
-          disp_eval_result.Flags |= eval_result.Flags;
-          disp_eval_result.AddrSpaceMask |= eval_result.AddrSpaceMask;
-          if (neg_flag)
-            disp_acc -= this_disp;
-          else
-            disp_acc += this_disp;
-        }
-      }
-
-      /* sign of next component */
-
-      neg_flag = next_neg_flag;
-      if (p_split_pos)
-        arg = remainder;
-    }
-    while (p_split_pos);
+    as_eval_cb_data_ini(&z80_eval_cb_data.cb_data, z80_eval_cb);
+    z80_eval_cb_data.addr_reg = 0xff;
+    z80_eval_cb_data.addr_reg_size = eSymbolSizeUnknown;
+    disp_acc = EvalStrIntExprWithResultAndCallback(&arg, Int32, &disp_eval_result, &z80_eval_cb_data.cb_data);
+    if (!disp_eval_result.OK)
+      goto found;
 
     /* now we have parsed the expression, see what we can do with it: */
 
-    switch (addr_reg)
+    switch (z80_eval_cb_data.addr_reg)
     {
       /* no register: absolute */
       case 0xff:
@@ -642,20 +636,7 @@ static ShortInt DecodeAdr(const tStrComp *pArg, unsigned ModeMask)
            && !ChkRangeByType(disp_acc, UInt16, pArg))
             return AdrMode;
           ChkSpace(SegCode, disp_eval_result.AddrSpaceMask);
-          AdrVals[0] = address & 0xff;
-          AdrVals[1] = (address >> 8) & 0xff;
-          AdrCnt = 2;
-          if (address > 0xfffful)
-          {
-            AdrVals[AdrCnt++] = (address >> 16) & 0xff;
-            if (address <= 0xfffffful)
-              ChangeDDPrefix(ePrefixIB);
-            else
-            {
-              AdrVals[AdrCnt++] = ((address >> 24) & 0xff);
-              ChangeDDPrefix(ePrefixIW);
-            }
-          }
+          abs_2_adrvals(address);
           AdrMode = ModAbs;
           goto found;
         }
@@ -674,7 +655,7 @@ static ShortInt DecodeAdr(const tStrComp *pArg, unsigned ModeMask)
       }
 
       case 0:
-        if ((addr_reg_size != eSymbolSize16Bit) || disp_acc) /* no (B), (BC+d) */
+        if ((z80_eval_cb_data.addr_reg_size != eSymbolSize16Bit) || disp_acc) /* no (B), (BC+d) */
           goto wrong;
         else /* (BC) */
         {
@@ -684,7 +665,7 @@ static ShortInt DecodeAdr(const tStrComp *pArg, unsigned ModeMask)
         }
 
       case 1:
-        if (addr_reg_size  == eSymbolSize16Bit) /* (DE) */
+        if (z80_eval_cb_data.addr_reg_size == eSymbolSize16Bit) /* (DE) */
         {
           if (disp_acc)
             goto wrong;
@@ -704,7 +685,7 @@ static ShortInt DecodeAdr(const tStrComp *pArg, unsigned ModeMask)
         }
 
       case 2:
-        if ((addr_reg_size != eSymbolSize16Bit) || disp_acc) /* no (D), (HL+d) */
+        if ((z80_eval_cb_data.addr_reg_size != eSymbolSize16Bit) || disp_acc) /* no (D), (HL+d) */
           goto wrong;
         else /* (HL) */
         {
@@ -718,13 +699,13 @@ static ShortInt DecodeAdr(const tStrComp *pArg, unsigned ModeMask)
       case 3: /* (SP+d) */
         if (!mFirstPassUnknownOrQuestionable(disp_eval_result.Flags) && !ChkRangeByType(disp_acc, (MomCPU >= CPUZ380) ? SInt24 : SInt8, pArg))
           return AdrMode;
-        if (addr_reg == 3)
+        if (z80_eval_cb_data.addr_reg == 3)
           AdrMode = ModSPRel;
         else
         {
           AdrMode = ModReg8;
           AdrPart = 6;
-          BAsmCode[PrefixCnt++] = 0x0d | (addr_reg & 0xf0);
+          BAsmCode[PrefixCnt++] = 0x0d | (z80_eval_cb_data.addr_reg & 0xf0);
         }
         AdrVals[0] = disp_acc & 0xff;
         AdrCnt = 1;
@@ -3141,6 +3122,30 @@ static void DecodeRET(Word Code)
   }
 }
 
+static void encode_jp_core(Byte condition)
+{
+  BAsmCode[PrefixCnt] = 0xc2 + condition;
+  CodeLen = PrefixCnt + 1;
+  AppendAdrVals();
+}
+
+static IntType get_jr_dist(LongWord dest, LongInt *p_dist)
+{
+  *p_dist = dest - (EProgCounter() + 2);
+  if (RangeCheck(*p_dist, SInt8))
+    return SInt8;
+  if (MomCPU >= CPUZ380)
+  {
+    *p_dist -= 2;
+    if (RangeCheck(*p_dist, SInt16))
+      return SInt16;
+    (*p_dist)--;
+    if (RangeCheck(*p_dist, SInt24))
+      return SInt24;
+  }
+  return UInt0;
+}
+
 static void DecodeJP(Word Code)
 {
   int Cond;
@@ -3177,9 +3182,11 @@ static void DecodeJP(Word Code)
       break;
     case ModAbs:
     {
-      BAsmCode[PrefixCnt] = 0xc2 + Cond;
-      CodeLen = PrefixCnt + 1;
-      AppendAdrVals();
+      LongInt dist;
+
+      if (get_jr_dist(AdrVal, &dist) != UInt0)
+        WrStrErrorPos(ErrNum_RelJumpPossible, &ArgStr[ArgCnt]);
+      encode_jp_core(Cond);
       break;
     }
   }
@@ -3248,10 +3255,43 @@ static void DecodeCALL(Word Code)
   }
 }
 
+static void encode_jr_core(IntType dist_size, Byte condition, LongInt dist)
+{
+  switch (dist_size)
+  {
+    case SInt8:
+      CodeLen = 2;
+      BAsmCode[0] = condition << 3;
+      BAsmCode[1] = dist & 0xff;
+      break;
+    case SInt16:
+      CodeLen = 4;
+      BAsmCode[0] = 0xdd;
+      BAsmCode[1] = condition << 3;
+      BAsmCode[2] = dist & 0xff;
+      BAsmCode[3] = (dist >> 8) & 0xff;
+      break;
+    case SInt24:
+      CodeLen = 5;
+      BAsmCode[0] = 0xfd;
+      BAsmCode[1] = condition << 3;
+      BAsmCode[2] = dist & 0xff;
+      BAsmCode[3] = (dist >> 8) & 0xff;
+      BAsmCode[4] = (dist >> 16) & 0xff;
+      break;
+    default:
+      break;
+  }
+}
+
 static void DecodeJR(Word Code)
 {
   Boolean OK;
   int Condition;
+  LongWord dest;
+  tEvalResult EvalResult;
+  LongInt dist;
+  IntType dist_type;
 
   UNUSED(Code);
 
@@ -3274,60 +3314,77 @@ static void DecodeJR(Word Code)
       (void)ChkArgCnt(1, 2);
       OK = False;
   }
+  if (!OK)
+    return;
 
-  if (OK)
+  dest = EvalAbsAdrExpression(&ArgStr[ArgCnt], &EvalResult);
+  if (!EvalResult.OK)
+    return;
+
+  dist_type = get_jr_dist(dest, &dist);
+  if (dist_type == UInt0)
   {
-    LongInt AdrLInt;
-    tEvalResult EvalResult;
-
-    AdrLInt = EvalAbsAdrExpression(&ArgStr[ArgCnt], &EvalResult);
-    if (EvalResult.OK)
+    if (mFirstPassUnknownOrQuestionable(EvalResult.Flags))
+      dist_type = (MomCPU >= CPUZ380) ? SInt24 : SInt8;
+    else
     {
-      IntType dist_type;
+      WrStrErrorPos(ErrNum_JmpDistTooBig, &ArgStr[ArgCnt]);
+      return;
+    }
+  }
+    
+  encode_jr_core(dist_type, Condition, dist);
+}
 
-      AdrLInt -= EProgCounter() + 2;
+static void DecodeJ(Word Code)
+{
+  int condition;
 
-      if ((MomCPU < CPUZ380) || RangeCheck(AdrLInt, SInt8))
-        dist_type = SInt8;
+  UNUSED(Code);
+
+  switch (ArgCnt)
+  {
+    case 1:
+      condition = 0xff;
+      break;
+    case 2:
+      if (!DecodeCondition(ArgStr[1].str.p_str, &condition))
+      {
+        WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
+        return;
+      }
+      break;
+    default:
+      (void)ChkArgCnt(1, 2);
+      return;
+  }
+
+  switch (DecodeAdr(&ArgStr[ArgCnt], MModImmIsAbs | MModAbs | ((condition == 0xff) ? MModReg8 : 0)))
+  {
+    case ModReg8:
+      if ((AdrPart != 6) || ((AdrCnt > 0) && AdrVals[0])) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[ArgCnt]);
       else
       {
-        AdrLInt -= 2;
-        if (RangeCheck(AdrLInt, SInt16))
-          dist_type = SInt16;
-        else
+        BAsmCode[PrefixCnt] = 0xe9;
+        CodeLen = PrefixCnt + 1;
+      }
+      break;
+    case ModAbs:
+      if ((condition <= 3) || (condition == 0xff))
+      {
+        LongInt dist;
+        IntType dist_type = get_jr_dist(AdrVal, &dist);
+
+        if (dist_type != UInt0)
         {
-          AdrLInt--;
-          dist_type = SInt24;
+          encode_jr_core(dist_type, (condition == 0xff) ? 3 : (condition + 4), dist);
+          return;
         }
       }
-
-      if (!mFirstPassUnknownOrQuestionable(EvalResult.Flags) && !RangeCheck(AdrLInt, dist_type)) WrError(ErrNum_JmpDistTooBig);
-      else switch (dist_type)
-      {
-        case SInt8:
-          CodeLen = 2;
-          BAsmCode[0] = Condition << 3;
-          BAsmCode[1] = AdrLInt & 0xff;
-          break;
-        case SInt16:
-          CodeLen = 4;
-          BAsmCode[0] = 0xdd;
-          BAsmCode[1] = Condition << 3;
-          BAsmCode[2] = AdrLInt & 0xff;
-          BAsmCode[3] = (AdrLInt >> 8) & 0xff;
-          break;
-        case SInt24:
-          CodeLen = 5;
-          BAsmCode[0] = 0xfd;
-          BAsmCode[1] = Condition << 3;
-          BAsmCode[2] = AdrLInt & 0xff;
-          BAsmCode[3] = (AdrLInt >> 8) & 0xff;
-          BAsmCode[4] = (AdrLInt >> 16) & 0xff;
-          break;
-        default:
-          break;
-      }
-    }
+      encode_jp_core((condition == 0xff) ? 1 : (condition << 3));
+      break;
+    default:
+      break;
   }
 }
 
@@ -3885,6 +3942,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "JP" , 0, DecodeJP);
   AddInstTable(InstTable, "CALL", 0, DecodeCALL);
   AddInstTable(InstTable, "JR" , 0, DecodeJR);
+  AddInstTable(InstTable, "J" , 0, DecodeJ);
   AddInstTable(InstTable, "CALR", 0, DecodeCALR);
   AddInstTable(InstTable, "DJNZ", 0, DecodeDJNZ);
   AddInstTable(InstTable, "RST", 0, DecodeRST);
@@ -4269,6 +4327,8 @@ static void SwitchTo_Z80(void)
       SetFlag(&LWordFlag, LWordModeSymName, False);
     AddONOFF(LWordModeCmdName, &LWordFlag , LWordModeSymName , False);
   }
+
+  asmerr_warn_relative_add();
 
   if (MomCPU == CPUZ180)
   {

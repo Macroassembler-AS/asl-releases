@@ -1,0 +1,7 @@
++-------------------------- Test Application Z80_J --------------------------+
+|                                                                            |
+| This test plays a bit with the Z80 'pseudo instruction' J.  Depending on   |
+| the condition and the target address, either a relative jump (JR) or an    |
+| absolute one (JP) is generated.                                            |
+|                                                                            |
++----------------------------------------------------------------------------+

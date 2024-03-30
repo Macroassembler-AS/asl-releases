@@ -85,20 +85,59 @@ static void SetOpSize(ShortInt New)
   }
 }
 
+  static const char Reg16Names[][3] = { "BC", "DE", "HL", "\0", "IX", "IY", "SP" };
+
+typedef struct
+{
+  as_eval_cb_data_t cb_data;
+  Byte occ_flag, base_reg;
+} tlcs90_eval_cb_data_t;
+
+DECLARE_AS_EVAL_CB(tlcs90_eval_cb)
+{
+  tlcs90_eval_cb_data_t *p_tlcs90_eval_cb_data = (tlcs90_eval_cb_data_t*)p_data;
+  size_t z;
+
+  if (!as_strcasecmp(p_arg->str.p_str, "A"))
+  {
+    if ((p_tlcs90_eval_cb_data->occ_flag & 1)
+     || !as_eval_cb_data_stack_plain_add(p_data->p_stack))
+    {
+      WrStrErrorPos(ErrNum_InvAddrMode, p_arg);
+      return e_eval_fail;
+    }
+    p_tlcs90_eval_cb_data->occ_flag |= 1;
+    as_tempres_set_int(p_res, 0);
+    return e_eval_ok;
+  }
+
+  for (z = 0; z < as_array_size(Reg16Names); z++)
+    if (!as_strcasecmp(p_arg->str.p_str, Reg16Names[z]))
+    {
+      if ((p_tlcs90_eval_cb_data->occ_flag & 2)
+       || !as_eval_cb_data_stack_plain_add(p_data->p_stack))
+      {
+        WrStrErrorPos(ErrNum_InvAddrMode, p_arg);
+        return e_eval_fail;
+      }
+      p_tlcs90_eval_cb_data->occ_flag |= 2;
+      p_tlcs90_eval_cb_data->base_reg = z;
+      as_tempres_set_int(p_res, 0);
+      return e_eval_ok;
+    }
+  return e_eval_none;
+}
+
 static void DecodeAdr(const tStrComp *pArg, Word Erl)
 {
   static const char Reg8Names[][2] = { "B", "C", "D", "E", "H", "L", "A" };
   static const int Reg8Cnt = sizeof(Reg8Names) / sizeof(*Reg8Names);
-  static const char Reg16Names[][3] = { "BC", "DE", "HL", "\0", "IX", "IY", "SP" };
   static const int Reg16Cnt = sizeof(Reg16Names) / sizeof(*Reg16Names);
   static const char IReg16Names[][3] =  {"IX", "IY", "SP" };
   static const int IReg16Cnt = sizeof(IReg16Names) / sizeof(*IReg16Names);
 
   int z;
-  char *p;
-  LongInt DispAcc, DispVal;
-  Byte OccFlag, BaseReg;
-  Boolean ok, fnd, NegFlag, NNegFlag, Unknown, is_indirect;
+  Boolean ok, is_indirect;
 
   AdrType = ModNone; AdrCnt = 0;
 
@@ -146,91 +185,33 @@ static void DecodeAdr(const tStrComp *pArg, Word Erl)
   is_indirect = IsIndirect(pArg->str.p_str);
   if (is_indirect || (Erl & MAssumeInd))
   {
-    tStrComp Arg, Remainder;
+    tlcs90_eval_cb_data_t tlcs90_eval_cb_data;
+    LongInt DispAcc;
+    tStrComp Arg;
+    tEvalResult eval_result;
 
-    OccFlag = 0;
-    BaseReg = 0;
-    DispAcc = 0;
-    ok = True;
-    NegFlag = False;
-    Unknown = False;
     StrCompRefRight(&Arg, pArg, !!is_indirect);
     if (is_indirect)
       StrCompShorten(&Arg, 1);
     KillPrefBlanksStrCompRef(&Arg);
     KillPostBlanksStrComp(&Arg);
 
-    do
-    {
-      /* Split off one component: */
-
-      p = indir_split_pos(Arg.str.p_str);
-      NNegFlag = p && (*p == '-');
-      if (p)
-        StrCompSplitRef(&Arg, &Remainder, &Arg, p);
-
-      KillPrefBlanksStrComp(&Arg);
-      KillPostBlanksStrComp(&Arg);
-      fnd = False;
-
-      if (!as_strcasecmp(Arg.str.p_str, "A"))
-      {
-        fnd = True;
-        ok = ((!NegFlag) && (!(OccFlag & 1)));
-        if (ok)
-          OccFlag += 1;
-        else
-          WrError(ErrNum_InvAddrMode);
-      }
-
-      if (!fnd)
-      {
-        for (z = 0; z < Reg16Cnt; z++)
-        {
-          if (!as_strcasecmp(Arg.str.p_str, Reg16Names[z]))
-          {
-            fnd = True;
-            BaseReg = z;
-            ok = ((!NegFlag) && (!(OccFlag & 2)));
-            if (ok)
-              OccFlag += 2;
-            else
-              WrError(ErrNum_InvAddrMode);
-          }
-        }
-      }
-
-      if (!fnd)
-      {
-        tSymbolFlags Flags;
-
-        DispVal = EvalStrIntExpressionWithFlags(&Arg, Int32, &ok, &Flags);
-        if (ok)
-        {
-          DispAcc = NegFlag ? DispAcc - DispVal : DispAcc + DispVal;
-          if (mFirstPassUnknown(Flags))
-            Unknown = True;
-        }
-      }
-
-      NegFlag = NNegFlag;
-      if (p)
-        Arg = Remainder;
-    }
-    while (p && ok);
-
-    if (!ok)
+    as_eval_cb_data_ini(&tlcs90_eval_cb_data.cb_data, tlcs90_eval_cb);
+    tlcs90_eval_cb_data.occ_flag = 0;
+    tlcs90_eval_cb_data.base_reg = 0;
+    DispAcc = EvalStrIntExprWithResultAndCallback(&Arg, Int32, &eval_result, &tlcs90_eval_cb_data.cb_data);
+    if (!eval_result.OK)
       return;
-    if (Unknown)
+    if (mFirstPassUnknown(eval_result.Flags))
       DispAcc &= 0x7f;
 
-    switch (OccFlag)
+    switch (tlcs90_eval_cb_data.occ_flag)
     {
       case 1:
         WrError(ErrNum_InvAddrMode);
         break;
       case 3:
-        if ((BaseReg != 2) || (DispAcc!=0)) WrError(ErrNum_InvAddrMode);
+        if ((tlcs90_eval_cb_data.base_reg != 2) || DispAcc) WrError(ErrNum_InvAddrMode);
         else
         {
           AdrType = ModIdxReg;
@@ -242,13 +223,13 @@ static void DecodeAdr(const tStrComp *pArg, Word Erl)
         else if (DispAcc == 0)
         {
           AdrType = ModIndReg;
-          AdrMode = BaseReg;
+          AdrMode = tlcs90_eval_cb_data.base_reg;
         }
-        else if (BaseReg < 4) WrError(ErrNum_InvAddrMode);
+        else if (tlcs90_eval_cb_data.base_reg < 4) WrError(ErrNum_InvAddrMode);
         else
         {
           AdrType = ModIdxReg;
-          AdrMode = BaseReg - 4;
+          AdrMode = tlcs90_eval_cb_data.base_reg - 4;
           AdrCnt = 1;
           AdrVals[0] = DispAcc & 0xff;
         }
@@ -292,7 +273,8 @@ static void DecodeAdr(const tStrComp *pArg, Word Erl)
         }
         break;
       case 1:
-        DispVal = EvalStrIntExpression(pArg, Int16, &ok);
+      {
+        LongInt DispVal = EvalStrIntExpression(pArg, Int16, &ok);
         if (ok)
         {
           AdrType = ModImm;
@@ -301,6 +283,7 @@ static void DecodeAdr(const tStrComp *pArg, Word Erl)
           AdrVals[1] = Hi(DispVal);
         }
         break;
+      }
     }
   }
 

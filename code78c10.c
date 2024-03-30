@@ -420,131 +420,128 @@ static int split_auto_val(tStrComp *p_arg)
   return 0;
 }
 
-static void parse_indirect_list(z80_adr_vals_t *p_vals, const tStrComp *p_arg, unsigned mode_mask, int auto_val)
+typedef struct
 {
-  char *p;
-  tStrComp rem, arg;
-  Byte reg, base = 0, index = 0;
-  LongInt disp_acc = 0;
-  Boolean bad_reg, first_unknown = False, this_minus, next_minus;
+  as_eval_cb_data_t cb_data;
+  Byte base, index;
+} upd78_eval_cb_data_t;
 
-  StrCompRefRight(&arg, p_arg, 0);
-  KillPostBlanksStrComp(&arg);
-  this_minus = False;
-  do
+DECLARE_AS_EVAL_CB(upd78_eval_cb)
+{
+  upd78_eval_cb_data_t *p_upd78_eval_cb_data = (upd78_eval_cb_data_t*)p_data;
+  Byte reg;
+  Boolean bad_reg = False;
+
+  /* 8 bit register? Note that a B/D/H may actually mean BC/DE/HL
+     in 'old syntax': */
+
+  if (decode_reg8(p_arg->str.p_str, &reg))
   {
-    /* split off one component */
-
-    KillPrefBlanksStrCompRef(&arg);
-    next_minus = False;
-    p = indir_split_pos(arg.str.p_str); /* TODO: parentheses */
-    if (p)
+    if (!as_eval_cb_data_stack_plain_add(p_data->p_stack))
+      bad_reg = True;
+    else switch (reg)
     {
-      next_minus = (*p == '-');
-      StrCompSplitRef(&arg, &rem, &arg, p);
-      KillPostBlanksStrComp(&arg);
-    }
-    bad_reg = False;
-
-    /* 8 bit register? Note that a B/D/H may actually mean BC/DE/HL
-       in 'old syntax': */
-
-    if (decode_reg8(arg.str.p_str, &reg))
-    {
-      if (this_minus)
-        bad_reg = True;
-      else switch (reg)
-      {
-        case REG_A:
-          if (index)
-            bad_reg = True;
-          else
-            index = reg;
-          break;
-        case REG_B:
-          if (!index)
-            index = reg;
-          else if (!base)
-            base = REG_BC;
-          else
-            bad_reg = True;
-          break;
-        case REG_D:
-          if (!base)
-            base = REG_DE;
-          else
-            bad_reg = True;
-          break;
-        case REG_H:
-          if (!base)
-            base = REG_HL;
-          else
-            bad_reg = True;
-          break;
-        default:
+      case REG_A:
+        if (p_upd78_eval_cb_data->index)
           bad_reg = True;
-      }
-    }
-
-    /* 16 bit register? */
-
-    else if (decode_reg16(arg.str.p_str, &reg, False))
-    {
-      if (this_minus)
-        bad_reg = True;
-      else switch (reg)
-      {
-        case REG_EA:
-          if (index)
-            bad_reg = True;
-          else
-            index = reg;
-          break;
-        case REG_BC:
-        case REG_DE:
-        case REG_HL:
-          if (base)
-            bad_reg = True;
-          else
-            base = reg;
-          break;
-        default:
+        else
+          p_upd78_eval_cb_data->index = reg;
+        break;
+      case REG_B:
+        if (!p_upd78_eval_cb_data->index)
+          p_upd78_eval_cb_data->index = reg;
+        else if (!p_upd78_eval_cb_data->base)
+          p_upd78_eval_cb_data->base = REG_BC;
+        else
           bad_reg = True;
-      }
-    }
-    else
-    {
-      tEvalResult eval_result;
-      Word value;
-
-      value = EvalStrIntExpressionWithResult(&arg, UInt16, &eval_result);
-      if (!eval_result.OK)
-        return;
-      if (mFirstPassUnknownOrQuestionable(eval_result.Flags))
-        first_unknown = True;
-      disp_acc = this_minus ? (disp_acc - value) : (disp_acc + value);
-    }
-
-    if (bad_reg)
-    {
-      WrStrErrorPos(ErrNum_InvReg, &arg);
-      return;
-    }
-
-    if (p)
-    {
-      arg = rem;
-      this_minus = next_minus;
+        break;
+      case REG_D:
+        if (!p_upd78_eval_cb_data->base)
+          p_upd78_eval_cb_data->base = REG_DE;
+        else
+          bad_reg = True;
+        break;
+      case REG_H:
+        if (!p_upd78_eval_cb_data->base)
+          p_upd78_eval_cb_data->base = REG_HL;
+        else
+          bad_reg = True;
+        break;
+      default:
+        bad_reg = True;
     }
   }
-  while (p);
+
+  /* 16 bit register? */
+
+  else if (decode_reg16(p_arg->str.p_str, &reg, False))
+  {
+    if (!as_eval_cb_data_stack_plain_add(p_data->p_stack))
+      bad_reg = True;
+    else switch (reg)
+    {
+      case REG_EA:
+        if (p_upd78_eval_cb_data->index)
+          bad_reg = True;
+        else
+          p_upd78_eval_cb_data->index = reg;
+        break;
+      case REG_BC:
+      case REG_DE:
+      case REG_HL:
+        if (p_upd78_eval_cb_data->base)
+          bad_reg = True;
+        else
+          p_upd78_eval_cb_data->base = reg;
+        break;
+      default:
+        bad_reg = True;
+    }
+  }
+
+  /* neither -> tell parser to evaluate as displacement */
+
+  else
+    return e_eval_none;
+
+  /* register, but invalid usage -> tell parser to terminate */
+
+  if (bad_reg)
+  {
+    WrStrErrorPos(ErrNum_InvReg, p_arg);
+    return e_eval_fail;
+  }
+
+  /* all fine -> tell parser to treat as zero */
+
+  as_tempres_set_int(p_res, 0);
+  return e_eval_ok;
+}
+
+static void parse_indirect_list(z80_adr_vals_t *p_vals, const tStrComp *p_arg, unsigned mode_mask, int auto_val)
+{
+  tEvalResult eval_result;
+  upd78_eval_cb_data_t upd78_eval_cb_data;
+  LongInt disp_acc = 0;
+  Boolean first_unknown;
+
+  as_eval_cb_data_ini(&upd78_eval_cb_data.cb_data, upd78_eval_cb);
+  upd78_eval_cb_data.base =
+  upd78_eval_cb_data.index = 0;
+
+  /* Parse expression and filter out register components by callback */
+
+  disp_acc = EvalStrIntExprWithResultAndCallback(p_arg, Int16, &eval_result, &upd78_eval_cb_data.cb_data);
+  if (!eval_result.OK)
+    return;
+  first_unknown = mFirstPassUnknownOrQuestionable(eval_result.Flags);
 
   /* Dissolve ambiguities */
 
-  if ((index == REG_B) && !base)
+  if ((upd78_eval_cb_data.index == REG_B) && !upd78_eval_cb_data.base)
   {
-    index = 0;
-    base = REG_BC;
+    upd78_eval_cb_data.index = 0;
+    upd78_eval_cb_data.base = REG_BC;
   }
 
   /* For auto-in/decrement, only a plain base register DE/HL is allowed.
@@ -552,24 +549,24 @@ static void parse_indirect_list(z80_adr_vals_t *p_vals, const tStrComp *p_arg, u
 
   if (auto_val)
   {
-    if (index || (base < REG_BC) || (base > REG_HL) || disp_acc || (auto_val == -2))
+    if (upd78_eval_cb_data.index || (upd78_eval_cb_data.base < REG_BC) || (upd78_eval_cb_data.base > REG_HL) || disp_acc || (auto_val == -2))
       WrStrErrorPos(ErrNum_InvAddrMode, p_arg);
     else
     {
-      p_vals->val = (base + 2) + (2 * !!(auto_val < 0));
+      p_vals->val = (upd78_eval_cb_data.base + 2) + (2 * !!(auto_val < 0));
       p_vals->mode = e_mod_indir;
     }
   }
   else
   {
     /* (BC) (DE) (HL) */
-    if ((base >= REG_BC) && (base <= REG_HL) && !index && !disp_acc)
+    if ((upd78_eval_cb_data.base >= REG_BC) && (upd78_eval_cb_data.base <= REG_HL) && !upd78_eval_cb_data.index && !disp_acc)
     {
-      p_vals->val = base;
+      p_vals->val = upd78_eval_cb_data.base;
       p_vals->mode = e_mod_indir;
     }
     /* (DE+byte) (HL+byte) */
-    else if ((base >= REG_DE) && (base <= REG_HL) && !index)
+    else if ((upd78_eval_cb_data.base >= REG_DE) && (upd78_eval_cb_data.base <= REG_HL) && !upd78_eval_cb_data.index)
     {
       if (first_unknown)
         disp_acc &= 0xff;
@@ -578,27 +575,35 @@ static void parse_indirect_list(z80_adr_vals_t *p_vals, const tStrComp *p_arg, u
         WrStrErrorPos(ErrNum_OverRange, p_arg);
         return;
       }
-      p_vals->val = (base << 2) + 3;
+      p_vals->val = (upd78_eval_cb_data.base << 2) + 3;
       p_vals->mode = e_mod_indir;
       p_vals->vals[p_vals->count++] = Lo(disp_acc);
     }
     /* (HL+A) (HL+B) */
-    else if ((base == REG_HL) && (index >= REG_A) && (index <= REG_B) && !disp_acc)
+    else if ((upd78_eval_cb_data.base == REG_HL) && (upd78_eval_cb_data.index >= REG_A) && (upd78_eval_cb_data.index <= REG_B) && !disp_acc)
     {
-      p_vals->val = index + 11;
+      p_vals->val = upd78_eval_cb_data.index + 11;
       p_vals->mode = e_mod_indir;
     }
     /* (HL+EA) */
-    else if ((base == REG_HL) && (index == REG_EA) && !disp_acc)
+    else if ((upd78_eval_cb_data.base == REG_HL) && (upd78_eval_cb_data.index == REG_EA) && !disp_acc)
     {
       p_vals->val = 14;
       p_vals->mode = e_mod_indir;
     }
     /* abs/wa */
-    else if (!base && !index)
+    else if (!upd78_eval_cb_data.base && !upd78_eval_cb_data.index)
     {
-      Boolean is_wa = (Hi(disp_acc) == WorkArea),
-              may_wa = !!(mode_mask & MModWA);
+      Boolean is_wa, may_wa = !!(mode_mask & MModWA);
+
+      if (first_unknown)
+        disp_acc &= 0xff;
+      if ((disp_acc > 0xffff) || (disp_acc < 0))
+      {
+        WrStrErrorPos(ErrNum_OverRange, p_arg);
+        return;
+      }
+      is_wa = (Hi(disp_acc) == WorkArea);
 
       p_vals->vals[p_vals->count++] = Lo(disp_acc);
       if ((may_wa && is_wa) || (!may_wa && first_unknown))

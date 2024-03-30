@@ -134,7 +134,7 @@ void (*InternSymbol)();
 #endif
 DissectBitProc DissectBit;
 DissectRegProc DissectReg;
-tQualifyQuoteFnc QualifyQuote;
+as_qualify_quote_fnc_t QualifyQuote;
 
 StringPtr IncludeList;	                /* Suchpfade fuer Includedateien */
 Integer IncDepth, NextIncDepth,         /* Verschachtelungstiefe INCLUDEs */

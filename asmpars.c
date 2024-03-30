@@ -1193,7 +1193,7 @@ const struct sStrComp *pComp, TempType SearchType, Boolean SearchLocal, expand_c
 
 /*!------------------------------------------------------------------------
  * \fn     EvalResultClear(tEvalResult *pResult)
- * \brief  reset all elements of EvalResult
+ * \brief  reset all elements of EvalResult to 'none'
  * ------------------------------------------------------------------------ */
 
 void EvalResultClear(tEvalResult *pResult)
@@ -1202,6 +1202,97 @@ void EvalResultClear(tEvalResult *pResult)
   pResult->Flags = eSymbolFlag_None;
   pResult->AddrSpaceMask = 0;
   pResult->DataSize = eSymbolSizeUnknown;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     as_eval_cb_data_ini(struct as_eval_cb_data *p_data, as_eval_cb_t cb)
+ * \brief  initialize evaluation data callback
+ * \param  p_data callback data
+ * \param  cb callback function
+ * ------------------------------------------------------------------------ */
+
+void as_eval_cb_data_ini(struct as_eval_cb_data *p_data, as_eval_cb_t cb)
+{
+  p_data->callback = cb;
+  p_data->p_stack = NULL;
+  p_data->p_other_arg = NULL;
+  p_data->p_operators = no_operators;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     as_dump_eval_cb_data_stack(const as_eval_cb_data_stack_t *p_stack)
+ * \brief  dump eval callback data operator stack
+ * \param  p_stack stack to dump
+ * ------------------------------------------------------------------------ */
+
+void as_dump_eval_cb_data_stack(const as_eval_cb_data_stack_t *p_stack)
+{
+  while (True)
+  {
+    static const char type_names[][4] = { "op", "fnc" };
+    printf(" <- ");
+    if (!p_stack)
+      break;
+    printf("[%s '%s'(#%d)]",
+           ((size_t)p_stack->type < as_array_size(type_names)) ? type_names[p_stack->type] : "???",
+           p_stack->p_ident, p_stack->arg_index);
+    p_stack = p_stack->p_next;
+  }
+  printf("\n");
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     as_eval_cb_data_stack_depth(const as_eval_cb_data_stack_t *p_stack)
+ * \brief  retrieve depth of formula stack
+ * \param  p_stack stack to analyze
+ * \return depth
+ * ------------------------------------------------------------------------ */
+
+unsigned as_eval_cb_data_stack_depth(const as_eval_cb_data_stack_t *p_stack)
+{
+  unsigned ret = 0;
+  for (; p_stack; p_stack = p_stack->p_next)
+    ret++;
+  return ret;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     as_eval_cb_data_stack_plain_add(const as_eval_cb_data_stack_t *p_stack)
+ * \brief  check whether argument at given position in formula stack is plain add @ outermost level
+ * \param  p_stack stack to analyze
+ * \return True if plain add
+ * ------------------------------------------------------------------------ */
+
+Boolean as_eval_cb_data_stack_plain_add(const as_eval_cb_data_stack_t *p_stack)
+{
+  Boolean negate = False;
+
+  for (; p_stack; p_stack = p_stack->p_next)
+    if (p_stack->type != e_operator)
+      return False;
+    else if (!as_strcasecmp(p_stack->p_ident, "+"));
+    else if (!as_strcasecmp(p_stack->p_ident, "-"))
+    {
+      if (p_stack->arg_index)
+        negate = !negate;
+    }
+    else
+      return False;
+
+  return !negate;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     as_eval_cb_data_stackelem_mul(const as_eval_cb_data_stack_t *p_stack)
+ * \brief  check whether operator at given position in formula stack is product
+ * \param  p_stack stack element to analyze
+ * \return True if plain add
+ * ------------------------------------------------------------------------ */
+
+extern Boolean as_eval_cb_data_stackelem_mul(const as_eval_cb_data_stack_t *p_stack)
+{
+  return (p_stack->type == e_operator)
+       && !as_strcasecmp(p_stack->p_ident, "*");
 }
 
 /*****************************************************************************
@@ -1290,28 +1381,143 @@ static Byte TryConvert(Byte TypeMask, TempType ActType, int OpIndex)
   return 255;
 }
 
-void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
+typedef struct operator_search_cb_data
 {
-  const Operator *pOp;
-  const Operator *FOps[OPERATOR_MAXCNT];
-  LongInt FOpCnt = 0;
+  as_quoted_iterator_cb_data_t data;
+  sint l_klamm, r_klamm, w_klamm;
+  ptrdiff_t op_pos;
+  const as_operator_t *p_best_op;
+  const char *p_after_last_op_start;
+  const as_operator_t *found_ops[OPERATOR_MAXCNT];
+  size_t found_op_cnt;
+} operator_search_cb_data_t;
 
+static Boolean is_non_space_upto(const char *p_from, const char *p_to)
+{
+  for (; p_from < p_to; p_from++)
+    if (!as_isspace(*p_from))
+      return True;
+  return False;
+}
+
+static Boolean is_non_space(const char *p_from)
+{
+  for (; *p_from; p_from++)
+    if (!as_isspace(*p_from))
+      return True;
+  return False;
+}
+
+static int operator_search_cb(const char *p_pos, as_quoted_iterator_cb_data_t *p_cb_data)
+{
+  operator_search_cb_data_t *p_data = (operator_search_cb_data_t*)p_cb_data;
+  int extra_skip = 0;
+
+  switch (*p_pos)
+  {
+    case '(':
+      p_data->l_klamm++;
+      break;
+    case ')':
+      p_data->r_klamm++;
+      break;
+    case '{':
+      p_data->w_klamm++;
+      break;
+    case '}':
+      p_data->w_klamm--;
+      break;
+    default:
+      if ((p_data->l_klamm == p_data->r_klamm) && !p_data->w_klamm)
+      {
+        const as_operator_t *p_pos_best_op = NULL;
+        Boolean pos_best_op_argcnt_match = False;
+        size_t zop;
+
+        /* Operators with same 'match quality' override earlier ones.
+           This way, target- or expression-specific operators get higher priority
+           over built-in ones: */
+
+        for (zop = 0; zop < p_data->found_op_cnt; zop++)
+        {
+          const as_operator_t *p_this_op = p_data->found_ops[zop];
+          Boolean this_op_argcnt_match;
+
+          /* Possible at all:
+             (a) operator string itself must match */
+
+          if (strncmp(p_pos, p_this_op->Id, p_this_op->IdLen))
+            continue;
+
+          /* (b) non-blank content right to op */
+
+          if (!is_non_space(p_pos + p_this_op->IdLen))
+            continue;
+
+          /* (c) non-blank content left to binary op,
+                 blank content right to unary op */
+
+          this_op_argcnt_match = (p_this_op->Dyadic) == is_non_space_upto(p_data->p_after_last_op_start, p_pos);
+          if (!this_op_argcnt_match)
+            continue;
+
+          /* Better match? */
+
+          if (!p_pos_best_op
+           || (p_this_op->IdLen > p_pos_best_op->IdLen)
+           || ((p_this_op->IdLen == p_pos_best_op->IdLen) && (this_op_argcnt_match > pos_best_op_argcnt_match)))
+          {
+            p_pos_best_op = p_this_op;
+            pos_best_op_argcnt_match = this_op_argcnt_match;
+          }
+        }
+
+        if (p_pos_best_op)
+        {
+          /* NOTE: Due to the way we split up an expression in sub-operands, it is important to find the last
+             operator if several on the same level are of same prio.  For instance, A/B*C must be treated as
+             (A/B)*C and not A/(B*C): */
+
+          if (!p_data->p_best_op
+           || (p_pos_best_op->Priority >= p_data->p_best_op->Priority))
+          {
+            p_data->p_best_op = p_pos_best_op;
+            p_data->op_pos = p_pos - p_cb_data->p_str;
+          }
+          extra_skip = p_pos_best_op->IdLen - 1;
+          p_data->p_after_last_op_start = p_pos + p_pos_best_op->IdLen;
+        }
+      }
+  }
+  return extra_skip;
+}
+
+static void test_found_op(operator_search_cb_data_t *p_data, const as_operator_t *p_op, const char *p_str)
+{
+  const char *p_op_pos = (p_op->IdLen == 1) ? (strchr(p_str, *p_op->Id)) : (strstr(p_str, p_op->Id));
+
+  if (p_op_pos)
+    p_data->found_ops[p_data->found_op_cnt++] = p_op;
+}
+
+void EvalStrExpressionWithCallback(const tStrComp *pExpr, TempResult *pErg, as_eval_cb_data_t *p_callback_data)
+{
   Boolean OK;
   tStrComp InArgs[3];
   TempResult InVals[3];
   int z1, cnt;
   char Save = '\0';
-  sint LKlamm, RKlamm, WKlamm, zop;
-  sint OpMax, OpPos = -1;
-  Boolean InSgl, InDbl, NextEscaped, ThisEscaped;
+  operator_search_cb_data_t operator_search_data;
+  const as_operator_t *p_run_op;
+  char *p_arg_split_pos;
   PFunction ValFunc;
   tStrComp CopyComp, STempComp;
-  char *KlPos, *zp, *pOpPos;
   const tFunction *pFunction;
   PRelocEntry TReloc;
   tSymbolFlags PromotedFlags;
   unsigned PromotedAddrSpaceMask;
   tSymbolSize PromotedDataSize;
+  as_eval_cb_data_stack_t cb_data_stack;
 
   ChkStack();
 
@@ -1319,6 +1525,7 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
     as_tempres_ini(&InVals[z1]);
   StrCompAlloc(&CopyComp, STRINGSIZE);
   StrCompAlloc(&STempComp, STRINGSIZE);
+  cb_data_stack.p_next = p_callback_data->p_stack;
 
   if (MakeDebug)
     fprintf(Debug, "Parse '%s'\n", pExpr->str.p_str);
@@ -1376,9 +1583,23 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
     LEAVE;
   }
 
-  /* durch Codegenerator gegebene Konstanten ? */
+  /* Constands given by the target's generator code?  Note
+     the per-call given callback has higher prio then the 'global'
+     one.  This way, we do not need extra code to hand
+     register symbols to the callback:  */
 
   pErg->Relocs = NULL;
+  if (p_callback_data && p_callback_data->callback)
+    switch (p_callback_data->callback(p_callback_data, &CopyComp, pErg))
+    {
+      case e_eval_none:
+        break;
+      case e_eval_fail:
+        as_tempres_set_none(pErg);
+        /* FALL-THRU */
+      case e_eval_ok:
+        LEAVE;
+    }
   InternSymbol(CopyComp.str.p_str, pErg);
   if (pErg->Typ != TempNone)
   {
@@ -1387,89 +1608,29 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
 
   /* find out which operators *might* occur in expression */
 
-  OpMax = 0;
-  LKlamm = 0;
-  RKlamm = 0;
-  WKlamm = 0;
-  InSgl =
-  InDbl =
-  ThisEscaped =
-  NextEscaped = False;
-  for (pOp = Operators + 1; pOp->Id; pOp++)
-  {
-    pOpPos = (pOp->IdLen == 1) ? (strchr(CopyComp.str.p_str, *pOp->Id)) : (strstr(CopyComp.str.p_str, pOp->Id));
-    if (pOpPos)
-      FOps[FOpCnt++] = pOp;
-  }
+  operator_search_data.data.callback_before = False;
+  operator_search_data.data.qualify_quote = QualifyQuote;
+  operator_search_data.p_best_op = NULL;
+  operator_search_data.p_after_last_op_start = CopyComp.str.p_str;
+  operator_search_data.op_pos = -1;
+  operator_search_data.l_klamm = 0;
+  operator_search_data.r_klamm = 0;
+  operator_search_data.w_klamm = 0;
+  operator_search_data.found_op_cnt = 0;
+  for (p_run_op = operators; p_run_op->Id; p_run_op++)
+    test_found_op(&operator_search_data, p_run_op, CopyComp.str.p_str);
+  for (p_run_op = target_operators; p_run_op->Id; p_run_op++)
+    test_found_op(&operator_search_data, p_run_op, CopyComp.str.p_str);
+  for (p_run_op = p_callback_data->p_operators; p_run_op->Id; p_run_op++)
+    test_found_op(&operator_search_data, p_run_op, CopyComp.str.p_str);
 
-  /* nach Operator hoechster Rangstufe ausserhalb Klammern suchen */
+  /* search for highest-prio operator outside parentheses */
 
-  for (zp = CopyComp.str.p_str; *zp; zp++, ThisEscaped = NextEscaped)
-  {
-    NextEscaped = False;
-    switch (*zp)
-    {
-      case '(':
-        if (!(InSgl || InDbl))
-          LKlamm++;
-        break;
-      case ')':
-        if (!(InSgl || InDbl))
-          RKlamm++;
-        break;
-      case '{':
-        if (!(InSgl || InDbl))
-          WKlamm++;
-        break;
-      case '}':
-        if (!(InSgl || InDbl))
-          WKlamm--;
-        break;
-      case '"':
-        if (!InSgl && !ThisEscaped)
-          InDbl = !InDbl;
-        break;
-      case '\'':
-        if (!InDbl && !ThisEscaped)
-        {
-          if (InSgl || !QualifyQuote || QualifyQuote(CopyComp.str.p_str, zp))
-            InSgl = !InSgl;
-        }
-        break;
-      case '\\':
-        if ((InDbl || InSgl) && !ThisEscaped)
-          NextEscaped = True;
-        break;
-      default:
-        if ((LKlamm == RKlamm) && (WKlamm == 0) && (!InSgl) && (!InDbl))
-        {
-          Boolean OpFnd = False;
-          sint OpLen = 0, LocOpMax = 0;
-
-          for (zop = 0; zop < FOpCnt; zop++)
-          {
-            pOp = FOps[zop];
-            if ((!strncmp(zp, pOp->Id, pOp->IdLen)) && (pOp->IdLen >= OpLen))
-            {
-              OpFnd = True;
-              OpLen = pOp->IdLen;
-              LocOpMax = pOp - Operators;
-              if (Operators[LocOpMax].Priority >= Operators[OpMax].Priority)
-              {
-                OpMax = LocOpMax;
-                OpPos = zp - CopyComp.str.p_str;
-              }
-            }
-          }
-          if (OpFnd)
-            zp += Operators[LocOpMax].IdLen - 1;
-        }
-    }
-  }
+  as_iterate_str_quoted(CopyComp.str.p_str, operator_search_cb, &operator_search_data.data);
 
   /* Klammerfehler ? */
 
-  if (LKlamm != RKlamm)
+  if (operator_search_data.l_klamm != operator_search_data.r_klamm)
   {
     WrStrErrorPos(ErrNum_BrackErr, &CopyComp);
     LEAVE;
@@ -1477,46 +1638,44 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
 
   /* Operator gefunden ? */
 
-  if (OpMax)
+
+  if (operator_search_data.p_best_op)
   {
     int ThisArgCnt, CompLen, z, z2;
-    Byte ThisOpMatch, BestOpMatch, BestOpMatchIdx, SumCombinations, TypeMask;
-
-    pOp = Operators + OpMax;
-
-    /* Minuszeichen sowohl mit einem als auch 2 Operanden */
-
-    if (!strcmp(pOp->Id, "-"))
-    {
-      if (!OpPos)
-        pOp = &MinusMonadicOperator;
-    }
-
-    else if (!strcmp(pOp->Id, "^"))
-    {
-      if (!OpPos && pPotMonadicOperator)
-        pOp = pPotMonadicOperator;
-    }
+    Byte ThisOpMatch, BestOpMatch, SumCombinations, TypeMask;
+    tLineComp op_line_pos;
 
     /* Operandenzahl pruefen */
 
     CompLen = strlen(CopyComp.str.p_str);
+    op_line_pos.StartCol = CopyComp.Pos.StartCol + operator_search_data.op_pos;
+    op_line_pos.Len = operator_search_data.p_best_op->IdLen;
     if (CompLen <= 1)
       ThisArgCnt = 0;
-    else if (!OpPos || (OpPos == (int)strlen(CopyComp.str.p_str) - 1))
+    else if (!operator_search_data.op_pos || (operator_search_data.op_pos == (ptrdiff_t)strlen(CopyComp.str.p_str) - 1))
       ThisArgCnt = 1;
     else
       ThisArgCnt = 2;
-    if (!ChkArgCntExtPos(ThisArgCnt, pOp->Dyadic ? 2 : 1, pOp->Dyadic ? 2 : 1, &CopyComp.Pos))
+    if (!ChkArgCntExtPos(ThisArgCnt, operator_search_data.p_best_op->Dyadic ? 2 : 1, operator_search_data.p_best_op->Dyadic ? 2 : 1, &op_line_pos))
       LEAVE;
 
     /* Teilausdruecke rekursiv auswerten */
 
-    Save = StrCompSplitRef(&InArgs[0], &InArgs[1], &CopyComp, CopyComp.str.p_str + OpPos);
-    StrCompIncRefLeft(&InArgs[1], strlen(pOp->Id) - 1);
-    EvalStrExpression(&InArgs[1], &InVals[1]);
-    if (pOp->Dyadic)
-      EvalStrExpression(&InArgs[0], &InVals[0]);
+    Save = StrCompSplitRef(&InArgs[0], &InArgs[1], &CopyComp, CopyComp.str.p_str + operator_search_data.op_pos);
+    StrCompIncRefLeft(&InArgs[1], strlen(operator_search_data.p_best_op->Id) - 1);
+    cb_data_stack.type = e_operator;
+    cb_data_stack.p_ident = operator_search_data.p_best_op->Id;
+    p_callback_data->p_stack = &cb_data_stack;
+    
+    cb_data_stack.arg_index = 1;
+    EvalStrExpressionWithCallback(&InArgs[1], &InVals[1], p_callback_data);
+    if (operator_search_data.p_best_op->Dyadic)
+    {
+      cb_data_stack.arg_index = 0;
+      p_callback_data->p_other_arg = &InVals[1];
+      EvalStrExpressionWithCallback(&InArgs[0], &InVals[0], p_callback_data);
+      p_callback_data->p_other_arg = NULL;
+    }
     else if (InVals[1].Typ == TempFloat)
       as_tempres_set_float(&InVals[0], 0.0);
     else
@@ -1524,7 +1683,7 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
       as_tempres_set_int(&InVals[0], 0);
       InVals[0].Relocs = NULL;
     }
-    CopyComp.str.p_str[OpPos] = Save;
+    CopyComp.str.p_str[operator_search_data.op_pos] = Save;
 
     /* Abbruch, falls dabei Fehler */
 
@@ -1533,7 +1692,7 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
 
     /* relokatible Symbole nur fuer + und - erlaubt */
 
-    if ((OpMax != 12) && (OpMax != 13) && (InVals[0].Relocs || InVals[1].Relocs))
+    if (strcmp(operator_search_data.p_best_op->Id, "+") && strcmp(operator_search_data.p_best_op->Id, "-") && (InVals[0].Relocs || InVals[1].Relocs))
     {
       WrStrErrorPos(ErrNum_NoRelocs, &CopyComp);
       LEAVE;
@@ -1541,22 +1700,19 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
 
     /* see whether data types match operator's restrictions: */
 
-    BestOpMatch = 255; BestOpMatchIdx = OPERATOR_MAXCOMB;
+    BestOpMatch = 255;
     SumCombinations = 0;
     for (z = 0; z < OPERATOR_MAXCOMB; z++)
     {
-      if (!pOp->TypeCombinations[z])
+      if (!operator_search_data.p_best_op->TypeCombinations[z])
         break;
-      SumCombinations |= pOp->TypeCombinations[z];
+      SumCombinations |= operator_search_data.p_best_op->TypeCombinations[z];
 
       ThisOpMatch = 0;
-      for (z2 = pOp->Dyadic ? 0 : 1; z2 < 2; z2++)
-        ThisOpMatch |= TryConvert(GetOpTypeMask(pOp->TypeCombinations[z], z2), InVals[z2].Typ, z2);
+      for (z2 = operator_search_data.p_best_op->Dyadic ? 0 : 1; z2 < 2; z2++)
+        ThisOpMatch |= TryConvert(GetOpTypeMask(operator_search_data.p_best_op->TypeCombinations[z], z2), InVals[z2].Typ, z2);
       if (ThisOpMatch < BestOpMatch)
-      {
         BestOpMatch = ThisOpMatch;
-        BestOpMatchIdx = z;
-      }
       if (!BestOpMatch)
         break;
     }
@@ -1565,7 +1721,7 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
 
     if (BestOpMatch >= 255)
     {
-      for (z2 = pOp->Dyadic ? 0 : 1; z2 < 2; z2++)
+      for (z2 = operator_search_data.p_best_op->Dyadic ? 0 : 1; z2 < 2; z2++)
       {
         TypeMask = GetOpTypeMask(SumCombinations, z2);
         if (!(TypeMask & InVals[z2].Typ))
@@ -1576,7 +1732,7 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
 
     /* necessary conversions: */
 
-    for (z2 = pOp->Dyadic ? 0 : 1; z2 < 2; z2++)
+    for (z2 = operator_search_data.p_best_op->Dyadic ? 0 : 1; z2 < 2; z2++)
     {
       TypeMask = (BestOpMatch >> (z2 * 4)) & 15;
       if (TypeMask & 2)  /* String -> Int */
@@ -1587,24 +1743,24 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
 
     /* actual operation */
 
-    (void)BestOpMatchIdx;
-    pOp->pFunc(pErg, &InVals[0], &InVals[1]);
+    operator_search_data.p_best_op->pFunc(pErg, &InVals[0], &InVals[1]);
     LEAVE;
   } /* if (OpMax) */
 
   /* kein Operator gefunden: Klammerausdruck ? */
 
-  if (LKlamm != 0)
+  if (operator_search_data.l_klamm != 0)
   {
     tStrComp FName, FArg, Remainder;
+    char *p_opening_pos;
 
     /* erste Klammer suchen, Funktionsnamen abtrennen */
 
-    KlPos = strchr(CopyComp.str.p_str, '(');
+    p_opening_pos = strchr(CopyComp.str.p_str, '(');
 
     /* Funktionsnamen abschneiden */
 
-    StrCompSplitRef(&FName, &FArg, &CopyComp, KlPos);
+    StrCompSplitRef(&FName, &FArg, &CopyComp, p_opening_pos);
     StrCompShorten(&FArg, 1);
     KillPostBlanksStrComp(&FName);
 
@@ -1612,7 +1768,8 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
 
     if (*FName.str.p_str == '\0')
     {
-      EvalStrExpression(&FArg, pErg);
+      /* No need to establish another callback data stack level in this case: */
+      EvalStrExpressionWithCallback(&FArg, pErg, p_callback_data);
       LEAVE;
     }
 
@@ -1630,7 +1787,12 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
       PromotedDataSize = eSymbolSizeUnknown;
       as_dynstr_ini_c_str(&CompArgStr, ValFunc->Definition);
       as_dynstr_ini(&stemp, STRINGSIZE);
-      for (z1 = 1; z1 <= ValFunc->ArguCnt; z1++)
+      cb_data_stack.type = e_function;
+      cb_data_stack.p_ident = FName.str.p_str;
+      p_callback_data->p_stack = &cb_data_stack;
+      for (z1 = 1, cb_data_stack.arg_index = 0;
+           z1 <= ValFunc->ArguCnt;
+           z1++, cb_data_stack.arg_index++)
       {
         if (!*FArg.str.p_str)
         {
@@ -1638,11 +1800,11 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
           LEAVE2;
         }
 
-        KlPos = QuotPos(FArg.str.p_str, ',');
-        if (KlPos)
-          StrCompSplitRef(&FArg, &Remainder, &FArg, KlPos);
+        p_arg_split_pos = QuotPos(FArg.str.p_str, ',');
+        if (p_arg_split_pos)
+          StrCompSplitRef(&FArg, &Remainder, &FArg, p_arg_split_pos);
 
-        EvalStrExpression(&FArg, &InVals[0]);
+        EvalStrExpressionWithCallback(&FArg, &InVals[0], p_callback_data);
         if (InVals[0].Relocs)
         {
           WrStrErrorPos(ErrNum_NoRelocs, &FArg);
@@ -1653,7 +1815,7 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
         PromotedAddrSpaceMask |= InVals[0].AddrSpaceMask;
         if (PromotedDataSize == eSymbolSizeUnknown) PromotedDataSize = InVals[0].DataSize;
 
-        if (KlPos)
+        if (p_arg_split_pos)
           FArg = Remainder;
         else
           StrCompReset(&FArg);
@@ -1670,7 +1832,7 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
         LEAVE2;
       }
       StrCompMkTemp(&CompArg, CompArgStr.p_str, CompArgStr.capacity);
-      EvalStrExpression(&CompArg, pErg);
+      EvalStrExpressionWithCallback(&CompArg, pErg, p_callback_data);
       pErg->Flags |= PromotedFlags;
       pErg->AddrSpaceMask |= PromotedAddrSpaceMask;
       if (pErg->DataSize == eSymbolSizeUnknown) pErg->DataSize = PromotedDataSize;
@@ -1718,16 +1880,20 @@ func_exit2:
     PromotedFlags = eSymbolFlag_None;
     PromotedAddrSpaceMask = 0;
     PromotedDataSize = eSymbolSizeUnknown;
+    cb_data_stack.type = e_function;
+    cb_data_stack.p_ident = FName.str.p_str;
+    cb_data_stack.arg_index = 0;
+    p_callback_data->p_stack = &cb_data_stack;
     do
     {
-      zp = QuotPos(FArg.str.p_str, ',');
-      if (zp)
-        StrCompSplitRef(&InArgs[cnt], &Remainder, &FArg, zp);
+      p_arg_split_pos = QuotPos(FArg.str.p_str, ',');
+      if (p_arg_split_pos)
+        StrCompSplitRef(&InArgs[cnt], &Remainder, &FArg, p_arg_split_pos);
       else
         InArgs[cnt] = FArg;
       if (cnt < 3)
       {
-        EvalStrExpression(&InArgs[cnt], &InVals[cnt]);
+        EvalStrExpressionWithCallback(&InArgs[cnt], &InVals[cnt], p_callback_data);
         if (InVals[cnt].Typ == TempNone)
           LEAVE;
         TReloc = InVals[cnt].Relocs;
@@ -1743,14 +1909,15 @@ func_exit2:
         FreeRelocs(&TReloc);
         LEAVE;
       }
-      if (zp)
+      if (p_arg_split_pos)
         FArg = Remainder;
       PromotedFlags |= InVals[cnt].Flags & eSymbolFlags_Promotable;
       PromotedAddrSpaceMask |= InVals[cnt].AddrSpaceMask;
       if (PromotedDataSize == eSymbolSizeUnknown) PromotedDataSize = InVals[0].DataSize;
       cnt++;
+      cb_data_stack.arg_index++;
     }
-    while (zp);
+    while (p_arg_split_pos);
 
     /* search function */
 
@@ -1837,6 +2004,8 @@ func_exit2:
 
 func_exit:
 
+  p_callback_data->p_stack = cb_data_stack.p_next;
+
   StrCompFree(&CopyComp);
   StrCompFree(&STempComp);
 
@@ -1848,6 +2017,14 @@ func_exit:
   }
 }
 
+void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
+{
+  as_eval_cb_data_t cb_data;
+  
+  as_eval_cb_data_ini(&cb_data, NULL);
+  EvalStrExpressionWithCallback(pExpr, pErg, &cb_data);
+}
+
 void EvalExpression(const char *pExpr, TempResult *pErg)
 {
   tStrComp Expr;
@@ -1856,7 +2033,7 @@ void EvalExpression(const char *pExpr, TempResult *pErg)
   EvalStrExpression(&Expr, pErg);
 }
 
-LargeInt EvalStrIntExpressionWithResult(const tStrComp *pComp, IntType Type, tEvalResult *pResult)
+LargeInt EvalStrIntExprWithResultAndCallback(const tStrComp *pComp, IntType Type, tEvalResult *pResult, as_eval_cb_data_t *p_callback_data)
 {
   TempResult t;
   LargeInt Result = -1;
@@ -1864,7 +2041,7 @@ LargeInt EvalStrIntExpressionWithResult(const tStrComp *pComp, IntType Type, tEv
   as_tempres_ini(&t);
   EvalResultClear(pResult);
 
-  EvalStrExpression(pComp, &t);
+  EvalStrExpressionWithCallback(pComp, &t, p_callback_data);
   SetRelocs(t.Relocs);
 
   switch (t.Typ)
@@ -1933,6 +2110,14 @@ func_exit:
   return Result;
 }
 
+LargeInt EvalStrIntExpressionWithResult(const tStrComp *pComp, IntType Type, tEvalResult *pResult)
+{
+  as_eval_cb_data_t cb_data;
+
+  as_eval_cb_data_ini(&cb_data, NULL);
+  return EvalStrIntExprWithResultAndCallback(pComp, Type, pResult, &cb_data);
+}
+
 LargeInt EvalStrIntExpressionWithFlags(const tStrComp *pComp, IntType Type, Boolean *pResult, tSymbolFlags *pFlags)
 {
   tEvalResult EvalResult;
@@ -1964,6 +2149,19 @@ LargeInt EvalStrIntExpressionOffsWithResult(const tStrComp *pExpr, int Offset, I
   }
   else
     return EvalStrIntExpressionWithResult(pExpr, Type, pResult);
+}
+
+LargeInt EvalStrIntExprOffsWithResultAndCallback(const tStrComp *pExpr, int Offset, IntType Type, tEvalResult *pResult, as_eval_cb_data_t *p_callback_data)
+{
+  if (Offset)
+  {
+    tStrComp Comp;
+        
+    StrCompRefRight(&Comp, pExpr, Offset);
+    return EvalStrIntExprWithResultAndCallback(&Comp, Type, pResult, p_callback_data);
+  }
+  else
+    return EvalStrIntExprWithResultAndCallback(pExpr, Type, pResult, p_callback_data);
 }
 
 LargeInt EvalStrIntExpressionOffsWithFlags(const tStrComp *pComp, int Offset, IntType Type, Boolean *pResult, tSymbolFlags *pFlags)

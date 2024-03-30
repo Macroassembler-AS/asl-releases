@@ -321,8 +321,10 @@ in Arbeit / Planung / "Uberlegung :
 \begin{itemize}
 \item{ARM}
 \item{Analog Devices ADSP21xx}
+\item{DEC VAX}
 \item{SGS-Thomson ST20}
 \item{Texas Instruments TMS320C8x}
+\item{Zilog eZ80}
 \end{itemize}
 ungeliebt, aber {\it doch} vorhanden :
 \begin{itemize}
@@ -1089,6 +1091,12 @@ bzw. \ref{ChapShareOrder}.
       Include-Verschachtelungstiefe abzubrechen (Default ist 200).}
 \item{{\tt Werror}: Weist den Assembler an, Warnungen als Fehler zu
       behandeln.}
+\item{{\tt wrelative} bzw. {\tt wno-relative}: Weist den Assembler an,
+      Warnungen auszugeben, falls ein relativer anstelle eines absoluten
+      Sprungs m"oglich ist (nur f"ur Z80-Target).}
+\item{{\tt wsign-extension} bzw. {\tt wno-sign-extension}: Weist den
+      Assembler an, Warnungen über implizite Vorzeichen-Erweiterungen
+      auszugeben (nur 68K, MOVEQ).}
 \item{\tty{compmode}: Dieser Schalter weist den Assembler an, im Default
       im Kompatibilit"atsmodus zu arbeiten.  Genauere Informationen zu
       diesem Modus finden sich im Abschnitt \ref{SectCompMode}.}
@@ -4331,7 +4339,7 @@ Implizit schaltet der Assembler mit dem \tty{CPU}-Befehl das aktuelle Segment
 wieder auf Code zur"uck, da dies das einzige Segment ist, das alle
 Prozessoren definieren.
 \par
-Eine wichtige "Anderung: Das Default-Target ist nich mehr der 68008.  Falls
+Eine wichtige "Anderung: Das Default-Target ist nicht mehr der 68008.  Falls
 kein {\tt -cpu} Kommandozeilen-Argument gegeben wurde, dann ist bis zur
 ersten \tty{CPU}-Anweisung das reservierte Target \tty{NONE} gesetzt.  Vom
 Target unabh"angig verf"ugbare Pseudo-Anweisungen sind in dieser Situation
@@ -4693,6 +4701,19 @@ Stellung des Flip-Flops zul"assig.  Ihre Verwendung im anderen Modus
 wird vom Assembler mit einer Fehlermeldung quittiert.
 
 Die aktuelle Einstellung kann aus dem Symbol {\tt INPANEL} gelesen werden.
+
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+\subsection{WARNRELATIVE}
+
+{\em G"ultigkeit: Zx80}
+
+Mit diesem Schalter teilt man dem Assembler mit, ob eine Warnung erfolgen soll,
+falls ein relativer anstelle eines absoluten Sprungs m"oglich gewesen w"are.
+Der Default ist OFF bzw. das, was auf der Kommandozeile durch die Argumente
+{\tt -wrelative} bzw. {\tt -wno-relative} vorgegeben wurde.
+
+Die aktuelle Einstellung kann aus dem gleichnamigen Symbol gelesen werden.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -9407,6 +9428,11 @@ nicht m"oglich, da sie mit existierenden 8080-Mnemonics kollidieren:
 Der 8085 unterst"utzt mit \tty{RIM} und \tty{SIM} zwei Befehle, die
 im Z80-Befehlssatz nicht existieren.  Diese k"onnen ''Z80-artig'' als
 \tty{LD A,IM} bzw. \tty{LD IM,A} geschrieben werden.
+\par
+Der beim Z80-Target definierte 'generische Sprungbefehl' {\tt J} ist
+bei aktivierter Z80-Syntax ebenfalls verf"ugbar, da der 8080/8085
+jedoch keine relativen Spr"unge unterst"utzt, wird {\tt J} immer
+in {\tt JP} "ubersetzt.
 
 %%---------------------------------------------------------------------------
 
@@ -9749,6 +9775,27 @@ oder absoluten Spr"ungen werden die Adressen im ''Byte-Modus'' automatisch
 durch zwei geteilt.  Default ist die vom Atmel-Assembler vorgegebene Organisation
 in unteilbare 16-Bit-Worte.  Diese kann auch explizit mit dem Argument
 \verb!codesegsize=1! gew"ahlt werden.
+
+%%---------------------------------------------------------------------------
+
+\section{Z80, Z380}
+
+Der Z80 kennt zwei Arten von Spr"ungen: relativ ({\tt JR}) erlaubt Sprungdistanzen
+von -128 bis +127 Byte, w"ahrend man mit absoluten Spr"ungen ({\tt JP}) den
+kompletten Adre"sraum erreicht.  \asname{} unterst"utzt einen Pseudobefehl
+{\tt J}, der anhand der Zieladresse und der Sprungbedingung automatisch die
+k"urzestm"ogliche Variante w"ahlt (relative Spr"unge sind nicht f"ur alle
+Bedingungen definiert).  Dies gilt auch f"ur alle vom Z80 abgeleiteten Targets,
+wie Z80UNDOC, Z180, RABBIT2000 und LR35902.
+
+F"ur den Z380 wird {\tt J} ebenfalls angeboten, da der Z380 jedoch gr"o"sere
+Sprungdistanzen unterst"utzt, wird erst auf absolute Spr"unge ausgewichen,
+wenn die g"o"stm"ogliche Sprungdistanz (+/- 8 MByte) nicht mehr ausreicht.
+
+Generell sollte dieser Befehl mit Bedacht eingesetzt werden, da {\tt JR} und
+{\tt JP} nicht g"anzlich funktionsgleich sind: Code, der ausschlie"slich
+relative Spr"unge benutzt, kann positionsunabh"angig ausgef"uhrt werden,
+w"ahrend absolute Spr"unge einer Relozierung bed"urfen.
 
 %%---------------------------------------------------------------------------
 
@@ -12281,6 +12328,13 @@ Angaben:
                 Es wird ein kurzer Sprung erzeugt, der freie Platz wird
                 mit NOPs aufgef"ullt, um Phasenfehler zu vermeiden.}
                {keines}
+\errentry{  25}{relativer Sprung m"oglich}
+               {Warnung}
+               {Spr"unge k"onnen beim Z80 sowohl absolut als auch relativ
+                ausgef"uhrt werden.  In diesem Fall wurde ein absoluter
+                Sprung angefordert, ein(k"urzerer) relativer w"are aber
+                m"oglich.}
+               {das Sprungargument}
 \errentry{  30}{kein Sharefile angelegt, SHARED ignoriert}
                {Warnung}
                {Es wurde eine \tty{SHARED}-Anweisung gefunden, es
@@ -13646,6 +13700,7 @@ Angaben:
                {Fehler}
                {Die Zeichenkette enth"alt einen nicht abbildbares Zeichen.}
                {die fragliche Zeichenkette}
+               {keines}
 \errentry{2310}{Multi-Zeichenkonstante mit ung"ultiger L"ange}
                {Fehler}
                {Multi-Zeichenkonstanten m"ussen zwischen ein und vier Zeichen lang sein.}
@@ -13654,6 +13709,11 @@ Angaben:
                {fatal}
                {Es wurde noch kein Target gesetzt, der Assembler wei"s daher
                 nicht, f"ur welche CPU Code erzeugt werden soll.}
+               {keines}
+\errentry{2330}{Ung"ultige Displacement-L"ange}
+               {Fehler}
+               {Bei diesem Adressierungsmodus kann das Displacement diese
+                L"ange nicht haben.}
                {keines}
 \errentry{10001}{Fehler bein "Offnen der Datei}
                {fatal}
@@ -13843,7 +13903,7 @@ zwei Argumente also analysieren:
       wieder dem Assembler "uberlassen.}
 \end{enumerate}
 Um Punkt 2 auszuf"uhren, mu"s ein Argument in einen String "uberf"uhrt werden.  Von
-diesem kann das f"uhrend Hash-Zeichen dann auch entfernt werden, um den eigentlichen
+diesem kann das f"uhrende Hash-Zeichen dann auch entfernt werden, um den eigentlichen
 Wert zu evaluieren.  Komplett ausgeschrieben sieht das Makro dann so aus:
 \begin{verbatim}
 subd    macro   ARG1,ARG2
@@ -13872,7 +13932,7 @@ oder nicht.  Verwendet werden kann das Makro z.B. so:
         subd    #$55aa                  ; immediate
         subd    $12,x                   ; indexed
 \end{verbatim}
-Jetzt ist es aber so, dass man nicht nur 16-bittig subtrahieren möchte.  Man
+Jetzt ist es aber so, dass man nicht nur 16-bittig subtrahieren m"ochte.  Man
 k"onnte f"ur jede Operation eine eigene Version des Makros hinschreiben, es
 geht aber auch eleganter.  Ein Makro kann selber wieder eine Makro-Definition
 enthalten.  Man kann also ein 'Meta-Makro' definieren, das die Befehlsnamen

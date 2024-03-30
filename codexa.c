@@ -231,15 +231,47 @@ static Boolean ChkAdr(Word Mask, const tStrComp *pComp)
   return True;
 }
 
+typedef struct
+{
+  as_eval_cb_data_t cb_data;
+  Byte reg;
+} xa_eval_cb_data_t;
+
+DECLARE_AS_EVAL_CB(xa_eval_cb)
+{
+  xa_eval_cb_data_t *p_xa_eval_cb_data = (xa_eval_cb_data_t*)p_data;
+  Byte reg;
+  tSymbolSize reg_size;
+
+  switch (DecodeReg(p_arg, &reg_size, &reg, False))
+  {
+    case eIsReg:
+      if ((reg_size != eSymbolSize16Bit)
+       || (p_xa_eval_cb_data->reg != 0xff)
+       || !as_eval_cb_data_stack_plain_add(p_data->p_stack))
+      {
+        WrStrErrorPos(ErrNum_InvAddrMode, p_arg);
+        return e_eval_fail;
+      }
+      p_xa_eval_cb_data->reg = reg;
+      as_tempres_set_int(p_res, 0);
+      return e_eval_ok;
+    case eRegAbort:
+      return e_eval_fail;
+    default:
+      return e_eval_none;
+  }
+}
+
 static Boolean DecodeAdrIndirect(tStrComp *pArg, Word Mask)
 {
   unsigned ArgLen;
-  Byte Reg;
-  tSymbolSize NSize;
 
   ArgLen = strlen(pArg->str.p_str);
   if (pArg->str.p_str[ArgLen - 1] == '+')
   {
+    tSymbolSize NSize;
+
     StrCompShorten(pArg, 1); ArgLen--;
     if (!DecodeReg(pArg, &NSize, &AdrPart, True));
     else if (NSize != eSymbolSize16Bit) WrStrErrorPos(ErrNum_InvAddrMode, pArg);
@@ -250,56 +282,16 @@ static Boolean DecodeAdrIndirect(tStrComp *pArg, Word Mask)
   }
   else
   {
-    char *pSplit;
-    Boolean FirstFlag = False, NegFlag = False, NextNegFlag, ErrFlag = False;
-    tStrComp ThisComp = *pArg, RemComp;
-    LongInt DispAcc = 0;
+    LongInt DispAcc;
+    xa_eval_cb_data_t xa_eval_cb_data;
+    tEvalResult eval_result;
 
-    AdrPart = 0xff;
-    do
-    {
-      KillPrefBlanksStrComp(&ThisComp);
-      pSplit = indir_split_pos(ThisComp.str.p_str);
-      NextNegFlag = (pSplit && (*pSplit == '-'));
-      if (pSplit)
-        StrCompSplitRef(&ThisComp, &RemComp, &ThisComp, pSplit);
-      KillPostBlanksStrComp(&ThisComp);
+    as_eval_cb_data_ini(&xa_eval_cb_data.cb_data, xa_eval_cb);
+    xa_eval_cb_data.reg = 0xff;
+    DispAcc = EvalStrIntExprWithResultAndCallback(pArg, SInt16, &eval_result, &xa_eval_cb_data.cb_data);
 
-      switch (DecodeReg(&ThisComp, &NSize, &Reg, False))
-      {
-        case eIsReg:
-          if ((NSize != eSymbolSize16Bit) || (AdrPart != 0xff) || NegFlag)
-          {
-            WrStrErrorPos(ErrNum_InvAddrMode, &ThisComp); ErrFlag = True;
-          }
-          else
-            AdrPart = Reg;
-          break;
-        case eRegAbort:
-          return False;
-        default:
-        {
-          LongInt DispPart;
-          tSymbolFlags Flags;
-
-          DispPart = EvalStrIntExpressionWithFlags(&ThisComp, Int32, &ErrFlag, &Flags);
-          ErrFlag = !ErrFlag;
-          if (!ErrFlag)
-          {
-            FirstFlag = FirstFlag || mFirstPassUnknown(Flags);
-            DispAcc += NegFlag ? -DispPart : DispPart;
-          }
-        }
-      }
-
-      NegFlag = NextNegFlag;
-      if (pSplit)
-        ThisComp = RemComp;
-    }
-    while (pSplit && !ErrFlag);
-
-    if (FirstFlag) DispAcc &= 0x7fff;
-    if (AdrPart == 0xff) WrStrErrorPos(ErrNum_InvAddrMode, pArg);
+    AdrPart = xa_eval_cb_data.reg;
+    if (xa_eval_cb_data.reg == 0xff) WrStrErrorPos(ErrNum_InvAddrMode, pArg);
     else if (DispAcc == 0)
     {
       AdrMode = ModMem; MemPart = 2;

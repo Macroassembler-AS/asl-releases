@@ -68,6 +68,39 @@ static CondRec *Conditions;
 
 /*--------------------------------------------------------------------------*/
 
+typedef struct
+{
+  as_eval_cb_data_t cb_data;
+  Word reg_flag;
+} tlcs870_eval_cb_data_t;
+
+#define REGFLAG_DISP 0x20
+
+DECLARE_AS_EVAL_CB(tlcs870_eval_cb)
+{
+  tlcs870_eval_cb_data_t *p_tlcs870_eval_cb_data = (tlcs870_eval_cb_data_t*)p_data;
+  size_t z;
+  static const char AdrRegs[][3] =
+  {
+    "HL", "DE", "C", "PC", "A"
+  };
+
+  for (z = 0; z < as_array_size(AdrRegs); z++)
+    if (!as_strcasecmp(p_arg->str.p_str, AdrRegs[z]))
+    {
+      if ((p_tlcs870_eval_cb_data->reg_flag & (1 << z))
+       || !as_eval_cb_data_stack_plain_add(p_data->p_stack))
+      {
+        WrStrErrorPos(ErrNum_InvAddrMode, p_arg);
+        return e_eval_fail;
+      }
+      p_tlcs870_eval_cb_data->reg_flag |= 1 << z;
+      as_tempres_set_int(p_res, 0);
+      return e_eval_ok;
+    }
+  return e_eval_none;
+}
+
 static void DecodeAdr(const tStrComp *pArg, Byte Erl)
 {
   static const char Reg16Names[][3] =
@@ -75,14 +108,8 @@ static void DecodeAdr(const tStrComp *pArg, Byte Erl)
     "WA", "BC", "DE", "HL"
   };
   static const int Reg16Cnt = sizeof(Reg16Names) / sizeof(*Reg16Names);
-  static const char AdrRegs[][3] =
-  {
-    "HL", "DE", "C", "PC", "A"
-  };
-  static const int AdrRegCnt = sizeof(AdrRegs) / sizeof(*AdrRegs);
 
   int z;
-  Byte RegFlag;
   Boolean OK;
   LongInt DispAcc;
 
@@ -112,10 +139,9 @@ static void DecodeAdr(const tStrComp *pArg, Byte Erl)
 
   if (IsIndirect(pArg->str.p_str))
   {
-    tStrComp Arg, Remainder;
-    char *EPos;
-    Boolean NegFlag, NNegFlag, FirstFlag;
-    LongInt DispPart;
+    tEvalResult eval_result;
+    tStrComp Arg;
+    tlcs870_eval_cb_data_t tlcs870_eval_cb_data;
 
     StrCompRefRight(&Arg, pArg, 1);
     StrCompShorten(&Arg, 1);
@@ -133,51 +159,16 @@ static void DecodeAdr(const tStrComp *pArg, Byte Erl)
       goto chk;
     }
 
-    RegFlag = 0;
-    DispAcc = 0;
-    NegFlag = False;
-    OK = True;
-    FirstFlag = False;
-    do
-    {
-      KillPrefBlanksStrCompRef(&Arg);
-      EPos = indir_split_pos(Arg.str.p_str);
-      NNegFlag = EPos && (*EPos == '-');
-      if (EPos)
-        StrCompSplitRef(&Arg, &Remainder, &Arg, EPos);
-      KillPostBlanksStrComp(&Arg);
-
-      for (z = 0; z < AdrRegCnt; z++)
-        if (!as_strcasecmp(Arg.str.p_str, AdrRegs[z]))
-          break;
-      if (z >= AdrRegCnt)
-      {
-        tSymbolFlags Flags;
-
-        DispPart = EvalStrIntExpressionWithFlags(&Arg, Int32, &OK, &Flags);
-        FirstFlag |= mFirstPassUnknown(Flags);
-        DispAcc = NegFlag ? DispAcc - DispPart :  DispAcc + DispPart;
-      }
-      else if ((NegFlag) || (RegFlag & (1 << z)))
-      {
-        WrError(ErrNum_InvAddrMode);
-        OK = False;
-      }
-      else
-        RegFlag |= 1 << z;
-
-      NegFlag = NNegFlag;
-      if (EPos)
-        Arg = Remainder;
-    }
-    while (EPos && OK);
-    if (DispAcc != 0)
-      RegFlag |= 1 << AdrRegCnt;
-    if (OK)
-     switch (RegFlag)
+    as_eval_cb_data_ini(&tlcs870_eval_cb_data.cb_data, tlcs870_eval_cb);
+    tlcs870_eval_cb_data.reg_flag = 0;
+    DispAcc = EvalStrIntExprWithResultAndCallback(&Arg, Int32, &eval_result, &tlcs870_eval_cb_data.cb_data);
+    if (DispAcc || !tlcs870_eval_cb_data.reg_flag)
+      tlcs870_eval_cb_data.reg_flag |= REGFLAG_DISP;
+    if (eval_result.OK)
+     switch (tlcs870_eval_cb_data.reg_flag)
      {
-       case 0x20:
-         if (FirstFlag)
+       case REGFLAG_DISP:
+         if (mFirstPassUnknown(eval_result.Flags))
            DispAcc &= 0xff;
          if (DispAcc > 0xff) WrError(ErrNum_OverRange);
          else
@@ -196,8 +187,8 @@ static void DecodeAdr(const tStrComp *pArg, Byte Erl)
          AdrType = ModMem;
          AdrMode = 3;
          break;
-       case 0x21:
-         if (FirstFlag)
+       case REGFLAG_DISP | 0x01:
+         if (mFirstPassUnknown(eval_result.Flags))
            DispAcc &= 0x7f;
          if (ChkRange(DispAcc, -128, 127))
          {

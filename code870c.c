@@ -68,61 +68,37 @@ static CondRec *Conditions;
 
 /*--------------------------------------------------------------------------*/
 
-static Boolean DecodeRegDisp(tStrComp *pArg, Byte *pRegFlag, LongInt *pDispAcc, Boolean *pFirstFlag)
+typedef struct
 {
+  as_eval_cb_data_t cb_data;
+  Word reg_flag;
+} tlcs870c1_eval_cb_data_t;
+
+#define REGFLAG_DISP 0x100
+
+DECLARE_AS_EVAL_CB(tlcs870c1_eval_cb)
+{
+  tlcs870c1_eval_cb_data_t *p_tlcs870c1_eval_cb_data = (tlcs870c1_eval_cb_data_t*)p_data;
+  size_t z;
   static const char AdrRegs[][3] =
   {
-    "DE", "HL", "IX", "IY", "SP", "C"
+    "DE", "HL", "IX", "IY", "SP", "C", "PC", "A"
   };
-  static const int AdrRegCnt = sizeof(AdrRegs) / sizeof(*AdrRegs);
-  Boolean OK, NegFlag, NNegFlag;
-  char *EPos;
-  LongInt DispPart;
-  int z;
-  tStrComp Remainder;
 
-  *pRegFlag = 0;
-  *pDispAcc = 0;
-  NegFlag = False;
-  OK = True;
-  *pFirstFlag = False;
-  do
-  {
-    KillPrefBlanksStrCompRef(pArg);
-    EPos = indir_split_pos(pArg->str.p_str);
-    NNegFlag = EPos && (*EPos == '-');
-    if (EPos)
-      StrCompSplitRef(pArg, &Remainder, pArg, EPos);
-    KillPostBlanksStrComp(pArg);
-
-    for (z = 0; z < AdrRegCnt; z++)
-      if (!as_strcasecmp(pArg->str.p_str, AdrRegs[z]))
-        break;
-    if (z >= AdrRegCnt)
+  for (z = 0; z < as_array_size(AdrRegs); z++)
+    if (!as_strcasecmp(p_arg->str.p_str, AdrRegs[z]))
     {
-      tSymbolFlags Flags;
-
-      DispPart = EvalStrIntExpressionWithFlags(pArg, Int32, &OK, &Flags);
-      *pFirstFlag = *pFirstFlag || mFirstPassUnknown(Flags);
-      *pDispAcc = NegFlag ? *pDispAcc - DispPart :  *pDispAcc + DispPart;
+      if ((p_tlcs870c1_eval_cb_data->reg_flag & (1 << z))
+       || !as_eval_cb_data_stack_plain_add(p_data->p_stack))
+      {
+        WrStrErrorPos(ErrNum_InvAddrMode, p_arg);
+        return e_eval_fail;
+      }
+      p_tlcs870c1_eval_cb_data->reg_flag |= 1 << z;
+      as_tempres_set_int(p_res, 0);
+      return e_eval_ok;
     }
-    else if ((NegFlag) || (*pRegFlag & (1 << z)))
-    {
-      WrError(ErrNum_InvAddrMode);
-      OK = False;
-    }
-    else
-      *pRegFlag |= 1 << z;
-
-    NegFlag = NNegFlag;
-    if (EPos)
-      *pArg = Remainder;
-  }
-  while (OK && EPos);
-  if (*pDispAcc != 0)
-    *pRegFlag |= 1 << AdrRegCnt;
-
-  return OK;
+  return e_eval_none;
 }
 
 static void DecodeAdr(const tStrComp *pArg, Byte Erl, Boolean IsDest)
@@ -134,9 +110,8 @@ static void DecodeAdr(const tStrComp *pArg, Byte Erl, Boolean IsDest)
   static const int Reg16Cnt = sizeof(Reg16Names) / sizeof(*Reg16Names);
 
   int z;
-  Byte RegFlag;
   LongInt DispAcc;
-  Boolean OK, FirstFlag;
+  Boolean OK;
 
   AdrType = ModNone;
   AdrCnt = 0;
@@ -165,6 +140,8 @@ static void DecodeAdr(const tStrComp *pArg, Byte Erl, Boolean IsDest)
   if (IsIndirect(pArg->str.p_str))
   {
     tStrComp Arg;
+    tEvalResult eval_result;
+    tlcs870c1_eval_cb_data_t tlcs870c1_eval_cb_data;
 
     StrCompRefRight(&Arg, pArg, 1);
     StrCompShorten(&Arg, 1);
@@ -181,17 +158,16 @@ static void DecodeAdr(const tStrComp *pArg, Byte Erl, Boolean IsDest)
       AdrMode = 0xe6;
       goto chk;
     }
-    if ((!as_strcasecmp(Arg.str.p_str, "PC+A")) && (!IsDest))
-    {
-      AdrType = ModMem;
-      AdrMode = 0x4f;
-      goto chk;
-    }
 
-    if (DecodeRegDisp(&Arg, &RegFlag, &DispAcc, &FirstFlag))
-      switch (RegFlag)
+    as_eval_cb_data_ini(&tlcs870c1_eval_cb_data.cb_data, tlcs870c1_eval_cb);
+    tlcs870c1_eval_cb_data.reg_flag = 0;
+    DispAcc = EvalStrIntExprWithResultAndCallback(&Arg, Int32, &eval_result, &tlcs870c1_eval_cb_data.cb_data);
+    if (DispAcc || !tlcs870c1_eval_cb_data.reg_flag)
+      tlcs870c1_eval_cb_data.reg_flag |= REGFLAG_DISP;
+    if (eval_result.OK)
+      switch (tlcs870c1_eval_cb_data.reg_flag)
       {
-        case 0x40: /* (nnnn) (nn) */
+        case REGFLAG_DISP: /* (nnnn) (nn) */
           AdrType = ModMem;
           AdrVals[0] = DispAcc & 0xff;
           if (DispAcc > 0xff)
@@ -222,8 +198,12 @@ static void DecodeAdr(const tStrComp *pArg, Byte Erl, Boolean IsDest)
           AdrType = ModMem;
           AdrMode = 0xe2;
           break;
-        case 0x50: /* (SP+dd) */
-          if (FirstFlag)
+        case 0xc0: /* (PC+A) */
+          AdrType = ModMem;
+          AdrMode = 0x4f;
+          break;
+        case REGFLAG_DISP | 0x10: /* (SP+dd) */
+          if (mFirstPassUnknown(eval_result.Flags))
             DispAcc &= 0x7f;
           if (ChkRange(DispAcc, -128, 127))
           {
@@ -233,8 +213,8 @@ static void DecodeAdr(const tStrComp *pArg, Byte Erl, Boolean IsDest)
             AdrVals[0] = DispAcc & 0xff;
           }
           break;
-        case 0x48: /* (IY+dd) */
-          if (FirstFlag)
+        case REGFLAG_DISP | 0x08: /* (IY+dd) */
+          if (mFirstPassUnknown(eval_result.Flags))
             DispAcc &= 0x7f;
           if (ChkRange(DispAcc, -128, 127))
           {
@@ -244,8 +224,8 @@ static void DecodeAdr(const tStrComp *pArg, Byte Erl, Boolean IsDest)
             AdrVals[0] = DispAcc & 0xff;
           }
           break;
-        case 0x44: /* (IX+dd) */
-          if (FirstFlag)
+        case REGFLAG_DISP | 0x04: /* (IX+dd) */
+          if (mFirstPassUnknown(eval_result.Flags))
             DispAcc &= 0x7f;
           if (ChkRange(DispAcc, -128, 127))
           {
@@ -255,8 +235,8 @@ static void DecodeAdr(const tStrComp *pArg, Byte Erl, Boolean IsDest)
             AdrVals[0] = DispAcc & 0xff;
           }
           break;
-        case 0x42: /* (HL+dd) */
-          if (FirstFlag)
+        case REGFLAG_DISP | 0x02: /* (HL+dd) */
+          if (mFirstPassUnknown(eval_result.Flags))
             DispAcc &= 0x7f;
           if (ChkRange(DispAcc, -128, 127))
           {
@@ -271,7 +251,7 @@ static void DecodeAdr(const tStrComp *pArg, Byte Erl, Boolean IsDest)
           AdrMode = 0xe7;
           break;
         default:
-          WrError(ErrNum_InvAddrMode);
+          WrStrErrorPos(ErrNum_InvAddrMode, &Arg);
       }
     goto chk;
   }

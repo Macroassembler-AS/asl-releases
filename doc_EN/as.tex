@@ -325,8 +325,10 @@ under work / planned / in consideration :
 \begin{itemize}
 \item{ARM}
 \item{Analog Devices ADSP21xx}
+\item{DEC VAX}
 \item{SGS-Thomson ST20}
 \item{Texas Instruments TMS320C8x}
+\item{Zilog eZ80}
 \end{itemize}
 Unloved, but now, however, present :
 \begin{itemize}
@@ -1069,6 +1071,12 @@ chapters \ref{ChapShareMain} resp. \ref{ChapShareOrder}.
       assembly if the include nesting level exceeds the given limit
       (default is 200).}
 \item{{\tt Werror}: instructs the assembler to treat warnings as errors.}
+\item{{\tt wrelative} resp. {\tt wno-relative}: instructs the assembler
+      to issue warnings if a relative jump instead of an absolute is
+      possible (only for Z80 target).}
+\item{{\tt wsign-extension} resp. {\tt wno-sign-extension}: instructs
+      the assembler to issue warnings about implicit sign extensions
+      (onlx 68K, MOVEQ).}
 \item{\tty{compmode}: This switch instructs the assembler to operate by
       default in compatibility mode.  See section \ref{SectCompMode} for
       more information about this mode.}
@@ -4406,11 +4414,23 @@ range of course reduces to -128...+255.  If this option is turned off
 (argument {\tt OFF}), each integer argument obtains its own word and may
 take values from -32768...+65535.
 
-This distinctin is only made for integer arguments of {\tt DATA}, strings
+This distinction is only made for integer arguments of {\tt DATA}, strings
 will always be packed..  Keep further in mind that packing of values only
 works within the arguments of a {\tt DATA} statement; if one has
 subsequent {\tt DATA} statements, there will still be half-filled words
 when the argument count is odd!
+
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+\subsection{WARNRELATIVE}
+
+{\em valid for:  Zx80}
+
+This switch instructs the assembler whether to issue warnings when a relative jump
+instead of an absolute one would be possible.  The default is OFF respectively
+what was defined via the command line arguments {\tt -wrelative} and {\tt -wno-relative}.
+
+The current setting may be read from a symbol of same name.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -9203,6 +9223,11 @@ because they conflict with existing 8080 mnemonics:
 The 8085 supports the instructions \tty{RIM} and \tty{SIM} that are
 not part of the Z80 instruction set.  They may be written in 'Z80 style'
 as \tty{LD A,IM} resp. \tty{LD IM,A}.
+\par
+The 'generic jump' {\tt J} known from the Z80 target is also 
+available if Z80 syntax is activated.  However, since the 8080/8085
+does not support relative jumps, {\tt J} is always translated to
+{\tt JP}.
 
 %%---------------------------------------------------------------------------
 
@@ -9540,6 +9565,27 @@ inserted in between.  Target addresses for relative and absolute branches
 automatically get divided by two in this ''byte mode''.  The default is the
 organizazion in 16 bit word as used by the original Atmel assembler.  This
 may explicitly be selected by using the argument \verb!codesegsize=1!.
+
+%%---------------------------------------------------------------------------
+
+\section{Z80, Z380}
+
+The Z80 supports two types of jump instructions: relative ({\tt JR}) supports
+jump distances from -128 to +127 bytes, while absolute jumps  ({\tt JP})
+allow to reach the complete address space. \asname{} additionally supports
+a pseudo instruction {\tt J} which automatically selects the shortest
+possible variant, depending on the target address and the condition (relative
+jumps do not support all conditions).  This also applies to all targets
+'derived' from Z80, like Z80UNDOC, Z180, RABBIT2000, and LR35902.
+
+{\tt J} is also offered for the Z380, but since the Z380 supports larger
+jump distances, absolute jumps will only be used if the largest possible
+jump distance (+/- 8 MByte) no longer suffices.
+
+This instruction should be used with thought and care, since {\tt JR} and
+{\tt JP} are not entirely equivalent in function: code that exclusively
+uses relative jumps is position-independent, while absolute jumps
+require relocation.
 
 %%---------------------------------------------------------------------------
 
@@ -12017,6 +12063,12 @@ described by:
                 for the shorter jump is emitted, and the remaining space is
                 filled with NOPs to avoid phasing errors.}
                {none}
+\errentry{  25}{relative jump possible}
+               {warning}
+               {Z80 jumps may be either relative or absolute.  An absolute
+                jump was requested in this case, however a (shorter) relative
+                jump would be possible as well.}
+               {the jump instruction's argument}
 \errentry{  30}{no sharefile created, SHARED ignored}
                {warning}
                {A \tty{SHARED} directive was found, but on the command line no
@@ -13309,6 +13361,11 @@ described by:
                {No target has been set so far.  The assembler therefore does
                 not know which target to generate code for.}
                {none}
+\errentry{2330}{invalid displacement length}
+               {error}
+               {This displacement length must not be used if this addressing
+                mode is used.}
+               {none}
 \errentry{10001}{error in opening file}
                {fatal}
                {An error was detected while trying to open a file for input.}
@@ -13424,7 +13481,7 @@ immediately about this!!
 %%===========================================================================
 
 \cleardoublepage
-\chapter{Programmierbeispiele}
+\chapter{Programming Examples}
 
 I often get questions about how to realize certain things. Some of those are
 asked frequently, and it might be worth documenting the solutions in a 'Tips
@@ -13439,7 +13496,7 @@ on this virtual accumulator, they ideally should provide the same addressing
 modes as the 8 bit instructions implemented by the hardware.  To achieve this,
 macros somehow have to 'parse' their arguments.  How can this be accomplished?
 
-As an examplr, the Motorola 6800 contains two accumulators named A an B.  It
+As an example, the Motorola 6800 contains two accumulators named A an B.  It
 is straightforward to treat them also as a 16 bit accumulator.  Addressing modes
 should be the same as for 8 bit arithmetic instructions, namely:
 \begin{itemize}
@@ -13477,7 +13534,7 @@ _SARG1    set     substr(_SARG1,1,strlen(_SARG1)-1) ; y->del #
   endif
   endm
 \end{verbatim}
-Macro arguments hav deliberately been written in all-uppercase.  This way,
+Macro arguments have deliberately been written in all-uppercase.  This way,
 the macro works both in case-sensitive and non-case-sensitive mode.  The
 usage of the macro looks like this:
 \begin{verbatim}

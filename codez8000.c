@@ -486,6 +486,43 @@ static IntType GetImmIntType(tSymbolSize Size)
  * \return True if success
  * ------------------------------------------------------------------------ */
 
+typedef struct
+{
+  as_quoted_iterator_cb_data_t data;
+  int nest;
+  char *p_split_pos;
+} split_cb_data_t;
+
+static int split_cb(const char *p_pos, as_quoted_iterator_cb_data_t *p_cb_data)
+{
+  split_cb_data_t *p_data = (split_cb_data_t*)p_cb_data;
+
+  switch (*p_pos)
+  {
+    case '(':
+      p_data->nest++;
+      break;
+    case ')':
+      p_data->nest--;
+      break;
+    case '>':
+      if (!p_data->nest && (p_pos[1] == '>'))
+        p_data->p_split_pos = (char*)p_pos;
+      break;
+    default:
+      if (p_data->p_split_pos)
+      {
+        if (as_isspace(*p_pos)); /* delay decision to to next non-blank */
+        else if (as_isalnum(*p_pos) || (*p_pos == '('))
+          return -1; /* found */
+        else
+          p_data->p_split_pos = NULL;
+      }
+      break;
+  }
+  return 0;
+}
+
 static LongWord DecodeAddrPartNum(const tStrComp *pArg, LongInt Disp, tEvalResult *pEvalResult, Boolean IsDirect, Boolean IsIO, Boolean *pForceShort, Boolean *pIsDirect)
 {
   tStrComp CopyComp;
@@ -516,46 +553,20 @@ static LongWord DecodeAddrPartNum(const tStrComp *pArg, LongInt Disp, tEvalResul
     }
     if (!strncmp(CopyComp.str.p_str, "<<", 2))
     {
-      char *pRun, *pSplitPos = NULL;
-      int Nest = 0;
-      Boolean InSgl = False, InDbl = False, Found = False;
+      split_cb_data_t split_data;
 
-      for (pRun = CopyComp.str.p_str + 2; *pRun && !Found; pRun++)
-      {
-        switch (*pRun)
-        {
-          case '\'':
-            if (!InDbl) InSgl = !InSgl;
-            break;
-          case '"':
-            if (!InSgl) InDbl = !InDbl;
-            break;
-          case '(':
-            if (!InSgl && !InDbl) Nest++;
-            break;
-          case ')':
-            if (!InSgl && !InDbl) Nest--;
-            break;
-          case '>':
-            if (!InSgl && !InDbl && !Nest && (pRun[1] == '>'))
-              pSplitPos = pRun;
-            break;
-          default:
-            if (pSplitPos)
-            {
-              if (as_isspace(*pRun)); /* delay decision to to next non-blank */
-              else if (as_isalnum(*pRun) || (*pRun == '('))
-                Found = True;
-              else
-                pSplitPos = NULL;
-            }
-        }
-      }
-      if (pSplitPos)
+      split_data.data.callback_before = False;
+      split_data.data.qualify_quote = QualifyQuote;
+      split_data.p_split_pos = NULL;
+      split_data.nest = 0;
+
+      as_iterate_str_quoted(CopyComp.str.p_str + 2, split_cb, &split_data.data);
+
+      if (split_data.p_split_pos)
       {
         tStrComp SegArg;
 
-        StrCompSplitRef(&SegArg, &CopyComp, &CopyComp, pSplitPos);
+        StrCompSplitRef(&SegArg, &CopyComp, &CopyComp, split_data.p_split_pos);
         StrCompIncRefLeft(&CopyComp, 1);
         SegNum = EvalStrIntExpressionOffsWithResult(&SegArg, 2, UInt7, pEvalResult);
         if (!pEvalResult->OK)
@@ -845,7 +856,7 @@ static tAdrMode DecodeAdr(const tStrComp *pArg, unsigned ModeMask, tAdrVals *pAd
     goto chk;
   }
   if (AMDSyntax
-   && ((ArgLen = strlen(pArg->str.p_str))> 1)
+   && ((ArgLen = strlen(pArg->str.p_str)) > 1)
    && (pArg->str.p_str[ArgLen - 1] == '^'))
   {
     String Reg;
@@ -3382,12 +3393,12 @@ static Boolean IsDef_Z8000(void)
  * \param  pRVal input argument
  * ------------------------------------------------------------------------ */
 
-static void PotOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
+static void PotMonadicOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
   UNUSED(pLVal);
 
   /* If in front of a label, takes the address as an 'untyped' value.  This
-     will instruct the address decode to use immediate instead of direct
+     will instruct the address decoder to use immediate instead of direct
      addressing: */
 
   if (pRVal->AddrSpaceMask)
@@ -3406,9 +3417,10 @@ static void PotOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
   if (pErg->DataSize == eSymbolSizeUnknown) pErg->DataSize = pLVal->DataSize;
 }
 
-static const Operator PotMonadicOperator =
+static const as_operator_t z8000_operators[] =
 {
-  "^" ,1 , False, 8, { TempInt | (TempInt << 4), 0, 0, 0 }, PotOp
+  { "^" ,1 , False, 8, { TempInt | (TempInt << 4), 0, 0, 0 }, PotMonadicOp },
+  {NULL, 0 , False,  0, { 0, 0, 0, 0, 0 }, NULL}
 };
 
 /*!------------------------------------------------------------------------
@@ -3451,7 +3463,7 @@ static void SwitchTo_Z8000(void *pUser)
   InitFields();
   SetIsOccupiedFnc = TrueFnc;
   if (AMDSyntax)
-    pPotMonadicOperator = &PotMonadicOperator;
+    target_operators = z8000_operators;
   onoff_supmode_add();
 }
 

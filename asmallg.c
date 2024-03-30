@@ -169,7 +169,7 @@ static void SetCPUCore(const tCPUDef *pCPUDef, const tStrComp *pCPUArgs)
   DissectBit = Default_DissectBit;
   DissectReg = NULL;
   QualifyQuote = NULL;
-  pPotMonadicOperator = NULL;
+  target_operators = no_operators;
   SetIsOccupiedFnc =
   SaveIsOccupiedFnc =
   RestoreIsOccupiedFnc = NULL;
@@ -790,7 +790,7 @@ static void CodeString(Word Index)
 static void CodePHASE(Word Index)
 {
   Boolean OK;
-  LongInt HVal;
+  LongWord HVal;
   UNUSED(Index);
 
   if (!ChkArgCnt(1, 1));

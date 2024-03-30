@@ -110,6 +110,27 @@ typedef struct sEvalResult
   tSymbolSize DataSize;
 } tEvalResult;
 
+struct as_eval_cb_data;
+typedef enum { e_eval_none, e_eval_fail, e_eval_ok } as_eval_cb_rtn_t;
+typedef enum { e_operator, e_function } as_eval_cb_data_stack_elem_t;
+#define DECLARE_AS_EVAL_CB(fnc) as_eval_cb_rtn_t fnc(struct as_eval_cb_data *p_data, struct sStrComp *p_arg, TempResult *p_res)
+typedef DECLARE_AS_EVAL_CB((*as_eval_cb_t));
+typedef struct as_eval_cb_data_stack
+{
+  struct as_eval_cb_data_stack *p_next;
+  as_eval_cb_data_stack_elem_t type;
+  const char *p_ident;
+  int arg_index;
+} as_eval_cb_data_stack_t;
+struct as_operator;
+typedef struct as_eval_cb_data
+{
+  as_eval_cb_t callback;
+  const struct as_operator *p_operators;
+  as_eval_cb_data_stack_t *p_stack;
+  TempResult *p_other_arg;
+} as_eval_cb_data_t;
+
 struct sStrComp;
 struct as_nonz_dynstr;
 struct sRelocEntry;
@@ -197,6 +218,11 @@ extern void PrintSymbolDepth(void);
 
 extern void EvalResultClear(tEvalResult *pResult);
 
+extern void as_eval_cb_data_ini(struct as_eval_cb_data *p_data, as_eval_cb_t cb);
+extern void as_dump_eval_cb_data_stack(const as_eval_cb_data_stack_t *p_stack);
+extern unsigned as_eval_cb_data_stack_depth(const as_eval_cb_data_stack_t *p_stack);
+extern Boolean as_eval_cb_data_stack_plain_add(const as_eval_cb_data_stack_t *p_stack);
+extern Boolean as_eval_cb_data_stackelem_mul(const as_eval_cb_data_stack_t *p_stack);
 
 extern void SetSymbolOrStructElemSize(const struct sStrComp *pName, tSymbolSize Size);
 
@@ -213,6 +239,7 @@ extern Integer GetSymbolType(const struct sStrComp *pName);
 extern void EvalExpression(const char *pExpr, TempResult *Erg);
 
 extern void EvalStrExpression(const struct sStrComp *pExpr, TempResult *pErg);
+extern void EvalStrExpressionWithCallback(const struct sStrComp *pExpr, TempResult *pErg, as_eval_cb_data_t *p_callback_data);
 
 extern void SetIntConstModeByMask(LongWord Mask);
 extern void SetIntConstMode(tIntConstMode Mode);
@@ -221,9 +248,11 @@ extern void SetIntConstRelaxedMode(Boolean NewRelaxedMode);
 extern LargeInt EvalStrIntExpression(const struct sStrComp *pExpr, IntType Type, Boolean *pResult);
 extern LargeInt EvalStrIntExpressionWithFlags(const struct sStrComp *pExpr, IntType Type, Boolean *pResult, tSymbolFlags *pFlags);
 extern LargeInt EvalStrIntExpressionWithResult(const struct sStrComp *pExpr, IntType Type, struct sEvalResult *pResult);
+extern LargeInt EvalStrIntExprWithResultAndCallback(const struct sStrComp *pExpr, IntType Type, struct sEvalResult *pResult, as_eval_cb_data_t *p_callback_data);
 extern LargeInt EvalStrIntExpressionOffs(const struct sStrComp *pExpr, int Offset, IntType Type, Boolean *pResult);
 extern LargeInt EvalStrIntExpressionOffsWithFlags(const struct sStrComp *pExpr, int Offset, IntType Type, Boolean *pResult, tSymbolFlags *pFlags);
 extern LargeInt EvalStrIntExpressionOffsWithResult(const struct sStrComp *pExpr, int Offset, IntType Type, struct sEvalResult *pResult);
+extern LargeInt EvalStrIntExprOffsWithResultAndCallback(const struct sStrComp *pExpr, int Offset, IntType Type, struct sEvalResult *pResult, as_eval_cb_data_t *p_callback_data);
 
 extern Double EvalStrFloatExpressionWithResult(const struct sStrComp *pExpr, FloatType Typ, struct sEvalResult *pResult);
 extern Double EvalStrFloatExpression(const struct sStrComp *pExpr, FloatType Typ, Boolean *pResult);

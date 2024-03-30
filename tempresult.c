@@ -13,6 +13,7 @@
 
 #include "strutil.h"
 #include "asmdef.h"
+#include "asmsub.h"
 #include "tempresult.h"
 
 /*!------------------------------------------------------------------------

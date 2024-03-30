@@ -1,3 +1,15 @@
+2024-03-30 [1.42 Bld 267]
+
+- Addition    : Add new Z80 pseudo instruction 'J' that assembles
+                as JR or JP, depending on branch distance.
+- Bugfix      : Correct PHASE when handling addresses beyond 2 GByte.
+- Addition    : Add a command-line switch '-wrelative' to enable
+                warnings about possible relative jump.
+- Change      : Rework the indiredt address expression parser for
+                the following targets: 80C16x, uCOM78, 8086,
+                TLCS-870(C), TLCS-90(0(0)), XA, Z80, Z8000.
+                Behaviour *should* be the same as before.
+
 2024-03-25 [1.42 Bld 266]
 
 - Bugfix      : Add missing error message about invalid length

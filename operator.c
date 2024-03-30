@@ -31,6 +31,18 @@
         } \
         while (0)
 
+#define PromoteRValFlags() \
+        do \
+        { \
+          if (pErg->Typ != TempNone) \
+          { \
+            pErg->Flags |= (pRVal->Flags & eSymbolFlags_Promotable); \
+            pErg->AddrSpaceMask |= pRVal->AddrSpaceMask; \
+            if (pErg->DataSize == eSymbolSizeUnknown) pErg->DataSize = pRVal->DataSize; \
+          } \
+        } \
+        while (0)
+
 #define PromoteLRValFlags() \
         do \
         { \
@@ -85,13 +97,6 @@ static int reg_cmp(const TempResult *p_val1, const TempResult *p_val2)
     return 1;
   else
     return 0;
-}
-
-static void DummyOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
-{
-  UNUSED(pLVal);
-  UNUSED(pRVal);
-  UNUSED(pErg);
 }
 
 static void OneComplOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
@@ -341,6 +346,23 @@ static void SubOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
   PromoteLRValFlags();
 }
 
+static void SubSglOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
+{
+  UNUSED(pLVal);
+  switch (pLVal->Typ)
+  {
+    case TempInt:
+      as_tempres_set_int(pErg, -pRVal->Contents.Int);
+      break;
+    case TempFloat:
+      as_tempres_set_float(pErg, -pRVal->Contents.Float);
+      break;
+    default:
+      break;
+  }
+  PromoteRValFlags();
+}
+
 static void LogNotOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
   UNUSED(pLVal);
@@ -511,9 +533,8 @@ static void UneqOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 #define Int2String    (TempInt    | (TempString << 4))
 #define String2Int    (TempString | (TempInt << 4)   )
 
-const Operator Operators[] =
+const as_operator_t operators[] =
 {
-  {" " , 1 , False,  0, { 0, 0, 0, 0, 0 }, DummyOp},
   {"~" , 1 , False,  1, { TempInt << 4, 0, 0, 0, 0 }, OneComplOp},
   {"<<", 2 , True ,  3, { Int2Int, 0, 0, 0, 0 }, ShLeftOp},
   {">>", 2 , True ,  3, { Int2Int, 0, 0, 0, 0 }, ShRightOp},
@@ -526,7 +547,9 @@ const Operator Operators[] =
   {"/" , 1 , True , 11, { Int2Int, Float2Float, 0, 0, 0 }, DivOp},
   {"#" , 1 , True , 11, { Int2Int, 0, 0, 0, 0 }, ModOp},
   {"+" , 1 , True , 13, { Int2Int, Float2Float, String2String, Int2String, String2Int }, AddOp},
+  /* minus may have one or two operands */
   {"-" , 1 , True , 13, { Int2Int, Float2Float, 0, 0, 0 }, SubOp},
+  {"-" , 1 , False, 13, { TempInt << 4, TempFloat << 4, 0, 0, 0 }, SubSglOp},
   {"~~", 2 , False,  2, { TempInt << 4, 0, 0, 0, 0 }, LogNotOp},
   {"&&", 2 , True , 15, { Int2Int, 0, 0, 0, 0 }, LogAndOp},
   {"||", 2 , True , 16, { Int2Int, 0, 0, 0, 0 }, LogOrOp},
@@ -541,11 +564,11 @@ const Operator Operators[] =
   {"!=", 2 , True , 23, { Int2Int, Float2Float, String2String, Reg2Reg, 0 }, UneqOp},
   /* termination marker */
   {NULL, 0 , False,  0, { 0, 0, 0, 0, 0 }, NULL}
-},
-/* minus may have one or two operands */
-MinusMonadicOperator =
-{
-  "-" ,1 , False, 13, { TempInt << 4, TempFloat << 4, 0, 0, 0 }, SubOp
 };
 
-const Operator *pPotMonadicOperator = NULL;
+const as_operator_t no_operators[] =
+{
+  {NULL, 0 , False,  0, { 0, 0, 0, 0, 0 }, NULL}
+};
+
+const as_operator_t *target_operators = no_operators;

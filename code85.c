@@ -1140,6 +1140,55 @@ static void DecodeJP(Word Code)
   }
 }
 
+static void DecodeJ(Word Code)
+{
+  Byte Condition;
+  UNUSED(Code);
+
+  if (!ChkZ80Syntax(eSyntaxZ80))
+    return;
+
+  switch (ArgCnt)
+  {
+    /* if two arguments, first one is (Z80) condition */
+
+    case 2:
+      if (!DecodeCondition(ArgStr[1].str.p_str, &Condition, True))
+      {
+        WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
+        return;
+      }
+      break;
+
+    /* if one argument, it's unconditional JP */
+
+    case 1:
+      Condition = 0x01;
+      break;
+
+    default:
+      (void)ChkArgCnt(1, 2);
+      return;
+  }
+
+  OpSize = eSymbolSize16Bit;
+  DecodeAdr_Z80(&ArgStr[ArgCnt], MModImm | ((ArgCnt == 1) ? MModIReg16 : 0));
+  switch (AdrMode)
+  {
+    case ModIReg16:
+      if (AdrVals[0] != HLReg) WrError(ErrNum_InvAddrMode);
+      else
+        BAsmCode[CodeLen++] = 0xe9;
+      break;
+    case ModImm:
+      BAsmCode[CodeLen++] = 0xc2 + Condition;
+      BAsmCode[CodeLen++] = AdrVals[0];
+      BAsmCode[CodeLen++] = AdrVals[1];
+    default:
+      break;
+  }
+}
+
 static void DecodeCALL(Word Code)
 {
   Byte Condition;
@@ -1437,6 +1486,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "OR" , 6, DecodeALU8_Z80);
   AddInstTable(InstTable, "CP" , 0, DecodeCP);
   AddInstTable(InstTable, "JP" , 0, DecodeJP);
+  AddInstTable(InstTable, "J" , 0, DecodeJ);
   AddInstTable(InstTable, "CALL", 0, DecodeCALL);
   AddInstTable(InstTable, "RET", 0, DecodeRET);
   AddInstTable(InstTable, "IN", 0xdb, DecodeINOUT);

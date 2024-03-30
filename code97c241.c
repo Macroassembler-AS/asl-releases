@@ -27,6 +27,7 @@
 #include "intpseudo.h"
 #include "codevars.h"
 #include "errmsg.h"
+#include "operator.h"
 
 #include "code97c241.h"
 
@@ -267,15 +268,142 @@ typedef enum
   eImmAsAbs
 } tImmAllow;
 
-static void DecodeAdr(const tStrComp *pArg, Byte PrefInd, tImmAllow MayImm, Boolean MayReg)
-{
 #define FreeReg 0xff
 #define SPReg 0xfe
 #define PCReg 0xfd
 
+typedef struct
+{
+  as_eval_cb_data_t cb_data;
+  Byte base_reg, ind_reg, scale_fact;
+  tSymbolSize base_reg_size, ind_reg_size;
+} tlcs9000_eval_cb_data_t;
+
+DECLARE_AS_EVAL_CB(tlcs9000_eval_cb)
+{
+  tlcs9000_eval_cb_data_t *p_eval_cb_data = (tlcs9000_eval_cb_data_t*)p_data;
+  Byte this_reg;
+  tSymbolSize size;
+
+  UNUSED(p_res);
+
+  switch (DecodeReg(p_arg, &this_reg, &size, False))
+  {
+    case eIsReg:
+      break;
+    case eRegAbort:
+      return e_eval_fail;
+    default:
+      if (!as_strcasecmp(p_arg->str.p_str, "PC"))
+      {
+        this_reg = PCReg;
+        size = eSymbolSize32Bit;
+      }
+      else if (!as_strcasecmp(p_arg->str.p_str, "SP"))
+      {
+        this_reg = SPReg;
+        size = eSymbolSize32Bit;
+      }
+      else
+        return e_eval_none;
+  }
+
+  if (size == eSymbolSize8Bit)
+  {
+    WrStrErrorPos(ErrNum_InvAddrMode, p_arg);
+    return e_eval_fail;
+  }
+
+  /* I.4.c. Basisregister */
+
+  if (as_eval_cb_data_stack_plain_add(p_data->p_stack))
+  {
+    if (p_eval_cb_data->base_reg == FreeReg)
+    {
+      p_eval_cb_data->base_reg = this_reg;
+      p_eval_cb_data->base_reg_size = size;
+    }
+    else if (p_eval_cb_data->ind_reg == FreeReg)
+    {
+      p_eval_cb_data->ind_reg = this_reg;
+      p_eval_cb_data->ind_reg_size = size;
+      p_eval_cb_data->scale_fact = 0;
+    }
+    else
+    {
+      WrStrErrorPos(ErrNum_InvAddrMode, p_arg);
+      return e_eval_fail;
+    }
+    as_tempres_set_int(p_res, 0);
+    return e_eval_ok;
+  }
+
+  /* I.4.b. Indexregister mit Skalierung */
+
+  else if (p_data->p_stack
+        && as_eval_cb_data_stackelem_mul(p_data->p_stack)
+        && as_eval_cb_data_stack_plain_add(p_data->p_stack->p_next))
+  {
+    if (!p_data->p_other_arg || (p_data->p_other_arg->Typ != TempInt))
+    {
+      WrStrErrorPos(ErrNum_InvAddrMode, p_arg);
+      return e_eval_fail;
+    }
+    for (p_eval_cb_data->scale_fact = 0;
+         p_eval_cb_data->scale_fact < 4;
+         p_eval_cb_data->scale_fact++)
+      if (p_data->p_other_arg->Contents.Int == 1 << p_eval_cb_data->scale_fact)
+        break;
+    if (p_eval_cb_data->scale_fact >= 4)
+    {
+      WrStrErrorPos(ErrNum_InvAddrMode, p_arg);
+      return e_eval_fail;
+    }
+    if (p_eval_cb_data->ind_reg == FreeReg)
+    {
+      p_eval_cb_data->ind_reg = this_reg;
+      p_eval_cb_data->ind_reg_size = size;
+    }
+    else
+    {
+      WrStrErrorPos(ErrNum_InvAddrMode, p_arg);
+      return e_eval_fail;
+    }
+    as_tempres_set_int(p_res, 0);
+    return e_eval_ok;
+  }
+  else
+  {
+    WrStrErrorPos(ErrNum_InvAddrMode, p_arg);
+    return e_eval_fail;
+  }
+}
+
+static void force_long_op(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
+{
+  UNUSED(pLVal);
+
+  /* clone value as-is */
+
+  as_tempres_copy_value(pErg, pRVal);
+  pErg->Flags |= (pLVal->Flags & eSymbolFlags_Promotable) | eSymbolFlag_UserLong;
+  pErg->DataSize = pLVal->DataSize;
+}
+
+/* NOTE: as unary operator, '>' binds stronger than as binary operator, similar
+   to '~' : */
+
+static const as_operator_t tlcs9000_operators[] =
+{
+  { ">" ,1 , False, 1, { TempInt | (TempInt << 4), 0, 0, 0 }, force_long_op },
+  {NULL, 0 , False, 0, { 0, 0, 0, 0, 0 }, NULL}
+};
+
+static void DecodeAdr(const tStrComp *pArg, Byte PrefInd, tImmAllow MayImm, Boolean MayReg)
+{
   Byte Reg;
   String AdrPartStr;
-  tStrComp AdrPart, Remainder;
+  tStrComp AdrPart;
   Boolean OK;
   int ArgLen;
   tSymbolSize Size;
@@ -288,13 +416,12 @@ static void DecodeAdr(const tStrComp *pArg, Byte PrefInd, tImmAllow MayImm, Bool
 
   if (IsIndirect(pArg->str.p_str))
   {
-    Boolean ForcePrefix = False, MinFlag, NMinFlag;
     tStrComp Arg, TmpComp;
     String Tmp;
-    char *PMPos, *EPos;
-    Byte BaseReg, IndReg, ScaleFact;
-    tSymbolSize BaseRegSize, IndRegSize;
+    tlcs9000_eval_cb_data_t eval_cb_data;
+    tEvalResult eval_result;
     LongInt DispAcc;
+    Boolean force_prefix;
 
     StrCompMkTemp(&TmpComp, Tmp, sizeof(Tmp));
 
@@ -360,185 +487,68 @@ static void DecodeAdr(const tStrComp *pArg, Byte PrefInd, tImmAllow MayImm, Bool
 
     /* I.4. Adresskomponenten zerlegen */
 
-    BaseReg = IndReg = FreeReg;
-    BaseRegSize = IndRegSize = eSymbolSizeUnknown;
-    ScaleFact = 0;
-    DispAcc = AdrInc;
-    MinFlag = False;
-    do
-    {
-      /* I.4.a. Trennzeichen suchen */
-
-      KillPrefBlanksStrCompRef(&Arg);
-      PMPos = indir_split_pos(Arg.str.p_str);
-      NMinFlag = (PMPos && (*PMPos == '-'));
-      if (PMPos)
-      {
-        StrCompSplitRef(&Arg, &Remainder, &Arg, PMPos);
-        KillPostBlanksStrComp(&Arg);
-      }
-
-      /* I.4.b. Indexregister mit Skalierung */
-
-      EPos = QuotPos(Arg.str.p_str, '*');
-      if (EPos)
-      {
-        StrCompCopySub(&TmpComp, &Arg, 0, EPos - Arg.str.p_str);
-        KillPostBlanksStrComp(&TmpComp);
-      }
-      ArgLen = strlen(Arg.str.p_str);
-      if ((EPos == Arg.str.p_str + ArgLen - 2)
-       && ((Arg.str.p_str[ArgLen - 1] == '1') || (Arg.str.p_str[ArgLen - 1] == '2') || (Arg.str.p_str[ArgLen - 1] == '4') || (Arg.str.p_str[ArgLen - 1] == '8'))
-       && ((RegEvalResult = DecodeReg(&TmpComp, &Reg, &Size, False)) != eIsNoReg))
-      {
-        if (RegEvalResult == eRegAbort)
-          return;
-        if ((Size == eSymbolSize8Bit) || MinFlag || (IndReg != FreeReg))
-        {
-          WrError(ErrNum_InvAddrMode);
-          return;
-        }
-        IndReg = Reg;
-        IndRegSize = Size;
-        switch (Arg.str.p_str[ArgLen - 1])
-        {
-          case '1':
-            ScaleFact = 0;
-            break;
-          case '2':
-            ScaleFact = 1;
-            break;
-          case '4':
-            ScaleFact = 2;
-            break;
-          case '8':
-            ScaleFact = 3;
-            break;
-        }
-      }
-
-      /* I.4.c. Basisregister */
-
-      else if ((RegEvalResult = DecodeReg(&Arg, &Reg, &Size, False)) != eIsNoReg)
-      {
-        if (RegEvalResult == eRegAbort)
-          return;
-        if ((Size == eSymbolSize8Bit) || (MinFlag))
-        {
-          WrError(ErrNum_InvAddrMode);
-          return;
-        }
-        if (BaseReg == FreeReg)
-        {
-          BaseReg = Reg;
-          BaseRegSize = Size;
-        }
-        else if (IndReg == FreeReg)
-        {
-          IndReg = Reg;
-          IndRegSize = Size;
-          ScaleFact = 0;
-        }
-        else
-        {
-          WrStrErrorPos(ErrNum_InvAddrMode, &Arg);
-          return;
-        }
-      }
-
-      /* I.4.d. Sonderregister */
-
-      else if ((!as_strcasecmp(Arg.str.p_str, "PC")) || (!as_strcasecmp(Arg.str.p_str, "SP")))
-      {
-        if ((BaseReg != FreeReg) && (IndReg == FreeReg))
-        {
-          IndReg = BaseReg;
-          IndRegSize = BaseRegSize;
-          BaseReg = FreeReg;
-          ScaleFact = 0;
-        };
-        if ((BaseReg != FreeReg) || (MinFlag))
-        {
-          WrError(ErrNum_InvAddrMode);
-          return;
-        }
-/*#warning here*/
-        BaseReg = as_strcasecmp(Arg.str.p_str, "SP") ? PCReg : SPReg;
-      }
-
-      /* I.4.e. Displacement */
-
-      else
-      {
-        LongInt DispPart;
-        tSymbolFlags Flags;
-
-        DispPart = EvalStrIntExpressionOffsWithFlags(&Arg, CheckForcePrefix(Arg.str.p_str, &ForcePrefix), Int32, &OK, &Flags);
-        if (!OK)
-          return;
-        if (mFirstPassUnknown(Flags))
-          DispPart = 1;
-        DispAcc = MinFlag ? DispAcc - DispPart : DispAcc + DispPart;
-      }
-
-      if (PMPos)
-        Arg = Remainder;
-      MinFlag = NMinFlag;
-    }
-    while (PMPos);
+    as_eval_cb_data_ini(&eval_cb_data.cb_data, tlcs9000_eval_cb);
+    eval_cb_data.cb_data.p_operators = tlcs9000_operators;
+    eval_cb_data.base_reg = eval_cb_data.ind_reg = FreeReg;
+    eval_cb_data.base_reg_size = eval_cb_data.ind_reg_size = eSymbolSizeUnknown;
+    eval_cb_data.scale_fact = 0;
+    DispAcc = AdrInc + EvalStrIntExprWithResultAndCallback(&Arg, Int32, &eval_result, &eval_cb_data.cb_data);
+    if (!eval_result.OK)
+      return;
+    force_prefix = !!(eval_result.Flags & eSymbolFlag_UserLong);
 
     /* I.5. Indexregister mit Skalierung 1 als Basis behandeln */
 
-    if ((BaseReg == FreeReg) && (IndReg != FreeReg) && (ScaleFact == 0))
+    if ((eval_cb_data.base_reg == FreeReg) && (eval_cb_data.ind_reg != FreeReg) && (eval_cb_data.scale_fact == 0))
     {
-      BaseReg = IndReg;
-      BaseRegSize = IndRegSize;
-      IndReg = FreeReg;
+      eval_cb_data.base_reg = eval_cb_data.ind_reg;
+      eval_cb_data.base_reg_size = eval_cb_data.ind_reg_size;
+      eval_cb_data.ind_reg = FreeReg;
     }
 
     /* I.6. absolut */
 
-    if ((BaseReg == FreeReg) && (IndReg == FreeReg))
+    if ((eval_cb_data.base_reg == FreeReg) && (eval_cb_data.ind_reg == FreeReg))
     {
       AdrMode = 0x20; /* 0x60 should be equivalent: adding 0 as RW0 or RD0 is irrelvant */
       AdrVals[0] = 0xe000 + (DispAcc & 0x1fff); AdrCnt = 2;
-      AddAbsPrefix(PrefInd, 13, DispAcc, ForcePrefix);
+      AddAbsPrefix(PrefInd, 13, DispAcc, force_prefix);
       AdrOK = True;
       return;
     }
 
     /* I.7. Basis [mit Displacement] */
 
-    if ((BaseReg != FreeReg) && (IndReg == FreeReg))
+    if ((eval_cb_data.base_reg != FreeReg) && (eval_cb_data.ind_reg == FreeReg))
     {
       /* I.7.a. Basis ohne Displacement */
 
       if (DispAcc == 0)
       {
-        if (BaseRegSize == eSymbolSize16Bit)
-          AdrMode = 0x10 + (BaseReg & 15);
+        if (eval_cb_data.base_reg_size == eSymbolSize16Bit)
+          AdrMode = 0x10 + (eval_cb_data.base_reg & 15);
         else
-          AdrMode = 0x61 + (BaseReg & 14);
+          AdrMode = 0x61 + (eval_cb_data.base_reg & 14);
         AdrOK = True;
         return;
       }
 
       /* I.7.b. Nullregister mit Displacement muss in Erweiterungswort */
 
-      else if (BaseReg == 0)
+      else if (eval_cb_data.base_reg == 0)
       {
         if (DispAcc > 0x7ffff) WrError(ErrNum_OverRange);
         else if (DispAcc < -0x80000) WrError(ErrNum_UnderRange);
         else
         {
           AdrMode = 0x20;
-          if (BaseRegSize == eSymbolSize16Bit)
-            AdrVals[0] = ((Word)BaseReg & 15) << 11;
+          if (eval_cb_data.base_reg_size == eSymbolSize16Bit)
+            AdrVals[0] = ((Word)eval_cb_data.base_reg & 15) << 11;
           else
-            AdrVals[0] = (((Word)BaseReg & 14) << 11) + 0x8000;
+            AdrVals[0] = (((Word)eval_cb_data.base_reg & 14) << 11) + 0x8000;
           AdrVals[0] += DispAcc & 0x1ff;
           AdrCnt = 2;
-          AddSignedPrefix(PrefInd, 9, DispAcc, ForcePrefix);
+          AddSignedPrefix(PrefInd, 9, DispAcc, force_prefix);
           AdrOK = True;
         }
         return;
@@ -546,7 +556,7 @@ static void DecodeAdr(const tStrComp *pArg, Byte PrefInd, tImmAllow MayImm, Bool
 
       /* I.7.c. Stack mit Displacement: Optimierung moeglich */
 
-      else if (BaseReg == SPReg)
+      else if (eval_cb_data.base_reg == SPReg)
       {
         if (DispAcc > 0x7ffff) WrError(ErrNum_OverRange);
         else if (DispAcc < -0x80000) WrError(ErrNum_UnderRange);
@@ -559,7 +569,7 @@ static void DecodeAdr(const tStrComp *pArg, Byte PrefInd, tImmAllow MayImm, Bool
         {
           AdrMode = 0x20;
           AdrVals[0] = 0xd000 + (DispAcc & 0x1ff); AdrCnt = 2;
-          AddSignedPrefix(PrefInd, 9, DispAcc, ForcePrefix);
+          AddSignedPrefix(PrefInd, 9, DispAcc, force_prefix);
           AdrOK = True;
         }
         return;
@@ -567,7 +577,7 @@ static void DecodeAdr(const tStrComp *pArg, Byte PrefInd, tImmAllow MayImm, Bool
 
       /* I.7.d. Programmzaehler mit Displacement: keine Optimierung */
 
-      else if (BaseReg == PCReg)
+      else if (eval_cb_data.base_reg == PCReg)
       {
         if (DispAcc > 0x7ffff) WrError(ErrNum_OverRange);
         else if (DispAcc < -0x80000) WrError(ErrNum_UnderRange);
@@ -576,7 +586,7 @@ static void DecodeAdr(const tStrComp *pArg, Byte PrefInd, tImmAllow MayImm, Bool
           AdrMode = 0x20;
           AdrVals[0] = 0xd800 + (DispAcc & 0x1ff);
           AdrCnt = 2;
-          AddSignedPrefix(PrefInd, 9, DispAcc, ForcePrefix);
+          AddSignedPrefix(PrefInd, 9, DispAcc, force_prefix);
           AdrOK = True;
         }
         return;
@@ -590,13 +600,13 @@ static void DecodeAdr(const tStrComp *pArg, Byte PrefInd, tImmAllow MayImm, Bool
         else if (DispAcc < -0x800000) WrError(ErrNum_UnderRange);
         else
         {
-          if (BaseRegSize == eSymbolSize16Bit)
-            AdrMode = 0x20 + (BaseReg & 15);
+          if (eval_cb_data.base_reg_size == eSymbolSize16Bit)
+            AdrMode = 0x20 + (eval_cb_data.base_reg & 15);
           else
-            AdrMode = 0x60 + (BaseReg & 14);
+            AdrMode = 0x60 + (eval_cb_data.base_reg & 14);
           AdrVals[0] = 0xe000 + (DispAcc & 0x1fff);
           AdrCnt = 2;
-          AddSignedPrefix(PrefInd, 13, DispAcc, ForcePrefix);
+          AddSignedPrefix(PrefInd, 13, DispAcc, force_prefix);
           AdrOK = True;
         }
         return;
@@ -609,14 +619,14 @@ static void DecodeAdr(const tStrComp *pArg, Byte PrefInd, tImmAllow MayImm, Bool
     {
       if (DispAcc > 0x7ffff) WrError(ErrNum_OverRange);
       else if (DispAcc < -0x80000) WrError(ErrNum_UnderRange);
-      else if ((IndReg & 15) == 0) WrError(ErrNum_InvAddrMode);
+      else if ((eval_cb_data.ind_reg & 15) == 0) WrError(ErrNum_InvAddrMode);
       else
       {
-        if (IndRegSize == eSymbolSize16Bit)
-          AdrMode = 0x20 + (IndReg & 15);
+        if (eval_cb_data.ind_reg_size == eSymbolSize16Bit)
+          AdrMode = 0x20 + (eval_cb_data.ind_reg & 15);
         else
-          AdrMode = 0x60 + (IndReg & 14);
-        switch (BaseReg)
+          AdrMode = 0x60 + (eval_cb_data.ind_reg & 14);
+        switch (eval_cb_data.base_reg)
         {
           case FreeReg:
             AdrVals[0] = 0xc000; break;
@@ -625,14 +635,14 @@ static void DecodeAdr(const tStrComp *pArg, Byte PrefInd, tImmAllow MayImm, Bool
           case PCReg:
             AdrVals[0] = 0xd800; break;
           default:
-            if (BaseRegSize == eSymbolSize16Bit)
-              AdrVals[0] = ((Word)BaseReg & 15) << 11;
+            if (eval_cb_data.base_reg_size == eSymbolSize16Bit)
+              AdrVals[0] = ((Word)eval_cb_data.base_reg & 15) << 11;
             else
-              AdrVals[0] = 0x8000 + (((Word)BaseReg & 14) << 10);
+              AdrVals[0] = 0x8000 + (((Word)eval_cb_data.base_reg & 14) << 10);
         }
-        AdrVals[0] += (((Word)ScaleFact) << 9) + (DispAcc & 0x1ff);
+        AdrVals[0] += (((Word)eval_cb_data.scale_fact) << 9) + (DispAcc & 0x1ff);
         AdrCnt = 2;
-        AddSignedPrefix(PrefInd, 9, DispAcc, ForcePrefix);
+        AddSignedPrefix(PrefInd, 9, DispAcc, force_prefix);
         AdrOK = True;
       }
       return;

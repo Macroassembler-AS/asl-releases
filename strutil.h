@@ -76,10 +76,6 @@ extern LargeInt ConstLongInt(const char *inp, Boolean *pErr, LongInt Base);
 
 extern char *ParenthPos(char *pHaystack, char Needle);
 
-extern void KillBlanks(char *s);
-
-extern int CopyNoBlanks(char *pDest, const char *pSrc, size_t MaxLen);
-
 extern int KillPrefBlanks(char *s);
 
 extern int KillPostBlanks(char *s);

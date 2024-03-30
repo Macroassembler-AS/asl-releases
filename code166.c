@@ -428,11 +428,40 @@ static int SplitForceSize(const char *pArg, tForceSize *pForceSize)
   }
 }
 
+typedef struct
+{
+  as_eval_cb_data_t cb_data;
+  tAdrResult *p_result;
+} s166_eval_cb_data_t;
+
+DECLARE_AS_EVAL_CB(s166_eval_cb)
+{
+  s166_eval_cb_data_t *p_s166_eval_cb_data = (s166_eval_cb_data_t*)p_data;
+  Byte reg;
+
+  switch (IsReg(p_arg, &reg, NULL, eSymbolSize16Bit, False))
+  {
+    case eIsNoReg:
+      return e_eval_none;
+    case eIsReg:
+      if ((p_s166_eval_cb_data->p_result->Mode != 0xff)
+       || !as_eval_cb_data_stack_plain_add(p_data->p_stack))
+      {
+        WrStrErrorPos(ErrNum_InvAddrMode, p_arg);
+        return e_eval_fail;
+      }
+      p_s166_eval_cb_data->p_result->Mode = reg;
+      as_tempres_set_int(p_res, 0);
+      return e_eval_ok;
+    default:
+      return e_eval_fail;
+  }
+}
+
 static ShortInt DecodeAdr(const tStrComp *pArg, Word Mask, tAdrResult *pResult)
 {
   LongInt HDisp, DispAcc;
-  Boolean OK, NegFlag, NNegFlag;
-  Byte HReg;
+  Boolean OK;
   int Offs;
   tRegEvalResult RegEvalResult;
 
@@ -520,42 +549,16 @@ static ShortInt DecodeAdr(const tStrComp *pArg, Word Mask, tAdrResult *pResult)
 
     else
     {
-      tStrComp Remainder;
-      char *pSplitPos;
+      s166_eval_cb_data_t s166_eval_cb_data;
+      tEvalResult eval_result;
 
-      NNegFlag = NegFlag = False;
-      DispAcc = 0;
+      as_eval_cb_data_ini(&s166_eval_cb_data.cb_data, s166_eval_cb);
       pResult->Mode = 0xff;
-      do
-      {
-        pSplitPos = indir_split_pos(Arg.str.p_str);
-        if (pSplitPos)
-        {
-          NNegFlag = *pSplitPos == '-';
-          StrCompSplitRef(&Arg, &Remainder, &Arg, pSplitPos);
-        }
-        if ((RegEvalResult = IsReg(&Arg, &HReg, NULL, eSymbolSize16Bit, False)) != eIsNoReg)
-        {
-          if (RegEvalResult == eRegAbort)
-            return pResult->Type;
-          if (NegFlag || (pResult->Mode != 0xff))
-            WrError(ErrNum_InvAddrMode);
-          else
-            pResult->Mode = HReg;
-        }
-        else
-        {
-          HDisp = EvalStrIntExpressionOffs(&Arg, !!(*Arg.str.p_str == '#'), Int32, &OK);
-          if (OK)
-            DispAcc = NegFlag ? DispAcc - HDisp : DispAcc + HDisp;
-        }
-        if (pSplitPos)
-        {
-          NegFlag = NNegFlag;
-          Arg = Remainder;
-        }
-      }
-      while (pSplitPos);
+      s166_eval_cb_data.p_result = pResult;
+      DispAcc = EvalStrIntExprWithResultAndCallback(&Arg, Int16, &eval_result, &s166_eval_cb_data.cb_data);
+      if (!eval_result.OK)
+        return pResult->Type;
+
       if (pResult->Mode == 0xff)
         DecideAbsolute(DispAcc, Mask, pResult);
       else if (DispAcc == 0)

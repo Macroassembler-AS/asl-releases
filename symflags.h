@@ -33,7 +33,13 @@ typedef enum eSymbolFlags
 
   eSymbolFlag_Label = 1 << 5,
 
-  eSymbolFlags_Promotable = eSymbolFlag_FirstPassUnknown | eSymbolFlag_Questionable | eSymbolFlag_UsesForwards
+  eSymbolFlag_UserShort = 1 << 6,
+  eSymbolFlag_UserMedium = 1 << 7,
+  eSymbolFlag_UserLong = 1 << 8,
+
+  eSymbolFlags_Promotable = eSymbolFlag_FirstPassUnknown | eSymbolFlag_Questionable
+                          | eSymbolFlag_UsesForwards
+                          | eSymbolFlag_UserShort | eSymbolFlag_UserMedium | eSymbolFlag_UserLong
 } tSymbolFlags;
 
 #ifdef __cplusplus

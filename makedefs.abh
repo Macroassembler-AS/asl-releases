@@ -176,6 +176,7 @@ include $(TARG_OBJDIR)nls.dep
 include $(TARG_OBJDIR)nlmessages.dep
 include $(TARG_OBJDIR)chardefs.dep
 include $(TARG_OBJDIR)strutil.dep
+include $(TARG_OBJDIR)striter.dep
 include $(TARG_OBJDIR)stdhandl.dep
 include $(TARG_OBJDIR)stringlists.dep
 include $(TARG_OBJDIR)strcomp.dep

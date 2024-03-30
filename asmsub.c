@@ -8,7 +8,6 @@
 /*                                                                           */
 /*****************************************************************************/
 
-
 #include "stdinc.h"
 #include <string.h>
 #include <ctype.h>
@@ -85,72 +84,118 @@ void WriteCopyrights(void(*PrintProc)(const char *))
     PrintProc(p_line);
 }
 
-/*--------------------------------------------------------------------------*/
-/* ermittelt das erste/letzte Auftauchen eines Zeichens ausserhalb */
-/* "geschuetzten" Bereichen */
+/*!------------------------------------------------------------------------
+ * \fn     QuotMultPosQualify(const char *s, const char *pSearch, as_qualify_quote_fnc_t QualifyQuoteFnc)
+ * \brief  find first occurence in non-quoted areas of string
+ * \param  s string to search in
+ * \param  pSearch search test function (returns 0 for match)
+ * \param  QualifyQuoteFnc checks whether single quote actually begins quoted area
+ * \return first occurence or NULL if not found
+ * ------------------------------------------------------------------------ */
 
-static char *QuotPosCore(const char *s, int (*SearchFnc)(const char*, const char*), const char *pSearch, tQualifyQuoteFnc QualifyQuoteFnc)
+typedef struct
 {
-  register ShortInt Brack = 0, AngBrack = 0;
-  register const char *i;
-  Boolean InSglQuot = False, InDblQuot = False, ThisEscaped = False, NextEscaped = False;
+  as_quoted_iterator_cb_data_t data;
+  ShortInt brack, ang_brack;
+  const char *p_result;
+  int (*search_fnc)(const char*, const char*);
+  const char *p_search;
+} quot_search_cb_data;
 
-  for (i = s; *i; i++, ThisEscaped = NextEscaped)
+static int quot_search_cb(const char *p_pos, as_quoted_iterator_cb_data_t *p_cb_data)
+{
+  quot_search_cb_data *p_data = (quot_search_cb_data*)p_cb_data;
+
+  if (!p_data->brack && !p_data->ang_brack && !p_data->search_fnc(p_pos, p_data->p_search))
   {
-    NextEscaped = False;
-    if (!SearchFnc(i, pSearch))
-    {
-      if (!AngBrack && !Brack && !InSglQuot && !InDblQuot)
-        return (char*)i;
-    }
-    switch (*i)
-    {
-      case '"':
-        if (!InSglQuot && !ThisEscaped)
-          InDblQuot = !InDblQuot;
-        break;
-      case '\'':
-        if (!InDblQuot && !ThisEscaped)
-        {
-          if (InSglQuot || !QualifyQuoteFnc || QualifyQuoteFnc(s, i))
-            InSglQuot = !InSglQuot;
-        }
-        break;
-      case '\\':
-        if ((InSglQuot || InDblQuot) && !ThisEscaped)
-          NextEscaped = True;
-        break;
-      case '(':
-        if (!AngBrack && !InDblQuot && !InSglQuot)
-          Brack++;
-        break;
-      case ')':
-        if (!AngBrack && !InDblQuot && !InSglQuot)
-          Brack--;
-        break;
-      case '[':
-        if (!Brack && !InDblQuot && !InSglQuot)
-          AngBrack++;
-        break;
-      case ']':
-        if (!Brack && !InDblQuot && !InSglQuot)
-          AngBrack--;
-        break;
-    }
+    p_data->p_result = p_pos;
+    return -1;
   }
 
-  return NULL;
+  switch (*p_pos)
+  {
+    case '(':
+      if (!p_data->ang_brack)
+        p_data->brack++;
+      break;
+    case ')':
+      if (!p_data->ang_brack)
+        p_data->brack--;
+      break;
+    case '[':
+      if (!p_data->brack)
+        p_data->ang_brack++;
+      break;
+    case ']':
+      if (!p_data->brack)
+        p_data->ang_brack--;
+      break;
+  }
+
+  return 0;
 }
+
+static char *QuotPosCore(const char *s, int (*SearchFnc)(const char*, const char*), const char *pSearch, as_qualify_quote_fnc_t QualifyQuoteFnc)
+{
+  quot_search_cb_data data;
+
+  data.data.qualify_quote = QualifyQuoteFnc;
+  data.data.callback_before = True;
+  data.brack = data.ang_brack = 0;
+  data.p_result = NULL;
+  data.search_fnc = SearchFnc;
+  data.p_search = pSearch;
+
+  as_iterate_str_quoted(s, quot_search_cb, &data.data);
+  return (char*)data.p_result;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     QuotMultPosQualify(const char *s, char Zeichen, as_qualify_quote_fnc_t QualifyQuoteFnc)
+ * \brief  find first occurence of characters in non-quoted areas of string
+ * \param  s string to search in
+ * \param  Zeichen characters to search for
+ * \param  QualifyQuoteFnc checks whether single quote actually begins quoted area
+ * \return first occurence or NULL if not found
+ * ------------------------------------------------------------------------ */
+
+static int SearchMultChar(const char *pPos, const char *pSearch)
+{
+  return !strchr(pSearch, *pPos);
+}
+
+char *QuotMultPosQualify(const char *s, const char *pSearch, as_qualify_quote_fnc_t QualifyQuoteFnc)
+{
+  return QuotPosCore(s, SearchMultChar, pSearch, QualifyQuoteFnc);
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     QuotPosQualify(const char *s, char Zeichen, as_qualify_quote_fnc_t QualifyQuoteFnc)
+ * \brief  find first occurence of character in non-quoted areas of string
+ * \param  s string to search in
+ * \param  Zeichen character to search for
+ * \param  QualifyQuoteFnc checks whether single quote actually begins quoted area
+ * \return first occurence or NULL if not found
+ * ------------------------------------------------------------------------ */
 
 static int SearchSingleChar(const char *pPos, const char *pSearch)
 {
   return ((int)*pSearch) - ((int)*pPos);
 }
 
-static int SearchMultChar(const char *pPos, const char *pSearch)
+char *QuotPosQualify(const char *s, char Zeichen, as_qualify_quote_fnc_t QualifyQuoteFnc)
 {
-  return !strchr(pSearch, *pPos);
+  return QuotPosCore(s, SearchSingleChar, &Zeichen, QualifyQuoteFnc);
 }
+
+/*!------------------------------------------------------------------------
+ * \fn     QuotSMultPosQualify(const char *s, const char *pStrs, as_qualify_quote_fnc_t QualifyQuoteFnc)
+ * \brief  find first occurence of strings in non-quoted areas of string
+ * \param  s string to search in
+ * \param  pStrs strings to search for (continuous list, terminated by empty string)
+ * \param  QualifyQuoteFnc checks whether single quote actually begins quoted area
+ * \return first occurence or NULL if not found
+ * ------------------------------------------------------------------------ */
 
 static int SearchMultString(const char *pPos, const char *pSearch)
 {
@@ -166,62 +211,133 @@ static int SearchMultString(const char *pPos, const char *pSearch)
   }
 }
 
-char *QuotMultPosQualify(const char *s, const char *pSearch, tQualifyQuoteFnc QualifyQuoteFnc)
-{
-  return QuotPosCore(s, SearchMultChar, pSearch, QualifyQuoteFnc);
-}
-
-char *QuotPosQualify(const char *s, char Zeichen, tQualifyQuoteFnc QualifyQuoteFnc)
-{
-  return QuotPosCore(s, SearchSingleChar, &Zeichen, QualifyQuoteFnc);
-}
-
-char *QuotSMultPosQualify(const char *s, const char *pStrs, tQualifyQuoteFnc QualifyQuoteFnc)
+char *QuotSMultPosQualify(const char *s, const char *pStrs, as_qualify_quote_fnc_t QualifyQuoteFnc)
 {
   return QuotPosCore(s, SearchMultString, pStrs, QualifyQuoteFnc);
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     RQuotPos(char *s, char Zeichen)
+ * \brief  find last occurence of character, skipping quoted/parenthized parts
+ * \param  s string to search
+ * \param  Zeichen character to search for
+ * \return last occurence or NULL if not found at all
+ * ------------------------------------------------------------------------ */
+
+/* NOTE: Though we search for the last occurence, it is not wise to search
+   the string in backward direction.  Character escaping can only be tracked
+   correctly and unambiguously if we traverse the string in forward order.
+   So when we found an occurence, continue to search for a later one: */
+
+typedef struct
+{
+  as_quoted_iterator_cb_data_t data;
+  ShortInt brack, ang_brack;
+  const char *p_result;
+  char search;
+} rquot_search_cb_data;
+
+static int rquot_search_cb(const char *p_pos, as_quoted_iterator_cb_data_t *p_cb_data)
+{
+  rquot_search_cb_data *p_data = (rquot_search_cb_data*)p_cb_data;
+
+  if (!p_data->brack && !p_data->ang_brack && (*p_pos == p_data->search))
+    p_data->p_result = p_pos;
+
+  else switch (*p_pos)
+  {
+    case '(':
+      if (!p_data->ang_brack)
+        p_data->brack++;
+      break;
+    case ')':
+      if (!p_data->ang_brack)
+        p_data->brack--;
+      break;
+    case '[':
+      if (!p_data->brack)
+        p_data->ang_brack++;
+      break;
+    case ']':
+      if (!p_data->brack)
+        p_data->ang_brack--;
+      break;
+  }
+
+  return 0;
+}
+
 char *RQuotPos(char *s, char Zeichen)
 {
-  ShortInt Brack = 0, AngBrack = 0;
-  char *i;
-  Boolean Quot = False, Paren = False;
+  rquot_search_cb_data data;
 
-  for (i = s + strlen(s) - 1; i >= s; i--)
-    if (*i == Zeichen)
-    {
-      if ((!AngBrack) && (!Brack) && (!Paren) && (!Quot))
-        return i;
-    }
-    else switch (*i)
-    {
-      case '"':
-        if ((!Brack) && (!AngBrack) && (!Quot))
-          Paren = !Paren;
-        break;
-      case '\'':
-        if ((!Brack) && (!AngBrack) && (!Paren))
-          Quot = !Quot;
-        break;
-      case ')':
-        if ((!AngBrack) && (!Paren) && (!Quot))
-          Brack++;
-        break;
-      case '(':
-        if ((!AngBrack) && (!Paren) && (!Quot))
-          Brack--;
-        break;
-      case ']':
-        if ((!Brack) && (!Paren) && (!Quot))
-          AngBrack++;
-        break;
-      case '[':
-        if ((!Brack) && (!Paren) && (!Quot))
-          AngBrack--;
-        break;
-    }
+  data.data.qualify_quote = QualifyQuote;
+  data.data.callback_before = True;
+  data.brack = data.ang_brack = 0;
+  data.p_result = NULL;
+  data.search = Zeichen;
 
-  return NULL;
+  as_iterate_str_quoted(s, rquot_search_cb, &data.data);
+  return (char*)data.p_result;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     CopyNoBlanks(char *pDest, const char *pSrc, size_t MaxLen)
+ * \brief  copy string, excluding spaces in non-quoted areas
+ * \param  pDest destination buffer
+ * \param  pSrc copy source
+ * \param  MaxLen capacity of dest buffer
+ * \return # of copied characters, excluding NUL
+ * ------------------------------------------------------------------------ */
+
+typedef struct
+{
+  as_quoted_iterator_cb_data_t data;
+  char *p_dest;
+  size_t rem_cap, cnt;
+} copy_cb_data_t;
+
+static int copy_no_blanks_cb(const char *p_pos, as_quoted_iterator_cb_data_t *p_cb_data)
+{
+  copy_cb_data_t *p_data = (copy_cb_data_t*)p_cb_data;
+
+  /* leave space for NUL */
+
+  if ((p_cb_data->in_single_quote || p_cb_data->in_double_quote || !as_isspace(*p_pos)) && (p_data->rem_cap > 1))
+  {
+    *(p_data->p_dest++) = *p_pos;
+    p_data->rem_cap--;
+    p_data->cnt++;
+  }
+  return 0;
+}
+
+int CopyNoBlanks(char *pDest, const char *pSrc, size_t MaxLen)
+{
+  copy_cb_data_t data;
+
+  data.data.qualify_quote = NULL;
+  data.data.callback_before = True;
+  data.p_dest = pDest;
+  data.rem_cap = MaxLen;
+  data.cnt = 0;
+
+  as_iterate_str(pSrc, copy_no_blanks_cb, &data.data);
+  if (data.rem_cap)
+    *(data.p_dest) = '\0';
+
+  return data.cnt;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     KillBlanks(char *s)
+ * \brief  Delete all spaces in non-quoted areas from string
+ * \param  s string to process
+ * ------------------------------------------------------------------------ */
+
+void KillBlanks(char *s)
+{
+  CopyNoBlanks(s, s, 65535); /* SIZE_MAX */
 }
 
 /*--------------------------------------------------------------------------*/
@@ -262,40 +378,27 @@ void SplitString(char *Source, char *Left, char *Right, char *Trenner)
     strmov(Right, Trenner + 1);
 }
 
-/*--------------------------------------------------------------------------*/
-/* verbesserte Grossbuchstabenfunktion */
+/*!------------------------------------------------------------------------
+ * \fn     UpString(char *s)
+ * \brief  convert string to upper case, excluding quoted areas
+ * \param  s string to convert
+ * ------------------------------------------------------------------------ */
 
-/* einen String in Grossbuchstaben umwandeln.  Dabei Stringkonstanten in Ruhe */
-/* lassen */
+static int upstring_cb(const char *p_pos, as_quoted_iterator_cb_data_t *p_cb_data)
+{
+  UNUSED(p_cb_data);
+  *((char*)p_pos) = UpCaseTable[(int)*p_pos];
+  return 0;
+}
 
 void UpString(char *s)
 {
-  char *z;
-  int hypquot = 0;
-  Boolean LastBk = FALSE, ThisBk;
+  as_quoted_iterator_cb_data_t data;
 
-  for (z = s; *z != '\0'; z++)
-  {
-    ThisBk = FALSE;
-    switch (*z)
-    {
-      case '\\':
-        ThisBk = TRUE;
-        break;
-      case '\'':
-        if ((!(hypquot & 2)) && (!LastBk))
-          hypquot ^= 1;
-        break;
-      case '"':
-        if ((!(hypquot & 1)) && (!LastBk))
-          hypquot ^= 2;
-        break;
-      default:
-        if (!hypquot)
-          *z = UpCaseTable[(int)*z];
-    }
-    LastBk = ThisBk;
-  }
+  data.qualify_quote = QualifyQuote;
+  data.callback_before = False;
+
+  as_iterate_str_quoted(s, upstring_cb, &data);
 }
 
 /*!------------------------------------------------------------------------
@@ -389,59 +492,6 @@ func_exit:
 }
 
 /*!------------------------------------------------------------------------
- * \fn     as_iterate_str_quoted(const char *p_str, as_quoted_iterator_cb_t callback, as_quoted_iterator_cb_data_t *p_cb_data)
- * \brief  iterate through string, skipping quoted areas
- * \param  p_str string to iterate through
- * \param  callback is called for all characters outside quoted areas
- * \param  p_cb_data callback data
- * ------------------------------------------------------------------------ */
-
-void as_iterate_str_quoted(const char *p_str, as_quoted_iterator_cb_t callback, as_quoted_iterator_cb_data_t *p_cb_data)
-{
-  const char *p_run;
-  Boolean this_escaped, next_escaped;
-
-  p_cb_data->p_str = p_str;
-  p_cb_data->in_single_quote =
-  p_cb_data->in_double_quote = False;
-
-  for (p_run = p_str, this_escaped = False;
-       *p_run;
-       p_run++, this_escaped = next_escaped)
-  {
-    next_escaped = False;
-
-    switch(*p_run)
-    {
-      case '\\':
-        if ((p_cb_data->in_single_quote || p_cb_data->in_double_quote) && !this_escaped)
-          next_escaped = True;
-        break;
-      case '\'':
-        if (p_cb_data->in_double_quote) { }
-        else if (!p_cb_data->in_single_quote && (!QualifyQuote || QualifyQuote(p_str, p_run)))
-          p_cb_data->in_single_quote = True;
-        else if (!this_escaped) /* skip escaped ' in '...' */
-          p_cb_data->in_single_quote = False;
-        break;
-      case '"':
-        if (p_cb_data->in_single_quote) { }
-        else if (!p_cb_data->in_double_quote)
-          p_cb_data->in_double_quote = True;
-        else if (!this_escaped) /* skip escaped " in "..." */
-          p_cb_data->in_double_quote = False;
-        break;
-      default:
-        if (!p_cb_data->in_single_quote && !p_cb_data->in_double_quote)
-        {
-          if (!callback(p_run, p_cb_data))
-            return;
-        }
-    }
-  }
-}
-
-/*!------------------------------------------------------------------------
  * \fn     FindClosingParenthese(const char *pStr)
  * \brief  find matching closing parenthese
  * \param  pStr * to string right after opening parenthese
@@ -455,7 +505,7 @@ typedef struct
   const char *p_ret;
 } close_par_cb_data_t;
 
-static Boolean close_par_cb(const char *p_pos, as_quoted_iterator_cb_data_t *p_cb_data)
+static int close_par_cb(const char *p_pos, as_quoted_iterator_cb_data_t *p_cb_data)
 {
   close_par_cb_data_t *p_data = (close_par_cb_data_t*)p_cb_data;
 
@@ -468,21 +518,23 @@ static Boolean close_par_cb(const char *p_pos, as_quoted_iterator_cb_data_t *p_c
       if (!--p_data->nest)
       {
         p_data->p_ret = p_pos;
-        return False;
+        return -1;
       }
       break;
   }
-  return True;
+  return 0;
 }
 
 char *FindClosingParenthese(const char *pStr)
 {
   close_par_cb_data_t data;
 
+  data.data.callback_before = False;
+  data.data.qualify_quote = QualifyQuote;
   data.nest = 1;
   data.p_ret = NULL;
 
-  as_iterate_str_quoted(pStr, close_par_cb,&data.data);
+  as_iterate_str_quoted(pStr, close_par_cb, &data.data);
 
   return (char*)data.p_ret;
 }
@@ -505,7 +557,7 @@ typedef struct
   const char *p_bracks;
 } open_par_cb_data_t;
 
-static Boolean open_par_cb(const char *p_pos, as_quoted_iterator_cb_data_t *p_cb_data)
+static int open_par_cb(const char *p_pos, as_quoted_iterator_cb_data_t *p_cb_data)
 {
   open_par_cb_data_t *p_data = (open_par_cb_data_t*)p_cb_data;
 
@@ -521,13 +573,15 @@ static Boolean open_par_cb(const char *p_pos, as_quoted_iterator_cb_data_t *p_cb
   /* We are interested in the opening parenthese that is nearest to the closing
      one and on same level, so continue searching: */
 
-  return ((p_pos + 1) < p_data->p_str_end);
+  return ((p_pos + 1) < p_data->p_str_end) ? 0 : -1;
 }
 
 char *FindOpeningParenthese(const char *pStrBegin, const char *pStrEnd, const char Bracks[2])
 {
   open_par_cb_data_t data;
 
+  data.data.callback_before = False;
+  data.data.qualify_quote = QualifyQuote;
   data.nest = 0;
   data.p_ret = NULL;
   data.p_bracks = Bracks;

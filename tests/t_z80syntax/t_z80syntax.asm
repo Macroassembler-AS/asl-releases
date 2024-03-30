@@ -632,33 +632,43 @@
 
 	jmp	1234h
 	;jp	1234h	; leave this out since JP <addr> is jump-on-positive <addr> on 8080
+	j	1234h
 
 	jnz	1234h
 	jp	nz,1234h
+	j	nz,1234h
 
 	jz	1234h
 	jp	z,1234h
+	j	z,1234h
 
 	jnc	1234h
 	jp	nc,1234h
+	j	nc,1234h
 
 	jc	1234h
 	jp	c,1234h
+	j	c,1234h
 
 	jpo	1234h
 	jp	po,1234h
+	j	po,1234h
 
 	jpe	1234h
 	jp	pe,1234h
+	j	pe,1234h
 
 	jp	1234h
 	jp	p,1234h
+	j	p,1234h
 
 	jm	1234h
 	jp	m,1234h
+	j	m,1234h
 
 	pchl
 	jp	(hl)
+	j	(hl)
 
 	call	1234h
 

@@ -348,13 +348,87 @@ static Boolean decode_seg_reg(const char *p_arg, Byte *p_ret)
  * \return resulting addressing mode
  * ------------------------------------------------------------------------ */
 
+typedef struct
+{
+  as_eval_cb_data_t cb_data;
+  ShortInt IndexBuf, BaseBuf;
+} x86_eval_cb_data_t;
+
+static const char Reg16Names[8][3] =
+{
+  "AX", "CX", "DX", "BX", "SP", "BP", "SI", "DI"
+};
+
+#define DBG_CB 0
+
+DECLARE_AS_EVAL_CB(x86_eval_cb)
+{
+  x86_eval_cb_data_t *p_x86_eval_cb_data = (x86_eval_cb_data_t*)p_data;
+  ShortInt *p_buf, buf_val;
+  size_t reg_num;
+
+#if DBG_CB
+  printf("x86 eval callback: ");
+  DumpStrComp("arg", p_arg);
+#endif
+
+  /* CPU register? */
+
+  for (reg_num = 0; reg_num < as_array_size(Reg16Names); reg_num++)
+    if (!as_strcasecmp(p_arg->str.p_str, Reg16Names[reg_num]))
+      break;
+  if (reg_num >= as_array_size(Reg16Names))
+    return e_eval_none;
+
+#if DBG_CB
+  as_dump_eval_cb_data_stack(p_data->p_stack);
+#endif
+
+  /* Register allowed for addressing? */
+
+  switch (reg_num)
+  {
+    case 3:
+    case 5:
+      p_buf = &p_x86_eval_cb_data->BaseBuf;
+      buf_val = reg_num / 2;
+      break;
+    case 6:
+    case 7:
+      p_buf = &p_x86_eval_cb_data->IndexBuf;
+      buf_val = reg_num - 5;
+      break;
+    default:
+      WrStrErrorPos(ErrNum_InvAddrMode, p_arg);
+      return e_eval_fail;
+  }
+
+  /* Simple additive component in expression? */
+
+  if (!as_eval_cb_data_stack_plain_add(p_data->p_stack))
+  {
+    WrStrErrorPos(ErrNum_InvAddrMode, p_arg);
+    return e_eval_fail;
+  }
+
+  /* We already have a base/index register ? */
+
+  if (*p_buf)
+  {
+    WrStrErrorPos(ErrNum_InvAddrMode, p_arg);
+    return e_eval_fail;
+  }
+
+  /* Occupy slot and signal component as zero to parser */
+
+  *p_buf = buf_val;
+  as_tempres_set_int(p_res, 0);
+  return e_eval_ok;
+}
+
 static tAdrType DecodeAdr(const tStrComp *pArg, unsigned type_mask)
 {
   static const int RegCnt = 8;
-  static const char Reg16Names[8][3] =
-  {
-    "AX", "CX", "DX", "BX", "SP", "BP", "SI", "DI"
-  };
   static const char Reg8Names[8][3] =
   {
     "AL", "CL", "DL", "BL", "AH", "CH", "DH", "BH"
@@ -366,12 +440,12 @@ static tAdrType DecodeAdr(const tStrComp *pArg, unsigned type_mask)
 
   int RegZ, z;
   Boolean IsImm;
-  ShortInt IndexBuf, BaseBuf;
   Byte SumBuf;
   LongInt DispAcc, DispSum;
-  char *pIndirStart, *pIndirEnd, *pSep;
+  char *pIndirStart, *pIndirEnd;
   ShortInt SegBuffer;
   Byte MomSegment;
+  x86_eval_cb_data_t x86_eval_cb_data;
   tSymbolSize FoundSize;
   tStrComp Arg;
   int ArgLen = strlen(pArg->str.p_str);
@@ -429,7 +503,9 @@ static tAdrType DecodeAdr(const tStrComp *pArg, unsigned type_mask)
   }
 
   IsImm = True;
-  IndexBuf = 0; BaseBuf = 0;
+  as_eval_cb_data_ini(&x86_eval_cb_data.cb_data, x86_eval_cb);
+  x86_eval_cb_data.IndexBuf =
+  x86_eval_cb_data.BaseBuf = 0;
   DispAcc = 0; FoundSize = eSymbolSizeUnknown;
   StrCompRefRight(&Arg, pArg, 0);
   if (!as_strncasecmp(Arg.str.p_str, "WORD PTR", 8))
@@ -489,6 +565,8 @@ static tAdrType DecodeAdr(const tStrComp *pArg, unsigned type_mask)
 
   do
   {
+    tEvalResult EvalResult;
+
     pIndirStart = QuotPos(Arg.str.p_str, '[');
 
     /* no address expr or outer displacement: */
@@ -496,7 +574,6 @@ static tAdrType DecodeAdr(const tStrComp *pArg, unsigned type_mask)
     if (!pIndirStart || (pIndirStart != Arg.str.p_str))
     {
       tStrComp Remainder;
-      tEvalResult EvalResult;
 
       if (pIndirStart)
         StrCompSplitRef(&Arg, &Remainder, &Arg, pIndirStart);
@@ -519,8 +596,7 @@ static tAdrType DecodeAdr(const tStrComp *pArg, unsigned type_mask)
 
     if (pIndirStart)
     {
-      tStrComp IndirArg, OutRemainder, IndirArgRemainder;
-      Boolean NegFlag, OldNegFlag;
+      tStrComp IndirArg, OutRemainder;
 
       IsImm = False;
 
@@ -532,76 +608,26 @@ static tAdrType DecodeAdr(const tStrComp *pArg, unsigned type_mask)
       }
 
       StrCompSplitRef(&IndirArg, &OutRemainder, &Arg, pIndirEnd);
-      OldNegFlag = False;
 
-      do
-      {
-        NegFlag = False;
-        KillPrefBlanksStrComp(&IndirArg);
-        pSep = indir_split_pos(IndirArg.str.p_str);
-        NegFlag = pSep && (*pSep == '-');
-
-        if (pSep)
-          StrCompSplitRef(&IndirArg, &IndirArgRemainder, &IndirArg, pSep);
-        KillPostBlanksStrComp(&IndirArg);
-
-        if (!as_strcasecmp(IndirArg.str.p_str, "BX"))
-        {
-          if ((OldNegFlag) || (BaseBuf != 0))
-            goto chk_type;
-          else
-            BaseBuf = 1;
-        }
-        else if (!as_strcasecmp(IndirArg.str.p_str, "BP"))
-        {
-          if ((OldNegFlag) || (BaseBuf != 0))
-            goto chk_type;
-          else
-            BaseBuf = 2;
-        }
-        else if (!as_strcasecmp(IndirArg.str.p_str, "SI"))
-        {
-          if ((OldNegFlag) || (IndexBuf != 0))
-            goto chk_type;
-          else
-            IndexBuf = 1;
-        }
-        else if (!as_strcasecmp(IndirArg.str.p_str, "DI"))
-        {
-          if ((OldNegFlag) || (IndexBuf !=0 ))
-            goto chk_type;
-          else
-            IndexBuf = 2;
-        }
-        else
-        {
-          tEvalResult EvalResult;
-
-          DispSum = EvalStrIntExpressionWithResult(&IndirArg, Int16, &EvalResult);
-          if (!EvalResult.OK)
-            goto chk_type;
-          UnknownFlag = UnknownFlag || mFirstPassUnknown(EvalResult.Flags);
-          DispAcc = OldNegFlag ? DispAcc - DispSum : DispAcc + DispSum;
-          MomSegment |= EvalResult.AddrSpaceMask;
-          if (FoundSize == eSymbolSizeUnknown)
-            FoundSize = EvalResult.DataSize;
-        }
-        OldNegFlag = NegFlag;
-        if (pSep)
-          IndirArg = IndirArgRemainder;
-      }
-      while (pSep);
+      DispSum = EvalStrIntExprWithResultAndCallback(&IndirArg, Int16, &EvalResult, &x86_eval_cb_data.cb_data);
+      if (!EvalResult.OK)
+        goto chk_type;
+      UnknownFlag = UnknownFlag || mFirstPassUnknown(EvalResult.Flags);
+      DispAcc += DispSum;
+      MomSegment |= EvalResult.AddrSpaceMask;
+      if (FoundSize == eSymbolSizeUnknown)
+        FoundSize = EvalResult.DataSize;
       Arg = OutRemainder;
     }
   }
   while (*Arg.str.p_str);
 
-  SumBuf = BaseBuf * 10 + IndexBuf;
+  SumBuf = x86_eval_cb_data.BaseBuf * 10 + x86_eval_cb_data.IndexBuf;
 
   /* welches Segment effektiv benutzt ? */
 
   if (SegBuffer == -1)
-    SegBuffer = (BaseBuf == 2) ? 2 : 3;
+    SegBuffer = (x86_eval_cb_data.BaseBuf == 2) ? 2 : 3;
 
   /* nur Displacement */
 
@@ -2547,7 +2573,7 @@ static void DecodeFISUB_FISUBR_FIDIV_FIDIVR(Word Code)
         break;
       default:
         break;
-    } 
+    }
   }
   AddPrefixes();
 }

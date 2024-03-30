@@ -25,6 +25,7 @@
 #include "as.rsc"
 #include "ioerrs.h"
 #include "cmdarg.h"
+#include "asmallg.h"
 #include "asmerr.h"
 
 typedef struct sExpectError
@@ -37,7 +38,10 @@ Word ErrorCount, WarnCount;
 static tExpectError *pExpectErrors = NULL;
 static Boolean InExpect = False;
 static Boolean treat_warnings_as_errors,
-               warn_sign_extension;
+               warn_sign_extension,
+               def_warn_relative,
+               def_warn_relative_set,
+               warn_relative;
 
 static void ClearExpectErrors(void)
 {
@@ -79,6 +83,43 @@ Boolean FindAndTakeExpectError(tErrorNum Num)
       return True;
     }
   return False;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     registered_test_and_set(unsigned mask)
+ * \brief  check whether on/off insn is registered first time during pass
+ * \param  mask insn to test
+ * \return mask if first time, otherwise 0
+ * ------------------------------------------------------------------------ */
+
+enum
+{
+  e_onoff_reg_warn_relative = 1 << 0
+};
+
+static unsigned registered_test_and_set(unsigned mask)
+{
+  static unsigned warn_registered;
+
+  unsigned curr = warn_registered;
+  warn_registered |= mask;
+  return curr & mask;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     asmerr_warn_relative_add(Boolean def_value)
+ * \brief  register on/off command to warn about possible relative jump
+ * \param  def_value to set as default
+ * ------------------------------------------------------------------------ */
+
+#define WarnRelativeCmdName "WARNRELATIVE"
+#define WarnRelativeSymName "WARNRELATIVE"
+
+void asmerr_warn_relative_add(void)
+{
+  if (!registered_test_and_set(e_onoff_reg_warn_relative))
+    SetFlag(&warn_relative, WarnRelativeSymName, def_warn_relative_set ? def_warn_relative : False);
+  AddONOFF(WarnRelativeCmdName, &warn_relative, WarnRelativeSymName, False);
 }
 
 /*!------------------------------------------------------------------------
@@ -184,6 +225,8 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
       msgno = Num_ErrMsgShortAddrPossible; break;
     case ErrNum_ShortJumpPossible:
       msgno = Num_ErrMsgShortJumpPossible; break;
+    case ErrNum_RelJumpPossible:
+      msgno = Num_ErrMsgRelJumpPossible; break;
     case ErrNum_NoShareFile:
       msgno = Num_ErrMsgNoShareFile; break;
     case ErrNum_BigDecFloat:
@@ -703,6 +746,8 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
       msgno = Num_ErrMsgNoTarget; break;
     case ErrNum_MultiCharInvLength:
       msgno = Num_ErrMsgMultiCharInvLength; break;
+    case ErrNum_InvDispLen:
+      msgno = Num_ErrMsgInvDispLen; break;
     case ErrNum_InternalError:
       msgno = Num_ErrMsgInternalError; break;
     case ErrNum_OpeningFile:
@@ -860,6 +905,10 @@ void WrXErrorPos(tErrorNum Num, const char *pExtendError, const struct sLineComp
 
   switch (Num)
   {
+    case ErrNum_RelJumpPossible:
+      if (!warn_relative)
+        return;
+      break;
     case ErrNum_SignExtension:
       if (!warn_sign_extension)
         return;
@@ -1089,11 +1138,35 @@ static as_cmd_result_t cmd_no_warn_sign_extension(Boolean negate, const char *p_
   return e_cmd_ok;
 }
 
+static as_cmd_result_t cmd_warn_relative(Boolean negate, const char *p_arg)
+{
+  UNUSED(p_arg);
+
+  if (negate)
+    return e_cmd_err;
+  def_warn_relative = True;
+  def_warn_relative_set = True;
+  return e_cmd_ok;
+}
+
+static as_cmd_result_t cmd_no_warn_relative(Boolean negate, const char *p_arg)
+{
+  UNUSED(p_arg);
+
+  if (negate)
+    return e_cmd_err;
+  def_warn_relative = False;
+  def_warn_relative_set = True;
+  return e_cmd_ok;
+}
+
 static const as_cmd_rec_t cmd_params[] =
 {
   { "werror"                     , cmd_treat_warnings_as_errors },
   { "wimplicit-sign-extension"   , cmd_warn_sign_extension      },
-  { "wno-implicit-sign-extension", cmd_no_warn_sign_extension   }
+  { "wno-implicit-sign-extension", cmd_no_warn_sign_extension   },
+  { "wrelative"                  , cmd_warn_relative            },
+  { "wno-relative"               , cmd_no_warn_relative         }
 };
 
 /*!------------------------------------------------------------------------
@@ -1105,5 +1178,6 @@ void asmerr_init(void)
 {
   treat_warnings_as_errors = False;
   warn_sign_extension = True;
+  def_warn_relative = def_warn_relative_set = False;
   as_cmd_register(cmd_params, as_array_size(cmd_params));
 }

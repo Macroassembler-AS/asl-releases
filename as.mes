@@ -43,6 +43,10 @@ Message ErrMsgShortJumpPossible
  "kurzer Sprung m&ouml;glich"
  "short jump possible"
 
+Message ErrMsgRelJumpPossible
+ "relativer Sprung m&ouml;glich"
+ "relative jump possible"
+
 Message ErrMsgNoShareFile
  "kein Sharefile angelegt, SHARED ignoriert"
  "no sharefile created, SHARED ignored"
@@ -1053,6 +1057,10 @@ Message ErrMsgMultiCharInvLength
  "Multi-Zeichenkonstante mit ung&uuml;ltiger L&auml;nge"
  "invalid length of multi character constant"
 
+Message ErrMsgInvDispLen
+ "Ung&uuml;ltige Displacement-L&auml;nge"
+ "invalid displacement length"
+
 Message ErrMsgInternalError
  "interner Fehler"
  "internal error"
@@ -1545,6 +1553,7 @@ Message InfoMessHelp
  "  -w                   : Warnungen unterdr&uuml;cken\n" \
  "  -Werror              : Warnungen als Fehler behandeln\n" \
  "  -w[no-]implicit-sign-extension : Warnungen &uuml;ber Vorzeichen-Erweiterungen ein/ausschalten\n" \
+ "  -w[no-]relative      : Warnung, wenn relativer Sprung m&ouml;glich\n" \
  "  -x                   : erweiterte Fehlermeldungen\n" \
  "  -Y                   : Sprungfehlerunterdr&uuml;ckung (siehe Anleitung)\n" \
  "\n" \
@@ -1599,6 +1608,7 @@ Message InfoMessHelp
  "  -w                   : suppress warnings\n" \
  "  -Werror              : treat warnings as errors\n" \
  "  -w[no-]implicit-sign-extension : enable/disable sign extension warnings\n" \
+ "  -w[no-]relative      : enable/disable warnings about possible relative jump\n" \
  "  -x                   : extended error messages\n" \
  "  -Y                   : branch error suppression (see manual)\n" \
  "\n" \
