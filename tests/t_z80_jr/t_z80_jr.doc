@@ -1,6 +1,6 @@
 +------------------------- Test Application Z80_JR --------------------------+
 |                                                                            |
 | This tests the limits of the Z80s/Z380s JR instruction (8 or 24 bit        |
-| displacement).  It also tests the -wrelative command line  switch.         |
+| displacement).  It also tests the -wrelative command line switch.          |
 |                                                                            |
 +----------------------------------------------------------------------------+

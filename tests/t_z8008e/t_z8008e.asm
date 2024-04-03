@@ -29,42 +29,53 @@
 
 	; in exclusive Z80 mode, JP with one
 	; argument is interpreted as unconditional jump
+	; J is an alias for JP, to make porting among
+	; 8008, 8080 an Z80 simpler
 
 	expect	1506
 	jmp	1234h
 	endexpect
 	jp	1234h
+	j	1234h
 
 	expect	1506
 	jfc	1234h
 	endexpect
 	jp	nc,1234h
+	j	nc,1234h
 	expect	1506
 	jfz	1234h
 	endexpect
 	jp	nz,1234h
+	j	nz,1234h
 	expect	1506
 	jfs	1234h
 	endexpect
 	jp	p,1234h
+	j	p,1234h
 	expect	1506
 	jfp	1234h
 	endexpect
 	jp	po,1234h
+	j	po,1234h
 	expect	1506
 	jc	1234h
 	endexpect
 	jp	c,1234h
+	j	c,1234h
 	expect	1506
 	jz	1234h
 	endexpect
 	jp	z,1234h
+	j	z,1234h
 	expect	1506
 	js	1234h
 	endexpect
 	jp	m,1234h
+	j	m,1234h
 	jp	1234h
 	jp	pe,1234h
+	j	pe,1234h
 
 ;-----------------------------------
 ; Call and Return Group
@@ -819,42 +830,53 @@
 
 	; in exclusive Z80 mode, JP with one
 	; argument is interpreted as unconditional jump
+	; J is an alias for JP, to make porting among
+	; 8008, 8080 an Z80 simpler
 
 	expect	1506
 	jmp	1234h
 	endexpect
 	jp	1234h
+	j	1234h
 
 	expect	1506
 	jnc	1234h
 	endexpect
 	jp	nc,1234h
+	j	nc,1234h
 	expect	1506
 	jnz	1234h
 	endexpect
 	jp	nz,1234h
+	j	nz,1234h
 	jp	1234h
 	jp	p,1234h
+	j	p,1234h
 	expect	1506
 	jpo	1234h
 	endexpect
 	jp	po,1234h
+	j	po,1234h
 	expect	1506
 	jc	1234h
 	endexpect
 	jp	c,1234h
+	j	c,1234h
 	expect	1506
 	jz	1234h
 	endexpect
 	jp	z,1234h
+	j	z,1234h
 	expect	1506
 	jm	1234h
 	endexpect
 	jp	m,1234h
+	j	m,1234h
 	expect	1506
 	jpe	1234h
 	endexpect
 	jp	pe,1234h
+	j	pe,1234h
 
 ;-----------------------------------
 ; Call and Return Group

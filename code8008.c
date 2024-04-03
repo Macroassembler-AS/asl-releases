@@ -303,6 +303,44 @@ static void DecodeJP(Word Code)
 }
 
 /*!------------------------------------------------------------------------
+ * \fn     DecodeJ(Word Code)
+ * \brief  decode J instruction
+ * ------------------------------------------------------------------------ */
+
+static void DecodeJ(Word Code)
+{
+  UNUSED(Code);
+
+  if (!ChkZ80Syntax(eSyntaxZ80))
+    return;
+
+  switch (ArgCnt)
+  {
+    /* if two arguments, first one is (Z80) condition */
+
+    case 2:
+    {
+      Byte Condition;
+
+      if (DecodeCondition_Z80(ArgStr[1].str.p_str, &Condition))
+        DecodeJmpCore(0x40 | Condition);
+      break;
+    }
+
+    /* if one argument, it's unconditional JP */
+
+    case 1:
+      
+      DecodeJmpCore(0x44);
+      break;
+
+    default:
+      (void)ChkArgCnt(1, 2);
+      return;
+  }
+}
+
+/*!------------------------------------------------------------------------
  * \fn     DecodeCALL(Word Code)
  * \brief  decode CALL instruction
  * ------------------------------------------------------------------------ */
@@ -1044,6 +1082,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "OUT", False, DecodeINP_OUT);
 
   AddInstTable(InstTable, "JP", 0, DecodeJP);
+  AddInstTable(InstTable, "J", 0, DecodeJ);
   AddJmp ("JMP", 0x44);
   if (New)
   {

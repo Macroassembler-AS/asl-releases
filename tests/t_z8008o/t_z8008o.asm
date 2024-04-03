@@ -24,26 +24,36 @@
 	; in non-exclusive Z80 mode, JP with one
 	; argument is interpreted as original 8008 mnemonic
         ; (jump if parity even)
+	; There is no ambiguity with J
 
 	jmp	1234h
 	jp	1234h		; as below
+	j	1234h		; -> JMP
 
 	jfc	1234h
 	jp	nc,1234h
+	j	nc,1234h
 	jfz	1234h
 	jp	nz,1234h
+	j	nz,1234h
 	jfs	1234h
 	jp	p,1234h
+	j	p,1234h
 	jfp	1234h
 	jp	po,1234h
+	j	po,1234h
 	jc	1234h
 	jp	c,1234h
+	j	c,1234h
 	jz	1234h
 	jp	z,1234h
+	j	z,1234h
 	js	1234h
 	jp	m,1234h
+	j	m,1234h
 	jp	1234h
 	jp	pe,1234h
+	j	pe,1234h
 
 ;-----------------------------------
 ; Call and Return Group
@@ -506,26 +516,36 @@
 	; in non-exclusive Z80 mode, JP with one
 	; argument is interpreted as original 8008
         ; mnemonic (jump if positive)
+	; There is no ambiguity with J
 
 	jmp	1234h
 	jp	1234h
+	j	1234h		; -> JMP
 
 	jnc	1234h
 	jp	nc,1234h
+	j	nc,1234h
 	jnz	1234h
 	jp	nz,1234h
+	j	nz,1234h
 	jp	1234h
 	jp	p,1234h
+	j	p,1234h
 	jpo	1234h
 	jp	po,1234h
+	j	po,1234h
 	jc	1234h
 	jp	c,1234h
+	j	c,1234h
 	jz	1234h
 	jp	z,1234h
+	j	z,1234h
 	jm	1234h
 	jp	m,1234h
+	j	m,1234h
 	jpe	1234h
 	jp	pe,1234h
+	j	pe,1234h
 
 ;-----------------------------------
 ; Call and Return Group

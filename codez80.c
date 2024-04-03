@@ -122,6 +122,7 @@ typedef enum
 static Byte PrefixCnt;
 static Byte AdrPart, OpSize;
 static LongWord AdrVal;
+static LongWord adr_val_flags;
 static Byte AdrVals[4];
 static ShortInt AdrMode;
 
@@ -637,6 +638,8 @@ static ShortInt DecodeAdr(const tStrComp *pArg, unsigned ModeMask)
             return AdrMode;
           ChkSpace(SegCode, disp_eval_result.AddrSpaceMask);
           abs_2_adrvals(address);
+          AdrVal = address;
+          adr_val_flags = disp_eval_result.Flags;
           AdrMode = ModAbs;
           goto found;
         }
@@ -3149,6 +3152,7 @@ static IntType get_jr_dist(LongWord dest, LongInt *p_dist)
 static void DecodeJP(Word Code)
 {
   int Cond;
+  Boolean check_jr = False;
 
   UNUSED(Code);
 
@@ -3156,6 +3160,7 @@ static void DecodeJP(Word Code)
   {
     case 1:
       Cond = 1;
+      check_jr = True;
       break;
     case 2:
       if (!DecodeCondition(ArgStr[1].str.p_str, &Cond))
@@ -3163,6 +3168,7 @@ static void DecodeJP(Word Code)
         WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
         return;
       }
+      check_jr = (Cond <= 3);
       Cond <<= 3;
       break;
     default:
@@ -3184,7 +3190,9 @@ static void DecodeJP(Word Code)
     {
       LongInt dist;
 
-      if (get_jr_dist(AdrVal, &dist) != UInt0)
+      if (check_jr 
+       && (get_jr_dist(AdrVal, &dist) != UInt0)
+       && !mFirstPassUnknownOrQuestionable(adr_val_flags))
         WrStrErrorPos(ErrNum_RelJumpPossible, &ArgStr[ArgCnt]);
       encode_jp_core(Cond);
       break;
@@ -3303,7 +3311,7 @@ static void DecodeJR(Word Code)
       break;
     case 2:
       OK = DecodeCondition(ArgStr[1].str.p_str, &Condition);
-      if ((OK) && (Condition > 3))
+      if (OK && (Condition > 3))
         OK = False;
       if (OK)
         Condition += 4;

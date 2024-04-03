@@ -1,4 +1,5 @@
 	cpu	z80
+	page	0
 
 	org	1000h
 	jr	$+129		; OK
@@ -16,6 +17,24 @@
 
 	jp	$+130		; JR not possible
 	jp	$-127		; JR not possible
+
+	expect	25,25,25,25
+	jp	z,$+129		; JR possible
+	jp	nz,$+129	; JR possible
+	jp	c,$+129		; JR possible
+	jp	nc,$+129	; JR possible
+	endexpect
+
+	jp	pe,$+129	; JR not possible (wrong condition)
+	jp	po,$+129	; JR not possible (wrong condition)
+	jp	p,$+129		; JR not possible (wrong condition)
+	jp	m,$+129		; JR not possible (wrong condition)
+
+	jp	skip
+	rept	130
+	nop
+	endm
+skip:	nop
 
 	cpu	z380
 	extmode	on
@@ -43,3 +62,15 @@
 
 	jp	$+800005h	; JR not possible
 	jp	$-7ffffch	; JR not possible
+
+	expect	25,25,25,25
+	jp	z,$+800004h	; JR possible
+	jp	nz,$+800004h	; JR possible
+	jp	c,$+800004h	; JR possible
+	jp	nc,$+800004h	; JR possible
+	endexpect
+
+	jp	pe,$+800004h	; JR not possible (wrong condition)
+	jp	po,$+800004h	; JR not possible (wrong condition)
+	jp	p,$+800004h	; JR not possible (wrong condition)
+	jp	m,$+800004h	; JR not possible (wrong condition)

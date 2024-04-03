@@ -894,14 +894,8 @@ void WrXErrorPos(tErrorNum Num, const char *pExtendError, const struct sLineComp
   char Add[11];
   const char *pErrorMsg;
 
-  if (FindAndTakeExpectError(Num))
-    return;
-
-  if (!CodeOutput && (Num == ErrNum_UnknownInstruction))
-    return;
-
-  if (SuppWarns && (Num < 1000))
-    return;
+  /* If issuing of a certain error or warning is disabled, a program
+     that expects it should trigger an error. */
 
   switch (Num)
   {
@@ -916,6 +910,15 @@ void WrXErrorPos(tErrorNum Num, const char *pExtendError, const struct sLineComp
     default:
       break;
   }
+
+  if (FindAndTakeExpectError(Num))
+    return;
+
+  if (!CodeOutput && (Num == ErrNum_UnknownInstruction))
+    return;
+
+  if (SuppWarns && (Num < 1000))
+    return;
 
   pErrorMsg = ErrorNum2String(Num, h, sizeof(h));
 
