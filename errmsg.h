@@ -290,7 +290,9 @@ typedef enum
   ErrNum_FileWriteError = 10004,
   ErrNum_HeapOvfl = 10006,
   ErrNum_StackOvfl = 10007,
-  ErrNum_MaxIncLevelExceeded = 10008
+  ErrNum_MaxIncLevelExceeded = 10008,
+  ErrNum_InvListHeadFormat = 10010,
+  ErrNum_ListHeadFormatElemTooOften = 10011
 } tErrorNum;
 
 struct sLineComp;

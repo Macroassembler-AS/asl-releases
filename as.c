@@ -4328,6 +4328,7 @@ int main(int argc, char **argv)
     asmcode_init();
     asmlabel_init();
     asmdebug_init();
+    asmlist_init();
 
     codeallg_init();
     onoff_common_init();
@@ -4560,7 +4561,7 @@ int main(int argc, char **argv)
 
   /* ListRadixBase must have been set */
 
-  asmlist_init();
+  asmlist_setup();
 
   GlobErrFlag = False;
   if (ErrorPath[0] != '\0')

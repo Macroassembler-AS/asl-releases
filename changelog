@@ -1,3 +1,8 @@
+2024-04-13 [1.42 Bld 269]
+
+- Addition    : Make per-line header in listing configurable
+                via format string
+
 2024-04-03 [1.42 Bld 268]
 
 - Bugfix      : Z80: Do not warn about possible relative jump if

@@ -1097,6 +1097,14 @@ Message ErrMsgMaxIncLevelExceeded
  "INCLUDE zu tief verschachtelt"
  "INCLUDE nested too deeply"
 
+Message ErrMsgInvListHeadFormat
+ "ung&uuml;tiger Platzhalter in Listing Pro-Zeile-Pr&auml;fix Format"
+ "invalid place holder in listing per-line prefix format"
+
+Message ErrMsgListHeadFormatElemTooOften
+ "zu oft verwendeter Platzhalter in Listing Pro-Zeile-Pr&auml;fix Format"
+ "place holder used too often in listing per-line prefix format"
+
 Message ErrMsgTooManyErrors
  "zu viele Fehler, Assembler abgebrochen"
  "too many errors, assembly terminated"
@@ -1525,6 +1533,7 @@ Message InfoMessHelp
  "  -I                   : Include-Verschachtelungsliste ausgeben\n" \
  "  -i <Pfad>[:Pfad]...  : Pfadliste f&uuml;r Includedateien\n" \
  "  -L                   : Listing auf Datei\n" \
+ "  -listline-prefix <fmt> : Format des Pro-Zeile-Pr&auml;fix im Listing setzen\n" \
  "  -listradix <2...36>  : Zahlensystem im Listing\n" \
  "  -l                   : Listing auf Konsole\n" \
  "  -M                   : Makrodefinitionen extrahieren\n" \
@@ -1581,6 +1590,7 @@ Message InfoMessHelp
  "  -i <path>[;path]...  : list of paths for include files\n" \
  "  -L                   : listing to file\n" \
  "  -l                   : listing to console\n" \
+ "  -listline-prefix <fmt> : set format of listing per-line prefix\n" \
  "  -listradix <2...36>  : number system in listing\n" \
  "  -M                   : extract macro definitions\n" \
  "  -maxerrors <number>  : terminate assembly after <number> errors\n" \

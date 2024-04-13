@@ -30,6 +30,18 @@ extern int SysString(char *pDest, size_t DestSize, LargeWord i, int System, int 
 
 extern char *as_strdup(const char *s);
 
+typedef enum { e_not_set, e_set, e_finished } as_format_arg_state_t;
+
+typedef struct
+{
+  as_format_arg_state_t arg_state[3];
+  Boolean in_format, lead_zero, is_signed, left_align, add_plus, force_lead_zero, force_upper;
+  int arg[3], curr_arg, int_size;
+} as_format_ctx_t;
+
+extern void as_format_context_reset(as_format_ctx_t *p_context);
+extern Boolean as_format_context_consume(as_format_ctx_t *p_context, char ch);
+
 extern int as_vsnprcatf(char *pDest, size_t DestSize, const char *pFormat, va_list ap);
 extern int as_snprcatf(char *pDest, size_t DestSize, const char *pFormat, ...);
 extern int as_vsnprintf(char *pDest, size_t DestSize, const char *pFormat, va_list ap);

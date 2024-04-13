@@ -888,6 +888,10 @@ Momentan sind folgende Schalter definiert:
 \item{\tty{OLIST}: mit einem zus"atzlichen Argument legt einen anderen
       Pfad bzw. Namen f"ur die Listdatei fest.  Falls mehrere Dateien
       assembliert werden, kann diese Option auch mehrfach gegeben werden.}
+\item{\tty{listline-prefix}: Mit dieser Option k"onnen die Daten
+      bestimmt werden, die im Listing jeder Zeile vorangestellt
+      werden.  Der Aufbau des daf"ur verwendeten Formatstrings ist in
+      \ref{SectListing} beschrieben.}
 \item{\label{listradix}\tty{LISTRADIX}: Defaultm"a"sig erfolgen alle Zahlenausgaben im Listing
       (Adressen, erzeugter Code, Symboltabelle) im Hexadezimalsystem.  Mit
       diesem Schalter kann ein beliebiges anderes Zahlensystem im Bereich
@@ -1339,11 +1343,12 @@ genauso gut um Tabulatoren handeln.
 %%---------------------------------------------------------------------------
 
 \section{Format des Listings}
+\label{SectListing}
 
 Das von \asname{} bei Angabe der Kommandozeilenoptionen \tty{l} oder \tty{L}
 erzeugte Listing l"a"st sich grob in folgende Teile gliedern:
 \begin{enumerate}
-\item{Wiedergabe des assemblierten Quellcodes;}
+\item{Erg"anzte Wiedergabe des assemblierten Quellcodes;}
 \item{Symbolliste;}
 \item{Makroliste;}
 \item{Funktionsliste;}
@@ -1379,8 +1384,8 @@ gerade aktuell verwendete Target mit der Gr"o"se seines Adre"sraumes bestimmt
 die Breite des Feldes: F"ur einen Prozessor mit 64 KByte Adre"sraum sind
 nur 4 Hex-Stellen erforderlich, bei 4 GByte dagegen acht.
 \par
-Der erzeugte Code selber steht dahinter im Feld \tty{Code} in
-hexadezimaler Schreibweise.  Je nach Prozessortyp und aktuellem Segment
+Der erzeugte Code selber steht dahinter im Feld \tty{Code}, ebenfalls
+im durch den List-Radix gegebenen Zahlensystem.  Je nach Prozessortyp und aktuellem Segment
 k"onnen die Werte entweder als Bytes oder 16/32-Bit-Worte formatiert sein.
 Sollte mehr Code erzeugt worden sein, als in das Feld hineinpa"st, so
 werden im Anschlu"s an die Zeile weitere Zeilen erzeugt, in denen nur
@@ -1388,6 +1393,26 @@ dieses Feld belegt ist.
 \par
 Im Feld \tty{Quelle} schlu"sendlich wird die Zeile aus der Quelldatei in
 ihrer Originalform ausgegeben.
+\par
+Die Struktur der Daten vor der Quellcode-Zeile wird intern
+durch einen Formatstring gesteuert, der "uber die Kommandozeilen-Option
+{\tt -listline-prefix} ge"andert werden kann.  Dieser darf folgende
+Platzhalter enthalten:
+\begin{itemize}
+\item{{\tt \%[c]i}: Die aktuelle Include-Verschachtelungstiefe, mit optionaler
+      Feldbreite.  Ohne Feldbreite wird dies auf gar nichts oder eine
+      passende Menge Leerzeichen expandiert, falls die Tiefe Null ist.}
+\item{{\tt \%[c]n}: Die aktuelle Zeilennummer, mit einer optionalen Feldbreite,
+      in der die Zeilennummer rechtsb"undig ausgegeben wird.  Der Default
+      f"ur die Feldbreite ist f"unf Zeichen.}
+\item{{\tt \%[c]a}: Analog die aktuelle Speicheradresse, wobei der Default
+      der Feldbreite der oben erw"ahnte, Target-abh"angige Wert ist.}
+\end{itemize}
+In allen drei F"allen bedeutet eine f"uhrende Null bei einer Feldbreite, da"s
+links mit Nullen anstelle von Leerzeichen aufgef"ullt werden soll.
+Der Default f"ur diesen Formatstring ist \verb!%i%n/%a!.  Um eine Ausgabe
+zu erhalten, wie sie Versionen von \asname{} vor 1.42 Build 249 erzeugten,
+kann als Formatstring \verb!%1i%5n/%8a! verwendet werden.
 \par
 Die Symboltabelle ist so ausgelegt, da"s sie nach M"oglichkeit immer in 80
 Spalten dargestellt werden kann.  F"ur Symbole ,,normaler L"ange'' wird
@@ -13756,6 +13781,15 @@ Angaben:
                 fehlerhafte (rekusive) Verschachtelung ist aber die
                 wahrscheinlichere Ursache.}
                {Die INCLUDE-Anweisung, mit der das Limit "uberschritten wurde.}
+\errentry{10010}{ung"ultiger Platzhalter in Listing Pro-Zeile-Pr"afix Format}
+               {fatal}
+               {Als Platzhalter sind nur \%i, \%n oder \%a zul"assig.}
+               {das ung"ultige Format}
+\errentry{10011}{zu oft verwendeter Platzhalter in Listing Pro-Zeile-Pr"afix Format}
+               {fatal}
+               {Die Platzhalter \%i und \%n d"urfen jeweils nur maximal dreimal
+                im Formatstring enthalten sein.  Gen"ugt das nicht?}
+               {das mehrfach verwendete Format}
 \end{description}
 
 %%===========================================================================
