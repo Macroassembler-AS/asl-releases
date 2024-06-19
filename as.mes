@@ -235,6 +235,10 @@ Message ErrMsgNeedShortIO
  "I/O-Adresse mu&szlig; mit INS/OUTS angesprochen werden"
  "I/O address must be accessed via INS/OUTS"
 
+Message ErrMsgCaseWrongArgCnt
+ "CASE-Limit passt nicht zur Anzahl der Sprungadressen"
+ "CASE limit does not match number of branch addresses"
+
 ;*****
 
 Message ErrMsgDoubleDef
@@ -376,6 +380,14 @@ Message ErrMsgOverRange
 Message ErrMsgNotPwr2
  "keine Zweierpotenz"
  "not a power of two"
+
+Message ErrMsgInvalidDecDigit
+ "ung&uuml;tige Dezimalstelle"
+ "invalid decimal digit"
+
+Message ErrMsgDecStringTooLong
+ "Dezimalstring zu lang"
+ "decimal string too long"
 
 Message ErrMsgNotAligned
  "Adresse nicht ausgerichtet"
@@ -1140,6 +1152,10 @@ Message ErrMsgIntOrFloatButReg
 Message ErrMsgIntOrStringButReg
  "Ganzzahl oder String erwartet, aber Register bekommen"
  "expected integer or string but got register"
+
+Message ErrMsgStringTooLong
+ "String zu lang"
+ "string too long"
 
 Message ErrMsgIntButReg
  "Ganzzahl erwartet, aber Register bekommen"

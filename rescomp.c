@@ -38,7 +38,7 @@ typedef struct
 
 typedef struct
 {
-  char *AbbString,*Character;
+  const char *AbbString,*Character;
 } TransRec;
 
 #define IO_RETCODE_SRC 2
@@ -52,7 +52,7 @@ typedef struct
 unsigned _stklen = 16384;
 #endif
 
-static char *IdentString = "AS Message Catalog - not readable\n\032\004";
+static const char *IdentString = "AS Message Catalog - not readable\n\032\004";
 
 static LongInt MsgCounter;
 static PMsgCat MsgCats;
@@ -132,14 +132,14 @@ static void GetLine(char *Dest)
 
 /*****************************************************************************/
 
-static void SynError(char *LinePart)
+static void SynError(const char *LinePart)
 {
   fprintf(stderr, "syntax error : %s\n", LinePart); exit(10);
 }
 
 /*---------------------------------------------------------------------------*/
 
-static void Process_LANGS(char *Line)
+static void Process_LANGS(const char *Line)
 {
   char NLine[1024], *p, *p2, *p3, *end, z, Part[1024];
   PMsgCat PCat;

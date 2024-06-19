@@ -1,3 +1,8 @@
+2024-06-19 [1.42 Bld 270]
+
+- Bugfix      : allow .byte and .word on PDP-11 again.
+- Addition    : initial VAX support
+
 2024-04-13 [1.42 Bld 269]
 
 - Addition    : Make per-line header in listing configurable

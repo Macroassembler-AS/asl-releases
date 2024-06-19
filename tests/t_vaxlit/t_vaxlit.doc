@@ -1,0 +1,6 @@
++-------------------------- Test Application VAXLIT -------------------------+
+|                                                                            |
+| This test iterates through the list of floating point values that can be   |
+| expressed as literals on VAX.                                              |
+|                                                                            |
++----------------------------------------------------------------------------+

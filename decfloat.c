@@ -4,16 +4,19 @@
 /*                                                                           */
 /* AS                                                                        */
 /*                                                                           */
-/* DEC<->IEEE Floating Point Conversion on host                               */
+/* DEC<->IEEE Floating Point Conversion on host                              */
 /*                                                                           */
 /*****************************************************************************/
 
 #include "stdinc.h"
+#include <math.h>
 #include <errno.h>
 
 #include "be_le.h"
 #include "ieeefloat.h"
 #include "decfloat.h"
+
+/* NOTE: if host uses DEC float, double is assumed to be D_float */
 
 #ifdef DECFLOAT
 
@@ -98,14 +101,46 @@ void DECD_2_LongDouble(Byte *pDest, Double inp)
 #endif /* DECFLOAT */
 
 /*!------------------------------------------------------------------------
- * \fn     Double_2_dec4(Double inp, Word *p_dest)
- * \brief  convert from host to DEC (PDP/VAX) 4 byte float format
- * \param  inp value to dispose
- * \param  p_dest where to dispose
- * \return 0 or error code
+ * \fn     Double_2_dec_lit(Double inp, Byte *p_dest)
+ * \brief  convert from host to DEC (VAX) 6 bit float (literal) format
+ * \param  inp value to convert
+ * \param  p_dest result buffer
+ * \return >0 for number of bytes used (1) or <0 for error code
  * ------------------------------------------------------------------------ */
 
-int Double_2_dec4(Double inp, Word *p_dest)
+extern int Double_2_dec_lit(Double inp, Byte *p_dest)
+{
+  int exp;
+  double fract_part, nonfract_part;
+  int int_part;
+
+  for (exp = 7; exp >= 0; exp--, inp *= 2.0)
+  {
+    if (inp > 120.0)
+      return -E2BIG;
+    if (inp < 64.0)
+      continue;
+    fract_part = modf(inp, &nonfract_part);
+    if (fract_part != 0.0)
+      return -EBADF;
+    int_part = (int)nonfract_part;
+    if ((int_part & 7) || (int_part < 64))
+      return -EBADF;
+    *p_dest = (exp << 3) | ((int_part & 0x38) >> 3);
+    return 1;
+  }
+  return -EIO;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     Double_2_dec_f(Double inp, Word *p_dest)
+ * \brief  convert from host to DEC (PDP/VAX) 4 byte float (F) format
+ * \param  inp value to dispose
+ * \param  p_dest where to dispose
+ * \return >0 for number of words used (2) or <0 for error code
+ * ------------------------------------------------------------------------ */
+
+int Double_2_dec_f(Double inp, Word *p_dest)
 {
 #ifdef HOST_DECFLOAT
 
@@ -123,13 +158,13 @@ int Double_2_dec4(Double inp, Word *p_dest)
      otherwise the layout is the same: */
 
   if (fabs(inp) > 1.70141e+38)
-    return E2BIG;
+    return -E2BIG;
 
 # ifdef IEEEFLOAT
   {
     int fp_class = as_fpclassify(inp);
     if ((fp_class != AS_FP_NORMAL) && (fp_class != AS_FP_SUBNORMAL))
-      return EINVAL;
+      return -EINVAL;
   }
 # endif /* IEEEFLOAT */
   {
@@ -140,18 +175,18 @@ int Double_2_dec4(Double inp, Word *p_dest)
     p_dest[1] = ((Word)(buf[2])) << 8 | buf[3];
   }
 #endif /* HOST_DECFLOAT */
-  return 0;
+  return 2;
 }
 
 /*!------------------------------------------------------------------------
- * \fn     Double_2_dec8(Double inp, Word *p_dest)
+ * \fn     Double_2_dec_d(Double inp, Word *p_dest)
  * \brief  convert from host to DEC (PDP/VAX) 8 byte float (D) format
  * \param  inp value to dispose
  * \param  p_dest where to dispose
- * \return 0 or error code
+ * \return >0 for number of words used (4) or <0 for error code
  * ------------------------------------------------------------------------ */
 
-int Double_2_dec8(Double inp, Word *p_dest)
+int Double_2_dec_d(Double inp, Word *p_dest)
 {
 #ifdef HOST_DECFLOAT
 
@@ -161,16 +196,16 @@ int Double_2_dec8(Double inp, Word *p_dest)
 
 #else /* !HOST_DECFLOAT */
 
-  /* Otherwise, convert to IEEE 32 bit: */
+  /* Otherwise, convert to IEEE 64 bit: */
 
   if (fabs(inp) > 1.70141e+38)
-    return E2BIG;
+    return -E2BIG;
 
 # ifdef IEEEFLOAT
   {
     int fp_class = as_fpclassify(inp);
     if ((fp_class != AS_FP_NORMAL) && (fp_class != AS_FP_SUBNORMAL))
-      return EINVAL;
+      return -EINVAL;
   }
 # endif /* IEEEFLOAT */
 
@@ -211,7 +246,134 @@ int Double_2_dec8(Double inp, Word *p_dest)
   }
 #endif /* HOST_DECFLOAT */
 
-  return 0;
+  return 4;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     Double_2_dec_g(Double inp, Word *p_dest)
+ * \brief  convert from host to DEC (VAX) 8 byte float (G) format
+ * \param  inp value to dispose
+ * \param  p_dest where to dispose
+ * \return >0 for number of words used (4) or <0 for error code
+ * ------------------------------------------------------------------------ */
+
+int Double_2_dec_g(Double inp, Word *p_dest)
+{
+  /* Convert to IEEE 64 bit: */
+
+  if (fabs(inp) > 0.9e+308)
+    return -E2BIG;
+
+# ifdef IEEEFLOAT
+  {
+    int fp_class = as_fpclassify(inp);
+    if ((fp_class != AS_FP_NORMAL) && (fp_class != AS_FP_SUBNORMAL))
+      return -EINVAL;
+  }
+# endif /* IEEEFLOAT */
+
+  {
+    Word sign;
+    Integer exponent;
+    LongWord mantissa, fraction;
+
+    /* Dissect */
+
+    ieee8_dissect(&sign, &exponent, &mantissa, &fraction, inp);
+
+    /* For DEC float, Mantissa is in range 0.5...1.0, instead of 1.0...2.0: */
+
+    exponent++;
+
+    /* DEC float does not handle denormal numbers and truncates to zero: */
+
+    if (!(mantissa & 0x10000000ul))
+    {
+      fraction = mantissa = 0;
+      exponent = -1024;
+    }
+
+    /* add bias to exponent */
+
+    exponent += 1024;
+
+    /* assemble 1st word (seeeeeeeeeeemmmm): */
+
+    p_dest[0] = ((sign & 1) << 15)
+              | ((exponent << 4) & 0x7ff0u)
+              | ((mantissa >> 24) & 0x0f);  /* mant bits 27..24 */
+    p_dest[1] = (mantissa >> 8) & 0xffff;   /* mant bits 23..8 */
+    p_dest[2] = ((mantissa & 0xff) << 8)   /* mant bits 7..0 */
+              | ((fraction >> 16) & 0xff); /* fract bits 23..16 */
+    p_dest[3] = (fraction & 0xffff) << 0;  /* fract bits 15..0 */
+  }
+
+  return 4;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     Double_2_dec_h(Double inp, Word *p_dest)
+ * \brief  convert from host to DEC (VAX) 16 byte float (h) format
+ * \param  inp value to dispose
+ * \param  p_dest where to dispose
+ * \return >0 for number of words used (8) or <0 for error code
+ * ------------------------------------------------------------------------ */
+
+int Double_2_dec_h(Double inp, Word *p_dest)
+{
+  /* Convert to IEEE 64 bit: */
+
+  if (fabs(inp) > 0.9e+308)
+    return -E2BIG;
+
+# ifdef IEEEFLOAT
+  {
+    int fp_class = as_fpclassify(inp);
+    if ((fp_class != AS_FP_NORMAL) && (fp_class != AS_FP_SUBNORMAL))
+      return -EINVAL;
+  }
+# endif /* IEEEFLOAT */
+
+  {
+    Word sign;
+    Integer exponent;
+    LongWord mantissa, fraction;
+
+    /* Dissect */
+
+    ieee8_dissect(&sign, &exponent, &mantissa, &fraction, inp);
+
+    /* For DEC float, Mantissa is in range 0.5...1.0, instead of 1.0...2.0: */
+
+    exponent++;
+
+    /* DEC float does not handle denormal numbers and truncates to zero: */
+
+    if (!(mantissa & 0x10000000ul))
+    {
+      fraction = mantissa = 0;
+      exponent = -16384;
+    }
+
+    /* add bias to exponent */
+
+    exponent += 16384;
+
+    /* assemble 1st word (seeeeeeeeeeeeeee): */
+
+    p_dest[0] = ((sign & 1) << 15) 
+              | ((exponent << 0) & 0x7fffu);
+    p_dest[1] = (mantissa >> 12) & 0xffff; /* mant bits 27..12 */
+    p_dest[2] = ((mantissa & 0xfff) << 4)  /* mant bits 11..0 */
+              | ((fraction >> 20) & 0xf);  /* fract bits 23..20 */
+    p_dest[3] = (fraction >> 4) & 0xffff;  /* fract bits 19..4 */
+    p_dest[4] = (fraction & 0xf) << 12;    /* fract bits 3..0 */
+    p_dest[5] =
+    p_dest[6] =
+    p_dest[7] = 0x0000;
+  }
+
+  return 8;
 }
 
 #include "asmerr.h"
@@ -226,15 +388,24 @@ int Double_2_dec8(Double inp, Word *p_dest)
 
 Boolean check_dec_fp_dispose_result(int ret, const struct sStrComp *p_arg)
 {
+  if (ret >= 0) 
+    return True;
   switch (ret)
   {
-    case 0:
-      return True;
-    case E2BIG:
+    case -EIO:
+      WrStrErrorPos(ErrNum_UnderRange, p_arg);
+      return False;
+    case -EBADF:
+      WrXErrorPos(ErrNum_InvArg, "raster", &p_arg->Pos);
+      return False;
+    case -E2BIG:
       WrStrErrorPos(ErrNum_OverRange, p_arg);
       return False;
-    default:
+    case -EINVAL:
       WrXErrorPos(ErrNum_InvArg, "INF/NaN", &p_arg->Pos);
+      return False;
+    default:
+      WrStrErrorPos(ErrNum_InvArg, p_arg);
       return False;
   }
 }

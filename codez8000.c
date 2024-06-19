@@ -597,7 +597,7 @@ static LongWord DecodeAddrPartNum(const tStrComp *pArg, LongInt Disp, tEvalResul
     ThisIntType = (IsIO || HasSeg) ? UInt16 : MemIntType;
   else
     ThisIntType = GetImmIntType(OpSize);
-  if (mFirstPassUnknown(pEvalResult->Flags))
+  if (mFirstPassUnknown(pEvalResult->Flags) && (ThisIntType < IntTypeCnt))
     Result &= IntTypeDefs[(int)ThisIntType].Mask;
 
   if (IsDirect)

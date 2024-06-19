@@ -8,6 +8,7 @@
 /*                                                                           */
 /*****************************************************************************/
 
+#include <stdio.h>
 #include "fileformat.h"
 
 typedef struct
@@ -46,6 +47,16 @@ extern void FormatError(const char *Name, const char *Detail);
 
 extern void ChkIO(const char *Name);
 extern void chk_wr_read_error(const char *p_name);
+extern int chkio_fprintf(FILE *p_file, const char *p_name, const char *p_fmt, ...)
+#ifdef __GNUC__
+           __attribute__ ((format (printf, 3, 4)))
+#endif
+           ;
+extern int chkio_printf(const char *p_name, const char *p_fmt, ...)
+#ifdef __GNUC__
+           __attribute__ ((format (printf, 2, 3)))
+#endif
+           ;
 
 extern Word Granularity(Byte Header, Byte Segment);
 

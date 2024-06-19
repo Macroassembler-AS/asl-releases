@@ -11,6 +11,7 @@
 #include "stdinc.h"
 #include "be_le.h"
 #include <string.h>
+#include <stdarg.h>
 
 #include "strutil.h"
 #include "stringlists.h"
@@ -112,6 +113,32 @@ void ChkIO(const char *Name)
 void chk_wr_read_error(const char *p_name)
 {
   wr_io_str(p_name, errno ? GetErrorMsg(errno) : GetReadErrorMsg());
+}
+
+int chkio_fprintf(FILE *p_file, const char *p_name, const char *p_fmt, ...)
+{
+  va_list ap;
+  int ret;
+
+  va_start(ap, p_fmt);
+  ret = vfprintf(p_file, p_fmt, ap);
+  va_end(ap);
+  if (ret < 0)
+    ChkIO(p_name);
+  return ret;
+}
+
+int chkio_printf(const char *p_name, const char *p_fmt, ...)
+{
+  va_list ap;
+  int ret;
+
+  va_start(ap, p_fmt);
+  ret = vprintf(p_fmt, ap);
+  va_end(ap);
+  if (ret < 0)
+    ChkIO(p_name);
+  return ret;
 }
 
 Word Granularity(Byte Header, Byte Segment)

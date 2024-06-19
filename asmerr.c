@@ -319,6 +319,8 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
       msgno = Num_ErrMsgMeansE; break;
     case ErrNum_NeedShortIO:
       msgno = Num_ErrMsgNeedShortIO; break;
+    case ErrNum_CaseWrongArgCnt:
+      msgno = Num_ErrMsgCaseWrongArgCnt; break;
     case ErrNum_DoubleDef:
       msgno = Num_ErrMsgDoubleDef; break;
     case ErrNum_SymbolUndef:
@@ -385,6 +387,8 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
       msgno = Num_ErrMsgIntOrFloatButReg; break;
     case ErrNum_IntOrStringButReg:
       msgno = Num_ErrMsgIntOrStringButReg; break;
+    case ErrNum_StringTooLong:
+      msgno = Num_ErrMsgStringTooLong; break;
     case ErrNum_IntButReg:
       msgno = Num_ErrMsgIntButReg; break;
     case ErrNum_UnresRelocs:
@@ -403,6 +407,10 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
       msgno = Num_ErrMsgOverRange; break;
     case ErrNum_NotPwr2:
       msgno = Num_ErrMsgNotPwr2; break;
+    case ErrNum_InvalidDecDigit:
+      msgno = Num_ErrMsgInvalidDecDigit; break;
+    case ErrNum_DecStringTooLong:
+      msgno = Num_ErrMsgDecStringTooLong; break;
     case ErrNum_NotAligned:
       msgno = Num_ErrMsgNotAligned; break;
     case ErrNum_DistTooBig:

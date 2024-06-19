@@ -50,7 +50,7 @@ static void AddList(tpRefSave *ppList, const char *pDescr, const char *pName, co
     if (strcmp(pRun->pValue, pValue))
     {
       as_snprintf(err, sizeof(err), "value of %s '%s' has changed", pDescr, pName);
-      Warning(err);
+      tex_warning(err);
       DoRepass = True;
       free(pRun->pValue);
       pRun->pValue = as_strdup(pValue);
@@ -90,7 +90,7 @@ static void GetList(tpRefSave pList, const char *pDescr, const char *pName, char
   if (!pRun)
   {
     as_snprintf(err, sizeof(err), "undefined %s '%s'", pDescr, pName);
-    Warning(err); DoRepass = True;
+    tex_warning(err); DoRepass = True;
   }
   strcpy(pDest, !pRun ? "???" : pRun->pValue);
 }

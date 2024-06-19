@@ -25,6 +25,7 @@
 #include "errmsg.h"
 #include "intpseudo.h"
 #include "motpseudo.h"
+#include "decpseudo.h"
 #include "onoff_common.h"
 #include "cpu2phys.h"
 #include "decfloat.h"
@@ -528,7 +529,7 @@ static Boolean decode_adr(tStrComp *p_arg, adr_vals_t *p_result, Word pc_value, 
         Double f_val = EvalStrFloatExpressionWithResult(&imm_arg, Float64, &eval_result);
         if (eval_result.OK)
         {
-          int ret = Double_2_dec4(f_val, p_result->vals);
+          int ret = Double_2_dec_f(f_val, p_result->vals);
           eval_result.OK = check_dec_fp_dispose_result(ret, &imm_arg);
         }
         if (eval_result.OK)
@@ -540,7 +541,7 @@ static Boolean decode_adr(tStrComp *p_arg, adr_vals_t *p_result, Word pc_value, 
         Double f_val = EvalStrFloatExpressionWithResult(&imm_arg, Float64, &eval_result);
         if (eval_result.OK)
         {
-          int ret = Double_2_dec8(f_val, p_result->vals);
+          int ret = Double_2_dec_d(f_val, p_result->vals);
           eval_result.OK = check_dec_fp_dispose_result(ret, &imm_arg);
         }
         if (eval_result.OK)
@@ -1592,15 +1593,35 @@ static Boolean decode_pseudo(void)
     return True;
   }
 
+  /* TODO: RAD50, PACKED */
+
   if (Memo("BYTE"))
   {
-    DecodeIntelDB(eIntPseudoFlag_DECFormat | eIntPseudoFlag_AllowString);
+    DecodeIntelDB(eIntPseudoFlag_DECFormat | eIntPseudoFlag_AllowInt);
     return True;
   }
 
   if (Memo("WORD"))
   {
-    DecodeIntelDW(eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_DECFormat);
+    DecodeIntelDW(eIntPseudoFlag_AllowInt | eIntPseudoFlag_DECFormat);
+    return True;
+  }
+
+  if (Memo("ASCII"))
+  {
+    DecodeIntelDB(eIntPseudoFlag_AllowString | eIntPseudoFlag_DECFormat);
+    return True;
+  }
+
+  if (Memo("ASCIZ"))
+  {
+    DecodeIntelDB(eIntPseudoFlag_AllowString | eIntPseudoFlag_DECFormat | eIntPseudoFlag_ASCIZ);
+    return True;
+  }
+
+  if (Memo("PACKED"))
+  {
+    decode_dec_packed(0);
     return True;
   }
 
@@ -2061,6 +2082,9 @@ static void intern_symbol_pdp11(char *p_arg, TempResult *p_result)
 
 static void make_code_pdp11(void)
 {
+  InstProc inst_proc;
+  Word inst_index;
+
   CodeLen = 0; DontPrint = False;
   op_size = eSymbolSizeUnknown;
 
@@ -2073,6 +2097,13 @@ static void make_code_pdp11(void)
   if (decode_pseudo())
     return;
 
+  inst_proc = inst_fnc_table_search(InstTable, OpPart.str.p_str, &inst_index);
+  if (!inst_proc)
+  {
+    WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
+    return;
+  }
+
   /* machine instructions may not begin on odd addresses */
 
   if (Odd(EProgCounter()))
@@ -2083,8 +2114,7 @@ static void make_code_pdp11(void)
       WrError(ErrNum_AddrNotAligned);
   }
 
-  if (!LookupInstTable(InstTable, OpPart.str.p_str))
-    WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
+  inst_proc(inst_index);
 }
 
 /*!------------------------------------------------------------------------

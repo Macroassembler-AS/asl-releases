@@ -640,6 +640,9 @@ static void DecodeSPACE(Word Code)
 
 static void MakeCode_960(void)
 {
+  InstProc inst_proc;
+  Word inst_index;
+
   CodeLen = 0;
   DontPrint = False;
 
@@ -653,15 +656,21 @@ static void MakeCode_960(void)
   if (DecodeIntelPseudo(False))
     return;
 
+  /* CPU-Anweisungen */
+
+  inst_proc = inst_fnc_table_search(InstTable, OpPart.str.p_str, &inst_index);
+  if (!inst_proc)
+  {
+    WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
+    return;
+  }
+
   /* Befehlszaehler nicht ausgerichtet? */
 
   if (EProgCounter() & 3)
     WrError(ErrNum_AddrNotAligned);
 
-  /* CPU-Anweisungen */
-
-  if (!LookupInstTable(InstTable, OpPart.str.p_str))
-    WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
+  inst_proc(inst_index);
 }
 
 /*--------------------------------------------------------------------------*/

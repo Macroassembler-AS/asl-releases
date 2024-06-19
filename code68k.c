@@ -6312,11 +6312,15 @@ static Boolean DecodeAttrPart_68K(void)
 
 static void MakeCode_68K(void)
 {
+  InstProc inst_proc;
+  Word inst_index;
+
   CodeLen = 0;
   OpSize = (AttrPartOpSize[0] != eSymbolSizeUnknown)
          ? AttrPartOpSize[0]
          : ((pCurrCPUProps->Family == eColdfire) ? eSymbolSize32Bit : eSymbolSize16Bit);
-  DontPrint = False; RelPos = 2;
+  DontPrint = False;
+  RelPos = 2;
 
   /* Nullanweisung */
 
@@ -6328,6 +6332,13 @@ static void MakeCode_68K(void)
   if (DecodeMoto16Pseudo(OpSize, True))
     return;
 
+  inst_proc = inst_fnc_table_search(InstTable, OpPart.str.p_str, &inst_index);
+  if (!inst_proc)
+  {
+    WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
+    return;
+  }
+
   /* Befehlszaehler ungerade ? */
 
   if (Odd(EProgCounter()))
@@ -6338,8 +6349,7 @@ static void MakeCode_68K(void)
       WrError(ErrNum_AddrNotAligned);
   }
 
-  if (!LookupInstTable(InstTable, OpPart.str.p_str))
-    WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
+  inst_proc(inst_index);
 }
 
 static Boolean IsDef_68K(void)

@@ -1913,7 +1913,11 @@ fdest	reg	ac5
 
 	padding	on
 
-	byte	1,2,3
+	; .<inst> works on PDP-11 only if CPU is selected
+	; in source file and not on CLI.  Have to clean
+	; this up in the long run.
+
+	.byte	1,2,3
 	nop			; padding byte is inserted before machine instruction
 
 	word	1,2,3
@@ -1931,3 +1935,22 @@ fdest	reg	ac5
 	word	'Th','e ','qu','ic','k ','br','ow','n ','fo'
 	word	'x ','ju','mp','s ','ov','er',' t','he',' l'
 	word	'az','y ','do','g.'
+
+	ascii	"The quick brown fox jumps over the lazy dog."
+	asciz	"The quick brown fox jumps over the lazy dog."
+
+	packed	-12,pack	; 2D01
+	byte	pack		; 02
+	packed	500		; 0C50
+	packed	0		; 0C
+	packed	-0,sum		; 0C
+	byte	sum		; 01
+	packed	"1234",e6	; 2301 4C
+	packed	"1234567890123456789012345678901",maxpack ; 3412 7856 1290 5634 9078 3412 7856 1C90
+	byte	maxpack		; 1F
+	expect	1324
+	packed  "12345678901234567890123456789012" ; too long
+	endexpect
+	expect	1323
+	packed  "1234BCD"
+	endexpect

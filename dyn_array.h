@@ -31,7 +31,4 @@
 #define dyn_array_rsv_end(array, decl_type, curr_cnt) \
         dyn_array_realloc(array, decl_type, curr_cnt, (curr_cnt) + 1)
 
-#define order_array_rsv_end(orders, decl_type) \
-        dyn_array_rsv_end(orders, decl_type, InstrZ)
-
 #endif /* _DYN_ARRAY_H */

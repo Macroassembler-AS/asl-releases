@@ -78,7 +78,7 @@ static void ProcessFile(char *FileName)
 
   if (msg_level >= e_msg_level_normal)
   {
-    errno = 0; printf("%s==>>%s", FileName, TargName); ChkIO(OutName);
+    chkio_printf(OutName, "%s==>>%s", FileName, TargName);
   }
 
   SumLen = 0;
@@ -139,9 +139,9 @@ static void ProcessFile(char *FileName)
 
   if (msg_level >= e_msg_level_normal)
   {
-    errno = 0; printf("  ("); ChkIO(OutName);
-    errno = 0; printf(Integ32Format, SumLen); ChkIO(OutName);
-    errno = 0; printf(" %s)\n", getmessage((SumLen == 1) ? Num_Byte : Num_Bytes)); ChkIO(OutName);
+    chkio_printf(OutName, "  (");
+    chkio_printf(OutName, Integ32Format, SumLen);
+    chkio_printf(OutName, " %s)\n", getmessage((SumLen == 1) ? Num_Byte : Num_Bytes));
   }
 
   if (fclose(SrcFile) == EOF)
@@ -197,11 +197,11 @@ int main(int argc, char **argv)
   {
     char *ph1, *ph2;
 
-    errno = 0; printf("%s%s%s\n", getmessage(Num_InfoMessHead1), as_cmdarg_get_executable_name(), getmessage(Num_InfoMessHead2)); ChkIO(OutName);
+    chkio_printf(OutName, "%s%s%s\n", getmessage(Num_InfoMessHead1), as_cmdarg_get_executable_name(), getmessage(Num_InfoMessHead2));
     for (ph1 = getmessage(Num_InfoMessHelp), ph2 = strchr(ph1, '\n'); ph2; ph1 = ph2+1, ph2 = strchr(ph1, '\n'))
     {
       *ph2 = '\0';
-      printf("%s\n", ph1);
+      chkio_printf(OutName, "%s\n", ph1);
       *ph2 = '\n';
     }
   }
@@ -220,7 +220,7 @@ int main(int argc, char **argv)
   free(p_target_name); p_target_name = NULL;
   if (!*TargName)
   {
-    errno = 0; fprintf(stderr, "%s\n", getmessage(Num_ErrMsgTargetMissing)); ChkIO(OutName);
+    chkio_fprintf(stderr, OutName, "%s\n", getmessage(Num_ErrMsgTargetMissing));
     exit(1);
   }
   AddSuffix(TargName, STRINGSIZE, getmessage(Num_Suffix));

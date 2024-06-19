@@ -67,7 +67,7 @@
 
 \vspace{1cm}\par
 
-{\large Edition April 2024}
+{\large Edition June 2024}
 \end{raggedright}
 
 \clearpage
@@ -236,6 +236,7 @@ following processor families have been implemented:
 \item{Mitsubishi M16}
 \item{Mitsubishi M16C}
 \item{DEC PDP-11}
+\item{DEC VAX}
 \item{Western Digital WD16}
 \item{Intel 4004/4040}
 \item{Intel MCS-48/41, including Siemens SAB80C382, and the OKI
@@ -3428,27 +3429,39 @@ the instruction set is slightly different and instructions
 also available on the PDP-11 have different machine codes.
 %%-----------
 \begin{quote}
-z) CP-3F, LP8000, M380
+z) MICROVAX-I, MICROVAX-II, \\
+   VAX-11/725, VAX-11/730, VAX-11/750, \\
+   VAX-11/780, VAX-11/782, VAX-11/785, \\
+   VAX-8200, VAX-8300, VAX-8500, VAX-8600 \\
+   VAX-8650, VAX-8800
+\end{quote}
+All implementations of the VAX architecture share the same
+core instruction set.  However, certain extensions, like
+instructions to process strings, packed decimal numbers or
+certain floating point formats, are not available in hardware.
+%%-----------
+\begin{quote}
+aa) CP-3F, LP8000, M380
 \end{quote}
 The chipset's processor element was sold by AEG/Olympia, GI,
 and SGS-Ates under the respective names.  There are no differences
 in the instruction set and address spaces.
 %%-----------
 \begin{quote}
-aa) 4004 $\rightarrow$ 4040
+ab) 4004 $\rightarrow$ 4040
 \end{quote}
 In comparison to its predecessor, the 4040 features about a dozen
 additional machine instructions.
 %%-----------
 \begin{quote}
-ab) 8008 $\rightarrow$ 8008NEW
+ac) 8008 $\rightarrow$ 8008NEW
+\end{quote}
 Intel redefined the mnemonics around 1975, the second variant reflects
 this new instruction set.  A simultaneous support of both sets was not
 possible due to mnemonic conflicts.
-\end{quote}
 %%-----------
 \begin{quote}
-ac) 8021, 8022, \\
+ad) 8021, 8022, \\
     8401, 8411, 8421, 8461, \\
     8039, (MSM)80C39, 8048, (MSM)80C48, 8041, 8042, 80C382
 \end{quote}
@@ -3479,7 +3492,7 @@ instrucion set.
 \begin{quote}
 \begin{tabbing}
 \hspace{0.7cm} \= \kill
-ad) \> 87C750 $\rightarrow$ 8051, 8052, 80C320, 80C501, 80C502, \\
+ae) \> 87C750 $\rightarrow$ 8051, 8052, 80C320, 80C501, 80C502, \\
     \> 80C504, 80515, and 80517 \\
     \> $\rightarrow$ 80C390 \\
     \> $\rightarrow$ 80C251
@@ -3501,7 +3514,7 @@ and architecture only as far as it was necessary for the 16 Mbytes large
 address spaces.
 %%-----------
 \begin{quote}
-ae) 8096 $\rightarrow$ 80196 $\rightarrow$ 80196N $\rightarrow$ 80296
+af) 8096 $\rightarrow$ 80196 $\rightarrow$ 80196N $\rightarrow$ 80296
 \end{quote}
 Apart from a different set of SFRs (which however strongly vary from
 version to version), the 80196 knows several new instructions and
@@ -3514,7 +3527,7 @@ Transaction Server (PTS) and therefore looses again two machine
 instructions.
 %%-----------
 \begin{quote}
-af) 8080 $\rightarrow$ V30EMU $\rightarrow$ 8085 $\rightarrow$ 8085UNDOC
+ag) 8080 $\rightarrow$ V30EMU $\rightarrow$ 8085 $\rightarrow$ 8085UNDOC
 \end{quote}
 The 8085 knows the additional commands \tty{RIM} and \tty{SIM} for
 controlling the interrupt mask and the two I/O-pins.  The type {\tt
@@ -3526,7 +3539,7 @@ the instructions {\tt RETEM} and {\em CALLN}.  These allow to
 end or interrupt the 8080 emulation on a V20/V30/V40/V50.
 %%-----------
 \begin{quote}
-ag) 8088,8086 \\
+ah) 8088,8086 \\
 $\rightarrow$ 80188,80186 \\
 $\rightarrow$ V20,V30,V40,V50 \\
 $\rightarrow$ V33,V53 \\
@@ -3541,24 +3554,24 @@ with the NEC CPUs going different 'branches', coming from the 'V20 basic
 instruction set'.
 %%-----------
 \begin{quote}
-ah) 80960
+ai) 80960
 \end{quote}
 %%-----------
 \begin{quote}
-ai) 8X300 $\rightarrow$ 8X305
+aj) 8X300 $\rightarrow$ 8X305
 \end{quote}
 The 8X305 features a couple of additional registers that miss on the
 8X300.  Additionally, it can do new operations with these registers
 (like direct writing of 8 bit values to peripheral addresses).
 %%-----------
 \begin{quote}
-aj) XAG1, XAG2, XAG3
+ak) XAG1, XAG2, XAG3
 \end{quote}
 These processors only differ in the size of their internal ROM which
 is defined in \tty{STDDEFXA.INC}.
 %%-----------
 \begin{quote}
-ak) AT90S1200, AT90S2313, AT90S2323, AT90S233,\\
+al) AT90S1200, AT90S2313, AT90S2323, AT90S233,\\
     AT90S2343, AT90S4414, AT90S4433, AT90S4434,\\
     AT90S8515, AT90C8534, AT90S8535,\\
     ATTINY4, ATTINY5, ATTINY9,\\
@@ -3593,7 +3606,7 @@ instructions, while the ATtinys do not support the multiplication
 instructions.
 %%-----------
 \begin{quote}
-al) AM29245 $\rightarrow$ AM29243 $\rightarrow$ AM29240 $\rightarrow$ AM29000
+am) AM29245 $\rightarrow$ AM29243 $\rightarrow$ AM29240 $\rightarrow$ AM29000
 \end{quote}
 The further one moves to the right in this list, the fewer the
 instructions become that have to be emulated in software.  While e.g.
@@ -3603,7 +3616,7 @@ serves as a 'generic' type that understands all instructions in
 hardware.
 %%-----------
 \begin{quote}
-am) 80C166 $\rightarrow$ 80C167,80C165,80C163
+an) 80C166 $\rightarrow$ 80C167,80C165,80C163
 \end{quote}
 80C167 and 80C165/163 have an address space of 16 Mbytes instead of 256
 Kbytes, and furthermore they know some additional instructions for
@@ -3612,7 +3625,7 @@ extended addressing modes and atomic instruction sequences.  They are
 amount of on-chip peripherals.
 %%-----------
 \begin{quote}
-an) LR35902/GBZ80 $\rightarrow$ Z80 $\rightarrow$ Z80UNDOC \\
+ao) LR35902/GBZ80 $\rightarrow$ Z80 $\rightarrow$ Z80UNDOC \\
     $\rightarrow$ Z180 $\rightarrow$ Z380
 \end{quote}
 While there are only a few additional instructions for the Z180, the
@@ -3631,7 +3644,7 @@ and Z80.  It lacks the IX/IY registers, the I/O address space,
 the second register bank and a couple of 16 bit instructions.
 %%-----------
 \begin{quote}
-ao) Z8601, Z8603, z86C03, z86E03, Z86C06, Z86E06, \\
+ap) Z8601, Z8603, z86C03, z86E03, Z86C06, Z86E06, \\
     Z86C08, Z86C21, Z86E21, Z86C30, Z86C31, Z86C32 Z86C40 \\
     $\rightarrow$ Z88C00, Z88C01 \\
     $\rightarrow$ eZ8, Z8F0113, Z8F011A, Z8F0123, Z8F012A, \\
@@ -3653,14 +3666,14 @@ directions), and they are not fully upward-compatible on source code
 level as well.
 %%-----------
 \begin{quote}
-ap) Z8001, Z8002, Z8003, Z8004
+aq) Z8001, Z8002, Z8003, Z8004
 \end{quote}
 The operation mode (segmented for Z8001 and Z8003, non-segmented for
 Z8002 and Z8004) is selected via the processor type.  There is currently
 no further differentiation between Z8001/8002 and Z8003/8004.
 %%-----------
 \begin{quote}
-aq) KCPSM
+ar) KCPSM
 \end{quote}
 Both processor cores are not available as standalone components, they are
 provided as logic cores for gate arrays made by Xilinx The -3 variant
@@ -3668,7 +3681,7 @@ offers a larger address space and some additional instructions.  Note that
 it is not binary upward-compatible!
 %%-----------
 \begin{quote}
-ar) MICO8\_05, MICO8\_V3, MICO8\_V31
+as) MICO8\_05, MICO8\_V3, MICO8\_V31
 \end{quote}
 Lattice unfortunately changed the machine instructions more than once, so
 different targets became necessary to provide continued support for older
@@ -3676,18 +3689,18 @@ projects.  The first variant is the one described in the 2005 manual, the
 two other ones represent versions 3.0 resp. 3.1.
 %%-----------
 \begin{quote}
-as) 96C141, 93C141
+at) 96C141, 93C141
 \end{quote}
 These two processors represent the two variations of the processor
 family: TLCS-900 and TLCS-900L.  The differences of these two variations
 will be discussed in detail in section \ref{TLCS900Spec}.
 %%-----------
 \begin{quote}
-at) 90C141
+au) 90C141
 \end{quote}
 %%-----------
 \begin{quote}
-au) 87C00, 87C20, 87C40, 87C70
+av) 87C00, 87C20, 87C40, 87C70
 \end{quote}
 The processors of the TLCS-870 series have an identical CPU core, but
 different peripherals depending on the type.  In part registers with
@@ -3696,49 +3709,49 @@ the same name are located at different addresses.  The file
 possible by different types to provide the correct symbol set
 automatically.
 %%-----------
-av) TLCS-870/C
+aw) TLCS-870/C
 Currently, only the processor core of the TLCS-870/C family is
 implemented.
 %%-----------
 \begin{quote}
-aw) 47C00 $\rightarrow$ 470C00 $\rightarrow$ 470AC00
+ax) 47C00 $\rightarrow$ 470C00 $\rightarrow$ 470AC00
 \end{quote}
 These three variations of the TLCS-47-family have on-chip RAM and ROM
 of different size, which leads to several bank switching instructions
 being added or suppressed.
 %%-----------
 \begin{quote}
-ax) 97C241
+ay) 97C241
 \end{quote}
 %%-----------
 \begin{quote}
-ay) TC9331
+az) TC9331
 \end{quote}
 %%-----------
 \begin{quote}
-az) 16C54 $\rightarrow$ 16C55 $\rightarrow$ 16C56 $\rightarrow$ 16C57
+ba) 16C54 $\rightarrow$ 16C55 $\rightarrow$ 16C56 $\rightarrow$ 16C57
 \end{quote}
 These processors differ by the available code area, i.e. by the address
 limit after which \asname{} reports overruns.
 %%-----------
 \begin{quote}
-ba) 16C84, 16C64
+bb) 16C84, 16C64
 \end{quote}
 Analog to the MCS-51 family, no distinction is made in the code generator,
 the different numbers only serve to include the correct SFRs in
 \tty{STDDEF18.INC}.
 %%-----------
 \begin{quote}
-bb) 17C42
+bc) 17C42
 \end{quote}
 %%-----------
 \begin{quote}
-bc) SX20, SX28
+bd) SX20, SX28
 \end{quote}
 The SX20 uses a smaller housing and lacks port C.
 %%-----------
 \begin{quote}
-bd) ST6200, ST6201, ST6203, ST6208, ST6209,\\
+be) ST6200, ST6201, ST6203, ST6208, ST6209,\\
     ST6210, ST6215, ST6218, ST6220, ST6225,\\
     ST6228, ST6230, ST6232, ST6235, ST6240,\\
     ST6242, ST6245, ST6246, ST6252, ST6253,\\
@@ -3749,7 +3762,7 @@ The various ST6 derivates differ in the amount of
 on-chip peripherals and built-in memory.
 %%-----------
 \begin{quote}
-be) ST7 \\
+bf) ST7 \\
     ST72251G1, ST72251G2, ST72311J2, ST72311J4, \\
     ST72321BR6, ST72321BR7, ST72321BR9, ST72325S4, \\
     ST72325S6, ST72325J7, ST72325R9, ST72324J6, \\
@@ -3809,7 +3822,7 @@ a couple of new instructions.  Though many instructions have the same
 machine code as for ST7, it is not binary upward compatible.
 %%-----------
 \begin{quote}
-bf) ST9020, ST9030, ST9040, ST9050
+bg) ST9020, ST9030, ST9040, ST9050
 \end{quote}
 These 4 names represent the four ''sub-families'' of the ST9 family,
 which only differ in their on-chip peripherals.  Their processor
@@ -3817,24 +3830,24 @@ cores are identical, which is why this distinction is again only used
 in the include file containing the peripheral addresses.
 %%-----------
 \begin{quote}
-bg) 6804
+bh) 6804
 \end{quote}
 %%-----------
 \begin{quote}
-bh) 32010$\rightarrow$32015
+bi) 32010$\rightarrow$32015
 \end{quote}
 The TMS32010 owns just 144 bytes of internal RAM, and so \asname{} limits
 addresses in the data segment just up to this amount.  This restriction
 does not apply for the 32015, the full range from 0..255 can be used.
 %%-----------
 \begin{quote}
-bi) 320C25 $\rightarrow$ 320C26 $\rightarrow$ 320C28
+bj) 320C25 $\rightarrow$ 320C26 $\rightarrow$ 320C28
 \end{quote}
 These processors only differ slightly in their on-chip peripherals
 and in their configuration instructions.
 %%-----------
 \begin{quote}
-bj) 320C30, 320C31 $\rightarrow$ 320C40, 320C44
+bk) 320C30, 320C31 $\rightarrow$ 320C40, 320C44
 \end{quote}
 The 320C31 is a reduced version with the same instruction set,
 however fewer peripherals.  The distinction is exploited in
@@ -3845,19 +3858,19 @@ version of the C40, with less peripherals and a smaller address
 space.
 %%-----------
 \begin{quote}
-bk) 320C203 $\rightarrow$ 320C50, 320C51, 320C53
+bl) 320C203 $\rightarrow$ 320C50, 320C51, 320C53
 \end{quote}
 The first one represents the C20x family of signal processors which
 implement a subset of the C5x instruction set.  The distinction among the
 C5x processors is currently not used by \asname{}.
 %%-----------
 \begin{quote}
-bl) 320C541
+bm) 320C541
 \end{quote}
 This one at the moment represents the TMS320C54x family...
 %%-----------
 \begin{quote}
-bm) TI990/4, TI990/10, TI990/12 \\
+bn) TI990/4, TI990/10, TI990/12 \\
     TMS9900, TMS9940, TMS9995, TMS99105, TMS99110
 \end{quote}
 The TMS99xx/99xxx processors are basically single chip implementations
@@ -3869,7 +3882,7 @@ privileged mode.
 \begin{quote}
 \begin{tabbing}
 \hspace{0.7cm} \= \kill
-bn) \> TMS70C00, TMS70C20, TMS70C40,\\
+bo) \> TMS70C00, TMS70C20, TMS70C40,\\
     \> TMS70CT20, TMS70CT40,\\
     \> TMS70C02, TMS70C42, TMS70C82,\\
     \> TMS70C08, TMS70C48\\
@@ -3883,21 +3896,21 @@ RAM and the same on-chip peripherals, they differ only in the amount of
 integrated ROM.
 %%-----------
 \begin{quote}
-bo) 370C010, 370C020, 370C030, 370C040 and 370C050
+bp) 370C010, 370C020, 370C030, 370C040 and 370C050
 \end{quote}
 Similar to the MCS-51 family, the different types are only used to
 differentiate the peripheral equipment in \tty{STDDEF37.INC}; the
 instruction set is always the same.
 %%-----------
 \begin{quote}
-bp) MSP430 $\rightarrow$ MSP430X
+bq) MSP430 $\rightarrow$ MSP430X
 The X variant of the CPU core extends the address space from 64
 KiBytes to 1 MiByte and augments the instruction set, e.g. by
 prefixed to repeat instructions.
 \end{quote}
 %%-----------
 \begin{quote}
-bq) TMS1000, TMS1100, TMS1200, TMS1300
+br) TMS1000, TMS1100, TMS1200, TMS1300
 \end{quote}
 TMS1000 and TMS1200 each provide 1 KByte of ROM and 64 nibbles of
 RAM, while TMS1100 and TMS1300 provide twice the amount of RAM
@@ -3906,31 +3919,31 @@ default instruction set fot TMS1100 and TMS1300(\asname{} only knows the
 default instruction sets!)
 %%-----------
 \begin{quote}
-br) IMP-16C/200, IMP-16C/300, IMP-16P/200, IMP-16P/300, IMP-16L
+bs) IMP-16C/200, IMP-16C/300, IMP-16P/200, IMP-16P/300, IMP-16L
 \end{quote}
 The IMP-16L defines a few additional bits in its status register,
 plus more branch conditions.  It supports the extended instruction
 set just like the /300 variants.
 %%-----------
 \begin{quote}
-bs) IPC-16, INS8900
+bt) IPC-16, INS8900
 \end{quote}
 The INS8900 is just a re-implementation of PACE in a more modern
 NMOS manufacturing process; there are no differences in instruction
 set.
 %%-----------
 \begin{quote}
-bt) SC/MP
+bu) SC/MP
 \end{quote}
 %%-----------
 \begin{quote}
-bu) 8070
+bv) 8070
 \end{quote}
 This processor represents the whole 807x family (which consists at least
 of the 8070, 8072, and 8073), which however shares identical CPU cores.
 %%-----------
 \begin{quote}
-bv) COP87L84
+bw) COP87L84
 \end{quote}
 This is the only member of National Semiconductor's COP8 family that
 is currently supported.  I know that the family is substantially
@@ -3939,15 +3952,15 @@ instruction sets which will be added when a need occurs.  It is a
 beginning, and National's documentation is quite extensive...
 %%-----------
 \begin{quote}
-bw) COP410 $\rightarrow$ COP420 $\rightarrow$ COP440 $\rightarrow$ COP444
+bx) COP410 $\rightarrow$ COP420 $\rightarrow$ COP440 $\rightarrow$ COP444
+\end{quote}
 The COP42x derivates offer some additional instructions, plus other
 instructions have an extended operand range.
-\end{quote}
 %%-----------
 \begin{quote}
 \begin{tabbing}
 \hspace{0.7cm} \= \kill
-bx) \> SC14400, SC14401, SC14402, SC14404, SC14405, \\
+by) \> SC14400, SC14401, SC14402, SC14404, SC14405, \\
     \> SC14420, SC14421, SC14422, SC14424 \\
 \end{tabbing}
 \end{quote}
@@ -3956,7 +3969,7 @@ instructions, since each of them supports different B field formats and
 their architecture has been optimized over time.
 %%-----------
 \begin{quote}
-by) NS16008, NS32008, NS08032, NS16032, NS32016, NS32032, \\
+bz) NS16008, NS32008, NS08032, NS16032, NS32016, NS32032, \\
     NS32332, NS32CG16, NS32532
 \end{quote}
 National renamed the first-generation CPUs several times in the early
@@ -3966,11 +3979,11 @@ MBytes, and the NS32CG16 is an embedded variant with additional instructions
 for bit block transfers.
 %%-----------
 \begin{quote}
-bz) ACE1101, ACE1202
+ca) ACE1101, ACE1202
 \end{quote}
 %%-----------
 \begin{quote}
-ca) F3850, MK3850, \\
+cb) F3850, MK3850, \\
     MK3870, MK3870/10, MK3870/12, "MK3870/20, MK3870/22, \\
     MK3870/30, MK3870/32, MK3870/40, MK3870/42, \\
     MK3872, MK3873, MK3873/10, MK3873/12, MK3873/20, \\
@@ -3991,7 +4004,7 @@ while the MK3875 offers a second supply voltage pin to buffer the internal
 memory in standby mode.
 %%-----------
 \begin{quote}
-cb) 7800, 7801, 7802 \\
+cc) 7800, 7801, 7802 \\
 78C05, 78C06 \\
 7807, 7808, 7809 \\
 7810$\rightarrow$78C10, 78C11, 78C12, 78C14, 78C17, 78C18
@@ -4009,7 +4022,7 @@ no stop-mode; the respective command and the ZCM register are omitted.
 values of some registers!
 %%-----------
 \begin{quote}
-cc) 7500 $\leftrightarrow$ 7508
+cd) 7500 $\leftrightarrow$ 7508
 \end{quote}
 There are two different types of CPU cores in the $\mu$PD75xx
 family: the 7566 represents the the 'instruction set B', which
@@ -4020,7 +4033,7 @@ CAUTION!} These instruction sets are not 100\% binary compatible!
 \begin{quote}
 \begin{tabbing}
 \hspace{0.7cm} \= \kill
-cd) \> 75402,\\
+ce) \> 75402,\\
     \> 75004, 75006, 75008,\\
     \> 75268,\\
     \> 75304, 75306, 75308, 75312, 75316,\\
@@ -4036,45 +4049,45 @@ peripherals on the one hand and by their instruction set's power on
 the other hand.
 %%-----------
 \begin{quote}
-ce) 78070
+cf) 78070
 \end{quote}
 This is currently the only member of NEC's 78K0 family I am familiar
 with.  Similar remarks like for the COP8 family apply!
 %%-----------
 \begin{quote}
-cf) 78214
+cg) 78214
 \end{quote}
 This is currently the representor of NEC's 78K2 family.
 %%-----------
 \begin{quote}
-cg) 78310
+ch) 78310
 \end{quote}
 This is currently the representor of NEC's 78K3 family.
 %%-----------
 \begin{quote}
-ch) 784026
+ci) 784026
 \end{quote}
 This is currently the representor of NEC's 78K4 family.
 %%-----------
 \begin{quote}
-ci) 7720 $\rightarrow$ 7725
+cj) 7720 $\rightarrow$ 7725
 \end{quote}
 The $\mu$PD7725 offers larger address spaces and som more instructions
 compared to his predecessor. {\bf CAUTION!}  The processors are not binary
 compatible to each other!
 %%-----------
 \begin{quote}
-cj) 77230
+ck) 77230
 \end{quote}
 %%-----------
 \begin{quote}
-ck) 70616
+cl) 70616
 \end{quote}
 This is currently the representor of NEC's V60 family.
 %%-----------
 \begin{quote}
 \begin{tabbing}
-cl) \= SYM53C810, SYM53C860, SYM53C815, SYM53C825, \\
+cm) \= SYM53C810, SYM53C860, SYM53C815, SYM53C825, \\
     \> SYM53C875, SYM53C895
 \end{tabbing}
 \end{quote}
@@ -4083,37 +4096,37 @@ instruction variants, furthermore they are different in their set of
 internal registers.
 %%-----------
 \begin{quote}
-cm) MB89190
+cn) MB89190
 \end{quote}
 This processor type represents Fujitsu's F$^{2}$MC8L series...
 %%-----------
 \begin{quote}
-cn) MB9500
+co) MB9500
 \end{quote}
 ...just like this one does it currently for the 16-bit variants from
 Fujitsu!
 %%-----------
 \begin{quote}
-co) MSM5840, MSM5842, MSM58421, MSM58422, MSM5847
+cp) MSM5840, MSM5842, MSM58421, MSM58422, MSM5847
 \end{quote}
 These variants of the OLMS-40 family differ in their instruction
 set and in the amount of internal program and data memory.
 %%-----------
 \begin{quote}
-cp) MSM5054, MSM5055, MSM5056, MSM6051, MSM6052
+cq) MSM5054, MSM5055, MSM5056, MSM6051, MSM6052
 \end{quote}
 The as for the OLMS-40 family: differences in instruction
 set and the amount of internal program and data memory.
 %%-----------
 \begin{quote}
-cq) MN1610[ALT] $\rightarrow$ MN1613[ALT]
+cr) MN1610[ALT] $\rightarrow$ MN1613[ALT]
 \end{quote}
 In addition to its predecessor's features, the MN1613 offers a larger
 address space, a floating point unit and a couple of new machine
 instructions.
 %%-----------
 \begin{quote}
-cr) RXV1, RX110, RX111, RX113, RX130, RX210,\\
+cs) RXV1, RX110, RX111, RX113, RX130, RX210,\\
     RX21A, RX220, RX610, RX621, RX62N, RX630,\\
     RX631 $\longrightarrow$ \\
     RXV2, RX140, RX230, RX231, RX64M,\\
@@ -4126,7 +4139,7 @@ generation (RXv1, RXv2, RXv3), new machine instructions
 were added.
 %%-----------
 \begin{quote}
-cs) PMC150, PMS150, PFS154, PMC131, PMS130, PMS131 \\
+ct) PMC150, PMS150, PFS154, PMC131, PMS130, PMS131 \\
     PMS132, PMS132B, PMS152, PMS154B, PMS154C, PFS173 \\
     PMS133, PMS134, DF69, MCS11, PMC232, PMC234, PMC251 \\
     PMC271,PMC884, PMS232, PMS234, PMS271
@@ -4137,7 +4150,7 @@ the built-in peripherals, and their instruction set (both
 extent and binary coding).
 %%-----------
 \begin{quote}
-ct) 1802 $\rightarrow$ 1804, 1805, 1806 $\rightarrow$ 1804A,
+cu) 1802 $\rightarrow$ 1804, 1805, 1806 $\rightarrow$ 1804A,
 1805A, 1806A
 \end{quote}
 1804, 1805, and 1806 feature an instruction set that is slightly
@@ -4147,41 +4160,41 @@ an integrated timer.  The A variants extend the instruction set by
 subtraction in BCD format.
 %%-----------
 \begin{quote}
-cu) XS1
+cv) XS1
 \end{quote}
 This type represents the XCore-"family".
 %%-----------
 \begin{quote}
-cv) 1750
+cw) 1750
 \end{quote}
 MIL STD 1750 is a standard, therefore there is only one
 (standard) variant...
 %%-----------
 \begin{quote}
-cw) KENBAK
+cx) KENBAK
 \end{quote}
 Since there has never been a KENBAK-2, the target is simply KENBAK...
 %%-----------
 \begin{quote}
-cx) CP-1600
+cy) CP-1600
 \end{quote}
 %%-----------
 \begin{quote}
-cy) HPNANO
+cz) HPNANO
 \end{quote}
 %%-----------
 \begin{quote}
-cz) 6100 $\rightarrow$ 6120
+da) 6100 $\rightarrow$ 6120
 \end{quote}
 The IM6120 supports a larger address space (32K
 instead of 4K) and additional machine instructions.
 \begin{quote}
-da) SC61860
+db) SC61860
 \end{quote}
 This is the processor used in the Sharp PC-12xx...PC-15xx pocket computers.
 %%-----------
 \begin{quote}
-db) SC62015
+dc) SC62015
 \end{quote}
 This is the processor used in the  Sharp PC-E500.
 
@@ -4309,6 +4322,26 @@ The commands have the following meanings in detail:
 The usage of of instructions prohibited in this manner will generate a
 warning at \tty{SUPMODE}, at \tty{PMMU} and \tty{FPU} a real error
 message.
+
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+\subsection{ACCMODE}
+\ttindex{ACCMODE}
+
+{\em
+\begin{itemize}
+\item{valid for: VAX}
+\end{itemize}
+}
+
+The VAX not only knows a user and supervisor mode, it supports four privilege
+levels of this type.  Going from more to less rights, these are named Kernel,
+Executive, Supervisor, and User.  The {\tt ACCMODE} instruction informs the
+assembler about the access mode the following code is executed within.  Not
+all machine instructions are allowed in all modes.  Valid arguments are either
+the mode names mentioned before, or a number between zero (kernel mode) to
+three (user mode).  As default, user mode is assumed, and the current setting
+(as numeric value) may be read from a symbol of same name.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -5567,9 +5600,12 @@ but different names:
       order: instructions defined by National for address storage use big
       endian, \tty{BYTE} resp. \tty{WORD} in contrast use little endian.}
 \ttindex{BYTE}\ttindex{WORD}
-\item{\tty{BYTE} resp. \tty{WORD} are available on PDP-11 and WD16 as an
-      alias for \tty{DB} resp. \tty{DW}.}
-\ttindex{BYTE}\ttindex{WORD}\ttindex{LWORD}\ttindex{FLOAT}\ttindex{DOUBLE}
+\item{\tty{BYTE} resp. \tty{WORD} on PDP-11, VAX and WD16 work like \tty{DB}
+      resp. \tty{DW}, however only accept integer arguments.}
+\item{\tty{LWORD} resp. \tty{QUAD} on VAXwork like \tty{DD} resp. \tty{DQ},
+      however only accept integer arguments.}
+\ttindex{BYTE}\ttindex{WORD}\ttindex{LWORD}\ttindex{QUAD}
+\ttindex{FLOAT}\ttindex{DOUBLE}
 \item{The Renesas RX target provides:
       \begin{itemize}
       \item{\tty{BYTE} (like \tty{DB})}
@@ -5600,11 +5636,31 @@ them in the processor's proprietary 32-bit format). There is {\em no}
 \subsection{FLT2, FLT3, FLT4}
 \ttindex{FLT2}\ttindex{FLT3}\ttindex{FLT4}
 
+{\em\begin{tabbing}
+valid for: \= PDP-11 (\tty{FLT2, FLT4}),\\
+           \> WD16 (\tty{FLT3})
+\end{tabbing}}
+
 \tty{FLT2} and \tty{FLT4} are similar in function to \tty{DD} bzw. \tty{DQ}.
 However, they only store floating point numbers (in DEC's own F and D formats)
 in memory.  The WD16 uses an own, 48 bits (three machine words) long format.
 Floating point numbers in this format can be stored in memory with the \tty{FLT3}
 instruction.
+
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+\subsection{x\_FLOATING}
+\ttindex{F\_FLOATING}\ttindex{FLOAT}
+\ttindex{D\_FLOATING}\ttindex{DOUBLE}
+\ttindex{G\_FLOATING}
+\ttindex{H\_FLOATING}
+
+{\em valid for: VAX}
+
+These instructions store floating point constants in DEC format in memory. 
+{\tt x} represents one of the four supported formats (F, D, G and H). {\tt FLOAT}
+is an alias for {\tt F\_FLOATING}, and {\tt DOUBLE} is an alias for {\tt D\_FLOATING}.
+Otherwise, these instructions work like \tty{DD} and \tty{DQ}.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -5635,6 +5691,20 @@ Beware that the code memory of these processors is organized in words of
 16 bits, it is therefore impossible to reserve individual bytes.  In case
 the argument of {\tt DS} is odd, it will be rounded up to the next even
 number.
+
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+\subsection{BLKx}
+\ttindex{BLKB}\ttindex{BLKW}\ttindex{BLKL}\ttindex{BLKQ}\ttindex{BLKO}
+\ttindex{BLKF}\ttindex{BLKD}\ttindex{BLKG}\ttindex{BLKH}
+
+{\em valid for: VAX}
+
+These instructions reserve storage space for the given number of elements,
+with the element size coded into the instruction's last character.  Therefore,
+the size of the reserved area in bytes is equal to the element count for {\tt BLKB},
+double the count for {\tt BLKW}, and sixteen times the count for {\tt BLKO} and
+{\tt BLKH}.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -5890,14 +5960,18 @@ while the second one sets the filling constant itself.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-\subsection{ASCII and ASCIZ}
-\ttindex{ASCII}\ttindex{ASCIZ}
+\subsection{ASCII, ASCIC, and ASCIZ}
+\ttindex{ASCII}\ttindex{ASCIC}\ttindex{ASCIZ}
 
-{\em valid for: ST6, \tty{ASCII} also on IMP-16/IPC-16}
+{\em\begin{tabbing}
+valid for: \= ST6, PDP-11, VAX, IMP-16, IPC-16 ({\tt ASCII}) \\
+           \> ST6, PDP-11, VAX ({\tt ASCIZ}) \\
+             \> PDP-11, VAX ({\tt ASCIC}) \\
+\end{tabbing}}
 
-Both commands store string constants to memory.  While \tty{ASCII} writes
+These commands store string constants to memory.  While \tty{ASCII} writes
 the character information only, \tty{ASCIZ} additionally appends a zero to
-the end of the string.
+the end of the string, and \tty{ASCIC} prepends a length byte.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -5914,6 +5988,37 @@ upper one first then the lower one, \tty{RSTRING} does this vice versa.
 Note that when in 320C2(0)x/5x mode the assembler assumes that a label on the
 left side of this instruction has no type, i.e. it belongs to no address
 space.  This behaviour is explained in the processor-specific hints.
+
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+\subsection{PACKED}
+
+{\em valid for: PDP-11, VAX}
+
+This instruction may be use to put numbers in packed decimal format into
+mmemory. Ist argument is either a (signed) integer number, or a string.  Of
+course, the latter may only contain characters from 0 to 9 and an optional
+plus or minus sign at the beginning.  The maximum number of digits is 31,
+and the sign is appended as last digit.  The values 12 resp. 13 represent 
+a plus resp. minus sign. If the number of digits plus sign is odd, a zero
+digit is inserted at the beginning.
+
+Optionally, a symbol's name may be given as second argument.  The number of
+digits, excluding the sign and the optional null pad, is stored in this
+symbol.
+
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+\subsection{RADIX50}
+\ttindex{RADIX50}
+
+{\em valid for: diverse}
+
+This instruction may be used to put strings in packed RADIX50 format into
+memory.  This coding was common for file names in DEC environments and packs
+three characters into one 16 bit word.  {\tt RADIX50} is not a built-in
+instruction.  Instead, it is defined as a macro in the {\tt radix50.inc}
+include file.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -12377,6 +12482,12 @@ described by:
                 processor module and can only be accessed via the {\tt INS}
                 and {\tt OUTS} instructios, not via {\tt IN} or {\tt OUT}.}
                {the address argument in question}
+\errentry{ 460}{CASE limit does not match number of branch addresses}
+               {warning}
+               {The CASE instruction expects a branch table with as many
+                entries, as the limit argument says, plus one.  The limit and
+                the number of branch addresses do not fit together.}
+               {tas limit argument}
 \errentry{1000}{symbol double defined}
                {error}
                {A new value is assigned to a symbol, using a label or a
@@ -12537,6 +12648,11 @@ described by:
                {Only an integer argument may be used at this place,
                 but a register was given.}
                {the argument in question}
+\errentry{1154}{string too long}
+               {error}
+               {The string is too long to be represented with leading
+                length byte.}
+               {the argument in question}
 \errentry{1200}{unknown instruction}
                {error}
                {An instruction was used that is neither an \asname{} instruction, nor a
@@ -12567,6 +12683,16 @@ described by:
                {error}
                {only powers of two (1,2,4,8,...) are allowed at this place.}
                {The value in question}
+\errentry{1323}{invalid decimal digit}
+               {error}
+               {A string as argument to {\tt PACKED} may only contain the
+                characters from 0 to 9, and optionally a plus or minus
+                sign at the beginning.}
+               {The argument in question}
+\errentry{1324}{decimal string too long}
+               {error}
+               {A packed decimal number must not be longer than 31 digits.}
+               {The argument in question}
 \errentry{1325}{address is not properly aligned}
                {error}
                {The given address does not correspond with the size needed

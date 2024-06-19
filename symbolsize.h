@@ -18,16 +18,18 @@ typedef enum
   eSymbolSize32Bit = 2,
   eSymbolSize64Bit = 3,
   eSymbolSize80Bit = 4, /* Intel 80 Bit extended float */
-  eSymbolSizeFloat32Bit = 5,
-  eSymbolSizeFloat64Bit = 6,
-  eSymbolSizeFloat96Bit = 7,
+  eSymbolSizeFloat32Bit = 5, /* IEEE Single Precision, DEC F, IBM Single Precision */
+  eSymbolSizeFloat64Bit = 6, /* IEEE Double Precision, DEC D, IBM Double Precision */
+  eSymbolSizeFloat96Bit = 7, /* Motorola Extended Precision */
   eSymbolSize24Bit = 8,
   eSymbolSizeFloatDec96Bit = 9,
   eSymbolSizeFloat16Bit = 10,
   eSymbolSize12Bit = 11,
   eSymbolSize48Bit = 12,
   eSymbolSizeFloat48Bit = 13,
-  eSymbolSize128Bit = 14
+  eSymbolSize128Bit = 14,
+  eSymbolSizeFloat128Bit = 15, /* DEC H Floating Point */
+  eSymbolSizeFloat64Bit_G = 16 /* DEC G Floating Point */
 } tSymbolSize;
 
 #ifdef __cplusplus

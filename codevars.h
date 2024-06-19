@@ -14,6 +14,9 @@
 
 #include "dyn_array.h"
 
+#define order_array_rsv_end(orders, decl_type) \
+        dyn_array_rsv_end(orders, decl_type, InstrZ)
+
 #define order_array_free(orders) \
   do { \
     free(orders); \

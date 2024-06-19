@@ -52,7 +52,8 @@ static void switch_to_none(void)
   SetIntConstMode(eIntConstModeMoto);
 
   PCSymbol = ""; HeaderID = 0x00; NOPCode = 0x00;
-  DivideChars = ","; HasAttrs = False;
+  DivideChars = ","; HasAttrs = True;
+  AttrChars = ".";
 
   ValidSegs = 1 << SegCode;
   Grans[SegCode] = 1; ListGrans[SegCode] = 1; SegInits[SegCode] = 0;
