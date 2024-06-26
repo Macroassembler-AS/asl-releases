@@ -1,3 +1,13 @@
+2024-06-26 [1.42 Bld 271]
+
+- Bugfix      : warn about usage of MOV A,ACC on MCS-51
+- Bugfix      : disallow odd addresses for CALL #IA on Super8
+- Bugfix      : correct operand size of DIVD on 6309
+- Bugfix      : correct FMOVE FPcr<->An handling on 68K
+- Bugfix      : correct FMOVEM handling of dynamic register
+                lists on 68K
+- Addition    : add support for register symbols on x86
+
 2024-06-19 [1.42 Bld 270]
 
 - Bugfix      : allow .byte and .word on PDP-11 again.

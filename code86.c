@@ -55,18 +55,6 @@ typedef struct
 
 #define NO_FWAIT_FLAG 0x2000
 
-#define SegRegCnt 6
-static const char SegRegNames[SegRegCnt][4] =
-{
-  "ES", "CS", "SS", "DS",
-  "DS3", "DS2" /* V55 specific */
-};
-static const Byte SegRegPrefixes[SegRegCnt] =
-{
-  0x26, 0x2e, 0x36, 0x3e,
-  0xd6, 0x63
-};
-
 static char ArgSTStr[] = "ST";
 static const tStrComp ArgST = { { 0, 0 }, { 0, ArgSTStr, 0 } };
 
@@ -99,8 +87,6 @@ static Boolean NoSegCheck;
 
 static Byte Prefixes[6];
 static Byte PrefixLen;
-
-static Byte SegAssumes[SegRegCnt];
 
 enum
 {
@@ -137,17 +123,224 @@ static unsigned StringOrderCnt;
 /*------------------------------------------------------------------------------------*/
 
 /*!------------------------------------------------------------------------
- * \fn     PutCode(Word Code)
- * \brief  append 1- or 2-byte machine code to instruction stream
- * \param  Code machine code to append
+ * Register Symbols
  * ------------------------------------------------------------------------ */
 
-static void PutCode(Word Code)
+#define SEGREG_NUMOFFSET 8
+
+static const char reg8_names[][3] =
 {
-  if (Hi(Code) != 0)
-    BAsmCode[CodeLen++] = Hi(Code);
-  BAsmCode[CodeLen++] = Lo(Code);
+  "AL", "CL", "DL", "BL", "AH", "CH", "DH", "BH"
+};
+static const char reg16_names[][3] =
+{
+  "AX", "CX", "DX", "BX", "SP", "BP", "SI", "DI"
+};
+static const char seg_reg_names[][4] =
+{
+  "ES", "CS", "SS", "DS",
+  "DS3", "DS2" /* V55 specific */
+};
+
+/*!------------------------------------------------------------------------
+ * \fn     decode_reg8_core(const char *p_arg, Byte *p_ret)
+ * \brief  check whether argument is an 8 bit register's name
+ * \param  p_arg source argument
+ * \param  p_ret returns register # if so
+ * \return True if argument is a 8 bit register
+ * ------------------------------------------------------------------------ */
+
+static Boolean decode_reg8_core(const char *p_arg, Byte *p_ret)
+{
+  for (*p_ret = 0; *p_ret < as_array_size(reg8_names); (*p_ret)++)
+    if (!as_strcasecmp(p_arg, reg8_names[*p_ret]))
+      return True;
+  return False;
 }
+
+/*!------------------------------------------------------------------------
+ * \fn     decode_reg16_core(const char *p_arg, Byte *p_ret)
+ * \brief  check whether argument is a 16 bit register's name
+ * \param  p_arg source argument
+ * \param  p_ret returns register # if so
+ * \return True if argument is a 16 bit register
+ * ------------------------------------------------------------------------ */
+
+static Boolean decode_reg16_core(const char *p_arg, Byte *p_ret)
+{
+  for (*p_ret = 0; *p_ret < as_array_size(reg16_names); (*p_ret)++)
+    if (!as_strcasecmp(p_arg, reg16_names[*p_ret]))
+      return True;
+  return False;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     decode_seg_reg_core(const char *p_arg, Byte *p_ret)
+ * \brief  check whether argument is a segment register's name
+ * \param  p_arg source argument
+ * \param  p_ret returns register # if so
+ * \return True if argument is a segment register
+ * ------------------------------------------------------------------------ */
+
+static Boolean decode_seg_reg_core(const char *p_arg, Byte *p_ret)
+{
+  int reg_z, reg_cnt = as_array_size(seg_reg_names);
+
+  /* DS2/DS3 only allowed on V55.  These names should be allowed as
+     ordinary symbol names on other targets: */
+
+  if (!(p_curr_cpu_props->core & e_core_all_v55))
+    reg_cnt -= 2;
+  for (reg_z = 0; reg_z < reg_cnt; reg_z++)
+    if (!as_strcasecmp(p_arg, seg_reg_names[reg_z]))
+    {
+      *p_ret = reg_z;
+      return True;
+    }
+  return False;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     decode_reg_core(const char *p_arg, tRegInt *p_ret, tSymbolSize *p_size)
+ * \brief  check whether argument is a register's name
+ * \param  p_arg source argument
+ * \param  p_ret returns register # if so
+ * \param  p_size returns register size if so
+ * \return True if argument is a register
+ * ------------------------------------------------------------------------ */
+
+static Boolean decode_reg_core(const char *p_arg, tRegInt *p_ret, tSymbolSize *p_size)
+{
+  Byte reg_num;
+
+  if (decode_reg8_core(p_arg, &reg_num))
+  {
+    *p_ret = reg_num;
+    *p_size = eSymbolSize8Bit;
+    return True;
+  }
+  else if (decode_reg16_core(p_arg, &reg_num))
+  {
+    *p_ret = reg_num;
+    *p_size = eSymbolSize16Bit;
+    return True;
+  }
+  else if (decode_seg_reg_core(p_arg, &reg_num))
+  {
+    *p_ret = reg_num + SEGREG_NUMOFFSET;
+    *p_size = eSymbolSize16Bit;
+    return True;
+  }
+  else
+    return False;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     dissect_reg_86(char *p_dest, size_t dest_size, tRegInt reg_num, tSymbolSize reg_size)
+ * \brief  dissect register symbols - x86 variant
+ * \param  p_dest destination buffer
+ * \param  dest_size destination buffer size
+ * \param  reg_num numeric register value
+ * \param  reg_size register size
+ * ------------------------------------------------------------------------ */
+
+static void dissect_reg_86(char *p_dest, size_t dest_size, tRegInt reg_num, tSymbolSize reg_size)
+{
+  switch (reg_size)
+  {
+    case eSymbolSize8Bit:
+      if (reg_num >= as_array_size(reg8_names))
+        goto unknown;
+      strmaxcpy(p_dest, reg8_names[reg_num], dest_size);
+      break;
+    case eSymbolSize16Bit:
+      if (reg_num < as_array_size(reg16_names))
+        strmaxcpy(p_dest, reg16_names[reg_num], dest_size);
+      else if (reg_num < SEGREG_NUMOFFSET + as_array_size(seg_reg_names))
+        strmaxcpy(p_dest, seg_reg_names[reg_num - as_array_size(reg16_names)], dest_size);
+      else
+        goto unknown;
+      break;
+    default:
+    unknown:
+      as_snprintf(p_dest, dest_size, "%d-%u", (int)reg_size, (unsigned)reg_num);
+  }
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     decode_reg(const tStrComp *p_arg, Byte *p_reg_num, tSymbolSize *p_size, tSymbolSize req_size, Boolean must_be_reg)
+ * \brief  check whether argument is a CPU register or user-defined register alias
+ * \param  p_arg argument
+ * \param  p_reg_num resulting register # if yes
+ * \param  p_size resulting register size if yes
+ * \param  req_size requested register size
+ * \param  must_be_reg expecting register or maybe not?
+ * \return reg eval result
+ * ------------------------------------------------------------------------ */
+
+static Boolean chk_reg_size(tSymbolSize req_size, tSymbolSize act_size)
+{
+  return (req_size == eSymbolSizeUnknown)
+      || (req_size == act_size);
+}
+
+static tRegEvalResult decode_reg(const tStrComp *p_arg, Byte *p_reg_num, tSymbolSize *p_size, tSymbolSize req_size, Boolean must_be_reg)
+{
+  tRegDescr reg_descr;
+  tEvalResult eval_result;
+  tRegEvalResult reg_eval_result;
+
+  if (decode_reg_core(p_arg->str.p_str, &reg_descr.Reg, &eval_result.DataSize))
+    reg_eval_result = eIsReg;
+  else
+    reg_eval_result = EvalStrRegExpressionAsOperand(p_arg, &reg_descr, &eval_result, eSymbolSizeUnknown, must_be_reg);
+
+  if (reg_eval_result == eIsReg)
+  {
+    if (!chk_reg_size(req_size, eval_result.DataSize))
+    {
+      WrStrErrorPos(ErrNum_InvOpSize, p_arg);
+      reg_eval_result = must_be_reg ? eIsNoReg : eRegAbort;
+    }
+  }
+
+  *p_reg_num = reg_descr.Reg;
+  if (p_size) *p_size = eval_result.DataSize;
+  return reg_eval_result;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     decode_seg_reg(const tStrComp *p_arg, Byte *p_reg_num)
+ * \brief  check whether argument is a CPU segment register or user-defined register alias
+ * \param  p_arg source argument
+ * \param  p_reg_num resulting segment register # if yes
+ * \return True if it is
+ * ------------------------------------------------------------------------ */
+
+static Boolean decode_seg_reg(const tStrComp *p_arg, Byte *p_reg_num)
+{
+  switch (decode_reg(p_arg, p_reg_num, NULL, eSymbolSize16Bit, True))
+  {
+    case eIsReg:
+      if (*p_reg_num < SEGREG_NUMOFFSET)
+        return False;
+      *p_reg_num -= SEGREG_NUMOFFSET;
+      return True;
+    default:
+      return False;
+  }
+}
+
+/*!------------------------------------------------------------------------
+ * Address Expression parser
+ * ------------------------------------------------------------------------ */
+
+static const Byte SegRegPrefixes[6] =
+{
+  0x26, 0x2e, 0x36, 0x3e,
+  0xd6, 0x63
+};
+static Byte SegAssumes[6];
 
 /*!------------------------------------------------------------------------
  * \fn     copy_adr_vals(int Dest)
@@ -287,10 +480,10 @@ static void ChkSingleSpace(Byte Seg, Byte EffSeg, Byte MomSegment, const tStrCom
   else
   {
     z = 0;
-    while ((z < SegRegCnt) && (SegAssumes[z] != Seg))
+    while ((z < as_array_size(SegAssumes)) && (SegAssumes[z] != Seg))
       z++;
-    if (z > SegRegCnt)
-      WrXErrorPos(ErrNum_InAccSegment, SegRegNames[Seg], &p_arg->Pos);
+    if (z >= as_array_size(SegAssumes))
+      WrXErrorPos(ErrNum_InAccSegment, seg_reg_names[Seg], &p_arg->Pos);
     else
       AddPrefix(SegRegPrefixes[z]);
   }
@@ -315,32 +508,6 @@ static void ChkSpaces(ShortInt SegBuffer, Byte MomSegment, const tStrComp *p_arg
 }
 
 /*!------------------------------------------------------------------------
- * \fn     decode_seg_reg(const char *p_arg, Byte *p_ret)
- * \brief  dcheck whether argument is a segment register's name
- * \param  p_arg source argument
- * \param  p_ret returns register # if so
- * \return True if argument is segment register
- * ------------------------------------------------------------------------ */
-
-static Boolean decode_seg_reg(const char *p_arg, Byte *p_ret)
-{
-  int reg_z, reg_cnt = SegRegCnt;
-
-  /* DS2/DS3 only allowed on V55.  These names should be allowed as
-     ordinary symbol names on other targets: */
-
-  if (!(p_curr_cpu_props->core & e_core_all_v55))
-    reg_cnt -= 2;
-  for (reg_z = 0; reg_z < reg_cnt; reg_z++)
-    if (!as_strcasecmp(p_arg, SegRegNames[reg_z]))
-    {
-      *p_ret = reg_z;
-      return True;
-    }
-  return False;
-}
-
-/*!------------------------------------------------------------------------
  * \fn     DecodeAdr(const tStrComp *pArg, unsigned type_mask)
  * \brief  parse addressing mode argument
  * \param  pArg source argument
@@ -354,18 +521,14 @@ typedef struct
   ShortInt IndexBuf, BaseBuf;
 } x86_eval_cb_data_t;
 
-static const char Reg16Names[8][3] =
-{
-  "AX", "CX", "DX", "BX", "SP", "BP", "SI", "DI"
-};
-
 #define DBG_CB 0
 
 DECLARE_AS_EVAL_CB(x86_eval_cb)
 {
   x86_eval_cb_data_t *p_x86_eval_cb_data = (x86_eval_cb_data_t*)p_data;
   ShortInt *p_buf, buf_val;
-  size_t reg_num;
+  Byte reg_num;
+  tSymbolSize reg_size;
 
 #if DBG_CB
   printf("x86 eval callback: ");
@@ -374,11 +537,20 @@ DECLARE_AS_EVAL_CB(x86_eval_cb)
 
   /* CPU register? */
 
-  for (reg_num = 0; reg_num < as_array_size(Reg16Names); reg_num++)
-    if (!as_strcasecmp(p_arg->str.p_str, Reg16Names[reg_num]))
+  switch (decode_reg(p_arg, &reg_num, &reg_size, eSymbolSizeUnknown, False))
+  {
+    case eIsReg:
+      if (reg_size != eSymbolSize16Bit)
+      {
+        WrStrErrorPos(ErrNum_InvAddrMode, p_arg);
+        return e_eval_fail;
+      }
       break;
-  if (reg_num >= as_array_size(Reg16Names))
-    return e_eval_none;
+    case eRegAbort:
+      return e_eval_fail;
+    default:
+      return e_eval_none;
+  }
 
 #if DBG_CB
   as_dump_eval_cb_data_stack(p_data->p_stack);
@@ -428,17 +600,12 @@ DECLARE_AS_EVAL_CB(x86_eval_cb)
 
 static tAdrType DecodeAdr(const tStrComp *pArg, unsigned type_mask)
 {
-  static const int RegCnt = 8;
-  static const char Reg8Names[8][3] =
-  {
-    "AL", "CL", "DL", "BL", "AH", "CH", "DH", "BH"
-  };
   static const Byte RMCodes[8] =
   {
     11, 12, 21, 22, 1, 2 , 20, 10
   };
 
-  int RegZ, z;
+  int z;
   Boolean IsImm;
   Byte SumBuf;
   LongInt DispAcc, DispSum;
@@ -453,27 +620,33 @@ static tAdrType DecodeAdr(const tStrComp *pArg, unsigned type_mask)
   AdrType = TypeNone; AdrCnt = 0;
   SegBuffer = -1; MomSegment = 0;
 
-  for (RegZ = 0; RegZ < RegCnt; RegZ++)
-  {
-    if (!as_strcasecmp(pArg->str.p_str, Reg16Names[RegZ]))
-    {
-      AdrType = TypeReg16; AdrMode = RegZ;
-      ChkOpSize(eSymbolSize16Bit);
-      goto chk_type;
-    }
-    if (!as_strcasecmp(pArg->str.p_str, Reg8Names[RegZ]))
-    {
-      AdrType = TypeReg8; AdrMode = RegZ;
-      ChkOpSize(eSymbolSize8Bit);
-      goto chk_type;
-    }
-  }
+  /* A somewhat dirty hack to avoid
+   *
+   * 'addr[reg]'
+   *
+   * being parsed as symbol with section: */
 
-  if (decode_seg_reg(pArg->str.p_str, &AdrMode))
+  if (!strchr(pArg->str.p_str, '['))
   {
-    AdrType = TypeRegSeg;
-    ChkOpSize(eSymbolSize16Bit);
-    goto chk_type;
+    switch (decode_reg(pArg, &AdrMode, &FoundSize, eSymbolSizeUnknown, False))
+    {
+      case eRegAbort:
+        return AdrType;
+      case eIsReg:
+        if (FoundSize == eSymbolSize8Bit)
+          AdrType = TypeReg8;
+        else if (AdrMode >= SEGREG_NUMOFFSET)
+        {
+          AdrMode -= SEGREG_NUMOFFSET;
+          AdrType = TypeRegSeg;
+        }
+        else
+          AdrType = TypeReg16;
+        ChkOpSize(FoundSize);
+        goto chk_type;
+      default:
+        break;
+    }
   }
 
   if (FPUAvail)
@@ -550,14 +723,14 @@ static tAdrType DecodeAdr(const tStrComp *pArg, unsigned type_mask)
     Byte seg_reg;
 
     StrCompSplitRef(&Arg, &Remainder, &Arg, Arg.str.p_str + 2);
-    if (decode_seg_reg(Arg.str.p_str, &seg_reg))
+    if (decode_seg_reg(&Arg, &seg_reg))
     {
       SegBuffer = seg_reg;
       AddPrefix(SegRegPrefixes[SegBuffer]);
     }
     if (SegBuffer < 0)
     {
-      WrStrErrorPos(ErrNum_InvReg, &Arg);
+      WrStrErrorPos(ErrNum_UnknownSegReg, &Arg);
       goto chk_type;
     }
     Arg = Remainder;
@@ -724,6 +897,23 @@ chk_type:
     AdrCnt = 0;
   }
   return AdrType;
+}
+
+/*!------------------------------------------------------------------------
+ * Code Helpers
+ * ------------------------------------------------------------------------ */
+
+/*!------------------------------------------------------------------------
+ * \fn     PutCode(Word Code)
+ * \brief  append 1- or 2-byte machine code to instruction stream
+ * \param  Code machine code to append
+ * ------------------------------------------------------------------------ */
+
+static void PutCode(Word Code)
+{
+  if (Hi(Code) != 0)
+    BAsmCode[CodeLen++] = Hi(Code);
+  BAsmCode[CodeLen++] = Lo(Code);
 }
 
 /*!------------------------------------------------------------------------
@@ -1738,7 +1928,7 @@ static void DecodeASSUME(void)
         StrCompRefRight(&seg_arg, &ArgStr[z], 0);
         StrCompMkTemp(&val_arg, empty_str, sizeof(empty_str));
       }
-      if (!decode_seg_reg(seg_arg.str.p_str, &seg_reg)) WrStrErrorPos(ErrNum_UnknownSegReg, &seg_arg);
+      if (!decode_seg_reg(&seg_arg, &seg_reg)) WrStrErrorPos(ErrNum_UnknownSegReg, &seg_arg);
       else
       {
         z3 = addrspace_lookup(val_arg.str.p_str);
@@ -3551,6 +3741,8 @@ static void InitFields(void)
   AddImm16("QHOUT",  e_core_all_v55, 0x0fe0);
   AddImm16("QOUT",   e_core_all_v55, 0x0fe1);
   AddImm16("QTIN",   e_core_all_v55, 0x0fe2);
+
+  AddInstTable(InstTable, "REG" , 0, CodeREG);
 }
 
 /*!------------------------------------------------------------------------
@@ -3623,7 +3815,25 @@ static void InitCode_86(void)
 
 static Boolean IsDef_86(void)
 {
-  return (Memo("PORT"));
+  return Memo("PORT")
+      || Memo("REG");
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     intern_symbol_86(char *p_arg, TempResult *p_result)
+ * \brief  parse for built-in symbols
+ * \param  p_arg source argument
+ * \param  p_result possible result
+ * ------------------------------------------------------------------------ */
+
+static void intern_symbol_86(char *p_arg, TempResult *p_result)
+{
+  if (decode_reg_core(p_arg, &p_result->Contents.RegDescr.Reg, &p_result->DataSize))
+  {
+    p_result->Typ = TempReg;
+    p_result->Contents.RegDescr.Dissect = dissect_reg_86;
+    p_result->Contents.RegDescr.compare = NULL;
+  }
 }
 
 /*!------------------------------------------------------------------------
@@ -3655,6 +3865,8 @@ static void SwitchTo_86(void *p_user)
 
   MakeCode = MakeCode_86; IsDef = IsDef_86;
   SwitchFrom = DeinitFields; InitFields();
+  InternSymbol = intern_symbol_86;
+  DissectReg = dissect_reg_86;
   onoff_fpu_add();
 }
 

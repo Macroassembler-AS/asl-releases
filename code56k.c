@@ -429,8 +429,11 @@ static void DecodeAdr(const tStrComp *pArg, Word Erl, Byte ErlSeg, tAdrResult *p
   tStrComp Arg;
 
   pResult->Type = ModNone;
+  pResult->Val = 0;
   pResult->Cnt = 0;
+  pResult->AbsSymFlags = eSymbolFlag_None;
   pResult->ShortMode = 0;
+  pResult->ForceImmLong = False;
 
   /* Adressierungsmodi vom 56300 abschneiden */
 

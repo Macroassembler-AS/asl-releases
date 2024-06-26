@@ -29,7 +29,7 @@ typedef enum
 
 /*--------------------------------------------------------------------------*/
 
-extern int CurrFontFlags, FontNest;
+extern int CurrFontFlags;
 extern tFontSize CurrFontSize;
 extern tFontType CurrFontType;
 

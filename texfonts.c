@@ -12,6 +12,7 @@
 
 #include "datatypes.h"
 #include "texfonts.h"
+#include "texutil.h"
 
 /*--------------------------------------------------------------------------*/
 
@@ -24,7 +25,7 @@ typedef struct sFontSave
 
 /*--------------------------------------------------------------------------*/
 
-int CurrFontFlags, FontNest;
+int CurrFontFlags;
 tFontSize CurrFontSize;
 tFontType CurrFontType;
 
@@ -38,7 +39,7 @@ static tpFontSave pFontStack;
 void InitFont(void)
 {
   pFontStack = NULL;
-  FontNest = 0;
+  curr_tex_env_data.FontNest = 0;
   CurrFontSize = FontNormalSize;
   CurrFontType = FontStandard;
   CurrFontFlags = 0;
@@ -58,7 +59,7 @@ void SaveFont(void)
   pNewSave->FontSize = CurrFontSize;
   pNewSave->FontFlags = CurrFontFlags;
   pFontStack = pNewSave;
-  FontNest++;
+  curr_tex_env_data.FontNest++;
 }
 
 /*!------------------------------------------------------------------------
@@ -84,7 +85,7 @@ void RestoreFont(void)
   CurrFontSize = pOldSave->FontSize;
   CurrFontFlags = pOldSave->FontFlags;
   free(pOldSave);
-  FontNest--;
+  curr_tex_env_data.FontNest--;
 }
 
 /*!------------------------------------------------------------------------

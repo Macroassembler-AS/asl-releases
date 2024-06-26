@@ -63,10 +63,13 @@
 	bxor 	r3,#7,r5	; 27 5f c3
 	bxor 	32,#7,r5	; 27 5f 20
 
-	call 	#32		; d4 20 ?? IA -> Imm
+	call 	#32		; d4 20 (actually, 'call (32)' would better describe what happens)
+	expect	1351
+	call	#33
+	endexpect
 	call 	@rr2		; f4 c2
 	call 	@32		; f4 20
-	call 	64		; f6 0040
+	call 	64		; f6 00 40
 
 	ccf			; ef
 

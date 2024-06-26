@@ -1381,7 +1381,7 @@ static void InitFields(void)
   AddALU("SUBD", 0x0083, eSymbolSize16Bit, True , CPU6809);
   AddALU("SBCD", 0x1082, eSymbolSize16Bit, True , CPU6309);
   AddALU("MULD", 0x118f, eSymbolSize16Bit, True , CPU6309);
-  AddALU("DIVD", 0x118d, eSymbolSize16Bit, True , CPU6309);
+  AddALU("DIVD", 0x118d, eSymbolSize8Bit , True , CPU6309);
   AddALU("ANDD", 0x1084, eSymbolSize16Bit, True , CPU6309);
   AddALU("ORD" , 0x108a, eSymbolSize16Bit, True , CPU6309);
   AddALU("EORD", 0x1088, eSymbolSize16Bit, True , CPU6309);
