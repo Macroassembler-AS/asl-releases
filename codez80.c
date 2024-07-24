@@ -20,6 +20,8 @@
 #include "asmpars.h"
 #include "asmcode.h"
 #include "asmallg.h"
+#include "nlmessages.h"
+#include "as.rsc"
 #include "onoff_common.h"
 #include "asmitree.h"
 #include "codepseudo.h"
@@ -33,28 +35,12 @@
 #include "codez80.h"
 
 /*-------------------------------------------------------------------------*/
-/* Instruktionsgruppendefinitionen */
-
-typedef struct
-{
-  CPUVar MinCPU;
-  Byte Len;
-  Word Code;
-} BaseOrder;
-
-typedef struct
-{
-  const char *Name;
-  Byte Code;
-} Condition;
-
-/*-------------------------------------------------------------------------*/
 /* Praefixtyp */
 
 typedef enum
 {
-  Pref_IN_N,Pref_IN_W ,Pref_IB_W ,Pref_IW_W ,Pref_IB_N ,
-  Pref_IN_LW,Pref_IB_LW,Pref_IW_LW,Pref_IW_N
+  Pref_IN_N, Pref_IN_W, Pref_IB_W, Pref_IW_W, Pref_IB_N,
+  Pref_IN_LW, Pref_IB_LW, Pref_IW_LW, Pref_IW_N
 } PrefType;
 
 typedef enum
@@ -65,6 +51,45 @@ typedef enum
   ePrefixIB,  /* one byte more in argument */
   ePrefixIW   /* one word more in argument */
 } tOpPrefix;
+
+typedef enum
+{
+  e_core_sharp,
+  e_core_z80,
+  e_core_z80u,
+  e_core_z180,
+  e_core_r2000,
+  e_core_ez80,
+  e_core_z380
+} cpu_core_t;
+
+typedef enum
+{
+  e_core_mask_sharp = 1 << e_core_sharp,
+  e_core_mask_z80 = 1 << e_core_z80,
+  e_core_mask_z80u = 1 << e_core_z80u,
+  e_core_mask_z180 = 1 << e_core_z180,
+  e_core_mask_r2000 = 1 << e_core_r2000,
+  e_core_mask_ez80 = 1 << e_core_ez80,
+  e_core_mask_z380 = 1 << e_core_z380,
+  e_core_mask_no_sharp = e_core_mask_z80 | e_core_mask_z80u | e_core_mask_z180 | e_core_mask_r2000 | e_core_mask_ez80 | e_core_mask_z380,
+  e_core_mask_all = e_core_mask_sharp | e_core_mask_no_sharp,
+  e_core_mask_min_z180 = e_core_mask_z180 | e_core_mask_r2000 | e_core_mask_ez80 | e_core_mask_z380
+} cpu_core_mask_t;
+
+typedef enum
+{
+  e_core_flag_none = 0,
+  e_core_flag_i_8bit = 1 << 0,
+  e_core_flag_no_xio = 1 << 1
+} cpu_core_flags_t;
+
+typedef struct
+{
+  const char *p_name;
+  cpu_core_t core;
+  cpu_core_flags_t core_flags;
+} cpu_props_t;
 
 #ifdef __cplusplus
 # include "codez80.hpp"
@@ -87,6 +112,7 @@ typedef enum
 #define ModHLDec 12
 #define ModIOAbs 13
 #define ModImmIsAbs 14
+#define ModMB 15
 
 #define MModReg8 (1 << ModReg8)
 #define MModReg16 (1 << ModReg16)
@@ -102,6 +128,7 @@ typedef enum
 #define MModHLDec (1 << ModHLDec)
 #define MModIOAbs (1 << ModIOAbs)
 #define MModImmIsAbs (1 << ModImmIsAbs)
+#define MModMB (1 << ModMB)
 
 /* These masks deliberately omit the (special) 
    Sharp/Gameboy addressing modes: */
@@ -113,9 +140,28 @@ typedef enum
 #define IYPrefix 0xfd
 
 #define AccReg 7
+#define MReg 6
+#define HReg 4
+#define LReg 5
+
 #define DEReg 1
 #define HLReg 2
 #define SPReg 3
+
+/*-------------------------------------------------------------------------*/
+/* Instruktionsgruppendefinitionen */
+
+typedef struct
+{
+  cpu_core_mask_t core_mask;
+  Word Code;
+} BaseOrder;
+
+typedef struct
+{
+  const char *Name;
+  Byte Code;
+} Condition;
 
 /*-------------------------------------------------------------------------*/
 
@@ -131,9 +177,14 @@ static BaseOrder *AccOrders;
 static BaseOrder *HLOrders;
 static Condition *Conditions;
 
-static CPUVar CPULR35902, CPUGBZ80,
-              CPUZ80, CPUZ80U, CPUZ180,
-              CPUR2000, CPUZ380;
+static const cpu_props_t *p_curr_cpu_props;
+
+#define is_sharp() (p_curr_cpu_props->core == e_core_sharp)
+#define is_z80u() (p_curr_cpu_props->core == e_core_z80u)
+#define is_z180() (p_curr_cpu_props->core == e_core_z180)
+#define is_r2000() (p_curr_cpu_props->core == e_core_r2000)
+#define is_ez80() (p_curr_cpu_props->core == e_core_ez80)
+#define is_z380() (p_curr_cpu_props->core == e_core_z380)
 
 static Boolean MayLW,             /* Instruktion erlaubt 32 Bit */
                ExtFlag,           /* Prozessor im 4GByte-Modus ? */
@@ -144,18 +195,12 @@ static PrefType CurrPrefix,       /* mom. explizit erzeugter Praefix */
 
 static LongInt Reg_CBAR,
                Reg_BBR,
-               Reg_CBR;
+               Reg_CBR,
+               Reg_ADL,
+               Reg_MBASE;
 static const char Reg8Names[] = "BCDEHL*A";
 static int Reg16Cnt;
 static const char Reg16Names[][3] = { "BC", "DE", "HL", "SP", "IX", "IY" };
-
-/*==========================================================================*/
-/* Aux Functions */
-
-static Boolean is_sharp(void)
-{
-  return (MomCPU == CPULR35902) || (MomCPU == CPUGBZ80);
-}
 
 /*--------------------------------------------------------------------------*/
 /* Praefix dazuaddieren */
@@ -316,12 +361,45 @@ static Boolean InLongMode(void)
   }
 }
 
-/*--------------------------------------------------------------------------*/
-/* absolute Adresse */
+/*!------------------------------------------------------------------------
+ * \fn     check_ez80_mpage(LongWord address, unsigned eval_flags, tSymbolSize op_size, const tStrComp *p_arg)
+ * \brief  check whether address is in current 64K Z80 mode page
+ * \param  address address to check
+ * \param  eval_flags result flags from address evaluation
+ * \param  op_size actual address size in code
+ * \param  p_arg related source argument
+ * ------------------------------------------------------------------------ */
+
+static void check_ez80_mpage(LongWord address, unsigned eval_flags, tSymbolSize op_size, const tStrComp *p_arg)
+{
+  if ((op_size != eSymbolSize24Bit)
+   && !mFirstPassUnknownOrQuestionable(eval_flags)
+   && (((address >> 16) & 0xff) != (unsigned)Reg_MBASE))
+    WrStrErrorPos(ErrNum_InAccPage, p_arg);
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     EvalAbsAdrExpression(const tStrComp *pArg, tEvalResult *pEvalResult)
+ * \brief  evaluate absolute address, range is targent-dependant
+ * \param  pArg source argument
+ * \param  pEvalResult sideband params
+ * \return address value
+ * ------------------------------------------------------------------------ */
 
 static LongWord EvalAbsAdrExpression(const tStrComp *pArg, tEvalResult *pEvalResult)
 {
-  return EvalStrIntExpressionWithResult(pArg, ExtFlag ? Int32 : UInt16, pEvalResult);
+  if (ExtFlag)
+    return EvalStrIntExpressionWithResult(pArg, Int32, pEvalResult);
+  else if (is_ez80())
+  {
+    LongWord ret = EvalStrIntExpressionWithResult(pArg, UInt24, pEvalResult);
+
+    if (pEvalResult->OK)
+      check_ez80_mpage(ret, pEvalResult->Flags, AttrPartOpSize[1], pArg);
+    return ret;
+  }
+  else
+    return EvalStrIntExpressionWithResult(pArg, UInt16, pEvalResult);
 }
 
 /*==========================================================================*/
@@ -360,10 +438,18 @@ static Boolean DecodeReg8Core(const char *p_asc, Byte *p_ret)
           *p_ret = 5 | (((ix == 'X') ? IXPrefix : IYPrefix) & 0xf0);
           return True;
         case 'H':
-          if (MomCPU != CPUZ80U) /* do not allow IXH/IYH on Z380 */
+          /* do not allow IXH/IYH on Z380 */
+          if (is_z380())
             return False;
-          /* else fall-through */
+          else
+            goto ir_high;
         case 'U':
+          /* do not allow IXU/IYU on eZ80 */
+          if (is_ez80())
+            return False;
+          else
+            goto ir_high;
+        ir_high:
           *p_ret = 4 | (((ix == 'X') ? IXPrefix : IYPrefix) & 0xf0);
           return True;
         default:
@@ -507,7 +593,10 @@ static void abs_2_adrvals(LongWord address)
   AdrVals[0] = address & 0xff;
   AdrVals[1] = (address >> 8) & 0xff;
   AdrCnt = 2;
-  if (address > 0xfffful)
+
+  /* Z380: prefix needed if address >=64K */
+
+  if (ExtFlag && (address > 0xfffful))
   {
     AdrVals[AdrCnt++] = (address >> 16) & 0xff;
     if (address <= 0xfffffful)
@@ -518,6 +607,11 @@ static void abs_2_adrvals(LongWord address)
       ChangeDDPrefix(ePrefixIW);
     }
   }
+
+  /* eZ80: 24 bits if .IL mode */
+
+  else if (is_ez80() && (AttrPartOpSize[1] == eSymbolSize24Bit))
+    AdrVals[AdrCnt++] = (address >> 16) & 0xff;
 }
 
 static ShortInt DecodeAdr(const tStrComp *pArg, unsigned ModeMask)
@@ -545,6 +639,12 @@ static ShortInt DecodeAdr(const tStrComp *pArg, unsigned ModeMask)
   if (!as_strcasecmp(pArg->str.p_str, "I"))
   {
     AdrMode = ModInt;
+    goto found;
+  }
+
+  if (is_ez80() && !as_strcasecmp(pArg->str.p_str, "MB"))
+  {
+    AdrMode = ModMB;
     goto found;
   }
 
@@ -630,12 +730,38 @@ static ShortInt DecodeAdr(const tStrComp *pArg, unsigned ModeMask)
 
         if (ModeMask & MModAbs)
         {
-          /* no range checking if address range is 32 bits - disp_acc is only a 32 bit value */
+          /* no range checking if Z380 address range is 32 bits - disp_acc is only a 32 bit value */
 
-          if (!mFirstPassUnknownOrQuestionable(disp_eval_result.Flags)
-           && !ExtFlag
-           && !ChkRangeByType(disp_acc, UInt16, pArg))
-            return AdrMode;
+          if (ExtFlag);
+          else if (is_ez80())
+          {
+            if (!mFirstPassUnknownOrQuestionable(disp_eval_result.Flags))
+            {
+              if (!ChkRangeByType(disp_acc, UInt24, pArg))
+                return AdrMode;
+
+              /* .SIL, .SIS: use MBASE as bits 16..24, ignore bits 16.24 from .SIL instruction: */
+
+              if (AttrPartOpSize[0] != eSymbolSize24Bit)
+                check_ez80_mpage(disp_acc, disp_eval_result.Flags, AttrPartOpSize[0], pArg);
+
+              /* .LIS -> fetch 16 bits, use 0x00 as bits 16..24: */
+
+              else if (AttrPartOpSize[1] != eSymbolSize24Bit)
+              {
+                if (((disp_acc >> 16) & 0xff) != 0)
+                  WrStrErrorPos(ErrNum_InAccPage, pArg);
+              }
+
+              /* .LIL: linear 24 bit address */
+            }
+          }
+          else
+          {
+            if (!mFirstPassUnknownOrQuestionable(disp_eval_result.Flags)
+             && !ChkRangeByType(disp_acc, UInt16, pArg))
+              return AdrMode;
+          }
           ChkSpace(SegCode, disp_eval_result.AddrSpaceMask);
           abs_2_adrvals(address);
           AdrVal = address;
@@ -700,7 +826,7 @@ static ShortInt DecodeAdr(const tStrComp *pArg, unsigned ModeMask)
       case (IXPrefix & 0xf0) | 2: /* (IX+d) */
       case (IYPrefix & 0xf0) | 2: /* (IY+d) */
       case 3: /* (SP+d) */
-        if (!mFirstPassUnknownOrQuestionable(disp_eval_result.Flags) && !ChkRangeByType(disp_acc, (MomCPU >= CPUZ380) ? SInt24 : SInt8, pArg))
+        if (!mFirstPassUnknownOrQuestionable(disp_eval_result.Flags) && !ChkRangeByType(disp_acc, is_z380() ? SInt24 : SInt8, pArg))
           return AdrMode;
         if (z80_eval_cb_data.addr_reg == 3)
           AdrMode = ModSPRel;
@@ -712,7 +838,7 @@ static ShortInt DecodeAdr(const tStrComp *pArg, unsigned ModeMask)
         }
         AdrVals[0] = disp_acc & 0xff;
         AdrCnt = 1;
-        if (((disp_acc < -0x80l) || (disp_acc > 0x7fl)) && (MomCPU >= CPUZ380))
+        if (((disp_acc < -0x80l) || (disp_acc > 0x7fl)) && is_z380())
         {
           AdrVals[AdrCnt++] = (disp_acc >> 8) & 0xff;
           if ((disp_acc >= -0x8000l) && (disp_acc <= 0x7fffl))
@@ -744,7 +870,7 @@ static ShortInt DecodeAdr(const tStrComp *pArg, unsigned ModeMask)
       else
         AdrMode = ModImm;  /* will fail on test @ label found */
       break;
-    case 0:
+    case eSymbolSize8Bit:
       AdrVals[0] = EvalStrIntExpression(pArg, Int8, &OK);
       if (OK)
       {
@@ -752,7 +878,7 @@ static ShortInt DecodeAdr(const tStrComp *pArg, unsigned ModeMask)
         AdrCnt = 1;
       }
       break;
-    case 1:
+    case eSymbolSize16Bit:
       if (InLongMode())
       {
         LongWord ImmVal = EvalStrIntExpression(pArg, Int32, &OK);
@@ -776,18 +902,30 @@ static ShortInt DecodeAdr(const tStrComp *pArg, unsigned ModeMask)
           }
         }
       }
-     else
-     {
-       AdrInt = EvalStrIntExpression(pArg, Int16, &OK);
-       if (OK)
-       {
-         AdrVals[0] = Lo(AdrInt);
-         AdrVals[1] = Hi(AdrInt);
-         AdrMode = ModImm;
-         AdrCnt = 2;
-       }
-     }
-     break;
+      else if (is_ez80() && AttrPartOpSize[1] == eSymbolSize24Bit)
+      {
+        LongWord ImmVal = EvalStrIntExpression(pArg, Int24, &OK);
+        if (OK)
+        {
+          AdrVals[0] = (ImmVal >>  0) & 0xff;
+          AdrVals[1] = (ImmVal >>  8) & 0xff;
+          AdrVals[2] = (ImmVal >> 16) & 0xff;
+          AdrMode = ModImm;
+          AdrCnt = 3;
+        }
+      }
+      else
+      {
+        AdrInt = EvalStrIntExpression(pArg, Int16, &OK);
+        if (OK)
+        {
+          AdrVals[0] = Lo(AdrInt);
+          AdrVals[1] = Hi(AdrInt);
+          AdrMode = ModImm;
+          AdrCnt = 2;
+        }
+      }
+      break;
   }
 
 found:
@@ -850,7 +988,7 @@ static Boolean DecodeAdr_HL(const tStrComp *p_arg)
 
 static void DecodeAdrWithF(const tStrComp *pArg, Boolean AllowF)
 {
-  Boolean applies_to_cpu = (MomCPU == CPUZ80U) || (MomCPU == CPUZ180) || (MomCPU == CPUZ380);
+  Boolean applies_to_cpu = is_z80u() || is_z180() || is_z380();
 
   if (applies_to_cpu
    && AllowF
@@ -916,6 +1054,61 @@ static Boolean ParPair(const char *Name1, const char *Name2)
           ((!as_strcasecmp(ArgStr[1].str.p_str, Name2)) && (!as_strcasecmp(ArgStr[2].str.p_str, Name1))));
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     has_index_prefix(void)
+ * \brief  Check if HL has been replaced by IX/IY via prefix
+ * \return True if yes
+ * ------------------------------------------------------------------------ */
+
+static Boolean has_index_prefix(void)
+{
+  return (PrefixCnt > 0)
+      && ((BAsmCode[PrefixCnt - 1] == IXPrefix)
+       || (BAsmCode[PrefixCnt - 1] == IYPrefix));
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     store_prefix(prefix_store_t *p_store, Byte old_prefix_cnt)
+ * \brief  check whether another (index) prefix was added, and store it
+ * \param  p_store place to store
+ * \param  old_prefix_cnt prefix cound before possible addition
+ * ------------------------------------------------------------------------ */
+
+typedef struct
+{
+  Byte cnt, value;
+  Boolean present;
+} prefix_store_t;
+
+static void store_prefix(prefix_store_t *p_store, Byte old_prefix_cnt)
+{
+  p_store->cnt = PrefixCnt;
+  p_store->present = p_store->cnt > old_prefix_cnt;
+  p_store->value = p_store->present ? BAsmCode[p_store->cnt - 1] : 0x00;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     remove_prefix(int byte_index)
+ * \brief  remove a code prefix
+ * \param  byte_index 0 -> remove last prefix
+ *                    1 -> remove second last prefix
+ * \return value of removed prefix
+ * ------------------------------------------------------------------------ */
+
+static Byte remove_prefix(int byte_index)
+{
+  Byte ret;
+
+  if (PrefixCnt < (byte_index + 1))
+    WrError(ErrNum_InternalError);
+  ret = BAsmCode[PrefixCnt - 1 - byte_index];
+  memmove(&BAsmCode[PrefixCnt - 1 - byte_index],
+          &BAsmCode[PrefixCnt     - byte_index],
+          byte_index);
+  PrefixCnt--;
+  return ret;
+}
+
 /*-------------------------------------------------------------------------*/
 /* Bedingung entschluesseln */
 
@@ -956,86 +1149,183 @@ static Boolean DecodeSFR(char *Inp, Byte *Erg)
 
 static LargeWord PortEnd(void)
 {
-  return (LargeWord)IntTypeDefs[ExtFlag ? UInt32 : UInt16].Max;
+  if (is_z380())
+    return (LargeWord)IntTypeDefs[ExtFlag ? UInt32 : UInt16].Max;
+  else if (is_ez80())
+    return 0xffff;
+  else
+    return 0xff;
 }
 
 /*==========================================================================*/
 /* instruction decoders */
+
+/*!------------------------------------------------------------------------
+ * \fn     chk_addr_ez80_z380(void)
+ * \brief  check for eZ80/Z380 and report invalid addressing mode if not
+ * \return True if condition given
+ * ------------------------------------------------------------------------ */
+
+static Boolean chk_addr_ez80_z380(void)
+{
+  Boolean ret = is_ez80() || is_z380();
+
+  if (!ret)
+  {
+    char str[100];
+
+    as_snprintf(str, sizeof(str), getmessage(Num_ErrMsgMinCPUSupported), "eZ80/Z380");
+    WrXError(ErrNum_AddrModeNotSupported, str);
+  }
+  return ret;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     Boolean chk_core_mask(cpu_core_mask_t core_mask)
+ * \brief  check whether current core fulfills requirement
+ * \param  core_mask bit mask of supported cores
+ * \return True if yes
+ * ------------------------------------------------------------------------ */
+
+static Boolean chk_core_mask(cpu_core_mask_t core_mask)
+{
+  if (!((core_mask >> p_curr_cpu_props->core) & 1))
+  {
+    WrStrErrorPos(ErrNum_InstructionNotSupported, &OpPart);
+    return False;
+  }
+  return True;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     Boolean a_chk_core_mask_pos(cpu_core_mask_t core_mask, const tStrComp *p_arg)
+ * \brief  check whether current core fulfills requirement for addressing mode
+ * \param  core_mask bit mask of supported cores
+ * \param  p_arg related source code argument
+ * \return True if yes
+ * ------------------------------------------------------------------------ */
+
+static Boolean a_chk_core_mask_pos(cpu_core_mask_t core_mask, const tStrComp *p_arg)
+{
+  if (!((core_mask >> p_curr_cpu_props->core) & 1))
+  {
+    WrStrErrorPos(ErrNum_AddrModeNotSupported, p_arg);
+    return False;
+  }
+  return True;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     chk_no_core_flags(cpu_core_flags_t flags)
+ * \brief  check that current target does NOT have certain properties
+ * \param  flags flags that must not be set
+ * ------------------------------------------------------------------------ */
+
+static Boolean chk_no_core_flags(cpu_core_flags_t flags)
+{
+  if (p_curr_cpu_props->core_flags & flags)
+  {
+    WrStrErrorPos(ErrNum_InstructionNotSupported, &OpPart);
+    return False;
+  }
+  return True;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     append_to_prefixes(Word code)
+ * \brief  append oe or two byte opcode to existing prefixes
+ * \param  code code to append (2 byte if MSB != 0)
+ * ------------------------------------------------------------------------ */
+
+static void append_to_prefixes(Word code)
+{
+  if (Hi(code))
+    BAsmCode[PrefixCnt++] = Hi(code);
+  BAsmCode[PrefixCnt++] = Lo(code);
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     DecodeFixed(Word Index)
+ * \brief  handle instructions without arguments
+ * \param  Index * to instruction description
+ * ------------------------------------------------------------------------ */
 
 static void DecodeFixed(Word Index)
 {
   BaseOrder *POrder = FixedOrders + Index;
 
   if (ChkArgCnt(0, 0)
-   && ChkMinCPU(POrder->MinCPU))
+   && chk_core_mask(POrder->core_mask))
   {
-    if (POrder->Len == 2)
-    {
-      BAsmCode[PrefixCnt++] = Hi(POrder->Code);
-      BAsmCode[PrefixCnt++] = Lo(POrder->Code);
-    }
-    else
-      BAsmCode[PrefixCnt++] = Lo(POrder->Code);
+    append_to_prefixes(POrder->Code);
     CodeLen = PrefixCnt;
   }
 }
 
 /*!------------------------------------------------------------------------
- * \fn     DecodeSTOP(Word Code)
- * \brief  handle STOP machine instruction
- * \param  Code machine code
+ * \fn     decode_ez80_xio(Word code)
+ * \brief  handle strin I/O instructions not present on all eZ80 variants
+ * \param  code machine opcode
  * ------------------------------------------------------------------------ */
 
-static void DecodeSTOP(Word Code)
+static void decode_ez80_xio(Word code)
 {
-  if (ChkArgCnt(0, 0) && (ChkExactCPUList(ErrNum_InstructionNotSupported, CPUGBZ80, CPULR35902, CPUNone) >= 0))
+  if (ChkArgCnt(0, 0)
+   && chk_core_mask(e_core_mask_ez80)
+   && chk_no_core_flags(e_core_flag_no_xio))
   {
-    BAsmCode[PrefixCnt++] = Lo(Code);
-    CodeLen = PrefixCnt; 
+    append_to_prefixes(code);
+    CodeLen = PrefixCnt;
   }
 }
+
+/*!------------------------------------------------------------------------
+ * \fn     DecodeAcc(Word Index)
+ * \brief  handle instructions with accumulator as argument
+ * \param  Index * to instruction description
+ * ------------------------------------------------------------------------ */
 
 static void DecodeAcc(Word Index)
 {
   BaseOrder *POrder = AccOrders + Index;
 
   if (!ChkArgCnt(0, 1)
-   || !ChkMinCPU(POrder->MinCPU))
+   || !chk_core_mask(POrder->core_mask))
     return;
 
   if (ArgCnt && !DecodeAdr_A(&ArgStr[1]))
     return;
 
-  if (POrder->Len == 2)
-  {
-    BAsmCode[PrefixCnt++] = Hi(POrder->Code);
-    BAsmCode[PrefixCnt++] = Lo(POrder->Code);
-  }
-  else
-    BAsmCode[PrefixCnt++] = Lo(POrder->Code);
+  append_to_prefixes(POrder->Code);
   CodeLen = PrefixCnt;
 }
+
+/*!------------------------------------------------------------------------
+ * \fn     DecodeHL(Word Index)
+ * \brief  handle instructions with HL as argument
+ * \param  Index * to instruction description
+ * ------------------------------------------------------------------------ */
 
 static void DecodeHL(Word Index)
 {
   BaseOrder *POrder = HLOrders + Index;
 
   if (!ChkArgCnt(0, 1)
-   || !ChkMinCPU(POrder->MinCPU))
+   || !chk_core_mask(POrder->core_mask))
     return;
 
   if (ArgCnt && !DecodeAdr_HL(&ArgStr[1]))
     return;
 
-  if (POrder->Len == 2)
-  {
-    BAsmCode[PrefixCnt++] = Hi(POrder->Code);
-    BAsmCode[PrefixCnt++] = Lo(POrder->Code);
-  }
-  else
-    BAsmCode[PrefixCnt++] = Lo(POrder->Code);
+  append_to_prefixes(POrder->Code);
   CodeLen = PrefixCnt;
 }
+
+/*!------------------------------------------------------------------------
+ * \fn     DecodeLD(Word IsLDW)
+ * \brief  handle LD(W) instruction
+ * \param  IsLDW LD or LDW?
+ * ------------------------------------------------------------------------ */
 
 static void DecodeLD(Word IsLDW)
 {
@@ -1045,15 +1335,28 @@ static void DecodeLD(Word IsLDW)
 
   if (ChkArgCnt(2, 2))
   {
-    DecodeAdr(&ArgStr[1], MModReg8 | MModReg16 | MModIndReg16 | MModAbs | MModSPRel
-                        | (is_sharp() ? (MModIndReg8 | MModHLInc | MModHLDec) : (MModRef | MModInt)));
+    unsigned dest_mask;
+
+    dest_mask = MModReg8 | MModReg16 | MModIndReg16 | MModAbs | MModSPRel;
+    if (is_sharp())
+      dest_mask |= MModIndReg8 | MModHLInc | MModHLDec;
+    else
+      dest_mask |= MModRef | MModInt | (is_ez80() ? MModMB : 0);
+    DecodeAdr(&ArgStr[1], dest_mask);
     switch (AdrMode)
     {
       case ModReg8:
         if (AdrPart == AccReg) /* LD A, ... */
         {
-          OpSize = 0; DecodeAdr(&ArgStr[2], MModReg8 | MModReg16 | MModIndReg16 | MModImm | MModAbs | MModSPRel
-                                          | (is_sharp() ? (MModIndReg8 | MModHLInc | MModHLDec) : (MModRef | MModInt)));
+          unsigned src_mask;
+
+          OpSize = eSymbolSize8Bit;
+          src_mask = MModReg8 | MModReg16 | MModIndReg16 | MModImm | MModAbs | MModSPRel;
+          if (is_sharp())
+            src_mask |= MModIndReg8 | MModHLInc | MModHLDec;
+          else
+            src_mask |= MModRef | MModInt | (is_ez80() ? MModMB : 0);
+          DecodeAdr(&ArgStr[2], src_mask);
           switch (AdrMode)
           {
             case ModReg8: /* LD A, R8/RX8/(HL)/(XY+D) */
@@ -1106,18 +1409,30 @@ static void DecodeLD(Word IsLDW)
               BAsmCode[PrefixCnt++] = 0x57;
               CodeLen = PrefixCnt;
               break;
+            case ModMB: /* LD A, MB */
+              BAsmCode[PrefixCnt++] = 0xed;
+              BAsmCode[PrefixCnt++] = 0x6e;
+              CodeLen = PrefixCnt;
+              break;
             default:
               if (AdrMode != ModNone) WrError(ErrNum_InvAddrMode);
           }
         }
-        else if ((AdrPart != 6) && (PrefixCnt == 0)) /* LD R8, ... */
+        else if ((AdrPart != MReg) && !has_index_prefix()) /* LD R8, ... */
         {
           AdrByte = AdrPart; OpSize = 0; DecodeAdr(&ArgStr[2], MModReg8 | MModImm);
           switch (AdrMode)
           {
             case ModReg8: /* LD R8, R8/RX8/(HL)/(XY+D) */
               /* if (I(XY)+d) as source, cannot use H/L as target ! */
-              if (((AdrByte == 4) || (AdrByte == 5)) && IndexPrefix() && (AdrCnt == 0)) WrError(ErrNum_InvAddrMode);
+              if (((AdrByte == HReg) || (AdrByte == LReg)) && IndexPrefix() && (AdrCnt == 0)) WrError(ErrNum_InvAddrMode);
+              /* LD x,x for x==B...E used as prefixes on eZ80: */
+              else if ((AdrByte < 4) && (AdrPart == AdrByte) && is_ez80())
+              {
+                WrError(ErrNum_ReplacedByNOP);
+                BAsmCode[PrefixCnt] = NOPCode;
+                CodeLen = PrefixCnt + 1;
+              }
               else
               {
                 BAsmCode[PrefixCnt] = 0x40 + (AdrByte << 3) + AdrPart;
@@ -1133,7 +1448,7 @@ static void DecodeLD(Word IsLDW)
               if (AdrMode != ModNone) WrError(ErrNum_InvAddrMode);
           }
         }
-        else if ((AdrPart == 4) || (AdrPart == 5)) /* LD RX8, ... */
+        else if ((AdrPart == HReg) || (AdrPart == LReg)) /* LD RX8, ... */
         {
           AdrByte = AdrPart; OpSize = 0; DecodeAdr(&ArgStr[2], MModAll);
           switch (AdrMode)
@@ -1185,7 +1500,7 @@ static void DecodeLD(Word IsLDW)
             case ModImm: /* LD (HL)/(XY+D),imm8:16:32 */
               if ((z == 0) && (IsLDW))
               {
-                if (ChkMinCPU(CPUZ380))
+                if (chk_core_mask(e_core_mask_z380))
                 {
                   BAsmCode[PrefixCnt] = 0xed;
                   BAsmCode[PrefixCnt + 1] = 0x36;
@@ -1202,44 +1517,78 @@ static void DecodeLD(Word IsLDW)
               }
               break;
             case ModReg16: /* LD (HL)/(XY+D),R16/XY */
-              if (!ChkMinCPU(CPUZ380));
-              else if (AdrPart == 3) WrError(ErrNum_InvAddrMode);
+              if (!chk_addr_ez80_z380());
+              else if (AdrPart == SPReg) WrError(ErrNum_InvAddrMode);
               else if (HLen == 0)
               {
                 if (PrefixCnt == z) /* LD (HL),R16 */
                 {
-                  if (AdrPart == 2)
+                  if ((AdrPart == 2) && is_z380())
                     AdrPart = 3;
-                  BAsmCode[0] = 0xfd;
-                  BAsmCode[1] = 0x0f + (AdrPart << 4);
-                  CodeLen = 2;
+                  BAsmCode[PrefixCnt] = is_ez80() ? 0xed : 0xfd;
+                  BAsmCode[PrefixCnt + 1] = 0x0f + (AdrPart << 4);
+                  CodeLen = PrefixCnt + 2;
                 }
                 else /* LD (HL),XY */
                 {
-                  CodeLen = PrefixCnt + 1;
-                  BAsmCode[PrefixCnt] = 0x31;
-                  CodeLen = 1 + PrefixCnt;
+                  if (is_z380())
+                  {
+                    CodeLen = PrefixCnt + 1;
+                    BAsmCode[PrefixCnt] = 0x31;
+                    CodeLen = 1 + PrefixCnt;
+                  }
+                  else /* is_ez80() */
+                  {
+                    Byte index_prefix = remove_prefix(0);
+                    CodeLen = PrefixCnt + 2;
+                    BAsmCode[PrefixCnt] = 0xed;
+                    BAsmCode[PrefixCnt + 1] = (index_prefix == IYPrefix) ? 0x3e : 0x3f;
+                  }
                 }
               }
               else
               {
                 if (PrefixCnt == z) /* LD (XY+D),R16 */
                 {
-                  if (AdrPart == 2)
-                    AdrPart = 3;
-                  BAsmCode[PrefixCnt] = 0xcb;
-                  memcpy(BAsmCode + PrefixCnt + 1, HVals, HLen);
-                  BAsmCode[PrefixCnt + 1 + HLen] = 0x0b + (AdrPart << 4);
-                  CodeLen = PrefixCnt + 1 + HLen + 1;
+                  if (is_z380())
+                  {
+                    if (AdrPart == HLReg)
+                      AdrPart = 3;
+                    BAsmCode[PrefixCnt] = 0xcb;
+                    memcpy(BAsmCode + PrefixCnt + 1, HVals, HLen);
+                    BAsmCode[PrefixCnt + 1 + HLen] = 0x0b + (AdrPart << 4);
+                    CodeLen = PrefixCnt + 1 + HLen + 1;
+                  }
+                  else /* is_ez80() */
+                  {
+                    BAsmCode[PrefixCnt] = 0x0f | (AdrPart << 4);
+                    memcpy(BAsmCode + PrefixCnt + 1, HVals, HLen);
+                    CodeLen = PrefixCnt + 1 + HLen;
+                  }
                 }
-                else if (BAsmCode[0] == BAsmCode[1]) WrError(ErrNum_InvAddrMode);
-                else
+                else /* LD (XY+D), IX/Y */
                 {
-                  PrefixCnt--;
-                  BAsmCode[PrefixCnt] = 0xcb;
-                  memcpy(BAsmCode+PrefixCnt + 1, HVals, HLen);
-                  BAsmCode[PrefixCnt + 1 + HLen] = 0x2b;
-                  CodeLen = PrefixCnt + 1 + HLen + 1;
+                  if (is_z380())
+                  {
+                    if (BAsmCode[0] == BAsmCode[1]) WrError(ErrNum_InvAddrMode);
+                    else
+                    {
+                      (void)remove_prefix(0);
+                      BAsmCode[PrefixCnt] = 0xcb;
+                      memcpy(BAsmCode + PrefixCnt + 1, HVals, HLen);
+                      BAsmCode[PrefixCnt + 1 + HLen] = 0x2b;
+                      CodeLen = PrefixCnt + 1 + HLen + 1;
+                    }
+                  }
+                  else /* is_ez80() */
+                  {
+                    Byte src_index_prefix = remove_prefix(0);
+                    BAsmCode[PrefixCnt] = (src_index_prefix == IYPrefix) ? 0x3e : 0x3f;
+                    if (BAsmCode[PrefixCnt - 1] == IYPrefix)
+                      BAsmCode[PrefixCnt] ^= 0x01;
+                    memcpy(BAsmCode + PrefixCnt + 1, HVals, HLen);
+                    CodeLen = PrefixCnt + 1 + HLen;
+                  }
                 }
               }
               break;
@@ -1249,7 +1598,7 @@ static void DecodeLD(Word IsLDW)
         }
         break;
       case ModReg16:
-        if (AdrPart == 3) /* LD SP,... */
+        if (AdrPart == SPReg) /* LD SP,... */
         {
           OpSize = 1;
           MayLW = True;
@@ -1270,7 +1619,7 @@ static void DecodeLD(Word IsLDW)
               CodeLen = PrefixCnt + 1 + AdrCnt;
               break;
             case ModAbs: /* LD SP,(adr) */
-              if (AChkMinCPUPos(CPUZ80, &ArgStr[2]))
+              if (a_chk_core_mask_pos(e_core_mask_no_sharp, &ArgStr[2]))
               {
                 BAsmCode[PrefixCnt] = 0xed;
                 BAsmCode[PrefixCnt + 1] = 0x7b;
@@ -1282,9 +1631,10 @@ static void DecodeLD(Word IsLDW)
               if (AdrMode != ModNone) WrError(ErrNum_InvAddrMode);
           }
         }
-        else if (PrefixCnt == 0) /* LD R16,... */
+        else if (!has_index_prefix()) /* LD R16,... */
         {
           unsigned ModeMask = MModAll;
+          unsigned after_dest_prefixcnt = PrefixCnt;
 
           AdrByte = (AdrPart == 2) ? 3 : AdrPart;
           OpSize = 1;
@@ -1295,35 +1645,63 @@ static void DecodeLD(Word IsLDW)
           switch (AdrMode)
           {
             case ModInt: /* LD HL,I */
-              if (!ChkMinCPU(CPUZ380));
-              else if (AdrByte != 3) WrError(ErrNum_InvAddrMode);
-              else
+              if (AdrByte != 3) WrError(ErrNum_InvAddrMode);
+              else if (is_z380())
               {
                 BAsmCode[0] = 0xdd;
                 BAsmCode[1] = 0x57;
                 CodeLen = 2;
               }
+              else if (is_ez80())
+              {
+                if (chk_no_core_flags(e_core_flag_i_8bit))
+                {
+                  BAsmCode[0] = 0xed;
+                  BAsmCode[1] = 0xd7;
+                  CodeLen = 2;
+                }
+              }
               break;
             case ModReg8:
               if (AdrPart != 6) WrError(ErrNum_InvAddrMode);
-              else if (!ChkMinCPU(CPUZ380));
-              else if (PrefixCnt == 0) /* LD R16,(HL) */
+              else if (!is_z380() && !is_ez80()) WrError(ErrNum_InvAddrMode);
+              else if (PrefixCnt == after_dest_prefixcnt) /* LD R16,(HL) */
               {
-                BAsmCode[0] = 0xdd;
-                BAsmCode[1] = 0x0f + (AdrByte << 4);
-                CodeLen = 2;
+                if (is_z380())
+                {
+                  BAsmCode[0] = 0xdd;
+                  BAsmCode[1] = 0x0f + (AdrByte << 4);
+                  CodeLen = 2;
+                }
+                else /* if (is_ez80()) */
+                {
+                  if (AdrByte == 3) AdrByte = 2;
+                  BAsmCode[PrefixCnt] = 0xed;
+                  BAsmCode[PrefixCnt + 1] = 0x07 | (AdrByte << 4);
+                  CodeLen = PrefixCnt + 2;
+                }
               }
               else /* LD R16,(XY+d) */
               {
-                BAsmCode[PrefixCnt] = 0xcb;
-                memcpy(BAsmCode+PrefixCnt + 1, AdrVals, AdrCnt);
-                BAsmCode[PrefixCnt + 1 + AdrCnt] = 0x03 + (AdrByte << 4);
-                CodeLen = PrefixCnt + 1 + AdrCnt + 1;
+                if (is_z380())
+                {
+                  BAsmCode[PrefixCnt] = 0xcb;
+                  memcpy(BAsmCode+PrefixCnt + 1, AdrVals, AdrCnt);
+                  BAsmCode[PrefixCnt + 1 + AdrCnt] = 0x03 + (AdrByte << 4);
+                  CodeLen = PrefixCnt + 1 + AdrCnt + 1;
+                }
+                else /* if (is_ez80()) */
+                {
+                  if (AdrByte == 3) AdrByte = 2;
+                  BAsmCode[PrefixCnt] = 0x07 | (AdrByte << 4);
+                  memcpy(BAsmCode + PrefixCnt + 1, AdrVals, AdrCnt);
+                  CodeLen = PrefixCnt + 1 + AdrCnt;
+                }
               }
               break;
             case ModReg16:
               if (AdrPart == 3) WrError(ErrNum_InvAddrMode);
-              else if (!ChkMinCPU(CPUZ380));
+              else if (!chk_core_mask(e_core_mask_z380));
               else if (PrefixCnt == 0) /* LD R16,R16 */
               {
                 if (AdrPart == 2)
@@ -1341,7 +1719,7 @@ static void DecodeLD(Word IsLDW)
               }
               break;
             case ModIndReg16: /* LD R16,(R16) */
-              if (ChkMinCPU(CPUZ380))
+              if (chk_core_mask(e_core_mask_z380))
               {
                 CodeLen = 2;
                 BAsmCode[0] = 0xdd;
@@ -1356,7 +1734,7 @@ static void DecodeLD(Word IsLDW)
               memcpy(BAsmCode + PrefixCnt + 1, AdrVals, AdrCnt);
               break;
             case ModAbs: /* LD R16,(adr) */
-              if (!AChkMinCPUPos(CPUZ80, &ArgStr[2]));
+              if (!a_chk_core_mask_pos(e_core_mask_no_sharp, &ArgStr[2]));
               else if (AdrByte == 3)
               {
                 BAsmCode[PrefixCnt] = 0x2a;
@@ -1377,7 +1755,7 @@ static void DecodeLD(Word IsLDW)
               CodeLen = 2;
               break;
             case ModSPRel: /* LD R16,(SP+D) */
-              if (ChkMinCPU(CPUZ380))
+              if (chk_core_mask(e_core_mask_z380))
               {
                 BAsmCode[PrefixCnt] = 0xdd;
                 BAsmCode[PrefixCnt + 1] = 0xcb;
@@ -1399,25 +1777,49 @@ static void DecodeLD(Word IsLDW)
           {
             case ModReg8:
               if (AdrPart != 6) WrError(ErrNum_InvAddrMode);
-              else if (!ChkMinCPU(CPUZ380));
+              else if (!is_z380() && !is_ez80()) WrError(ErrNum_InvAddrMode);
               else if (AdrCnt == 0) /* LD XY,(HL) */
               {
-                BAsmCode[PrefixCnt] = 0x33;
-                CodeLen = PrefixCnt + 1;
+                if (is_z380())
+                {
+                  BAsmCode[PrefixCnt] = 0x33;
+                  CodeLen = PrefixCnt + 1;
+                }
+                else /* is_ez80() */
+                {
+                  Byte index_prefix = remove_prefix(0);
+                  BAsmCode[PrefixCnt] = 0xed;
+                  BAsmCode[PrefixCnt + 1] = (index_prefix == IYPrefix) ? 0x31 : 0x37;
+                  CodeLen = PrefixCnt + 2;
+                }
               }
-              else if (BAsmCode[0] == BAsmCode[1]) WrError(ErrNum_InvAddrMode);
               else /* LD XY,(XY+D) */
               {
-                BAsmCode[0] = BAsmCode[1];
-                PrefixCnt--;
-                BAsmCode[PrefixCnt] = 0xcb;
-                memcpy(BAsmCode + PrefixCnt + 1, AdrVals, AdrCnt);
-                BAsmCode[PrefixCnt + 1 + AdrCnt] = 0x23;
-                CodeLen = PrefixCnt + 1 + AdrCnt + 1;
+                if (is_z380())
+                {
+                  if (BAsmCode[0] == BAsmCode[1]) WrError(ErrNum_InvAddrMode);
+                  else
+                  {
+                    (void)remove_prefix(1);
+                    BAsmCode[PrefixCnt] = 0xcb;
+                    memcpy(BAsmCode + PrefixCnt + 1, AdrVals, AdrCnt);
+                    BAsmCode[PrefixCnt + 1 + AdrCnt] = 0x23;
+                    CodeLen = PrefixCnt + 1 + AdrCnt + 1;
+                  }
+                }
+                else
+                {
+                  Byte dest_index_prefix = remove_prefix(1);
+                  BAsmCode[PrefixCnt] = (dest_index_prefix == IYPrefix) ? 0x31 : 0x37;
+                  if (BAsmCode[PrefixCnt - 1] == IYPrefix)
+                    BAsmCode[PrefixCnt] ^= 0x06;
+                  memcpy(BAsmCode + PrefixCnt + 1, AdrVals, AdrCnt);
+                  CodeLen = PrefixCnt + 1 + AdrCnt;
+                }
               }
               break;
             case ModReg16:
-              if (!ChkMinCPU(CPUZ380));
+              if (!chk_core_mask(e_core_mask_z380));
               else if (AdrPart == 3) WrError(ErrNum_InvAddrMode);
               else if (PrefixCnt == 1) /* LD XY,R16 */
               {
@@ -1433,7 +1835,7 @@ static void DecodeLD(Word IsLDW)
               }
               break;
             case ModIndReg16:
-              if (ChkMinCPU(CPUZ380)) /* LD XY,(R16) */
+              if (chk_core_mask(e_core_mask_z380)) /* LD XY,(R16) */
               {
                 BAsmCode[PrefixCnt] = 0x03 + (AdrPart << 4);
                 CodeLen = PrefixCnt + 1;
@@ -1450,7 +1852,7 @@ static void DecodeLD(Word IsLDW)
               CodeLen = PrefixCnt + 1 + AdrCnt;
               break;
             case ModSPRel: /* LD XY,(SP+D) */
-              if (ChkMinCPU(CPUZ380))
+              if (chk_core_mask(e_core_mask_z380))
               {
                 BAsmCode[PrefixCnt] = 0xcb;
                 memcpy(BAsmCode + PrefixCnt + 1, AdrVals, AdrCnt);
@@ -1527,13 +1929,13 @@ static void DecodeLD(Word IsLDW)
             if (AdrPart != AccReg) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[2]);
             else
             {
-              CodeLen = 1;
-              BAsmCode[0] = 0x02 + (AdrByte << 4);
+              CodeLen = PrefixCnt + 1;
+              BAsmCode[PrefixCnt] = 0x02 + (AdrByte << 4);
             }
             break;
           case ModReg16:
             if (AdrPart == 3) WrError(ErrNum_InvAddrMode);
-            else if (!ChkMinCPU(CPUZ380));
+            else if (!chk_core_mask(e_core_mask_z380));
             else if (PrefixCnt == 0) /* LD (R16),R16 */
             {
               if (AdrPart == 2)
@@ -1550,7 +1952,7 @@ static void DecodeLD(Word IsLDW)
             break;
           case ModImm:
             if (!IsLDW) WrError(ErrNum_InvAddrMode);
-            else if (ChkMinCPU(CPUZ380))
+            else if (chk_core_mask(e_core_mask_z380))
             {
               CodeLen = PrefixCnt;
               BAsmCode[CodeLen++] = 0xed;
@@ -1590,7 +1992,7 @@ static void DecodeLD(Word IsLDW)
               BAsmCode[0] = 0x08;
               CodeLen = 1;
             }
-            else if (!AChkMinCPUPos(CPUZ80, &ArgStr[1]));
+            else if (!a_chk_core_mask_pos(e_core_mask_no_sharp, &ArgStr[1]));
             else if (AdrPart == 2) /* LD (adr),HL/XY */
             {
               CodeLen = PrefixCnt;
@@ -1623,12 +2025,23 @@ static void DecodeLD(Word IsLDW)
             break;
           case ModReg16: /* LD I,HL */
             if ((AdrPart != HLReg) || PrefixCnt) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[2]);
-            else if (ChkMinCPU(CPUZ380))
+            else if (is_z380())
             {
               CodeLen = 2;
               BAsmCode[0] = 0xdd;
               BAsmCode[1] = 0x47;
             }
+            else if (is_ez80())
+            {
+              if (chk_no_core_flags(e_core_flag_i_8bit))
+              {
+                CodeLen = 2;
+                BAsmCode[0] = 0xed;
+                BAsmCode[1] = 0xc7;
+              }
+            }
+            else
+              WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[2]);
             break;
           default:
             break;
@@ -1643,8 +2056,17 @@ static void DecodeLD(Word IsLDW)
         }
         else WrError(ErrNum_InvAddrMode);
         break;
+      case ModMB:
+        if (DecodeAdr_A(&ArgStr[2])) /* LD MB,A */
+        {
+          CodeLen = 2;
+          BAsmCode[0] = 0xed;
+          BAsmCode[1] = 0x6d;
+        }
+        else WrError(ErrNum_InvAddrMode);
+        break;
       case ModSPRel:
-        if (ChkMinCPU(CPUZ380))
+        if (chk_core_mask(e_core_mask_z380))
         {
           HLen = AdrCnt;
           memcpy(HVals, AdrVals, AdrCnt);
@@ -1695,7 +2117,7 @@ static void DecodeLDHL(Word Code)
   UNUSED(Code);
 
   if (!ChkArgCnt(2, 2)
-   || (ChkExactCPUList(ErrNum_InstructionNotSupported, CPULR35902, CPUGBZ80, CPUNone) < 0))
+   || !chk_core_mask(e_core_mask_sharp))
     return;
   DecodeAdr(&ArgStr[1], MModReg16);
   if (AdrMode != ModReg16)
@@ -1736,7 +2158,7 @@ static void DecodeLDH(Word code)
   UNUSED(code);
 
   if (!ChkArgCnt(2, 2)
-   || (ChkExactCPUList(ErrNum_InstructionNotSupported, CPULR35902, CPUGBZ80, CPUNone) < 0))
+   || !chk_core_mask(e_core_mask_sharp))
     return;
 
   OpSize = 0;
@@ -1793,7 +2215,7 @@ static void DecodeLDX(Word Code)
   UNUSED(Code);
 
   if (!ChkArgCnt(2, 2)
-   || (ChkExactCPUList(ErrNum_InstructionNotSupported, CPULR35902, CPUGBZ80, CPUNone) < 0))
+   || !chk_core_mask(e_core_mask_sharp))
     return;
   DecodeAdr(&ArgStr[1], MModReg8 | MModAbs);
   switch (AdrMode)
@@ -1839,7 +2261,7 @@ static void DecodeALU8(Word Code)
       AdrCnt = 0;
       break;
     case 2:
-      DecodeAdr(&ArgStr[1], MModReg8 | (MomCPU == CPUZ380? MModReg16 : 0));
+      DecodeAdr(&ArgStr[1], MModReg8 | (is_z380() ? MModReg16 : 0));
       break;
     default:
       (void)ChkArgCnt(1, 2);
@@ -1910,7 +2332,7 @@ static void DecodeALU8(Word Code)
 static void DecodeALU16(Word Code)
 {
   if (ChkArgCnt(1, 2)
-   && ChkMinCPU(CPUZ380)
+   && chk_core_mask(e_core_mask_z380)
    && ((ArgCnt == 1) || DecodeAdr_HL(&ArgStr[1])))
   {
     OpSize = 1; DecodeAdr(&ArgStr[ArgCnt], MModAll);
@@ -1959,6 +2381,8 @@ static void DecodeADD(Word Index)
 
   if (ChkArgCnt(2, 2))
   {
+    Byte raw_prefix_cnt = PrefixCnt;
+
     DecodeAdr(&ArgStr[1], MModNoImm);
     switch (AdrMode)
     {
@@ -1987,33 +2411,35 @@ static void DecodeADD(Word Index)
       case ModReg16:
         if (AdrPart == 3) /* SP */
         {
-          OpSize = (MomCPU == CPUZ380) ? 1 : 0;
+          OpSize = is_z380() ? 1 : 0;
           DecodeAdr(&ArgStr[2], MModAll);
           switch (AdrMode)
           {
             case ModImm:
-              switch (ChkExactCPUList(ErrNum_InstructionNotSupported, CPUZ380, CPUR2000, CPULR35902, CPUGBZ80, CPUNone))
+              if (is_z380())
               {
-                case 0:
-                  BAsmCode[0] = 0xed; BAsmCode[1] = 0x82;
-                  memcpy(BAsmCode + 2, AdrVals, AdrCnt);
-                  CodeLen = 2 + AdrCnt;
-                  break;
-                case 1:
-                  BAsmCode[0] = 0x27; BAsmCode[1] = 0[AdrVals];
-                  CodeLen = 2;
-                  break;
-                case 2:
-                case 3:
-                  if (!ImmIsS8()) WrStrErrorPos(ErrNum_OverRange, &ArgStr[2]);
-                  else
-                  {
-                    BAsmCode[0] = 0xe8;
-                    BAsmCode[1] = 0[AdrVals];
-                    CodeLen = 2;
-                  }
-                  break;
+                BAsmCode[0] = 0xed; BAsmCode[1] = 0x82;
+                memcpy(BAsmCode + 2, AdrVals, AdrCnt);
+                CodeLen = 2 + AdrCnt;
+                break;
               }
+              else if (is_r2000())
+              {
+                BAsmCode[0] = 0x27; BAsmCode[1] = 0[AdrVals];
+                CodeLen = 2;
+              }
+              else if (is_sharp())
+              {
+                if (!ImmIsS8()) WrStrErrorPos(ErrNum_OverRange, &ArgStr[2]);
+                else
+                {
+                  BAsmCode[0] = 0xe8;
+                  BAsmCode[1] = 0[AdrVals];
+                  CodeLen = 2;
+                }
+              }
+              else
+                WrStrErrorPos(ErrNum_InstructionNotSupported, &OpPart);
               break;
             default:
               if (AdrMode != ModNone) WrError(ErrNum_InvAddrMode);
@@ -2022,24 +2448,30 @@ static void DecodeADD(Word Index)
         else if (AdrPart != 2) WrError(ErrNum_InvAddrMode);
         else
         {
-          Boolean HasPrefixes = (PrefixCnt> 0);
+          prefix_store_t dest_prefix;
+          store_prefix(&dest_prefix, raw_prefix_cnt);
 
           OpSize = 1; DecodeAdr(&ArgStr[2], MModAll);
           switch (AdrMode)
           {
             case ModReg16:
-              if ((AdrPart == 2) && (PrefixCnt != 0) && ((PrefixCnt != 2) || (BAsmCode[0] != BAsmCode[1]))) WrError(ErrNum_InvAddrMode);
+            {
+              prefix_store_t src_prefix;
+              store_prefix(&src_prefix, dest_prefix.cnt);
+
+              if ((AdrPart == 2) && ((dest_prefix.present != src_prefix.present) || (dest_prefix.value != src_prefix.value))) WrError(ErrNum_InvAddrMode);
               else
               {
-                if (PrefixCnt == 2)
+                if (dest_prefix.present && src_prefix.present)
                   PrefixCnt--;
                 CodeLen = PrefixCnt;
                 BAsmCode[CodeLen++] = 0x09 + (AdrPart << 4);
               }
               break;
+            }
             case ModAbs:
-              if (HasPrefixes) WrError(ErrNum_InvAddrMode);
-              else if (ChkMinCPU(CPUZ380))
+              if (dest_prefix.present) WrError(ErrNum_InvAddrMode);
+              else if (chk_core_mask(e_core_mask_z380))
               {
                 CodeLen = PrefixCnt;
                 BAsmCode[CodeLen++] = 0xed;
@@ -2063,7 +2495,7 @@ static void DecodeADDW(Word Index)
   UNUSED(Index);
 
   if (ChkArgCnt(1, 2)
-   && ChkMinCPU(CPUZ380)
+   && chk_core_mask(e_core_mask_z380)
    && ((ArgCnt == 1) || DecodeAdr_HL(&ArgStr[1])))
   {
     OpSize = 1; DecodeAdr(&ArgStr[ArgCnt], MModAll);
@@ -2138,21 +2570,21 @@ static void DecodeADC_SBC(Word IsSBC)
         }
         break;
       case ModReg16:
-        if ((AdrPart != 2) || (PrefixCnt != 0)) WrError(ErrNum_InvAddrMode);
+        if ((AdrPart != 2) || has_index_prefix()) WrError(ErrNum_InvAddrMode);
         else
         {
           OpSize = 1; DecodeAdr(&ArgStr[2], MModAll);
           switch (AdrMode)
           {
             case ModReg16:
-              if (PrefixCnt != 0) WrError(ErrNum_InvAddrMode);
+              if (has_index_prefix()) WrError(ErrNum_InvAddrMode);
               else
               {
-                CodeLen = 2;
-                BAsmCode[0] = 0xed;
-                BAsmCode[1] = 0x42 + (AdrPart << 4);
+                CodeLen = PrefixCnt + 2;
+                BAsmCode[PrefixCnt] = 0xed;
+                BAsmCode[PrefixCnt + 1] = 0x42 + (AdrPart << 4);
                 if (!IsSBC)
-                  BAsmCode[1] += 8;
+                  BAsmCode[PrefixCnt + 1] += 8;
               }
               break;
             default:
@@ -2169,7 +2601,7 @@ static void DecodeADC_SBC(Word IsSBC)
 static void DecodeADCW_SBCW(Word Code)
 {
   if (ChkArgCnt(1, 2)
-   && ChkMinCPU(CPUZ380)
+   && chk_core_mask(e_core_mask_z380)
    && ((ArgCnt == 1) || DecodeAdr_HL(&ArgStr[1])))
   {
     OpSize = 1; DecodeAdr(&ArgStr[ArgCnt], MModAll);
@@ -2245,9 +2677,9 @@ static void DecodeShift8(Word Code)
   Byte reg_num = 0;
   int mem_arg_index;
 
-  if (!ChkArgCnt(1, (MomCPU == CPUZ80U) ? 2 : 1))
+  if (!ChkArgCnt(1, is_z80u() ? 2 : 1))
     return;
-  if ((Code == 6) && !ChkExactCPU(CPUZ80U)) /* SLI(A)/SL1/SLS undok. Z80 */
+  if ((Code == 6) && !chk_core_mask(e_core_mask_z80u)) /* SLI(A)/SL1/SLS undok. Z80 */
     return;
 
   /* dual arg (Z80 undoc): which is the extra destination register? This must be a 'simple' register (A,B,C,D,E,H,L): */
@@ -2308,7 +2740,7 @@ static void DecodeShift8(Word Code)
 static void DecodeShift16(Word Code)
 {
   if (!ChkArgCnt(1, 1));
-  else if (ChkMinCPU(CPUZ380))
+  else if (chk_core_mask(e_core_mask_z380))
   {
     OpSize = 1; DecodeAdr(&ArgStr[1], MModNoImm);
     switch (AdrMode)
@@ -2361,7 +2793,7 @@ static void DecodeBit(Word Code)
 
   /* extra undocumented dest register is not allowed for BIT */
 
-  if (!ChkArgCnt(1, ((MomCPU == CPUZ80U) && (Code != 0)) ? 3 : 2))
+  if (!ChkArgCnt(1, (is_z80u() && (Code != 0)) ? 3 : 2))
     return;
 
   /* triple arg (Z80 undoc): which is the extra destination register? This must be a 'simple' register (A,B,C,D,E,H,L): */
@@ -2439,15 +2871,15 @@ static void DecodeMLT(Word Index)
   UNUSED(Index);
 
   if (!ChkArgCnt(1, 1));
-  else if (ChkMinCPU(CPUZ180))
+  else if (chk_core_mask(e_core_mask_min_z180))
   {
     DecodeAdr(&ArgStr[1], MModAll);
-    if ((AdrMode != ModReg16) || (PrefixCnt != 0)) WrError(ErrNum_InvAddrMode);
+    if ((AdrMode != ModReg16) || has_index_prefix()) WrError(ErrNum_InvAddrMode);
     else
     {
-      BAsmCode[CodeLen] = 0xed;
-      BAsmCode[CodeLen + 1] = 0x4c + (AdrPart << 4);
-      CodeLen = 2;
+      BAsmCode[PrefixCnt] = 0xed;
+      BAsmCode[PrefixCnt + 1] = 0x4c + (AdrPart << 4);
+      CodeLen = PrefixCnt + 2;
     }
   }
 }
@@ -2456,7 +2888,7 @@ static void DecodeMULT_DIV(Word Code)
 {
   const tStrComp *pSrcArg;
 
-  if (!ChkMinCPU(CPUZ380)
+  if (!chk_core_mask(e_core_mask_z380)
    || !ChkArgCnt(1, 2))
     return;
 
@@ -2515,26 +2947,37 @@ static void DecodeTST(Word Index)
 {
   UNUSED(Index);
 
-  if (!ChkArgCnt(1, 1));
-  else if (ChkMinCPU(CPUZ180))
+  if (!ChkArgCnt(1, 2));
+  else if (chk_core_mask(e_core_mask_min_z180))
   {
-    OpSize = 0; DecodeAdr(&ArgStr[1], MModAll);
+    if (ArgCnt == 2)
+    {
+      if (DecodeAdr(&ArgStr[1], MModReg8) != ModReg8)
+        return;
+      if (AdrPart != AccReg)
+      {
+        WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
+        return;
+      }
+    }
+    OpSize = eSymbolSize8Bit;
+    DecodeAdr(&ArgStr[ArgCnt], MModAll);
     switch (AdrMode)
     {
       case ModReg8:
-        if (PrefixCnt != 0) WrError(ErrNum_InvAddrMode);
+        if (has_index_prefix()) WrError(ErrNum_InvAddrMode);
         else
         {
-          BAsmCode[0] = 0xed;
-          BAsmCode[1] = 4 + (AdrPart << 3);
-          CodeLen = 2;
+          BAsmCode[PrefixCnt] = 0xed;
+          BAsmCode[PrefixCnt + 1] = 4 + (AdrPart << 3);
+          CodeLen = PrefixCnt + 2;
         }
         break;
       case ModImm:
-        BAsmCode[0] = 0xed;
-        BAsmCode[1] = 0x64;
-        BAsmCode[2] = AdrVals[0];
-        CodeLen = 3;
+        BAsmCode[PrefixCnt] = 0xed;
+        BAsmCode[PrefixCnt + 1] = 0x64;
+        BAsmCode[PrefixCnt + 2] = AdrVals[0];
+        CodeLen = PrefixCnt + 3;
         break;
       default:
         if (AdrMode != ModNone) WrError(ErrNum_InvAddrMode);
@@ -2547,9 +2990,9 @@ static void DecodeSWAP(Word Index)
   UNUSED(Index);
 
   if (!ChkArgCnt(1, 1));
-  else if (ChkExactCPUList(ErrNum_InstructionNotSupported, CPUZ380, CPUGBZ80, CPULR35902, CPUNone) >= 0)
+  else if (chk_core_mask(e_core_mask_z380 | e_core_mask_sharp))
   {
-    DecodeAdr(&ArgStr[1], (MomCPU == CPUZ380) ? MModReg16 : MModReg8);
+    DecodeAdr(&ArgStr[1], is_z380() ? MModReg16 : MModReg8);
     switch (AdrMode)
     {
       case ModReg16:
@@ -2590,7 +3033,7 @@ static void DecodePUSH_POP(Word Code)
   if (!ChkArgCnt(1, 1));
   else if (!as_strcasecmp(ArgStr[1].str.p_str, "SR"))
   {
-    if (ChkMinCPU(CPUZ380))
+    if (chk_core_mask(e_core_mask_z380))
     {
       CodeLen = 2;
       BAsmCode[0] = 0xed;
@@ -2606,7 +3049,7 @@ static void DecodePUSH_POP(Word Code)
       AdrMode = ModReg16;
     }
     else
-      DecodeAdr(&ArgStr[1], MModReg16 | (((Code == 4) && (MomCPU == CPUZ380)) ? MModImm : 0));
+      DecodeAdr(&ArgStr[1], MModReg16 | (((Code == 4) && is_z380()) ? MModImm : 0));
     switch (AdrMode)
     {
       case ModReg16:
@@ -2634,7 +3077,7 @@ static void DecodeEX(Word Index)
 
   /* No EX at all on GBZ80 */
 
-  if (!ChkMinCPU(CPUZ80))
+  if (!chk_core_mask(e_core_mask_no_sharp))
     return;
 
   /* work around the parser problem related to the ' character */
@@ -2670,7 +3113,7 @@ static void DecodeEX(Word Index)
         if (AdrPart == 6)
         {
           if (PrefixCnt) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
-          else if (DecodeAdr_A(&ArgStr[2]) && ChkMinCPU(CPUZ380)) /* (HL),A */
+          else if (DecodeAdr_A(&ArgStr[2]) && chk_core_mask(e_core_mask_z380)) /* (HL),A */
           {
             BAsmCode[0] = 0xed;
             BAsmCode[1] = 0x37;
@@ -2687,14 +3130,14 @@ static void DecodeEX(Word Index)
               if (AdrPart == 6)
               {
                 if ((AdrByte != AccReg) || PrefixCnt) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[2]); /* A<->(HL) */
-                else if (ChkMinCPU(CPUZ380))
+                else if (chk_core_mask(e_core_mask_z380))
                 {
                   BAsmCode[0] = 0xed;
                   BAsmCode[1] = 0x37;
                   CodeLen = 2;
                 }
               }
-              else if (!ChkMinCPU(CPUZ380));
+              else if (!chk_core_mask(e_core_mask_z380));
               else if ((AdrByte == AccReg) && !OK)
               {
                 BAsmCode[0] = 0xed;
@@ -2731,14 +3174,14 @@ static void DecodeEX(Word Index)
             case ModReg16:
               /* For DE <-> IX/IY, use the DD/FD prefix and DE<->HL on Z80, but the newer coding on Z380 */
 
-              if (((AdrByte == DEReg) && (AdrPart == HLReg) && (!PrefixCnt || (MomCPU != CPUZ380))) /* DE <-> HL */
-               || ((AdrByte == SPReg) && (AdrPart == DEReg) && (!PrefixCnt || (MomCPU != CPUZ380))))
+              if (((AdrByte == DEReg) && (AdrPart == HLReg) && (!PrefixCnt || !is_z380())) /* DE <-> HL */
+               || ((AdrByte == SPReg) && (AdrPart == DEReg) && (!PrefixCnt || !is_z380())))
               {
                 BAsmCode[PrefixCnt] = 0xeb;
                 CodeLen = PrefixCnt + 1;
               }
               else if (AdrPart == 3) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[2]);
-              else if (!ChkMinCPU(CPUZ380));
+              else if (!chk_core_mask(e_core_mask_z380));
               else if (OK)
               {
                 if (AdrPart == 2)
@@ -2798,7 +3241,7 @@ static void DecodeEX(Word Index)
           {
             case ModReg16:
               if (AdrPart == 3) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[2]);
-              else if (!ChkMinCPU(CPUZ380));
+              else if (!chk_core_mask(e_core_mask_z380));
               else if (OK)
               {
                 if ((PrefixCnt != 2) || (BAsmCode[0] != BAsmCode[1])) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[2]);
@@ -2866,7 +3309,7 @@ static void DecodeTSTI(Word Code)
 {
   UNUSED(Code);
 
-  if (ChkExactCPU(CPUZ80U)
+  if (chk_core_mask(e_core_mask_z80u)
    && ChkArgCnt(0, 0))
   {
     BAsmCode[0] = 0xed;
@@ -2879,7 +3322,7 @@ static void DecodeIN_OUT(Word IsOUT)
 {
   if ((ArgCnt == 1) && !IsOUT)
   {
-    if (ChkExactCPU(CPUZ80U)
+    if (chk_core_mask(e_core_mask_z80u)
      && (DecodeAdr(&ArgStr[1], MModIndReg8) == ModIndReg8))
     {
       BAsmCode[0] = 0xed;
@@ -2887,7 +3330,7 @@ static void DecodeIN_OUT(Word IsOUT)
       CodeLen = 2;
     }
   }
-  else if (ChkArgCnt(2, 2) && ChkMinCPU(CPUZ80))
+  else if (ChkArgCnt(2, 2) && chk_core_mask(e_core_mask_no_sharp))
   {
     const tStrComp *pPortArg = IsOUT ? &ArgStr[1] : &ArgStr[2],
                    *pRegArg = IsOUT ? &ArgStr[2] : &ArgStr[1];
@@ -2895,8 +3338,17 @@ static void DecodeIN_OUT(Word IsOUT)
     /* allow absolute I/O address also without (...) */
 
     OpSize = 0;
-    switch (DecodeAdr(pPortArg, MModIndReg8 | MModIOAbs | MModImm))
+    switch (DecodeAdr(pPortArg, (is_ez80() ? MModIndReg16 : 0) | MModIndReg8 | MModIOAbs | MModImm))
     {
+      case ModIndReg16:
+        if (0 != AdrPart) WrStrErrorPos(ErrNum_InvAddrMode, pPortArg);
+        else if (ModReg8 == DecodeAdr(pRegArg, MModReg8))
+        {
+          CodeLen = 2;
+          BAsmCode[0] = 0xed;
+          BAsmCode[1] = 0x40 | (AdrPart << 3) | !!IsOUT;
+        }
+        break;
       case ModIndReg8:
         DecodeAdrWithF(pRegArg, !IsOUT);
         switch (AdrMode)
@@ -2914,13 +3366,13 @@ static void DecodeIN_OUT(Word IsOUT)
             break;
           case ModImm:
             if (!IsOUT) WrError(ErrNum_InvAddrMode);
-            else if ((MomCPU == CPUZ80U) && (AdrVals[0] == 0))
+            else if (is_z80u() && (AdrVals[0] == 0))
             {
               BAsmCode[0] = 0xed;
               BAsmCode[1] = 0x71;
               CodeLen = 2;
             }
-            else if (ChkMinCPU(CPUZ380))
+            else if (chk_core_mask(e_core_mask_z380))
             {
               BAsmCode[0] = 0xed;
               BAsmCode[1] = 0x71;
@@ -2951,7 +3403,7 @@ static void DecodeINW_OUTW(Word IsOUTW)
 {
   const tStrComp *pPortArg, *pRegArg;
 
-  if (!ChkArgCnt(2, 2) || !ChkMinCPU(CPUZ380))
+  if (!ChkArgCnt(2, 2) || !chk_core_mask(e_core_mask_z380))
     return;
 
   pPortArg = IsOUTW ? &ArgStr[1] : &ArgStr[2];
@@ -3003,7 +3455,7 @@ static void DecodeIN0_OUT0(Word IsOUT0)
      I will leave it in for upward compatibility, and not implicitly assume A as register: */
 
   if (ChkArgCnt(IsOUT0 ? 2 : 1, 2)
-   && ChkMinCPU(CPUZ180))
+   && chk_core_mask(e_core_mask_min_z180))
   {
     Boolean OK;
     const tStrComp *pRegArg, *pPortArg;
@@ -3056,7 +3508,7 @@ static void DecodeINA_INAW_OUTA_OUTAW(Word Code)
   tStrComp *pRegArg, *pPortArg;
   tEvalResult EvalResult;
 
-  if (!ChkArgCnt(2, 2) || !ChkMinCPU(CPUZ380))
+  if (!ChkArgCnt(2, 2) || !chk_core_mask(e_core_mask_z380))
     return;
 
   pRegArg = IsIn ? &ArgStr[1] : &ArgStr[2];
@@ -3091,7 +3543,7 @@ static void DecodeTSTIO(Word Code)
   UNUSED(Code);
 
   if (ChkArgCnt(1, 1)
-   && ChkMinCPU(CPUZ180))
+   && chk_core_mask(e_core_mask_min_z180))
   {
     Boolean OK;
 
@@ -3111,17 +3563,19 @@ static void DecodeRET(Word Code)
 
   UNUSED(Code);
 
+  /* TODO: allow only no and .L as eZ80 attribute */
+
   if (ArgCnt == 0)
   {
-    CodeLen = 1;
-    BAsmCode[0] = 0xc9;
+    CodeLen = PrefixCnt + 1;
+    BAsmCode[PrefixCnt] = 0xc9;
   }
   else if (!ChkArgCnt(0, 1));
   else if (!DecodeCondition(ArgStr[1].str.p_str, &Cond)) WrStrErrorPos(ErrNum_UndefCond, &ArgStr[1]);
   else
   {
-    CodeLen = 1;
-    BAsmCode[0] = 0xc0 + (Cond << 3);
+    CodeLen = PrefixCnt + 1;
+    BAsmCode[PrefixCnt] = 0xc0 + (Cond << 3);
   }
 }
 
@@ -3137,7 +3591,7 @@ static IntType get_jr_dist(LongWord dest, LongInt *p_dist)
   *p_dist = dest - (EProgCounter() + 2);
   if (RangeCheck(*p_dist, SInt8))
     return SInt8;
-  if (MomCPU >= CPUZ380)
+  if (is_z380())
   {
     *p_dist -= 2;
     if (RangeCheck(*p_dist, SInt16))
@@ -3190,6 +3644,16 @@ static void DecodeJP(Word Code)
     {
       LongInt dist;
 
+      /* JP.SIL nnnn, JP.LIS nnnn are illegal on eZ80: */
+
+      if (is_ez80()
+       && (((AttrPartOpSize[0] == eSymbolSize16Bit) && (AttrPartOpSize[1] == eSymbolSize24Bit))
+        || ((AttrPartOpSize[0] == eSymbolSize24Bit) && (AttrPartOpSize[1] == eSymbolSize16Bit))))
+      {
+        WrStrErrorPos(ErrNum_UndefAttr, &AttrPart);
+        return;
+      }
+
       if (check_jr 
        && (get_jr_dist(AdrVal, &dist) != UInt0)
        && !mFirstPassUnknownOrQuestionable(adr_val_flags))
@@ -3233,14 +3697,17 @@ static void DecodeCALL(Word Code)
     AdrLong = EvalAbsAdrExpression(&ArgStr[ArgCnt], &EvalResult);
     if (EvalResult.OK)
     {
-      if (AdrLong <= 0xfffful)
+      if (is_z380() && (AdrLong > 0xfffffful))
       {
-        CodeLen = 3;
-        BAsmCode[0] = 0xc4 + Condition;
-        BAsmCode[1] = Lo(AdrLong);
-        BAsmCode[2] = Hi(AdrLong);
+        ChangeDDPrefix(ePrefixIW);
+        CodeLen = PrefixCnt;
+        BAsmCode[CodeLen++] = 0xc4 + Condition;
+        BAsmCode[CodeLen++] = Lo(AdrLong);
+        BAsmCode[CodeLen++] = Hi(AdrLong);
+        BAsmCode[CodeLen++] = Hi(AdrLong >> 8);
+        BAsmCode[CodeLen++] = Hi(AdrLong >> 16);
       }
-      else if (AdrLong <= 0xfffffful)
+      else if (is_z380() && (AdrLong > 0xfffful))
       {
         ChangeDDPrefix(ePrefixIB);
         CodeLen = PrefixCnt;
@@ -3251,13 +3718,12 @@ static void DecodeCALL(Word Code)
       }
       else
       {
-        ChangeDDPrefix(ePrefixIW);
         CodeLen = PrefixCnt;
         BAsmCode[CodeLen++] = 0xc4 + Condition;
         BAsmCode[CodeLen++] = Lo(AdrLong);
         BAsmCode[CodeLen++] = Hi(AdrLong);
-        BAsmCode[CodeLen++] = Hi(AdrLong >> 8);
-        BAsmCode[CodeLen++] = Hi(AdrLong >> 16);
+        if (is_ez80() && (AttrPartOpSize[1] == eSymbolSize24Bit))
+          BAsmCode[CodeLen++] = Hi(AdrLong >> 8);
       }
     }
   }
@@ -3333,7 +3799,7 @@ static void DecodeJR(Word Code)
   if (dist_type == UInt0)
   {
     if (mFirstPassUnknownOrQuestionable(EvalResult.Flags))
-      dist_type = (MomCPU >= CPUZ380) ? SInt24 : SInt8;
+      dist_type = is_z380() ? SInt24 : SInt8;
     else
     {
       WrStrErrorPos(ErrNum_JmpDistTooBig, &ArgStr[ArgCnt]);
@@ -3423,7 +3889,7 @@ static void DecodeCALR(Word Code)
 
   if (OK)
   {
-    if (ChkMinCPU(CPUZ380))
+    if (chk_core_mask(e_core_mask_z380))
     {
       LongInt AdrLInt;
       tEvalResult EvalResult;
@@ -3474,7 +3940,7 @@ static void DecodeDJNZ(Word Code)
 {
   UNUSED(Code);
 
-  if (ChkArgCnt(1, 1) && ChkMinCPU(CPUZ80))
+  if (ChkArgCnt(1, 1) && chk_core_mask(e_core_mask_no_sharp))
   {
     tEvalResult EvalResult;
     LongInt AdrLInt;
@@ -3489,7 +3955,7 @@ static void DecodeDJNZ(Word Code)
         BAsmCode[0] = 0x10;
         BAsmCode[1] = Lo(AdrLInt);
       }
-      else if (MomCPU<CPUZ380) WrError(ErrNum_JmpDistTooBig);
+      else if (!is_z380()) WrError(ErrNum_JmpDistTooBig);
       else
       {
         AdrLInt -= 2;
@@ -3547,8 +4013,8 @@ static void DecodeRST(Word Code)
       if ((AdrByte > 0x38) || (AdrByte & 7)) WrError(ErrNum_NotFromThisAddress);
       else
       {
-        CodeLen = 1;
-        BAsmCode[0] = 0xc7 + AdrByte;
+        CodeLen = PrefixCnt + 1;
+        BAsmCode[PrefixCnt] = 0xc7 + AdrByte;
       }
     }
   }
@@ -3562,7 +4028,7 @@ static void DecodeEI_DI(Word Code)
     CodeLen = 1;
   }
   else if (ChkArgCnt(1, 1)
-        && ChkMinCPU(CPUZ380))
+        && chk_core_mask(e_core_mask_z380))
   {
     Boolean OK;
 
@@ -3581,7 +4047,7 @@ static void DecodeIM(Word Code)
   UNUSED(Code);
 
   if (ChkArgCnt(1, 1)
-   && ChkMinCPU(CPUZ80))
+   && chk_core_mask(e_core_mask_no_sharp))
   {
     Byte AdrByte;
     Boolean OK;
@@ -3590,7 +4056,7 @@ static void DecodeIM(Word Code)
     if (OK)
     {
       if (AdrByte > 3) WrError(ErrNum_OverRange);
-      else if ((AdrByte == 3) && (!ChkMinCPU(CPUZ380)));
+      else if ((AdrByte == 3) && (!chk_core_mask(e_core_mask_z380)));
       else
       {
         if (AdrByte == 3)
@@ -3613,7 +4079,7 @@ static void DecodeLDCTL(Word Code)
 
   OpSize = 0;
   if (!ChkArgCnt(2, 2));
-  else if (!ChkMinCPU(CPUZ380));
+  else if (!chk_core_mask(e_core_mask_z380));
   else if (DecodeSFR(ArgStr[1].str.p_str, &AdrByte))
   {
     DecodeAdr(&ArgStr[2], MModAll);
@@ -3681,7 +4147,7 @@ static void DecodeLDCTL(Word Code)
 static void DecodeRESC_SETC(Word Code)
 {
   if (ChkArgCnt(1, 1)
-   && ChkMinCPU(CPUZ380))
+   && chk_core_mask(e_core_mask_z380))
   {
     Byte AdrByte = 0xff;
 
@@ -3704,7 +4170,7 @@ static void DecodeDDIR(Word Code)
   UNUSED(Code);
 
   if (ChkArgCnt(1, 2)
-   && ChkMinCPU(CPUZ380))
+   && chk_core_mask(e_core_mask_z380))
   {
     Boolean OK;
     int z;
@@ -3726,6 +4192,100 @@ static void DecodeDDIR(Word Code)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     CodeLEA(Word Code)
+ * \brief  handle LEA instruction
+ * ------------------------------------------------------------------------ */
+
+static void CodeLEA(Word Code)
+{
+  Byte dest_reg, ini_prefix_cnt = PrefixCnt,
+       dest_prefix, src_prefix;
+
+  UNUSED(Code);
+
+  if (!is_ez80())
+  {
+    char Str[100];
+    as_snprintf(Str, sizeof(Str), "%seZ80%s", getmessage(Num_ErrMsgOnlyCPUSupported1), getmessage(Num_ErrMsgOnlyCPUSupported2));
+    WrXError(ErrNum_InstructionNotSupported, Str);
+    return;
+  }
+  if (!ChkArgCnt(2, 2))
+    return;
+
+  if (DecodeAdr(&ArgStr[1], MModReg16) != ModReg16)
+    return;
+  if (AdrPart == SPReg)
+  {
+    WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
+    return;
+  }
+  dest_reg = AdrPart;
+  dest_prefix = (PrefixCnt > ini_prefix_cnt) ? remove_prefix(0) : 0x00;
+  if (DecodeAdr(&ArgStr[2], MModReg8 | MModImmIsAbs) != ModReg8)
+    return;
+  if ((AdrPart != MReg) || (PrefixCnt == ini_prefix_cnt))
+  {
+    WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[2]);
+    return;
+  }
+  src_prefix = remove_prefix(0);
+  CodeLen = PrefixCnt;
+  BAsmCode[CodeLen++] = 0xed;
+  if ((dest_prefix == IXPrefix) && (src_prefix == IXPrefix))
+    BAsmCode[CodeLen++] = 0x32;
+  else if ((dest_prefix == IYPrefix) && (src_prefix == IXPrefix))
+    BAsmCode[CodeLen++] = 0x55;
+  else if ((dest_prefix == IXPrefix) && (src_prefix == IYPrefix))
+    BAsmCode[CodeLen++] = 0x54;
+  else if ((dest_prefix == IYPrefix) && (src_prefix == IYPrefix))
+    BAsmCode[CodeLen++] = 0x33;
+  else if (src_prefix == IXPrefix)
+    BAsmCode[CodeLen++] = 0x02 | (dest_reg << 4);
+  else
+    BAsmCode[CodeLen++] = 0x03 | (dest_reg << 4);
+  memcpy(&BAsmCode[CodeLen], AdrVals, AdrCnt);
+  CodeLen += AdrCnt;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     CodePEA(Word Code)
+ * \brief  handle PEA instruction
+ * ------------------------------------------------------------------------ */
+
+static void CodePEA(Word Code)
+{
+  Byte ini_prefix_cnt = PrefixCnt,
+       src_prefix;
+
+  UNUSED(Code);
+
+  if (!is_ez80())
+  {
+    char Str[100];
+    as_snprintf(Str, sizeof(Str), "%seZ80%s", getmessage(Num_ErrMsgOnlyCPUSupported1), getmessage(Num_ErrMsgOnlyCPUSupported2));
+    WrXError(ErrNum_InstructionNotSupported, Str);
+    return;
+  }
+  if (!ChkArgCnt(1, 1))
+    return;
+
+  if (DecodeAdr(&ArgStr[1], MModReg8 | MModImmIsAbs) != ModReg8)
+    return;
+  if ((AdrPart != MReg) || (PrefixCnt == ini_prefix_cnt))
+  {
+    WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[1]);
+    return;
+  }
+  src_prefix = remove_prefix(0);
+  CodeLen = PrefixCnt;
+  BAsmCode[CodeLen++] = 0xed;
+  BAsmCode[CodeLen++] = (src_prefix == IXPrefix) ? 0x65 : 0x66;
+  memcpy(&BAsmCode[CodeLen], AdrVals, AdrCnt);
+  CodeLen += AdrCnt;
+}
+
 static void DecodePORT(Word Code)
 {
   UNUSED(Code);
@@ -3735,7 +4295,8 @@ static void DecodePORT(Word Code)
 
 static void DecodeLDI_LDD(Word Code)
 {
-  if (ChkArgCnt(2,2) && (ChkExactCPUList(ErrNum_InstructionNotSupported, CPUGBZ80, CPULR35902, CPUNone) >= 0))
+  if (ChkArgCnt(2,2)
+   && chk_core_mask(e_core_mask_sharp))
   {
     DecodeAdr(&ArgStr[1], MModReg8);
     if (AdrMode == ModReg8)
@@ -3775,7 +4336,7 @@ static void DecodePRWINS(Word Code)
 {
   UNUSED(Code);
 
-  if (ChkExactCPU(CPUZ180))
+  if (chk_core_mask(e_core_mask_z180))
   {
     printf("\nCBAR 0%02xh BBR 0%02xh CBR 0%02xh\n",
            (unsigned)Reg_CBAR, (unsigned)Reg_BBR, (unsigned)Reg_CBR);
@@ -3854,29 +4415,26 @@ static void check_cbar(void)
 /*==========================================================================*/
 /* Codetabellenerzeugung */
 
-static void AddFixed(const char *NewName, CPUVar NewMin, Byte NewLen, Word NewCode)
+static void AddFixed(const char *NewName, cpu_core_mask_t core_mask, Word NewCode)
 {
   order_array_rsv_end(FixedOrders, BaseOrder);
-  FixedOrders[InstrZ].MinCPU = NewMin;
-  FixedOrders[InstrZ].Len = NewLen;
+  FixedOrders[InstrZ].core_mask = core_mask;
   FixedOrders[InstrZ].Code = NewCode;
   AddInstTable(InstTable, NewName, InstrZ++, DecodeFixed);
 }
 
-static void AddAcc(const char *NewName, CPUVar NewMin, Byte NewLen, Word NewCode)
+static void AddAcc(const char *NewName, cpu_core_mask_t core_mask, Word NewCode)
 {
   order_array_rsv_end(AccOrders, BaseOrder);
-  AccOrders[InstrZ].MinCPU = NewMin;
-  AccOrders[InstrZ].Len = NewLen;
+  AccOrders[InstrZ].core_mask = core_mask;
   AccOrders[InstrZ].Code = NewCode;
   AddInstTable(InstTable, NewName, InstrZ++, DecodeAcc);
 }
 
-static void AddHL(const char *NewName, CPUVar NewMin, Byte NewLen, Word NewCode)
+static void AddHL(const char *NewName, cpu_core_mask_t core_mask, Word NewCode)
 {
   order_array_rsv_end(HLOrders, BaseOrder);
-  HLOrders[InstrZ].MinCPU = NewMin;
-  HLOrders[InstrZ].Len = NewLen;
+  HLOrders[InstrZ].core_mask = core_mask;
   HLOrders[InstrZ].Code = NewCode;
   AddInstTable(InstTable, NewName, InstrZ++, DecodeHL);
 }
@@ -3978,7 +4536,7 @@ static void InitFields(void)
   AddCondition(NULL, 0);
 
   InstrZ = 0;
-  AddFixed("EXX"  , CPUZ80   , 1, 0x00d9);
+  AddFixed("EXX"   , e_core_mask_no_sharp  , 0x00d9);
   if (is_sharp())
   {
     AddInstTable(InstTable, "LDI", 0x22, DecodeLDI_LDD);
@@ -3986,74 +4544,93 @@ static void InitFields(void)
   }
   else
   {
-    AddFixed("LDI"  , CPUZ80   , 2, 0xeda0);
-    AddFixed("LDD"  , CPUZ80   , 2, 0xeda8);
+    AddFixed("LDI"  , e_core_mask_no_sharp  , 0xeda0);
+    AddFixed("LDD"  , e_core_mask_no_sharp  , 0xeda8);
   }
-  AddFixed("LDIR" , CPUZ80   , 2, 0xedb0);
-  AddFixed("LDDR" , CPUZ80   , 2, 0xedb8);
-  AddFixed("CPI"  , CPUZ80   , 2, 0xeda1);
-  AddFixed("CPIR" , CPUZ80   , 2, 0xedb1);
-  AddFixed("CPD"  , CPUZ80   , 2, 0xeda9);
-  AddFixed("CPDR" , CPUZ80   , 2, 0xedb9);
-  AddFixed("RLCA" , CPUGBZ80 , 1, 0x0007);
-  AddFixed("RRCA" , CPUGBZ80 , 1, 0x000f);
-  AddFixed("RLA"  , CPUGBZ80 , 1, 0x0017);
-  AddFixed("RRA"  , CPUGBZ80 , 1, 0x001f);
-  AddFixed("RLD"  , CPUZ80   , 2, 0xed6f);
-  AddFixed("RRD"  , CPUZ80   , 2, 0xed67);
-  AddFixed("DAA"  , CPUGBZ80 , 1, 0x0027);
-  AddFixed("CCF"  , CPUGBZ80 , 1, 0x003f);
-  AddFixed("SCF"  , CPUGBZ80 , 1, 0x0037);
-  AddFixed("NOP"  , CPUGBZ80 , 1, 0x0000);
-  AddFixed("HALT" , CPUGBZ80 , 1, 0x0076);
-  AddFixed("RETI" , CPUGBZ80 ,
-           is_sharp() ? 1 : 2,
-           is_sharp() ? 0x00d9 : 0xed4d);
-  AddFixed("RETN" , CPUZ80   , 2, 0xed45);
-  AddFixed("INI"  , CPUZ80   , 2, 0xeda2);
-  AddFixed("INIR" , CPUZ80   , 2, 0xedb2);
-  AddFixed("IND"  , CPUZ80   , 2, 0xedaa);
-  AddFixed("INDR" , CPUZ80   , 2, 0xedba);
-  AddFixed("OUTI" , CPUZ80   , 2, 0xeda3);
-  AddFixed("OTIR" , CPUZ80   , 2, 0xedb3);
-  AddFixed("OUTD" , CPUZ80   , 2, 0xedab);
-  AddFixed("OTDR" , CPUZ80   , 2, 0xedbb);
-  AddFixed("EXA"  , CPUZ80   , 1, 0x0008);
-  AddFixed("EXD"  , CPUZ80   , 1, 0x00eb);
-  AddFixed("SLP"  , CPUZ180  , 2, 0xed76);
-  AddFixed("OTIM" , CPUZ180  , 2, 0xed83);
-  AddFixed("OTIMR", CPUZ180  , 2, 0xed93);
-  AddFixed("OTDM" , CPUZ180  , 2, 0xed8b);
-  AddFixed("OTDMR", CPUZ180  , 2, 0xed9b);
-  AddFixed("BTEST", CPUZ380  , 2, 0xedcf);
-  AddFixed("EXALL", CPUZ380  , 2, 0xedd9);
-  AddFixed("EXXX" , CPUZ380  , 2, 0xddd9);
-  AddFixed("EXXY" , CPUZ380  , 2, 0xfdd9);
-  AddFixed("INDW" , CPUZ380  , 2, 0xedea);
-  AddFixed("INDRW", CPUZ380  , 2, 0xedfa);
-  AddFixed("INIW" , CPUZ380  , 2, 0xede2);
-  AddFixed("INIRW", CPUZ380  , 2, 0xedf2);
-  AddFixed("LDDW" , CPUZ380  , 2, 0xede8);
-  AddFixed("LDDRW", CPUZ380  , 2, 0xedf8);
-  AddFixed("LDIW" , CPUZ380  , 2, 0xede0);
-  AddFixed("LDIRW", CPUZ380  , 2, 0xedf0);
-  AddFixed("MTEST", CPUZ380  , 2, 0xddcf);
-  AddFixed("OTDRW", CPUZ380  , 2, 0xedfb);
-  AddFixed("OTIRW", CPUZ380  , 2, 0xedf3);
-  AddFixed("OUTDW", CPUZ380  , 2, 0xedeb);
-  AddFixed("OUTIW", CPUZ380  , 2, 0xede3);
-  AddFixed("RETB" , CPUZ380  , 2, 0xed55);
-  AddInstTable(InstTable, "STOP", 0x0010, DecodeSTOP);
+  AddFixed("LDIR"  , e_core_mask_no_sharp  , 0xedb0);
+  AddFixed("LDDR"  , e_core_mask_no_sharp  , 0xedb8);
+  AddFixed("CPI"   , e_core_mask_no_sharp  , 0xeda1);
+  AddFixed("CPIR"  , e_core_mask_no_sharp  , 0xedb1);
+  AddFixed("CPD"   , e_core_mask_no_sharp  , 0xeda9);
+  AddFixed("CPDR"  , e_core_mask_no_sharp  , 0xedb9);
+  AddFixed("RLCA"  , e_core_mask_all       , 0x0007);
+  AddFixed("RRCA"  , e_core_mask_all       , 0x000f);
+  AddFixed("RLA"   , e_core_mask_all       , 0x0017);
+  AddFixed("RRA"   , e_core_mask_all       , 0x001f);
+  AddFixed("RLD"   , e_core_mask_no_sharp  , 0xed6f);
+  AddFixed("RRD"   , e_core_mask_no_sharp  , 0xed67);
+  AddFixed("DAA"   , e_core_mask_all       , 0x0027);
+  AddFixed("CCF"   , e_core_mask_all       , 0x003f);
+  AddFixed("SCF"   , e_core_mask_all       , 0x0037);
+  AddFixed("NOP"   , e_core_mask_all       , 0x0000);
+  AddFixed("HALT"  , e_core_mask_all       , 0x0076);
+  /* TODO: allow only no and .L as eZ80 attribute */
+  AddFixed("RETI"  , e_core_mask_all       , is_sharp() ? 0x00d9 : 0xed4d);
+  /* TODO: allow only no and .L as eZ80 attribute */
+  AddFixed("RETN"  , e_core_mask_no_sharp  , 0xed45);
+  AddFixed("INI"   , e_core_mask_no_sharp  , 0xeda2);
+  AddFixed("INIR"  , e_core_mask_no_sharp  , 0xedb2);
+  AddFixed("IND"   , e_core_mask_no_sharp  , 0xedaa);
+  AddFixed("INDR"  , e_core_mask_no_sharp  , 0xedba);
+  AddFixed("IND2"  , e_core_mask_ez80      , 0xed8c);
+  AddFixed("IND2R" , e_core_mask_ez80      , 0xed9c);
+  AddFixed("INDM"  , e_core_mask_ez80      , 0xed8a);
+  AddFixed("INDMR" , e_core_mask_ez80      , 0xed9a);
+  AddFixed("INI2"  , e_core_mask_ez80      , 0xed84);
+  AddFixed("INI2R" , e_core_mask_ez80      , 0xed94);
+  AddFixed("INIM"  , e_core_mask_ez80      , 0xed82);
+  AddFixed("INIMR" , e_core_mask_ez80      , 0xed92);
+  AddFixed("OTD2R" , e_core_mask_ez80      , 0xedbc);
+  AddFixed("OTI2R" , e_core_mask_ez80      , 0xedb4);
+  AddFixed("OUTD2" , e_core_mask_ez80      , 0xedac);
+  AddFixed("OUTI2" , e_core_mask_ez80      , 0xeda4);
+  AddFixed("RSMIX" , e_core_mask_ez80      , 0xed7e);
+  AddFixed("STMIX" , e_core_mask_ez80      , 0xed7d);
+  AddFixed("OUTI"  , e_core_mask_no_sharp  , 0xeda3);
+  AddFixed("OTIR"  , e_core_mask_no_sharp  , 0xedb3);
+  AddFixed("OUTD"  , e_core_mask_no_sharp  , 0xedab);
+  AddFixed("OTDR"  , e_core_mask_no_sharp  , 0xedbb);
+  AddFixed("EXA"   , e_core_mask_no_sharp  , 0x0008);
+  AddFixed("EXD"   , e_core_mask_no_sharp  , 0x00eb);
+  AddFixed("SLP"   , e_core_mask_min_z180  , 0xed76);
+  AddFixed("OTIM"  , e_core_mask_min_z180  , 0xed83);
+  AddFixed("OTIMR" , e_core_mask_min_z180  , 0xed93);
+  AddFixed("OTDM"  , e_core_mask_min_z180  , 0xed8b);
+  AddFixed("OTDMR" , e_core_mask_min_z180  , 0xed9b);
+  AddFixed("BTEST" , e_core_mask_z380      , 0xedcf);
+  AddFixed("EXALL" , e_core_mask_z380      , 0xedd9);
+  AddFixed("EXXX"  , e_core_mask_z380      , 0xddd9);
+  AddFixed("EXXY"  , e_core_mask_z380      , 0xfdd9);
+  AddFixed("INDW"  , e_core_mask_z380      , 0xedea);
+  AddFixed("INDRW" , e_core_mask_z380      , 0xedfa);
+  AddFixed("INIW"  , e_core_mask_z380      , 0xede2);
+  AddFixed("INIRW" , e_core_mask_z380      , 0xedf2);
+  AddFixed("LDDW"  , e_core_mask_z380      , 0xede8);
+  AddFixed("LDDRW" , e_core_mask_z380      , 0xedf8);
+  AddFixed("LDIW"  , e_core_mask_z380      , 0xede0);
+  AddFixed("LDIRW" , e_core_mask_z380      , 0xedf0);
+  AddFixed("MTEST" , e_core_mask_z380      , 0xddcf);
+  AddFixed("OTDRW" , e_core_mask_z380      , 0xedfb);
+  AddFixed("OTIRW" , e_core_mask_z380      , 0xedf3);
+  AddFixed("OUTDW" , e_core_mask_z380      , 0xedeb);
+  AddFixed("OUTIW" , e_core_mask_z380      , 0xede3);
+  AddFixed("RETB"  , e_core_mask_z380      , 0xed55);
+  AddFixed("STOP"  , e_core_mask_sharp     , 0x0010);
+
+  AddInstTable(InstTable, "INDRX", 0xedca, decode_ez80_xio);
+  AddInstTable(InstTable, "INIRX", 0xedc2, decode_ez80_xio);
+  AddInstTable(InstTable, "OTDRX", 0xedcb, decode_ez80_xio);
+  AddInstTable(InstTable, "OTIRX", 0xedc3, decode_ez80_xio);
 
   InstrZ = 0;
-  AddAcc("CPL"  , CPUGBZ80 , 1, 0x002f);
-  AddAcc("NEG"  , CPUZ80   , 2, 0xed44);
-  AddAcc("EXTS" , CPUZ380  , 2, 0xed65);
+  AddAcc("CPL"  , e_core_mask_all , 0x002f);
+  AddAcc("NEG"  , e_core_mask_no_sharp   , 0xed44);
+  AddAcc("EXTS" , e_core_mask_z380  , 0xed65);
 
   InstrZ = 0;
-  AddHL("CPLW" , CPUZ380, 2, 0xdd2f);
-  AddHL("NEGW" , CPUZ380, 2, 0xed54);
-  AddHL("EXTSW", CPUZ380, 2, 0xed75);
+  AddHL("CPLW" , e_core_mask_z380, 0xdd2f);
+  AddHL("NEGW" , e_core_mask_z380, 0xed54);
+  AddHL("EXTSW", e_core_mask_z380, 0xed75);
 
   AddALU("SUB", "SUBW", 2); AddALU("AND", "ANDW", 4);
   AddALU("OR" , "ORW" , 6); AddALU("XOR", "XORW", 5);
@@ -4067,6 +4644,9 @@ static void InitFields(void)
   AddShift("SL1" , NULL   , 6);
 
   AddBit("BIT", 0); AddBit("RES", 1); AddBit("SET", 2);
+
+  AddInstTable(InstTable, "LEA", 0, CodeLEA);
+  AddInstTable(InstTable, "PEA", 0, CodePEA);
 
   AddInstTable(InstTable, "REG" , 0, CodeREG);
 
@@ -4144,6 +4724,37 @@ static void StripPref(const char *Arg, Byte Opcode)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     decode_attrpart_ez80(void)
+ * \brief  decode eZ80-style attribute part for ADL mode overrides
+ * \return True if success
+ * ------------------------------------------------------------------------ */
+
+static Boolean decode_attrpart_ez80(void)
+{
+  int attr_index = 0;
+  const char *p_attr;
+
+  AttrPartOpSize[0] =
+  AttrPartOpSize[1] = eSymbolSizeUnknown;
+  for (p_attr = AttrPart.str.p_str; *p_attr; p_attr++)
+    switch (as_toupper(*p_attr))
+    {
+      case 'S':
+      case 'L':
+        if (AttrPartOpSize[attr_index] != eSymbolSizeUnknown)
+          return False;
+        AttrPartOpSize[attr_index] = (as_toupper(*p_attr) == 'L') ? eSymbolSize24Bit : eSymbolSize16Bit;
+        break;
+      case 'I':
+        attr_index = 1;
+        break;
+      default:
+        return False;
+    }
+  return True;
+}
+
 static void MakeCode_Z80(void)
 {
   CodeLen = 0;
@@ -4152,22 +4763,44 @@ static void MakeCode_Z80(void)
   OpSize = 0xff;
   MayLW = False;
 
-/*--------------------------------------------------------------------------*/
-/* Rabbit 2000 prefixes */
-
-  if (MomCPU == CPUR2000)
-  {
-    StripPref("ALTD", 0x76);
-  }
-
-  /* zu ignorierendes */
+  /* To Be Ignored: */
 
   if (Memo("")) return;
 
-  /* letzten Praefix umkopieren */
+  switch (p_curr_cpu_props->core)
+  {
+    case e_core_r2000:
+      /* Rabbit 2000 prefixes */
+      StripPref("ALTD", 0x76);
+      if (Memo("")) return;
+      break;
+    case e_core_z380:
+      /* Z380: letzten Praefix umkopieren */
+      LastPrefix = CurrPrefix;
+      CurrPrefix = Pref_IN_N;
+      break;
+    case e_core_ez80:
+    {
+      int z, pref_index = 0;
+      Boolean need_prefix = False;
+      tSymbolSize def_size = Reg_ADL ? eSymbolSize24Bit : eSymbolSize16Bit;
 
-  LastPrefix = CurrPrefix;
-  CurrPrefix = Pref_IN_N;
+      /* eZ80: Suffix Completion */
+      for (z = 0; z < 2; z++)
+      {
+        if (AttrPartOpSize[z] == eSymbolSizeUnknown)
+          AttrPartOpSize[z] = def_size;
+        else
+          need_prefix = True;
+        pref_index |= (AttrPartOpSize[z] == eSymbolSize24Bit) << z;
+      }
+      if (need_prefix)
+        BAsmCode[PrefixCnt++] = 0x40 | (pref_index << 3) | pref_index;
+      break;
+    }
+    default:
+      break;
+  }
 
   /* evtl. Datenablage */
 
@@ -4181,6 +4814,7 @@ static void InitCode_Z80(void)
 {
   Reg_CBAR = 0xf0;
   Reg_CBR = Reg_BBR = 0x00;
+  Reg_ADL = 0;
 }
 
 static Boolean IsDef_Z80(void)
@@ -4215,9 +4849,9 @@ static void DissectReg_Z80(char *p_dest, size_t dest_size, tRegInt value, tSymbo
   {
     case eSymbolSize8Bit:
       if ((value & 0xf0) == (IXPrefix & 0xf0))
-        as_snprintf(p_dest, dest_size, "%s%c", Reg16Names[4], (value & 1) ? 'L' : ((MomCPU == CPUZ80U) ? 'H' : 'U'));
+        as_snprintf(p_dest, dest_size, "%s%c", Reg16Names[4], (value & 1) ? 'L' : (is_z80u() ? 'H' : 'U'));
       else if ((value & 0xf0) == (IYPrefix & 0xf0))
-        as_snprintf(p_dest, dest_size, "%s%c", Reg16Names[5], (value & 1) ? 'L' : ((MomCPU == CPUZ80U) ? 'H' : 'U'));
+        as_snprintf(p_dest, dest_size, "%s%c", Reg16Names[5], (value & 1) ? 'L' : (is_z80u() ? 'H' : 'U'));
       else if ((value < 8) && (value != 6))
         as_snprintf(p_dest, dest_size, "%c", Reg8Names[value]);
       else
@@ -4284,8 +4918,16 @@ static Boolean chk_pc_z380(LargeWord addr)
   }
 }
 
-static void SwitchTo_Z80(void)
+/*!------------------------------------------------------------------------
+ * \fn     SwitchTo_Z80(void *p_user)
+ * \brief  switch to Z80 target
+ * \param  p_user properties of CPU
+ * ------------------------------------------------------------------------ */
+
+static void SwitchTo_Z80(void *p_user)
 {
+  p_curr_cpu_props = (const cpu_props_t*)p_user;
+
   TurnWords = False;
   SetIntConstMode(eIntConstModeIntel);
   SetIsOccupiedFnc = ChkMoreOneArg;
@@ -4295,27 +4937,67 @@ static void SwitchTo_Z80(void)
 
   ValidSegs = 1 << SegCode;
   Grans[SegCode] = 1; ListGrans[SegCode] = 1; SegInits[SegCode] = 0;
-  if (MomCPU == CPUZ380)
+
+  switch (p_curr_cpu_props->core)
   {
-    SegLimits[SegCode] = 0xfffffffful;
-    ChkPC = chk_pc_z380;
+    case e_core_z380:
+      SegLimits[SegCode] = 0xfffffffful;
+      ChkPC = chk_pc_z380;
+
+      /* Extended Modes only on Z380 */
+
+      if (!onoff_test_and_set(e_onoff_reg_extmode))
+        SetFlag(&ExtFlag, ExtModeSymName, False);
+      AddONOFF(ExtModeCmdName, &ExtFlag, ExtModeSymName, False);
+      if (!onoff_test_and_set(e_onoff_reg_lwordmode))
+        SetFlag(&LWordFlag, LWordModeSymName, False);
+      AddONOFF(LWordModeCmdName, &LWordFlag , LWordModeSymName , False);
+      break;
+    case e_core_ez80:
+    {
+      static const ASSUMERec assume_ez80[] =
+      {
+        { "ADL"  , &Reg_ADL  , 0, 1   , 0, NULL },
+        { "MBASE", &Reg_MBASE, 0, 0xff, 0, NULL }
+      };
+
+      SegLimits[SegCode] = 0xfffffful;
+      AttrChars = "."; HasAttrs = True;
+      DecodeAttrPart = decode_attrpart_ez80;
+      pASSUMERecs = assume_ez80;
+      ASSUMERecCnt = as_array_size(assume_ez80);
+      break;
+    }
+    case e_core_z180:
+    {
+      static const ASSUMERec ASSUMEZ180s[] =
+      {
+        { "CBAR" , &Reg_CBAR , 0,  0xff, 0xf0, check_cbar },
+        { "CBR"  , &Reg_CBR  , 0,  0xff, 0   , update_z180_areas },
+        { "BBR"  , &Reg_BBR  , 0,  0xff, 0   , update_z180_areas },
+      };
+
+      SegLimits[SegCode] = 0x7fffful;
+      pASSUMERecs = ASSUMEZ180s;
+      ASSUMERecCnt = as_array_size(ASSUMEZ180s);
+      update_z180_areas();
+      break;
+    }
+    default:
+      SegLimits[SegCode] = 0xffffu;
   }
-  else if (MomCPU == CPUZ180)
-    SegLimits[SegCode] = 0x7fffful;
-  else
-    SegLimits[SegCode] = 0xffffu;
 
   /* Gameboy Z80 does not have I/O space, and no IX/IY, do not test for them and allow as normal symbols: */
 
-  if (!is_sharp())
+  if (is_sharp())
+    Reg16Cnt = 4;
+  else
   {
     ValidSegs |= 1 << SegIO;
     Grans[SegIO  ] = 1; ListGrans[SegIO  ] = 1; SegInits[SegIO  ] = 0;
     SegLimits[SegIO  ] = PortEnd();
     Reg16Cnt = 6;
   }
-  else
-    Reg16Cnt = 4;
 
   MakeCode = MakeCode_Z80;
   IsDef = IsDef_Z80;
@@ -4323,45 +5005,32 @@ static void SwitchTo_Z80(void)
   InternSymbol = InternSymbol_Z80;
   SwitchFrom = DeinitFields; InitFields();
   DissectReg = DissectReg_Z80;
-
-  /* Extended Modes only on Z380 */
-
-  if (MomCPU >= CPUZ380)
-  {
-    if (!onoff_test_and_set(e_onoff_reg_extmode))
-      SetFlag(&ExtFlag, ExtModeSymName, False);
-    AddONOFF(ExtModeCmdName, &ExtFlag, ExtModeSymName, False);
-    if (!onoff_test_and_set(e_onoff_reg_lwordmode))
-      SetFlag(&LWordFlag, LWordModeSymName, False);
-    AddONOFF(LWordModeCmdName, &LWordFlag , LWordModeSymName , False);
-  }
-
+  
   asmerr_warn_relative_add();
-
-  if (MomCPU == CPUZ180)
-  {
-    static const ASSUMERec ASSUMEZ180s[] =
-    {
-      { "CBAR" , &Reg_CBAR , 0,  0xff, 0xf0, check_cbar },
-      { "CBR"  , &Reg_CBR  , 0,  0xff, 0   , update_z180_areas },
-      { "BBR"  , &Reg_BBR  , 0,  0xff, 0   , update_z180_areas },
-    };
-
-    pASSUMERecs = ASSUMEZ180s;
-    ASSUMERecCnt = as_array_size(ASSUMEZ180s);
-    update_z180_areas();
-  }
 }
+
+static const cpu_props_t cpu_props[] =
+{
+  { "GBZ80"     , e_core_sharp, e_core_flag_none },
+  { "LR35902"   , e_core_sharp, e_core_flag_none },
+  { "Z80"       , e_core_z80  , e_core_flag_none },
+  { "Z80UNDOC"  , e_core_z80u , e_core_flag_none },
+  { "Z180"      , e_core_z180 , e_core_flag_none },
+  { "RABBIT2000", e_core_r2000, e_core_flag_none },
+  { "eZ80190"   , e_core_ez80 , e_core_flag_i_8bit | e_core_flag_no_xio },
+  { "eZ80L92"   , e_core_ez80 , e_core_flag_i_8bit },
+  { "eZ80F91"   , e_core_ez80 , e_core_flag_none },
+  { "eZ80F92"   , e_core_ez80 , e_core_flag_i_8bit },
+  { "eZ80F93"   , e_core_ez80 , e_core_flag_i_8bit },
+  { "Z380"      , e_core_z380 , e_core_flag_none }
+};
 
 void codez80_init(void)
 {
-  CPUGBZ80 = AddCPU("GBZ80"     , SwitchTo_Z80);
-  CPULR35902 = AddCPU("LR35902" , SwitchTo_Z80);
-  CPUZ80   = AddCPU("Z80"       , SwitchTo_Z80);
-  CPUZ80U  = AddCPU("Z80UNDOC"  , SwitchTo_Z80);
-  CPUZ180  = AddCPU("Z180"      , SwitchTo_Z80);
-  CPUR2000 = AddCPU("RABBIT2000", SwitchTo_Z80);
-  CPUZ380  = AddCPU("Z380"      , SwitchTo_Z80);
+  const cpu_props_t *p_props;
+
+  for (p_props = cpu_props; p_props < cpu_props + as_array_size(cpu_props); p_props++)
+    (void)AddCPUUser(p_props->p_name, SwitchTo_Z80, (void*)p_props, NULL);
 
   AddInitPassProc(InitCode_Z80);
 }

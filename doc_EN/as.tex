@@ -87,6 +87,8 @@ registered trademarks of Intel Corp. .
 
 {\em PicoBlaze} is a registered trademark of Xilinx Inc.
 
+{\em eZ80} and {\em Z80} are registered trademarks of Zilog Inc. 
+
 {\em UNIX} is a registered trademark of the The Open Group.
 
 {\em Linux} is a registered trademark of Linus Thorvalds.
@@ -251,7 +253,7 @@ following processor families have been implemented:
 \item{Atmel (Mega-)AVR}
 \item{AMD 29K}
 \item{Siemens 80C166/167}
-\item{Zilog Z80 (including undocumented instructions), Z180, Z380}
+\item{Zilog Z80 (including undocumented instructions), Z180, Z380, eZ80}
 \item{Sharp LR35902 (,,Gameboy Z80'')}
 \item{Sharp SC61860}
 \item{Sharp SC62015}
@@ -574,6 +576,7 @@ REG78310.INC      & register addresses \& vectors 78K3 \\
 REG78K0.INC       & register addresses 78K0 \\
 REG96.INC         & register addresses MCS-96 \\
 REGACE.INC        & register addresses ACE \\
+REGEZ80.INC       & register addresses eZ80 \\
 REGF8.INC         & register and memory addresses F8 \\
 REGAVROLD.INC     & register and bit addresses AVR family (old)\\
 REGAVR.INC        & register and bit addresses AVR family \\
@@ -612,6 +615,8 @@ REGSX20.INC       & register and bit addresses Parallax SX20/28 \\
 AVR/\*.INC        & register and bit addresses AVR family \\
                   & (do not include directly, use REGAVR.INC) \\
 COLDFIRE/\*.INC   & register and bit addresses ColdFire family \\
+                  & (do not include directly, use REGCOLD.INC) \\
+EZ80/\*.INC       & register and bit addresses eZ80 family \\
                   & (do not include directly, use REGCOLD.INC) \\
 PDK/\*.INC        & register and bit addresses PMC/PMS/PFSxxx \\
                   & (do not include directly, use REGPDK.INC) \\
@@ -3644,7 +3649,10 @@ amount of on-chip peripherals.
 %%-----------
 \begin{cpulist}
    LR35902/GBZ80 $\rightarrow$ Z80 $\rightarrow$ Z80UNDOC \\
-\> $\rightarrow$ Z180 $\rightarrow$ Z380
+\> $\rightarrow$ Z180 \\
+\> $\rightarrow$ eZ80190, eZ80L92, eZ80F91, \\
+\> eZ80F92, eZ80F93, \\
+\> $\rightarrow$ Z380
 \end{cpulist}
 While there are only a few additional instructions for the Z180, the
 Z380 owns 32-bit registers, a linear address space of 4 Gbytes, a
@@ -3660,6 +3668,13 @@ The processor built into the Gameboy (official designation LR35092,
 commonly referred to as ''Gameboy Z80'') is a mixture of an 8080
 and Z80.  It lacks the IX/IY registers, the I/O address space,
 the second register bank and a couple of 16 bit instructions.
+
+The Zilog eZ80 variants extend the Z80 architecture with a 16
+MByte address space, 24 bit registers and moderate additions to
+the instruction set.  Some variants feature an I register that
+is only 8 bits wide, and the eZ80190 additionally lacks a few
+string I/O instructios.  Otherwise, they only differ in the
+amonut of on-chip memory and peripherals.
 %%-----------
 \begin{cpulist}
    Z8601, Z8603, z86C03, z86E03, Z86C06, Z86E06, \\
@@ -5013,6 +5028,29 @@ the {\tt phys2cpu()} function.
 
 %%. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
+\subsubsection{eZ80}
+
+The eZ80 mode can operate in two modes:
+\begin{itemize}
+\item{In Z80 mode, the BC, DE, HL, IX, IY, and SP registers are 16 bits wide,
+      and only the 64K page defined by the MBASE register is addressable.
+      For instructions with an absolute address or a non-8-bit immediate value
+      as argument, two bytes are fetched.}
+\item{In ADL mode, the mentioned registers are 24 bits wide, and the whole
+      16 MByte address space can be addressed.  For instructions with an absolute
+      address or a non-8-bit immediate value, three bytes are fetched.}
+\end{itemize}
+Since instruction encoding and range checking depends on the operating mode,
+the assembler needs to know which mode the CPU currently uses.  By using
+{\tt ASSUME} to set {\tt ADL} either to 0 or 1, the assembler is told about
+the default operating mode, i.e. the mode if no suffixes are given.  Furthermore,
+the assembler can be told about the current value of MBASE (0 to 0ff hex) as
+well.  The default assumption for both values is zero, same as to the values
+set in the CPU after a reset.
+      
+
+%%. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
 \subsubsection{XA}
 
 The XA family has a data address space of 16 Mbytes, a process however
@@ -5563,7 +5601,7 @@ the specification of the operand length is moved into the mnemonic:
 \item{\tty{DW}: 16-bit integer or half precision}
 \item{\tty{DD}: 32-bit integer or single precision}
 \item{\tty{DQ}: double precision   (64 bits)}
-\item{\tty{DT}: extended precision (80 bits)}
+\item{\tty{DT}: packed BCD integer or extended precision (80 bits)}
 \end{itemize}
 Second, the distinction between constant definition and memory
 reservation is done by the operand.  A reservation of memory is
@@ -7799,8 +7837,10 @@ optionally be enclosed with '' characters).  This instruction is
 useful to split source files that would otherwise not fit into the
 editor or to create ''tool boxes''.
 
-In case that the file name does not have an extension, it will
-automatically be extended with \tty{INC}.
+In case that the file name does not have an extension, an extension
+of \tty{INC} is assumed in a firstg step.  Only if no sch file 
+exists, or if the specified name contains a period (and therefore an
+extension), a file of exactly this name is searched for.
 
 The assmebler primarily tries to open the file in the directory
 containing the source file with the \tty{INCLUDE} statenemt.  This
@@ -7822,9 +7862,6 @@ and
 \end{verbatim}
 are equivalent.  \bb{CAUTION!} This freedom of choice is the reason why
 only a string constant but no string expression is allowed!
-
-The search list is ignored if the file name itself contains a path
-specification.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -7851,7 +7888,8 @@ the file's end.
 This way, \tty{$<$length$>$} bytes are included starting at
 \tty{$<$offset$>$}.
 
-The same rules regarding search paths apply as for \tty{INCLUDE}.
+The same rules regarding search paths and assumed suffixes apply as for
+\tty{INCLUDE}.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -9735,8 +9773,8 @@ undocumented instructions; furthermore, not everyone might know the
 full set.  It might therefore make sense to list all instructions at
 this place:
 
-Similar to a Z380, it is possible to access the byte halves of IX and
-IY separately.  In detail, these are the instructions that allow
+Similar to the Z380 and eZ80, it is possible to access the byte halves
+of IX and IY separately.  In detail, these are the instructions that allow
 this:
 \begin{verbatim}
  INC Rx              LD R,Rx             LD  Rx,n
@@ -12496,7 +12534,13 @@ described by:
                {The CASE instruction expects a branch table with as many
                 entries, as the limit argument says, plus one.  The limit and
                 the number of branch addresses do not fit together.}
-               {tas limit argument}
+               {the limit argument}
+\errentry{ 470}{instruction assembled as NOP}
+               {warning}
+               {The machinne code assigned to this instruction is used
+                for different purposes.  Since this instruction anyway does
+                not perform any operation, it is assembled as a NOP.}
+               {none}
 \errentry{1000}{symbol double defined}
                {error}
                {A new value is assigned to a symbol, using a label or a

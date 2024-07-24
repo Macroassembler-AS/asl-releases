@@ -239,6 +239,10 @@ Message ErrMsgCaseWrongArgCnt
  "CASE-Limit passt nicht zur Anzahl der Sprungadressen"
  "CASE limit does not match number of branch addresses"
 
+Message ErrMsgReplacedByNOP
+ "Befehl als NOP assembliert"
+ "instruction assembled as NOP"
+
 ;*****
 
 Message ErrMsgDoubleDef

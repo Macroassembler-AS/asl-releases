@@ -70,6 +70,8 @@ Motorola Inc. .
 
 {\em PicoBlaze} ist ein eingetragenes Warenzeichen der Xilinx Inc.
 
+{\em eZ80} und {\em Z80} sind eingetragene Warenzeichen von Zilog Inc.
+
 {\em UNIX} ist ein eingetragenes Warenzeichen der Open Group.
 
 {\em Linux} ist ein eingetragenes Warenzeichen von Linus Thorvalds.
@@ -247,7 +249,7 @@ folgende Prozessorfamilien implementiert:
 \item{Atmel (Mega-)AVR}
 \item{AMD 29K}
 \item{Siemens 80C166/167}
-\item{Zilog Z80 (einschlie"slich undokumentierter Befehle), Z180, Z380}
+\item{Zilog Z80 (einschlie"slich undokumentierter Befehle), Z180, Z380, eZ80}
 \item{Sharp LR35902 (,,Gameboy-Z80'')}
 \item{Sharp SC61860}
 \item{Sharp SC62015}
@@ -585,6 +587,7 @@ REGAVROLD.INC     & Register- \& Bitadressen AVR-Familie (veraltet)\\
 REGAVR.INC        & Register- \& Bitadressen AVR-Familie (aktuell)\\
 REGCOLD.INC       & Registeradressen ColdFire \\
 REGCOP8.INC       & Registeradressen COP8 \\
+REGEZ80.INC       & Registeradressen eZ80 \\
 REGF8.INC         & Register- \& Speicheradressen F8 \\
 REGGP32.INC       & Registeradressen 68HC908GP32 \\
 REGH16.INC        & Registeradressen H16 \\
@@ -629,6 +632,9 @@ AVR/\*.INC        & Register- \& Bitadressen AVR-Familie \\
                   & inkludieren) \\
 COLDFIRE\/*.INC   & Register- \& Bitadressen ColdFire-Familie \\
                   & (nicht direkt benutzen, REGCOLD.INC \\
+                  & inkludieren) \\
+EZ80\/*.INC       & Register- \& Bitadressen eZ80-Familie \\
+                  & (nicht direkt benutzen, REGEZ80.INC \\
                   & inkludieren) \\
 PDK\/*.INC        & Register- \& Bitadressen PMC/PMS/PFSxxx \\
                   & (nicht direkt benutzen, REGPDK.INC \\
@@ -3741,7 +3747,10 @@ eingebauten Peripherie.
 %%-----------
 \begin{cpulist}
    LR35902/GBZ80 $\rightarrow$ Z80 $\rightarrow$ Z80UNDOC \\
-\> $\rightarrow$ Z180 $\rightarrow$ Z380
+\> $\rightarrow$ Z180 \\
+\> $\rightarrow$ eZ80190, eZ80L92, eZ80F91, \\
+\> eZ80F92, eZ80F93, \\
+\> $\rightarrow$ Z380
 \end{cpulist}
 W"ahrend f"ur den Z180 nur die zus"atzlichen Befehle definiert sind
 (d.h. die Z180-MMU findet noch keine Ber"ucksichtigung), besitzt der
@@ -3759,6 +3768,14 @@ umgangssprachlich auch als ,,Gameboy-Z80'' bezeichnet) ist eine
 Mischung aus Z80 und 8080.  Ihm fehlen die IX/IY-Register, der
 I/O-Adre"sraum, die zweite Registerbank sowie eine Reihe von
 16-Bit-Befehlen.
+
+Die Zilog eZ80 Varianten erweitern die Z80 Architektur um
+einem 16 MByte gro"sen Adre"sraum, 24 Bit breite Register
+sowie eine begrenzte Zahl neuer Befehle.  Einige Varianten
+enthalten ein I-Register, das nur 8 Bit breit ist.  Dem
+eZ80190 fehlen zus"atzlich einige String-I/O Befehle.  Ansonsten
+liegen die Unterschiede nur in der Menge des eingebauten
+Speichers sowie der integrierten Peripherie.
 %%-----------
 \begin{cpulist}
    Z8601, Z8603, Z86C03, Z86E03, Z86C06, Z86E06, \\
@@ -5162,6 +5179,30 @@ unter Benutzung der {\tt phys2cpu()}-Funktion zu benutzen.
 
 %%. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
+\subsubsection{eZ80}
+
+Der eZ80 kann in zwei Modi operieren:
+\begin{itemize}
+\item{Im Z80 Modus sind die Register BC, DE, HL, IX, IY und SP 16 bit breit,
+      und nur die 64K-Speicherseite, die durch das MBASE-Register definiert
+      ist, kann adressiert werden.  Bei Befehlen, die eine absolute Adresse oder
+      einen nicht-8-Bit Wert als Argument beinhalten, werden zwei Bytes
+      geladen.}
+\item{Im ADL Modus sind die Register BC, DE, HL, IX, IY und SP 24 Bit breit,
+      und der komplette 16 MByte Adressraum kann angesprochen werden.  Bei Befehlen,
+      die eine absolute Adresse oder einen nicht-8-Bit Wert als Argument beinhalten,
+      werden drei Bytes geladen.}
+\end{itemize}
+Da die Bin"arkodierung und Adre"sbereichspr"ufung von diesem Modus abh"angt,
+mu"s der Assembler wissen, welcher Modus gerade verwendet wird.  Indem man
+{\tt ADL} mittels {\tt ASSUME} entweder auf 0 oder 1 setzt, teilt man dem
+Assembler den Default-Modus mit, d.h. den Modus ohne Verwendung expliziter
+Suffixe an einem Befehl.  Des weiteren kann dem Assembler der aktuelle
+Wert von MBASE (0 bis 0ff hex) mitgeteilt werden.  Die Default-Annahme
+f"ur beide Werte ist 0, "ahnlich den Werten nach einem Hardware-Reset.
+
+%%. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
 \subsubsection{XA}
 
 Die XA-Familie besitzt einen Datenadre"sraum von 16 Mbyte, ein Proze"s
@@ -5719,7 +5760,7 @@ verlegt:
 \item{\tty{DW}: 16-Bit-Integer oder Half Precision}
 \item{\tty{DD}: 32-Bit-Integer oder Single Precision}
 \item{\tty{DQ}: Double Precision (64 Bit)}
-\item{\tty{DT}: Extended Precision (80 Bit)}
+\item{\tty{DT}: Gepackter BCD Integer oder Extended Precision (80 Bit)}
 \end{itemize}
 Zum anderen erfolgt die Unterscheidung, ob Konstantendefinition oder
 Speicherreservierung, im Operanden.  Eine Reservierung von Speicher
@@ -7994,10 +8035,12 @@ stehen w"urde.  Dieser Befehl ist sinnvoll, um Quelldateien aufzuspalten,
 die alleine nicht in den Speicher passen w"urden oder um sich ''Toolboxen''
 zu erzeugen.
 \par
-Falls der angegebene Dateiname keine Endung hat, wird er automatisch
-um die Endung \tty{INC} erweitert.
+Falls der angegebene Dateiname keine Endung hat, wird in einem ersten
+Schritt eine Endung \tty{.INC} angenommen.  Erst wenn keine solche Datei
+existiert, oder der angegebene Name bereits einen Punkt und damit eine Endung
+enth"alt, wird nach einer Datei genau mit dem anggegebenen Namen gesucht.
 \par
-Der Assembler versucht als erstes, die angegebene Datei in den Verzeichnis
+Der Assembler versucht als erstes, die Datei in dem Verzeichnis
 zu finden, in dem sich auch die Quelldatei befindet, die das \tty{INCLUDE}-Statement
 enth"alt - ein eventuell in der Dateiangabe enthaltener Pfad ist also relativ
 zu deren Pfad, und nicht zu dem Verzeichnis, von dem aus man den Assembler
@@ -8021,9 +8064,6 @@ und
 \end{verbatim}
 sind also "aquivalent.  \bb{ACHTUNG!} Wegen dieser Wahlfreiheit ist
 hier nur eine Stringkonstante, aber kein Stringausdruck zul"assig!
-\par
-Sollte der Dateiname eine Pfadangabe enthalten, so wird die Suchliste
-ignoriert.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -8050,7 +8090,8 @@ der Datei eingebunden.
 \end{verbatim}
 In dieser Form werden \verb!<Len>! Bytes ab Offset \verb!<Offset>! eingebunden.
 \par
-Es gelten die gleichen Regeln bez"uglich Suchpfaden wie bei \tty{INCLUDE}.
+Es gelten die gleichen Regeln bez"uglich Suchpfaden und impliziten Suffixen
+wie bei \tty{INCLUDE}.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -9944,7 +9985,7 @@ Da es von Zilog naturgem"a"s keine Syntaxvorgaben f"ur die undokumentierten
 Befehle gibt und wohl auch nicht jeder den kompletten Satz kennt,
 ist es vielleicht sinnvoll, diese Befehle hier kurz aufzuz"ahlen:
 \par
-Wie auch beim Z380 ist es m"oglich, die Byte-H"alften von IX und IY
+Wie auch beim Z380 und eZ80 ist es m"oglich, die Byte-H"alften von IX und IY
 einzeln anzusprechen.  Im einzelnen sind dies folgende Varianten:
 \begin{verbatim}
  INC Rx              LD R,Rx             LD  Rx,n
@@ -12780,6 +12821,12 @@ Angaben:
                 Eintr"agen, wie das Limit-Argument plus eins angibt.  Limit-Wert
                 und Anzahl der Sprungadressen passen nicht zueinander.}
                {das Limit-Argument}
+\errentry{ 470}{Befehl als NOP assembliert}
+               {Warnung}
+               {Der dieser Anweisung eigentlich zugewiesene Opcode wird anderweitig
+                verwendet.  Da die Anweisung ohnehin nichts bewirkt, wird sie stattdessen
+                als NOP assembliert.}
+               {keines}
 \errentry{1000}{Symbol doppelt definiert}
                {Fehler}
                {Einem Symbol wurde durch ein Label oder

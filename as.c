@@ -3403,8 +3403,8 @@ static void AssembleFile(char *Name)
               getmessage((PassNo == 1) ? Num_InfoMessPassCnt : Num_InfoMessPPassCnt), STRINGSIZE);
   AssembleFile_WrSummary(s);
 
-  if ((ErrorCount > 0) && (Repass) && (ListMode != 0))
-    WrLstLine(getmessage(Num_InfoMessNoPass));
+  if ((ErrorCount > 0) && Repass)
+    AssembleFile_WrSummary(getmessage(Num_InfoMessNoPass));
 
 #ifdef __TURBOC__
   as_snprintf(s, sizeof(s), "%7lu%s", coreleft() >> 10,

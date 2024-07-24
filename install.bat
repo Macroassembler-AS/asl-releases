@@ -10,6 +10,8 @@ md %2
 for %%i in (include\*.inc) do unumlaut %%i %2\
 md %2\avr
 for %%i in (include\avr\*.inc) do unumlaut %%i %2\avr\
+md %2\ez80
+for %%i in (include\ez80\*.inc) do unumlaut %%i %2\ez80\
 md %2\s12z
 for %%i in (include\s12z\*.inc) do unumlaut %%i %2\s12z\
 md %2\s12z\vh

@@ -70,7 +70,7 @@ static inline Boolean Memo(const char *s)
 #endif
 
 
-extern void AddSuffix(char *s, const char *Suff);
+extern Boolean AddSuffix(char *s, const char *Suff);
 
 extern void KillSuffix(char *s);
 

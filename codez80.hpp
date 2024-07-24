@@ -7,4 +7,7 @@
 # include "cppops.h"
 DefCPPOps_Enum(tOpPrefix)
 
+DefCPPOps_Mask(cpu_core_mask_t)
+DefCPPOps_Mask(cpu_core_flags_t)
+
 #endif /* _CODEZ80_HPP */

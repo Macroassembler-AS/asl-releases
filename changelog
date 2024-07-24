@@ -1,3 +1,19 @@
+2024-07-24 [1.42 Bld 272]
+
+- Change      : If the file name given as argument to INCLUDE
+                or BINCLUDE does not contain an extension, the
+                name extended by .INC and the plain name is
+                searched for (in this order).
+- Bugfix      : The message "Additional pass not started..."
+                is now also added to the summary written
+                to the console.
+- Change      : Allow MFPT and XOR on T-11 (architecture
+                handbook seems to be wrong on this)
+- Change      : The DT pseudo instruction stores integer
+                arguments in packed BCD format, instead
+                of converting integers to floats
+- Addition    : support Zilog eZ80
+
 2024-06-26 [1.42 Bld 271]
 
 - Bugfix      : warn about usage of MOV A,ACC on MCS-51

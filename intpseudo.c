@@ -76,6 +76,7 @@ struct sLayoutCtx
   Boolean (*Put48F)(Double f, struct sLayoutCtx *pCtx);
   Boolean (*Put64I)(LargeWord q, struct sLayoutCtx *pCtx);
   Boolean (*Put64F)(Double f, struct sLayoutCtx *pCtx);
+  Boolean (*Put80I)(LargeWord t, Boolean orig_negative, struct sLayoutCtx *pCtx);
   Boolean (*Put80F)(Double t, struct sLayoutCtx *pCtx);
   Boolean (*Put128I)(LargeWord q, Boolean orig_negative, struct sLayoutCtx *pCtx);
   Boolean (*Put128F)(Double t, struct sLayoutCtx *pCtx);
@@ -1139,6 +1140,86 @@ func_exit:
  * Result:      TRUE if no errors occured
  *****************************************************************************/
 
+static Boolean Put80I_To_8(LargeWord t, Boolean orig_negative, struct sLayoutCtx *p_ctx)
+{
+  unsigned dest, bit_pos;
+  Byte digit;
+
+  if (!IncMaxCodeLen(p_ctx, 10))
+    return False;
+  memset(&BAsmCode[p_ctx->CurrCodeFill.FullWordCnt], 0, 10);
+
+  if (orig_negative)
+    t = (LargeWord)(0 - ((LargeInt)t));
+  dest = bit_pos = 0;
+  while (t)
+  {
+    digit = (t % 10) << bit_pos;
+    t /= 10;
+    if (p_ctx->LoHiMap)
+      BAsmCode[p_ctx->CurrCodeFill.FullWordCnt + (9 - dest)] |= digit;
+    else
+      BAsmCode[p_ctx->CurrCodeFill.FullWordCnt + dest] |= digit;
+    if ((bit_pos += 4) >= 8)
+    {
+      bit_pos = 0;
+      dest++;
+    }
+    if ((dest >= 9) && t)
+    {
+      WrError(orig_negative ? ErrNum_UnderRange : ErrNum_OverRange);
+      return False;
+    }
+  }
+  digit = !!orig_negative << 7;
+  if (p_ctx->LoHiMap)
+    BAsmCode[p_ctx->CurrCodeFill.FullWordCnt + 0] |= digit;
+  else
+    BAsmCode[p_ctx->CurrCodeFill.FullWordCnt + 9] |= digit;
+  p_ctx->CurrCodeFill.FullWordCnt += 10;
+  return True;
+}
+
+static Boolean Put80I_To_16(LargeWord t, Boolean orig_negative, struct sLayoutCtx *p_ctx)
+{
+  unsigned dest, bit_pos;
+  Word digit;
+
+  if (!IncMaxCodeLen(p_ctx, 5))
+    return False;
+  memset(&WAsmCode[p_ctx->CurrCodeFill.FullWordCnt], 0, 10);
+
+  if (orig_negative)
+    t = (LargeWord)(0 - ((LargeInt)t));
+  dest = bit_pos = 0;
+  while (t)
+  {
+    digit = (t % 10) << bit_pos;
+    t /= 10;
+    if (p_ctx->LoHiMap)
+      WAsmCode[p_ctx->CurrCodeFill.FullWordCnt + (4 - dest)] |= digit;
+    else
+      WAsmCode[p_ctx->CurrCodeFill.FullWordCnt + dest] |= digit;
+    if ((bit_pos += 4) >= 16)
+    {
+      bit_pos = 0;
+      dest++;
+    }
+    if ((dest >= 4) && (bit_pos >= 8) && t)
+    {
+      WrError(orig_negative ? ErrNum_UnderRange : ErrNum_OverRange);
+      return False;
+    }
+  }
+  digit = !!orig_negative << 15;
+  if (p_ctx->LoHiMap)
+    WAsmCode[p_ctx->CurrCodeFill.FullWordCnt + 4] |= digit;
+  else
+    WAsmCode[p_ctx->CurrCodeFill.FullWordCnt + 0] |= digit;
+  p_ctx->CurrCodeFill.FullWordCnt += 5;
+  return True;
+}
+
 static Boolean Put80F_To_8(Double t, struct sLayoutCtx *pCtx)
 {
   if (!IncMaxCodeLen(pCtx, 10))
@@ -1180,9 +1261,21 @@ static Boolean LayoutTenBytes(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
       break;
     case TempInt:
     ToInt:
-      TempResultToFloat(&erg);
-      /* fall-through */
+      if (pCtx->flags & eIntPseudoFlag_AllowInt)
+      {
+        if (!pCtx->Put80I(erg.Contents.Int, erg.Contents.Int < 0, pCtx))
+          LEAVE;
+        Cnt = 10;
+        Result = True;
+        break;
+      }
+      else
+      {
+        TempResultToFloat(&erg);
+        goto ToFloat;
+      }
     case TempFloat:
+    ToFloat:
       if (!pCtx->Put80F(erg.Contents.Float, pCtx))
         LEAVE;
       Cnt = 10;
@@ -1190,6 +1283,7 @@ static Boolean LayoutTenBytes(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
       break;
     case TempString:
     {
+      Boolean ret;
       unsigned z;
 
       if (MultiCharToInt(&erg, 4))
@@ -1199,8 +1293,13 @@ static Boolean LayoutTenBytes(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
         LEAVE;
 
       for (z = 0; z < erg.Contents.str.len; z++)
-        if (!pCtx->Put80F(erg.Contents.str.p_str[z], pCtx))
+      {
+        ret = (pCtx->flags & eIntPseudoFlag_AllowInt)
+            ? pCtx->Put80I(erg.Contents.str.p_str[z], False, pCtx)
+            : pCtx->Put80F(erg.Contents.str.p_str[z], pCtx);
+        if (!ret)
           LEAVE;
+      }
 
       Cnt = erg.Contents.str.len * 10;
       Result = True;
@@ -1896,11 +1995,13 @@ void DecodeIntelDT(Word Flags)
   {
     case 1:
       LayoutCtx.Put80F = Put80F_To_8;
+      LayoutCtx.Put80I = Put80I_To_8;
       LayoutCtx.LoHiMap = (Flags & eIntPseudoFlag_BigEndian) ? 1 : 0;
       LayoutCtx.Replicate = Replicate8ToN_To_8;
       break;
     case 2:
       LayoutCtx.Put80F = Put80F_To_16;
+      LayoutCtx.Put80I = Put80I_To_16;
       LayoutCtx.LoHiMap = (Flags & eIntPseudoFlag_BigEndian) ? 1 : 0;
       LayoutCtx.Replicate = Replicate16ToN_To_16;
       break;
