@@ -600,8 +600,17 @@ static Boolean decode_adr(tStrComp *p_arg, adr_vals_t *p_result, Word pc_value, 
 
     if (!decode_reg_or_const(&reg_arg, &p_result->mode))
       return False;
-    if (!*disp_arg.str.p_str && !deferred)
-      p_result->mode |= 010;
+    if (!*disp_arg.str.p_str)
+    {
+      if (deferred)
+      {
+        p_result->vals[0] = 0;
+        p_result->mode |= 070;
+        p_result->count = 2;
+      }
+      else
+        p_result->mode |= 010;
+    }
     else
     {
       p_result->vals[0] = EvalStrIntExpressionWithResult(&disp_arg, Int16, &eval_result);

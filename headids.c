@@ -116,6 +116,7 @@ static const TFamilyDescr Descrs[] =
   { "7725"         , 0x007e, eHexFormatIntel   },
   { "77230"        , 0x007f, eHexFormatIntel   },
   { "V60"          , 0x000d, eHexFormatIntel32 },
+  { "uCOM-43"      , 0x0028, eHexFormatIntel   },
   { "SYM53C8xx"    , 0x0025, eHexFormatIntel   },
   { "F2MC8"        , 0x0015, eHexFormatIntel   },
   { "F2MC16"       , 0x0016, eHexFormatIntel   },

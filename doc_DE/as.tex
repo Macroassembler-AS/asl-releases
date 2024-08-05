@@ -295,6 +295,7 @@ folgende Prozessorfamilien implementiert:
 \item{Fairchild ACE}
 \item{Fairchild F8}
 \item{NEC $\mu$PD78(C)0x/$\mu$PD78(C)1x}
+\item{NEC $\mu$COM-43/44/45}
 \item{NEC $\mu$PD75xx}
 \item{NEC $\mu$PD75xxx (alias 75K0)}
 \item{NEC 78K0}
@@ -4163,6 +4164,18 @@ generell nur teilweise bin"ar aufw"artskompatibel!  Die NMOS-Version
 $\mu$PD7810 besitzt keinen STOP-Modus; der entsprechende Befehl sowie das
 ZCM-Register fehlen demzufolge.  \bb{VORSICHT!} NMOS- und CMOS-Version
 differieren zum Teil in den Reset-Werten einiger Register!
+%%-----------
+\begin{cpulist}
+   uPD550, uPD554, uPD652, \\
+\> uPD547, uPD552, uPD651, \\
+\> uPD546, uPD553, uPD556, uPD557, uPD650
+\end{cpulist}
+Die drei Gruppen vom Controllers geh"oren jeweils zur
+$\mu$COM-45-, $\mu$COM-44- und $\mu$COM-43-Familie. Die
+ersten beiden Familien implementieren eine Untermenge
+des $\mu$COM-43-Befehlssatzes.  Ansonsten unterscheiden
+die Varianten sich in der Menge des integrierten ROM-
+und RAM-Speichers.
 %%-----------
 \begin{cpulist}
    7566 $\leftrightarrow$ 7508

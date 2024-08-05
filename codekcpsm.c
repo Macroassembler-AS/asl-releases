@@ -188,7 +188,14 @@ static void DecodeAdr(const tStrComp *pArg, Byte Mask, int Segment)
       StrCompShorten(&RegComp, 1);
       if (IsWReg(&RegComp, &AdrMode, True) == eIsReg)
       {
-        AdrIndex = EvalStrIntExpressionWithResult(&DispComp, UInt8, &EvalResult);
+        if (DispComp.str.p_str[0])
+          AdrIndex = EvalStrIntExpressionWithResult(&DispComp, UInt8, &EvalResult);
+        else
+        {
+          AdrIndex = 0;
+          EvalResult.OK = True;
+          EvalResult.AddrSpaceMask = 0;
+        }
         if (EvalResult.OK)
         {
           AdrType = ModInd;

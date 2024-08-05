@@ -446,7 +446,12 @@ static adr_mode_t DecodeAdr(int ArgStartIdx, int ArgEndIdx,
     /* Displacement auswerten */
 
     Offset = ChkZero(pStartArg->str.p_str, &ZeroMode);
-    if (ZeroMode > 1)
+    if (!pStartArg->str.p_str[0])
+    {
+      AdrInt = 0;
+      OK = True;
+    }
+    else if (ZeroMode > 1)
     {
       tSymbolFlags Flags;
 
@@ -532,7 +537,13 @@ static adr_mode_t DecodeAdr(int ArgStartIdx, int ArgEndIdx,
     /* Displacement auswerten */
 
     Offset = ChkZero(pStartArg->str.p_str, &ZeroMode);
-    AdrInt = EvalStrIntExpressionOffs(pStartArg, Offset, Int16, &OK);
+    if (pStartArg->str.p_str[0])
+      AdrInt = EvalStrIntExpressionOffs(pStartArg, Offset, Int16, &OK);
+    else
+    {
+      AdrInt = 0;
+      OK = True;
+    }
 
     /* Displacement 0 ? */
 

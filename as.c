@@ -150,6 +150,7 @@
 #include "code7720.h"
 #include "code77230.h"
 #include "codev60.h"
+#include "codeuc43.h"
 #include "code53c8xx.h"
 #include "codefmc8.h"
 #include "codefmc16.h"
@@ -4421,6 +4422,7 @@ int main(int argc, char **argv)
     code7720_init();
     code77230_init();
     codev60_init();
+    codeuc43_init();
     codescmp_init();
     codeimp16_init();
     code807x_init();

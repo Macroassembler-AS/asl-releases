@@ -149,7 +149,14 @@ static void DecodeAdr(Byte Start, Byte Stop, Word Mask)
     }
 
     Offset = ChkZero(ArgStr[Start].str.p_str, &ZeroMode);
-    AdrWord = EvalStrIntExpressionOffsWithFlags(&ArgStr[Start], Offset, (ZeroMode == 2) ? Int8 : Int16, &OK, &Flags);
+    if (ArgStr[Start].str.p_str[0])
+      AdrWord = EvalStrIntExpressionOffsWithFlags(&ArgStr[Start], Offset, (ZeroMode == 2) ? Int8 : Int16, &OK, &Flags);
+    else
+    {
+      OK = True;
+      AdrWord = 0;
+      Flags = eSymbolFlag_None;
+    }
 
     if (OK)
     {

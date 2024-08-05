@@ -172,7 +172,13 @@ static void DecodeAdr(const tStrComp *pArg, Word Mask)
       }
       else
       {
-        AdrVals[0] = EvalStrIntExpression(&Arg, UInt8, &OK);
+        if (Arg.str.p_str[0])
+          AdrVals[0] = EvalStrIntExpression(&Arg, UInt8, &OK);
+        else
+        {
+          AdrVals[0] = 0;
+          OK = True;
+        }
         if (OK)
         {
           if (AdrVals[0] == 0)

@@ -315,7 +315,13 @@ static Boolean DecodeMem(tStrComp *pArg, Word *pResult)
     StrCompShorten(&Arg, 4);
     KillPostBlanksStrComp(&Arg);
     DispIndirect = IsIndirect(Arg.str.p_str);
-    Disp = EvalStrIntExpression(&Arg, (R == 2) ? SInt8 : UInt8, &OK);
+    if (Arg.str.p_str[0])
+      Disp = EvalStrIntExpression(&Arg, (R == 2) ? SInt8 : UInt8, &OK);
+    else
+    {
+      Disp = 0;
+      OK = True;
+    }
     if (!OK)
       return False;
     if (R == 2)

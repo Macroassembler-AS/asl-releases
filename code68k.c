@@ -1393,14 +1393,14 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
         if (ValOK)
           switch (OutDispLen)
           {
-            case 0:
+            case eSymbolSize8Bit:
               if (!IsDisp8(HVal))
               {
                 WrError(ErrNum_OverRange);
                 ValOK = FALSE;
               }
               break;
-            case 1:
+            case eSymbolSize16Bit:
               if (!IsDisp16(HVal))
               {
                 WrError(ErrNum_OverRange);
@@ -1795,7 +1795,13 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
 
       /* aeusseres Displacement: */
 
-      HVal = EvalStrIntExpression(&OutDisp, (OutDispLen == 1) ? SInt16 : SInt32, &ValOK);
+      if (OutDisp.str.p_str[0])
+        HVal = EvalStrIntExpression(&OutDisp, (OutDispLen == 1) ? SInt16 : SInt32, &ValOK);
+      else
+      {
+        HVal = 0;
+        ValOK = True;
+      }
       if (!ValOK)
       {
         pResult->AdrMode = ModNone;
@@ -3969,7 +3975,7 @@ static void DecodeBcc(Word CondCode)
 
     if (ValOK)
     {
-      /* 16 Bit ? */
+      /* 16 Bit (.L or .W) ? */
 
       if ((OpSize == eSymbolSize32Bit) || (OpSize == eSymbolSize16Bit))
       {
@@ -3987,7 +3993,7 @@ static void DecodeBcc(Word CondCode)
         }
       }
 
-      /* 8 Bit ? */
+      /* 8 Bit (.S or .B) ? */
 
       else if ((OpSize == eSymbolSizeFloat32Bit) || (OpSize == eSymbolSize8Bit))
       {
@@ -4019,9 +4025,10 @@ static void DecodeBcc(Word CondCode)
         }
       }
 
-      /* 32 Bit ? */
+      /* 32 Bit ?  Complain about non-supported instructio only if .X
+         was requested explicitly: */
 
-      else if (!(pCurrCPUProps->SuppFlags & eFlagBranch32)) WrError(ErrNum_InstructionNotSupported);
+      else if (!(pCurrCPUProps->SuppFlags & eFlagBranch32)) WrError(*AttrPart.str.p_str ? ErrNum_InstructionNotSupported : ErrNum_JmpDistTooBig);
       else
       {
         CodeLen = 6;

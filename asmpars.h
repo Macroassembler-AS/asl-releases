@@ -28,7 +28,7 @@ typedef enum
  ,UInt3
  ,SInt4    , UInt4   , Int4
  ,SInt5    , UInt5   , Int5
- ,SInt6    , UInt6
+ ,SInt6    , UInt6   , Int6
  ,SInt7    , UInt7
  ,SInt8    , UInt8   , Int8
  ,SInt9    , UInt9

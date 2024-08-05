@@ -423,7 +423,13 @@ static int DecodeMem(const tStrComp *pArg, LongWord *Erg, LongWord *Ext)
   }
   while (!Done);
 
-  DispAcc = EvalStrIntExpression(&Arg, Int32, &OK);
+  if (Arg.str.p_str[0])
+    DispAcc = EvalStrIntExpression(&Arg, Int32, &OK);
+  else
+  {
+    DispAcc = 0;
+    OK = True;
+  }
 
   if (Base == IPREG)
   {

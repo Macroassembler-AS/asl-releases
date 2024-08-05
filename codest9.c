@@ -119,11 +119,22 @@ static Boolean DecodeReg(char *Asc_O, Byte *Erg, Byte *Size)
   return True;
 }
 
+static LargeInt eval_outer_disp(const tStrComp *p_arg, IntType type, Boolean *p_ok)
+{
+  if (p_arg->str.p_str[0])
+    return EvalStrIntExpression(p_arg, type, p_ok);
+  else
+  {
+    *p_ok = True;
+    return 0;
+  }
+}
+
 static void DecodeAdr(tStrComp *pArg, LongWord Mask)
 {
   Word AdrWord;
   int level;
-  Byte flg,Size;
+  Byte flg, Size;
   Boolean OK, IsIndirect;
   tEvalResult EvalResult;
   char *p;
@@ -260,7 +271,7 @@ static void DecodeAdr(tStrComp *pArg, LongWord Mask)
     {
       if (Size == 0)   /* d(r) */
       {
-        AdrVals[0] = EvalStrIntExpression(pArg, Int8, &OK);
+        AdrVals[0] = eval_outer_disp(pArg, Int8, &OK);
         if (OK)
         {
           if ((Mask & MModIWReg) && (AdrVals[0] == 0)) AdrMode = ModIWReg;
@@ -286,7 +297,7 @@ static void DecodeAdr(tStrComp *pArg, LongWord Mask)
         }
         else
         {             /* d(rr) */
-          AdrWord = EvalStrIntExpression(pArg, Int16, &OK);
+          AdrWord = eval_outer_disp(pArg, Int16, &OK);
           if ((AdrWord == 0) && (Mask & (MModIRReg | MModIWRReg)))
           {
             if (Mask & MModIWRReg) AdrMode = ModIWRReg;
@@ -334,7 +345,7 @@ static void DecodeAdr(tStrComp *pArg, LongWord Mask)
       else if (AdrWord < 0xff)
       {
         AdrVals[0] = Lo(AdrWord);
-        AdrWord = EvalStrIntExpression(pArg, Int8, &OK);
+        AdrWord = eval_outer_disp(pArg, Int8, &OK);
         if (AdrWord != 0) WrError(ErrNum_OverRange);
         else
         {
@@ -345,7 +356,7 @@ static void DecodeAdr(tStrComp *pArg, LongWord Mask)
       else
       {
         AdrVals[0] = Lo(AdrWord);
-        AdrWord = EvalStrIntExpression(pArg, Int16, &OK);
+        AdrWord = eval_outer_disp(pArg, Int16, &OK);
         if ((AdrWord == 0) && (Mask & MModIRReg))
         {
           AdrCnt = 1; AdrMode = ModIRReg;

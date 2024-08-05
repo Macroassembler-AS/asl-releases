@@ -299,6 +299,7 @@ following processor families have been implemented:
 \item{Fairchild ACE}
 \item{Fairchild F8}
 \item{NEC $\mu$PD78(C)0x/$\mu$PD 78(C)1x}
+\item{NEC $\mu$COM-43/44/45}
 \item{NEC $\mu$PD75xx}
 \item{NEC $\mu$PD 75xxx (alias 75K0)}
 \item{NEC 78K0}
@@ -3141,7 +3142,7 @@ desired result when used as argument for \tty{ORG}.  The
 \hline
 \multicolumn{11}{|l|}{$^{8}$ only on variants supporting the \tty{MOVX} instruction} \\
 \hline
-\multicolumn{11}{|l|}{$^{9}$ device dependant} \\
+\multicolumn{11}{|l|}{$^{9}$ device dependent} \\
 \hline
 \multicolumn{11}{|l|}{$^{10}$ model dependent} \\
 \hline
@@ -4047,8 +4048,18 @@ adds an A/D converter - however, instructions for bit processing were
 again removed.  \bb{NOTE:} The instruction set is in general only
 partially binary upward compatible! The NMOS version $\mu$PD7810 has
 no stop-mode; the respective command and the ZCM register are omitted.
-\bb{CAUTION!}  NMOS and CMOS version partially differ in the reset
+\bb{CAUTION!} NMOS and CMOS version partially differ in the reset
 values of some registers!
+%%-----------
+\begin{cpulist}
+   uPD550, uPD554, uPD652, \\
+\> uPD547, uPD552, uPD651, \\
+\> uPD546, uPD553, uPD556, uPD557, uPD650
+\end{cpulist}
+These three groups of controllers belong to the $\mu$COM-45,
+$\mu$COM-44, amd $\mu$COM-43 family.  The first two families
+implement a subset of the $\mu$COM-43 instruction set.  Otherwise,
+the chips differ by the amount of on-chip ROM and RAM.
 %%-----------
 \begin{cpulist}
    7500 $\leftrightarrow$ 7508

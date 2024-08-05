@@ -542,7 +542,13 @@ static void DecodeAdr(int Start, int Stop, Word Mask)
       else
       {
         CutShort(ArgStr[Start].str.p_str, &ShortMode);
-        AdrWord = EvalStrIntExpressionWithFlags(&ArgStr[Start], Int16, &OK, &Flags);
+        if (ArgStr[Start].str.p_str[0])
+          AdrWord = EvalStrIntExpressionWithFlags(&ArgStr[Start], Int16, &OK, &Flags);
+        else
+        {
+          AdrWord = 0;
+          OK = True;
+        }
         if (AdrVals[0] == eBaseRegPC)
           AdrWord -= EProgCounter() + ExPos;
         if (OK)
