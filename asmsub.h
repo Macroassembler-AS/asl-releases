@@ -79,7 +79,7 @@ extern const char *NamePart(const char *Name);
 extern char *PathPart(char *Name);
 
 
-extern void FloatString(char *pDest, size_t DestSize, Double f);
+extern void FloatString(char *pDest, size_t DestSize, as_float_t f);
 
 struct sTempResult;
 extern void StrSym(const struct sTempResult *t, Boolean WithSystem, struct as_dynstr *p_dest, unsigned Radix);

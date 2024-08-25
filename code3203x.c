@@ -25,6 +25,7 @@
 #include "codepseudo.h"
 #include "codevars.h"
 #include "tipseudo.h"
+#include "tifloat.h"
 #include "headids.h"
 #include "onoff_common.h"
 #include "errmsg.h"
@@ -178,7 +179,7 @@ static void DecodeAdr(const tStrComp *pArg, Byte Erl, Boolean ImmFloat)
   Integer Disp;
   char *p;
   int l;
-  Double f;
+  as_float_t f;
   Word fi;
   LongInt AdrLong;
   Boolean BitRev, Circ;
@@ -463,8 +464,17 @@ static void DecodeAdr(const tStrComp *pArg, Byte Erl, Boolean ImmFloat)
 
   if (ImmFloat)
   {
-    f = EvalStrFloatExpression(&Arg, Float64, &OK);
-    if ((OK) && (ExtToTIC34xShort(f, &fi)))
+    f = EvalStrFloatExpression(&Arg, &OK);
+    if (OK)
+    {
+      int ret = as_float_2_ti2(f, &fi);
+      if (ret < 0)
+      {
+        asmerr_check_fp_dispose_result(ret, pArg);
+        OK = False;
+      }
+    }
+    if (OK)
     {
       AdrPart = fi;
       AdrMode = ModImm;

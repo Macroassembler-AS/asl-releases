@@ -32,7 +32,7 @@
 #include "operator.h"
 #include "function.h"
 #include "intformat.h"
-#include "ieeefloat.h"
+#include "as_float.h"
 #include "chartrans.h"
 #include "dynstr_nls.h"
 
@@ -271,33 +271,6 @@ Boolean ChkRangeByType(LargeInt value, IntType type, const struct sStrComp *p_co
 Boolean ChkRangeWarnByType(LargeInt value, IntType type, const struct sStrComp *p_comp)
 {
   return range_not_checkable(type) || ChkRangeWarnPos(value, IntTypeDefs[(int)type].Min, IntTypeDefs[(int)type].Max, p_comp);
-}
-
-Boolean FloatRangeCheck(Double Wert, FloatType Typ)
-{
-  /* NaN/Infinity is representable in all formats */
-
-  int numclass = as_fpclassify(Wert);
-  if ((numclass == AS_FP_NAN) || (numclass == AS_FP_INFINITE))
-    return True;
-
-  switch (Typ)
-  {
-    case Float16:
-      return (fabs(Wert) <= 65504.0);
-    case Float32:
-      return (fabs(Wert) <= 3.4e38);
-    case Float64:
-      return (fabs(Wert) <= 1.7e308);
-/**     case FloatCo: return fabs(Wert) <= 9.22e18; */
-    case Float80:
-      return True;
-    case FloatDec:
-      return True;
-    default:
-      return False;
-  }
-/**   if (Typ == FloatDec) && (fabs(Wert) > 1e1000) WrError(ErrNum_BigDecFloat);**/
 }
 
 Boolean SingleBit(LargeInt Inp, LargeInt *Erg)
@@ -991,37 +964,41 @@ static LargeInt ConstIntVal(const char *pExpr, IntType Typ, Boolean *pResult)
  * Result:      value
  *****************************************************************************/
 
-static Double ConstFloatVal(const char *pExpr, FloatType Typ, Boolean *pResult)
+static as_float_t ConstFloatVal(const char *pExpr, Boolean *pResult, Boolean *p_over_range)
 {
-  Double Erg;
+  as_float_t Erg;
   char *pEnd;
-
-  UNUSED(Typ);
 
   if (*pExpr)
   {
     /* Some strtod() implementations interpret hex constants starting with '0x'.  We
        don't want this here.  Either 0x for hex constants is allowed, then it should
        have been parsed before by ConstIntVal(), or not, then we don't want the constant
-       be stored as float. */
+       be stored as float either. */
 
     if ((strlen(pExpr) >= 2)
      && (pExpr[0] == '0')
      && (toupper(pExpr[1]) == 'X'))
     {
       Erg = 0;
+      *p_over_range = False;
       *pResult = False;
     }
 
     else
     {
-      Erg = strtod(pExpr, &pEnd);
+      Erg = as_strtof(pExpr, &pEnd);
       *pResult = (*pEnd == '\0');
+      *p_over_range =
+         (((Erg == AS_HUGE_VAL) || (Erg == -AS_HUGE_VAL))
+       && (errno == ERANGE)
+       && *pResult);
     }
   }
   else
   {
     Erg = 0.0;
+    *p_over_range = False;
     *pResult = NULLSTRING_EVAL_RESULT;
   }
   return Erg;
@@ -1507,7 +1484,7 @@ static void test_found_op(operator_search_cb_data_t *p_data, const as_operator_t
 
 void EvalStrExpressionWithCallback(const tStrComp *pExpr, TempResult *pErg, as_eval_cb_data_t *p_callback_data)
 {
-  Boolean OK;
+  Boolean OK, over_range;
   tStrComp InArgs[3];
   TempResult InVals[3];
   int z1, cnt;
@@ -1573,11 +1550,16 @@ void EvalStrExpressionWithCallback(const tStrComp *pExpr, TempResult *pErg, as_e
     LEAVE;
   }
 
-  pErg->Contents.Float = ConstFloatVal(CopyComp.str.p_str, Float80, &OK);
+  pErg->Contents.Float = ConstFloatVal(CopyComp.str.p_str, &OK, &over_range);
   if (OK)
   {
-    pErg->Typ = TempFloat;
-    pErg->Relocs = NULL;
+    if (over_range)
+      WrStrErrorPos(ErrNum_OverRange, &CopyComp);
+    else
+    {
+      pErg->Typ = TempFloat;
+      pErg->Relocs = NULL;
+    }
     LEAVE;
   }
 
@@ -2189,10 +2171,10 @@ LargeInt EvalStrIntExpressionOffs(const tStrComp *pComp, int Offset, IntType Typ
   return Result;
 }
 
-Double EvalStrFloatExpressionWithResult(const tStrComp *pExpr, FloatType Type, tEvalResult *pResult)
+as_float_t EvalStrFloatExpressionWithResult(const tStrComp *pExpr, tEvalResult *pResult)
 {
   TempResult t;
-  Double Result = -1;
+  as_float_t Result = -1;
 
   as_tempres_ini(&t);
   EvalResultClear(pResult);
@@ -2217,24 +2199,18 @@ Double EvalStrFloatExpressionWithResult(const tStrComp *pExpr, FloatType Type, t
       Result = t.Contents.Float;
   }
 
-  if (!FloatRangeCheck(Result, Type))
-  {
-    WrStrErrorPos(ErrNum_OverRange, pExpr);
-    LEAVE;
-  }
-
   pResult->OK = True;
 func_exit:
   as_tempres_free(&t);
   return Result;
 }
 
-Double EvalStrFloatExpression(const tStrComp *pExpr, FloatType Type, Boolean *pResult)
+as_float_t EvalStrFloatExpression(const tStrComp *pExpr, Boolean *pResult)
 {
-  Double Ret;
+  as_float_t Ret;
   tEvalResult Result;
 
-  Ret = EvalStrFloatExpressionWithResult(pExpr, Type, &Result);
+  Ret = EvalStrFloatExpressionWithResult(pExpr, &Result);
   *pResult = Result.OK;
   return Ret;
 }
@@ -2798,14 +2774,14 @@ PSymbolEntry EnterRelSymbol(const tStrComp *pName, LargeInt Wert, as_addrspace_t
 }
 
 /*!------------------------------------------------------------------------
- * \fn     EnterFloatSymbol(const tStrComp *pName, Double Wert, Boolean MayChange)
+ * \fn     EnterFloatSymbol(const tStrComp *pName, as_float_t Wert, Boolean MayChange)
  * \brief  enter floating point symbol
  * \param  pName unexpanded name
  * \param  Wert symbol value
  * \param  MayChange variable or constant?
  * ------------------------------------------------------------------------ */
 
-void EnterFloatSymbol(const tStrComp *pName, Double Wert, Boolean MayChange)
+void EnterFloatSymbol(const tStrComp *pName, as_float_t Wert, Boolean MayChange)
 {
   LongInt DestHandle;
   PSymbolEntry pNeu = CreateSymbolEntry(pName, &DestHandle, eSymbolFlag_None);
@@ -4445,6 +4421,8 @@ void PrintCodepages(void)
 void asmpars_init(void)
 {
   tIntTypeDef *pCurr;
+
+  function_init();
 
   serr = (char*)malloc(sizeof(char) * STRINGSIZE);
   snum = (char*)malloc(sizeof(char) * STRINGSIZE);

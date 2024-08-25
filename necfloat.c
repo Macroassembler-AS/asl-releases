@@ -1,45 +1,48 @@
-/* aplfloat.c */
+/* necfloat.c */
 /*****************************************************************************/
 /* SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only                     */
 /*                                                                           */
 /* AS                                                                        */
 /*                                                                           */
-/* APPLE<->IEEE Floating Point Conversion on host                            */
+/* NEC<->IEEE Floating Point Conversion on host                              */
 /*                                                                           */
 /*****************************************************************************/
 
 #include "stdinc.h"
+#include <math.h>
 #include <errno.h>
 #include <string.h>
 
-#include "errmsg.h"
-#include "asmerr.h"
-#include "strcomp.h"
 #include "as_float.h"
-#include "aplfloat.h"
+#include "necfloat.h"
 
 /*!------------------------------------------------------------------------
- * \fn     as_float_2_apl4(as_float_t inp, Word *p_dest)
- * \brief  convert from host to Apple II 4 byte float format
+ * \fn     as_float_2_nec_4(as_float_t inp, LongWord *p_dest)
+ * \brief  convert from host to NEC 4 byte float format
  * \param  inp value to dispose
  * \param  p_dest where to dispose
- * \return 0 or error code (<0)
+ * \return >0 for number of words used (1) or <0 for error code
  * ------------------------------------------------------------------------ */
 
-int as_float_2_apl4(as_float_t inp, Word *p_dest)
+int as_float_2_nec_4(as_float_t inp, LongWord *p_dest)
 {
   Boolean round_up;
   as_float_dissect_t dissect;
+  LongWord mantissa;
 
-  /* Dissect number: */
+  /* Dissect */
 
   as_float_dissect(&dissect, inp);
 
-  /* NaN and Infinity cannot be represented: */
+  /* Inf/NaN cannot be represented in target format: */
 
-  if ((dissect.fp_class == AS_FP_NAN)
-   || (dissect.fp_class == AS_FP_INFINITE))
+  if ((dissect.fp_class != AS_FP_NORMAL)
+   && (dissect.fp_class != AS_FP_SUBNORMAL))
     return -EINVAL;
+
+  /* For NEC float, Mantissa is in range 0.5...1.0, instead of 1.0...2.0: */
+
+  dissect.exponent++;
 
   /* (3) Denormalize small numbers: */
 
@@ -105,16 +108,25 @@ int as_float_2_apl4(as_float_t inp, Word *p_dest)
   if (dissect.exponent > 127)
     return -E2BIG;
 
-  /* (5) mantissa zero means exponent is also zero */
+  /* (5) Mantissa zero means exponent is minimum value */
 
   if (as_float_mantissa_is_zero(&dissect))
-    dissect.exponent = 0;
+    dissect.exponent = -128;
+
+  /* (6) NEC documentation does not use mantissa value 0x800000 (-1.0) unless
+         absolutely necessary? */
+
+  mantissa = as_float_mantissa_extract(&dissect, 0, 24);
+  if ((mantissa == 0x800000) && (dissect.exponent < 127))
+  {
+    mantissa = 0xc00000;
+    dissect.exponent++;
+  }
 
   /* (7) Assemble: */
 
-  p_dest[0] = (((dissect.exponent + 128) << 8) & 0xff00ul)
-            | as_float_mantissa_extract(&dissect, 0, 8);
-  p_dest[1] = as_float_mantissa_extract(&dissect, 8, 16);
+  *p_dest = dissect.exponent & 0xff;
+  *p_dest = (*p_dest << 24) | mantissa;
 
-  return 0;
+  return 1;
 }

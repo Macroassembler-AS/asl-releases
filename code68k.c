@@ -972,7 +972,8 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
   LongInt HVal;
   Integer HVal16;
   ShortInt HVal8;
-  Double DVal;
+  as_float_t DVal;
+  int ret;
   Boolean ValOK;
   tSymbolFlags Flags;
   Word SwapField[6];
@@ -1049,10 +1050,17 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
       }
       case eSymbolSizeFloat32Bit:
         pResult->Cnt = 4;
-        DVal = EvalStrFloatExpression(&ImmArg, Float32, &ValOK);
+        DVal = EvalStrFloatExpression(&ImmArg, &ValOK);
         if (ValOK)
         {
-          Double_2_ieee4(DVal, (Byte *) SwapField, HostBigEndian);
+          if ((ret = as_float_2_ieee4(DVal, (Byte *) SwapField, HostBigEndian)) < 0)
+          {
+            asmerr_check_fp_dispose_result(ret, &ImmArg);
+            ValOK = False;
+          }
+        }
+        if (ValOK)
+        {
           if (HostBigEndian)
             DWSwap((Byte *) SwapField, 4);
           pResult->Vals[0] = SwapField[1];
@@ -1061,10 +1069,17 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
         break;
       case eSymbolSizeFloat64Bit:
         pResult->Cnt = 8;
-        DVal = EvalStrFloatExpression(&ImmArg, Float64, &ValOK);
+        DVal = EvalStrFloatExpression(&ImmArg, &ValOK);
         if (ValOK)
         {
-          Double_2_ieee8(DVal, (Byte *) SwapField, HostBigEndian);
+          if ((ret = as_float_2_ieee8(DVal, (Byte *) SwapField, HostBigEndian)) < 0)
+          {
+            asmerr_check_fp_dispose_result(ret, &ImmArg);
+            ValOK = False;
+          }
+        }
+        if (ValOK)
+        {
           if (HostBigEndian)
             QWSwap((Byte *) SwapField, 8);
           pResult->Vals[0] = SwapField[3];
@@ -1075,10 +1090,17 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
         break;
       case eSymbolSizeFloat96Bit:
         pResult->Cnt = 12;
-        DVal = EvalStrFloatExpression(&ImmArg, Float64, &ValOK);
+        DVal = EvalStrFloatExpression(&ImmArg, &ValOK);
         if (ValOK)
         {
-          Double_2_ieee10(DVal, (Byte *) SwapField, False);
+          if ((ret = as_float_2_ieee10(DVal, (Byte *) SwapField, False)) < 0)
+          {
+            asmerr_check_fp_dispose_result(ret, &ImmArg);
+            ValOK = False;
+          }
+        }
+        if (ValOK)
+        {
           if (HostBigEndian)
             WSwap((Byte *) SwapField, 10);
           pResult->Vals[0] = SwapField[4];
@@ -1091,7 +1113,7 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
         break;
       case eSymbolSizeFloatDec96Bit:
         pResult->Cnt = 12;
-        DVal = EvalStrFloatExpression(&ImmArg, Float64, &ValOK);
+        DVal = EvalStrFloatExpression(&ImmArg, &ValOK);
         if (ValOK)
         {
           ConvertMotoFloatDec(DVal, (Byte *) SwapField, False);

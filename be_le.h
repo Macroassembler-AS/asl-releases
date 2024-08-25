@@ -32,6 +32,8 @@ extern void QSwap(void *Field, int Cnt);
 
 extern void TSwap(void *Field, int Cnt);
 
+extern void OSwap(void *Field, int Cnt);
+
 extern void DWSwap(void *Field, int Cnt);
 
 extern void QWSwap(void *Field, int Cnt);

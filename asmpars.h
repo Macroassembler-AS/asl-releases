@@ -79,17 +79,6 @@ typedef struct
 
 typedef enum
 {
-  Float32,
-  Float64,
-  Float80,
-  FloatDec,
-  FloatCo,
-  Float16,
-  FloatTypeCnt
-} FloatType;
-
-typedef enum
-{
   e_symbol_source_none,
   e_symbol_source_label,
   e_symbol_source_define
@@ -171,8 +160,6 @@ extern Boolean RangeCheck(LargeInt Wert, IntType Typ);
 extern Boolean ChkRangeByType(LargeInt value, IntType type, const struct sStrComp *p_comp);
 extern Boolean ChkRangeWarnByType(LargeInt value, IntType type, const struct sStrComp *p_comp);
 
-extern Boolean FloatRangeCheck(Double Wert, FloatType Typ);
-
 
 extern Boolean IdentifySection(const struct sStrComp *pName, LongInt *Erg);
 
@@ -189,7 +176,7 @@ extern void EnterExtSymbol(const struct sStrComp *pName, LargeInt Wert, as_addrs
 
 extern struct sSymbolEntry *EnterRelSymbol(const struct sStrComp *pName, LargeInt Wert, as_addrspace_t addrspace, Boolean MayChange);
 
-extern void EnterFloatSymbol(const struct sStrComp *pName, Double Wert, Boolean MayChange);
+extern void EnterFloatSymbol(const struct sStrComp *pName, as_float_t Wert, Boolean MayChange);
 
 extern void EnterStringSymbol(const struct sStrComp *pName, const char *pValue, Boolean MayChange);
 
@@ -254,8 +241,8 @@ extern LargeInt EvalStrIntExpressionOffsWithFlags(const struct sStrComp *pExpr, 
 extern LargeInt EvalStrIntExpressionOffsWithResult(const struct sStrComp *pExpr, int Offset, IntType Type, struct sEvalResult *pResult);
 extern LargeInt EvalStrIntExprOffsWithResultAndCallback(const struct sStrComp *pExpr, int Offset, IntType Type, struct sEvalResult *pResult, as_eval_cb_data_t *p_callback_data);
 
-extern Double EvalStrFloatExpressionWithResult(const struct sStrComp *pExpr, FloatType Typ, struct sEvalResult *pResult);
-extern Double EvalStrFloatExpression(const struct sStrComp *pExpr, FloatType Typ, Boolean *pResult);
+extern as_float_t EvalStrFloatExpressionWithResult(const struct sStrComp *pExpr, struct sEvalResult *pResult);
+extern as_float_t EvalStrFloatExpression(const struct sStrComp *pExpr, Boolean *pResult);
 
 extern void EvalStrStringExpressionWithResult(const struct sStrComp *pExpr, struct sEvalResult *pResult, char *pEvalResult);
 extern void EvalStrStringExpression(const struct sStrComp *pExpr, Boolean *pResult, char *pEvalResult);

@@ -98,6 +98,7 @@ extern char SrcSuffix[],IncSuffix[],PrgSuffix[],LstSuffix[],
 #define FlagTrueName     "TRUE"	      /* Flagkonstanten */
 #define FlagFalseName    "FALSE"
 #define PiName           "CONSTPI"    /* Zahl Pi */
+#define FloatMaxName     "FLOATMAX"   /* largest floating point number */
 #define DateName         "DATE"       /* Datum & Zeit */
 #define TimeName         "TIME"
 #define VerName          "VERSION"    /* speichert Versionsnummer */

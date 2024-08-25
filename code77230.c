@@ -18,7 +18,7 @@
 #include "strutil.h"
 #include "nls.h"
 #include "be_le.h"
-#include "ieeefloat.h"
+#include "necfloat.h"
 #include "bpemu.h"
 
 #include "asmdef.h"
@@ -586,8 +586,7 @@ static void DecodeNAL(Word Index)
 
 static Boolean DecodePseudo(void)
 {
-  LongWord temp;
-  LongInt sign, mant, expo, Size;
+  LongInt Size;
 
   if (Memo("DW"))
   {
@@ -623,37 +622,18 @@ static Boolean DecodePseudo(void)
             DAsmCode[CodeLen++] = t.Contents.Int;
             break;
           case TempFloat:
-            if (!FloatRangeCheck(t.Contents.Float, Float32))
+          {
+            int ret;
+
+            if ((ret = as_float_2_nec_4(t.Contents.Float, &DAsmCode[CodeLen])) < 0)
             {
-              WrStrErrorPos(ErrNum_OverRange, pArg);
+              asmerr_check_fp_dispose_result(ret, pArg);
               OK = False;
               break;
             }
-            Double_2_ieee4(t.Contents.Float, (Byte*) &temp, HostBigEndian);
-            sign = (temp >> 31) & 1;
-            expo = (temp >> 23) & 255;
-            mant = temp & 0x7fffff;
-            if ((mant == 0) && (expo == 0))
-              DAsmCode[CodeLen++] = 0x80000000;
-            else
-            {
-              if (expo > 0)
-              {
-                mant |= 0x800000;
-                expo -= 127;
-              }
-              else
-                expo -= 126;
-              if (mant >= 0x800000)
-              {
-                mant = mant >> 1;
-                expo += 1;
-              }
-              if (sign == 1)
-                mant = ((mant ^ 0xffffff) + 1);
-              DAsmCode[CodeLen++] = ((expo & 0xff) << 24) | (mant & 0xffffff);
-            }
+            CodeLen++;
             break;
+          }
           default:
             OK = False;
         }

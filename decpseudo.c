@@ -69,7 +69,7 @@ void decode_dec_packed(Word index)
 
   as_tempres_ini(&value);
   EvalStrExpression(&ArgStr[1], &value);
-  switch(value.Typ)
+  switch (value.Typ)
   {
     case TempNone:
       break;

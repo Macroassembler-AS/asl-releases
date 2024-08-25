@@ -1506,11 +1506,11 @@ static void TeXIndex(Word Index)
   while (strcmp(Token, "}"));
 }
 
-static int GetDim(Double *Factors)
+static int GetDim(double *Factors)
 {
   char Acc[TOKLEN];
   static char *UnitNames[] = {"cm", "mm", ""}, **run, *endptr;
-  Double Value;
+  double Value;
 
   tex_assert_token("{");
   tex_collect_token(Acc, "}");
@@ -1526,8 +1526,8 @@ static int GetDim(Double *Factors)
   return (int)(Value*Factors[run - UnitNames]);
 }
 
-static Double HFactors[] = { 4.666666, 0.4666666, 0 };
-static Double VFactors[] = { 3.111111, 0.3111111, 0 };
+static double HFactors[] = { 4.666666, 0.4666666, 0 };
+static double VFactors[] = { 3.111111, 0.3111111, 0 };
 
 static void TeXHSpace(Word Index)
 {

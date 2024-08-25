@@ -17,6 +17,6 @@
 #include "stdinc.h"
 #include <math.h>
 
-Boolean Double2IBMFloat(Word *pDest, double Src, Boolean ToDouble);
+extern int as_float_2_ibm_float(Word *pDest, as_float_t Src, Boolean ToDouble);
 
 #endif /* _IBMLFLOAT_H */

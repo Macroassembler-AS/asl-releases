@@ -1102,6 +1102,37 @@ void CodeENDEXPECT(Word Code)
 }
 
 /*!------------------------------------------------------------------------
+ * \fn     asmerr_check_fp_dispose_result(int ret, const struct sStrComp *p_arg)
+ * \brief  check the result of as_float_2...and throw associated error messages
+ * \param  ret return code
+ * \param  p_arg associated source argument
+ * ------------------------------------------------------------------------ */
+
+Boolean asmerr_check_fp_dispose_result(int ret, const struct sStrComp *p_arg)
+{
+  if (ret >= 0)
+    return True;
+  switch (ret)
+  {
+    case -EIO:
+      WrStrErrorPos(ErrNum_UnderRange, p_arg);
+      return False;
+    case -EBADF:
+      WrXErrorPos(ErrNum_InvArg, "raster", &p_arg->Pos);
+      return False;
+    case -E2BIG:
+      WrStrErrorPos(ErrNum_OverRange, p_arg);
+      return False;
+    case -EINVAL:
+      WrXErrorPos(ErrNum_InvArg, "INF/NaN", &p_arg->Pos);
+      return False;
+    default:
+      WrStrErrorPos(ErrNum_InvArg, p_arg);
+      return False;
+  }
+}
+
+/*!------------------------------------------------------------------------
  * \fn     AsmErrPassInit(void)
  * \brief  module initialization prior to (another) pass through sources
  * ------------------------------------------------------------------------ */

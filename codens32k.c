@@ -969,22 +969,36 @@ static Boolean DecodeAdr(const tStrComp *pArg, tAdrVals *pDest, Boolean AddrMode
       }
       case eSymbolSizeFloat32Bit:
       {
-        Double Val = EvalStrFloatExpression(pArg, Float32, &OK);
+        as_float_t Val = EvalStrFloatExpression(pArg, &OK);
         if (OK)
         {
-          Double_2_ieee4(Val, pDest->Disp, True);
-          pDest->DispCnt = 4;
+          int ret;
+
+          if ((ret = as_float_2_ieee4(Val, pDest->Disp, True)) < 0)
+          {
+            asmerr_check_fp_dispose_result(ret, pArg);
+            OK = False;
+          }
         }
+        if (OK)
+          pDest->DispCnt = 4;
         break;
       }
       case eSymbolSizeFloat64Bit:
       {
-        Double Val = EvalStrFloatExpression(pArg, Float64, &OK);
+        as_float_t Val = EvalStrFloatExpression(pArg, &OK);
         if (OK)
         {
-          Double_2_ieee8(Val, pDest->Disp, True);
-          pDest->DispCnt = 8;
+          int ret;
+
+          if ((ret = as_float_2_ieee8(Val, pDest->Disp, True)) < 0)
+          {
+            asmerr_check_fp_dispose_result(ret, pArg);
+            OK = False;
+          }
         }
+        if (OK)
+          pDest->DispCnt = 8;
         break;
       }
       default:

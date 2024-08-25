@@ -38,7 +38,7 @@ extern void init_moto8_pseudo(struct sInstTable *p_inst_table, unsigned moto8_fl
 extern Boolean decode_moto8_pseudo(void);
 extern void deinit_moto8_pseudo(void);
 
-extern void ConvertMotoFloatDec(Double F, Byte *pDest, Boolean NeedsBig);
+extern int ConvertMotoFloatDec(as_float_t F, Byte *pDest, Boolean NeedsBig);
 
 extern void AddMoto16PseudoONOFF(Boolean default_paddding_value);
 

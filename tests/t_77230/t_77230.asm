@@ -246,17 +246,35 @@ target:
 	dw "abcdef"
 	dw "abcdefg"
 	dw "abcdefgh"
-	dw 32.0,-32.0
-	dw 1.0,-1.0
-;	dw 3.6e-46		; these do not work on machines that
-;	dw 3.6e-45		; do not support denormalized values,
-;	dw 3.6e-44		; so we better leave them out for portable
-;	dw 3.6e-43		; tests...
+
+	; NOTE: The uPD77230's floating point format uses a mantissa
+	; in two's complement representation.  This means its range
+	; is asymmetric: [-1,+1).  Therefore, a negative power-of-two
+	; integer value can be represented with a mantissa value of
+	; -1.0, a positive power-of-two however must use a mantissa
+	; value of +0.5 and an exponent value that is one higher.  This
+	; is similar to the Apple/MS FP format.  The NEC documentation
+	; however uses the same mantissa value for positive and negative
+	; values:
+
+	dw 0.0			; 80000000 = 0.0*2^-128
+	dw 32.0			; 06400000 = 0.5*2^6
+	dw -32.0		; 06C00000 = -0.5*2^6, or 05800000 = 1.0*2^5 ?
+	dw 1.0			; 01400000 = 0.5*2^1
+	dw -1.0			; 01C00000 = -0.5*2^1, or 00800000 = 1.0*2^0 ?
+	; these do not work on machines that
+	; do not support denormalized values,
+	; so we better leave them out for portable
+	; tests...
+;	dw 3.6e-46
+;	dw 3.6e-45
+;	dw 3.6e-44
+;	dw 3.6e-43
 ;	dw 3.6e-42
 ;	dw 3.6e-41
 ;	dw 3.6e-40
 ;	dw 3.6e-39
-	dw 3.6e-38
+;	dw 3.6e-38
 
 	; unpacked storage
 

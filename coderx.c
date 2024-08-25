@@ -369,7 +369,7 @@ static Boolean DecodeFloat(const tStrComp *pArg, LongInt *pResult)
 		*pResult = temp.Contents.Int;
 		break;
 	case TempFloat:
-		Double_2_ieee4(temp.Contents.Float, (unsigned char *)pResult, False);
+		as_float_2_ieee4(temp.Contents.Float, (unsigned char *)pResult, False);
     /* TODO: rework this - we should better pass in a byte array as pResult */
     if (HostBigEndian)
       DSwap(pResult, 4);

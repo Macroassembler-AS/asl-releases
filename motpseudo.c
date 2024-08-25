@@ -16,6 +16,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <math.h>
+#include <float.h>
 #include <assert.h>
 
 #include "bpemu.h"
@@ -436,8 +437,8 @@ void DecodeMotoDCM(Word big_endian)
           break;
         }
 
-        ret = Double_2_apl4(Res.Contents.Float, buf);
-        if (!check_apl_fp_dispose_result(ret, &Arg))
+        ret = as_float_2_apl4(Res.Contents.Float, buf);
+        if (!asmerr_check_fp_dispose_result(ret, &Arg))
         {
           OK = False;
           break;
@@ -608,7 +609,7 @@ static void DigIns(char Ch, int Pos, Byte *pDest)
   pDest[bytepos] |= (dig << bitpos);
 }
 
-void ConvertMotoFloatDec(Double F, Byte *pDest, Boolean NeedsBig)
+int ConvertMotoFloatDec(as_float_t F, Byte *pDest, Boolean NeedsBig)
 {
   char s[30], Man[30], Exp[30];
   char *pSplit;
@@ -617,9 +618,10 @@ void ConvertMotoFloatDec(Double F, Byte *pDest, Boolean NeedsBig)
 
   UNUSED(NeedsBig);
 
+  /* TODO: as_fabs(F) <= 9.22e18; */
   /* convert to ASCII, split mantissa & exponent */
 
-  as_snprintf(s, sizeof(s), "%0.16e", F);
+  as_snprintf(s, sizeof(s), "%0.*lllle", AS_FLOAT_DIG + 1, F);
   pSplit = strchr(s, HexStartCharacter + ('e' - 'a'));
   if (!pSplit)
   {
@@ -671,7 +673,7 @@ void ConvertMotoFloatDec(Double F, Byte *pDest, Boolean NeedsBig)
     DigIns(Man[z], 15 - z, pDest);
 
   /* truncate exponent if we have more digits than we can represent - this should
-     never occur since an IEEE double is limited to ~1E308 and we have for digits */
+     never occur since an extended float is limited to ~1E4932 and we have four digits */
 
   if (strlen(Exp) > 4)
     strmov(Exp, Exp + strlen(Exp) - 4);
@@ -690,6 +692,7 @@ void ConvertMotoFloatDec(Double F, Byte *pDest, Boolean NeedsBig)
 
   if (HostBigEndian)
     WSwap(pDest, 12);
+  return 12;
 }
 
 static void EnterByte(LargeWord b, Boolean BigEndian)
@@ -1009,11 +1012,6 @@ static void EnterMotoFloatDec(Word *pField, Boolean BigEndian)
   CodeLen += 12;
 }
 
-static void Double_2_ieee2_wrap(Double Inp, Byte *pDest, Boolean BigEndian)
-{
-  (void)Double_2_ieee2(Inp, pDest, BigEndian);
-}
-
 void AddMoto16PseudoONOFF(Boolean default_padding_value)
 {
   SetFlag(&DoPadding, DoPaddingName, default_padding_value);
@@ -1046,7 +1044,7 @@ static Word GetWSize(tSymbolSize OpSize)
     case eSymbolSizeFloat64Bit:
       return 8;
 
-    /* NOTE: Double_2_ieee10() creates 10 bytes, but WSize is set to 12 (two
+    /* NOTE: as_float_2_ieee10() creates 10 bytes, but WSize is set to 12 (two
        padding bytes in binary representation).  This means that WSwap() will
        swap 12 instead of 10 bytes, which doesn't hurt, since TurnField is
        large enough and the two (garbage) bytes at the end will not be used
@@ -1078,11 +1076,10 @@ void DecodeMotoDC(tSymbolSize OpSize, Boolean BigEndian)
   TempResult t;
   tSymbolFlags Flags;
   void (*EnterInt)(LargeWord, Boolean) = NULL;
-  void (*ConvertFloat)(Double, Byte*, Boolean) = NULL;
+  int (*ConvertFloat)(as_float_t, Byte*, Boolean) = NULL;
   void (*EnterFloat)(Word*, Boolean) = NULL;
   void (*Swap)(void*, int) = NULL;
   IntType IntTypeEnum = UInt1;
-  FloatType FloatTypeEnum = Float32;
   Boolean PadBeforeStart = Odd(EProgCounter()) && DoPadding && (OpSize != eSymbolSize8Bit);
 
   as_tempres_ini(&t);
@@ -1123,40 +1120,35 @@ void DecodeMotoDC(tSymbolSize OpSize, Boolean BigEndian)
 #endif
       break;
     case eSymbolSizeFloat16Bit:
-      ConvertFloat = Double_2_ieee2_wrap;
+      ConvertFloat = as_float_2_ieee2;
       EnterFloat = EnterIEEE2;
-      FloatTypeEnum = Float16;
       Swap = NULL;
       break;
     case eSymbolSizeFloat32Bit:
-      ConvertFloat = Double_2_ieee4;
+      ConvertFloat = as_float_2_ieee4;
       EnterFloat = EnterIEEE4;
-      FloatTypeEnum = Float32;
       Swap = DWSwap;
       break;
     case eSymbolSizeFloat64Bit:
-      ConvertFloat = Double_2_ieee8;
+      ConvertFloat = as_float_2_ieee8;
       EnterFloat = EnterIEEE8;
-      FloatTypeEnum = Float64;
       Swap = QWSwap;
       break;
 
-    /* NOTE: Double_2_ieee10() creates 10 bytes, but WSize is set to 12 (two
+    /* NOTE: as_float_2_ieee10() creates 10 bytes, but WSize is set to 12 (two
        padding bytes in binary representation).  This means that WSwap() will
        swap 12 instead of 10 bytes, which doesn't hurt, since TurnField is
        large enough and the two (garbage) bytes at the end will not be used
        by EnterIEEE10() anyway: */
 
     case eSymbolSizeFloat96Bit:
-      ConvertFloat = Double_2_ieee10;
+      ConvertFloat = as_float_2_ieee10;
       EnterFloat = EnterIEEE10;
-      FloatTypeEnum = Float80;
       Swap = TWSwap;
       break;
     case eSymbolSizeFloatDec96Bit:
       ConvertFloat = ConvertMotoFloatDec;
       EnterFloat = EnterMotoFloatDec;
-      FloatTypeEnum = FloatDec;
       break;
     default:
       break;
@@ -1258,11 +1250,6 @@ void DecodeMotoDC(tSymbolSize OpSize, Boolean BigEndian)
             WrStrErrorPos(ErrNum_StringOrIntButFloat, pArg);
             OK = False;
           }
-          else if (!FloatRangeCheck(t.Contents.Float, FloatTypeEnum))
-          {
-            WrError(ErrNum_OverRange);
-            OK = False;
-          }
           else if (SetMaxCodeLen(CodeLen + (Rep * WSize)))
           {
             WrError(ErrNum_CodeOverflow);
@@ -1271,12 +1258,20 @@ void DecodeMotoDC(tSymbolSize OpSize, Boolean BigEndian)
           else
           {
             Word TurnField[8];
+            int ret;
 
-            ConvertFloat(t.Contents.Float, (Byte *) TurnField, HostBigEndian);
-            if (HostBigEndian && Swap)
-              Swap((void*) TurnField, WSize);
-            for (z2 = 0; z2 < Rep; z2++)
-              EnterFloat(TurnField, BigEndian);
+            if ((ret = ConvertFloat(t.Contents.Float, (Byte *) TurnField, HostBigEndian)) < 0)
+            {
+              asmerr_check_fp_dispose_result(ret, pArg);
+              OK = False;
+            }
+            else
+            {
+              if (HostBigEndian && Swap)
+                Swap((void*) TurnField, WSize);
+              for (z2 = 0; z2 < Rep; z2++)
+                EnterFloat(TurnField, BigEndian);
+            }
           }
           break;
         case TempString:

@@ -14,21 +14,18 @@
 
 extern void DECF_2_Single(Byte *pDest, float inp);
 
-extern void DECD_2_Double(Byte *pDest, Double inp);
+extern void DECD_2_Double(Byte *pDest, as_float_t inp);
 
-extern void DECD_2_LongDouble(Byte *pDest, Double inp);
+extern void DECD_2_LongDouble(Byte *pDest, as_float_t inp);
 
-extern int Double_2_dec_lit(Double inp, Byte *p_dest);
+extern int as_float_2_dec_lit(as_float_t inp, Byte *p_dest);
 
-extern int Double_2_dec_f(Double inp, Word *p_dest);
+extern int as_float_2_dec_f(as_float_t inp, Word *p_dest);
 
-extern int Double_2_dec_d(Double inp, Word *p_dest);
+extern int as_float_2_dec_d(as_float_t inp, Word *p_dest);
 
-extern int Double_2_dec_g(Double inp, Word *p_dest);
+extern int as_float_2_dec_g(as_float_t inp, Word *p_dest);
 
-extern int Double_2_dec_h(Double inp, Word *p_dest);
-
-struct sStrComp;
-extern Boolean check_dec_fp_dispose_result(int ret, const struct sStrComp *p_arg);
+extern int as_float_2_dec_h(as_float_t inp, Word *p_dest);
 
 #endif /* _DECFLOAT_H */

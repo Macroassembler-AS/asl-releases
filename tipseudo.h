@@ -22,12 +22,6 @@ extern Boolean DecodeTIPseudo(void);
 
 extern Boolean IsTIDef(void);
 
-extern Boolean ExtToTIC34xShort(Double Inp, Word *Erg);
-
-extern Boolean ExtToTIC34xSingle(Double Inp, LongWord *Erg);
-
-extern Boolean ExtToTIC34xExt(Double Inp, LongWord *ErgL, LongWord *ErgH);
-
 extern void AddTI34xPseudo(struct sInstTable *pInstTable);
 
 #endif /* _TIPSEUDO_H */

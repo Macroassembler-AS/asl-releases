@@ -1423,17 +1423,23 @@ static void DecodeDC(Word Index)
 				}
 				break;
 			case TempFloat:
+			{
+				int ret;
+
 				SetMaxCodeLen((CodeLen + 2) * 2);
-				if (Double2IBMFloat(&WAsmCode[CodeLen], t.Contents.Float, False))
+				ret = as_float_2_ibm_float(&WAsmCode[CodeLen], t.Contents.Float, False);
+				if (ret >= 0)
 				{
 					CodeLen += 2;
 				}
 				else
 				{
+					asmerr_check_fp_dispose_result(ret, pArg);
 					OK = False;
 				}
 				LowerByte = False;
 				break;
+			}
 			case TempString:
 				if (MultiCharToInt(&t, 2))
 					goto ToInt;

@@ -83,6 +83,24 @@ void TSwap(void *Field, int Cnt)
   }
 }
 
+void OSwap(void *Field, int Cnt)
+{
+  register unsigned char *Run = (unsigned char *) Field, Swap;
+  register int z;
+
+  for (z = 0; z < Cnt / 16; z++, Run += 16)
+  {
+    SWAP(Run[0], Run[15]);
+    SWAP(Run[1], Run[14]);
+    SWAP(Run[2], Run[13]);
+    SWAP(Run[3], Run[12]);
+    SWAP(Run[4], Run[11]);
+    SWAP(Run[5], Run[10]);
+    SWAP(Run[6], Run[ 9]);
+    SWAP(Run[7], Run[ 8]);
+  }
+}
+
 void DWSwap(void *Field, int Cnt)
 {
   register unsigned char *Run = (unsigned char *) Field, Swap;
@@ -324,8 +342,18 @@ static void CheckDataTypes(void)
   CheckSingle(sizeof(QuadInt), 8, "QuadInt");
   CheckSingle(sizeof(QuadWord), 8, "QuadWord");
 #endif
-  CheckSingle(sizeof(Single),  4, "Single");
-  CheckSingle(sizeof(Double),  8, "Double");
+#ifdef IEEEFLOAT_8_DOUBLE
+  CheckSingle(sizeof(as_float_t),  8, "as_float_t");
+#endif
+#ifdef IEEEFLOAT_10_10_LONG_DOUBLE
+  CheckSingle(sizeof(as_float_t), 10, "as_float_t");
+#endif
+#ifdef IEEEFLOAT_10_12_LONG_DOUBLE
+  CheckSingle(sizeof(as_float_t), 12, "as_float_t");
+#endif
+#ifdef IEEEFLOAT_10_16_LONG_DOUBLE
+  CheckSingle(sizeof(as_float_t), 16, "as_float_t");
+#endif
 }
 
 
@@ -337,7 +365,7 @@ static const char *AssignSingle(int size)
     return "%d";
   else if (size == sizeof(long))
     return "%ld";
-#ifndef NOLONGLONG
+#if AS_HAS_LONGLONG
   else if (size == sizeof(long long))
     return "%lld";
 #endif
@@ -358,7 +386,7 @@ static const char *AssignHSingle(int size)
     return "%x";
   else if (size == sizeof(long))
     return "%lx";
-#ifndef NOLONGLONG
+#if AS_HAS_LONGLONG
   else if (size == sizeof(long long))
     return "%llx";
 #endif

@@ -29,6 +29,7 @@
 #include "headids.h"
 #include "be_le.h"
 #include "ieeefloat.h"
+#include "milfloat.h"
 #include "errmsg.h"
 
 #include "code1750.h"
@@ -500,159 +501,31 @@ static void DecodeXIO(Word Code)
   }
 }
 
-static void ShiftMantRight(Byte Field[8])
-{
-  int Index;
-
-  for (Index = 7; Index >= 1; Index--)
-    Field[Index] = ((Field[Index] >> 1) & 0x7f) | ((Field[Index - 1] & 1) << 7);
-}
-
-static void ShiftMantLeft(Byte Field[8])
-{
-  int Index;
-
-  for (Index = 1; Index <= 7; Index++)
-  {
-    Field[Index] = ((Field[Index] & 0x7f) << 1);
-    if (Index < 7)
-      Field[Index] |= (Field[Index + 1] >> 7) & 0x01;
-  }
-}
-
 static void DecodeFLOAT(Word Extended)
 {
   int z;
   Boolean OK;
-  Double Value;
-  Byte Field[8];
-  Byte Sign;
-  Word Exponent, Word0, Word1, Word2;
-  Integer SignedExponent;
+  as_float_t Value;
+  Word Words[3];
 
   if (!ChkArgCnt(1, ArgCntMax))
     return;
 
   for (z = 1; z <= ArgCnt; z++)
   {
-    Value = EvalStrFloatExpression(&ArgStr[z], Float64, &OK);
+    int ret, z2;
+    Value = EvalStrFloatExpression(&ArgStr[z], &OK);
     if (!OK)
       break;
 
-    /* get binary representation, big endian */
-
-    Double_2_ieee8(Value, Field, True);
-#if 0
-    printf("Field 0x%02x%02x%02x%02x%02x%02x%02x%02x\n",
-           Field[0], Field[1], Field[2], Field[3], Field[4], Field[5], Field[6], Field[7]);
-#endif
-
-    /* split off sign & exponent */
-
-    Sign = (Field[0] > 0x7f);
-    Exponent = (((Word) Field[0] & 0x7f) << 4) + (Field[1] >> 4);
-    Field[0] = 0;
-    Field[1] &= 0x0f;
-
-#if 0
-    printf("Sign %u Exponent %u Mantissa 0x%02x%02x%02x%02x%02x%02x%02x\n", Sign, Exponent,
-           Field[1], Field[2], Field[3], Field[4], Field[5], Field[6], Field[7]);
-#endif
-
-    /* 1750 format has no implicit leading one in mantissa; i.e. mantissa can only
-       represent values of 1 > mant >= -1. If number is not denormalized, we have to
-       increase the exponent and shift the mantissa by one to the right: */
-
-    if (Exponent > 0)
+    ret = as_float_2_mil1750(Value, Words, Extended);
+    if (ret < 0)
     {
-      Field[1] |= 0x10; /* make leading one explicit */
-      Exponent++;
-      ShiftMantRight(Field);
-    }
-
-    /* If exponent is too small to represent, shift down mantissa
-       until exponent is large enough, or mantissa is all-zeroes: */
-
-    while (Exponent < 1023 - 128)
-    {
-      Exponent++;
-      ShiftMantRight(Field);
-      /* todo: regord only relevant bits of mantissa */
-      if (!(Field[1] | Field[2] | Field[3] | Field[4] | Field[5] | Field[6] | Field[7]))
-      {
-        Exponent = 0;
-        break;
-      }
-    }
-    SignedExponent = Exponent - 1023;
-
-    /* exponent overflow? */
-
-    if (SignedExponent > 127)
-    {
-      WrError(ErrNum_OverRange);
+      asmerr_check_fp_dispose_result(ret, &ArgStr[z]);
       break;
     }
-
-#if 0
-    printf("Sign %u SignedExponent %d Mantissa 0x%02x%02x%02x%02x%02x%02x%02x\n", Sign, SignedExponent,
-           Field[1], Field[2], Field[3], Field[4], Field[5], Field[6], Field[7]);
-#endif
-
-    /* form 2s complement of mantissa when sign is set */
-
-    if (Sign)
-    {
-      /* 2s complement range is asymmetric: we can represent -1.0 in the
-         mantissa, but not +1.0.  So if the mantissa is +0.5, and the
-         exponent is not at minimum, convert it to +1.0 and decrement the
-         exponent: */
-
-      if ((Field[1] == 0x08) && !Field[2] && !Field[3] && !Field[4]
-       && !Field[5] && !Field[6] && !Field[7] && (SignedExponent > -127))
-      {
-        ShiftMantLeft(Field);
-        SignedExponent--;
-      }
-
-      Field[7] ^= 0xff;
-      Field[6] ^= 0xff;
-      Field[5] ^= 0xff;
-      Field[4] ^= 0xff;
-      Field[3] ^= 0xff;
-      Field[2] ^= 0xff;
-      Field[1] ^= 0x1f;
-      if (!(++Field[7]))
-        if (!(++Field[6]))
-          if (!(++Field[5]))
-            if (!(++Field[4]))
-              if (!(++Field[3]))
-                if (!(++Field[2]))
-                  Field[1] = (Field[1] + 1) & 0x1f;
-    }
-
-    /* assemble mantissa */
-    /* TODO: mantissa rounding? */
-
-    Word0 = ((Word)(Field[1] & 0x1f) << 11) | ((Word)Field[2] << 3) | ((Field[3] >> 5) & 0x07);
-    Word1 = ((Word)(Field[3] & 0x1f) << 11) | ((Word)(Field[4] & 0xe0) << 3);
-    if (Extended)
-      Word2 = ((Word)(Field[4] & 0x1f) << 11) | ((Word)Field[5] << 3) | ((Field[6] >> 5) & 0x07);
-    else
-      Word2 = 0;
-
-    /* zero mantissa means zero exponent */
-
-    if (!Word0 && !Word1 && !Word2);
-    else
-      Word1 |= (SignedExponent & 0xff);
-
-    /* now copy the mantissa to the destination */
-
-    PutCode(Word0);
-    PutCode(Word1);
-    if (Extended)
-      PutCode(Word2);
+    for (z2 = 0; z2 < ret; z2++)
+      PutCode(Words[z2]);
   }
 }
 

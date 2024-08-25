@@ -14,6 +14,22 @@
 /*                                                                           */
 /*****************************************************************************/
 
+/* Default Assumptions:
+   - No long long data type if C89/C++98 is used.
+   - long double would be available, but not the ..l() functions
+     we need along with it: */
+
+#if (defined __cplusplus) && (__cplusplus>=201103L)
+# define AS_HAS_LONGLONG 1
+# define AS_HAS_LONGDOUBLE 1
+#elif (defined __STDC__) && (defined __STDC_VERSION__)
+# define AS_HAS_LONGLONG 1
+# define AS_HAS_LONGDOUBLE 1
+#else
+# define AS_HAS_LONGLONG 0
+# define AS_HAS_LONGDOUBLE 0
+#endif
+
 /* NOTE:
  *
  * when adding new platforms, " gcc -dM -E - <<<'' " might be helpful to
@@ -47,7 +63,7 @@
 # define OPENRDMODE "rb"
 # define OPENWRMODE "wb"
 # define OPENUPMODE "rb+"
-# define IEEEFLOAT
+# define IEEEFLOAT_8_DOUBLE
 # define SLASHARGS
 # define PATHSEP '\\'
 # define SPATHSEP "\\"
@@ -56,19 +72,15 @@
 # define DRSEP ':'
 # define SDRSEP ":"
 # define NULLDEV "NUL"
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 # define HAS16
-typedef signed int Integ32;
-# define PRIInteg32 "d"
-typedef unsigned int Card32;
-# ifndef NOLONGLONG
-typedef signed long long Integ64;
-typedef unsigned long long Card64;
-#  define HAS64
-# endif
+typedef signed int as_int32_t;
+# define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONGLONG
 # define W32_NLS
 #endif
 
@@ -118,7 +130,9 @@ typedef unsigned long long Card64;
 /* ditto for VAX platforms */
 
 #ifdef vax
-# define __vax__
+# ifndef __vax__
+#  define __vax__
+# endif
 #endif
 
 /*---------------------------------------------------------------------------*/
@@ -201,9 +215,11 @@ typedef unsigned long long Card64;
 
 #ifdef __m68k
 # ifndef __NetBSD__
-#  ifndef __MUNIX__
-#   ifndef __amiga
-#    define __sunos__
+#  ifndef __linux__
+#   ifndef __MUNIX__
+#    ifndef __amiga
+#     define __sunos__
+#    endif
 #   endif
 #  endif
 # endif
@@ -222,27 +238,25 @@ typedef unsigned long long Card64;
    see my SunOS quarrels in the Sparc section... */
 
 #ifdef __sunos__
+#ifndef __GNUC__
+# undef AS_HAS_LONGLONG
+# define AS_HAS_LONGLONG 0
+#endif
 #define ARCHSYSNAME "sun-sunos"
 #define DEFSMADE
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define IEEEFLOAT
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+#define IEEEFLOAT_8_DOUBLE
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-#ifdef __GNUC__
-typedef signed long long Integ64;
-typedef unsigned long long Card64;
-#define HAS64
-#else
-#define NOLONGLONG
-#endif
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONGLONG
 #define memmove(s1,s2,len) bcopy(s2,s1,len)
 extern void bcopy();
 #define NO_NLS
@@ -259,18 +273,16 @@ extern void bcopy();
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define IEEEFLOAT
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+#define IEEEFLOAT_8_DOUBLE
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-typedef signed long long Integ64;
-typedef unsigned long long Card64;
-#define HAS64
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONGLONG
 #define LOCALE_NLS
 #endif
 
@@ -285,19 +297,20 @@ typedef unsigned long long Card64;
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define IEEEFLOAT
-#define NEEDS_STRSTR
-typedef char Integ8;
-typedef unsigned char Card8;
-typedef short Integ16;
-typedef unsigned short Card16;
-#define HAS16
-typedef int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-#define NOLONGLONG
-#define memmove(s1,s2,len) bcopy(s2,s1,len)
+#define IEEEFLOAT_8_DOUBLE
 extern double strtod();
+#define NEEDS_STRSTR
+typedef char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef short as_int16_t;
+typedef unsigned short as_uint16_t;
+#define HAS16
+typedef int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#undef AS_HAS_LONGLONG
+#define AS_HAS_LONGLONG 0
+#define memmove(s1,s2,len) bcopy(s2,s1,len)
 extern char *getenv();
 #define NO_NLS
 #endif
@@ -313,18 +326,20 @@ extern char *getenv();
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define IEEEFLOAT
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+#if AS_HAS_LONGDOUBLE
+# define IEEEFLOAT_10_2P8_LONG_DOUBLE
+#else
+# define IEEEFLOAT_8_DOUBLE
+#endif
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-typedef signed long long Integ64;
-typedef unsigned long long Card64;
-#define HAS64
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONGLONG
 #define NO_NLS
 #endif
 
@@ -354,27 +369,25 @@ typedef unsigned long long Card64;
    32-bit-UNIX... */
 
 #ifdef __sunos__
+#ifndef __GNUC__
+# undef AS_HAS_LONGLONG
+# define AS_HAS_LONGLONG 0
+#endif
 #define ARCHSYSNAME "sun-sunos"
 #define DEFSMADE
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define IEEEFLOAT
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+#define IEEEFLOAT_8_DOUBLE
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-#ifdef __GNUC__
-typedef signed long long Integ64;
-typedef unsigned long long Card64;
-#define HAS64
-#else
-#define NOLONGLONG
-#endif
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONGLONG
 #define fpos_t long
 #ifdef __STDC__
 extern void bcopy();
@@ -394,18 +407,16 @@ extern void bcopy();
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define IEEEFLOAT
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+#define IEEEFLOAT_8_DOUBLE
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-typedef signed long long Integ64;
-typedef unsigned long long Card64;
-#define HAS64
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONGLONG
 #define LOCALE_NLS
 #endif
 
@@ -420,18 +431,16 @@ typedef unsigned long long Card64;
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define IEEEFLOAT
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+#define IEEEFLOAT_8_DOUBLE
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-typedef signed long long Integ64;
-typedef unsigned long long Card64;
-#define HAS64
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONGLONG
 #define LOCALE_NLS
 #endif
 
@@ -444,18 +453,16 @@ typedef unsigned long long Card64;
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define IEEEFLOAT
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+#define IEEEFLOAT_8_DOUBLE
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-typedef signed long long Integ64;
-typedef unsigned long long Card64;
-#define HAS64
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONGLONG
 #define LOCALE_NLS
 #endif
 
@@ -476,28 +483,26 @@ typedef unsigned long long Card64;
    cc isn't worth trying, believe me! */
 
 #ifdef __ultrix
+#ifndef __GNUC__
+# undef AS_HAS_LONGLONG
+# define AS_HAS_LONGLONG 0
+#endif
 #define ARCHSYSNAME "dec-ultrix"
 #define DEFSMADE
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define IEEEFLOAT
+#define IEEEFLOAT_8_DOUBLE
 #define NEEDS_STRDUP
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-#ifdef __GNUC__
-typedef signed long long Integ64;
-typedef unsigned long long Card64;
-#define HAS64
-#else
-#define NOLONGLONG
-#endif
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONGLONG
 #define NO_NLS
 #endif
 
@@ -512,18 +517,16 @@ typedef unsigned long long Card64;
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define IEEEFLOAT
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+#define IEEEFLOAT_8_DOUBLE
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-typedef signed long long Integ64;
-typedef unsigned long long Card64;
-#define HAS64
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONGLONG
 #define LOCALE_NLS
 #endif
 
@@ -539,20 +542,23 @@ typedef unsigned long long Card64;
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define IEEEFLOAT
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+#define IEEEFLOAT_8_DOUBLE
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-typedef signed long long Integ64;
-typedef unsigned long long Card64;
-#define HAS64
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONGLONG
 #define LOCALE_NLS
 #endif
+
+/*---------------------------------------------------------------------------*/
+/* R3000/4x00 with Linux:
+
+  quite a normal 32-Bit-UNIX system */
 
 #ifdef __linux__
 #define ARCHSYSNAME "unknown-linux"
@@ -560,18 +566,16 @@ typedef unsigned long long Card64;
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define IEEEFLOAT
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+#define IEEEFLOAT_8_DOUBLE
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-typedef signed long long Integ64;
-typedef unsigned long long Card64;
-#define HAS64
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONGLONG
 #define LOCALE_NLS
 #endif
 
@@ -593,18 +597,16 @@ typedef unsigned long long Card64;
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define IEEEFLOAT
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+#define IEEEFLOAT_8_DOUBLE
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-typedef signed long long Integ64;
-typedef unsigned long long Card64;
-#define HAS64
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONGLONG
 #define LOCALE_NLS
 #endif
 
@@ -627,18 +629,16 @@ typedef unsigned long long Card64;
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define IEEEFLOAT
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+#define IEEEFLOAT_8_DOUBLE
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-typedef signed long Integ64;
-typedef unsigned long Card64;
-#define HAS64
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONG
 #define LOCALE_NLS
 #endif
 
@@ -658,18 +658,18 @@ typedef unsigned long Card64;
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define IEEEFLOAT
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+#define IEEEFLOAT_8_DOUBLE
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-typedef signed long long Integ64;
-typedef unsigned long long Card64;
-#define HAS64
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#undef AS_HAS_LONGLONG
+#define AS_HAS_LONGLONG
+#define AS_64_IS_LONGLONG
 #define LOCALE_NLS
 #endif
 
@@ -678,31 +678,21 @@ typedef unsigned long long Card64;
 
 #ifdef __linux__
 
-/* no long long data type if C89 is used */
-
-#if (defined __STDC__) && (!defined __STDC_VERSION__)
-# define NOLONGLONG
-#endif
-
 #define ARCHSYSNAME "unknown-linux"
 #define DEFSMADE
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define IEEEFLOAT
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+#define IEEEFLOAT_8_DOUBLE
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-#ifndef NOLONGLONG
-typedef signed long long Integ64;
-typedef unsigned long long Card64;
-# define HAS64
-#endif /* !NOLONGLONG */
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONGLONG
 #define LOCALE_NLS
 #endif
 
@@ -715,18 +705,18 @@ typedef unsigned long long Card64;
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define IEEEFLOAT
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+#define IEEEFLOAT_8_DOUBLE
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-typedef signed long long Integ64;
-typedef unsigned long long Card64;
-#define HAS64
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#undef AS_HAS_LONGLONG
+#define AS_HAS_LONGLONG
+#define AS_64_IS_LONGLONG
 #define NO_NLS
 #endif
 
@@ -743,6 +733,10 @@ typedef unsigned long long Card64;
 /* VAX with Ultrix: */
 
 #ifdef ultrix
+#ifndef __GNUC__
+# undef AS_HAS_LONGLONG
+# define AS_HAS_LONGLONG 0
+#endif
 #define ARCHSYSNAME "dec-ultrix"
 #define DEFSMADE
 #define OPENRDMODE "r"
@@ -751,22 +745,22 @@ typedef unsigned long long Card64;
 #define HOST_DECFLOAT
 #define NEEDS_STRDUP
 #define BKOKEN_SPRINTF
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-#define NOLONGLONG
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONGLONG
 #define NO_NLS
 #endif
 
 /*---------------------------------------------------------------------------*/
 /* VAX with NetBSD 1.x:
 
-   quite a normal 32-Bit-UNIX system - apart from the float format... */
+   quite a normal 32-Bit-UNIX system - except for the float format... */
 
 #ifdef __NetBSD__
 #define ARCHSYSNAME "vax-netbsd"
@@ -775,17 +769,15 @@ typedef unsigned int Card32;
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
 #define HOST_DECFLOAT
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-typedef signed long long Integ64;
-typedef unsigned long long Card64;
-#define HAS64
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONGLONG
 #define LOCALE_NLS
 #endif
 
@@ -804,18 +796,16 @@ typedef unsigned long long Card64;
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define IEEEFLOAT
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+#define IEEEFLOAT_8_DOUBLE
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-typedef signed long Integ64;
-typedef unsigned long Card64;
-#define HAS64
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONG
 #define LOCALE_NLS
 #endif
 
@@ -828,18 +818,16 @@ typedef unsigned long Card64;
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define IEEEFLOAT
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+#define IEEEFLOAT_8_DOUBLE
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-typedef signed long Integ64;
-typedef unsigned long Card64;
-#define HAS64
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONG
 #define LOCALE_NLS
 #endif
 
@@ -864,18 +852,16 @@ typedef unsigned long Card64;
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define IEEEFLOAT
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+#define IEEEFLOAT_8_DOUBLE
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-typedef signed long Integ64;
-typedef unsigned long Card64;
-#define HAS64
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONG
 #define LOCALE_NLS
 #endif
 
@@ -890,18 +876,16 @@ typedef unsigned long Card64;
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define IEEEFLOAT
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+#define IEEEFLOAT_8_DOUBLE
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-typedef signed long Integ64;
-typedef unsigned long Card64;
-#define HAS64
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONG
 #define LOCALE_NLS
 #endif
 
@@ -916,18 +900,16 @@ typedef unsigned long Card64;
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define IEEEFLOAT
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+#define IEEEFLOAT_8_DOUBLE
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-typedef signed long Integ64;
-typedef unsigned long Card64;
-#define HAS64
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONG
 #define LOCALE_NLS
 #endif
 
@@ -937,18 +919,16 @@ typedef unsigned long Card64;
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define IEEEFLOAT
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+#define IEEEFLOAT_8_DOUBLE
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-typedef signed long Integ64;
-typedef unsigned long Card64;
-#define HAS64
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONG
 #define NO_NLS
 #endif
 
@@ -962,7 +942,7 @@ typedef unsigned long Card64;
 #define ARCHPRNAME "i386"
 
 /*---------------------------------------------------------------------------*/
-/* Intel i386 with NetBSD 1. and GCC: (tested on 1.5.3)
+/* Intel i386 with NetBSD 1.x and GCC: (tested on 1.5.3)
 
    principally, a normal 32-bit UNIX */
 
@@ -972,18 +952,16 @@ typedef unsigned long Card64;
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define IEEEFLOAT
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+#define IEEEFLOAT_8_DOUBLE
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-typedef signed long long Integ64;
-typedef unsigned long long Card64;
-#define HAS64
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONGLONG
 #define LOCALE_NLS
 #endif
 
@@ -994,31 +972,25 @@ typedef unsigned long long Card64;
 
 #ifdef __linux__
 
-/* no long long data type if C89 is used */
-
-#if (defined __STDC__) && (!defined __STDC_VERSION__)
-# define NOLONGLONG
-#endif
-
 #define ARCHSYSNAME "unknown-linux"
 #define DEFSMADE
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define IEEEFLOAT
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+#if AS_HAS_LONGDOUBLE
+# define IEEEFLOAT_10_12_LONG_DOUBLE
+#else
+# define IEEEFLOAT_8_DOUBLE
+#endif
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-#ifndef NOLONGLONG
-typedef signed long long Integ64;
-typedef unsigned long long Card64;
-#define HAS64
-#endif /* !NOLONGLONG */
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONGLONG
 #define LOCALE_NLS
 #endif
 
@@ -1033,18 +1005,16 @@ typedef unsigned long long Card64;
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define IEEEFLOAT
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+#define IEEEFLOAT_8_DOUBLE
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-typedef signed long long Integ64;
-typedef unsigned long long Card64;
-#define HAS64
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONGLONG
 #define NO_NLS
 #endif
 
@@ -1058,18 +1028,16 @@ typedef unsigned long long Card64;
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define IEEEFLOAT
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+#define IEEEFLOAT_8_DOUBLE
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-typedef signed long long Integ64;
-typedef unsigned long long Card64;
-#define HAS64
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONGLONG
 #define LOCALE_NLS
 #endif
 
@@ -1091,7 +1059,7 @@ typedef unsigned long long Card64;
 #define OPENRDMODE "rb"
 #define OPENWRMODE "wb"
 #define OPENUPMODE "rb+"
-#define IEEEFLOAT
+#define IEEEFLOAT_8_DOUBLE
 #define SLASHARGS
 #define PATHSEP '\\'
 #define SPATHSEP "\\"
@@ -1100,19 +1068,15 @@ typedef unsigned long long Card64;
 #define DRSEP ':'
 #define SDRSEP ":"
 #define NULLDEV "NUL"
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-#ifndef NOLONGLONG
-typedef signed long long Integ64;
-typedef unsigned long long Card64;
-# define HAS64
-#endif
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONGLONG
 #define W32_NLS
 #endif
 
@@ -1127,7 +1091,7 @@ typedef unsigned long long Card64;
 #define OPENRDMODE "rb"
 #define OPENWRMODE "wb"
 #define OPENUPMODE "rb+"
-#define IEEEFLOAT
+#define IEEEFLOAT_8_DOUBLE
 #define SLASHARGS
 #define PATHSEP '\\'
 #define SPATHSEP "\\"
@@ -1136,17 +1100,15 @@ typedef unsigned long long Card64;
 #define DRSEP ':'
 #define SDRSEP ":"
 #define NULLDEV "NUL"
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-typedef signed long long Integ64;
-typedef unsigned long long Card64;
-#define HAS64
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONGLONG
 #define OS2_NLS
 #endif
 
@@ -1161,22 +1123,23 @@ well, not really a UNIX... */
 #define OPENRDMODE "rb"
 #define OPENWRMODE "wb"
 #define OPENUPMODE "rb+"
-#define IEEEFLOAT
+#define IEEEFLOAT_8_DOUBLE
 #define SLASHARGS
 #define PATHSEP '\\'
 #define SPATHSEP "\\"
 #define DRSEP ':'
 #define SDRSEP ":"
 #define NULLDEV "NUL"
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-#define NOLONGLONG
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#undef AS_HAS_LONGLONG
+#define AS_HAS_LONGLONG 0
 #define OS2_NLS
 #endif
 
@@ -1205,7 +1168,12 @@ typedef unsigned int Card32;
 #define OPENRDMODE "rb"
 #define OPENWRMODE "wb"
 #define OPENUPMODE "rb+"
-#define IEEEFLOAT
+#define IEEEFLOAT_8_DOUBLE
+/*
+#define IEEEFLOAT_10_10_LONG_DOUBLE
+#define HUGE_VALL _LHUGE_VAL
+#define strtold(s,e) _strtold(s,e)
+*/
 #define SLASHARGS
 #define PATHSEP '\\'
 #define SPATHSEP "\\"
@@ -1214,15 +1182,16 @@ typedef unsigned int Card32;
 #define DRSEP ':'
 #define SDRSEP ":"
 #define NULLDEV "NUL"
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed long Integ32;
-#define PRIInteg32 "ld"
-typedef unsigned long Card32;
-#define NOLONGLONG
+typedef signed long as_int32_t;
+#define PRIas_int32_t "ld"
+typedef unsigned long as_uint32_t;
+#undef AS_HAS_LONGLONG
+#define AS_HAS_LONGLONG 0
 #define DOS_NLS
 #define __PROTOS__
 #undef UNUSED
@@ -1247,12 +1216,6 @@ typedef unsigned long Card32;
 
 #if defined(__linux__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__APPLE__)
 
-/* no long long data type if C89 is used */
-
-#if (defined __STDC__) && (!defined __STDC_VERSION__)
-# define NOLONGLONG
-#endif
-
 #ifdef __linux__
 #define ARCHSYSNAME "unknown-linux"
 #elif defined __FreeBSD__
@@ -1267,24 +1230,26 @@ typedef unsigned long Card32;
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define IEEEFLOAT
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+#if AS_HAS_LONGDOUBLE
+# define IEEEFLOAT_10_16_LONG_DOUBLE
+#else
+# define IEEEFLOAT_8_DOUBLE
+#endif
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-typedef signed long Integ64;
-typedef unsigned long Card64;
-#define HAS64
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONG
 #define LOCALE_NLS
 
 #endif /* __linux__ || __FreeBSD__ || __NetBSD__ || __APPLE__ */
 
 /*---------------------------------------------------------------------------*/
-/* Intel i386 with WIN32 and MinGW:
+/* Intel x86-64 with WIN32 and MinGW:
 
    Well, not really a UNIX...note that in contrast to Unix-like systems,
    the size of 'long' remains 32 bit.  One still has to use 'long long' to
@@ -1292,18 +1257,16 @@ typedef unsigned long Card64;
 
 #ifdef _WIN32
 
-/* no long long data type if C89 is used */
-
-#if (defined __STDC__) && (!defined __STDC_VERSION__)
-# define NOLONGLONG
-#endif
-
 #define ARCHSYSNAME "unknown-win64"
 #define DEFSMADE
 #define OPENRDMODE "rb"
 #define OPENWRMODE "wb"
 #define OPENUPMODE "rb+"
-#define IEEEFLOAT
+#if AS_HAS_LONGDOUBLE
+# define IEEEFLOAT_10_16_LONG_DOUBLE
+#else
+# define IEEEFLOAT_8_DOUBLE
+#endif
 #define SLASHARGS
 #define PATHSEP '\\'
 #define SPATHSEP "\\"
@@ -1312,19 +1275,15 @@ typedef unsigned long Card64;
 #define DRSEP ':'
 #define SDRSEP ":"
 #define NULLDEV "NUL"
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-#ifndef NOLONGLONG
-typedef signed long long Integ64;
-typedef unsigned long long Card64;
-# define HAS64
-#endif
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONGLONG
 #define NO_NLS
 
 #endif /* _WIN32 */
@@ -1347,18 +1306,16 @@ typedef unsigned long long Card64;
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define IEEEFLOAT
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+#define IEEEFLOAT_8_DOUBLE
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-typedef signed long long Integ64;
-typedef unsigned long long Card64;
-#define HAS64
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONGLONG
 #define LOCALE_NLS
 #endif /* __linux__ */
 
@@ -1375,18 +1332,16 @@ typedef unsigned long long Card64;
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define IEEEFLOAT
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+#define IEEEFLOAT_8_DOUBLE
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-typedef signed long long Integ64;
-typedef unsigned long long Card64;
-#define HAS64
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONGLONG
 #define NO_NLS
 #endif /* __EPOCEMX__ */
 
@@ -1411,18 +1366,16 @@ typedef unsigned long long Card64;
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define IEEEFLOAT
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ16;
-typedef unsigned short Card16;
+#define IEEEFLOAT_8_DOUBLE
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int16_t;
+typedef unsigned short as_uint16_t;
 #define HAS16
-typedef signed int Integ32;
-#define PRIInteg32 "d"
-typedef unsigned int Card32;
-typedef signed long long Integ64;
-typedef unsigned long long Card64;
-#define HAS64
+typedef signed int as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned int as_uint32_t;
+#define AS_64_IS_LONGLONG
 #define LOCALE_NLS
 #endif /* __linux__ */
 
@@ -1438,21 +1391,169 @@ typedef unsigned long long Card64;
 #define OPENRDMODE "r"
 #define OPENWRMODE "w"
 #define OPENUPMODE "r+"
-#define IEEEFLOAT
-typedef signed char Integ8;
-typedef unsigned char Card8;
-typedef signed short Integ32;
-#define PRIInteg32 "d"
-typedef unsigned short Card32;
-typedef signed int Integ64;
-typedef unsigned int Card64;
-#define HAS64
+#define IEEEFLOAT_8_DOUBLE
+typedef signed char as_int8_t;
+typedef unsigned char as_uint8_t;
+typedef signed short as_int32_t;
+#define PRIas_int32_t "d"
+typedef unsigned short as_uint32_t;
+#define AS_64_IS_LONG
 #define LOCALE_NLS
 #endif
 
 /*===========================================================================*/
 /* Post-Processing: check for definition, add defaults */
 
+/* Host provides 64 bit int as long long: can only use it if long long
+   is available: */
+
+#ifdef AS_64_IS_LONGLONG
+# if AS_HAS_LONGLONG
+typedef signed long long as_int64_t;
+typedef unsigned long long as_uint64_t;
+#  define HAS64
+# endif /* AS_HAS_LONGLONG */
+#endif /* AS_64_IS_LONGLONG */
+
+/* Host provides 64 bit int as long: use it and define long long
+   away (we don't need it): */
+
+#ifdef AS_64_IS_LONG
+typedef signed long as_int64_t;
+typedef unsigned long as_uint64_t;
+# define HAS64
+# undef AS_HAS_LONGLONG
+# define AS_HAS_LONGLONG 0
+#endif /* AS_64_IS_LONG */
+
+/* Some VAX compilers internally seem to use D float
+   and are unable to parse the G float DBL_MAX literal
+   of 8.98...E+308 from float.h.
+   So we put a hand-crafted constant in memory: */
+
+#ifdef HOST_DECFLOAT
+ typedef double as_float_t;
+# ifdef __GFLOAT
+   extern double as_decfloat_get_max_gfloat(void);
+#  define AS_FLOAT_MAX as_decfloat_get_max_gfloat()
+# else
+#  define AS_FLOAT_MAX DBL_MAX
+# endif
+# define AS_FLOAT_DIG DBL_DIG
+# define AS_HUGE_VAL HUGE_VAL
+# define as_strtof(s,e) strtod(s,e)
+#endif /* HOST_DECFLOAT */
+
+#ifdef IEEEFLOAT_8_DOUBLE
+ typedef double as_float_t;
+# define AS_FLOAT_MAX DBL_MAX
+# define AS_FLOAT_DIG DBL_DIG
+# define AS_HUGE_VAL HUGE_VAL
+# define as_strtof(s,e) strtod(s,e)
+#endif /* IEEEFLOAT_8_DOUBLE */
+
+#ifdef IEEEFLOAT_10_16_LONG_DOUBLE
+# define IEEEFLOAT_10_LONG_DOUBLE
+# define XPRIas_float_t "L"
+#endif /* IEEEFLOAT_10_16_LONG_DOUBLE */
+
+#ifdef IEEEFLOAT_10_12_LONG_DOUBLE
+# define IEEEFLOAT_10_LONG_DOUBLE
+# define XPRIas_float_t "L"
+#endif /* IEEEFLOAT_10_12_LONG_DOUBLE */
+
+#ifdef IEEEFLOAT_10_10_LONG_DOUBLE
+# define IEEEFLOAT_10_LONG_DOUBLE
+# define XPRIas_float_t "L"
+#endif /* IEEEFLOAT_10_10_LONG_DOUBLE */
+
+#ifdef IEEEFLOAT_10_2P8_LONG_DOUBLE
+# define IEEEFLOAT_10_LONG_DOUBLE
+# define XPRIas_float_t "L"
+#endif /* IEEEFLOAT_10_2P8_LONG_DOUBLE */
+
+#ifdef IEEEFLOAT_10_LONG_DOUBLE
+ typedef long double as_float_t;
+# define AS_FLOAT_MAX LDBL_MAX
+# define AS_FLOAT_DIG LDBL_DIG
+# define AS_HUGE_VAL HUGE_VALL
+# define as_strtof(s,e) strtold(s,e)
+# define as_fabs(f) fabsl(f)
+# define as_ldexp(f,e) ldexpl(f,e)
+# define as_frexp(f,e) frexpl(f,e)
+# define as_modf(f,e) modfl(f,e)
+# define as_sqrt(f) sqrtl(f)
+# define as_sin(f) sinl(f)
+# define as_cos(f) cosl(f)
+# define as_tan(f) tanl(f)
+# define as_asin(f) asinl(f)
+# define as_acos(f) acosl(f)
+# define as_atan(f) atanl(f)
+# define as_exp(f) expl(f)
+# define as_log(f) logl(f)
+# define as_log10(f) log10l(f)
+# define as_sinh(f) sinh(f)
+# define as_cosh(f) coshl(f)
+# define as_tanh(f) tanhl(f)
+#endif /* IEEEFLOAT_10_LONG_DOUBLE */
+
+#ifndef as_strtof
+# define as_strtof(s,e) strtod(s,e)
+#endif
+#ifndef XPRIas_float_t
+# define XPRIas_float_t ""
+#endif
+#ifndef as_fabs
+# define as_fabs(f) fabs(f)
+#endif
+#ifndef as_ldexp
+# define as_ldexp(f,e) ldexp(f,e)
+#endif
+#ifndef as_frexp
+# define as_frexp(f,e) frexp(f,e)
+#endif
+#ifndef as_modf
+# define as_modf(f,e) modf(f,e)
+#endif
+#ifndef as_sqrt
+# define as_sqrt(f) sqrt(f)
+#endif
+#ifndef as_sin
+# define as_sin(f) sin(f)
+#endif
+#ifndef as_cos
+# define as_cos(f) cos(f)
+#endif
+#ifndef as_tan
+# define as_tan(f) tan(f)
+#endif
+#ifndef as_asin
+# define as_asin(f) asin(f)
+#endif
+#ifndef as_acos
+# define as_acos(f) acos(f)
+#endif
+#ifndef as_atan
+# define as_atan(f) atan(f)
+#endif
+#ifndef as_sinh
+# define as_sinh(f) sinh(f)
+#endif
+#ifndef as_exp
+# define as_exp(f) exp(f)
+#endif
+#ifndef as_log
+# define as_log(f) log(f)
+#endif
+#ifndef as_log10
+# define as_log10(f) log10(f)
+#endif
+#ifndef as_cosh
+# define as_cosh(f) cosh(f)
+#endif
+#ifndef as_tanh
+# define as_tanh(f) tanh(f)
+#endif
 
 #ifdef DEFSMADE
 #ifndef PATHSEP

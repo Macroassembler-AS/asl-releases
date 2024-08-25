@@ -74,13 +74,13 @@ void as_tempres_set_int(TempResult *p_res, LargeInt value)
 }
 
 /*!------------------------------------------------------------------------
- * \fn     as_tempres_set_float(TempResult *p_res, Double value)
+ * \fn     as_tempres_set_float(TempResult *p_res, as_float_t value)
  * \brief  set temp result to float value
  * \param  p_res result to fill
  * \param  value float value to set
  * ------------------------------------------------------------------------ */
 
-void as_tempres_set_float(TempResult *p_res, Double value)
+void as_tempres_set_float(TempResult *p_res, as_float_t value)
 {
   if (p_res->Typ == TempString)
     as_nonz_dynstr_free(&p_res->Contents.str);

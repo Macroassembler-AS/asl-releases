@@ -13,24 +13,14 @@
 
 #include "datatypes.h"
 
-enum
-{
-  AS_FP_NORMAL,
-  AS_FP_SUBNORMAL,
-  AS_FP_NAN,
-  AS_FP_INFINITE
-};
+extern int as_float_2_ieee2(as_float_t inp, Byte *pDest, Boolean NeedsBig);
 
-extern int as_fpclassify(Double inp);
+extern int as_float_2_ieee4(as_float_t inp, Byte *pDest, Boolean NeedsBig);
 
-extern void ieee8_dissect(Word *p_sign, Integer *p_exponent, LongWord *p_mantissa, LongWord *p_fraction, Double num);
+extern int as_float_2_ieee8(as_float_t inp, Byte *pDest, Boolean NeedsBig);
 
-extern Boolean Double_2_ieee2(Double inp, Byte *pDest, Boolean NeedsBig);
+extern int as_float_2_ieee10(as_float_t inp, Byte *pDest, Boolean NeedsBig);
 
-extern void Double_2_ieee4(Double inp, Byte *pDest, Boolean NeedsBig);
-
-extern void Double_2_ieee8(Double inp, Byte *pDest, Boolean NeedsBig);
-
-extern void Double_2_ieee10(Double inp, Byte *pDest, Boolean NeedsBig);
+extern int as_float_2_ieee16(as_float_t inp, Byte *pDest, Boolean NeedsBig);
 
 #endif /* _IEEEFLOAT_H */

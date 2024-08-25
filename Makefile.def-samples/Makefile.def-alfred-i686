@@ -31,16 +31,14 @@ HOST_EXEXTENSION =
 
 # Here I select the target.  Object directories have to exist *before* build:
 
-TARG_OBJDIR = x86_64-linux/
-#TARG_OBJDIR = i686-linux/
+TARG_OBJDIR = i686-linux/
 #TARG_OBJDIR = ppc-linux/
 #TARG_OBJDIR = m68k-linux/
 #TARG_OBJDIR = i686-w32/
-#TARG_OBJDIR = x86_64-w64/
 
 # ...for the actual build targets.  This is the simple case for no cross-build:
 
-ifeq ($(TARG_OBJDIR),x86_64-linux/)
+ifeq ($(TARG_OBJDIR),i686-linux/)
  TARG_CC = gcc
  TARG_CFLAGS = $(CFLAGS_GCC)
  #TARG_CC = clang
@@ -58,20 +56,6 @@ ifeq ($(TARG_OBJDIR),x86_64-linux/)
  ifeq ($(VALGRIND),1)
   TARG_RUNCMD = "valgrind --leak-check=full"
  endif
-endif
-
-# build 32 bit Linux binary on 64 bit system
-# gcc-multilib cannot be installed together with cross compilers.
-# In such case, install&use 32 bit GCC also as cross compiler
-
-ifeq ($(TARG_OBJDIR),i686-linux/)
- TARG_CC = i686-linux-gnu-gcc
- #TARG_CC = gcc -m32
- TARG_CFLAGS = $(CFLAGS_GCC)
- TARG_OBJEXTENSION = .o
- TARG_LD = $(TARG_CC)
- TARG_LDFLAGS = $(LDFLAGS)
- TARG_EXEXTENSION =
 endif
 
 # PPC build to test big endian
@@ -103,19 +87,6 @@ endif
 
 ifeq ($(TARG_OBJDIR),i686-w32/)
  TARG_CC = i686-w64-mingw32-gcc
- TARG_CFLAGS = $(CFLAGS_GCC)
- TARG_OBJEXTENSION = .o
- TARG_LD = $(TARG_CC)
- TARG_LDFLAGS = $(LDFLAGS)
- TARG_EXEXTENSION = .exe
- TARG_RUNCMD = wine
- TEX2DOC_FLAGS=-codepage 1252
-endif
-
-# cross Build with MinGW64
-
-ifeq ($(TARG_OBJDIR),x86_64-w64/)
- TARG_CC = x86_64-w64-mingw32-gcc
  TARG_CFLAGS = $(CFLAGS_GCC)
  TARG_OBJEXTENSION = .o
  TARG_LD = $(TARG_CC)

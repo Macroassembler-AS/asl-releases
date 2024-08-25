@@ -299,58 +299,78 @@
 	xio	r7,300,r3
 
 ; These are some examples for the floating point format used by MIL STD 1750.
-; Since conversion from the host's FP format to this format is alway dependent
+; Since conversion from the host's FP format to this format is always dependent
 ; on rounding issues, I leave out the majority of them.  You may remove the
 ; comments to see how precisely conversion works on your system...
 
-;	float	1.7014118346046921e+38	; 0.999999880791 * 2^127 = 7fff ff 7f
-;	float	8.5070591730234615e+37	; 0.5 * 2^127            = 4000 00 7f
-	float	10.0			; 0.625 * 2^16           = 5000 00 04
+testall	equ	0
+
+	if	testall
+	float	1.7014118346046921e+38	; 0.999999880791 * 2^127 = 7fff ff 7f
+	float	8.5070591730234615e+37	; 0.5 * 2^127            = 4000 00 7f
+	endif
+	float	10.0			; 0.625 * 2^4            = 5000 00 04
 	float	1.0			; 0.5 * 2^1              = 4000 00 01
 	float	0.5			; 0.5 * 2^0              = 4000 00 00
 	float	0.25			; 0.5 * 2^-1             = 4000 00 ff
-;	float	1.46936793853e-39	; 0.5 * 2^-128           = 4000 00 80
+	if	testall
+	float	1.46936793853e-39	; 0.5 * 2^-128           = 4000 00 80
+	endif
 	float	0.0			; 0.0 * 2^0		 = 0000 00 00
 	float	-1.0			; -1.0 * 2^0             = 8000 00 00
-;	float	-1.4693682888524e-39	; -0.5000001 * 2^-128    = bfff ff 80
-;	float	-12.000001		; -0.7500001 * 2^4       = 9fff ff 04
+	if	testall
+	float	-1.4693682888524e-39	; -0.5000001 * 2^-128    = bfff ff 80
+	float	-12.000001		; -0.7500001 * 2^4       = 9fff ff 04
+	endif
 
-;	float	1.0e50			; too large
+	expect	1320
+	float	1.0e50			; too large
+	endexpect
 
 ; not sure whether 1750 supports denormalized numbers. For the
 ; moment, I assume yes.  If no, all these should result in 0:
 
-;	float	7.3468396926393e-40	; 2^-2 * 2^-128 (denorm) = 2000 00 80
-;	float	4.59177480789957e-41	; 2^-6 * 2^-128 (denorm) = 0200 00 80
-;	float	2.86985925493723e-42	; 2^-10 * 2^-128 (denorm)= 0020 00 80
-;	float	1.79366203433577e-43	; 2^-14 * 2^-128 (denorm)= 0002 00 80
-;	float	1.12103877145986e-44	; 2^-18 * 2^-128 (denorm)= 0000 20 80
-;	float	7.00649232162409e-46	; 2^-22 * 2^-128 (denorm)= 0000 02 80
-;	float	3.50324616081205e-46    ; 2^-23 * 2^-128 (denorm)= 0000 01 80
-;	float	1.75162308040603e-46	; 2^-24 * 2^-128 (uflo) =  0000 00 00
+	if	testall
+	float	7.3468396926393e-40	; 2^-2  * 2^-128 (denorm) = 2000 00 80
+	float	4.59177480789957e-41	; 2^-6  * 2^-128 (denorm) = 0200 00 80
+	float	2.86985925493723e-42	; 2^-10 * 2^-128 (denorm) = 0020 00 80
+	float	1.79366203433577e-43	; 2^-14 * 2^-128 (denorm) = 0002 00 80
+	float	1.12103877145986e-44	; 2^-18 * 2^-128 (denorm) = 0000 20 80
+	float	7.00649232162409e-46	; 2^-22 * 2^-128 (denorm) = 0000 02 80
+	float	3.50324616081205e-46    ; 2^-23 * 2^-128 (denorm) = 0000 01 80
+	float	1.75162308040603e-46	; 2^-24 * 2^-128 (uflo)   = 0000 00 00
+	endif
 
-;	extended	8.5070591730234615e+37	; 0.5 * 2^127        = 400000 7f 0000
+	if		testall
+	extended	8.5070591730234615e+37	; 0.5 * 2^127        ; = 400000 7f 0000
+	endif
 	extended	0.5			; 0.5 * 2^0          = 400000 00 0000
 	extended	0.25			; 0.5 * 2^-1         = 400000 ff 0000
-;	extended	1.46936793853e-39	; 0.5 * 2^-128       = 400000 80 0000
-;	extended	-1.70141183460469e+38	; -1.0 * 2^127       = 800000 7f 0000
+	if		testall
+	extended	1.46936793853e-39	; 0.5 * 2^-128       ; = 400000 80 0000
+	extended	-1.70141183460469e+38	; -1.0 * 2^127       ; = 800000 7f 0000
+	endif
 	extended	-1.0			; -1.0 * 2^0         = 800000 00 0000
 	extended	-0.5			; -1.0 * 2^-1        = 800000 ff 0000
-;	extended	-2.93873587705571e-39	; -1.0 * 2^-128      = 800000 80 0000
+	if		testall
+	extended	-2.93873587705571e-39	; -1.0 * 2^-128      ; = 800000 80 0000
+	endif
 	extended	0.0			; 0.0 * 2^0          = 000000 00 0000
 	extended	-0.375			; -0.75 * 2^-1       : a00000 ff 0000
 
 ; due to more mantissa bits, we can go a bit further with denormalized numbers:
 
-;	extended	7.3468396926393e-40	; 2^-2 * 2^-128 (denorm) = 2000 00 80 0000
-;	extended	4.59177480789957e-41	; 2^-6 * 2^-128 (denorm) = 0200 00 80 0000
-;	extended	2.86985925493723e-42	; 2^-10 * 2^-128 (denorm)= 0020 00 80 0000
-;	extended	1.79366203433577e-43	; 2^-14 * 2^-128 (denorm)= 0002 00 80 0000
-;	extended	1.12103877145986e-44	; 2^-18 * 2^-128 (denorm)= 0000 20 80 0000
-;	extended	7.00649232162409e-46	; 2^-22 * 2^-128 (denorm)= 0000 02 80 0000
-;	extended	4.37905770101506e-47    ; 2^-26 * 2^-128 (denorm)= 0000 00 80 2000
-;	extended	2.73691106313441e-48	; 2^-30 * 2^-128 (denorm)= 0000 00 00 0200
-;	extended	1.71056941445901e-49	; 2^-34 * 2^-128 (denorm)= 0000 00 00 0020
-;	extended	1.06910588403688e-50	; 2^-38 * 2^-128 (denorm)= 0000 00 00 0002
-;	extended	5.34552942018440e-51	; 2^-39 * 2^-128 (denorm)= 0000 00 00 0001
-;	extended	2.6727647100922e-51	; 2^-40 * 2^-128 (uflo)  = 0000 00 00 0000
+	if		testall
+	extended	7.3468396926393e-40	; 2^-2 * 2^-128 (denorm) = 2000 00 80 0000
+	extended	4.59177480789957e-41	; 2^-6 * 2^-128 (denorm) = 0200 00 80 0000
+	extended	2.86985925493723e-42	; 2^-10 * 2^-128 (denorm)= 0020 00 80 0000
+	extended	1.79366203433577e-43	; 2^-14 * 2^-128 (denorm)= 0002 00 80 0000
+	extended	1.12103877145986e-44	; 2^-18 * 2^-128 (denorm)= 0000 20 80 0000
+	extended	7.00649232162409e-46	; 2^-22 * 2^-128 (denorm)= 0000 02 80 0000
+	extended	4.37905770101506e-47    ; 2^-26 * 2^-128 (denorm)= 0000 00 80 2000
+	extended	2.73691106313441e-48	; 2^-30 * 2^-128 (denorm)= 0000 00 80 0200
+	extended	1.71056941445901e-49	; 2^-34 * 2^-128 (denorm)= 0000 00 80 0020
+	extended	1.06910588403688e-50	; 2^-38 * 2^-128 (denorm)= 0000 00 80 0002
+	extended	5.34552942018440e-51	; 2^-39 * 2^-128 (denorm)= 0000 00 80 0001
+	extended	2.6727647100922e-51	; 2^-40 * 2^-128 (uflo)  = 0000 00 00 0000
+	endif

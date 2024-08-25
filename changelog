@@ -1,3 +1,9 @@
+2024-08-25 [1.42 Bld 274]
+
+- Addition    : pre-define variable FLOATMAX
+- Addition    : use 80 bit extended float on host platforms
+                supporting it
+
 2024-08-05 [1.42 Bld 273]
 
 - Addition    : support NEC uCOM 43/44/45

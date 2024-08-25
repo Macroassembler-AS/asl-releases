@@ -940,26 +940,28 @@ static void DecodeWORD(Word Code)
 
 static void DecodeFLOAT(Word DestLen)
 {
-  int z;
-  Boolean OK;
-  double FVal;
-
   if (ChkArgCnt(1, ArgCntMax))
   {
-    z = 1;
+    int z, ret;
+    Boolean OK;
+    as_float_t FVal;
+
     OK = True;
-    do
+    for (z = 1; (z <= ArgCnt) && OK; z++)
     {
-      FVal = EvalStrFloatExpression(&ArgStr[z], Float64, &OK);
-      if (OK)
+      FVal = EvalStrFloatExpression(&ArgStr[z], &OK);
+      if (!OK)
+        break;
+      SetMaxCodeLen(CodeLen + DestLen);
+      ret = as_float_2_ibm_float(&WAsmCode[CodeLen >> 1], FVal, DestLen == 8);
+      if (ret < 0)
       {
-        SetMaxCodeLen(CodeLen + DestLen);
-        if (Double2IBMFloat(&WAsmCode[CodeLen >> 1], FVal, DestLen == 8))
-          CodeLen += DestLen;
+        asmerr_check_fp_dispose_result(ret, &ArgStr[z]);
+        OK = False;
+        break;
       }
-      z++;
+      CodeLen += DestLen;
     }
-    while ((z <= ArgCnt) && (OK));
     if (!OK)
       CodeLen = 0;
   }

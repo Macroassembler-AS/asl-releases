@@ -1528,6 +1528,7 @@ Name             & Bedeutung \\
 \tty{TRUE}             & logisch ,,wahr'' \\
 \tty{FALSE}            & logisch ,,falsch'' \\
 \tty{CONSTPI}          & Kreiszahl Pi (3.1415.....) \\
+\tty{FLOATMAX}         & gr"o"ste darstellbare Gleitkommazahl \\
 \tty{VERSION}          & Version von \asname{} in BCD-Kodierung, \\
                        & z.B. 1331 hex f"ur Version 1.33p1 \\
 \tty{ARCHITECTURE}     & Zielplattform, f"ur die \asname{} "ubersetzt wurde, \\
@@ -2018,15 +2019,11 @@ Zeichen bzw. 16 Bit.
 \subsection{Evaluierung}
 
 Die Berechnung von im Formelausdruck entstehenden Zwischenergebnissen
-erfolgt immer mit der h"ochsten verf"ugbaren Wortbreite, d.h. 32 oder 64 Bit
-f"ur Ganzzahlen, 80 Bit f"ur Gleitkommazahlen und 255 Zeichen f"ur Strings.
-Eine eventuelle Pr"ufung auf Wertebereichs"uberschreitung findet erst am
-Endergebnis statt.
-\par
-Die portable C-Version \marginpar{{\em UNIX}} kann nur mit
-64-Bit-Gleitkommazahlen umgehen, ist daher auf einen Maximalwert von ca.
-$10^{308}$ beschr"ankt.  Als Ausgleich werden auf einigen Plattformen
-Integers mit 64 Bit Breite behandelt.
+erfolgt immer mit der h"ochsten auf dem Host-System verf"ugbaren Wortbreite.
+Bei Ganzzahlen sind dies 32 oder 64 Bit, und bei Gleitkommazahlen
+ca. +/-$1.8*10^{308}$ (IEEE Double Precision) oder ca. +/-$1.1*10^{4932}$
+(IEEE Extended Precision).  Eine eventuelle Pr"ufung auf
+Wertebereichs"uberschreitungen findet erst am Endergebnis statt.
 
 \subsection{Operatoren}
 
@@ -4749,7 +4746,7 @@ dies beim MCS-251 nicht mehr so, er kann auch ganze (Lang-)Worte aus
 dem Speicher lesen und erwartet dabei das MSB zuerst.  Da dies nicht der
 bisherigen Arbeitsweise von \asname{} bei der Konstantenablage entspricht,
 kann man nun mit diesem Befehl umschalten, ob die Befehle \tty{DB, DW, DD,
-DQ} und \tty{DT} mit Big- oder Little-Endian-Orientierung arbeiten sollen.
+DQ, DT} und \tty{DO} mit Big- oder Little-Endian-Orientierung arbeiten sollen.
 Mit \tty{BIGENDIAN OFF} (Voreinstellung) wird wie bei "alteren \asname{}-Versionen
 zuerst das niederwertigste Byte abgelegt, mit \tty{BIGENDIAN ON} wird die
 MCS-251-kompatible Variante benutzt.  Nat"urlich kann man diese Einstellung
@@ -5750,8 +5747,9 @@ f"ur \tty{BLKB}, 2 Byte f"ur \tty{BLKW}, 4 Byte f"ur \tty{BLKL} und
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-\subsection{DN,DB,DW,DD,DQ \& DT}
-\ttindex{DN}\ttindex{DB}\ttindex{DW}\ttindex{DD}\ttindex{DQ}\ttindex{DT}
+\subsection{DN,DB,DW,DD,DQ,DT \& DO}
+\ttindex{DN}\ttindex{DB}\ttindex{DW}\ttindex{DD}
+\ttindex{DQ}\ttindex{DT}\ttindex{DO}
 
 {\em\begin{tabbing}
 G"ultigkeit: \= Intel (au"ser 4004/4040), Zilog, Toshiba, NEC, TMS370,\\
@@ -5770,10 +5768,11 @@ verlegt:
 \begin{itemize}
 \item{\tty{DN}: 4-Bit-Integer}
 \item{\tty{DB}: Byte oder ASCII-String wie bei \tty{DC.B}}
-\item{\tty{DW}: 16-Bit-Integer oder Half Precision}
-\item{\tty{DD}: 32-Bit-Integer oder Single Precision}
-\item{\tty{DQ}: Double Precision (64 Bit)}
-\item{\tty{DT}: Gepackter BCD Integer oder Extended Precision (80 Bit)}
+\item{\tty{DW}: 16-Bit-Integer oder Gleitkomma mit halber Genauigkeit}
+\item{\tty{DD}: 32-Bit-Integer oder Gleitkomma mit einfacher Genauigkeit}
+\item{\tty{DQ}: 64-Bit-Integer oder Gleitkomma mit doppelter Genauigkeit}
+\item{\tty{DT}: Gepackter BCD Integer oder Gleitkomma mit erweiterter Genauigkeit (80 Bit)}
+\item{\tty{DO}: Gleitkomma mit vierfacher Genauigkeit (128 Bit)}
 \end{itemize}
 Zum anderen erfolgt die Unterscheidung, ob Konstantendefinition oder
 Speicherreservierung, im Operanden.  Eine Reservierung von Speicher
@@ -5855,6 +5854,13 @@ Sie funktioniert eher wie \tty{DATA} bei seinen kleineren Br"udern,
 akzeptiert aber neben String- und Integerargumenten auch Gleitkommawerte
 (und legt sie prozessorspezifischen 32-Bit-Format ab). \tty{DUP} gibt es {\em
 nicht}!
+
+Bei der Ablage von Gleitkommazahlen ist zu beachten, da"s diese keine h"ohere
+Genauigkeit und Wertebereich haben können als das auf dem Host-System verwendete
+Format.  Handelt es sich dabei z.B. um das '"ubliche' IEEE 754 64-Bit-Format,
+so ist der Wertebereich auf ca. +/-$1.8*10^{308}$ beschr"ankt (siehe Variable
+\tty{FLOATMAX}), und die untersten zwei bzw. acht Bytes bei \tty{DT} bzw.
+\tty{DO} sind Null.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -15497,7 +15503,7 @@ Dieses Modul wird nicht nur von \asname{}, sondern auch von den Hilfsprogrammen
 \subsubsection{codepseudo.c}
 
 Hier finden sich Pseudobefehle, die von mehreren Codegeneratoren verwendet
-werden.  Dies ist einmal die Intel-Gruppe mit der \tty{DB..DT}-Gruppe,
+werden.  Dies ist einmal die Intel-Gruppe mit der \tty{DB..DO}-Gruppe,
 zum anderen die Pendants f"ur die 8/16-Bitter von Motorola oder Rockwell.
 Wer in diesem Bereich um einen Prozessor erweitern will, kann mit einem
 Aufruf den gr"o"sten Teil der Pseudobefehle erschlagen.

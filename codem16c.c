@@ -2582,7 +2582,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "LDINTB", 0, DecodeLDINTB);
   AddInstTable(InstTable, "LDIPL", 0, DecodeLDIPL);
 
-  Format = (char*)malloc(sizeof(Char) * STRINGSIZE);
+  Format = (char*)malloc(sizeof(char) * STRINGSIZE);
 
   AddFixed("BRK"   , 0x0000);
   AddFixed("EXITD" , 0x7df2);

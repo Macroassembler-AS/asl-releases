@@ -1490,6 +1490,7 @@ name          & meaning \\
 TRUE          & logically ''true'' \\
 FALSE         & logically ''false'' \\
 CONSTPI       & Pi (3.1415.....) \\
+FLOATMAX      & largest representable floating point number \\
 VERSION       & version of \asname{} in BCD-coding, \\
               & e.g. 1331 hex for version 1.33p1 \\
 ARCHITECTURE  & target platform \asname{} was compiled for, in \\
@@ -1959,15 +1960,11 @@ string is longer than the used operand size, which is two characters or
 \subsection{Evaluation}
 
 The calculation of intermediary results within formula expressions is
-always done with the highest available resolution, i.e. 32 or 64 bits for
-integer numbers, 80 bit for floating point numbers and 255 characters
-for strings.  An possible test of value range overflows is done only
-on the final result.
-
-The portable C version \marginpar{{\em UNIX}} only supports floating
-point values up to 64 bits (resulting in a maximum value of roughly
-$10^{308}$), but in turn features integer lengths of 64 bits on some
-platforms.
+always done with the highest resolution available on the host system.
+For integer numbers, this is 32 or 64 bits.  For floating point numbers,
+the range is approximately +/-$1.8*10^{308}$ (IEEE Double Precision) or
++/-$1.1*10^{4932}$ (IEEE Extended Precision). A possible test for value
+range overflows is done only on the final result.
 
 \subsection{Operators}
 
@@ -4621,8 +4618,8 @@ free to use whichever endianess one wanted), it may be a problem for the
 251 as it can fetch whole (long-)words from memory and expects the MSB to
 be first.  As this is not the way of constant disposal earlier versions of
 \asname{} used, one can use this instruction to toggle between big and
-little endian mode for the instructions \tty{DB, DW, DD, DQ,} and
-\tty{DT}.  \tty{BIGENDIAN OFF} (the default) puts the LSB first into
+little endian mode for the instructions \tty{DB, DW, DD, DQ, DT,} and
+\tty{DO}.  \tty{BIGENDIAN OFF} (the default) puts the LSB first into
 memory as it used to be on earlier versions of \asname{}, \tty{BIGENDIAN ON}
 engages the big-endian mode compatible to the MCS-251.  One may of course
 change this setting as often as one wants; the current setting can be read
@@ -5592,8 +5589,9 @@ bytes for \tty{BLKL}, and 8 bytes for \tty{BLKD}).
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-\subsection{DN,DB,DW,DD,DQ, and DT}
-\ttindex{DN}\ttindex{DB}\ttindex{DW}\ttindex{DD}\ttindex{DQ}\ttindex{DT}
+\subsection{DN,DB,DW,DD,DQ,DT, and DO}
+\ttindex{DN}\ttindex{DB}\ttindex{DW}\ttindex{DD}
+\ttindex{DQ}\ttindex{DT}\ttindex{DO}
 
 {\em\begin{tabbing}
 valid for: \= Intel (except for 4004/4040), Zilog, Toshiba,\\
@@ -5608,11 +5606,12 @@ These commands are - one could say - the Intel counterpart to \tty{DS} and
 the specification of the operand length is moved into the mnemonic:
 \begin{itemize}
 \item{\tty{DN}: 4-bit integer}
-\item{\tty{DB}: byte or ASCII string similar to \tty{DC.B}}
-\item{\tty{DW}: 16-bit integer or half precision}
-\item{\tty{DD}: 32-bit integer or single precision}
-\item{\tty{DQ}: double precision   (64 bits)}
-\item{\tty{DT}: packed BCD integer or extended precision (80 bits)}
+\item{\tty{DB}: 8-bit byte or ASCII string similar to \tty{DC.B}}
+\item{\tty{DW}: 16-bit integer or half precision floating point}
+\item{\tty{DD}: 32-bit integer or single precision floating point}
+\item{\tty{DQ}: 64-bit integer or double precision floating point}
+\item{\tty{DT}: packed BCD integer or extended precision floating point (80 bits)}
+\item{\tty{DO}: quad precision floating point (128 bits)}
 \end{itemize}
 Second, the distinction between constant definition and memory
 reservation is done by the operand.  A reservation of memory is
@@ -5688,6 +5687,13 @@ the \tty{DATA} statement of its smaller brothers, but apart from string
 and integer arguments, it also accepts floating point values (and stores
 them in the processor's proprietary 32-bit format). There is {\em no}
 \tty{DUP} operator!
+
+When floating point constants are stored, they cannot have a larger
+precision or range than the floating point type used on the host system.
+For instance, if the common 64 bit IEEE 754 format is used on the host side,
+the value range is limited to roughly +/-$1.8*10^{308}$ (see the variable \tty{FLOATMAX}),
+and the lowest two resp. eight bytes of \tty{DT} resp. \tty{DO} are filled
+with zeros.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -15048,7 +15054,7 @@ the following:
 
 You will find at this place pseudo instructions that are used by
 a subset of code generators.  On the one hand, this is the Intel group of
-\tty{DB..DT}, and on the other hand their counterparts for 8/16 bit CPUs
+\tty{DB..DO}, and on the other hand their counterparts for 8/16 bit CPUs
 from Motorola or Rockwell.  Someone who wants to extend \asname{} by a
 processor fitting into one of these groups can get the biggest part
 of the necessary pseudo instructions with one call to this module.

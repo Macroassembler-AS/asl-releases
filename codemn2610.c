@@ -1103,11 +1103,17 @@ static void DecodeDC(Word Code)
         }
         case TempFloat:
         {
+          int ret;
+
           IncMaxCodeLen(2);
-          if (Double2IBMFloat(&WAsmCode[CodeLen], t.Contents.Float, False))
+          ret = as_float_2_ibm_float(&WAsmCode[CodeLen], t.Contents.Float, False);
+          if (ret >= 0)
             CodeLen += 2;
           else
+          {
+            asmerr_check_fp_dispose_result(ret, pArg);
             OK = False;
+          }
           HalfFilledWord = False;
           break;
         }

@@ -7,11 +7,17 @@
 	ds.op	9
 	endm
 
+	; since the precision of PI depends on the host system,
+	; disposing it with highest-possible resolution may result
+	; in data that differs in the lowest bits.  So better
+	; use a constant that can be represented precisely in binary:
+
+my_pi	equ	3.140625	; = 2 + 1 + 1/8 + 1/64
 	irp	op,s,d,x,p
 	dc.op	1.5
-	dc.op	constpi*1000
-        dc.op	constpi/1000
-        dc.op   -constpi
+	dc.op	my_pi*1024
+        dc.op	my_pi/1024
+        dc.op   -my_pi
 	endm
 
 	padding	off

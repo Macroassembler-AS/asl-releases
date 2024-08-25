@@ -526,11 +526,11 @@ static Boolean decode_adr(tStrComp *p_arg, adr_vals_t *p_result, Word pc_value, 
       }
       case eSymbolSizeFloat32Bit:
       {
-        Double f_val = EvalStrFloatExpressionWithResult(&imm_arg, Float64, &eval_result);
+        as_float_t f_val = EvalStrFloatExpressionWithResult(&imm_arg, &eval_result);
         if (eval_result.OK)
         {
-          int ret = Double_2_dec_f(f_val, p_result->vals);
-          eval_result.OK = check_dec_fp_dispose_result(ret, &imm_arg);
+          int ret = as_float_2_dec_f(f_val, p_result->vals);
+          eval_result.OK = asmerr_check_fp_dispose_result(ret, &imm_arg);
         }
         if (eval_result.OK)
           p_result->count = 4;
@@ -538,11 +538,11 @@ static Boolean decode_adr(tStrComp *p_arg, adr_vals_t *p_result, Word pc_value, 
       }  
       case eSymbolSizeFloat64Bit:
       {
-        Double f_val = EvalStrFloatExpressionWithResult(&imm_arg, Float64, &eval_result);
+        as_float_t f_val = EvalStrFloatExpressionWithResult(&imm_arg, &eval_result);
         if (eval_result.OK)
         {
-          int ret = Double_2_dec_d(f_val, p_result->vals);
-          eval_result.OK = check_dec_fp_dispose_result(ret, &imm_arg);
+          int ret = as_float_2_dec_d(f_val, p_result->vals);
+          eval_result.OK = asmerr_check_fp_dispose_result(ret, &imm_arg);
         }
         if (eval_result.OK)
           p_result->count = 8;

@@ -448,7 +448,7 @@ static Boolean decode_adr(tStrComp *p_arg, adr_vals_t *p_result, LongWord pc_val
     else
     {
       IntType eval_int_type;
-      int (*float_convert)(Double inp, Word *p_dest);
+      int (*float_convert)(as_float_t inp, Word *p_dest);
       Byte *p_specifier;
 
       if (index_reg)
@@ -484,19 +484,19 @@ static Boolean decode_adr(tStrComp *p_arg, adr_vals_t *p_result, LongWord pc_val
           goto int_common;
 
         case eSymbolSizeFloat32Bit:
-          float_convert = Double_2_dec_f;
+          float_convert = as_float_2_dec_f;
           goto float_common;
 
         case eSymbolSizeFloat64Bit:
-          float_convert = Double_2_dec_d;
+          float_convert = as_float_2_dec_d;
           goto float_common;
 
         case eSymbolSizeFloat64Bit_G:
-          float_convert = Double_2_dec_g;
+          float_convert = as_float_2_dec_g;
           goto float_common;
 
         case eSymbolSizeFloat128Bit:
-          float_convert = Double_2_dec_h;
+          float_convert = as_float_2_dec_h;
           goto float_common;
 
         int_common:
@@ -519,25 +519,24 @@ static Boolean decode_adr(tStrComp *p_arg, adr_vals_t *p_result, LongWord pc_val
             append_adr_vals_int(p_result, (LargeWord)p_result->imm_value, op_size);
             return check_mode_mask(mode_mask, MModImm, p_arg, p_result);
           }
-          break;
         }
 
         float_common:
         {
-          Double value = EvalStrFloatExpressionWithResult(&imm_arg, Float64, &eval_result);
+          as_float_t value = EvalStrFloatExpressionWithResult(&imm_arg, &eval_result);
 
           if (!eval_result.OK)
             return reset_adr_vals(p_result);
           if (len_spec == 'S')
           {
-            int ret = Double_2_dec_lit(value, p_specifier);
+            int ret = as_float_2_dec_lit(value, p_specifier);
             if (ret <= 0)
             {
-              check_dec_fp_dispose_result(ret, &imm_arg);
+              asmerr_check_fp_dispose_result(ret, &imm_arg);
               return reset_adr_vals(p_result);
             }
           }
-          else if (!len_spec && (mode_mask & MModLit) && (Double_2_dec_lit(value, p_specifier) > 0)) { }
+          else if (!len_spec && (mode_mask & MModLit) && (as_float_2_dec_lit(value, p_specifier) > 0)) { }
           else
           {
             Word buf[8];
@@ -545,7 +544,7 @@ static Boolean decode_adr(tStrComp *p_arg, adr_vals_t *p_result, LongWord pc_val
 
             if (ret < 0)
             {
-              check_dec_fp_dispose_result(ret, &imm_arg);
+              asmerr_check_fp_dispose_result(ret, &imm_arg);
               return reset_adr_vals(p_result);
             }
             *p_specifier = 0x80 | REG_PC;

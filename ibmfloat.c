@@ -14,128 +14,133 @@
 
 #include "stdinc.h"
 #include <math.h>
+#include <string.h>
 
-#include "ieeefloat.h"
+#include "as_float.h"
 #include "errmsg.h"
 #include "asmerr.h"
 #include "ibmfloat.h"
 
 /*!------------------------------------------------------------------------
- * \fn     Double2IBMFloat(Word *pDest, double Src, Boolean ToDouble)
+ * \fn     as_float_2_ibm_float(Word *pDest, as_float_t Src, Boolean ToDouble)
  * \brief  convert floating point number to IBM single precision format
  * \param  pDest where to write result (2 words)
  * \param  Src floating point number to store
  * \param  ToDouble convert to double precision (64 instead of 32 bits)?
- * \return True if conversion was successful
+ * \return 0 or error code
  * ------------------------------------------------------------------------ */
 
-#define DBG_FLOAT 0
-
-Boolean Double2IBMFloat(Word *pDest, double Src, Boolean ToDouble)
+int as_float_2_ibm_float(Word *pDest, as_float_t Src, Boolean ToDouble)
 {
-  Word Sign;
-  Integer Exponent;
-  LongWord Mantissa, Fraction;
-
-#if DBG_FLOAT
-  fprintf(stderr, "(0) %lf\n", Src);
-#endif
+  as_float_dissect_t dissect;
+  unsigned dest_num_bits;
 
   /* (1) Dissect IEEE number */
 
-  ieee8_dissect(&Sign, &Exponent, &Mantissa, &Fraction, Src);
+  as_float_dissect(&dissect, Src);
 
-  /* (2) Convert IEEE 2^n exponent to multiple of four since IBM float exponent is to the base of 16: */
+  /* NaN or infinity not representable: */
 
-  while ((Mantissa & 0x10000000ul) || (Exponent & 3))
+  if ((dissect.fp_class != AS_FP_NORMAL)
+   && (dissect.fp_class != AS_FP_SUBNORMAL))
+    return -EINVAL;
+
+  /* IBM format mantissa is in range [0.5,1) instead of [1,2): */
+
+  dissect.exponent++;
+
+  /* (2) Convert 2^n exponent to multiple of four since IBM float exponent is to the base of 16.
+         Note that before shifting, we ad a zero bit at the end to avoid losing precision: */
+
+  while (dissect.exponent & 3)
   {
-    if (Mantissa & 1)
-      Fraction |= 0x1000000ul;
-    Mantissa >>= 1;
-    Fraction >>= 1;
-    Exponent++;
+    as_float_append_mantissa_bits(&dissect, 0, 1);
+    as_float_mantissa_shift_right(dissect.mantissa, 0, dissect.mantissa_bits);
+    dissect.exponent++;
   }
-#if DBG_FLOAT
-  fprintf(stderr, "(expo4) %2d * 0x%08x * 2^%d Fraction 0x%08x\n", Sign ? -1 : 1, Mantissa, Exponent, Fraction);
-#endif
 
   /* (3) make base-16 exponent explicit */
 
-  Exponent /= 4;
-#if DBG_FLOAT
-  fprintf(stderr, "(exp16) %2d * 0x%08x * 16^%d Fraction 0x%08x\n", Sign ? -1 : 1, Mantissa, Exponent, Fraction);
-#endif
+  dissect.exponent /= 4;
 
-  /* (2a) Round-to-the-nearest for single precision: */
+  /* (4) Round to target precision.  We cannot use as_float_round() for rounding
+         since the exponent is already base-16: */
 
-  if (!ToDouble)
+  dest_num_bits = ToDouble ? 56 : 24;
+  if (dest_num_bits > dissect.mantissa_bits)
+    as_float_round(&dissect, dest_num_bits);
+  else if (dest_num_bits < dissect.mantissa_bits)
   {
-    Boolean RoundUp;
+    Boolean round_up;
 
-    /* Bits 27..4 of mantissa will make it into dest, so the decision bit is bit 3: */
-
-    if (Mantissa & 0x8) /* fraction is >= 0.5 */
+    if (as_float_get_mantissa_bit(dissect.mantissa, dissect.mantissa_bits, dest_num_bits))
     {
-      if ((Mantissa & 7) || Fraction) /* fraction is > 0.5 -> round up */
-        RoundUp = True;
-      else /* fraction is 0.5 -> round towards even, i.e. round up if mantissa is odd */
-        RoundUp = !!(Mantissa & 0x10);
+      if (!as_float_mantissa_is_zero_from(&dissect, dest_num_bits + 1)) /* > 0.5 */
+        round_up = True;
+      else
+        round_up = !!as_float_get_mantissa_bit(dissect.mantissa, dissect.mantissa_bits, dest_num_bits - 1);
     }
-    else /* fraction is < 0.5 -> round down */
-      RoundUp = False;
-#if DBG_FLOAT
-    fprintf(stderr, "RoundUp %u\n", RoundUp);
-#endif
-    if (RoundUp)
+    else /* < 0.5 */
+      round_up = False;
+
+    if (round_up)
     {
-      Mantissa += 16 - (Mantissa & 15);
-      Fraction = 0;
-      if (Mantissa & 0x10000000ul)
+      as_float_mant_word_t carry;
+      as_float_mant_t sum;
+
+      carry = as_float_mantissa_add_bit(sum, dissect.mantissa, dest_num_bits, dissect.mantissa_bits);
+      if (carry)
       {
-        Mantissa >>= 4;
-        Exponent++;
+        as_float_mantissa_shift_right(sum, carry, dissect.mantissa_bits);
+        as_float_mantissa_shift_right(sum, 0, dissect.mantissa_bits);
+        as_float_mantissa_shift_right(sum, 0, dissect.mantissa_bits);
+        as_float_mantissa_shift_right(sum, 0, dissect.mantissa_bits);
+        dissect.exponent++;
       }
+      memcpy(dissect.mantissa, sum, sizeof dissect.mantissa);
     }
-#if DBG_FLOAT
-    fprintf(stderr, "(round) %2d * 0x%08x * 16^%d Fraction 0x%08x\n", Sign ? -1 : 1, Mantissa, Exponent, Fraction);
-#endif
+    as_float_remove_mantissa_bits(&dissect, dissect.mantissa_bits - dest_num_bits);
   }
 
-  /* (3a) Overrange? */
+  /* Overrange? */
 
-  if (Exponent > 63)
+  if (dissect.exponent > 63)
+    return -E2BIG;
+
+  /* number that is too small may degenerate to 0: */
+
+  while ((dissect.exponent < -64) && !as_float_mantissa_is_zero(&dissect))
   {
-    WrError(ErrNum_OverRange);
-    return False;
+    as_float_mantissa_shift_right(dissect.mantissa, 0, dissect.mantissa_bits);
+    as_float_mantissa_shift_right(dissect.mantissa, 0, dissect.mantissa_bits);
+    as_float_mantissa_shift_right(dissect.mantissa, 0, dissect.mantissa_bits);
+    as_float_mantissa_shift_right(dissect.mantissa, 0, dissect.mantissa_bits);
+    dissect.exponent++;
   }
-  else
+
+  /* Zero shall get zero (-64) as exponent: */
+
+  if (as_float_mantissa_is_zero(&dissect))
+    dissect.exponent = -64;
+
+  if (dissect.exponent < -64)
+    dissect.exponent = -64;
+
+  /* add bias to exponent */
+
+  dissect.exponent += 64;
+
+  /* store result: */
+
+  pDest[0] = (dissect.negative << 15)
+           | ((dissect.exponent << 8) & 0x7f00)
+           | as_float_mantissa_extract(&dissect, 0, 8);
+  pDest[1] = as_float_mantissa_extract(&dissect, 8, 16);
+  if (ToDouble)
   {
-    /* (3b) number that is too small may degenerate to 0: */
-
-    while ((Exponent < -64) && Mantissa)
-    {
-      Exponent++; Mantissa >>= 4;
-    }
-    if (Exponent < -64)
-      Exponent = -64;
-
-    /* (3c) add bias to exponent */
-
-    Exponent += 64;
-
-    /* (3d) store result */
-
-    pDest[0] = (Sign << 15) | ((Exponent << 8) & 0x7f00) | ((Mantissa >> 20) & 0xff);
-    pDest[1] = (Mantissa >> 4) & 0xffff;
-
-    /* IBM format has four mantissa bits more than IEEE double, so the 4 LSBs
-       remain zero: */
-
-    if (ToDouble)
-    {
-      pDest[2] = ((Mantissa & 15) << 12) | ((Fraction >> 12) & 0x0fff);
-      pDest[3] = (Fraction & 0x0fff) << 4;
-    }
-    return True;
+    pDest[2] = as_float_mantissa_extract(&dissect, 24, 16);
+    pDest[3] = as_float_mantissa_extract(&dissect, 40, 16);
   }
+
+  return 0;
 }

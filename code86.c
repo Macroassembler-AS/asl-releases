@@ -3016,7 +3016,9 @@ static void DecodeShift(Word Index)
       case TypeReg16:
       case TypeMem:
         BAsmCode[CodeLen] = OpSize;
-        BAsmCode[CodeLen + 1] = AdrMode + (pOrder->Code << 3);
+        /* work around issue on VAX */
+        BAsmCode[CodeLen + 1] = pOrder->Code;
+        BAsmCode[CodeLen + 1] = (BAsmCode[CodeLen + 1] << 3) | AdrMode;
         if (AdrType != TypeMem)
           BAsmCode[CodeLen + 1] += 0xc0;
         copy_adr_vals(2);

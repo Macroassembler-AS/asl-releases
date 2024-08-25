@@ -11,14 +11,118 @@
 #include "stdinc.h"
 #include <math.h>
 #include <errno.h>
+#include <string.h>
 
 #include "be_le.h"
+#include "as_float.h"
 #include "ieeefloat.h"
 #include "decfloat.h"
 
-/* NOTE: if host uses DEC float, double is assumed to be D_float */
+#define DBG_FLOAT 0
 
-#ifdef DECFLOAT
+#ifdef HOST_DECFLOAT
+
+#ifdef __GFLOAT
+/* Some VAX compilers internally seem to use D float
+   and are unable to parse the G float DBL_MAX literal
+   of 8.98...E+308 from float.h.
+   So we put a hand-crafted constant in memory.
+   Note this is only about half of the maximum, but
+   putting 0x7ff into the exponent results in a
+   floating point exception.  Maybe SIMH misinterpretes
+   this as infinity, which does not exist for VAX
+   floatingpoint formats? */
+
+double as_decfloat_get_max_gfloat(void)
+{
+  static double max_gfloat;
+  static Boolean set = False;
+
+  if (!set)
+  {
+    Byte raw[8] = { 0xef, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+    memcpy(&max_gfloat, raw, 8);
+    set = True;
+  }
+  return max_gfloat;
+}
+#endif /* __GFLOAT */
+
+/*!------------------------------------------------------------------------
+ * \fn     as_float_dissect(as_float_dissect_t *p_dest, as_float_t num)
+ * \brief  dissect (64 bit) float into components - may be D or G float
+ * \param  p_dest result buffer
+ * \param  num number to dissect
+ * ------------------------------------------------------------------------ */
+
+void as_float_dissect(as_float_dissect_t *p_dest, as_float_t num)
+{
+  const Byte *p_src = (const Byte*)&num;
+  LongWord mant_h, mant_l;
+  Integer biased_exponent;
+
+  as_float_zero(p_dest);
+#if DBG_FLOAT
+  {
+    int z;
+    printf("%g:", num);
+    for (z = 0; z < 8; z++)
+      printf(" %02x", p_src[z]);
+    printf("\n");
+  }
+#endif
+
+  /* (a) Sign is MSB of highest byte: */
+
+  p_dest->negative = !!(p_src[1] & 0x80);
+
+  /* (b) Exponent is stored in the following 8/11 bits, with a bias of 128/1024: */
+
+  biased_exponent = p_src[1] & 0x7f;
+#ifdef __GFLOAT
+  biased_exponent = (biased_exponent << 4) | ((p_src[0] >> 4) & 15);
+#else
+  biased_exponent = (biased_exponent << 1) | ((p_src[0] >> 7) & 1);
+#endif
+
+  /* (c) remove bias, correct mantissa normalization */
+
+#ifdef __GFLOAT
+  p_dest->exponent = biased_exponent - 1024;
+#else
+  p_dest->exponent = biased_exponent - 128;
+#endif
+  p_dest->exponent--;
+
+  /* (d) mantissa parts: */
+
+  mant_h = p_src[0]
+#ifdef __GFLOAT
+         & 0x0f;
+#else
+         & 0x7f;
+#endif
+  mant_h = (mant_h << 8) | p_src[3];
+  mant_h = (mant_h << 8) | p_src[2];
+  mant_l = p_src[5];
+  mant_l = (mant_l << 8) | p_src[4];
+  mant_l = (mant_l << 8) | p_src[7];
+  mant_l = (mant_l << 8) | p_src[6];
+
+  /* (e) append leading one (if not zero) and mantissa words: */
+
+  as_float_append_mantissa_bits(p_dest, mant_h || mant_l || biased_exponent, 1);
+#ifdef __GFLOAT
+  as_float_append_mantissa_bits(p_dest, mant_h, 20);
+#else
+  as_float_append_mantissa_bits(p_dest, mant_h, 23);
+#endif
+  as_float_append_mantissa_bits(p_dest, mant_l, 32);
+
+#if DBG_FLOAT
+  as_float_dump(stdout, "(0)", p_dest);
+#endif
+}
 
 /*!------------------------------------------------------------------------
  * \fn     DECF_2_Single(Byte *pDest, float inp)
@@ -29,10 +133,12 @@
 
 void DECF_2_Single(Byte *pDest, float inp)
 {
+  float tmp = inp;
+
   /* IEEE + DEC layout is the same for single, just the exponent offset is different
      by two: */
 
-  inp /= 4;
+  tmp /= 4;
   memcpy(pDest, &tmp, 4);
   WSwap(pDest, 4);
 }
@@ -44,7 +150,7 @@ void DECF_2_Single(Byte *pDest, float inp)
  * \param  inp value to convert
  * ------------------------------------------------------------------------ */
 
-void DECD_2_Double(Byte *pDest, Double inp)
+void DECD_2_Double(Byte *pDest, as_float_t inp)
 {
   Byte tmp[8];
   Word Exp;
@@ -83,8 +189,12 @@ void DECD_2_Double(Byte *pDest, Double inp)
  * \param  inp value to convert
  * ------------------------------------------------------------------------ */
 
-void DECD_2_LongDouble(Byte *pDest, Double inp)
+void DECD_2_LongDouble(Byte *pDest, as_float_t inp)
 {
+  Byte Buffer[8], Sign;
+  Word Exponent;
+  int z;
+
   memcpy(Buffer, &inp, 8);
   WSwap(Buffer, 8);
   Sign = (*Buffer) & 0x80;
@@ -101,14 +211,14 @@ void DECD_2_LongDouble(Byte *pDest, Double inp)
 #endif /* DECFLOAT */
 
 /*!------------------------------------------------------------------------
- * \fn     Double_2_dec_lit(Double inp, Byte *p_dest)
+ * \fn     as_float_2_dec_lit(as_float_t inp, Byte *p_dest)
  * \brief  convert from host to DEC (VAX) 6 bit float (literal) format
  * \param  inp value to convert
  * \param  p_dest result buffer
  * \return >0 for number of bytes used (1) or <0 for error code
  * ------------------------------------------------------------------------ */
 
-extern int Double_2_dec_lit(Double inp, Byte *p_dest)
+extern int as_float_2_dec_lit(as_float_t inp, Byte *p_dest)
 {
   int exp;
   double fract_part, nonfract_part;
@@ -133,279 +243,257 @@ extern int Double_2_dec_lit(Double inp, Byte *p_dest)
 }
 
 /*!------------------------------------------------------------------------
- * \fn     Double_2_dec_f(Double inp, Word *p_dest)
+ * \fn     as_float_2_dec_f(as_float_t inp, Word *p_dest)
  * \brief  convert from host to DEC (PDP/VAX) 4 byte float (F) format
  * \param  inp value to dispose
  * \param  p_dest where to dispose
  * \return >0 for number of words used (2) or <0 for error code
  * ------------------------------------------------------------------------ */
 
-int Double_2_dec_f(Double inp, Word *p_dest)
+int as_float_2_dec_f(as_float_t inp, Word *p_dest)
 {
 #ifdef HOST_DECFLOAT
+  float tmp;
 
   /* native format: */
-
-  {
-    Single tmp = inp;
-    memcpy(p_dest, &tmp, 4);
-  }
+  if (fabs(inp) > 1.7E38)
+    return -E2BIG;
+  tmp = inp;
+  memcpy(p_dest, &tmp, 4);
 
 #else /* !HOST_DECFLOAT */
 
-  /* Otherwise, convert to IEEE 32 bit.  Conversion
-     from IEEE -> DEC F means just multiplying by four,
-     otherwise the layout is the same: */
+  as_float_dissect_t dissect;
 
-  if (fabs(inp) > 1.70141e+38)
+  /* Dissect */
+
+  as_float_dissect(&dissect, inp);
+
+  /* Inf/NaN cannot be represented in target format: */
+
+  if ((dissect.fp_class != AS_FP_NORMAL)
+   && (dissect.fp_class != AS_FP_SUBNORMAL))
+    return -EINVAL;
+
+  as_float_round(&dissect, 24);
+
+  /* For DEC float, Mantissa is in range 0.5...1.0, instead of 1.0...2.0: */
+
+  dissect.exponent++;
+  if (dissect.exponent > 127)
     return -E2BIG;
 
-# ifdef IEEEFLOAT
-  {
-    int fp_class = as_fpclassify(inp);
-    if ((fp_class != AS_FP_NORMAL) && (fp_class != AS_FP_SUBNORMAL))
-      return -EINVAL;
-  }
-# endif /* IEEEFLOAT */
-  {
-    Byte buf[4];
-    Double_2_ieee4(inp * 4.0, buf, True);
+  /* DEC float does not handle denormal numbers and truncates to zero: */
 
-    p_dest[0] = ((Word)(buf[0])) << 8 | buf[1];
-    p_dest[1] = ((Word)(buf[2])) << 8 | buf[3];
+  if (dissect.fp_class == AS_FP_SUBNORMAL)
+  {
+    dissect.exponent = -128;
+    memset(dissect.mantissa, 0, sizeof dissect.mantissa);
   }
+
+  /* add bias to exponent */
+
+  dissect.exponent += 128;
+
+  /* assemble 1st word (seeeeeeeemmmmmmm): */
+
+                                         /* discard highest mantissa bit 23 (implicit leading one) */
+  p_dest[0] = (((Word)dissect.negative & 1) << 15)
+            | ((dissect.exponent << 7) & 0x7f80u)
+            | as_float_mantissa_extract(&dissect, 1, 7);  /* mant bits 22...16 */
+  p_dest[1] = as_float_mantissa_extract(&dissect, 8, 16); /* mant bits 15... 0 */
+
 #endif /* HOST_DECFLOAT */
+
   return 2;
 }
 
 /*!------------------------------------------------------------------------
- * \fn     Double_2_dec_d(Double inp, Word *p_dest)
+ * \fn     as_float_2_dec_d(as_float_t inp, Word *p_dest)
  * \brief  convert from host to DEC (PDP/VAX) 8 byte float (D) format
  * \param  inp value to dispose
  * \param  p_dest where to dispose
  * \return >0 for number of words used (4) or <0 for error code
  * ------------------------------------------------------------------------ */
 
-int Double_2_dec_d(Double inp, Word *p_dest)
+int as_float_2_dec_d(as_float_t inp, Word *p_dest)
 {
-#ifdef HOST_DECFLOAT
+#if (defined HOST_DECFLOAT) && (!defined __GFLOAT)
+  double tmp;
 
   /* native format: */
-
+  tmp = inp;
   memcpy(p_dest, &tmp, 8);
 
-#else /* !HOST_DECFLOAT */
+#else /* !HOST_DECFLOAT || __GFLOAT*/
 
-  /* Otherwise, convert to IEEE 64 bit: */
+  as_float_dissect_t dissect;
 
-  if (fabs(inp) > 1.70141e+38)
+  /* Dissect */
+
+  as_float_dissect(&dissect, inp);
+
+  /* Inf/NaN cannot be represented in target format: */
+
+  if ((dissect.fp_class != AS_FP_NORMAL)
+   && (dissect.fp_class != AS_FP_SUBNORMAL))
+    return -EINVAL;
+
+  as_float_round(&dissect, 56);
+
+  /* For DEC float, Mantissa is in range 0.5...1.0, instead of 1.0...2.0: */
+
+  dissect.exponent++;
+  if (dissect.exponent > 127)
     return -E2BIG;
 
-# ifdef IEEEFLOAT
+  /* DEC float does not handle denormal numbers and truncates to zero: */
+
+  if (dissect.fp_class == AS_FP_SUBNORMAL)
   {
-    int fp_class = as_fpclassify(inp);
-    if ((fp_class != AS_FP_NORMAL) && (fp_class != AS_FP_SUBNORMAL))
-      return -EINVAL;
+    dissect.exponent = -128;
+    memset(dissect.mantissa, 0, sizeof dissect.mantissa);
   }
-# endif /* IEEEFLOAT */
 
-  {
-    Word sign;
-    Integer exponent;
-    LongWord mantissa, fraction;
+  /* add bias to exponent */
 
-    /* Dissect */
+  dissect.exponent += 128;
 
-    ieee8_dissect(&sign, &exponent, &mantissa, &fraction, inp);
+  /* assemble 1st word (seeeeeeeemmmmmmm): */
 
-    /* For DEC float, Mantissa is in range 0.5...1.0, instead of 1.0...2.0: */
+                                         /* discard highest mantissa bit 55 (implicit leading one) */
+  p_dest[0] = (((Word)dissect.negative & 1) << 15)
+            | ((dissect.exponent << 7) & 0x7f80u)
+            | as_float_mantissa_extract(&dissect,  1,  7); /* mant bits 54...48 */
+  p_dest[1] = as_float_mantissa_extract(&dissect,  8, 16); /* mant bits 47...32 */
+  p_dest[2] = as_float_mantissa_extract(&dissect, 24, 16); /* mant bits 31...24 */
+  p_dest[3] = as_float_mantissa_extract(&dissect, 40, 16); /* mant bits 15... 0 */
 
-    exponent++;
-
-    /* DEC float does not handle denormal numbers and truncates to zero: */
-
-    if (!(mantissa & 0x10000000ul))
-    {
-      fraction = mantissa = 0;
-      exponent = -128;
-    }
-
-    /* add bias to exponent */
-
-    exponent += 128;
-
-    /* assemble 1st word (seeeeeeeemmmmmmm): */
-
-    p_dest[0] = ((sign & 1) << 15) 
-              | ((exponent << 7) & 0x7f80u)
-              | ((mantissa >> 21) & 0x7f);  /* mant bits 27..21 */
-    p_dest[1] = (mantissa >> 5) & 0xffff;   /* mant bits 20..5 */
-    p_dest[2] = ((mantissa & 0x1f) << 11)   /* mant bits 4..0 */
-              | ((fraction >> 13) & 0x7ff); /* fract bits 23..13 */
-    p_dest[3] = (fraction & 0x1fff) << 3;  /* fract bits 12..0 */
-  }
-#endif /* HOST_DECFLOAT */
+#endif /* HOST_DECFLOAT && !__GFLOAT */
 
   return 4;
 }
 
 /*!------------------------------------------------------------------------
- * \fn     Double_2_dec_g(Double inp, Word *p_dest)
+ * \fn     as_float_2_dec_g(as_float_t inp, Word *p_dest)
  * \brief  convert from host to DEC (VAX) 8 byte float (G) format
  * \param  inp value to dispose
  * \param  p_dest where to dispose
  * \return >0 for number of words used (4) or <0 for error code
  * ------------------------------------------------------------------------ */
 
-int Double_2_dec_g(Double inp, Word *p_dest)
+int as_float_2_dec_g(as_float_t inp, Word *p_dest)
 {
-  /* Convert to IEEE 64 bit: */
+#if (defined HOST_DECFLOAT) && (defined __GFLOAT)
+  double tmp;
 
-  if (fabs(inp) > 0.9e+308)
+  /* native format: */
+  tmp = inp;
+  memcpy(p_dest, &tmp, 8);
+
+#else /* !HOST_DECFLOAT || !__GFLOAT*/
+
+  as_float_dissect_t dissect;
+
+  /* Dissect */
+
+  as_float_dissect(&dissect, inp);
+
+  /* Inf/NaN cannot be represented in target format: */
+
+  if ((dissect.fp_class != AS_FP_NORMAL)
+   && (dissect.fp_class != AS_FP_SUBNORMAL))
+    return -EINVAL;
+
+  as_float_round(&dissect, 53);
+
+  /* For DEC float, Mantissa is in range 0.5...1.0, instead of 1.0...2.0: */
+
+  dissect.exponent++;
+  if (dissect.exponent > 1023)
     return -E2BIG;
 
-# ifdef IEEEFLOAT
+  /* DEC float does not handle denormal numbers and truncates to zero: */
+
+  if (dissect.fp_class == AS_FP_SUBNORMAL)
   {
-    int fp_class = as_fpclassify(inp);
-    if ((fp_class != AS_FP_NORMAL) && (fp_class != AS_FP_SUBNORMAL))
-      return -EINVAL;
+    dissect.exponent = -1024;
+    memset(dissect.mantissa, 0, sizeof dissect.mantissa);
   }
-# endif /* IEEEFLOAT */
 
-  {
-    Word sign;
-    Integer exponent;
-    LongWord mantissa, fraction;
+  /* add bias to exponent */
 
-    /* Dissect */
+  dissect.exponent += 1024;
 
-    ieee8_dissect(&sign, &exponent, &mantissa, &fraction, inp);
+  /* assemble 1st word (seeeeeeeeeeemmmm): */
 
-    /* For DEC float, Mantissa is in range 0.5...1.0, instead of 1.0...2.0: */
+                                         /* discard highest mantissa bit 52 (implicit leading one) */
+  p_dest[0] = (((Word)dissect.negative & 1) << 15)
+            | ((dissect.exponent << 4) & 0x7ff0u)
+            | as_float_mantissa_extract(&dissect,  1,  4); /* mant bits 51...48 */
+  p_dest[1] = as_float_mantissa_extract(&dissect,  5, 16); /* mant bits 47...32 */
+  p_dest[2] = as_float_mantissa_extract(&dissect, 21, 16); /* mant bits 31...16 */
+  p_dest[3] = as_float_mantissa_extract(&dissect, 37, 16); /* mant bits 15... 0 */
 
-    exponent++;
-
-    /* DEC float does not handle denormal numbers and truncates to zero: */
-
-    if (!(mantissa & 0x10000000ul))
-    {
-      fraction = mantissa = 0;
-      exponent = -1024;
-    }
-
-    /* add bias to exponent */
-
-    exponent += 1024;
-
-    /* assemble 1st word (seeeeeeeeeeemmmm): */
-
-    p_dest[0] = ((sign & 1) << 15)
-              | ((exponent << 4) & 0x7ff0u)
-              | ((mantissa >> 24) & 0x0f);  /* mant bits 27..24 */
-    p_dest[1] = (mantissa >> 8) & 0xffff;   /* mant bits 23..8 */
-    p_dest[2] = ((mantissa & 0xff) << 8)   /* mant bits 7..0 */
-              | ((fraction >> 16) & 0xff); /* fract bits 23..16 */
-    p_dest[3] = (fraction & 0xffff) << 0;  /* fract bits 15..0 */
-  }
+#endif /* HOST_DECFLOAT && __GFLOAT */
 
   return 4;
 }
 
 /*!------------------------------------------------------------------------
- * \fn     Double_2_dec_h(Double inp, Word *p_dest)
+ * \fn     as_float_2_dec_h(as_float_t inp, Word *p_dest)
  * \brief  convert from host to DEC (VAX) 16 byte float (h) format
  * \param  inp value to dispose
  * \param  p_dest where to dispose
  * \return >0 for number of words used (8) or <0 for error code
  * ------------------------------------------------------------------------ */
 
-int Double_2_dec_h(Double inp, Word *p_dest)
+int as_float_2_dec_h(as_float_t inp, Word *p_dest)
 {
-  /* Convert to IEEE 64 bit: */
+  as_float_dissect_t dissect;
 
-  if (fabs(inp) > 0.9e+308)
+  /* Dissect */
+
+  as_float_dissect(&dissect, inp);
+
+  /* Inf/NaN cannot be represented in target format: */
+
+  if ((dissect.fp_class != AS_FP_NORMAL)
+   && (dissect.fp_class != AS_FP_SUBNORMAL))
+    return -EINVAL;
+
+  as_float_round(&dissect, 113);
+
+  /* For DEC float, Mantissa is in range 0.5...1.0, instead of 1.0...2.0: */
+
+  dissect.exponent++;
+  if (dissect.exponent > 16383)
     return -E2BIG;
 
-# ifdef IEEEFLOAT
+  /* DEC float does not handle denormal numbers and truncates to zero: */
+
+  if (dissect.fp_class == AS_FP_SUBNORMAL)
   {
-    int fp_class = as_fpclassify(inp);
-    if ((fp_class != AS_FP_NORMAL) && (fp_class != AS_FP_SUBNORMAL))
-      return -EINVAL;
+    dissect.exponent = -16384;
+    memset(dissect.mantissa, 0, sizeof dissect.mantissa);
   }
-# endif /* IEEEFLOAT */
 
-  {
-    Word sign;
-    Integer exponent;
-    LongWord mantissa, fraction;
+  /* add bias to exponent */
 
-    /* Dissect */
+  dissect.exponent += 16384;
 
-    ieee8_dissect(&sign, &exponent, &mantissa, &fraction, inp);
+  /* assemble 1st word (seeeeeeeeeeeeeee): */
 
-    /* For DEC float, Mantissa is in range 0.5...1.0, instead of 1.0...2.0: */
-
-    exponent++;
-
-    /* DEC float does not handle denormal numbers and truncates to zero: */
-
-    if (!(mantissa & 0x10000000ul))
-    {
-      fraction = mantissa = 0;
-      exponent = -16384;
-    }
-
-    /* add bias to exponent */
-
-    exponent += 16384;
-
-    /* assemble 1st word (seeeeeeeeeeeeeee): */
-
-    p_dest[0] = ((sign & 1) << 15) 
-              | ((exponent << 0) & 0x7fffu);
-    p_dest[1] = (mantissa >> 12) & 0xffff; /* mant bits 27..12 */
-    p_dest[2] = ((mantissa & 0xfff) << 4)  /* mant bits 11..0 */
-              | ((fraction >> 20) & 0xf);  /* fract bits 23..20 */
-    p_dest[3] = (fraction >> 4) & 0xffff;  /* fract bits 19..4 */
-    p_dest[4] = (fraction & 0xf) << 12;    /* fract bits 3..0 */
-    p_dest[5] =
-    p_dest[6] =
-    p_dest[7] = 0x0000;
-  }
+  p_dest[0] = (((Word)dissect.negative & 1) << 15)
+            | ((dissect.exponent << 0) & 0x7fffu);
+                                         /* discard highest mantissa bit 112 (implicit leading one) */
+  p_dest[1] = as_float_mantissa_extract(&dissect,  1, 16); /* mant bits 111...96 */
+  p_dest[2] = as_float_mantissa_extract(&dissect, 17, 16); /* mant bits  95...80 */
+  p_dest[3] = as_float_mantissa_extract(&dissect, 33, 16); /* mant bits  79...64 */
+  p_dest[4] = as_float_mantissa_extract(&dissect, 49, 16); /* mant bits  63...48 */
+  p_dest[5] = as_float_mantissa_extract(&dissect, 65, 16); /* mant bits  47...32 */
+  p_dest[6] = as_float_mantissa_extract(&dissect, 81, 16); /* mant bits  31...16 */
+  p_dest[7] = as_float_mantissa_extract(&dissect, 97, 16); /* mant bits  15... 0 */
 
   return 8;
-}
-
-#include "asmerr.h"
-#include "strcomp.h"
-
-/*!------------------------------------------------------------------------
- * \fn     check_dec_fp_dispose_result(int ret, const struct sStrComp *p_arg)
- * \brief  check the result of Double_2...and throw associated error messages
- * \param  ret return code
- * \param  p_arg associated source argument
- * ------------------------------------------------------------------------ */
-
-Boolean check_dec_fp_dispose_result(int ret, const struct sStrComp *p_arg)
-{
-  if (ret >= 0) 
-    return True;
-  switch (ret)
-  {
-    case -EIO:
-      WrStrErrorPos(ErrNum_UnderRange, p_arg);
-      return False;
-    case -EBADF:
-      WrXErrorPos(ErrNum_InvArg, "raster", &p_arg->Pos);
-      return False;
-    case -E2BIG:
-      WrStrErrorPos(ErrNum_OverRange, p_arg);
-      return False;
-    case -EINVAL:
-      WrXErrorPos(ErrNum_InvArg, "INF/NaN", &p_arg->Pos);
-      return False;
-    default:
-      WrStrErrorPos(ErrNum_InvArg, p_arg);
-      return False;
-  }
 }

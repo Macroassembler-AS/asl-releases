@@ -12,6 +12,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <setjmp.h>
+#include <float.h>
 #include <assert.h>
 
 #include "version.h"
@@ -2011,7 +2012,7 @@ static void INCLUDE_Restorer(PInputTag PInp)
  * \fn     ExpandINCLUDE_Core(const tStrComp *pArg, Boolean SearchPath)
  * \brief  The actual core code to open a source file for assembly
  * \param  pArg file's name to open
- * \param  SearchPath searhc file in include path?
+ * \param  SearchPath search file in include path?
  * ------------------------------------------------------------------------ */
 
 static void ExpandINCLUDE_Core(const tStrComp *pArg, Boolean SearchPath)
@@ -2917,7 +2918,8 @@ static void AssembleFile_InitPass(void)
   ResetStructDefines();
   strmaxcpy(TmpCompStr, FlagTrueName, sizeof(TmpCompStr)); EnterIntSymbol(&TmpComp, 1, SegNone, True);
   strmaxcpy(TmpCompStr, FlagFalseName, sizeof(TmpCompStr)); EnterIntSymbol(&TmpComp, 0, SegNone, True);
-  strmaxcpy(TmpCompStr, PiName, sizeof(TmpCompStr)); EnterFloatSymbol(&TmpComp, 4.0 * atan(1.0), True);
+  strmaxcpy(TmpCompStr, PiName, sizeof(TmpCompStr)); EnterFloatSymbol(&TmpComp, 4.0 * as_atan(1.0), True);
+  strmaxcpy(TmpCompStr, FloatMaxName, sizeof(TmpCompStr)); EnterFloatSymbol(&TmpComp, AS_FLOAT_MAX, True);
   strmaxcpy(TmpCompStr, VerName, sizeof(TmpCompStr)); EnterIntSymbol(&TmpComp, VerNo, SegNone, True);
   as_snprintf(ArchVal, sizeof(ArchVal), "%s-%s", ARCHPRNAME, ARCHSYSNAME);
   strmaxcpy(TmpCompStr, ArchName, sizeof(TmpCompStr)); EnterStringSymbol(&TmpComp, ArchVal, True);

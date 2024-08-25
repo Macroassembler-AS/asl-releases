@@ -186,9 +186,9 @@ static void PotOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
         as_tempres_set_float(pErg, 0.0);
       else if (pLVal->Contents.Float > 0)
         as_tempres_set_float(pErg, pow(pLVal->Contents.Float, pRVal->Contents.Float));
-      else if ((fabs(pRVal->Contents.Float) <= ((double)MaxLongInt)) && (floor(pRVal->Contents.Float) == pRVal->Contents.Float))
+      else if ((as_fabs(pRVal->Contents.Float) <= ((as_float_t)MaxLongInt)) && (floor(pRVal->Contents.Float) == pRVal->Contents.Float))
       {
-        Double Base = pLVal->Contents.Float, Result;
+        as_float_t Base = pLVal->Contents.Float, Result;
 
         HVal = (LongInt) floor(pRVal->Contents.Float + 0.5);
         if (HVal < 0)
