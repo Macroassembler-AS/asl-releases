@@ -218,15 +218,14 @@ static void decode_jcp(Word code)
 
     if (eval_result.OK)
     {
-      /* TODO: is PC[0..7] incremented immediately after fetching instruction? */
+      /* PC[0..7] is not auto-incremented after fetching a jump or call
+         instruction.  So JCP always remains in the current 64 byte page,
+         even if it is located in the last byte of a 64 byte page: */
 
       ChkSpace(SegCode, eval_result.AddrSpaceMask);
       if (!mFirstPassUnknownOrQuestionable(eval_result.Flags))
       {
-        Word next_address = EProgCounter();
-
-        next_address = (next_address & 0x700) | ((next_address + 1) & 0xff);
-        if ((next_address & 0x7c0) != (address & 0x7c0))
+        if ((EProgCounter() & 0x7c0) != (address & 0x7c0))
         {
           WrStrErrorPos(ErrNum_TargOnDiffPage, &ArgStr[1]);
           return;

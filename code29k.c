@@ -263,20 +263,28 @@ static Boolean DecodeArgSpReg(int ArgIndex, LongWord *pRes)
 static void DecodeStd(Word Index)
 {
   const StdOrder *pOrder = StdOrders + Index;
-  LongWord Dest, Src1, Src2, Src3;
-  Boolean OK;
+  LongWord Dest;
 
   if (ChkArgCnt(2, 3) && DecodeArgReg(1, &Dest))
   {
-    OK = True;
-    if (ArgCnt == 2) Src1 = Dest;
-    else OK = DecodeArgReg(2, &Src1);
+    LongWord Src1;
+    Boolean OK;
+
+    if (ArgCnt == 2)
+    {
+      Src1 = Dest;
+      OK = True;
+    }
+    else
+      OK = DecodeArgReg(2, &Src1);
     if (OK)
     {
+      LongWord Src2, Src3 = 0;
+
       switch (DecodeReg(&ArgStr[ArgCnt], &Src2, False))
       {
         case eIsReg:
-          OK = True; Src3 = 0;
+          OK = True;
           break;
         case eIsNoReg:
           Src2 = EvalStrIntExpression(&ArgStr[ArgCnt], UInt8, &OK);

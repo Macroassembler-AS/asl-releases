@@ -44,7 +44,7 @@ static String TargName;
 
 static LongWord StartAdr, StopAdr, EntryAdr, RealFileLen;
 static LongWord MaxGran, Dummy;
-static Boolean StartAuto, StopAuto, AutoErase, EntryAdrPresent;
+static Boolean StartAuto, StopAuto, AutoErase, EntryAdrPresent, last_byte_no_pad;
 
 static Byte FillVal, ValidSegment;
 static Boolean DoCheckSum;
@@ -116,7 +116,7 @@ static void CloseTarget(void)
 
   /* write entry address to file? */
 
-  if ((EntryAdrPresent) && (StartHeader != 0))
+  if (EntryAdrPresent && (StartHeader != 0))
   {
     LongWord bpos;
 
@@ -139,6 +139,9 @@ static void CloseTarget(void)
   if (DoCheckSum)
   {
     LongWord Sum, Size, Rest, Trans, Read;
+
+    if (last_byte_no_pad)
+      chkio_printf(TargName, "%s\n", getmessage(Num_WarnMessChecksumOverlaysData));
 
     TargFile = fopen(TargName, OPENUPMODE);
     if (!TargFile)
@@ -238,6 +241,8 @@ static void ProcessFile(const char *FileName, LongWord Offset)
         InpStart += Offset;
         ErgStart = max(StartAdr, InpStart);
         ErgStop = min(StopAdr, InpStart + (InpLen/Gran) - 1);
+        if (ErgStop == StopAdr)
+          last_byte_no_pad = True;
         doit = (ErgStop >= ErgStart);
         if (doit)
         {
@@ -589,6 +594,7 @@ int main(int argc, char **argv)
   StopAuto = True;
   FillVal = 0xff;
   DoCheckSum = False;
+  last_byte_no_pad = False;
   SizeDiv = 1;
   ANDEq = 0;
   EntryAdr = -1;
@@ -662,7 +668,7 @@ int main(int argc, char **argv)
   free(p_target_name); p_target_name = NULL;
 
   MaxGran = 1;
-  if ((StartAuto) || (StopAuto))
+  if (StartAuto || StopAuto)
   {
     if (StartAuto)
       StartAdr = 0xfffffffful;

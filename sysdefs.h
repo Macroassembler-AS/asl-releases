@@ -744,6 +744,7 @@ typedef unsigned int as_uint32_t;
 #define OPENUPMODE "r+"
 #define HOST_DECFLOAT
 #define NEEDS_STRDUP
+#define NEED_GETTIMEOFDAY
 #define BKOKEN_SPRINTF
 typedef signed char as_int8_t;
 typedef unsigned char as_uint8_t;

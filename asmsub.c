@@ -1810,6 +1810,10 @@ long GTime(void)
 
 #include <sys/time.h>
 
+#ifdef NEED_GETTIMEOFDAY
+# include <portability.h>
+#endif
+
 long GTime(void)
 {
   struct timeval tv;

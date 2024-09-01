@@ -581,11 +581,12 @@ static void CodeJumpGen(Word Code)
  * \param  Code instruction code in 1st byte
  * ------------------------------------------------------------------------ */
 
+#define NODEST 0x100
+
 static void CodeSkipCore(Word Code, int ArgOffs)
 {
   LongWord BitSpec;
   tEvalResult DestEvalResult;
-  int HasDest;
   Word Dest;
 
   /* For two operands, we do not know whether it's <addr>,<bit>
@@ -595,10 +596,9 @@ static void CodeSkipCore(Word Code, int ArgOffs)
   switch (ArgCnt - ArgOffs)
   {
     case 1:
-      HasDest = 0;
+      Dest = NODEST;
       break;
     case 3:
-      HasDest = 1;
       Dest = EvalStrIntExpressionWithResult(&ArgStr[ArgOffs + 3], UInt8, &DestEvalResult);
       if (!DestEvalResult.OK)
         return;
@@ -608,7 +608,8 @@ static void CodeSkipCore(Word Code, int ArgOffs)
       Dest = EvalStrIntExpressionWithResult(&ArgStr[ArgOffs + 2], UInt8, &DestEvalResult);
       if (!DestEvalResult.OK)
         return;
-      HasDest = !!(DestEvalResult.AddrSpaceMask & (1 << SegCode));
+      if (!(DestEvalResult.AddrSpaceMask & (1 << SegCode)))
+        Dest = NODEST;
       break;
     }
     default:
@@ -616,14 +617,14 @@ static void CodeSkipCore(Word Code, int ArgOffs)
       return;
   }
 
-  if (DecodeBitArg(&BitSpec, 1 + ArgOffs, ArgCnt - HasDest))
+  if (DecodeBitArg(&BitSpec, 1 + ArgOffs, ArgCnt - (Dest != NODEST)))
   {
     Word Address;
     Byte BitPos;
 
     DissectBitSymbol(BitSpec, &Address, &BitPos);
 
-    if (HasDest)
+    if (Dest != NODEST)
     {
       if (!(DestEvalResult.Flags & (eSymbolFlag_FirstPassUnknown | eSymbolFlag_Questionable))
        && (Dest != EProgCounter() + 4))

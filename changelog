@@ -1,3 +1,10 @@
+2024-09-01 [1.42 Bld 275]
+
+- Addition    : P2BIN warns if checksum overwrites data from
+                source file(s)
+- Bugfix      : uCOM-43: correct behaviour of JCP on last
+                address in 64 byte page.
+
 2024-08-25 [1.42 Bld 274]
 
 - Addition    : pre-define variable FLOATMAX

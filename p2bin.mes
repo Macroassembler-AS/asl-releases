@@ -20,6 +20,10 @@ Message InfoMessChecksum
  "Pr&uuml;fsumme: "
  "checksum: "
 
+Message WarnMessChecksumOverlaysData
+ "Warnung: Pr&uuml;fsumme &uuml;berlagert Daten aus Quelldatei(en)"
+ "warning: checksum overlays data from source file(s)"
+
 Message InfoMessHead2
  " <Quelldatei(en)> <Zieldatei> [Optionen]"
  " <source file(s)> <target file> [options]"
