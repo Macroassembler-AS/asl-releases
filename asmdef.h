@@ -247,6 +247,7 @@ extern Boolean MakeSectionList;
 extern Boolean MakeIncludeList;
 extern Boolean DefRelaxedMode;
 extern Word ListMask;
+extern Boolean list_macro_handles;
 extern ShortInt ExtendErrors;
 extern Integer EnumSegment;
 extern LongInt EnumIncrement, EnumCurrentValue;

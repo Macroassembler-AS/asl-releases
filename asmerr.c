@@ -329,6 +329,8 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
       msgno = Num_ErrMsgSymbolUndef; break;
     case ErrNum_InvSymName:
       msgno = Num_ErrMsgInvSymName; break;
+    case ErrNum_RsvdSymName:
+      msgno = Num_ErrMsgRsvdSymName; break;
     case ErrNum_InvFormat:
       msgno = Num_ErrMsgInvFormat; break;
     case ErrNum_UseLessAttr:

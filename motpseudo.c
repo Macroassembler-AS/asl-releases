@@ -32,6 +32,7 @@
 #include "chartrans.h"
 #include "asmcode.h"
 #include "errmsg.h"
+#include "as_float.h"
 #include "aplfloat.h"
 
 #include "motpseudo.h"
@@ -611,83 +612,99 @@ static void DigIns(char Ch, int Pos, Byte *pDest)
 
 int ConvertMotoFloatDec(as_float_t F, Byte *pDest, Boolean NeedsBig)
 {
-  char s[30], Man[30], Exp[30];
-  char *pSplit;
-  int z, ManLen, ExpLen;
-  Byte epos;
+  as_float_dissect_t dissect;
 
   UNUSED(NeedsBig);
-
-  /* TODO: as_fabs(F) <= 9.22e18; */
-  /* convert to ASCII, split mantissa & exponent */
-
-  as_snprintf(s, sizeof(s), "%0.*lllle", AS_FLOAT_DIG + 1, F);
-  pSplit = strchr(s, HexStartCharacter + ('e' - 'a'));
-  if (!pSplit)
-  {
-    strcpy(Man, s);
-    strcpy(Exp, "+0000");
-  }
-  else
-  {
-    *pSplit = '\0';
-    strcpy(Man, s);
-    strcpy(Exp, pSplit + 1);
-  }
-
   memset(pDest, 0, 12);
 
-  /* handle mantissa sign */
-
-  if (*Man == '-')
+  as_float_dissect(&dissect, F);
+  switch (dissect.fp_class)
   {
-    pDest[11] |= 0x80; strmov(Man, Man + 1);
-  }
-  else if (*Man == '+')
-    strmov(Man, Man + 1);
+    case AS_FP_NAN:
+      pDest[7] = 0x80;
+      /* FALL-THRU */
+    case AS_FP_INFINITE:
+      pDest[11] = dissect.negative ? 0xff : 0x7f;
+      pDest[10] = 0xff;
+      break;
+    default:
+    {
+      char s[30], Man[30], Exp[30];
+      char *pSplit;
+      int z, ManLen, ExpLen;
+      Byte epos;
 
-  /* handle exponent sign */
+      /* TODO: as_fabs(F) <= 9.22e18; */
+      /* convert to ASCII, split mantissa & exponent */
 
-  if (*Exp == '-')
-  {
-    pDest[11] |= 0x40;
-    strmov(Exp, Exp + 1);
-  }
-  else if (*Exp == '+')
-    strmov(Exp, Exp + 1);
+      as_snprintf(s, sizeof(s), "%0.*lllle", AS_FLOAT_DIG + 1, F);
+      pSplit = strchr(s, HexStartCharacter + ('e' - 'a'));
+      if (!pSplit)
+      {
+        strcpy(Man, s);
+        strcpy(Exp, "+0000");
+      }
+      else
+      {
+        *pSplit = '\0';
+        strcpy(Man, s);
+        strcpy(Exp, pSplit + 1);
+      }
 
-  /* integral part of mantissa (one digit) */
+      /* handle mantissa sign */
 
-  DigIns(*Man, 16, pDest);
-  strmov(Man, Man + 2);
+      if (*Man == '-')
+      {
+        pDest[11] |= 0x80; strmov(Man, Man + 1);
+      }
+      else if (*Man == '+')
+        strmov(Man, Man + 1);
 
-  /* truncate mantissa if we have more digits than we can represent */
+      /* handle exponent sign */
 
-  if (strlen(Man) > 16)
-    Man[16] = '\0';
+      if (*Exp == '-')
+      {
+        pDest[11] |= 0x40;
+        strmov(Exp, Exp + 1);
+      }
+      else if (*Exp == '+')
+        strmov(Exp, Exp + 1);
 
-  /* insert mantissa digits */
+      /* integral part of mantissa (one digit) */
 
-  ManLen = strlen(Man);
-  for (z = 0; z < ManLen; z++)
-    DigIns(Man[z], 15 - z, pDest);
+      DigIns(*Man, 16, pDest);
+      strmov(Man, Man + 2);
 
-  /* truncate exponent if we have more digits than we can represent - this should
-     never occur since an extended float is limited to ~1E4932 and we have four digits */
+      /* truncate mantissa if we have more digits than we can represent */
 
-  if (strlen(Exp) > 4)
-    strmov(Exp, Exp + strlen(Exp) - 4);
+      if (strlen(Man) > 16)
+        Man[16] = '\0';
 
-  /* insert exponent bits */
+      /* insert mantissa digits */
 
-  ExpLen = strlen(Exp);
-  for (z = ExpLen - 1; z >= 0; z--)
-  {
-    epos = ExpLen - 1 - z;
-    if (epos == 3)
-      DigIns(Exp[z], 19, pDest);
-    else
-      DigIns(Exp[z], epos + 20, pDest);
+      ManLen = strlen(Man);
+      for (z = 0; z < ManLen; z++)
+        DigIns(Man[z], 15 - z, pDest);
+
+      /* truncate exponent if we have more digits than we can represent - this should
+         never occur since an extended float is limited to ~1E4932 and we have four digits */
+
+      if (strlen(Exp) > 4)
+        strmov(Exp, Exp + strlen(Exp) - 4);
+
+      /* insert exponent bits */
+
+      ExpLen = strlen(Exp);
+      for (z = ExpLen - 1; z >= 0; z--)
+      {
+        epos = ExpLen - 1 - z;
+        if (epos == 3)
+          DigIns(Exp[z], 19, pDest);
+        else
+          DigIns(Exp[z], epos + 20, pDest);
+      }
+      break;
+    }
   }
 
   if (HostBigEndian)

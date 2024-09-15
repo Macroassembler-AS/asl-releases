@@ -78,6 +78,7 @@ Boolean MakeSectionList;                 /* Sektionsliste ? */
 Boolean MakeIncludeList;                 /* Includeliste ? */
 Boolean DefRelaxedMode;                  /* alle Integer-Syntaxen zulassen ? */
 Word ListMask;                           /* Listingmaske */
+Boolean list_macro_handles;              /* add macros' symbol handles to listing? */
 ShortInt ExtendErrors;	                 /* erweiterte Fehlermeldungen */
 Integer EnumSegment;                     /* ENUM state & config */
 LongInt EnumIncrement, EnumCurrentValue;

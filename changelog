@@ -1,3 +1,12 @@
+2024-09-15 [1.42 Bld 276]
+
+- Bugfix      : Regard infinities for DC.{SDP}, DD, and DQ
+- Bugfix      : ...as a consequence, do not allow 'INF' for
+                user-defined symbols
+- Bugfix      : ifdef ..., if defined(...), and ifused ...
+                did not check for valid symbol names
+- Bugfix      : correct entry address printout for PLIST
+
 2024-09-01 [1.42 Bld 275]
 
 - Addition    : P2BIN warns if checksum overwrites data from

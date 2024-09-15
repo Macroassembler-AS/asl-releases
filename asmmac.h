@@ -76,6 +76,7 @@ typedef struct _TInputTag
 #endif
                                                     );
   PMacroRec Macro;
+  LongInt LocHandle;
 } TInputTag, *PInputTag;
 
 typedef struct _TOutputTag

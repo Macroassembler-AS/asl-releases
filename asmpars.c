@@ -194,6 +194,8 @@ static PSymbolStack FirstStack;
 static PCToken MomSection;
 static char *LastGlobSymbol;
 static PFunction FirstFunction;	        /* Liste definierter Funktionen */
+static const char inf_name[] = "INF";
+static Boolean inf_reserved;
 
 void InitPass_AsmPars(void)
 {
@@ -2672,11 +2674,29 @@ func_exit:
  * \return * to newly created entry in tree
  * ------------------------------------------------------------------------ */
 
+static Boolean symbol_name_reserved(const char *p_name)
+{
+  if (inf_reserved)
+  {
+    if (*p_name == '-')
+      p_name++;
+    return !as_strcasecmp(p_name, inf_name);
+  }
+  return False;
+}
+
 PSymbolEntry EnterIntSymbolWithFlags(const tStrComp *pName, LargeInt Wert, as_addrspace_t addrspace, Boolean MayChange, tSymbolFlags Flags)
 {
   LongInt DestHandle;
-  PSymbolEntry pNeu = CreateSymbolEntry(pName, &DestHandle, Flags);
+  PSymbolEntry pNeu;
 
+  if (symbol_name_reserved(pName->str.p_str))
+  {
+    WrStrErrorPos(ErrNum_RsvdSymName, pName);
+    return NULL;
+  }
+
+  pNeu = CreateSymbolEntry(pName, &DestHandle, Flags);
   if (!pNeu)
     return NULL;
 
@@ -3115,7 +3135,10 @@ PSymbolEntry ExpandAndFindNode(const struct sStrComp *pComp, TempType SearchType
 
     pKlPos = strchr(p_exp_name->str.p_str, '[');
     if ((pKlPos == p_exp_name->str.p_str) || (ChkSymbNameUpTo(p_exp_name->str.p_str, pKlPos) != pKlPos))
+    {
+      if (p_error_on_find) *p_error_on_find = True;
       return NULL;
+    }
   }
 
   return FindNode(p_exp_name, SearchType, SearchLocal, p_error_on_find);
@@ -3205,30 +3228,18 @@ void SetSymbolOrStructElemSize(const struct sStrComp *pName, tSymbolSize Size)
 }
 
 /*!------------------------------------------------------------------------
- * \fn     GetSymbolSize(const struct sStrComp *pName)
- * \brief  get symbol's integer size
- * \param  pName unexpanded symbol name
- * \return symbol size or -1 if symbol does not exist
- * ------------------------------------------------------------------------ */
-
-ShortInt GetSymbolSize(const struct sStrComp *pName)
-{
-  Boolean error_on_find;
-  PSymbolEntry pEntry = ExpandAndFindNode(pName, TempInt, True, e_expand_chk_none, &error_on_find);
-
-  return pEntry ? pEntry->SymWert.DataSize : (error_on_find ? -1 : eSymbolSizeUnknown);
-}
-
-/*!------------------------------------------------------------------------
  * \fn     IsSymbolDefined(const struct sStrComp *pName)
- * \brief  check whether symbol nas been used so far
+ * \brief  check whether symbol has been defined so far
  * \param  pName unexpanded symbol name
  * \return true if symbol exists and has been defined so far
  * ------------------------------------------------------------------------ */
 
 Boolean IsSymbolDefined(const struct sStrComp *pName)
 {
-  PSymbolEntry pEntry = ExpandAndFindNode(pName, TempAll, True, e_expand_chk_none, NULL);
+  Boolean error_on_find;
+  PSymbolEntry pEntry = ExpandAndFindNode(pName, TempAll, True, e_expand_chk_upto, &error_on_find);
+  if (error_on_find)
+    WrStrErrorPos(ErrNum_InvSymName, pName);
 
   return pEntry && pEntry->Defined;
 }
@@ -3242,7 +3253,10 @@ Boolean IsSymbolDefined(const struct sStrComp *pName)
 
 Boolean IsSymbolUsed(const struct sStrComp *pName)
 {
-  PSymbolEntry pEntry = ExpandAndFindNode(pName, TempAll, True, e_expand_chk_none, NULL);
+  Boolean error_on_find;
+  PSymbolEntry pEntry = ExpandAndFindNode(pName, TempAll, True, e_expand_chk_upto, &error_on_find);
+  if (error_on_find)
+    WrStrErrorPos(ErrNum_InvSymName, pName);
 
   return pEntry && pEntry->Used;
 }
@@ -4423,6 +4437,7 @@ void PrintCodepages(void)
 void asmpars_init(void)
 {
   tIntTypeDef *pCurr;
+  char *p_end;
 
   function_init();
 
@@ -4459,4 +4474,7 @@ void asmpars_init(void)
   }
 
   LastGlobSymbol = (char*)malloc(sizeof(char) * STRINGSIZE);
+
+  (void)strtod(inf_name, &p_end);
+  inf_reserved = !*p_end;
 }

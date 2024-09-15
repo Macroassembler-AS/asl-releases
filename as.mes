@@ -257,6 +257,10 @@ Message ErrMsgInvSymName
  "ung&uuml;ltiger Symbolname"
  "invalid symbol name"
 
+Message ErrMsgRsvdSymName
+ "reservierter Symbolname"
+ "reserved symbol name"
+
 Message ErrMsgInvFormat
  "ung&uuml;ltiges Format"
   "invalid format"
@@ -1555,6 +1559,7 @@ Message InfoMessHelp
  "  -L                   : Listing auf Datei\n" \
  "  -listline-prefix <fmt> : Format des Pro-Zeile-Pr&auml;fix im Listing setzen\n" \
  "  -listradix <2...36>  : Zahlensystem im Listing\n" \
+ "  -list-macro-handles  : Symbol-Handles von Makros im Listing anzeigen\n" \
  "  -l                   : Listing auf Konsole\n" \
  "  -M                   : Makrodefinitionen extrahieren\n" \
  "  -maxerrors <Anzahl>  : Assemblierung nach <Anzahl> Fehlern abbrechen\n" \
@@ -1612,6 +1617,7 @@ Message InfoMessHelp
  "  -l                   : listing to console\n" \
  "  -listline-prefix <fmt> : set format of listing per-line prefix\n" \
  "  -listradix <2...36>  : number system in listing\n" \
+ "  -list-macro-handles  : list macro's symbol handles\n" \
  "  -M                   : extract macro definitions\n" \
  "  -maxerrors <number>  : terminate assembly after <number> errors\n" \
  "  -maxinclevel <number>: limit include nesting level to <number>\n" \

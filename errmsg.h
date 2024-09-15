@@ -72,6 +72,7 @@ typedef enum
   ErrNum_DoubleDef = 1000,
   ErrNum_SymbolUndef = 1010,
   ErrNum_InvSymName = 1020,
+  ErrNum_RsvdSymName = 1030,
   ErrNum_InvFormat = 1090,
   ErrNum_UseLessAttr = 1100,
   ErrNum_TooLongAttr = 1105,

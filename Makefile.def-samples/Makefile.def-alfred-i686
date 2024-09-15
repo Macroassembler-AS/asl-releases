@@ -4,7 +4,7 @@
 # and PPC/M68K cross compiling/emulation to test on a big endian host:
 # any additionally needed flags
 
-CFLAGS_COMMON = -g -O3 -fomit-frame-pointer -Wall -Wextra -Werror -pedantic -Wshift-count-overflow
+CFLAGS_COMMON = -g -O3 -fomit-frame-pointer -Wall -Wundef -Wextra -Werror -pedantic -Wshift-count-overflow
 CFLAGS_C = -Wstrict-prototypes
 CFLAGS_GCC_EXTRA = -Wshift-overflow=2
 CFLAGS_CLANG_EXTRA = -Wshift-overflow

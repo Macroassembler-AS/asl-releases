@@ -15,6 +15,8 @@
 #include "strutil.h"
 #include "texutil.h"
 
+#define DBG_IF 0
+
 /*--------------------------------------------------------------------------*/
 
 Boolean DoRepass;

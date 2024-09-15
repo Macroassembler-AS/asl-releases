@@ -85,7 +85,7 @@ static void ProcessSingle(const char *pFileName)
     {
       if (!Read4(ProgFile, &StartAdr))
         chk_wr_read_error(pFileName);
-      chkio_printf("%s%08lX\n", OutName, getmessage(Num_MessEntryPoint), LoDWord(StartAdr));
+      chkio_printf(OutName, "%s%08lX\n", getmessage(Num_MessEntryPoint), LoDWord(StartAdr));
     }
 
     else if (Header == FileHeaderRelocInfo)

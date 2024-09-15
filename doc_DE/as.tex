@@ -1559,6 +1559,10 @@ Zus"atzlich definieren einige Pseudobefehle noch Symbole, die eine
 Abfrage des damit momentan eingestellten Wertes erm"oglichen.  Deren
 Beschreibung findet sich bei den zugeh"origen Befehlen.
 \par
+Auf den meisten Plattformen ist der Name {\tt INF} als Sonderwert
+f"ur Unendlich im Gleitkomma-Format reserviert und kann nicht
+f"ur eigene Symbole verwendet werden.
+\par
 Ein etwas verstecktes (und mit Vorsicht zu nutzendes) Feature ist,
 Symbolnamen aus String-Variablen zusammenzubauen, indem man den
 Namen des Strings mit geschweiften Klammern in den Symbolnamen
@@ -12859,12 +12863,18 @@ Angaben:
                {Ein benutztes Symbol ist auch im 2.Pass noch
                 nicht in der Symboltabelle enthalten.}
                {Name des nicht gefundenen Symbols}
-\errentry{1020}{Ung"ultiger Symbolname}
+\errentry{1020}{ung"ultiger Symbolname}
                {Fehler}
                {Ein Symbolname entspricht nicht den Bedingungen
                 f"ur einen g"ultigen Symbolnamen.  Beachten Sie, da"s f"ur
                 Makro-und Funktionsparameter strengere Regeln gelten!}
                {der fehlerhafte Symbolname}
+\errentry{1030}{reservierter Symbolname}
+               {Fehler}
+               {Der Symbolname ist zwar an sich g"ultig, dieser spezielle
+                Name ist aber f"ur andere Zwecke reserviert, und kann nicht
+                f"ur selbst definierte Symbole verwendet werden.}
+               {der reservierte Symbolname}
 \errentry{1090}{Ung"ultiges Format}
                {Fehler}
                {Das benutzte Befehlsformat existiert bei diesem

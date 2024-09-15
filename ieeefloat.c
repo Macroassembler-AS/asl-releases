@@ -255,10 +255,14 @@ void as_float_dissect(as_float_dissect_t *p_dest, as_float_t num)
 
 int as_float_2_ieee4(as_float_t inp, Byte *pDest, Boolean NeedsBig)
 {
+  as_float_dissect_t dissect;
 #if (defined IEEEFLOAT_8_DOUBLE) || (defined IEEEFLOAT_10_LONG_DOUBLE)
 
   float tmp;
-  if (as_fabs(inp) > FLT_MAX)
+  as_float_dissect(&dissect, inp);
+  if ((dissect.fp_class != AS_FP_NAN)
+   && (dissect.fp_class != AS_FP_INFINITE)
+   && (as_fabs(inp) > FLT_MAX))
     return -E2BIG;
   tmp = inp;
   memcpy(pDest, &tmp, 4);
@@ -267,7 +271,6 @@ int as_float_2_ieee4(as_float_t inp, Byte *pDest, Boolean NeedsBig)
 
 #else
 
-  as_float_dissect_t dissect;
   as_float_round_t round_type;
   unsigned mask = NeedsBig ? 3 : 0;
 
@@ -367,10 +370,14 @@ int as_float_2_ieee4(as_float_t inp, Byte *pDest, Boolean NeedsBig)
 
 int as_float_2_ieee8(as_float_t inp, Byte *pDest, Boolean NeedsBig)
 {
+  as_float_dissect_t dissect;
 #if (defined IEEEFLOAT_8_DOUBLE) || (defined IEEEFLOAT_10_LONG_DOUBLE)
 
   double tmp;
-  if (as_fabs(inp) > DBL_MAX)
+  as_float_dissect(&dissect, inp);
+  if ((dissect.fp_class != AS_FP_NAN)
+   && (dissect.fp_class != AS_FP_INFINITE)
+   && (as_fabs(inp) > DBL_MAX))
     return -E2BIG;
   tmp = inp;
   memcpy(pDest, &tmp, 8);
@@ -379,7 +386,6 @@ int as_float_2_ieee8(as_float_t inp, Byte *pDest, Boolean NeedsBig)
 
 #else
 
-  as_float_dissect_t dissect;
   as_float_round_t round_type;
   unsigned mask = NeedsBig ? 7 : 0;
 

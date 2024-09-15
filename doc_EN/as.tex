@@ -1519,6 +1519,10 @@ Additionally some pseudo instructions define symbols that reflect the
 value that has been set  with these instructions.  Their descriptions
 are explained at the individual commands belonging to them.
 
+On most platforms, the name {\tt INF} is reserved as infinity in
+floating point format.  It therefore may not be used for user-defined
+symbols.
+
 A hidden feature (that has to be used with care) is that symbol names
 may be assembled from the contents of string symbols.  This can be
 achieved by framing the string symbol's name with curly braces and
@@ -12577,7 +12581,13 @@ described by:
                 must have to be considered valid by \asname{}. Please pay
                 attention that more stringent syntax rules exist for
                 macros and function parameters.}
-               {the wrong symbol}
+               {the wrong symbol name}
+\errentry{1030}{reserved symbol name}
+               {error}
+               {A symbol is valid by itself, but this specific name is reserved
+                for other purposes.  It therefore cannot be used for user-defined
+                symbols.}
+               {the symbol name in question}
 \errentry{1090}{invalid format}
                {error}
                {The instruction format used does not exist for this

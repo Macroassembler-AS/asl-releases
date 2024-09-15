@@ -520,7 +520,7 @@ Boolean MACRO_Processor(PInputTag PInp, as_dynstr_t *p_dest)
   /* before the first line, start a new local symbol space */
 
   if ((PInp->LineZ == 1) && (!PInp->GlobalSymbols))
-    PushLocHandle(GetLocHandle());
+    PushLocHandle(PInp->LocHandle);
 
   /* signal the end of the macro */
 
@@ -834,7 +834,7 @@ static void MACRO_Restorer(PInputTag PInp)
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 /* Dies initialisiert eine Makroexpansion */
 
-static void ExpandMacro(PMacroRec OneMacro)
+static Boolean ExpandMacro(PMacroRec OneMacro)
 {
   int z1, z2;
   StringRecPtr Lauf, pDefault, pParamName, pArg;
@@ -857,6 +857,7 @@ static void ExpandMacro(PMacroRec OneMacro)
     Tag->Cleanup   = MACRO_Cleanup;
     Tag->GetPos    = MACRO_GetPos;
     Tag->Macro     = OneMacro;
+    Tag->LocHandle = GetLocHandle();
     Tag->GlobalSymbols = OneMacro->GlobalSymbols;
     Tag->UsesNumArgs = OneMacro->UsesNumArgs;
     Tag->UsesAllArgs = OneMacro->UsesAllArgs;
@@ -995,12 +996,16 @@ static void ExpandMacro(PMacroRec OneMacro)
       Tag->Next = FirstInputTag;
       FirstInputTag = Tag;
       MacroNestLevel++;
+      return True;
     }
     else
     {
       ClearStringList(&(Tag->Params)); free(Tag);
+      return False;
     }
   }
+  else
+    return False;
 }
 
 /*-------------------------------------------------------------------------*/
@@ -2455,11 +2460,13 @@ static void Produce_Code(void)
     ResetLastLabel = False;
     if (IfAsm)
     {
-      ExpandMacro(OneMacro);
+      Boolean expanded = ExpandMacro(OneMacro);
       if ((MacroNestLevel > 1) && (MacroNestLevel < 100))
         as_snprintf(ListLine, STRINGSIZE, "%*s(MACRO-%u)", MacroNestLevel - 1, "", MacroNestLevel);
       else
         strmaxcpy(ListLine, "(MACRO)", STRINGSIZE);
+      if (expanded)
+        as_snprcatf(ListLine, STRINGSIZE, "[%lu]", (unsigned long)FirstInputTag->LocHandle);
 
       /* Macro call itself must not appear in expanded output.  However, a label
          in the same line that is not consumed by the macro must.  In this case,
@@ -3854,7 +3861,14 @@ static as_cmd_result_t CMD_GNUErrors(Boolean Negate, const char *Arg)
 {
   UNUSED(Arg);
 
-  GNUErrors  =  !Negate;
+  GNUErrors  = !Negate;
+  return e_cmd_ok;
+}
+
+static as_cmd_result_t CMD_ListMacroHandles(Boolean negate, const char *p_arg)
+{
+  UNUSED(p_arg);
+  list_macro_handles = !negate;
   return e_cmd_ok;
 }
 
@@ -4248,6 +4262,7 @@ static const as_cmd_rec_t ASParams[] =
   { "screenheight"  , CMD_screen_height   },
   { "shareout"      , CMD_ShareOutFile    },
   { "olist"         , CMD_ListOutFile     },
+  { "list-macro-handles", CMD_ListMacroHandles },
   { "t"             , CMD_ListMask        },
   { "u"             , CMD_UseList         },
   { "U"             , CMD_CaseSensitive   },
@@ -4493,6 +4508,7 @@ int main(int argc, char **argv)
   MakeSectionList = False;
   MakeIncludeList = False;
   ListMask = 0x1ff;
+  list_macro_handles = False;
   MakeDebug = False;
   ExtendErrors = 0;
   DefRelaxedMode = False;
