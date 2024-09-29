@@ -4357,7 +4357,8 @@ static void DecodeFRESTORE(Word Code)
   {
     tAdrResult AdrResult;
 
-    if (DecodeAdr(&ArgStr[1], MModAdrI | MModPost | MModDAdrI | MModAIX | MModAbs, &AdrResult))
+    RelPos = 4;
+    if (DecodeAdr(&ArgStr[1], MModAdrI | MModPost | MModDAdrI | MModAIX | MModPC | MModPCIdx | MModAbs, &AdrResult))
     {
       CodeLen = 2 + AdrResult.Cnt;
       WAsmCode[0] = 0xf340 | AdrResult.AdrPart;
@@ -4931,6 +4932,7 @@ static void DecodeFScc(Word CondCode)
   {
     tAdrResult AdrResult;
 
+    OpSize = eSymbolSize8Bit;
     if (DecodeAdr(&ArgStr[1], MModData | MModAdrI | MModPost | MModPre | MModDAdrI | MModAIX | MModAbs, &AdrResult))
     {
       CodeLen = 4 + AdrResult.Cnt;
@@ -5083,7 +5085,8 @@ static void DecodePRESTORE(Word Code)
   {
     tAdrResult AdrResult;
 
-    if (DecodeAdr(&ArgStr[1], MModAdrI | MModPre | MModDAdrI | MModAIX | MModAbs, &AdrResult))
+    RelPos = 4;
+    if (DecodeAdr(&ArgStr[1], MModAdrI | MModPre | MModDAdrI | MModAIX | MModPC | MModPCIdx | MModAbs, &AdrResult))
     {
       CodeLen = 2 + AdrResult.Cnt;
       WAsmCode[0] = 0xf140 | AdrResult.AdrPart;
@@ -5491,6 +5494,7 @@ static void DecodePScc(Word CondCode)
     {
       tAdrResult AdrResult;
 
+      OpSize = eSymbolSize8Bit;
       if (DecodeAdr(&ArgStr[1], MModData | MModAdrI | MModPost | MModPre | MModDAdrI | MModAIX | MModAbs, &AdrResult))
       {
         CodeLen = 4 + AdrResult.Cnt;

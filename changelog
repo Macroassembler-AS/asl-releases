@@ -1,3 +1,16 @@
+2024-09-29  [1.42 Bld 277]
+
+- Change      : IFDEF, IFNDEF, and DEFINED() also accept an
+                expression as argument, not only a simple
+                symbol name.  They return true if the
+                expression does not contain any symbols
+                that are undefined up to now.
+- Bugfix      : Add missing PDP-11 instructions STCFD and STCDF.
+- Bugfix      : 68K: Assume default operand size of 8 bits also
+                for FScc and PScc, not only for Scc.
+- Bugfix      : 68K: Allow PC-relative addressing for FRESTORE
+                and PRESTORE.
+
 2024-09-15 [1.42 Bld 276]
 
 - Bugfix      : Regard infinities for DC.{SDP}, DD, and DQ

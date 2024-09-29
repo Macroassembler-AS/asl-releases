@@ -1563,7 +1563,8 @@ The individual segment types have the assigned numbers listed in table
 of normal symbols are explained in section \ref{SectRegSyms}.  The
 \tty{SYMTYPE} function delivers -1 as result when called with an undefined
 symbol as argument.  However, if all you want to know is whether a symbol
-is defined or not, you may as well use the \tty{DEFINED} function.
+is defined or not, or whether an expression contains no no symbols that are
+undefined so far, you may as well use the \tty{DEFINED} function.
 \begin{table}[htb]
 \begin{center}
 \begin{tabular}{|l|c|}
@@ -7097,9 +7098,9 @@ in case \tty{IF}'s are nested.
 In addition to \tty{IF}, the following further conditional statements are
 defined:
 \begin{itemize}
-\item{\tty{IFDEF $<$symbol$>$}: true if the given symbol has been defined.
-      The definition has to appear before \tty{IFDEF}.}
-\item{\tty{IFNDEF $<$symbol$>$}: counterpart to \tty{IFDEF}.}
+\item{\tty{IFDEF $<$expressionl$>$}: true if the expression does not contain
+      any symbols that are so far undefined.}
+\item{\tty{IFNDEF $<$expression$>$}: counterpart to \tty{IFDEF}.}
 \item{\tty{IFUSED $<$symbol$>$}: true if if the given symbol has been
       referenced at least once up to now.}
 \item{\tty{IFNUSED $<$symbol$>$}: counterpart to \tty{IFUSED}.}
@@ -11535,6 +11536,17 @@ A record with a header byte of \$81 is a record that may contain code
 or data from arbitrary segments.  The first byte (\tty{Header}) describes
 the processor family the following code resp. data was generated for (see
 table \ref{TabHeader}).
+
+\newcounter{headidcounter}
+\setcounter{headidcounter}{1}
+\newcommand{\headid}[2]{#1 & #2
+  \ifnum\value{headidcounter}>1 \\ \fi
+  \ifnum\value{headidcounter}<2 & \fi
+  \stepcounter{headidcounter}
+  \ifnum\value{headidcounter}>2
+   \setcounter{headidcounter}{1}
+  \fi
+}
 
 \begin{center}\begin{longtable}{|c|l||c|l|}
 \hline

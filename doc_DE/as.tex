@@ -1604,7 +1604,8 @@ aufgelisteten Nummern zugeordnet.  Die aus der Ordnung normaler Symbole
 etwas herausfallenden Registersymbole sind n"aher in Abschnitt
 \ref{SectRegSyms} erl"autert.  Mit einem undefinierten Symbol als Argument
 liefert die \tty{SYMTYPE}-Funktion -1 als Ergebnis.  Ob ein Symbol "uberhaupt
-definiert ist, l"a"st sich auch einfach mit der \tty{DEFINED}-Funktion abfragen.
+definiert ist, oder ein Formelausdruck keine bisher undefinierten Symbole
+enth"alt, l"a"st sich auch einfach mit der \tty{DEFINED}-Funktion abfragen.
 \begin{table}[htb]
 \begin{center}
 \begin{tabular}{|l|c|}
@@ -7313,9 +7314,9 @@ Neben \tty{IF} sind noch folgende weitere bedingte Befehle definiert:
 \ttindex{IFEXIST}\ttindex{IFNEXIST}
 \ttindex{IFB}\ttindex{IFNB}
 \begin{itemize}
-\item{\tty{IFDEF} $<$Symbol$>$ : wahr, falls das Symbol definiert wurde.
-      Die Definition mu"s vor \tty{IFDEF} erfolgt sein.}
-\item{\tty{IFNDEF} $<$Symbol$>$ : Umkehrung zu \tty{IFDEF}}
+\item{\tty{IFDEF} $<$Ausdruck$>$ : wahr, falls das der Ausdruck keine Symbole
+      enth"alt, die bisher undefiniert sind.}
+\item{\tty{IFNDEF} $<$Ausdruck$>$ : Umkehrung zu \tty{IFDEF}}
 \item{\tty{IFUSED} $<$Symbol$>$ : wahr, falls das Symbol bisher mindestens einmal
       benutzt wurde.}
 \item{\tty{IFNUSED} $<$Symbol$>$ : Umkehrung zu \tty{IFUSED}}
@@ -11811,6 +11812,17 @@ Ein Record mit einem Header-Byte von \verb!$81! ist ein Record, der Code
 oder Daten aus beliebigen Segmenten beinhalten kann.  Das erste
 Byte (Header) gibt an, f"ur welche Prozessorfamilie die folgenden
 Daten bzw. der folgende  Code bestimmt ist (siehe Tabelle \ref{TabHeader}).
+
+\newcounter{headidcounter}
+\setcounter{headidcounter}{1}
+\newcommand{\headid}[2]{#1 & #2
+  \ifnum\value{headidcounter}>1 \\ \fi
+  \ifnum\value{headidcounter}<2 & \fi
+  \stepcounter{headidcounter}
+  \ifnum\value{headidcounter}>2
+   \setcounter{headidcounter}{1}
+  \fi
+}
 
 \begin{center}\begin{longtable}{|c|l||c|l|}
 \hline

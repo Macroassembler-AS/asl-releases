@@ -509,26 +509,18 @@ int as_float_2_ieee10(as_float_t inp, Byte *pDest, Boolean NeedsBig)
   memcpy(pDest, &inp, 10);
   if (HostBigEndian != NeedsBig)
     TSwap(pDest, 10);
-#elif defined IEEEFLOAT_10_2P8_LONG_DOUBLE
-  Byte *p_src = (Byte*)&inp;
-  pDest[NeedsBig ? 0 : 9] = p_src[0];
-  pDest[NeedsBig ? 1 : 8] = p_src[1];
-  pDest[NeedsBig ? 2 : 7] = p_src[4];
-  pDest[NeedsBig ? 3 : 6] = p_src[5];
-  pDest[NeedsBig ? 4 : 5] = p_src[6];
-  pDest[NeedsBig ? 5 : 4] = p_src[7];
-  pDest[NeedsBig ? 6 : 3] = p_src[8];
-  pDest[NeedsBig ? 7 : 2] = p_src[9];
-  pDest[NeedsBig ? 8 : 1] = p_src[10];
-  pDest[NeedsBig ? 9 : 0] = p_src[11];
+
 #else
+
   as_float_dissect_t dissect;
 
   /* (1) Dissect IEEE number */
 
   as_float_dissect(&dissect, inp);
 
-  /* Infinity/NaN: */
+  /* Infinity/NaN: Note that for IEEEFLOAT_10_2P8_LONG_DOUBLE (M68K Extended float),
+     the mantissa's MSB of infinities and NANs may be 1 or 0.  We want the 1-version,
+     to be consistent with x86: */
 
   if ((dissect.fp_class == AS_FP_NAN)
    || (dissect.fp_class == AS_FP_INFINITE))
@@ -546,14 +538,34 @@ int as_float_2_ieee10(as_float_t inp, Byte *pDest, Boolean NeedsBig)
     else
     {
       memset(&pDest[0], 0x00, 8);
-      if (as_float_get_mantissa_bit(dissect.mantissa, dissect.mantissa_bits, 1))
-        pDest[7] |= 0x80;
+      pDest[7] |= 0x80;
       if (as_float_get_mantissa_bit(dissect.mantissa, dissect.mantissa_bits, dissect.mantissa_bits - 1))
         pDest[0] |= 0x01;
     }
+
+    if (NeedsBig)
+      TSwap(pDest, 10);
+
     return 10;
   }
 
+# ifdef IEEEFLOAT_10_2P8_LONG_DOUBLE
+
+  Byte *p_src = (Byte*)&inp;
+  pDest[NeedsBig ? 0 : 9] = p_src[0];
+  pDest[NeedsBig ? 1 : 8] = p_src[1];
+  pDest[NeedsBig ? 2 : 7] = p_src[4];
+  pDest[NeedsBig ? 3 : 6] = p_src[5];
+  pDest[NeedsBig ? 4 : 5] = p_src[6];
+  pDest[NeedsBig ? 5 : 4] = p_src[7];
+  pDest[NeedsBig ? 6 : 3] = p_src[8];
+  pDest[NeedsBig ? 7 : 2] = p_src[9];
+  pDest[NeedsBig ? 8 : 1] = p_src[10];
+  pDest[NeedsBig ? 9 : 0] = p_src[11];
+
+# else /* !IEEEFLOAT_10_2P8_LONG_DOUBLE */
+
+  as_float_dissect(&dissect, inp);
   /* (2) Round to target precision: */
 
   as_float_round(&dissect, 64);
@@ -612,7 +624,8 @@ int as_float_2_ieee10(as_float_t inp, Byte *pDest, Boolean NeedsBig)
 
   if (NeedsBig)
     TSwap(pDest, 10);
-#endif
+# endif /* IEEEFLOAT_10_2P8_LONG_DOUBLE */
+#endif /* IEEEFLOAT_10_1?_LONG_DOUBLE */
   return 10;
 }
 
@@ -656,7 +669,9 @@ int as_float_2_ieee16(as_float_t inp, Byte *pDest, Boolean NeedsBig)
       if (as_float_get_mantissa_bit(dissect.mantissa, dissect.mantissa_bits, dissect.mantissa_bits - 1))
         pDest[0] |= 0x01;
     }
-    return 10;
+    if (NeedsBig)
+      OSwap(pDest, 16);
+    return 16;
   }
 
   /* (2) Round to target precision: */

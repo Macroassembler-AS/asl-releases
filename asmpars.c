@@ -127,13 +127,21 @@ LongInt LocHandleCnt;          /* mom. verwendeter lokaler Handle            */
 typedef struct sSymbolEntry
 {
   TTree Tree;
-  Boolean Defined, Used, Changeable, changed;
+  Byte flags;
   TempResult SymWert;
   LargeInt unchanged_value;
   PCrossRef RefList;
   Byte FileNum;
   LongInt LineNum;
 } TSymbolEntry, *PSymbolEntry;
+
+#define set_symbol_entry_flag(dest, flag, value) \
+do { \
+ (dest)->flags = (value) ? ((dest)->flags | e_symbol_entry_flag_##flag) : ((dest)->flags & ~e_symbol_entry_flag_##flag); \
+} while (0)
+
+#define get_symbol_entry_flag(src, flag) \
+ (!!((src)->flags & e_symbol_entry_flag_##flag))
 
 typedef struct sSymbolStackEntry
 {
@@ -1486,7 +1494,7 @@ static void test_found_op(operator_search_cb_data_t *p_data, const as_operator_t
     p_data->found_ops[p_data->found_op_cnt++] = p_op;
 }
 
-void EvalStrExpressionWithCallback(const tStrComp *pExpr, TempResult *pErg, as_eval_cb_data_t *p_callback_data)
+void EvalStrExpressionWithCallback(const tStrComp *pExpr, TempResult *pErg, as_eval_flags_t eval_flags, as_eval_cb_data_t *p_callback_data)
 {
   Boolean OK, over_range;
   tStrComp InArgs[3];
@@ -1659,12 +1667,12 @@ void EvalStrExpressionWithCallback(const tStrComp *pExpr, TempResult *pErg, as_e
     p_callback_data->p_stack = &cb_data_stack;
     
     cb_data_stack.arg_index = 1;
-    EvalStrExpressionWithCallback(&InArgs[1], &InVals[1], p_callback_data);
+    EvalStrExpressionWithCallback(&InArgs[1], &InVals[1], eval_flags, p_callback_data);
     if (operator_search_data.p_best_op->Dyadic)
     {
       cb_data_stack.arg_index = 0;
       p_callback_data->p_other_arg = &InVals[1];
-      EvalStrExpressionWithCallback(&InArgs[0], &InVals[0], p_callback_data);
+      EvalStrExpressionWithCallback(&InArgs[0], &InVals[0], eval_flags, p_callback_data);
       p_callback_data->p_other_arg = NULL;
     }
     else if (InVals[1].Typ == TempFloat)
@@ -1760,7 +1768,7 @@ void EvalStrExpressionWithCallback(const tStrComp *pExpr, TempResult *pErg, as_e
     if (*FName.str.p_str == '\0')
     {
       /* No need to establish another callback data stack level in this case: */
-      EvalStrExpressionWithCallback(&FArg, pErg, p_callback_data);
+      EvalStrExpressionWithCallback(&FArg, pErg, eval_flags, p_callback_data);
       LEAVE;
     }
 
@@ -1795,7 +1803,7 @@ void EvalStrExpressionWithCallback(const tStrComp *pExpr, TempResult *pErg, as_e
         if (p_arg_split_pos)
           StrCompSplitRef(&FArg, &Remainder, &FArg, p_arg_split_pos);
 
-        EvalStrExpressionWithCallback(&FArg, &InVals[0], p_callback_data);
+        EvalStrExpressionWithCallback(&FArg, &InVals[0], eval_flags, p_callback_data);
         if (InVals[0].Relocs)
         {
           WrStrErrorPos(ErrNum_NoRelocs, &FArg);
@@ -1823,7 +1831,7 @@ void EvalStrExpressionWithCallback(const tStrComp *pExpr, TempResult *pErg, as_e
         LEAVE2;
       }
       StrCompMkTemp(&CompArg, CompArgStr.p_str, CompArgStr.capacity);
-      EvalStrExpressionWithCallback(&CompArg, pErg, p_callback_data);
+      EvalStrExpressionWithCallback(&CompArg, pErg, eval_flags, p_callback_data);
       pErg->Flags |= PromotedFlags;
       pErg->AddrSpaceMask |= PromotedAddrSpaceMask;
       if (pErg->DataSize == eSymbolSizeUnknown) pErg->DataSize = PromotedDataSize;
@@ -1884,7 +1892,7 @@ func_exit2:
         InArgs[cnt] = FArg;
       if (cnt < 3)
       {
-        EvalStrExpressionWithCallback(&InArgs[cnt], &InVals[cnt], p_callback_data);
+        EvalStrExpressionWithCallback(&InArgs[cnt], &InVals[cnt], eval_flags, p_callback_data);
         if (InVals[cnt].Typ == TempNone)
           LEAVE;
         TReloc = InVals[cnt].Relocs;
@@ -1991,7 +1999,7 @@ func_exit2:
 
   /* plain symbol */
 
-  LookupSymbol(&CopyComp, pErg, True, TempAll);
+  LookupSymbol(&CopyComp, pErg, True, TempAll, eval_flags, NULL);
 
 func_exit:
 
@@ -2013,7 +2021,7 @@ void EvalStrExpression(const tStrComp *pExpr, TempResult *pErg)
   as_eval_cb_data_t cb_data;
   
   as_eval_cb_data_ini(&cb_data, NULL);
-  EvalStrExpressionWithCallback(pExpr, pErg, &cb_data);
+  EvalStrExpressionWithCallback(pExpr, pErg, e_eval_flag_none, &cb_data);
 }
 
 void EvalExpression(const char *pExpr, TempResult *pErg)
@@ -2032,7 +2040,7 @@ LargeInt EvalStrIntExprWithResultAndCallback(const tStrComp *pComp, IntType Type
   as_tempres_ini(&t);
   EvalResultClear(pResult);
 
-  EvalStrExpressionWithCallback(pComp, &t, p_callback_data);
+  EvalStrExpressionWithCallback(pComp, &t, e_eval_flag_none, p_callback_data);
   SetRelocs(t.Relocs);
 
   switch (t.Typ)
@@ -2284,7 +2292,7 @@ tErrorNum EvalStrRegExpressionWithResult(const struct sStrComp *pExpr, tRegDescr
   if (!pEntry)
     return ErrNum_SymbolUndef;
 
-  pEntry->Used = True;
+  set_symbol_entry_flag(pEntry, used, True);
   pEvalResult->DataSize = pEntry->SymWert.DataSize;
 
   if (pEntry->SymWert.Typ != TempReg)
@@ -2395,9 +2403,9 @@ static Boolean SymbolAdder(PTree *PDest, PTree Neu, void *pData)
 
   if (!PDest)
   {
-    NewEntry->Defined = True;
-    NewEntry->Used = False;
-    NewEntry->Changeable = EnterStruct->MayChange;
+    set_symbol_entry_flag(NewEntry, defined, True);
+    set_symbol_entry_flag(NewEntry, used, False);
+    set_symbol_entry_flag(NewEntry, changeable, EnterStruct->MayChange);
     NewEntry->RefList = NULL;
     if (EnterStruct->DoCross)
     {
@@ -2413,7 +2421,7 @@ static Boolean SymbolAdder(PTree *PDest, PTree Neu, void *pData)
 
   /* tried to redefine a symbol with EQU ? */
 
-  if (((*Node)->Defined) && (!(*Node)->Changeable) && (!EnterStruct->MayChange))
+  if (get_symbol_entry_flag((*Node), defined) && !get_symbol_entry_flag(*Node, changeable) && !EnterStruct->MayChange)
   {
     strmaxcpy(serr, (*Node)->Tree.Name, STRINGSIZE);
     if (EnterStruct->DoCross)
@@ -2427,14 +2435,14 @@ static Boolean SymbolAdder(PTree *PDest, PTree Neu, void *pData)
 
   /* tried to reassign a constant (EQU) a value with SET and vice versa ? */
 
-  else if ( ((*Node)->Defined) && (EnterStruct->MayChange != (*Node)->Changeable) )
+  else if (get_symbol_entry_flag((*Node), defined) && (EnterStruct->MayChange != get_symbol_entry_flag(*Node, changeable)) )
   {
     strmaxcpy(serr, (*Node)->Tree.Name, STRINGSIZE);
     if (EnterStruct->DoCross)
       as_snprcatf(serr, STRINGSIZE, ",%s %s:%ld",
                   getmessage(Num_PrevDefMsg),
                   GetFileName((*Node)->FileNum), (long)((*Node)->LineNum));
-    WrXError((*Node)->Changeable ? ErrNum_VariableRedefinedAsConstant : ErrNum_ConstantRedefinedAsVariable, serr);
+    WrXError(get_symbol_entry_flag(*Node, changeable) ? ErrNum_VariableRedefinedAsConstant : ErrNum_ConstantRedefinedAsVariable, serr);
     FreeSymbolEntry(&NewEntry, TRUE);
     return False;
   }
@@ -2448,7 +2456,7 @@ static Boolean SymbolAdder(PTree *PDest, PTree Neu, void *pData)
 #if 0
       if (NewEntry->SymWert.Typ == TempInt)
         fprintf(stderr, "NewEntry 0x%lx Node 0x%lx Node changed %d\n",
-                NewEntry->SymWert.Contents.Int, (*Node)->SymWert.Contents.Int, (*Node)->changed);
+                NewEntry->SymWert.Contents.Int, (*Node)->SymWert.Contents.Int, get_symbol_entry_flag(*Node, changed));
 #endif
 
       /* If the symbol value was changed after entry (padding of label),
@@ -2460,7 +2468,7 @@ static Boolean SymbolAdder(PTree *PDest, PTree Neu, void *pData)
       else switch (NewEntry->SymWert.Typ)
       {
         case TempInt:
-          value_changed = NewEntry->SymWert.Contents.Int != ((*Node)->changed ? (*Node)->unchanged_value : (*Node)->SymWert.Contents.Int);
+          value_changed = NewEntry->SymWert.Contents.Int != (get_symbol_entry_flag(*Node, changed) ? (*Node)->unchanged_value : (*Node)->SymWert.Contents.Int);
           break;
         default:
           value_changed = !!as_tempres_cmp(&NewEntry->SymWert, &(*Node)->SymWert);
@@ -2497,9 +2505,9 @@ static Boolean SymbolAdder(PTree *PDest, PTree Neu, void *pData)
 
     NewEntry->RefList = (*Node)->RefList;
     (*Node)->RefList = NULL;
-    NewEntry->Defined = True;
-    NewEntry->Used = (*Node)->Used;
-    NewEntry->Changeable = EnterStruct->MayChange;
+    set_symbol_entry_flag(NewEntry, defined, True);
+    set_symbol_entry_flag(NewEntry, used, get_symbol_entry_flag(*Node, used));
+    set_symbol_entry_flag(NewEntry, changeable, EnterStruct->MayChange);
 
     /* since NewEntry will be copied over Node, free the latter's dynamic data: */
 
@@ -2620,10 +2628,10 @@ void PrintSymTree(char *Name)
 
 void ChangeSymbol(PSymbolEntry pEntry, LargeInt Value)
 {
-  if (!pEntry->changed)
+  if (!get_symbol_entry_flag(pEntry, changed))
   {
     pEntry->unchanged_value = (pEntry->SymWert.Typ == TempInt) ? pEntry->SymWert.Contents.Int : 0;
-    pEntry->changed = True;
+    set_symbol_entry_flag(pEntry, changed, True);
   }
   as_tempres_set_int(&pEntry->SymWert, Value);
 }
@@ -3159,14 +3167,20 @@ void SetSymbolType(const tStrComp *pName, Byte NTyp)
 }
 **/
 
-void LookupSymbol(const struct sStrComp *pComp, TempResult *pValue, Boolean WantRelocs, TempType ReqType)
+void LookupSymbol(const struct sStrComp *pComp, TempResult *pValue, Boolean WantRelocs, TempType ReqType,
+                  as_eval_flags_t eval_flags, as_symbol_entry_flags_t *p_symbol_entry_flags)
 {
   Boolean error_on_find;
   PSymbolEntry pEntry = ExpandAndFindNode(pComp, ReqType, True, e_expand_chk_upto, &error_on_find);
 
+  if (pEntry && !get_symbol_entry_flag(pEntry, defined) && (eval_flags & e_eval_flag_undefined_is_unknown))
+    pEntry = NULL;
+
   if (pEntry)
   {
     as_tempres_copy_value(pValue, &pEntry->SymWert);
+    if (p_symbol_entry_flags)
+      *p_symbol_entry_flags = (as_symbol_entry_flags_t)pEntry->flags;
     if (pValue->Typ != TempNone)
     {
       if (WantRelocs)
@@ -3176,13 +3190,13 @@ void LookupSymbol(const struct sStrComp *pComp, TempResult *pValue, Boolean Want
     pValue->AddrSpaceMask = pEntry->SymWert.AddrSpaceMask;
     if ((pEntry->SymWert.DataSize != eSymbolSizeUnknown) && (pValue->DataSize == eSymbolSizeUnknown))
       pValue->DataSize = pEntry->SymWert.DataSize;
-    if (!pEntry->Defined)
+    if (!get_symbol_entry_flag(pEntry, defined))
     {
       if (Repass)
         pValue->Flags |= eSymbolFlag_Questionable;
       pValue->Flags |= eSymbolFlag_UsesForwards;
     }
-    pEntry->Used = True;
+    set_symbol_entry_flag(pEntry, used, True);
   }
 
   else if (error_on_find)
@@ -3190,12 +3204,15 @@ void LookupSymbol(const struct sStrComp *pComp, TempResult *pValue, Boolean Want
 
   /* Symbol evtl. im ersten Pass unbekannt */
 
-  else if (PassNo <= MaxSymPass) /* !pEntry */
+  else if ((PassNo <= MaxSymPass) || (eval_flags & e_eval_flag_undefined_is_unknown)) /* !pEntry */
   {
     as_tempres_set_int(pValue, EProgCounter());
-    Repass = True;
-    if ((MsgIfRepass) && (PassNo >= PassNoForMessage))
-      WrStrErrorPos(ErrNum_RepassUnknown, pComp);
+    if (!(eval_flags & e_eval_flag_undefined_is_unknown))
+    {
+      Repass = True;
+      if ((MsgIfRepass) && (PassNo >= PassNoForMessage))
+        WrStrErrorPos(ErrNum_RepassUnknown, pComp);
+    }
     pValue->Flags |= eSymbolFlag_FirstPassUnknown;
   }
   else
@@ -3236,12 +3253,26 @@ void SetSymbolOrStructElemSize(const struct sStrComp *pName, tSymbolSize Size)
 
 Boolean IsSymbolDefined(const struct sStrComp *pName)
 {
+#if 1
+  as_eval_cb_data_t cb_data;
+  TempResult result;
+  Boolean ret;
+
+  as_tempres_ini(&result);
+  as_eval_cb_data_ini(&cb_data, NULL);
+  EvalStrExpressionWithCallback(pName, &result, e_eval_flag_undefined_is_unknown, &cb_data);
+  ret = (result.Typ != TempNone)
+     && (!(result.Flags & eSymbolFlag_FirstPassUnknown));
+  as_tempres_free(&result);
+  return ret;
+#else
   Boolean error_on_find;
   PSymbolEntry pEntry = ExpandAndFindNode(pName, TempAll, True, e_expand_chk_upto, &error_on_find);
   if (error_on_find)
     WrStrErrorPos(ErrNum_InvSymName, pName);
 
-  return pEntry && pEntry->Defined;
+  return pEntry && get_symbol_entry_flag(pEntry, defined);
+#endif
 }
 
 /*!------------------------------------------------------------------------
@@ -3258,21 +3289,7 @@ Boolean IsSymbolUsed(const struct sStrComp *pName)
   if (error_on_find)
     WrStrErrorPos(ErrNum_InvSymName, pName);
 
-  return pEntry && pEntry->Used;
-}
-
-/*!------------------------------------------------------------------------
- * \fn     IsSymbolChangeable(const struct sStrComp *pName)
- * \brief  check whether symbol's value may be changed or is constant
- * \param  pName unexpanded symbol name
- * \return true if symbol exists and is changeable
- * ------------------------------------------------------------------------ */
-
-Boolean IsSymbolChangeable(const struct sStrComp *pName)
-{
-  PSymbolEntry pEntry = ExpandAndFindNode(pName, TempAll, True, e_expand_chk_none, NULL);
-
-  return pEntry && pEntry->Changeable;
+  return pEntry && get_symbol_entry_flag(pEntry, used);
 }
 
 /*!------------------------------------------------------------------------
@@ -3350,7 +3367,7 @@ static void PrintSymbolList_PNode(PTree Tree, void *pData)
     else
       StrSym(pValue, False, &pContext->s1, ListRadixBase);
 
-    as_sdprintf(&pContext->sh, "%c%s : ", Node->Used ? ' ' : '*', Tree->Name);
+    as_sdprintf(&pContext->sh, "%c%s : ", get_symbol_entry_flag(Node, used) ? ' ' : '*', Tree->Name);
     if (Tree->Attribute != -1)
       as_sdprcatf(&pContext->sh, " [%s]", GetSectionName(Tree->Attribute));
     l1 = (strlen(pContext->s1.p_str) + visible_strlen(pContext->sh.p_str) + 4);
@@ -3358,7 +3375,7 @@ static void PrintSymbolList_PNode(PTree Tree, void *pData)
     as_sdprcatf(&pContext->sh, "%s%s %c | ", Blanks(nBlanks), pContext->s1.p_str, SegShorts[addrspace_from_mask(pValue->AddrSpaceMask)]);
     PrintSymbolList_AddOut(pContext->sh.p_str, pContext);
     pContext->Sum++;
-    if (!Node->Used)
+    if (!get_symbol_entry_flag(Node, used))
       pContext->USum++;
   }
 }
@@ -3471,7 +3488,8 @@ static void PrintDebSymbols_PNode(PTree Tree, void *pData)
     l1 = strlen(DebContext->s.p_str);
     fprintf(DebContext->f, "%s", DebContext->s.p_str); ChkIO(ErrNum_FileWriteError);
   }
-  fprintf(DebContext->f, "%s %-3d %d %d\n", Blanks(25 - l1), Node->SymWert.DataSize, (int)Node->Used, (int)Node->Changeable);
+  fprintf(DebContext->f, "%s %-3d %d %d\n", Blanks(25 - l1), Node->SymWert.DataSize,
+          get_symbol_entry_flag(Node, used), get_symbol_entry_flag(Node, changeable));
   ChkIO(ErrNum_FileWriteError);
 }
 
@@ -3845,8 +3863,8 @@ static void ResetSymbolDefines_ResetNode(PTree Node, void *pData)
   PSymbolEntry SymbolEntry = (PSymbolEntry) Node;
   UNUSED(pData);
 
-  SymbolEntry->Defined = False;
-  SymbolEntry->Used = False;
+  set_symbol_entry_flag(SymbolEntry, defined, False);
+  set_symbol_entry_flag(SymbolEntry, used, False);
 }
 
 void ResetSymbolDefines(void)
@@ -4280,7 +4298,7 @@ static void PrintRegList_PNode(PTree Tree, void *pData)
     *tmp = '\0';
     if (Tree->Attribute != -1)
       as_snprcatf(tmp, sizeof(tmp), "[%s]", GetSectionName(Tree->Attribute));
-    as_snprcatf(tmp, sizeof(tmp), "%c%s --> %s", Node->Used ? ' ' : '*', Tree->Name, tmp2);
+    as_snprcatf(tmp, sizeof(tmp), "%c%s --> %s", get_symbol_entry_flag(Node, used) ? ' ' : '*', Tree->Name, tmp2);
     if ((int)strlen(tmp) > pContext->cwidth - 3)
     {
       if (*pContext->Zeilenrest.p_str)
@@ -4301,7 +4319,7 @@ static void PrintRegList_PNode(PTree Tree, void *pData)
       }
     }
     pContext->Sum++;
-    if (!Node->Used)
+    if (!get_symbol_entry_flag(Node, used))
       pContext->USum++;
   }
 }

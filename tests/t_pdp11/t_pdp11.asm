@@ -1594,6 +1594,36 @@ fdest	reg	ac5
 	seti
 	setl
 
+	stcfd	ac2,ac4			; store F32 AC into F64 in memory
+	stcfd	ac2,@r2
+	stcfd	ac2,(r3)+
+	stcfd	ac2,@(r4)+
+	stcfd	ac2,-(r5)
+	stcfd	ac2,@-(r6)
+	stcfd	ac2,0123456(r1)
+	stcfd	ac2,@0123456(r2)
+	expect	1350
+	stcfd	ac2,#1.5
+	endexpect
+	stcfd	ac2,@#0123456
+	stcfd	ac2,0123456
+	stcfd	ac2,@0123456
+
+	stcdf	ac2,ac4			; store F64 AC into F32 in memory
+	stcdf	ac2,@r2
+	stcdf	ac2,(r3)+
+	stcdf	ac2,@(r4)+
+	stcdf	ac2,-(r5)
+	stcdf	ac2,@-(r6)
+	stcdf	ac2,0123456(r1)
+	stcdf	ac2,@0123456(r2)
+	expect	1350
+	stcdf	ac2,#1.5
+	endexpect
+	stcdf	ac2,@#0123456
+	stcdf	ac2,0123456
+	stcdf	ac2,@0123456
+
 	stf	ac2,ac4
 	stf	ac2,@r2
 	stf	ac2,(r3)+
