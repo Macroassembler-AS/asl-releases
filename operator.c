@@ -72,7 +72,7 @@ static int reg_cmp(const TempResult *p_val1, const TempResult *p_val2)
   tRegInt num1, num2;
 
   /* If the two symbols are for different target architectures,
-     they are for sure unequal, but no ordering critera can be given: */
+     they are for sure unequal, but no ordering criteria can be given: */
 
   if ((p_val1->Contents.RegDescr.Dissect != p_val2->Contents.RegDescr.Dissect)
    || (p_val1->Contents.RegDescr.compare != p_val2->Contents.RegDescr.compare))
@@ -99,28 +99,43 @@ static int reg_cmp(const TempResult *p_val1, const TempResult *p_val2)
     return 0;
 }
 
-static void OneComplOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
+static Boolean OneComplOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
   UNUSED(pLVal);
+  if (!pRVal)
+    return False;
+
   as_tempres_set_int(pErg, ~(pRVal->Contents.Int));
   PromoteLValFlags();
+  return True;
 }
 
-static void ShLeftOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
+static Boolean ShLeftOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
+  if (!pLVal || !pRVal)
+    return False;
+
   as_tempres_set_int(pErg, pLVal->Contents.Int << pRVal->Contents.Int);
   PromoteLRValFlags();
+  return True;
 }
 
-static void ShRightOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
+static Boolean ShRightOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
+  if (!pLVal || !pRVal)
+    return False;
+
   as_tempres_set_int(pErg, pLVal->Contents.Int >> pRVal->Contents.Int);
   PromoteLRValFlags();
+  return True;
 }
 
-static void BitMirrorOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
+static Boolean BitMirrorOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
   int z;
+
+  if (!pLVal || !pRVal)
+    return False;
 
   if ((pRVal->Contents.Int < 1) || (pRVal->Contents.Int > 32)) WrError(ErrNum_OverRange);
   else
@@ -135,29 +150,45 @@ static void BitMirrorOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
     as_tempres_set_int(pErg, Result);
   }
   PromoteLRValFlags();
+  return True;
 }
 
-static void BinAndOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
+static Boolean BinAndOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
+  if (!pLVal || !pRVal)
+    return False;
+
   as_tempres_set_int(pErg, pLVal->Contents.Int & pRVal->Contents.Int);
   PromoteLRValFlags();
+  return True;
 }
 
-static void BinOrOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
+static Boolean BinOrOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
+  if (!pLVal || !pRVal)
+    return False;
+
   as_tempres_set_int(pErg, pLVal->Contents.Int | pRVal->Contents.Int);
   PromoteLRValFlags();
+  return True;
 }
 
-static void BinXorOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
+static Boolean BinXorOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
+  if (!pLVal || !pRVal)
+    return False;
+
   as_tempres_set_int(pErg, pLVal->Contents.Int ^ pRVal->Contents.Int);
   PromoteLRValFlags();
+  return True;
 }
 
-static void PotOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
+static Boolean PotOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
   LargeInt HVal;
+
+  if (!pLVal || !pRVal)
+    return False;
 
   switch (pLVal->Typ)
   {
@@ -216,10 +247,14 @@ static void PotOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
       break;
   }
   PromoteLRValFlags();
+  return True;
 }
 
-static void MultOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
+static Boolean MultOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
+  if (!pLVal || !pRVal)
+    return False;
+
   switch (pLVal->Typ)
   {
     case TempInt:
@@ -232,10 +267,14 @@ static void MultOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
       break;
   }
   PromoteLRValFlags();
+  return True;
 }
 
-static void DivOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
+static Boolean DivOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
+  if (!pLVal || !pRVal)
+    return False;
+
   switch (pLVal->Typ)
   {
     case TempInt:
@@ -251,20 +290,28 @@ static void DivOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
       break;
   }
   PromoteLRValFlags();
+  return True;
 }
 
-static void ModOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
+static Boolean ModOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
+  if (!pLVal || !pRVal)
+    return False;
+
   if (pRVal->Contents.Int == 0) WrError(ErrNum_DivByZero);
   else
     as_tempres_set_int(pErg, pLVal->Contents.Int % pRVal->Contents.Int);
   PromoteLRValFlags();
+  return True;
 }
 
 /* TODO: handle return code of NonZString2Int() better */
 
-static void AddOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
+static Boolean AddOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
+  if (!pLVal || !pRVal)
+    return False;
+
   as_tempres_set_none(pErg);
   switch (pLVal->Typ)
   {
@@ -340,10 +387,14 @@ static void AddOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
       break;
   }
   PromoteLRValFlags();
+  return True;
 }
 
-static void SubOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
+static Boolean SubOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
+  if (!pLVal || !pRVal)
+    return False;
+
   switch (pLVal->Typ)
   {
     case TempInt:
@@ -356,11 +407,15 @@ static void SubOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
       break;
   }
   PromoteLRValFlags();
+  return True;
 }
 
-static void SubSglOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
+static Boolean SubSglOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
   UNUSED(pLVal);
+  if (!pRVal)
+    return False;
+
   switch (pLVal->Typ)
   {
     case TempInt:
@@ -373,35 +428,81 @@ static void SubSglOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
       break;
   }
   PromoteRValFlags();
+  return True;
 }
 
-static void LogNotOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
+static Boolean LogNotOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
   UNUSED(pLVal);
+  if (!pRVal)
+    return False;
+
   as_tempres_set_int(pErg, pRVal->Contents.Int ? 0 : 1);
   PromoteLValFlags();
+  return True;
 }
 
-static void LogAndOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
+static Boolean LogAndOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
+  if (!pLVal)
+    return False;
+
+  /* short circuit evaluation: 0 && ... -> 0 */
+
+  if (!pRVal)
+  {
+    if (!pLVal->Contents.Int)
+    {
+      as_tempres_set_int(pErg, 0);
+      PromoteLValFlags();
+      return True;
+    }
+    return False;
+  }
+
   as_tempres_set_int(pErg, (pLVal->Contents.Int && pRVal->Contents.Int) ? 1 : 0);
   PromoteLRValFlags();
+  return True;
 }
 
-static void LogOrOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
+static Boolean LogOrOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
+  if (!pLVal)
+    return False;
+
+  /* short circuit evaluation: 1 ||  ... -> 1 */
+
+  if (!pRVal)
+  {
+    if (pLVal->Contents.Int)
+    {
+      as_tempres_set_int(pErg, 1);
+      PromoteLValFlags();
+      return True;
+    }
+    return False;
+  }
+
   as_tempres_set_int(pErg, (pLVal->Contents.Int || pRVal->Contents.Int) ? 1 : 0);
   PromoteLRValFlags();
+  return True;
 }
 
-static void LogXorOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
+static Boolean LogXorOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
+  if (!pLVal || !pRVal)
+    return False;
+
   as_tempres_set_int(pErg, ((pLVal->Contents.Int != 0) != (pRVal->Contents.Int != 0)) ? 1 : 0);
   PromoteLRValFlags();
+  return True;
 }
 
-static void EqOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
+static Boolean EqOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
+  if (!pLVal || !pRVal)
+    return False;
+
   switch (pLVal->Typ)
   {
     case TempInt:
@@ -420,10 +521,14 @@ static void EqOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
       break;
   }
   PromoteLRValFlags();
+  return True;
 }
 
-static void GtOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
+static Boolean GtOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
+  if (!pLVal || !pRVal)
+    return False;
+
   switch (pLVal->Typ)
   {
     case TempInt:
@@ -442,10 +547,14 @@ static void GtOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
       break;
   }
   PromoteLRValFlags();
+  return True;
 }
 
-static void LtOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
+static Boolean LtOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
+  if (!pLVal || !pRVal)
+    return False;
+
   switch (pLVal->Typ)
   {
     case TempInt:
@@ -464,10 +573,14 @@ static void LtOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
       break;
   }
   PromoteLRValFlags();
+  return True;
 }
 
-static void LeOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
+static Boolean LeOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
+  if (!pLVal || !pRVal)
+    return False;
+
   switch (pLVal->Typ)
   {
     case TempInt:
@@ -489,10 +602,14 @@ static void LeOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
       break;
   }
   PromoteLRValFlags();
+  return True;
 }
 
-static void GeOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
+static Boolean GeOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
+  if (!pLVal || !pRVal)
+    return False;
+
   switch (pLVal->Typ)
   {
     case TempInt:
@@ -514,10 +631,14 @@ static void GeOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
       break;
   }
   PromoteLRValFlags();
+  return True;
 }
 
-static void UneqOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
+static Boolean UneqOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
+  if (!pLVal || !pRVal)
+    return False;
+
   switch (pLVal->Typ)
   {
     case TempInt:
@@ -536,6 +657,7 @@ static void UneqOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
       break;
   }
   PromoteLRValFlags();
+  return True;
 }
 
 #define Int2Int       (TempInt    | (TempInt << 4)   )
@@ -547,40 +669,40 @@ static void UneqOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 
 const as_operator_t operators[] =
 {
-  {"~" , 1 , False,  1, { TempInt << 4, 0, 0, 0, 0 }, OneComplOp},
-  {"<<", 2 , True ,  3, { Int2Int, 0, 0, 0, 0 }, ShLeftOp},
-  {">>", 2 , True ,  3, { Int2Int, 0, 0, 0, 0 }, ShRightOp},
-  {"><", 2 , True ,  4, { Int2Int, 0, 0, 0, 0 }, BitMirrorOp},
-  {"&" , 1 , True ,  5, { Int2Int, 0, 0, 0, 0 }, BinAndOp},
-  {"|" , 1 , True ,  6, { Int2Int, 0, 0, 0, 0 }, BinOrOp},
-  {"!" , 1 , True ,  7, { Int2Int, 0, 0, 0, 0 }, BinXorOp},
-  {"^" , 1 , True ,  8, { Int2Int, Float2Float, 0, 0, 0 }, PotOp},
-  {"*" , 1 , True , 11, { Int2Int, Float2Float, 0, 0, 0 }, MultOp},
-  {"/" , 1 , True , 11, { Int2Int, Float2Float, 0, 0, 0 }, DivOp},
-  {"#" , 1 , True , 11, { Int2Int, 0, 0, 0, 0 }, ModOp},
-  {"+" , 1 , True , 13, { Int2Int, Float2Float, String2String, Int2String, String2Int }, AddOp},
+  {"~" , 1 , e_op_monadic,  1, { TempInt << 4, 0, 0, 0, 0 }, OneComplOp},
+  {"<<", 2 , e_op_dyadic ,  3, { Int2Int, 0, 0, 0, 0 }, ShLeftOp},
+  {">>", 2 , e_op_dyadic ,  3, { Int2Int, 0, 0, 0, 0 }, ShRightOp},
+  {"><", 2 , e_op_dyadic ,  4, { Int2Int, 0, 0, 0, 0 }, BitMirrorOp},
+  {"&" , 1 , e_op_dyadic ,  5, { Int2Int, 0, 0, 0, 0 }, BinAndOp},
+  {"|" , 1 , e_op_dyadic ,  6, { Int2Int, 0, 0, 0, 0 }, BinOrOp},
+  {"!" , 1 , e_op_dyadic ,  7, { Int2Int, 0, 0, 0, 0 }, BinXorOp},
+  {"^" , 1 , e_op_dyadic ,  8, { Int2Int, Float2Float, 0, 0, 0 }, PotOp},
+  {"*" , 1 , e_op_dyadic , 11, { Int2Int, Float2Float, 0, 0, 0 }, MultOp},
+  {"/" , 1 , e_op_dyadic , 11, { Int2Int, Float2Float, 0, 0, 0 }, DivOp},
+  {"#" , 1 , e_op_dyadic , 11, { Int2Int, 0, 0, 0, 0 }, ModOp},
+  {"+" , 1 , e_op_dyadic , 13, { Int2Int, Float2Float, String2String, Int2String, String2Int }, AddOp},
   /* minus may have one or two operands */
-  {"-" , 1 , True , 13, { Int2Int, Float2Float, 0, 0, 0 }, SubOp},
-  {"-" , 1 , False, 13, { TempInt << 4, TempFloat << 4, 0, 0, 0 }, SubSglOp},
-  {"~~", 2 , False,  2, { TempInt << 4, 0, 0, 0, 0 }, LogNotOp},
-  {"&&", 2 , True , 15, { Int2Int, 0, 0, 0, 0 }, LogAndOp},
-  {"||", 2 , True , 16, { Int2Int, 0, 0, 0, 0 }, LogOrOp},
-  {"!!", 2 , True , 17, { Int2Int, 0, 0, 0, 0 }, LogXorOp},
-  {"=" , 1 , True , 23, { Int2Int, Float2Float, String2String, Reg2Reg, 0 }, EqOp},
-  {"==", 2 , True , 23, { Int2Int, Float2Float, String2String, Reg2Reg, 0 }, EqOp},
-  {">" , 1 , True , 23, { Int2Int, Float2Float, String2String, Reg2Reg, 0 }, GtOp},
-  {"<" , 1 , True , 23, { Int2Int, Float2Float, String2String, Reg2Reg, 0 }, LtOp},
-  {"<=", 2 , True , 23, { Int2Int, Float2Float, String2String, Reg2Reg, 0 }, LeOp},
-  {">=", 2 , True , 23, { Int2Int, Float2Float, String2String, Reg2Reg, 0 }, GeOp},
-  {"<>", 2 , True , 23, { Int2Int, Float2Float, String2String, Reg2Reg, 0 }, UneqOp},
-  {"!=", 2 , True , 23, { Int2Int, Float2Float, String2String, Reg2Reg, 0 }, UneqOp},
+  {"-" , 1 , e_op_dyadic , 13, { Int2Int, Float2Float, 0, 0, 0 }, SubOp},
+  {"-" , 1 , e_op_monadic, 13, { TempInt << 4, TempFloat << 4, 0, 0, 0 }, SubSglOp},
+  {"~~", 2 , e_op_monadic,  2, { TempInt << 4, 0, 0, 0, 0 }, LogNotOp},
+  {"&&", 2 , e_op_dyadic_short , 15, { Int2Int, 0, 0, 0, 0 }, LogAndOp},
+  {"||", 2 , e_op_dyadic_short , 16, { Int2Int, 0, 0, 0, 0 }, LogOrOp},
+  {"!!", 2 , e_op_dyadic , 17, { Int2Int, 0, 0, 0, 0 }, LogXorOp},
+  {"=" , 1 , e_op_dyadic , 23, { Int2Int, Float2Float, String2String, Reg2Reg, 0 }, EqOp},
+  {"==", 2 , e_op_dyadic , 23, { Int2Int, Float2Float, String2String, Reg2Reg, 0 }, EqOp},
+  {">" , 1 , e_op_dyadic , 23, { Int2Int, Float2Float, String2String, Reg2Reg, 0 }, GtOp},
+  {"<" , 1 , e_op_dyadic , 23, { Int2Int, Float2Float, String2String, Reg2Reg, 0 }, LtOp},
+  {"<=", 2 , e_op_dyadic , 23, { Int2Int, Float2Float, String2String, Reg2Reg, 0 }, LeOp},
+  {">=", 2 , e_op_dyadic , 23, { Int2Int, Float2Float, String2String, Reg2Reg, 0 }, GeOp},
+  {"<>", 2 , e_op_dyadic , 23, { Int2Int, Float2Float, String2String, Reg2Reg, 0 }, UneqOp},
+  {"!=", 2 , e_op_dyadic , 23, { Int2Int, Float2Float, String2String, Reg2Reg, 0 }, UneqOp},
   /* termination marker */
-  {NULL, 0 , False,  0, { 0, 0, 0, 0, 0 }, NULL}
+  {NULL, 0 , e_op_monadic,  0, { 0, 0, 0, 0, 0 }, NULL}
 };
 
 const as_operator_t no_operators[] =
 {
-  {NULL, 0 , False,  0, { 0, 0, 0, 0, 0 }, NULL}
+  {NULL, 0 , e_op_monadic,  0, { 0, 0, 0, 0, 0 }, NULL}
 };
 
 const as_operator_t *target_operators = no_operators;

@@ -2085,6 +2085,12 @@ und FALSE falls nicht.  Vergleiche betrachten Integerzahlen dabei als
 die logischen Operatoren ist ein Ausdruck TRUE, falls er ungleich 0 ist,
 ansonsten FALSE.
 \par
+Grunds"atzlich ist bei Operatoren mit zwei Argumenten nicht definiert, in
+welcher Reihenfolge die Operanden bestimmt werden.  Die einzige Ausnahme
+von dieser Regel sind das logische AND und OR: Falls das Ergebnis bereits
+durch den linken Operanden eindeutig bestimmt ist, wird der rechte
+Operand nicht mehr ausgewertet,
+\par
 Bei Vergleichen von Register-Symbolen sind zwei Details zu beachten.
 Zum einen sind zwei Register-Symbole dann gleich, wenn sie auf das
 gleiche Register verweisen.  Da Register bei einigen Prozessoren
@@ -11572,6 +11578,52 @@ ROM zur Ablage von Konstanten besitzen.  Dieses ist bei \asname{} auf das
 
 %%---------------------------------------------------------------------------
 
+\section{uCOM-43}
+
+Der uCOM-43-Befehlssatz enth"alt einen Befehl {\tt CZP}, der es erlaubt, einen
+Unterprogrammaufruf auf eine der Adressen 0, 4, 8, 12...60 mit einem einzigen
+Instruktions-Byte zu machen.  Leider ist die vorhandene Dokumentation dar"uber
+unklar, ob der Befehl im Quelltext die Zieladresse (also einen durch vier
+teilbaren Wert) oder den im Befehl enthaltenen Vektor (also eine Zahl von 0 bis
+15) erwartet.  Im Moment betreibt der Assembler ein wenig 'Kaffeesatzleserei':
+\begin{itemize}
+\item{Falls das Argument gr"o"ser als 15 ist, mu"s es sich um eine Adresse
+      handeln, ansonsten:}
+\item{Falls das Argument kein mehrfaches von vier ist, mu"s es sich um einen
+      Vektor handeln, ansonsten:}
+\item{Falls das Argument Null ist, ist keine Unterscheidung notwendig, ansonsten:}
+\item{Falls das Argument ein Symbol aus dem {\tt CODE}-Segment ist, z.B. ein Label,
+      mu"s es sich um eine Adresse handlen, ansonsten:}
+\item{ist es ein Vektor.}
+\end{itemize}
+Die letzten beiden F"alle treffen nur auf die Werte 4, 8 oder 12 zu, und weil die
+Entscheidung nicht intuitiv ist, wird bei der Entscheidung f"ur einen Vektor
+eine Warnung ausgegeben.  F"ur den Fall, da"s wirklich die Adresse 4, 8 oder 12
+gemeint ist, definiere man den Wert als Symbol im Code-Segment:
+\begin{verbatim}
+dest   label  4
+       .
+       .
+       .
+       czp dest
+\end{verbatim}
+F"ur den Fall, da"s ein Vektor gemeint ist, und die Warnung st"ort, kann man die
+Warnung folgender ma"sen unterdr"ucken:
+\begin{verbatim}
+vector equ    4
+       .
+       .
+       .
+       expect 480
+       czp    vector
+       endexpect
+\end{verbatim}
+Ich gestehe ein, da"s diese Situation nicht 100\% befriedigend ist.  Falls
+jemand Informationen "uber das Verhalten des Original-NEC-Assemblers hat,
+w"are ich f"ur eine Nachricht dankbar.
+
+%%---------------------------------------------------------------------------
+
 \section{F2MC16L}
 
 Darauf, da"s man bei Anwendungen mit mehr als 64K ROM oder 64K RAM darauf
@@ -12862,6 +12914,12 @@ Angaben:
                 verwendet.  Da die Anweisung ohnehin nichts bewirkt, wird sie stattdessen
                 als NOP assembliert.}
                {keines}
+\errentry{ 480}{Argument wird als Vektor behandelt}
+               {Warnung}
+               {Anhand des Arguments kann nicht zweifelsfrei entschieden werden, ob
+                es sich um eine Adresse oder einen Vektor handelt.  Da das Argument eine
+                reine Zahl und keinem Segment zugeordnet ist, wird es als Vektor behandelt.}
+               {das fragliche Argument}
 \errentry{1000}{Symbol doppelt definiert}
                {Fehler}
                {Einem Symbol wurde durch ein Label oder

@@ -1,0 +1,6 @@
++----------------------- Test Application SHRTEV ----------------------------+
+|                                                                            |
+|      This test demonstrates the effect of short-circuit evaluation of the  |
+|      || and && operators.                                                  |
+|                                                                            |
++----------------------------------------------------------------------------+

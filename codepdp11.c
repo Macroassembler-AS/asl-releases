@@ -1824,11 +1824,11 @@ static void init_fields_pdp11(void)
   AddInstTable(InstTable, "TSTSET", 0007200, decode_tstset);
   AddInstTable(InstTable, "WRTLCK", 0007300, decode_wrtlck);
   AddInstTable(InstTable, "CSM"   , 0007000 | CODE_FLAG_16BIT | CODE_FLAG_GEN_IMM, decode_csm);
-  AddInstTable(InstTable, "MFPD"  , 0006500 | CODE_FLAG_16BIT | CODE_FLAG_GEN_IMM, decode_mfp_mtp);
-  AddInstTable(InstTable, "MFPI"  , 0106500 | CODE_FLAG_16BIT | CODE_FLAG_GEN_IMM, decode_mfp_mtp);
+  AddInstTable(InstTable, "MFPD"  , 0106500 | CODE_FLAG_16BIT | CODE_FLAG_GEN_IMM, decode_mfp_mtp);
+  AddInstTable(InstTable, "MFPI"  , 0006500 | CODE_FLAG_16BIT | CODE_FLAG_GEN_IMM, decode_mfp_mtp);
   AddInstTable(InstTable, "MFPS"  , 0106700 , decode_mfps_mtps);
-  AddInstTable(InstTable, "MTPD"  , 0006600 | CODE_FLAG_16BIT, decode_mfp_mtp);
-  AddInstTable(InstTable, "MTPI"  , 0106600 | CODE_FLAG_16BIT, decode_mfp_mtp);
+  AddInstTable(InstTable, "MTPD"  , 0106600 | CODE_FLAG_16BIT, decode_mfp_mtp);
+  AddInstTable(InstTable, "MTPI"  , 0006600 | CODE_FLAG_16BIT, decode_mfp_mtp);
   AddInstTable(InstTable, "MTPS"  , 0106400 | CODE_FLAG_GEN_IMM, decode_mfps_mtps);
 
   AddInstTable(InstTable, "FADD"  , 0075000, decode_fis);

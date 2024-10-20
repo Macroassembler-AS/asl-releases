@@ -3393,9 +3393,11 @@ static Boolean IsDef_Z8000(void)
  * \param  pRVal input argument
  * ------------------------------------------------------------------------ */
 
-static void PotMonadicOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
+static Boolean PotMonadicOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
   UNUSED(pLVal);
+  if (!pRVal)
+    return False;
 
   /* If in front of a label, takes the address as an 'untyped' value.  This
      will instruct the address decoder to use immediate instead of direct
@@ -3415,12 +3417,13 @@ static void PotMonadicOp(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
   pErg->Contents = pRVal->Contents;
   pErg->Flags |= (pLVal->Flags & eSymbolFlags_Promotable);
   if (pErg->DataSize == eSymbolSizeUnknown) pErg->DataSize = pLVal->DataSize;
+  return True;
 }
 
 static const as_operator_t z8000_operators[] =
 {
-  { "^" ,1 , False, 8, { TempInt | (TempInt << 4), 0, 0, 0 }, PotMonadicOp },
-  {NULL, 0 , False,  0, { 0, 0, 0, 0, 0 }, NULL}
+  { "^" ,1 , e_op_monadic, 8, { TempInt | (TempInt << 4), 0, 0, 0 }, PotMonadicOp},
+  {NULL, 0 , e_op_monadic,  0, { 0, 0, 0, 0, 0 }, NULL}
 };
 
 /*!------------------------------------------------------------------------

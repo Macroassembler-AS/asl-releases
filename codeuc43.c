@@ -284,6 +284,9 @@ static void decode_czp(Word code)
     else if (eval_result.AddrSpaceMask & (1 << SegCode))
       address = (address >> 2) & 15;
 
+    else
+      WrStrErrorPos(ErrNum_TreatedAsVector, &ArgStr[1]);
+
     put_code(code | address);
   }
 }

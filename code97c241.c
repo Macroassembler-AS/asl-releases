@@ -379,15 +379,18 @@ DECLARE_AS_EVAL_CB(tlcs9000_eval_cb)
   }
 }
 
-static void force_long_op(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
+static Boolean force_long_op(TempResult *pErg, TempResult *pLVal, TempResult *pRVal)
 {
   UNUSED(pLVal);
+  if (!pRVal)
+    return False;
 
   /* clone value as-is */
 
   as_tempres_copy_value(pErg, pRVal);
   pErg->Flags |= (pLVal->Flags & eSymbolFlags_Promotable) | eSymbolFlag_UserLong;
   pErg->DataSize = pLVal->DataSize;
+  return True;
 }
 
 /* NOTE: as unary operator, '>' binds stronger than as binary operator, similar
@@ -395,8 +398,8 @@ static void force_long_op(TempResult *pErg, TempResult *pLVal, TempResult *pRVal
 
 static const as_operator_t tlcs9000_operators[] =
 {
-  { ">" ,1 , False, 1, { TempInt | (TempInt << 4), 0, 0, 0 }, force_long_op },
-  {NULL, 0 , False, 0, { 0, 0, 0, 0, 0 }, NULL}
+  { ">" ,1 , e_op_monadic, 1, { TempInt | (TempInt << 4), 0, 0, 0 }, force_long_op},
+  {NULL, 0 , e_op_monadic, 0, { 0, 0, 0, 0, 0 }, NULL}
 };
 
 static void DecodeAdr(const tStrComp *pArg, Byte PrefInd, tImmAllow MayImm, Boolean MayReg)

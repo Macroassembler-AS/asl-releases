@@ -276,15 +276,16 @@ prt	equ	r3
 	cpu	tms99110
 
 	; only on TI990 & TMS99110
+	; LDS and LDD expect no argument on TMS99110 and act like a prefix?
 
 	expect	50	
         lmf	r5,0
 	endexpect
 	expect	50
-        lds	@bits
+        lds
 	endexpect
 	expect	50
-        ldd	@bits
+        ldd
 	endexpect
 
 	mm	@1234h(wr13),@2345h(wr5)
@@ -301,9 +302,20 @@ prt	equ	r3
 	str	*wr10
 	cir	@1234h(wr9)
 
-	; only on TI990/12
-
 	cpu	ti990/12
+
+	; only on TI990/12
+	; LDS and LDD have same opcode, but different arguments on TI990?
+
+	expect	50	
+        lmf	r5,0
+	endexpect
+	expect	50
+        lds	@bits
+	endexpect
+	expect	50
+        ldd	@bits
+	endexpect
 
 	; Type 11 instructions have a byte count as third argument.
         ; The TMS99xxx only implements AM and SM of those, with the

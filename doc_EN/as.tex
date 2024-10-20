@@ -2024,6 +2024,11 @@ The comparison operators deliver TRUE in case the condition fits,
 and FALSE in case it doesn't.  For the logical operators an expression
 is TRUE in case it is not 0, otherwise it is FALSE.
 
+For operators with two arguments, the order of operand evaluation
+is undefined.  The only exception from this is the logical AND and
+logical OR: If the result is unambiguously defined by the left
+operand, the right operand is not evaluated at all.
+
 Two details have to be kept im mind when comparing register symbols.
 First, two register symbols are equal if they refer to the same 
 register.  Some processors have alias names for registers, and these
@@ -11305,6 +11310,50 @@ mapped onto the \tty{ROMDATA} segment!
 
 %%---------------------------------------------------------------------------
 
+\section{uCOM-43}
+
+The uCOM-43 instruction set contains an instruction {\tt CZP} that performs a
+single byte subroutine call to the addresses 0, 4, 8, 12...60.  However, the
+available documentation is unclear about the instruction's argument in source
+code: should it be the target address (i.e., a multiple of four) or th vector
+contained in the opcode (i.e., a number from 0 to 15).  To decide, the assembler
+performs some guessing:
+\begin{itemize}
+\item{If the argument is larger than 15, it must be an address, otherwise:}
+\item{If the argument is not a multiple of four, it must be a vector, otherwise:}
+\item{If the argument is zero, no distinction is possible, otherwise:}
+\item{If the argument is a symbol from CODE space (e.g. a label), it must
+      be an address, otherwise:}
+\item{The argument is a vector.}
+\end{itemize}
+The final two rules only apply to the values 4, 8, and 12, and since the
+decision is not intuitively clear, the decision for a vector is accompanied
+with a warning.  In case an address was meant, define the argument as symbol
+from CODe space:
+\begin{verbatim}
+dest   label  4
+       .
+       .
+       .
+       czp dest
+\end{verbatim}
+In case a vector was meant, and the warning bothers you, it may be suppressed
+this way:
+\begin{verbatim}
+vector equ    4
+       .
+       .
+       .
+       expect 480
+       czp    vector
+       endexpect
+\end{verbatim}
+I admit that this situation is not 100% satisfactory.  If anyone has information
+about the behaviour of the original NEC assembler, I'd be grateful for contacting
+me.
+
+%%---------------------------------------------------------------------------
+
 \section{F2MC16L}
 
 Along with the discussion of the {\tt ASSUME} statement, it has already
@@ -12574,6 +12623,12 @@ described by:
                 for different purposes.  Since this instruction anyway does
                 not perform any operation, it is assembled as a NOP.}
                {none}
+\errentry{ 480}{argument treated as vector}
+               {warning}
+               {There is no way to umambiguously decide whether the argument is
+                an address or a vector.  Since the argument is a plain numeric
+                value not assigned to any segment, it is assumed to be a vector.}
+               {the argument in question}
 \errentry{1000}{symbol double defined}
                {error}
                {A new value is assigned to a symbol, using a label or a

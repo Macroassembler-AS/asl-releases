@@ -1164,8 +1164,11 @@ static void InitFields(void)
   AddSing("DEC" , 0x0600, eCoreAll);
   AddSing("DECT", 0x0640, eCoreAll);
   AddSing("X"   , 0x0480, eCoreAll);
-  AddSing("LDS" , 0x0780, eCoreFlagSupMode | eCore990_10 | eCore990_12 | eCore99110);
-  AddSing("LDD" , 0x07c0, eCoreFlagSupMode | eCore990_10 | eCore990_12 | eCore99110);
+  if (!(pCurrCPUProps->CoreFlags & eCore99110))
+  {
+    AddSing("LDS" , 0x0780, eCoreFlagSupMode | eCore990_10 | eCore990_12);
+    AddSing("LDD" , 0x07c0, eCoreFlagSupMode | eCore990_10 | eCore990_12);
+  }
   AddSing("DCA" , 0x2c00, eCore9940);
   AddSing("DCS" , 0x2c40, eCore9940);
   AddSing("BIND", 0x0140, eCore990_12 | eCore99105 | eCore99110);
@@ -1257,6 +1260,11 @@ static void InitFields(void)
   AddFixed("CDE" , 0x0c05, eCore990_12);
   AddFixed("CED" , 0x0c07, eCore990_12);
   AddFixed("XIT" , 0x0c0e, eCore990_12);
+  if (pCurrCPUProps->CoreFlags & eCore99110)
+  {
+    AddFixed("LDS" , 0x0780, eCoreFlagSupMode | eCore99110);
+    AddFixed("LDD" , 0x07c0, eCoreFlagSupMode | eCore99110);
+  }
 
   InstrZ = 0;
   AddType12("SNEB", 0x0e10, eCore990_12);

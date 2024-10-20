@@ -149,15 +149,21 @@ vect4	label	16
 	czp	1		; B1
 	czp	2		; B2
 	czp	3		; B3
+	expect	480
 	czp	4		; B4
+	endexpect
 	czp	5		; B5
 	czp	6		; B6
 	czp	7		; B7
+	expect	480
 	czp	8		; B8
+	endexpect
 	czp	9		; B9
 	czp	10		; BA
 	czp	11		; BB
+	expect	480
 	czp	12		; BC
+	endexpect
 	czp	13		; BD
 	czp	14		; BE
 	czp	15		; BF

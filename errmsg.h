@@ -69,6 +69,7 @@ typedef enum
   ErrNum_NeedShortIO = 450,
   ErrNum_CaseWrongArgCnt = 460,
   ErrNum_ReplacedByNOP = 470,
+  ErrNum_TreatedAsVector = 480,
   ErrNum_DoubleDef = 1000,
   ErrNum_SymbolUndef = 1010,
   ErrNum_InvSymName = 1020,

@@ -1,4 +1,15 @@
-2024-09-29  [1.42 Bld 277]
+2024-10-20 [1.42 Bld 278]
+
+- Bugfix      : correct encoding of PDP-11 instructions
+                M(F|T)P(D|I)
+- Change      : uCOM-43: Issue warning when decision about
+                CZP's argument type is unclear
+- Change      : Introduce short circuit evaluation for
+                logical AND and OR.
+- Bugfix      : regard different arguments for LDS/LDD on
+                TMS99110 and TI990.
+
+2024-09-29 [1.42 Bld 277]
 
 - Change      : IFDEF, IFNDEF, and DEFINED() also accept an
                 expression as argument, not only a simple

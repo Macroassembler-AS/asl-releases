@@ -243,6 +243,10 @@ Message ErrMsgReplacedByNOP
  "Befehl als NOP assembliert"
  "instruction assembled as NOP"
 
+Message ErrMsgTreatedAsVector
+ "Argument wird als Vektor behandelt"
+ "argument treated as vector"
+
 ;*****
 
 Message ErrMsgDoubleDef

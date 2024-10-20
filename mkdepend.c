@@ -147,7 +147,8 @@ static void ParseFile(const char *pFileName, const char *pParentFileName, String
       continue;
     pCmd = strtok(line + 1, " \t");
 
-    if (!strcmp(pCmd, "include") && curr_if)
+    if (!pCmd);
+    else if (!strcmp(pCmd, "include") && curr_if)
     {
       pName = strtok(NULL, " \t");
       if (!pName)
