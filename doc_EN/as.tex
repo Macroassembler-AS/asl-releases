@@ -12629,6 +12629,13 @@ described by:
                 an address or a vector.  Since the argument is a plain numeric
                 value not assigned to any segment, it is assumed to be a vector.}
                {the argument in question}
+\errentry{ 490}{interpreting too large integer constant as float}
+               {warning}
+               {Though the argument is a syntactically correct integer constant,
+                its value is outside of what can internally be represented as
+                integer.  The number is therefore stored as a floating point
+                number.}
+               {the argument in question}
 \errentry{1000}{symbol double defined}
                {error}
                {A new value is assigned to a symbol, using a label or a

@@ -325,6 +325,8 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
       msgno = Num_ErrMsgReplacedByNOP; break;
     case ErrNum_TreatedAsVector:
       msgno = Num_ErrMsgTreatedAsVector; break;
+    case ErrNum_LargeIntAsFloat:
+      msgno = Num_ErrMsgLargeIntAsFloat; break;
     case ErrNum_DoubleDef:
       msgno = Num_ErrMsgDoubleDef; break;
     case ErrNum_SymbolUndef:

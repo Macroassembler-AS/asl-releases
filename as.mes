@@ -247,6 +247,10 @@ Message ErrMsgTreatedAsVector
  "Argument wird als Vektor behandelt"
  "argument treated as vector"
 
+Message ErrMsgLargeIntAsFloat
+ "Zu grosse Integer-Konstante wird als Gleitkomma interpretiert"
+ "interpreting too large integer constant as float"
+
 ;*****
 
 Message ErrMsgDoubleDef

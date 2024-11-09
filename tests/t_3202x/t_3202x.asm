@@ -252,7 +252,7 @@ alladdr	macro	instr
 	long	'abc'
 	long	'abcd'
 	long	0
-	long	4294967296
+	long	4294967295
 	long	-2147483648
 	long	"a"
 	long	"ab"

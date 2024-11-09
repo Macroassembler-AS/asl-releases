@@ -732,7 +732,7 @@ typedef unsigned int as_uint32_t;
 /*---------------------------------------------------------------------------*/
 /* VAX with Ultrix: */
 
-#ifdef ultrix
+#ifdef __ultrix
 #ifndef __GNUC__
 # undef AS_HAS_LONGLONG
 # define AS_HAS_LONGLONG 0

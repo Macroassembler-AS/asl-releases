@@ -45,6 +45,8 @@
 
 #define NULLSTRING_EVAL_RESULT True
 
+#define TREAT_LARGEINT_FLOAT 1
+
 /* Mask, Min & Max are computed at initialization */
 
 tIntTypeDef IntTypeDefs[IntTypeCnt] =
@@ -107,6 +109,15 @@ tIntTypeDef IntTypeDefs[IntTypeCnt] =
   { 0xc040, 0, 0, 0 }, /* Int64 */
 #endif
 };
+
+typedef enum
+{
+  e_lookup_error_none,
+  e_lookup_error_expand,
+  e_lookup_error_getsymsection,
+  e_lookup_error_namecheck,
+  e_lookup_error_notfound
+} lookup_symbol_error_t;
 
 typedef struct
 {
@@ -883,13 +894,16 @@ static Boolean GetSymSection(tStrComp *p_name, LongInt *p_ret, const tStrComp *p
  * Result:      integer value
  *****************************************************************************/
 
-static LargeInt ConstIntVal(const char *pExpr, IntType Typ, Boolean *pResult)
+static LargeInt ConstIntVal(const char *pExpr, IntType Typ, Boolean *pResult, int *p_outof_range)
 {
   LargeInt Wert;
   Boolean NegFlag = False;
+  LargeWord acc, acc_max, mul_max;
   int Digit;
   tIntCheckCtx Ctx;
   const tIntFormatList *pIntFormat;
+
+  *p_outof_range = 0;
 
   /* empty string is interpreted as 0 */
 
@@ -903,10 +917,12 @@ static LargeInt ConstIntVal(const char *pExpr, IntType Typ, Boolean *pResult)
 
   /* sign: */
 
+  acc_max = (LargeWord)-1;
   switch (*pExpr)
   {
     case '-':
       NegFlag = True;
+      acc_max = (acc_max >> 1) + 1;
       /* else fall-through */
     case '+':
       pExpr++;
@@ -924,10 +940,11 @@ static LargeInt ConstIntVal(const char *pExpr, IntType Typ, Boolean *pResult)
     }
   if (Ctx.Base <= 0)
     return -1;
+  mul_max = acc_max / Ctx.Base;
 
   /* we may have decremented Ctx.ExprLen, so do not run until string end */
 
-  Wert = 0;
+  acc = 0;
   while (Ctx.ExprLen > 0)
   {
     if (256 == Ctx.Base)
@@ -943,12 +960,24 @@ static LargeInt ConstIntVal(const char *pExpr, IntType Typ, Boolean *pResult)
       Digit = DigitVal(as_toupper(*Ctx.pExpr), Ctx.Base);
     if (Digit == -1)
       return -1;
-    Wert = Wert * Ctx.Base + Digit;
+    if (acc > mul_max)
+    {
+      *pResult = True;
+      *p_outof_range = NegFlag ? -1 : 1;
+      return NegFlag ? -acc_max : acc_max;
+    }
+    acc = acc * Ctx.Base;
+    if (acc_max - acc < (unsigned)Digit)
+    {
+      *pResult = True;
+      *p_outof_range = NegFlag ? -1 : 1;
+      return NegFlag ? -acc_max : acc_max;
+    }
+    acc = acc + Digit;
     Ctx.pExpr++; Ctx.ExprLen--;
   }
 
-  if (NegFlag)
-    Wert = -Wert;
+  Wert = NegFlag ? -acc : acc;
 
   /* post-processing, range check */
 
@@ -974,7 +1003,7 @@ static LargeInt ConstIntVal(const char *pExpr, IntType Typ, Boolean *pResult)
  * Result:      value
  *****************************************************************************/
 
-static as_float_t ConstFloatVal(const char *pExpr, Boolean *pResult, Boolean *p_over_range)
+static as_float_t ConstFloatVal(const char *pExpr, Boolean *pResult, int *p_outof_range)
 {
   as_float_t Erg;
   char *pEnd;
@@ -991,7 +1020,7 @@ static as_float_t ConstFloatVal(const char *pExpr, Boolean *pResult, Boolean *p_
      && (toupper(pExpr[1]) == 'X'))
     {
       Erg = 0;
-      *p_over_range = False;
+      *p_outof_range = 0;
       *pResult = False;
     }
 
@@ -999,16 +1028,18 @@ static as_float_t ConstFloatVal(const char *pExpr, Boolean *pResult, Boolean *p_
     {
       Erg = as_strtof(pExpr, &pEnd);
       *pResult = (*pEnd == '\0');
-      *p_over_range =
-         (((Erg == AS_HUGE_VAL) || (Erg == -AS_HUGE_VAL))
-       && (errno == ERANGE)
-       && *pResult);
+      if ((Erg == AS_HUGE_VAL) && (errno == ERANGE) && *pResult)
+        *p_outof_range = 1;
+      else if ((Erg == -AS_HUGE_VAL) && (errno == ERANGE) && *pResult)
+        *p_outof_range = -1;
+      else
+        *p_outof_range = 0;
     }
   }
   else
   {
     Erg = 0.0;
-    *p_over_range = False;
+    *p_outof_range = False;
     *pResult = NULLSTRING_EVAL_RESULT;
   }
   return Erg;
@@ -1181,7 +1212,7 @@ typedef enum { e_expand_chk_none, e_expand_chk_upto, e_expand_chk_empty_upto } e
 
 static PSymbolEntry ExpandAndFindNode(
 #ifdef __PROTOS__
-const struct sStrComp *pComp, TempType SearchType, Boolean SearchLocal, expand_chk_t chk, Boolean *p_error_on_find
+const struct sStrComp *pComp, TempType SearchType, Boolean SearchLocal, expand_chk_t chk, lookup_symbol_error_t *p_lookup_error
 #endif
 );
 
@@ -1496,7 +1527,8 @@ static void test_found_op(operator_search_cb_data_t *p_data, const as_operator_t
 
 void EvalStrExpressionWithCallback(const tStrComp *pExpr, TempResult *pErg, as_eval_flags_t eval_flags, as_eval_cb_data_t *p_callback_data)
 {
-  Boolean OK, over_range;
+  Boolean OK;
+  int int_outof_range, float_outof_range;
   tStrComp InArgs[3];
   TempResult InVals[3];
   int z1, cnt;
@@ -1554,21 +1586,35 @@ void EvalStrExpressionWithCallback(const tStrComp *pExpr, TempResult *pErg, as_e
 
   /* Konstanten ? */
 
-  pErg->Contents.Int = ConstIntVal(CopyComp.str.p_str, (IntType) (IntTypeCnt - 1), &OK);
+  pErg->Contents.Int = ConstIntVal(CopyComp.str.p_str, (IntType) (IntTypeCnt - 1), &OK, &int_outof_range);
   if (OK)
   {
-    pErg->Typ = TempInt;
-    pErg->Relocs = NULL;
-    LEAVE;
-  }
-
-  pErg->Contents.Float = ConstFloatVal(CopyComp.str.p_str, &OK, &over_range);
-  if (OK)
-  {
-    if (over_range)
-      WrStrErrorPos(ErrNum_OverRange, &CopyComp);
+    if (int_outof_range)
+    {
+#if !TREAT_LARGEINT_FLOAT
+      WrStrErrorPos((int_outof_range > 0) ? ErrNum_OverRange : ErrNum_UnderRange, &CopyComp);
+      LEAVE;
+#endif
+    }
     else
     {
+      pErg->Typ = TempInt;
+      pErg->Relocs = NULL;
+      LEAVE;
+    }
+  }
+
+  pErg->Contents.Float = ConstFloatVal(CopyComp.str.p_str, &OK, &float_outof_range);
+  if (OK)
+  {
+    if (float_outof_range)
+      WrStrErrorPos((float_outof_range > 0) ? ErrNum_OverRange : ErrNum_UnderRange, &CopyComp);
+    else
+    {
+#if TREAT_LARGEINT_FLOAT
+      if (int_outof_range)
+        WrStrErrorPos(ErrNum_LargeIntAsFloat, &CopyComp);
+#endif
       pErg->Typ = TempFloat;
       pErg->Relocs = NULL;
     }
@@ -2301,7 +2347,6 @@ void EvalStrStringExpression(const tStrComp *pExpr, Boolean *pResult, char *pEva
  * \param  pResult retrieved register
  * \param  pEvalResult success flag, symbol size & flags
  * \param  IssueErrors print errors at all?
- * \param  p_error_on_find True if error on symbol resolution and not just not found
  * \return occured error
  * ------------------------------------------------------------------------ */
 
@@ -3094,69 +3139,70 @@ static PSymbolEntry FindLocNode(const char *p_name, TempType SearchType)
 }
 
 /*!------------------------------------------------------------------------
- * \fn     FindNode(const tStrComp *p_exp_name, TempType SearchType, Boolean SearchLocal, Boolean *p_error_on_find)
+ * \fn     FindNode(const tStrComp *p_exp_name, TempType SearchType, Boolean SearchLocal, lookup_symbol_error_t *p_lookup_error)
  * \brief  find node in global and/or local symbol table
  * \param  p_exp_name name of symbol to search
  * \param  SearchType data type to search for
  * \param  SearchLocal search in local table as well
- * \param  p_error_on_find may return True if NULL due to symbol syntax error
+ * \param  p_lookup_error may return e_lookup_error_getsymsection if NULL due to invalid section spec
  * \return * to node or NULL
  * ------------------------------------------------------------------------ */
 
-static PSymbolEntry FindNode(const tStrComp *p_exp_name, TempType SearchType, Boolean SearchLocal, Boolean *p_error_on_find)
+static PSymbolEntry FindNode(const tStrComp *p_exp_name, TempType SearchType, Boolean SearchLocal, lookup_symbol_error_t *p_lookup_error)
 {
   String name;
   tStrComp name_comp;
   LongInt DestSection = -1;
+  PSymbolEntry p_result = NULL;
 
   StrCompMkTemp(&name_comp, name, sizeof(name));
   StrCompCopy(&name_comp, p_exp_name);
   ChkTmp3(name_comp.str.p_str, e_symbol_source_none);
-  if (p_error_on_find)
-    *p_error_on_find = False;
+  if (p_lookup_error)
+    *p_lookup_error = e_lookup_error_none;
 
   if (!GetSymSection(&name_comp, &DestSection, p_exp_name))
   {
-    if (p_error_on_find)
-      *p_error_on_find = True;
+    if (p_lookup_error)
+      *p_lookup_error = e_lookup_error_getsymsection;
     return NULL;
   }
   if (DestSection != -2)
     SearchLocal = False;
 
   if (SearchLocal && (MomLocHandle != -1))
-  {
-    PSymbolEntry p_result = FindLocNode(name_comp.str.p_str, SearchType);
-    if (p_result)
-      return p_result;
-  }
-  return FindGlobNode(name_comp.str.p_str, SearchType, DestSection);
+    p_result = FindLocNode(name_comp.str.p_str, SearchType);
+  if (!p_result)
+    p_result = FindGlobNode(name_comp.str.p_str, SearchType, DestSection);
+  if (!p_result && p_lookup_error)
+    *p_lookup_error = e_lookup_error_notfound;
+  return p_result;
 }
 
 /*!------------------------------------------------------------------------
- * \fn     ExpandAndFindNode(const struct sStrComp *pComp, TempType SearchType, Boolean SearchLocal, expand_chk_t chk, Boolean *p_error_on_find)
+ * \fn     ExpandAndFindNode(const struct sStrComp *pComp, TempType SearchType, Boolean SearchLocal, expand_chk_t chk, lookup_symbol_error_t *p_lookup_error)
  * \brief  expand, optionally check and find node in global and/or local symbol table
  * \param  pComp name of symbol to expand & search
  * \param  SearchType data type to search for
  * \param  SearchLocal search in local table as well
  * \param  chk preliminary checks to perform
- * \param  p_error_on_find may return True if NULL due to symbol syntax error
+ * \param  p_lookup_error may return != e_lookup_error_none if NULL due to symbol syntax error
  * \return * to node or NULL
  * ------------------------------------------------------------------------ */
 
-PSymbolEntry ExpandAndFindNode(const struct sStrComp *pComp, TempType SearchType, Boolean SearchLocal, expand_chk_t chk, Boolean *p_error_on_find)
+PSymbolEntry ExpandAndFindNode(const struct sStrComp *pComp, TempType SearchType, Boolean SearchLocal, expand_chk_t chk, lookup_symbol_error_t *p_lookup_error)
 {
   String exp_name_buf;
   tStrComp exp_name;
   const tStrComp *p_exp_name;
   const char *pKlPos;
 
-  if (p_error_on_find) *p_error_on_find = False;
+  if (p_lookup_error) *p_lookup_error = e_lookup_error_none;
   StrCompMkTemp(&exp_name, exp_name_buf, sizeof(exp_name_buf));
   p_exp_name = ExpandStrSymbol(&exp_name, pComp, !CaseSensitive);
   if (!p_exp_name)
   {
-    if (p_error_on_find) *p_error_on_find = True;
+    if (p_lookup_error) *p_lookup_error = e_lookup_error_expand;
     return NULL;
   }
 
@@ -3167,12 +3213,12 @@ PSymbolEntry ExpandAndFindNode(const struct sStrComp *pComp, TempType SearchType
     pKlPos = strchr(p_exp_name->str.p_str, '[');
     if ((pKlPos == p_exp_name->str.p_str) || (ChkSymbNameUpTo(p_exp_name->str.p_str, pKlPos) != pKlPos))
     {
-      if (p_error_on_find) *p_error_on_find = True;
+      if (p_lookup_error) *p_lookup_error = e_lookup_error_namecheck;
       return NULL;
     }
   }
 
-  return FindNode(p_exp_name, SearchType, SearchLocal, p_error_on_find);
+  return FindNode(p_exp_name, SearchType, SearchLocal, p_lookup_error);
 }
 
 /**
@@ -3193,8 +3239,8 @@ void SetSymbolType(const tStrComp *pName, Byte NTyp)
 void LookupSymbol(const struct sStrComp *pComp, TempResult *pValue, Boolean WantRelocs, TempType ReqType,
                   as_eval_flags_t eval_flags, as_symbol_entry_flags_t *p_symbol_entry_flags)
 {
-  Boolean error_on_find;
-  PSymbolEntry pEntry = ExpandAndFindNode(pComp, ReqType, True, e_expand_chk_upto, &error_on_find);
+  lookup_symbol_error_t lookup_error;
+  PSymbolEntry pEntry = ExpandAndFindNode(pComp, ReqType, True, e_expand_chk_upto, &lookup_error);
 
   if (pEntry && !get_symbol_entry_flag(pEntry, defined) && (eval_flags & e_eval_flag_undefined_is_unknown))
     pEntry = NULL;
@@ -3222,24 +3268,32 @@ void LookupSymbol(const struct sStrComp *pComp, TempResult *pValue, Boolean Want
     set_symbol_entry_flag(pEntry, used, True);
   }
 
-  else if (error_on_find)
-    pValue->Typ = TempNone;
-
-  /* Symbol evtl. im ersten Pass unbekannt */
-
-  else if ((PassNo <= MaxSymPass) || (eval_flags & e_eval_flag_undefined_is_unknown)) /* !pEntry */
+  else switch (lookup_error)
   {
-    as_tempres_set_int(pValue, EProgCounter());
-    if (!(eval_flags & e_eval_flag_undefined_is_unknown))
-    {
-      Repass = True;
-      if ((MsgIfRepass) && (PassNo >= PassNoForMessage))
-        WrStrErrorPos(ErrNum_RepassUnknown, pComp);
-    }
-    pValue->Flags |= eSymbolFlag_FirstPassUnknown;
+    case e_lookup_error_namecheck:
+      WrStrErrorPos(ErrNum_InvSymName, pComp);
+      as_tempres_set_none(pValue);
+      break;
+
+    case e_lookup_error_notfound:
+      if ((PassNo <= MaxSymPass) || (eval_flags & e_eval_flag_undefined_is_unknown))
+      {
+        as_tempres_set_int(pValue, EProgCounter());
+        if (!(eval_flags & e_eval_flag_undefined_is_unknown))
+        {
+          Repass = True;
+          if (MsgIfRepass && (PassNo >= PassNoForMessage))
+            WrStrErrorPos(ErrNum_RepassUnknown, pComp);
+        }
+        pValue->Flags |= eSymbolFlag_FirstPassUnknown;
+      }
+      else
+        WrStrErrorPos(ErrNum_SymbolUndef, pComp);
+      break;
+
+    default:
+      as_tempres_set_none(pValue);
   }
-  else
-    WrStrErrorPos(ErrNum_SymbolUndef, pComp);
 }
 
 /*!------------------------------------------------------------------------
@@ -3307,9 +3361,9 @@ Boolean IsSymbolDefined(const struct sStrComp *pName)
 
 Boolean IsSymbolUsed(const struct sStrComp *pName)
 {
-  Boolean error_on_find;
-  PSymbolEntry pEntry = ExpandAndFindNode(pName, TempAll, True, e_expand_chk_upto, &error_on_find);
-  if (error_on_find)
+  lookup_symbol_error_t lookup_error;
+  PSymbolEntry pEntry = ExpandAndFindNode(pName, TempAll, True, e_expand_chk_upto, &lookup_error);
+  if (lookup_error == e_lookup_error_namecheck)
     WrStrErrorPos(ErrNum_InvSymName, pName);
 
   return pEntry && get_symbol_entry_flag(pEntry, used);

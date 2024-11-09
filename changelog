@@ -1,3 +1,14 @@
+2024-11-09 [1.42 Bld 279]
+
+- Bugfix      : Add missing error message about invalid
+                symbol name in some situations.
+- Change      : Differentiate negative/positive floating
+                point constant overflow.
+- Change      : Detect overflow on integer constants,
+                and try to treat them as float instead.
+- Bugfix      : LONG instruction did not test for 32 bit
+                value range.
+
 2024-10-20 [1.42 Bld 278]
 
 - Bugfix      : correct encoding of PDP-11 instructions
