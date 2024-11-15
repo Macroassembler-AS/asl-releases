@@ -22,6 +22,7 @@
 #include "asmitree.h"
 #include "codepseudo.h"
 #include "motpseudo.h"
+#include "intpseudo.h"
 #include "codevars.h"
 #include "errmsg.h"
 
@@ -1575,7 +1576,9 @@ static void InitFields(void)
   AddReg("CCRH", eRegCCRH , 0, CPU6812X);
   AddReg("CCRW", eRegCCRW , 1, CPU6812X);
 
-  init_moto8_pseudo(InstTable, e_moto_8_be | e_moto_8_db | e_moto_8_dw);
+  init_moto8_pseudo(InstTable, e_moto_8_be);
+  AddInstTable(InstTable, "DB", eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_MotoRep, DecodeIntelDB);
+  AddInstTable(InstTable, "DW", eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_MotoRep, DecodeIntelDW);
 }
 
 static void DeinitFields(void)

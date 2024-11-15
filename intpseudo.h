@@ -40,7 +40,8 @@ enum
   eIntPseudoFlag_ASCIZ = 1 << 7,
   eIntPseudoFlag_ASCIC = 1 << 8,
   eIntPseudoFlag_ASCID = eIntPseudoFlag_ASCIZ | eIntPseudoFlag_ASCIC,
-  eIntPseudoFlag_ASCIAll = eIntPseudoFlag_ASCIZ | eIntPseudoFlag_ASCIC
+  eIntPseudoFlag_ASCIAll = eIntPseudoFlag_ASCIZ | eIntPseudoFlag_ASCIC,
+  eIntPseudoFlag_MotoRep = 1 << 9
 };
 
 extern void DecodeIntelDN(Word Flags);

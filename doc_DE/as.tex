@@ -49,7 +49,7 @@
 
 \vspace{1cm}\par
 
-{\large Stand Juni 2024}
+{\large Stand November 2024}
 \end{raggedright}
 
 \clearpage
@@ -5820,6 +5820,11 @@ und links von ihm ein nicht-leeres Argument steht; auf diese Weise ist es
 m"oglich ein eventuell definiertes Symbol gleichen Namens auch als Argument
 zu verwenden.
 \par
+\tty{DB} und \tty{DW} auf 65xx- und 68xx-Plattformen verstehen neben
+dem \tty{DUP}-Operator zus"atzlich die 'Motorola-Variante' davon,
+nämlich eine in eckigen Klammern davor geschriebene Zahl von
+Wiederholungen.
+\par
 Auf verschiedenen Plattformen existieren Befehle mit identischer
 Funktionalit"at, jedoch anderem Namen:
 \begin{itemize}
@@ -6849,11 +6854,18 @@ was in folgendem resultiert:
         PUSH    dpl
         PUSH    dph
 \end{verbatim}
-Die Argumentliste darf analog zu einer Makro-Definition die
-Steueranweisungen \tty{GLOBALSYMBOLS} bzw. \tty{NOGLOBALSYMBOLS} (durch
-geschweifte Klammern als solche gekennzeichnet) enthalten, um zu
-steuern, ob benutzte Labels f"ur jeden Durchgang automatisch lokal
-sind oder nicht.
+Die Argumentliste darf analog zu einer Makro-Definition die folgenden
+Steueranweisungen (durch geschweifte Klammern als solche gekennzeichnet)
+enthalten:
+\begin{itemize}
+\item{\tty{GLOBALSYMBOLS} bzw. \tty{NOGLOBALSYMBOLS}, um zu steuern,
+      ob benutzte Labels f"ur jeden Durchgang automatisch lokal
+      sind oder nicht.}
+\item{\tty{EXPAND} bzw. \tty{NOEXPAND}}
+\item{\tty{EXPIF} bzw. \tty{NOEXPIF}}
+\item{\tty{EXPMACRO} bzw. \tty{NOEXPMACRO}}
+\item{\tty{EXPREST} bzw. \tty{NOEXPREST}}
+\end{itemize}
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -6894,10 +6906,7 @@ Der Vollst"andigkeit halber ein Beispiel:
 \end{verbatim}
 rotiert den Akku um 3 Stellen nach rechts.
 \par
-Ob Symbole f"ur jede einzelne Repetition lokal sind oder nicht,
-kann wiederum durch die Steuerparameter \tty{GLOBALSYMBOLS} bzw.
-\tty{NOGLOBALSYMBOLS} (durch geschweifte Klammern als solche
-gekennzeichnet) bestimmt werden.
+An Steueranweisungen sind die gleichen wie f"ur \tty{IRP} erlaubt.
 
 Ist das Argument von \tty{REPT} kleiner oder gleich Null, so wird
 "uberhaupt keine Expansion durchgef"uhrt.  Dies ist ein Unterschied
@@ -6928,6 +6937,9 @@ cnt      set     cnt+1
 sq       set     cnt*cnt
         endm
 \end{verbatim}
+An Steueranweisungen sind die gleichen wie f"ur \tty{IRP} und
+\tty{REPT} erlaubt.
+\par
 Dieses Beispiel legt alle Quadratzahlen bis 1000 im Speicher ab.
 \par
 Ein unsch"ones Detail bei \tty{WHILE} ist im Augenblick leider noch,

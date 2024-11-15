@@ -23,6 +23,7 @@
 #include "asmstructs.h"
 #include "codepseudo.h"
 #include "motpseudo.h"
+#include "intpseudo.h"
 #include "codevars.h"
 #include "errmsg.h"
 #include "headids.h"
@@ -2632,7 +2633,9 @@ static void InitFields(void)
   AddInstTable(InstTable, "DEFBIT", 0, DecodeDEFBIT);
   AddInstTable(InstTable, "DEFBITFIELD", 0, DecodeDEFBITFIELD);
 
-  init_moto8_pseudo(InstTable, e_moto_8_be | e_moto_8_db | e_moto_8_dw);
+  init_moto8_pseudo(InstTable, e_moto_8_be);
+  AddInstTable(InstTable, "DB", eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_MotoRep, DecodeIntelDB);
+  AddInstTable(InstTable, "DW", eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_MotoRep, DecodeIntelDW);
 }
 
 static void DeinitFields(void)

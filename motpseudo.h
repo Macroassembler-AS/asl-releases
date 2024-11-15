@@ -26,8 +26,10 @@ enum
 {
  e_moto_8_le = 0 << 0,
  e_moto_8_be = 1 << 0,
+#if 0
  e_moto_8_db = 1 << 1,
  e_moto_8_dw = 1 << 2,
+#endif
  e_moto_8_ds = 1 << 3,
  e_moto_8_ddb = 1 << 4,
  e_moto_8_dcm = 1 << 5

@@ -67,7 +67,7 @@
 
 \vspace{1cm}\par
 
-{\large Edition June 2024}
+{\large Edition November 2024}
 \end{raggedright}
 
 \clearpage
@@ -5655,6 +5655,10 @@ The \tty{DUP} operator only gets recognized if it is itself not enclosed
 in parentheses, and if there is a non-empty argument to its left.  This
 way, it is possible to use a symbol of same name as argument.
 
+\tty{DB} and \tty{DW} on 65xx and 68xx targets additionally support
+the 'Motorola variant' of the \tty{DUP} operator, namely a prefix
+that holds the number of repetitions in square brackets.
+
 Several platforms define pseudo instructions with same functionality,
 but different names:
 \begin{itemize}
@@ -6631,10 +6635,17 @@ to push a couple of registers to the stack, what results in
         push    dph
 \end{verbatim}
 Analog to a macro definition, the argument list may contain the
-control parameters \tty{GLOBALSYMBOLS} resp.
-\tty{NOGLOBALSYMBOLS} (marked as such by being enclosed in curly
-braces).  This allows to control whether used labels are local for
-every pass or not.
+following control parameters (marked as such by being enclosed in curly
+braces):
+\begin{itemize}
+\item{\tty{GLOBALSYMBOLS} resp. \tty{NOGLOBALSYMBOLS} control whether
+      defined labels are local for every individual pass or not.}
+\item{\tty{EXPAND} resp. \tty{NOEXPAND}}
+\item{\tty{EXPIF} resp. \tty{NOEXPIF}}
+\item{\tty{EXPMACRO} resp. \tty{NOEXPMACRO}}
+\item{\tty{EXPREST} resp. \tty{NOEXPREST}}
+\end{itemize}
+
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -6673,10 +6684,7 @@ An example for the sake of completeness:
 \end{verbatim}
 rotates the accumulator to the right by three digits.
 
-The optional control parameters \tty{GLOBALSYMBOLS}
-resp. \tty{NOGLOBALSYMBOLS} (marked as such by being enclosed in curly
-braces) may also be used here to decide whether labels are local to the
-individual repetitions.
+The allowed control directives are the same as for \tty{IRP}.
 
 In case \tty{REPT}'s argument is equal to or smaller than 0, no expansion
 at all is done.  This is different to older versions of \asname{} which used to
@@ -6707,6 +6715,9 @@ sq       set     cnt*cnt
         endm
 \end{verbatim}
 This example stores all square numbers up to 1000 to memory.
+
+The allowed control directives are the same as for \tty{IRP} and
+\tty{REPT}.
 
 Currently there exists a little ugly detail for \tty{WHILE}: an additional
 empty line that was not present in the code itself is added after the last

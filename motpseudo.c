@@ -574,12 +574,8 @@ void init_moto8_pseudo(PInstTable p_inst_table, unsigned flags)
     p_inst_table = inst_table_moto8 = CreateInstTable(23);
   AddInstTable(p_inst_table, "BYT", !!(flags & e_moto_8_be), DecodeMotoBYT);
   AddInstTable(p_inst_table, "FCB", !!(flags & e_moto_8_be), DecodeMotoBYT);
-  if (flags & e_moto_8_db)
-    AddInstTable(p_inst_table, "DB", !!(flags & e_moto_8_be), DecodeMotoBYT);
   AddInstTable(p_inst_table, "ADR", !!(flags & e_moto_8_be), DecodeMotoADR);
   AddInstTable(p_inst_table, "FDB", !!(flags & e_moto_8_be), DecodeMotoADR);
-  if (flags & e_moto_8_dw)
-    AddInstTable(p_inst_table, "DW", !!(flags & e_moto_8_be), DecodeMotoADR);
   if (flags & e_moto_8_ddb)
     AddInstTable(p_inst_table, "DDB", True, DecodeMotoADR);
   if (flags & e_moto_8_dcm)

@@ -1,0 +1,8 @@
++------------------------ Test Application DUP2 -----------------------------+
+|                                                                            |
+| DB and DW on 65xx and 68xx targets support both the 'Intel/MASM' style to  |
+| replicate constants in memory (n dup ...) and the 'Motorola style'         |
+| ([n]...).  This may even be combined in one statement, as this test        |
+| demonstrates.                                                              |
+|                                                                            |
++----------------------------------------------------------------------------+

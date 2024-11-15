@@ -95,6 +95,7 @@ typedef struct _TOutputTag
   Boolean DoExport, DoGlobCopy, UsesNumArgs, UsesAllArgs;
   String GName;
   tErrorNum OpenErrMsg;
+  tLstMacroExpMod LstMacroExpMod;
 } TOutputTag, *POutputTag;
 
 

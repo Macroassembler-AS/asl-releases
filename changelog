@@ -1,3 +1,13 @@
+2024-11-15 [1.42 Bld 280]
+
+- Addition    : DB and DW on 65xx and 68xx targets allow
+                both Intel and Motorola style duplication
+                of values.
+- Addition    : Allow the {EXPAND}, {NOEXPAND}, {EXPIF},
+                {NOEXPIF}, {EXPMACRO}, {NOEXPMACRO},
+                {EXPREST}, and {NOEXPREST} directives
+                also for IRP, IRPC, REPT, and WHILE,
+
 2024-11-09 [1.42 Bld 279]
 
 - Bugfix      : Add missing error message about invalid

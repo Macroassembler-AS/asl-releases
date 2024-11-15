@@ -20,6 +20,7 @@
 #include "asmitree.h"
 #include "codepseudo.h"
 #include "motpseudo.h"
+#include "intpseudo.h"
 #include "codevars.h"
 #include "errmsg.h"
 
@@ -420,7 +421,9 @@ static void InitFields(void)
   AddALU("CMP", 0x04);
   AddALU("AND", 0x05);
 
-  init_moto8_pseudo(InstTable, e_moto_8_be | e_moto_8_db | e_moto_8_dw | e_moto_8_ds);
+  init_moto8_pseudo(InstTable, e_moto_8_be | e_moto_8_ds);
+  AddInstTable(InstTable, "DB", eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_MotoRep, DecodeIntelDB);
+  AddInstTable(InstTable, "DW", eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_MotoRep, DecodeIntelDW);
 }
 
 static void DeinitFields(void)

@@ -25,6 +25,7 @@
 #include "asmitree.h"
 #include "codepseudo.h"
 #include "motpseudo.h"
+#include "intpseudo.h"
 #include "codevars.h"
 
 #include "code6816.h"
@@ -1061,10 +1062,9 @@ static void InitFields(void)
   AddInstTable(InstTable, "JSR", 1, DecodeJmpJsr);
   AddInstTable(InstTable, "BSR", 0, DecodeBsr);
 
-  AddInstTable(InstTable, "DB", 0, DecodeMotoBYT);
-  AddInstTable(InstTable, "DW", 0, DecodeMotoADR);
-
   init_moto8_pseudo(InstTable, e_moto_8_be);
+  AddInstTable(InstTable, "DB", eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_MotoRep, DecodeIntelDB);
+  AddInstTable(InstTable, "DW", eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_MotoRep, DecodeIntelDW);
 }
 
 static void DeinitFields(void)

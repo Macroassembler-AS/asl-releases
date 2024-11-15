@@ -1596,7 +1596,7 @@ static void DecodeIntelPseudo_HandleQuote(int *pDepth, Byte *pQuote, char Ch)
 static Boolean DecodeIntelPseudo_LayoutMult(const tStrComp *pArg, struct sLayoutCtx *pCtx)
 {
   int z, Depth, Len, LastNonBlank;
-  Boolean OK, LastValid, Result;
+  Boolean OK, LastValid, Result, DupIsRep;
   Byte Quote;
   const char *pDupFnd, *pRun;
   const tStrComp *pSaveComp;
@@ -1613,7 +1613,8 @@ static Boolean DecodeIntelPseudo_LayoutMult(const tStrComp *pArg, struct sLayout
   Depth = Quote = 0;
   LastValid = FALSE;
   LastNonBlank = -1;
-  pDupFnd = NULL; Len = strlen(pArg->str.p_str);
+  pDupFnd = NULL; DupIsRep = False;
+  Len = strlen(pArg->str.p_str);
   for (pRun = pArg->str.p_str; pRun < pArg->str.p_str + Len - 2; pRun++)
   {
     DecodeIntelPseudo_HandleQuote(&Depth, &Quote, *pRun);
@@ -1633,6 +1634,16 @@ static Boolean DecodeIntelPseudo_LayoutMult(const tStrComp *pArg, struct sLayout
     LastValid = DecodeIntelPseudo_ValidSymChar(*pRun);
   }
 
+  if (!pDupFnd && (pCtx->flags & eIntPseudoFlag_MotoRep))
+  {
+    if (*pArg->str.p_str == '[')
+    {
+      pDupFnd = QuotPos(pArg->str.p_str + 1, ']');
+      if (pDupFnd)
+        DupIsRep = True;
+    }
+  }
+
   /* found DUP: */
 
   if (pDupFnd)
@@ -1649,10 +1660,14 @@ static Boolean DecodeIntelPseudo_LayoutMult(const tStrComp *pArg, struct sLayout
     StrCompMkTemp(&Copy, CopyStr, sizeof(CopyStr));
     StrCompCopy(&Copy, pArg);
     pSep = Copy.str.p_str + (pDupFnd - pArg->str.p_str);
+    StrCompSplitRef(&DupArg, &RemArg, &Copy, pSep);
+    if (DupIsRep)
+      StrCompIncRefLeft(&DupArg, 1);
+    else
+      StrCompIncRefLeft(&RemArg, 2);
 
     /* evaluate count */
 
-    StrCompSplitRef(&DupArg, &RemArg, &Copy, pSep);
     DupCnt = EvalStrIntExpressionWithFlags(&DupArg, Int32, &OK, &Flags);
     if (mFirstPassUnknown(Flags))
     {
@@ -1676,7 +1691,6 @@ static Boolean DecodeIntelPseudo_LayoutMult(const tStrComp *pArg, struct sLayout
 
     /* split into parts and evaluate */
 
-    StrCompIncRefLeft(&RemArg, 2);
     KillPrefBlanksStrCompRef(&RemArg);
     Len = strlen(RemArg.str.p_str);
     if ((Len >= 2) && (*RemArg.str.p_str == '(') && (RemArg.str.p_str[Len - 1] == ')'))
@@ -1692,7 +1706,7 @@ static Boolean DecodeIntelPseudo_LayoutMult(const tStrComp *pArg, struct sLayout
       for (pRun = RemArg.str.p_str; *pRun; pRun++)
       {
         DecodeIntelPseudo_HandleQuote(&Depth, &Quote, *pRun);
-        if ((!Depth) && (!Quote) && (*pRun == ','))
+        if (!Depth && !Quote && (*pRun == ','))
         {
           pSep = pRun;
           break;
