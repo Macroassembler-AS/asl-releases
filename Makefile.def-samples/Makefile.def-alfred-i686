@@ -31,10 +31,10 @@ HOST_EXEXTENSION =
 
 # Here I select the target.  Object directories have to exist *before* build:
 
-TARG_OBJDIR = i686-linux/
-#TARG_OBJDIR = ppc-linux/
-#TARG_OBJDIR = m68k-linux/
-#TARG_OBJDIR = i686-w32/
+TARG_OBJDIR ?= i686-linux/
+#TARG_OBJDIR ?= ppc-linux/
+#TARG_OBJDIR ?= m68k-linux/
+#TARG_OBJDIR ?= i686-w32/
 
 # ...for the actual build targets.  This is the simple case for no cross-build:
 

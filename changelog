@@ -1,3 +1,7 @@
+2024-11-20 [1.42 Bld 281]
+
+- Bugfix      : DB/DW on 68xx are big endian again
+
 2024-11-15 [1.42 Bld 280]
 
 - Addition    : DB and DW on 65xx and 68xx targets allow

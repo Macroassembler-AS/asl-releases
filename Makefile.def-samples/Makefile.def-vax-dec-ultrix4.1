@@ -8,9 +8,11 @@
 #GFLOAT=-mg
 #LIBM=-lmg
 
+# Explicitly asking for C99 and thereby long long (64 bit) support
+
 OBJDIR =
 CC = gcc
-CFLAGS = -O2 -fomit-frame-pointer -Wall
+CFLAGS = -O2 -fomit-frame-pointer -Wall -std=c99
 HOST_OBJEXTENSION = .o
 LD = gcc
 LDFLAGS = -lcV
