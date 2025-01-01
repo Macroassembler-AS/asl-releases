@@ -30,6 +30,10 @@
 
 #include "codest7.h"
 
+#if (defined __GNUC__) && (__GNUC__==14)
+# warning You are using GCC 14.  This version has known issues in higher optimization levels that break compilation of this module. Assure you are using an optimization below -O2 or consider using a different compiler.
+#endif
+
 typedef enum
 {
   eModNone = -1,
@@ -2265,6 +2269,8 @@ static void InitFields(void)
 {
   InstTable = CreateInstTable(201);
   SetDynamicInstTable(InstTable);
+  add_null_pseudo(InstTable);
+
   AddInstTable(InstTable, "LD", 0, DecodeLD);
   AddInstTable(InstTable, "LDF", 0, DecodeLDF);
   AddInstTable(InstTable, "LDW", 0, DecodeLDW);
@@ -2340,7 +2346,8 @@ static void InitFields(void)
   AddRel("JRULT", 0x25);
   AddRel("JRV"  , (pCurrCPUProps->Core == eCoreSTM8) ? 0x29 : 0x00);
 
-  init_moto8_pseudo(InstTable, e_moto_8_be);
+  add_moto8_pseudo(InstTable, e_moto_pseudo_flags_be);
+  AddMoto16Pseudo(InstTable, e_moto_pseudo_flags_be);
 }
 
 /*!------------------------------------------------------------------------
@@ -2370,18 +2377,10 @@ static Boolean DecodeAttrPart_ST7(void)
 
 static void MakeCode_ST7(void)
 {
-  CodeLen = 0;
-  DontPrint = False;
-  OpSize = (AttrPartOpSize[0] != eSymbolSizeUnknown) ? AttrPartOpSize[0] : eSymbolSize8Bit;
+  if (AttrPartOpSize[0] == eSymbolSizeUnknown)
+    AttrPartOpSize[0] = eSymbolSize8Bit;
+  OpSize = AttrPartOpSize[0];
   PrefixCnt = 0;
-
-  /* zu ignorierendes */
-
-  if (Memo("")) return;
-
-  /* Pseudoanweisungen */
-
-  if (DecodeMoto16Pseudo(OpSize,True)) return;
 
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
@@ -2411,7 +2410,6 @@ static void SwitchTo_ST7(void *pUser)
 
   PCSymbol = "PC"; HeaderID = 0x33; NOPCode = 0x9d;
   DivideChars = ","; HasAttrs = True; AttrChars = ".";
-
 
   ValidSegs = 1 << SegCode;
   Grans[SegCode] = 1; ListGrans[SegCode] = 1; SegInits[SegCode] = 0;

@@ -1161,6 +1161,8 @@ static void InitFields(void)
 {
   InstTable = CreateInstTable(201);
 
+  add_null_pseudo(InstTable);
+
   InstrZ = 0;
   AddFixed("H"   , 0x2000 , CPUMN1610);
   AddFixed("RET" , 0x2003 , CPUMN1610);
@@ -1323,12 +1325,6 @@ static Boolean DecodeAttrPart_MN1610_Alt(void)
 static void MakeCode_MN1610_Alt(void)
 {
   OpSize = (AttrPartOpSize[0] != eSymbolSizeUnknown) ? AttrPartOpSize[0] : eSymbolSize16Bit;
-
-  /* Ignore empty instruction */
-
-  if (Memo("")) return;
-
-  /* Pseudo Instructions */
 
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);

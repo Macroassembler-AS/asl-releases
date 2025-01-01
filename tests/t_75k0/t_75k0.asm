@@ -191,3 +191,13 @@ bit5    bit     @h+5+3.2
         assume  mbs:4,mbe:1
         clr1    bit4
 
+;-----------------------------------------------------
+; standard Intel/MASM-style pseudo instructions
+
+	include "../t_dx/t_dn.inc"
+	include "../t_dx/t_db.inc"
+	include "../t_dx/t_dw.inc"
+	include "../t_dx/t_dd.inc"
+	include "../t_dx/t_dq.inc"
+	include "../t_dx/t_dt.inc"
+	include "../t_dx/t_do.inc"

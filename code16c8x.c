@@ -290,6 +290,8 @@ static void InitFields(void)
 {
   InstTable = CreateInstTable(201);
 
+  add_null_pseudo(InstTable);
+
   AddFixed("CLRW"  , 0x0100);
   AddFixed("NOP"   , 0x0000);
   AddFixed("CLRWDT", 0x0064);
@@ -349,14 +351,6 @@ static void DeinitFields(void)
 
 static void MakeCode_16c8x(void)
 {
-  CodeLen = 0; DontPrint = False;
-
-  /* zu ignorierendes */
-
-  if (Memo("")) return;
-
-  /* seek instruction */
-
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }

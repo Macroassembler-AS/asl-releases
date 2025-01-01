@@ -2085,6 +2085,36 @@ static void DecodeBank(Word Index)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     propagate_bank(Word index)
+ * \brief  things to perform prior to machine instruction
+ * ------------------------------------------------------------------------ */
+
+static void propagate_bank(Word index)
+{
+  UNUSED(index);
+
+  /* current data segment: */
+
+  switch (NextDataSeg)
+  {
+    case 0:
+      CurrBank = Reg_PCB;
+      break;
+    case 1:
+      CurrBank = Reg_DTB;
+      break;
+    case 2:
+      CurrBank = Reg_ADB;
+      break;
+    case 3:
+      CurrBank = SupAllowed ? Reg_SSB : Reg_USB;
+      break;
+  }
+  CurrBank <<= 16;
+  NextDataSeg = 1; /* = DTB */
+}
+
 /*--------------------------------------------------------------------------*/
 /* Codetabellen */
 
@@ -2145,6 +2175,10 @@ static void InitFields(void)
   unsigned z;
 
   InstTable = CreateInstTable(201);
+
+  add_null_pseudo(InstTable);
+
+  inst_table_set_prefix_proc(InstTable, propagate_bank, 0);
 
   AddFixed("EXT"    , 0x14); AddFixed("EXTW"   , 0x1c);
   AddFixed("INT9"   , 0x01); AddFixed("NOP"    , 0x00);
@@ -2255,6 +2289,9 @@ static void InitFields(void)
   AddInstTable(InstTable, "WBTC", 0xe0, DecodeWBit);
   AddInstTable(InstTable, "XCH", 0, DecodeExchange);
   AddInstTable(InstTable, "XCHW", 1, DecodeExchange);
+
+  inst_table_set_prefix_proc(InstTable, NULL, 0);
+  AddIntelPseudo(InstTable, eIntPseudoFlag_LittleEndian);
 }
 
 static void DeinitFields(void)
@@ -2268,37 +2305,7 @@ static void DeinitFields(void)
 
 static void MakeCode_F2MC16(void)
 {
-  /* Leeranweisung ignorieren */
-
-  if (Memo(""))
-    return;
-
-  /* Pseudoanweisungen */
-
-  if (DecodeIntelPseudo(False))
-    return;
-
-  /* akt. Datensegment */
-
-  switch (NextDataSeg)
-  {
-    case 0:
-      CurrBank = Reg_PCB;
-      break;
-    case 1:
-      CurrBank = Reg_DTB;
-      break;
-    case 2:
-      CurrBank = Reg_ADB;
-      break;
-    case 3:
-      CurrBank = SupAllowed ? Reg_SSB : Reg_USB;
-      break;
-  }
-  CurrBank <<= 16;
-  NextDataSeg = 1; /* = DTB */
-
-  OpSize = -1;
+  OpSize = eSymbolSizeUnknown;
 
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);

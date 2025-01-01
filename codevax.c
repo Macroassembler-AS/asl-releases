@@ -1351,6 +1351,8 @@ static void init_fields(void)
   InstTable = CreateInstTable(403);
   SetDynamicInstTable(InstTable);
 
+  add_null_pseudo(InstTable);
+
   var_arg_op_cnt =
   InstrZ = 0;
 
@@ -1679,23 +1681,23 @@ static void init_fields(void)
 
   /* TODO: ASCID */
 
-  AddInstTable(InstTable, "ASCII"     , eIntPseudoFlag_AllowString | eIntPseudoFlag_DECFormat                       , DecodeIntelDB);
-  AddInstTable(InstTable, "ASCIZ"     , eIntPseudoFlag_AllowString | eIntPseudoFlag_DECFormat | eIntPseudoFlag_ASCIZ, DecodeIntelDB);
-  AddInstTable(InstTable, "ASCIC"     , eIntPseudoFlag_AllowString | eIntPseudoFlag_DECFormat | eIntPseudoFlag_ASCIC, DecodeIntelDB);
-/*AddInstTable(InstTable, "ASCID"     , eIntPseudoFlag_AllowString | eIntPseudoFlag_DECFormat | eIntPseudoFlag_ASCID, DecodeIntelDB);*/
+  AddInstTable(InstTable, "ASCII"     , eIntPseudoFlag_LittleEndian | eIntPseudoFlag_AllowString | eIntPseudoFlag_DECFormat                       , DecodeIntelDB);
+  AddInstTable(InstTable, "ASCIZ"     , eIntPseudoFlag_LittleEndian | eIntPseudoFlag_AllowString | eIntPseudoFlag_DECFormat | eIntPseudoFlag_ASCIZ, DecodeIntelDB);
+  AddInstTable(InstTable, "ASCIC"     , eIntPseudoFlag_LittleEndian | eIntPseudoFlag_AllowString | eIntPseudoFlag_DECFormat | eIntPseudoFlag_ASCIC, DecodeIntelDB);
+/*AddInstTable(InstTable, "ASCID"     , eIntPseudoFlag_LittleEndian | eIntPseudoFlag_AllowString | eIntPseudoFlag_DECFormat | eIntPseudoFlag_ASCID, DecodeIntelDB);*/
   AddInstTable(InstTable, "PACKED"    , 0, decode_dec_packed);
 
-  AddInstTable(InstTable, "BYTE"      , eIntPseudoFlag_AllowInt                              , DecodeIntelDB);
-  AddInstTable(InstTable, "WORD"      , eIntPseudoFlag_AllowInt                              , DecodeIntelDW);
-  AddInstTable(InstTable, "LWORD"     , eIntPseudoFlag_AllowInt                              , DecodeIntelDD);
-  AddInstTable(InstTable, "QUAD"      , eIntPseudoFlag_AllowInt                              , DecodeIntelDQ);
-  AddInstTable(InstTable, "OCTA"      , eIntPseudoFlag_AllowInt                              , DecodeIntelDO);
-  AddInstTable(InstTable, "FLOAT"     , eIntPseudoFlag_AllowFloat | eIntPseudoFlag_DECFormat , DecodeIntelDD);
-  AddInstTable(InstTable, "F_FLOATING", eIntPseudoFlag_AllowFloat | eIntPseudoFlag_DECFormat , DecodeIntelDD);
-  AddInstTable(InstTable, "DOUBLE"    , eIntPseudoFlag_AllowFloat | eIntPseudoFlag_DECFormat , DecodeIntelDQ);
-  AddInstTable(InstTable, "D_FLOATING", eIntPseudoFlag_AllowFloat | eIntPseudoFlag_DECFormat , DecodeIntelDQ);
-  AddInstTable(InstTable, "G_FLOATING", eIntPseudoFlag_AllowFloat | eIntPseudoFlag_DECGFormat, DecodeIntelDQ);
-  AddInstTable(InstTable, "H_FLOATING", eIntPseudoFlag_AllowFloat | eIntPseudoFlag_DECFormat , DecodeIntelDO);
+  AddInstTable(InstTable, "BYTE"      , eIntPseudoFlag_LittleEndian | eIntPseudoFlag_AllowInt                              , DecodeIntelDB);
+  AddInstTable(InstTable, "WORD"      , eIntPseudoFlag_LittleEndian | eIntPseudoFlag_AllowInt                              , DecodeIntelDW);
+  AddInstTable(InstTable, "LWORD"     , eIntPseudoFlag_LittleEndian | eIntPseudoFlag_AllowInt                              , DecodeIntelDD);
+  AddInstTable(InstTable, "QUAD"      , eIntPseudoFlag_LittleEndian | eIntPseudoFlag_AllowInt                              , DecodeIntelDQ);
+  AddInstTable(InstTable, "OCTA"      , eIntPseudoFlag_LittleEndian | eIntPseudoFlag_AllowInt                              , DecodeIntelDO);
+  AddInstTable(InstTable, "FLOAT"     , eIntPseudoFlag_LittleEndian | eIntPseudoFlag_AllowFloat | eIntPseudoFlag_DECFormat , DecodeIntelDD);
+  AddInstTable(InstTable, "F_FLOATING", eIntPseudoFlag_LittleEndian | eIntPseudoFlag_AllowFloat | eIntPseudoFlag_DECFormat , DecodeIntelDD);
+  AddInstTable(InstTable, "DOUBLE"    , eIntPseudoFlag_LittleEndian | eIntPseudoFlag_AllowFloat | eIntPseudoFlag_DECFormat , DecodeIntelDQ);
+  AddInstTable(InstTable, "D_FLOATING", eIntPseudoFlag_LittleEndian | eIntPseudoFlag_AllowFloat | eIntPseudoFlag_DECFormat , DecodeIntelDQ);
+  AddInstTable(InstTable, "G_FLOATING", eIntPseudoFlag_LittleEndian | eIntPseudoFlag_AllowFloat | eIntPseudoFlag_DECGFormat, DecodeIntelDQ);
+  AddInstTable(InstTable, "H_FLOATING", eIntPseudoFlag_LittleEndian | eIntPseudoFlag_AllowFloat | eIntPseudoFlag_DECFormat , DecodeIntelDO);
 }
 
 /*!------------------------------------------------------------------------
@@ -1741,13 +1743,7 @@ static void intern_symbol_vax(char *p_arg, TempResult *p_result)
 
 static void make_code_vax(void)
 {
-  CodeLen = 0;
-  DontPrint = False;
   op_size = eSymbolSizeUnknown;
-
-  /* to be ignored */
-
-  if (Memo("")) return;
 
   /* Pseudo Instructions */
 

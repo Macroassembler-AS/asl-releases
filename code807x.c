@@ -20,6 +20,7 @@
 #include "asmpars.h"
 #include "asmitree.h"
 #include "headids.h"
+#include "codepseudo.h"
 #include "intpseudo.h"
 #include "codevars.h"
 #include "errmsg.h"
@@ -695,6 +696,8 @@ static void InitFields(void)
 {
   InstTable = CreateInstTable(53);
 
+  add_null_pseudo(InstTable);
+
   AddFixed("RET", 0x5c);
   AddFixed("NOP", 0x00);
 
@@ -736,6 +739,8 @@ static void InitFields(void)
   AddBranch("BP" , 0x64);
   AddBranch("BZ" , 0x6c);
   AddBranch("BNZ", 0x7c);
+
+  AddIntelPseudo(InstTable, eIntPseudoFlag_LittleEndian);
 }
 
 static void DeinitFields(void)
@@ -748,46 +753,40 @@ static void DeinitFields(void)
 
 static void MakeCode_807x(void)
 {
-   CodeLen=0; DontPrint=False; OpSize = -1;
+  OpSize = eSymbolSizeUnknown;
 
-   /* zu ignorierendes */
-
-   if (Memo("")) return;
-
-   if (DecodeIntelPseudo(False)) return;
-
-   if (!LookupInstTable(InstTable, OpPart.str.p_str))
-     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
+    WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
 
 static Boolean IsDef_807x(void)
 {
-   return False;
+  return False;
 }
 
 static void SwitchFrom_807x(void)
 {
-   DeinitFields();
+  DeinitFields();
 }
 
 static void SwitchTo_807x(void)
 {
-   const TFamilyDescr *FoundDescr;
+  const TFamilyDescr *FoundDescr;
 
-   FoundDescr = FindFamilyByName("807x");
+  FoundDescr = FindFamilyByName("807x");
 
-   TurnWords = False;
-   SetIntConstMode(eIntConstModeC);
+  TurnWords = False;
+  SetIntConstMode(eIntConstModeC);
 
-   PCSymbol="$"; HeaderID = FoundDescr->Id; NOPCode = 0x00;
-   DivideChars = ","; HasAttrs = False;
+  PCSymbol="$"; HeaderID = FoundDescr->Id; NOPCode = 0x00;
+  DivideChars = ","; HasAttrs = False;
 
-   ValidSegs = 1 << SegCode;
-   Grans[SegCode] = 1; ListGrans[SegCode] = 1; SegInits[SegCode] = 0;
-   SegLimits[SegCode] = 0xffff;
+  ValidSegs = 1 << SegCode;
+  Grans[SegCode] = 1; ListGrans[SegCode] = 1; SegInits[SegCode] = 0;
+  SegLimits[SegCode] = 0xffff;
 
-   MakeCode = MakeCode_807x; IsDef = IsDef_807x;
-   SwitchFrom = SwitchFrom_807x; InitFields();
+  MakeCode = MakeCode_807x; IsDef = IsDef_807x;
+  SwitchFrom = SwitchFrom_807x; InitFields();
 }
 
 /*---------------------------------------------------------------------------*/

@@ -231,6 +231,9 @@ static void AddConst(const char *NName, Word NCode, IntType NMax)
 static void InitFields(void)
 {
   InstTable = CreateInstTable(307);
+
+  add_null_pseudo(InstTable);
+
   AddInstTable(InstTable, "SZD", 0, DecodeSZD);
   AddInstTable(InstTable, "SEA", 0, DecodeSEA);
   AddInstTable(InstTable, "B", 0, DecodeB);
@@ -293,14 +296,6 @@ static void DeinitFields(void)
 
 static void MakeCode_4500(void)
 {
-  CodeLen = 0;
-  DontPrint = False;
-
-  /* zu ignorierendes */
-
-  if (Memo(""))
-    return;
-
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }

@@ -95,3 +95,14 @@ vari:	dad	-30(p2)
 	expect	1330		; would result in a displacement
 	ld	$-128		; of -129, which is out of range
 	endexpect
+
+;-----------------------------------------------------
+; standard Intel/MASM-style pseudo instructions
+
+	include "../t_dx/t_dn.inc"
+	include "../t_dx/t_db.inc"
+	include "../t_dx/t_dw.inc"
+	include "../t_dx/t_dd.inc"
+	include "../t_dx/t_dq.inc"
+	include "../t_dx/t_dt.inc"
+	include "../t_dx/t_do.inc"

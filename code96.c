@@ -1185,6 +1185,9 @@ static void InitFields(void)
 {
   InstTable = CreateInstTable(207);
   SetDynamicInstTable(InstTable);
+
+  add_null_pseudo(InstTable);
+
   AddInstTable(InstTable, "CMPL", 0, DecodeCMPL);
   AddInstTable(InstTable, "PUSH", 0, DecodePUSH_POP);
   AddInstTable(InstTable, "POP" , 1, DecodePUSH_POP);
@@ -1297,6 +1300,8 @@ static void InitFields(void)
   AddRpt("RPTIH"  , 0x39); AddRpt("RPTILE" , 0x3a); AddRpt("RPTIC"  , 0x3b);
   AddRpt("RPTIVT" , 0x3c); AddRpt("RPTIV"  , 0x3d); AddRpt("RPTILT" , 0x3e);
   AddRpt("RPTIE"  , 0x3f);
+
+  AddIntelPseudo(InstTable, eIntPseudoFlag_LittleEndian);
 }
 
 static void DeinitFields(void)
@@ -1308,19 +1313,7 @@ static void DeinitFields(void)
 
 static void MakeCode_96(void)
 {
-  CodeLen = 0;
-  DontPrint = False;
-  OpSize = -1;
-
-  /* zu ignorierendes */
-
-  if (Memo(""))
-    return;
-
-  /* Pseudoanweisungen */
-
-  if (DecodeIntelPseudo(False))
-    return;
+  OpSize = eSymbolSizeUnknown;
 
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);

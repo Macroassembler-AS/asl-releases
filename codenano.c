@@ -240,7 +240,9 @@ static void AddAddress(const char *NName, Word NCode)
 
 static void InitFields(void)
 {
-	InstTable = CreateInstTable(49);
+	InstTable = CreateInstTable(57);
+
+  add_null_pseudo(InstTable);
 
 	/* A. Accumulator Group */
 	AddBit("SBS", 0x10);
@@ -314,11 +316,6 @@ static void DeinitFields(void)
 
 static void MakeCode_NANO(void)
 {
-	CodeLen = 0;
-	DontPrint = False;
-
-	if (Memo("")) return;
-
 	if (!LookupInstTable(InstTable, OpPart.str.p_str))
 		WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }

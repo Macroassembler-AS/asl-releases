@@ -1045,6 +1045,8 @@ static void InitFields(void)
       exit(255);
   }
 
+  add_null_pseudo(InstTable);
+
   AddInstTable(InstTable, "NOP", NOPCode, DecodeFixed);
   if (pCurrCPUProps->Core <= eCorePDK14)
   {
@@ -1161,11 +1163,7 @@ static void DeinitFields(void)
 
 static void MakeCode_Padauk(void)
 {
-  CodeLen = 0;
-  DontPrint = False;
   OpSize = eSymbolSize8Bit;
-
-  if (Memo("")) return;
 
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);

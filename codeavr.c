@@ -914,6 +914,27 @@ static void DecodeBIT(Word Code)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     make_pc_even(Word index)
+ * \brief  assure PC is even before assembling machine instructions
+ * ------------------------------------------------------------------------ */
+
+static void make_pc_even(Word index)
+{
+  UNUSED(index);
+
+  /* All other instructions must be on an even address in byte mode.
+     In other words, they may not cross flash word boundaries: */
+
+  if (!CodeSegSize && Odd(EProgCounter()))
+  {
+    if (DoPadding)
+      InsertPadding(1, False);
+    else
+      WrError(ErrNum_AddrNotAligned);
+  }
+}
+
 /*---------------------------------------------------------------------------*/
 /* Dynamic Code Table Handling                                               */
 
@@ -969,6 +990,10 @@ static void AddPBit(const char *NName, Word NCode)
 static void InitFields(void)
 {
   InstTable = CreateInstTable(203);
+
+  add_null_pseudo(InstTable);
+
+  inst_table_set_prefix_proc(InstTable, make_pc_even, 0);
 
   InstrZ = 0;
   AddFixed("IJMP" , MinCoreMask(eCoreClassic) | (1 << eCoreMinTiny), 0x9409);
@@ -1054,12 +1079,6 @@ static void InitFields(void)
   AddInstTable(InstTable, "RJMP" , 0x0000, DecodeRJMPCALL);
   AddInstTable(InstTable, "RCALL", 0x1000, DecodeRJMPCALL);
 
-  AddInstTable(InstTable, "PORT", 0, DecodePORT);
-  AddInstTable(InstTable, "SFR" , 0, DecodeSFR);
-  AddInstTable(InstTable, "RES" , 0, DecodeRES);
-  AddInstTable(InstTable, "REG" , 0, CodeREG);
-  AddInstTable(InstTable, "BIT" , 0, DecodeBIT);
-
   AddInstTable(InstTable, "MULS", 0, DecodeMULS);
 
   AddInstTable(InstTable, "MULSU" , 0x0300, DecodeMegaMUL);
@@ -1071,6 +1090,18 @@ static void InitFields(void)
 
   AddInstTable(InstTable, "LPM" , 0, DecodeLPM);
   AddInstTable(InstTable, "ELPM", 0, DecodeELPM);
+
+  inst_table_set_prefix_proc(InstTable, NULL, 0);
+
+  /* instructions that do not require word alignment in byte mode */
+
+  AddInstTable(InstTable, "PORT", 0, DecodePORT);
+  AddInstTable(InstTable, "SFR" , 0, DecodeSFR);
+  AddInstTable(InstTable, "RES" , 0, DecodeRES);
+  AddInstTable(InstTable, "REG" , 0, CodeREG);
+  AddInstTable(InstTable, "BIT" , 0, DecodeBIT);
+  AddInstTable(InstTable, "DATA", 0, DecodeDATA_AVR);
+  AddIntelPseudo(InstTable, eIntPseudoFlag_LittleEndian);
 }
 
 static void DeinitFields(void)
@@ -1085,43 +1116,8 @@ static void DeinitFields(void)
 
 static void MakeCode_AVR(void)
 {
-  InstProc inst_proc;
-  Word inst_index;
-
-  CodeLen = 0; DontPrint = False;
-
-  if (Memo("")) return;
-
-  /* instructions that do not require word alignment in byte mode */
-
-  if (Memo("DATA"))
-  {
-    DecodeDATA_AVR(0);
-    return;
-  }
-
-  if (DecodeIntelPseudo(False))
-    return;
-
-  /* All other instructions must be on an even address in byte mode.
-     In other words, they may not cross flash word boundaries: */
-
-  inst_proc = inst_fnc_table_search(InstTable, OpPart.str.p_str, &inst_index);
-  if (!inst_proc)
-  {
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
-    return;
-  }
-
-  if (!CodeSegSize && Odd(EProgCounter()))
-  {
-    if (DoPadding)
-      InsertPadding(1, False);
-    else
-      WrError(ErrNum_AddrNotAligned);
-  }
-
-  inst_proc(inst_index);
 }
 
 static Boolean IsDef_AVR(void)

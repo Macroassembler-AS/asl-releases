@@ -22,6 +22,7 @@
 #include "codevars.h"
 #include "asmerr.h"
 #include "errmsg.h"
+#include "codepseudo.h"
 #include "fourpseudo.h"
 
 #include "codepps4.h"
@@ -267,6 +268,8 @@ static void init_fields(void)
 {
   InstTable = CreateInstTable(101);
 
+  add_null_pseudo(InstTable);
+
   AddInstTable(InstTable, "AD"   , 0x0b, decode_fixed);
   AddInstTable(InstTable, "ADC"  , 0x0a, decode_fixed);
   AddInstTable(InstTable, "ADSK" , 0x09, decode_fixed);
@@ -345,14 +348,6 @@ static void deinit_fields(void)
 
 static void make_code_pps4(void)
 {
-  CodeLen = 0; DontPrint = False;
-
-  /* to be ignored */
-
-  if (Memo("")) return;
-
-  /* pseudo instructions */
-
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }

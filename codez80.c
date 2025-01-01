@@ -4344,16 +4344,6 @@ static void DecodePRWINS(Word Code)
   }
 }
 
-static void ModIntel(Word Code)
-{
-  UNUSED(Code);
-
-  /* M80 compatibility: DEFB->DB, DEFW->DW */
-
-  strmov(OpPart.str.p_str + 1, OpPart.str.p_str + 3);
-  DecodeIntelPseudo(False);
-}
-
 /*!------------------------------------------------------------------------
  * \fn     valid_cbar(void)
  * \brief  allowed CBAR value?
@@ -4468,6 +4458,8 @@ static void InitFields(void)
 {
   InstTable = CreateInstTable(203);
 
+  add_null_pseudo(InstTable);
+
   AddInstTable(InstTable, "LD" , 0, DecodeLD);
   AddInstTable(InstTable, "LDW", 1, DecodeLD);
   AddInstTable(InstTable, "LDHL", 0, DecodeLDHL);
@@ -4520,8 +4512,8 @@ static void InitFields(void)
   AddInstTable(InstTable, "SETC", 0, DecodeRESC_SETC);
   AddInstTable(InstTable, "DDIR", 0, DecodeDDIR);
   AddInstTable(InstTable, "PORT", 0, DecodePORT);
-  AddInstTable(InstTable, "DEFB", 0, ModIntel);
-  AddInstTable(InstTable, "DEFW", 0, ModIntel);
+  AddInstTable(InstTable, "DEFB", eIntPseudoFlag_LittleEndian | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString, DecodeIntelDB);
+  AddInstTable(InstTable, "DEFW", eIntPseudoFlag_LittleEndian | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_AllowFloat, DecodeIntelDW);
 
   InstrZ = 0;
   AddCondition("NZ", 0); AddCondition("Z" , 1);
@@ -4651,6 +4643,8 @@ static void InitFields(void)
   AddInstTable(InstTable, "REG" , 0, CodeREG);
 
   AddInstTable(InstTable, "PRWINS", 0, DecodePRWINS);
+
+  AddIntelPseudo(InstTable, eIntPseudoFlag_LittleEndian);
 }
 
 static void DeinitFields(void)
@@ -4757,22 +4751,16 @@ static Boolean decode_attrpart_ez80(void)
 
 static void MakeCode_Z80(void)
 {
-  CodeLen = 0;
-  DontPrint = False;
   PrefixCnt = 0;
   OpSize = 0xff;
   MayLW = False;
-
-  /* To Be Ignored: */
-
-  if (Memo("")) return;
 
   switch (p_curr_cpu_props->core)
   {
     case e_core_r2000:
       /* Rabbit 2000 prefixes */
       StripPref("ALTD", 0x76);
-      if (Memo("")) return;
+      if (!*OpPart.str.p_str) return;
       break;
     case e_core_z380:
       /* Z380: letzten Praefix umkopieren */
@@ -4801,10 +4789,6 @@ static void MakeCode_Z80(void)
     default:
       break;
   }
-
-  /* evtl. Datenablage */
-
-  if (DecodeIntelPseudo(False)) return;
 
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);

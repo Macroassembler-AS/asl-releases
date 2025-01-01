@@ -1908,6 +1908,37 @@ static void DecodeBIT(Word Code)
  }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     update_prefixes(Word index)
+ * \brief  necessary operations prior to assembling machine instructions
+ * ------------------------------------------------------------------------ */
+
+static void update_prefixes(Word index)
+{
+  int z;
+
+  UNUSED(index);
+
+  /* Pipeline-Flags weiterschalten */
+
+  SPChanged = N_SPChanged; N_SPChanged = False;
+  CPChanged = N_CPChanged; N_CPChanged = False;
+  for (z = 0; z < DPPCount; z++)
+  {
+    DPPChanged[z] = N_DPPChanged[z];
+    N_DPPChanged[z] = False;
+  }
+
+  /* Praefixe herunterzaehlen */
+
+  if (ExtCounter >= 0)
+   if (--ExtCounter < 0)
+   {
+     MemMode = MemModeStd;
+     ExtSFRs = False;
+   }
+}
+
 /*-------------------------------------------------------------------------*/
 
 static void AddBInstTable(const char *NName, Word NCode, InstProc Proc)
@@ -1954,6 +1985,11 @@ static void InitFields(void)
 {
   InstTable = CreateInstTable(201);
   SetDynamicInstTable(InstTable);
+
+  add_null_pseudo(InstTable);
+
+  inst_table_set_prefix_proc(InstTable, update_prefixes, 0);
+
   AddBInstTable("MOV", 0, DecodeMOV);
   AddInstTable(InstTable, "MOVBS", 0x10, DecodeMOVBS_MOVBZ);
   AddInstTable(InstTable, "MOVBZ", 0x00, DecodeMOVBS_MOVBZ);
@@ -2049,8 +2085,11 @@ static void InitFields(void)
   AddInstTable(InstTable, "MULU" , InstrZ++, DecodeMul);
   AddInstTable(InstTable, "PRIOR", InstrZ++, DecodeMul);
 
+  inst_table_set_prefix_proc(InstTable, NULL, 0);
+
   AddInstTable(InstTable, "BIT" , 0, DecodeBIT);
   AddInstTable(InstTable, "REG" , 0, CodeREG);
+  AddIntelPseudo(InstTable, eIntPseudoFlag_LittleEndian);
 }
 
 static void DeinitFields(void)
@@ -2062,40 +2101,7 @@ static void DeinitFields(void)
 
 static void MakeCode_166(void)
 {
-  int z;
-
-  CodeLen = 0;
-  DontPrint = False;
   OpSize = eSymbolSize16Bit;
-
-  /* zu ignorierendes */
-
-  if (Memo(""))
-    return;
-
-  /* Pseudoanweisungen */
-
-  if (DecodeIntelPseudo(False))
-    return;
-
-  /* Pipeline-Flags weiterschalten */
-
-  SPChanged = N_SPChanged; N_SPChanged = False;
-  CPChanged = N_CPChanged; N_CPChanged = False;
-  for (z = 0; z < DPPCount; z++)
-  {
-    DPPChanged[z] = N_DPPChanged[z];
-    N_DPPChanged[z] = False;
-  }
-
-  /* Praefixe herunterzaehlen */
-
-  if (ExtCounter >= 0)
-   if (--ExtCounter < 0)
-   {
-     MemMode = MemModeStd;
-     ExtSFRs = False;
-   }
 
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);

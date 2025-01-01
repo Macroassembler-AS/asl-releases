@@ -30,6 +30,7 @@ extern Boolean CodeGlobalPseudo(void);
 
 extern void CodeREG(Word Index);
 extern void CodeNAMEREG(Word Index);
+extern void CodeINTSYNTAX(Word Index);
 
 extern void INCLUDE_SearchCore(struct sStrComp *pDest, const struct sStrComp *pArg, Boolean SearchPath);
 

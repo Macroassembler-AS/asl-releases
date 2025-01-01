@@ -20,6 +20,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmitree.h"
+#include "codepseudo.h"
 #include "intpseudo.h"
 #include "codevars.h"
 #include "headids.h"
@@ -230,6 +231,8 @@ static void InitFields(void)
 {
   InstTable = CreateInstTable(17);
 
+  add_null_pseudo(InstTable);
+
   AddInstTable(InstTable, "RTSL", 0xd000, DecodeFixed);
   AddInstTable(InstTable, "HALT", 0xb0b0, DecodeFixed);
 
@@ -262,12 +265,6 @@ static void SwitchFrom_Vector(void)
 
 static void MakeCode_Vector(void)
 {
-  CodeLen = 0; DontPrint = False;
-
-  /* zu ignorierendes */
-
-  if (Memo("")) return;
-
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }

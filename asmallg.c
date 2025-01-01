@@ -1039,32 +1039,39 @@ static void CodeCODEPAGE(Word Index)
 
 static void CodeFUNCTION(Word Index)
 {
-  Boolean OK;
-  int z;
   UNUSED(Index);
 
-  if (ChkArgCnt(2, ArgCntMax))
+  if (ChkArgCnt(1, ArgCntMax))
   {
-    OK = True;
-    z = 1;
-    do
-    {
-      OK = (OK && ChkMacSymbName(ArgStr[z].str.p_str));
-      if (!OK)
-        WrStrErrorPos(ErrNum_InvSymName, &ArgStr[z]);
-      z++;
-    }
-    while ((z < ArgCnt) && (OK));
-    if (OK)
-    {
-      as_dynstr_t FName;
+    Boolean OK;
+    int z, z2;
+    StringList arg_list;
 
-      as_dynstr_ini_c_str(&FName, ArgStr[ArgCnt].str.p_str);
-      for (z = 1; z < ArgCnt; z++)
-        CompressLine(ArgStr[z].str.p_str, z, &FName, CaseSensitive);
-      EnterFunction(&LabPart, FName.p_str, ArgCnt - 1);
-      as_dynstr_free(&FName);
+    InitStringList(&arg_list);
+    for (z = 1, OK = True; (z < ArgCnt) && OK; z++)
+    {
+      if (!ChkMacSymbName(ArgStr[z].str.p_str))
+      {
+        WrStrErrorPos(ErrNum_InvSymName, &ArgStr[z]);
+        OK = False;
+        break;
+      }
+      for (z2 = 1; z2 < z; z2++)
+      {
+        OK = CaseSensitive 
+           ? !!strcmp(ArgStr[z].str.p_str, ArgStr[z2].str.p_str)
+           : !!as_strcasecmp(ArgStr[z].str.p_str, ArgStr[z2].str.p_str);
+        if (!OK)
+        {
+          WrStrErrorPos(ErrNum_DupFuncArgName, &ArgStr[z]);
+          break;
+        }
+      }
+      AddStringListLast(&arg_list, ArgStr[z].str.p_str);
     }
+    if (OK)
+      EnterFunction(&LabPart, ArgStr[ArgCnt].str.p_str, ArgCnt - 1, &arg_list);
+    ClearStringList(&arg_list);
   }
 }
 
@@ -2192,7 +2199,7 @@ static void CodeRELAXED(Word Index)
  * \brief  process INTSYNTAX statement
  * ------------------------------------------------------------------------ */
 
-static void CodeINTSYNTAX(Word Index)
+void CodeINTSYNTAX(Word Index)
 {
   UNUSED(Index);
 

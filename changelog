@@ -1,3 +1,12 @@
+2025-01-01 [1.42 Bld 282]
+
+- Addition    : new command line switch '-radix' to set
+                default number system
+- Addition    : implement built-in JS instruction macro
+                for SC/MP
+- Addition    : new command line switch '-intsyntax' to
+                change default syntax for integer constants
+
 2024-11-20 [1.42 Bld 281]
 
 - Bugfix      : DB/DW on 68xx are big endian again

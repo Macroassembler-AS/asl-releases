@@ -101,3 +101,16 @@ myregre	reg	myreg
 
 	org	01ah
 vari:
+
+	segment	code
+
+;-----------------------------------------------------
+; standard Intel/MASM-style pseudo instructions
+
+	dn	8 dup(1,2,3)
+	db	4 dup(1,2,3)
+	dw	4 dup(1,2,3)
+	include "../t_dx/t_dd.inc"
+	include "../t_dx/t_dq.inc"
+	include "../t_dx/t_dt.inc"
+	include "../t_dx/t_do.inc"

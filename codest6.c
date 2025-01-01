@@ -751,6 +751,9 @@ static void AddAcc(const char *NName, Word NCode)
 static void InitFields(void)
 {
   InstTable = CreateInstTable(201);
+
+  add_null_pseudo(InstTable);
+
   AddInstTable(InstTable, "LD", 0, DecodeLD);
   AddInstTable(InstTable, "LDI", 0, DecodeLDI);
   AddInstTable(InstTable, "JP", 0x09, DecodeJP_CALL);
@@ -766,8 +769,8 @@ static void InitFields(void)
   AddInstTable(InstTable, "ASCII", 0, DecodeASCII_ASCIZ);
   AddInstTable(InstTable, "ASCIZ", 1, DecodeASCII_ASCIZ);
   AddInstTable(InstTable, "BYTE", 0, DecodeMotoBYT);
-  AddInstTable(InstTable, "WORD", 0, DecodeMotoADR);
-  AddInstTable(InstTable, "BLOCK", 0, DecodeMotoDFS);
+  AddInstTable(InstTable, "WORD", e_moto_pseudo_flags_le, DecodeMotoADR);
+  AddInstTable(InstTable, "BLOCK", e_moto_pseudo_flags_none, DecodeMotoDFS);
   AddInstTable(InstTable, "BIT", 0, DecodeBIT);
 
   AddFixed("NOP" , 0x04);
@@ -803,12 +806,6 @@ static void DeinitFields(void)
 
 static void MakeCode_ST6(void)
 {
-  CodeLen = 0; DontPrint = False;
-
-  /* zu ignorierendes */
-
-  if (Memo("")) return;
-
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }

@@ -311,8 +311,9 @@ DATA       \> DS          \> REG \\
 
 {\tt\begin{tabbing}
 \hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\kill    
-DB         \> DD          \> DN          \> DO          \> DQ \\
-DS         \> DT          \> DW          \> PORT        \> Z80SYNTAX \\
+DB         \> DD          \> DFB         \> DN          \> DO \\
+DQ         \> DS          \> DT          \> DW          \> PORT \\
+Z80SYNTAX \\
 \end{tabbing}}
 
 \subsubsection{Intel MCS-48}
@@ -764,8 +765,9 @@ ASCII      \> ASSUME      \> LTORG       \> WORD \\
 
 {\tt\begin{tabbing}
 \hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\kill
-BIGENDIAN  \> DB         \> DD          \> DN          \> DO \\
-DQ         \> DS         \> DT          \> DW          \> REG \\
+ASCII      \> BIGENDIAN  \> BYTE        \> DB          \> DBYTE \\
+DD         \> DN         \> DO          \> DQ          \> DS \\
+DT         \> DW         \> REG \\
 \end{tabbing}}
 	
 \subsubsection{National INS807x}

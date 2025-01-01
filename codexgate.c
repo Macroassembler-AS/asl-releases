@@ -475,7 +475,8 @@ static void DecodeMem(Word Code)
   else if (!DecodeArgReg(1, &DReg));
   else if (*ArgStr[2].str.p_str == '#')
   {
-    if (!Memo("LDW")) WrError(ErrNum_InvAddrMode);
+    /* Only allowed for LDW */
+    if (Code != 0x4800) WrError(ErrNum_InvAddrMode);
     else
     {
       Word Val;
@@ -568,12 +569,25 @@ static void DecodeMem(Word Code)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     check_pc_even(Word index)
+ * \brief  check that machine instruction ends up on even address
+ * ------------------------------------------------------------------------ */
+
+static void check_pc_even(Word index)
+{
+  UNUSED(index);
+  if (Odd(EProgCounter())) WrError(ErrNum_AddrNotAligned);
+}
+
 /*--------------------------------------------------------------------------*/
 /* Dynamic Code Table Handling */
 
 static void InitFields(void)
 {
   InstTable = CreateInstTable(103);
+
+  inst_table_set_prefix_proc(InstTable, check_pc_even, 0);
 
   AddInstTable(InstTable, "NOP", NOPCode, DecodeFixed);
   AddInstTable(InstTable, "BRK", 0x0000 , DecodeFixed);
@@ -664,15 +678,14 @@ static void InitFields(void)
   AddInstTable(InstTable, "STB"  , 0x5000, DecodeMem);
   AddInstTable(InstTable, "STW"  , 0x5800, DecodeMem);
 
+  inst_table_set_prefix_proc(InstTable, NULL, 0);
   AddInstTable(InstTable, "REG", 0, CodeREG);
-
-  init_moto8_pseudo(NULL, e_moto_8_be);
+  add_moto8_pseudo(InstTable, e_moto_pseudo_flags_be);
 }
 
 static void DeinitFields(void)
 {
   DestroyInstTable(InstTable);
-  deinit_moto8_pseudo();
 }
 
 /*--------------------------------------------------------------------------*/
@@ -701,37 +714,13 @@ static void InternSymbol_XGATE(char *pArg, TempResult *pResult)
 
 static void MakeCode_XGATE(void)
 {
-  InstProc inst_proc;
-  Word inst_index;
-
-  CodeLen = 0;
-
-  DontPrint = False;
-
   /* Nullanweisung */
 
   if ((*OpPart.str.p_str == '\0') && (ArgCnt == 0))
     return;
 
-  /* Pseudoanweisungen */
-
-  if (decode_moto8_pseudo())
-    return;
-
-  inst_proc = inst_fnc_table_search(InstTable, OpPart.str.p_str, &inst_index);
-  if (!inst_proc)
-  {
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
-    return;
-  }
-
-  /* Befehlszaehler ungerade ? */
-
-  if (Odd(EProgCounter())) WrError(ErrNum_AddrNotAligned);
-
-  /* alles aus der Tabelle */
-
-  inst_proc(inst_index);
 }
 
 static Boolean IsDef_XGATE(void)

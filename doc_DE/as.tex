@@ -49,7 +49,7 @@
 
 \vspace{1cm}\par
 
-{\large Stand November 2024}
+{\large Stand Januar 2025}
 \end{raggedright}
 
 \clearpage
@@ -900,6 +900,9 @@ Momentan sind folgende Schalter definiert:
       bestimmt werden, die im Listing jeder Zeile vorangestellt
       werden.  Der Aufbau des daf"ur verwendeten Formatstrings ist in
       \ref{SectListing} beschrieben.}
+\item{\label{radix}\tty{RADIX}: Stellt das Default-Zahlensystem auf
+      einen Wert zwischen 2 und 36, anstelle von 10.  Dieser Wert kann
+      durch die gleichnamige Anweisung im Programm übersteuert werden.}
 \item{\label{listradix}\tty{LISTRADIX}: Defaultm"a"sig erfolgen alle Zahlenausgaben im Listing
       (Adressen, erzeugter Code, Symboltabelle) im Hexadezimalsystem.  Mit
       diesem Schalter kann ein beliebiges anderes Zahlensystem im Bereich
@@ -1072,6 +1075,11 @@ bzw. \ref{ChapShareOrder}.
       vom Beginn des Programms an, der ansonsten erst durch die gleichnamige
       Pseudoanweisung (siehe Abschnitt \ref{SectRELAXED}) eingeschaltet
       werden mu"s.}
+\item{\tty{intsyntax}: Mit diesem Schalter kann man vom Beginn des Programms
+      an die Liste der erlaubten Schreibweisen für Ganzzahl-Konstanten
+      erweitern oder reduzieren, analog zur gleichnamigen Pseudoanweisung
+      (siehe Abschnitt \ref{SectINTSYNTAX} f"ur eine Liste erlauber
+      Argumente).}
 \item{\tty{supmode}: Mit diesem Schalter erlaubt man vom Beginn des Programms
       an die Verwendung von Maschinenbefehlen, die nur im Supervisor-Modus
       des Prozessors verwendet werden d"urfen (siehe Abschnitt \ref{SectSUPMODE}).}
@@ -1817,10 +1825,17 @@ ASCII       &                 &             &             & A'..' \\
 \caption{definierte Zahlensysteme und Schreibweisen\label{TabSystems}}
 \end{table*}
 Falls das Zahlensystem nicht explizit durch vor-oder nachgestellte Zeichen
-vorgegeben wird, nimmt \asname{} die Basis an, die mit dem {\tt RADIX}-Befehl
-vorgegeben wurde (deren Default ist wiederum 10).  Mit diesem Befehl lassen
-sich auch ,,ungew"ohnliche'' Zahlensysteme, d.h. andere als 2, 8, 10 oder 16
-einstellen.
+vorgegeben wird, wird die Basis folgenderma"sen bestimmt:
+\begin{itemize}
+\item{Falls ein {\tt RADIX}-Befehl gegeben wurde, benutze die dadurch
+      definierte Basis, ansonsten:}
+\item{Falls ein {\tt -radix} Kommandozeilenschalter gegeben wurde,
+      benutze die dadurch definierte Basis, ansonsten:}
+\item{Verwende das Dezimalsystem (Basis 10).}
+\end{itemize}
+Sowohl mit dem{\tt RADIX}-Befehl als auch mit dem {\tt -radix}-Kommandozeilenschalter
+lassen sich auch ,,ungew"ohnliche'' Zahlensysteme, d.h. andere als 2, 8,
+10 oder 16 einstellen.
 
 G"ultige Ziffern sind die Zahlen 0 bis 9 sowie die Buchstaben A bis Z
 (Wert 10 bis 35) bis zur Basis des Zahlensystems minus eins.  Die ASCII-
@@ -7076,9 +7091,8 @@ Funktionen bestehende Funktionen umdefinieren.  Damit lassen sich auch
 wieder Phasenfehler provozieren.  Solche Definitionen sollten daher auf
 jeden Fall vor der ersten Benutzung erfolgen!
 \par
-Da die Berechnung des Funktionsergebnisses anhand des Formelausdruckes
-auf textueller Ebene erfolgt, kann der Ergebnistyp von dem Typ des
-Eingangsargumentes abh"angen.  So kann bei folgender Funktion
+Der Ergebnistyp kann bei Funktionen vom Typ der Argumente abh"angen.
+So kann bei folgender Funktion
 \begin{verbatim}
 double  function x,x+x
 \end{verbatim}
@@ -7682,6 +7696,9 @@ beschrieben sind.
 Unabh"angig von der momentanen Einstellung ist das Argument von {\tt
 RADIX} {\em immer dezimal}; weiterhin d"urfen keine symbolischen oder
 Formelausdr"ucke verwendet werden, sondern nur einfache Zahlenkonstanten!
+
+Eine {\tt RADIX}-Anweisung "ubersteuert einen eventuell gesetzten
+{\tt -radix}-Schalter auf der Kommandozeile.
 
 Auf dem IM61x0 stehen die Anweisungen \tty{DECIMAL} und \tty{OCTAL} zur
 Verf"ugung, dies sind Kurzschreibweisen f"ur \tty{RADIX 10} beziehungsweise
@@ -13406,6 +13423,11 @@ Angaben:
                 selbst definierte Funktion stimmt nicht mit der geforderten
                 Anzahl "uberein.}
                {keines}
+\errentry{1491}{doppelter Funktions-Argumentenname}
+               {Fehler}
+               {Zwei oder mehrere Argumente einer Funktion haben den gleichen
+                Namen}
+               {das Argument mit dem doppelten Namen}
 \errentry{1495}{unaufgel"oste Literale (LTORG fehlt)}
                {Fehler}
                {Am Programmende oder beim Umachalten

@@ -2518,7 +2518,7 @@ static void Produce_Code(void)
         if (DecodeAttrPart ? DecodeAttrPart() : True)
         {
           if (!CodeGlobalPseudo())
-          MakeCode();
+            MakeCode();
         }
       }
       if (MacProOutput && ((*OpPart.str.p_str != '\0') || (*LabPart.str.p_str != '\0') || (*CommPart.str.p_str != '\0')))
@@ -2555,6 +2555,46 @@ static void adjust_copy_comp(tStrComp *p_comp, const char *p_src, size_t newsz)
   if (newsz + 1 > p_comp->str.capacity)
     as_dynstr_realloc(&p_comp->str, as_dynstr_roundup_len(newsz));
   p_comp->Pos.Len = strmemcpy(p_comp->str.p_str, p_comp->str.capacity, p_src, newsz);
+}
+
+static void split_arguments(tStrComp *p_args, const char *p_divide_chars)
+{
+  const char *p_div_pos, *p_act_div, *p_act_div_pos, *p_run, *p_end;
+
+  p_run = p_args->str.p_str;
+  p_end = p_run + strlen(p_run);
+  p_act_div_pos = NULL;
+
+  /* A separator found in the previous iteration forces another argument,
+     even if it will be empty because the separator is right at the end: */
+
+  while ((p_run < p_end) || p_act_div_pos)
+  {
+    while (*p_run && as_isspace(*p_run))
+      p_run++;
+#if 0 /* TODO: should work, but doesn't yet */
+    p_div_pos = QuotMultPosFixup(p_run, p_divide_chars, NULL);
+    if (!p_div_pos)
+      p_div_pos = p_end;
+#endif
+    p_div_pos = p_end;
+    for (p_act_div = p_divide_chars; *p_act_div; p_act_div++)
+    {
+      p_act_div_pos = QuotPosQualify(p_run, *p_act_div, QualifyQuote);
+      if (p_act_div_pos && (p_act_div_pos < p_div_pos))
+        p_div_pos = p_act_div_pos;
+    }
+    if (ArgCnt >= ArgCntMax)
+    {
+      WrError(ErrNum_TooManyArgs);
+      break;
+    }
+    AppendArg(p_div_pos - p_run);
+    adjust_copy_comp(&ArgStr[ArgCnt], p_run, p_div_pos - p_run);
+    ArgStr[ArgCnt].Pos.StartCol = p_args->Pos.StartCol + (p_run - p_args->str.p_str);
+    KillPostBlanksStrComp(&ArgStr[ArgCnt]);
+    p_run = (p_div_pos < p_end) ? p_div_pos + 1 : p_end;
+  }
 }
 
 static void SplitLine(void)
@@ -2712,44 +2752,7 @@ again:
   /* Argumente zerteilen: */
 
   if (*ArgPart.str.p_str)
-  {
-    const char *pDivPos, *pActDiv, *pActDivPos;
-
-    pRun = ArgPart.str.p_str;
-    pEnd = pRun + strlen(pRun);
-    pActDivPos = NULL;
-
-    /* A separator found in the previous iteration forces another argument,
-       even if it will be empty because the separator is right at the end: */
-
-    while ((pRun < pEnd) || pActDivPos)
-    {
-      while (*pRun && as_isspace(*pRun))
-        pRun++;
-#if 0 /* TODO: should work, but doesn't yet */
-      pDivPos = QuotMultPosFixup(pRun, DivideChars, NULL);
-      if (!pDivPos)
-        pDivPos = pEnd;
-#endif
-      pDivPos = pEnd;
-      for (pActDiv = DivideChars; *pActDiv; pActDiv++)
-      {
-        pActDivPos = QuotPosQualify(pRun, *pActDiv, QualifyQuote);
-        if (pActDivPos && (pActDivPos < pDivPos))
-          pDivPos = pActDivPos;
-      }
-      if (ArgCnt >= ArgCntMax)
-      {
-        WrError(ErrNum_TooManyArgs);
-        break;
-      }
-      AppendArg(pDivPos - pRun);
-      adjust_copy_comp(&ArgStr[ArgCnt], pRun, pDivPos - pRun);
-      ArgStr[ArgCnt].Pos.StartCol = ArgPart.Pos.StartCol + (pRun - ArgPart.str.p_str);
-      KillPostBlanksStrComp(&ArgStr[ArgCnt]);
-      pRun = (pDivPos < pEnd) ? pDivPos + 1 : pEnd;
-    }
-  }
+    split_arguments(&ArgPart, DivideChars);
 }
 
 /*------------------------------------------------------------------------*/
@@ -2997,6 +3000,16 @@ static void AssembleFile_InitPass(void)
   InitLstMacroExpMod(&LstMacroExpModDefault);
   SetFlag(&RelaxedMode, RelaxedName, DefRelaxedMode);
   SetIntConstRelaxedMode(DefRelaxedMode);
+  if (def_int_syntax.p_str && *def_int_syntax.p_str)
+  {
+    tStrComp int_comp;
+
+    LineCompReset(&int_comp.Pos);
+    as_dynstr_ini_clone(&int_comp.str, &def_int_syntax);
+    split_arguments(&int_comp, ",");
+    CodeINTSYNTAX(0);
+    as_dynstr_free(&int_comp.str);
+  }
   strmaxcpy(TmpCompStr, NestMaxName, sizeof(TmpCompStr)); EnterIntSymbol(&TmpComp, NestMax = DEF_NESTMAX, SegNone, True);
   CopyDefSymbols();
 
@@ -3817,6 +3830,22 @@ static as_cmd_result_t CMD_Relaxed(Boolean Negate, const char *pArg)
   return e_cmd_ok;
 }
 
+static as_cmd_result_t cmd_int_syntax(Boolean negate, const char *p_arg)
+{
+  if (negate)
+  {
+    as_dynstr_ini_c_str(&def_int_syntax, "");
+    return e_cmd_ok;
+  }
+  else
+  {
+    as_sdprcatf(&def_int_syntax, "%s%s",
+                "," + !(def_int_syntax.p_str && *def_int_syntax.p_str),
+                p_arg);
+    return e_cmd_arg;
+  }
+}
+
 static as_cmd_result_t CMD_ExtendErrors(Boolean Negate, const char *Arg)
 {
   UNUSED(Arg);
@@ -4271,6 +4300,7 @@ static const as_cmd_rec_t ASParams[] =
   { "h"             , CMD_HexLowerCase    },
   { "i"             , CMD_IncludeList     },
   { "I"             , CMD_MakeIncludeList },
+  { "intsyntax"     , cmd_int_syntax      },
   { "L"             , CMD_ListFile        },
   { "l"             , CMD_ListConsole     },
   { "listradix"     , CMD_ListRadix       },
@@ -4539,6 +4569,7 @@ int main(int argc, char **argv)
   MakeDebug = False;
   ExtendErrors = 0;
   DefRelaxedMode = False;
+  as_dynstr_ini_c_str(&def_int_syntax, "");
   MacroOutput = False;
   MacProOutput = False;
   CodeOutput = True;

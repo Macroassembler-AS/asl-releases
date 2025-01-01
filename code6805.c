@@ -21,6 +21,7 @@
 #include "asmsub.h"
 #include "asmitree.h"
 #include "motpseudo.h"
+#include "codepseudo.h"
 #include "intpseudo.h"
 #include "codevars.h"
 #include "errmsg.h"
@@ -75,7 +76,6 @@ enum
 #define MMod08 (MModSP2 | MModSP1 | MModIxP)
 
 static ShortInt AdrMode;
-static tSymbolSize OpSize;
 static Byte AdrVals[2];
 
 static IntType AdrIntType;
@@ -110,7 +110,7 @@ static unsigned ChkZero(char *s, Byte *pErg)
   }
 }
 
-static void DecodeAdr(Byte Start, Byte Stop, Word Mask)
+static void DecodeAdr(Byte Start, Byte Stop, tSymbolSize op_size, Word Mask)
 {
   Boolean OK;
   tSymbolFlags Flags;
@@ -210,7 +210,7 @@ static void DecodeAdr(Byte Start, Byte Stop, Word Mask)
 
     if (*ArgStr[Start].str.p_str == '#')
     {
-      switch (OpSize)
+      switch (op_size)
       {
         case eSymbolSizeUnknown:
           WrError(ErrNum_UndefOpSizes);
@@ -306,13 +306,12 @@ static void DecodeMOV(Word Index)
   if (ChkArgCnt(2, 2)
    && ChkMinCPU(CPU68HC08))
   {
-    OpSize = eSymbolSize8Bit;
-    DecodeAdr(1, 1, MModImm | MModDir | MModIxP);
+    DecodeAdr(1, 1, eSymbolSize8Bit, MModImm | MModDir | MModIxP);
     switch (AdrMode)
     {
       case ModImm:
         BAsmCode[1] = AdrVals[0];
-        DecodeAdr(2, 2, MModDir);
+        DecodeAdr(2, 2, eSymbolSizeUnknown, MModDir);
         if (AdrMode == ModDir)
         {
           BAsmCode[0] = 0x6e;
@@ -322,7 +321,7 @@ static void DecodeMOV(Word Index)
         break;
       case ModDir:
         BAsmCode[1] = AdrVals[0];
-        DecodeAdr(2, 2, MModDir | MModIxP);
+        DecodeAdr(2, 2, eSymbolSizeUnknown, MModDir | MModIxP);
         switch (AdrMode)
         {
           case ModDir:
@@ -337,7 +336,7 @@ static void DecodeMOV(Word Index)
         }
         break;
       case ModIxP:
-        DecodeAdr(2, 2, MModDir);
+        DecodeAdr(2, 2, eSymbolSizeUnknown, MModDir);
         if (AdrMode == ModDir)
         {
           BAsmCode[0] = 0x7e;
@@ -382,7 +381,7 @@ static void DecodeCBEQx(Word Index)
   if (ChkArgCnt(2, 2)
    && ChkMinCPU(CPU68HC08))
   {
-    OpSize = eSymbolSize8Bit; DecodeAdr(1, 1, MModImm);
+    DecodeAdr(1, 1, eSymbolSize8Bit, MModImm);
     if (AdrMode == ModImm)
     {
       BAsmCode[1] = AdrVals[0];
@@ -413,7 +412,7 @@ static void DecodeCBEQ(Word Index)
   if (!ChkMinCPU(CPU68HC08));
   else if (ArgCnt == 2)
   {
-    DecodeAdr(1, 1, MModDir | MModIxP);
+    DecodeAdr(1, 1, eSymbolSizeUnknown, MModDir | MModIxP);
     switch (AdrMode)
     {
       case ModDir:
@@ -512,7 +511,7 @@ static void DecodeDBNZ(Word Index)
   if (ChkArgCnt(2, 3)
    && ChkMinCPU(CPU68HC08))
   {
-    DecodeAdr(1, ArgCnt - 1, MModDir | MModIx | MModIx1 | MModSP1);
+    DecodeAdr(1, ArgCnt - 1, eSymbolSizeUnknown, MModDir | MModIx | MModIx1 | MModSP1);
     switch (AdrMode)
     {
       case ModDir:
@@ -558,8 +557,7 @@ static void DecodeALU(Word Index)
 
   if (ChkMinCPU(pOrder->MinCPU))
   {
-    OpSize = pOrder->Size;
-    DecodeAdr(1, ArgCnt, pOrder->Mask);
+    DecodeAdr(1, ArgCnt, pOrder->Size, pOrder->Mask);
     if (AdrMode != ModNone)
     {
       switch (AdrMode)
@@ -615,8 +613,7 @@ static void DecodeCPHX(Word Index)
 
     if (MomCPU >= CPU68HCS08)
       Mask |= MModExt| MModSP1;
-    OpSize = eSymbolSize16Bit;
-    DecodeAdr(1, ArgCnt, Mask);
+    DecodeAdr(1, ArgCnt, eSymbolSize16Bit, Mask);
     if (AdrMode != ModNone)
     {
       switch (AdrMode)
@@ -654,8 +651,8 @@ static void DecodeSTHX(Word Index)
     Word Mask = MModDir;
 
     if (MomCPU >= CPU68HCS08)
-      Mask |= MModExt| MModSP1;
-    DecodeAdr(1, ArgCnt, Mask);
+      Mask |= MModExt | MModSP1;
+    DecodeAdr(1, ArgCnt, eSymbolSizeUnknown, Mask);
     if (AdrMode != ModNone)
     {
       switch (AdrMode)
@@ -690,8 +687,7 @@ static void DecodeLDHX(Word Index)
 
     if (MomCPU >= CPU68HCS08)
       Mask |= MModExt| MModIx | MModIx1 | MModIx2 | MModSP1;
-    OpSize = eSymbolSize16Bit;
-    DecodeAdr(1, ArgCnt, Mask);
+    DecodeAdr(1, ArgCnt, eSymbolSize16Bit, Mask);
     if (AdrMode != ModNone)
     {
       switch (AdrMode)
@@ -759,7 +755,7 @@ static void DecodeRMW(Word Index)
 
   if (ChkMinCPU(pOrder->MinCPU))
   {
-    DecodeAdr(1, ArgCnt, pOrder->Mask);
+    DecodeAdr(1, ArgCnt, eSymbolSizeUnknown, pOrder->Mask);
     if (AdrMode != ModNone)
     {
       switch (AdrMode)
@@ -928,6 +924,8 @@ static void InitFields(void)
   InstTable = CreateInstTable(247);
   SetDynamicInstTable(InstTable);
 
+  add_null_pseudo(InstTable);
+
   InstrZ = 0;
   AddFixed("RTI" , CPU6805   , 0x80); AddFixed("RTS" , CPU6805   , 0x81);
   AddFixed("SWI" , CPU6805   , 0x83); AddFixed("TAX" , CPU6805   , 0x97);
@@ -1024,7 +1022,8 @@ static void InitFields(void)
   add_brset_brclr("BRCLR", 0x01);
   add_brset_brclr("BRSET", 0x00);
 
-  init_moto8_pseudo(InstTable, e_moto_8_be);
+  add_moto8_pseudo(InstTable, e_moto_pseudo_flags_be);
+  AddMoto16Pseudo(InstTable, e_moto_pseudo_flags_be);
   AddInstTable(InstTable, "DB", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_MotoRep, DecodeIntelDB);
   AddInstTable(InstTable, "DW", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_MotoRep, DecodeIntelDW);
 }
@@ -1056,19 +1055,8 @@ static Boolean DecodeAttrPart_6805(void)
 
 static void MakeCode_6805(void)
 {
-  CodeLen = 0;
-  DontPrint = False;
-  OpSize = AttrPartOpSize[0];
-
-  /* zu ignorierendes */
-
-  if (Memo(""))
-    return;
-
-  /* Pseudoanweisungen */
-
-  if (DecodeMoto16Pseudo(OpSize, True))
-    return;
+  if (AttrPartOpSize[0] == eSymbolSizeUnknown)
+    AttrPartOpSize[0] = eSymbolSize8Bit;
 
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);

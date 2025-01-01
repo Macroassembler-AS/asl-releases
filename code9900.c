@@ -1006,6 +1006,24 @@ static void DecodeCKPT(Word Code)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     make_pc_even(Word index)
+ * \brief  assure machine instruction ends up on even address
+ * ------------------------------------------------------------------------ */
+
+static void make_pc_even(Word index)
+{
+  UNUSED(index);
+
+  if (Odd(EProgCounter()))
+  {
+    if (DoPadding)
+      InsertPadding(1, False);
+    else
+      WrError(ErrNum_AddrNotAligned);
+  }
+}
+
 /*-------------------------------------------------------------------------*/
 /* dynamische Belegung/Freigabe Codetabellen */
 
@@ -1131,6 +1149,11 @@ static void AddType20(const char *NName, Word NCode, Word Flags)
 static void InitFields(void)
 {
   InstTable = CreateInstTable(203);
+
+  add_null_pseudo(InstTable);
+
+  inst_table_set_prefix_proc(InstTable, make_pc_even, 0);
+
   AddInstTable(InstTable, "LDCR", 0x3000, DecodeLDCR_STCR);
   AddInstTable(InstTable, "STCR", 0x3400, DecodeLDCR_STCR);
   AddInstTable(InstTable, "LMF", 0, DecodeLMF);
@@ -1299,6 +1322,12 @@ static void InitFields(void)
   AddInstTable(InstTable, "EP" , 0x03f0, DecodeEP);
 
   AddInstTable(InstTable, "LIIM", 0x2c80, DecodeLIIM);
+
+  /* may be aligned arbitrarily */
+
+  inst_table_set_prefix_proc(InstTable, NULL, 0);
+  AddInstTable(InstTable, "BYTE", 0, DecodeBYTE);
+  AddInstTable(InstTable, "BSS", 0, DecodeBSS);
 }
 
 static void DeinitFields(void)
@@ -1321,48 +1350,10 @@ static void DeinitFields(void)
 
 static void MakeCode_9900(void)
 {
-  InstProc inst_proc;
-  Word inst_index;
-
-  CodeLen = 0;
-  DontPrint = False;
   IsWord = False;
 
-  /* to be ignored */
-
-  if (Memo("")) return;
-
-  /* may be aligned arbitrarily */
-
-  if (Memo("BYTE"))
-  {
-    DecodeBYTE(0);
-    return;
-  }
-  if (Memo("BSS"))
-  {
-    DecodeBSS(0);
-    return;
-  }
-
-  /* For all other (pseudo) instructions, optionally pad to even */
-
-  inst_proc = inst_fnc_table_search(InstTable, OpPart.str.p_str, &inst_index);
-  if (!inst_proc)
-  {
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
-    return;
-  }
-
-  if (Odd(EProgCounter()))
-  {
-    if (DoPadding)
-      InsertPadding(1, False);
-    else
-      WrError(ErrNum_AddrNotAligned);
-  }
-
-  inst_proc(inst_index);
 }
 
 static Boolean IsDef_9900(void)

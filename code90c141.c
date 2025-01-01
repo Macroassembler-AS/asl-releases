@@ -1319,6 +1319,9 @@ static void InitFields(void)
 {
   InstTable = CreateInstTable(207);
   SetDynamicInstTable(InstTable);
+
+  add_null_pseudo(InstTable);
+
   AddW("LD", 0, DecodeLD);
   AddInstTable(InstTable, "PUSH", 0, DecodePUSH_POP);
   AddInstTable(InstTable, "POP" , 8, DecodePUSH_POP);
@@ -1402,6 +1405,8 @@ static void InitFields(void)
   AddCondition("UGE", 15); AddCondition("ULT",  7);
   AddCondition("UGT", 11); AddCondition("ULE",  3);
   AddCondition(NULL ,  0);
+
+  AddIntelPseudo(InstTable, eIntPseudoFlag_LittleEndian);
 }
 
 static void DeinitFields(void)
@@ -1413,15 +1418,7 @@ static void DeinitFields(void)
 
 static void MakeCode_90C141(void)
 {
-  CodeLen = 0; DontPrint = False; OpSize = -1;
-
-  /* zu ignorierendes */
-
-  if (Memo("")) return;
-
-  /* Pseudoanweisungen */
-
-  if (DecodeIntelPseudo(False)) return;
+  OpSize = eSymbolSizeUnknown;
 
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);

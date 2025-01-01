@@ -809,6 +809,8 @@ static void InitFields(void)
   InstTable = CreateInstTable(201);
   SetDynamicInstTable(InstTable);
 
+  add_null_pseudo(InstTable);
+
   InstrZ = 0;
   AddAri("ADD", 0x0040, 0x1800, M_5054 | M_5055 | M_5056 | M_6051 | M_6052);
   AddAri("SUB", 0x0240, 0x1a00, M_5054 | M_5055 | M_5056 | M_6051 | M_6052);
@@ -976,14 +978,6 @@ static void DeinitFields(void)
 
 static void  MakeCode_OLMS50(void)
 {
-  CodeLen = 0;
-  DontPrint = False;
-
-  /* zu ignorierendes */
-
-  if (Memo(""))
-    return;
-
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }

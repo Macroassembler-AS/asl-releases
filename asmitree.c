@@ -24,160 +24,6 @@
 
 /*---------------------------------------------------------------------------*/
 
-static Boolean AddSingle(PInstTreeNode *Node, char *NName, InstProc NProc, Word NIndex)
-{
-  PInstTreeNode p1, p2;
-  Boolean Result = False;
-
-  ChkStack();
-
-  if (!*Node)
-  {
-    *Node = (PInstTreeNode) malloc(sizeof(TInstTreeNode));
-    (*Node)->Left = NULL;
-    (*Node)->Right = NULL;
-    (*Node)->Proc = NProc;
-    (*Node)->Index = NIndex;
-    (*Node)->Balance = 0;
-    (*Node)->Name = as_strdup(NName);
-    Result = True;
-  }
-  else if (strcmp(NName, (*Node)->Name) < 0)
-  {
-    if (AddSingle(&((*Node)->Left), NName, NProc, NIndex))
-      switch ((*Node)->Balance)
-      {
-        case 1:
-          (*Node)->Balance = 0;
-          break;
-        case 0:
-          (*Node)->Balance = -1;
-          Result = True;
-          break;
-        case -1:
-          p1 = (*Node)->Left;
-          if (p1->Balance == -1)
-          {
-            (*Node)->Left = p1->Right;
-            p1->Right = (*Node);
-            (*Node)->Balance = 0;
-            *Node = p1;
-          }
-         else
-         {
-           p2 = p1->Right;
-           p1->Right = p2->Left;
-           p2->Left = p1;
-           (*Node)->Left = p2->Right;
-           p2->Right = (*Node);
-           (*Node)->Balance = (p2->Balance == -1) ? 1 : 0;
-           p1->Balance = (p2->Balance == 1) ? -1 : 0;
-           *Node = p2;
-         }
-         (*Node)->Balance = 0;
-         break;
-     }
-  }
-  else
-  {
-    if (AddSingle(&((*Node)->Right), NName, NProc, NIndex))
-      switch ((*Node)->Balance)
-      {
-        case -1:
-          (*Node)->Balance = 0;
-          break;
-        case 0:
-          (*Node)->Balance = 1;
-          Result = True;
-          break;
-        case 1:
-          p1 = (*Node)->Right;
-          if (p1->Balance == 1)
-          {
-            (*Node)->Right = p1->Left;
-            p1->Left = (*Node);
-            (*Node)->Balance = 0;
-            *Node = p1;
-          }
-          else
-          {
-            p2 = p1->Left;
-            p1->Left = p2->Right;
-            p2->Right = p1;
-            (*Node)->Right = p2->Left;
-            p2->Left = (*Node);
-            (*Node)->Balance = (p2->Balance == 1) ? -1 : 0;
-            p1->Balance = (p2->Balance == -1) ? 1 : 0;
-            *Node = p2;
-          }
-          (*Node)->Balance = 0;
-          break;
-      }
-  }
-  return Result;
-}
-
-void AddInstTree(PInstTreeNode *Root, char *NName, InstProc NProc, Word NIndex)
-{
-  AddSingle(Root, NName, NProc, NIndex);
-}
-
-static void ClearSingle(PInstTreeNode *Node)
-{
-  ChkStack();
-
-  if (*Node)
-  {
-    free((*Node)->Name);
-    ClearSingle(&((*Node)->Left));
-    ClearSingle(&((*Node)->Right));
-    free(*Node);
-    *Node = NULL;
-  }
-}
-
-void ClearInstTree(PInstTreeNode *Root)
-{
-  ClearSingle(Root);
-}
-
-Boolean SearchInstTree(PInstTreeNode Root, char *OpPart)
-{
-  while (Root)
-  {
-    int cmp_res = strcmp(OpPart, Root->Name);
-    if (!cmp_res)
-      break;
-    Root = (cmp_res < 0) ? Root->Left : Root->Right;
-  }
-
-  if (!Root)
-    return False;
-  else
-  {
-    Root->Proc(Root->Index);
-    return True;
-  }
-}
-
-static void PNode(PInstTreeNode Node, Word Lev)
-{
-  ChkStack();
-  if (Node)
-  {
-    PNode(Node->Left, Lev + 1);
-    printf("%*s %s %p %p %d\n", 5 * Lev, "", Node->Name, (void*)Node->Left, (void*)Node->Right, Node->Balance);
-    PNode(Node->Right, Lev + 1);
-  }
-}
-
-void PrintInstTree(PInstTreeNode Root)
-{
-  PNode(Root, 0);
-}
-
-/*----------------------------------------------------------------------------*/
-
 static int GetKey(const char *Name, LongWord TableSize)
 {
   register unsigned char *p;
@@ -202,6 +48,8 @@ PInstTable CreateInstTable(int TableSize)
   tab->Size = TableSize;
   tab->Entries = tmp;
   tab->Dynamic = FALSE;
+  tab->prefix_proc = NULL;
+  tab->prefix_proc_index = 0;
   return tab;
 }
 
@@ -270,9 +118,16 @@ void AddInstTable(PInstTable tab, const char *Name, Word Index, InstProc Proc)
   {
     if (!tab->Entries[h0].Name)
     {
+      int dest_index = 0;
       tab->Entries[h0].Name = (tab->Dynamic) ? as_strdup(Name) : (char*)Name;
-      tab->Entries[h0].Proc = Proc;
-      tab->Entries[h0].Index = Index;
+      memset(tab->Entries[h0].Procs, 0, sizeof(tab->Entries[h0].Procs));
+      if (tab->prefix_proc)
+      {
+        tab->Entries[h0].Procs[dest_index] = tab->prefix_proc;
+        tab->Entries[h0].Indices[dest_index++] = tab->prefix_proc_index;
+      }
+      tab->Entries[h0].Procs[dest_index] = Proc;
+      tab->Entries[h0].Indices[dest_index++] = Index;
       tab->Entries[h0].Coll = z;
       tab->Fill++;
       return;
@@ -286,6 +141,12 @@ void AddInstTable(PInstTable tab, const char *Name, Word Index, InstProc Proc)
     if ((LongInt)(++h0) == tab->Size)
       h0 = 0;
   }
+}
+
+void inst_table_set_prefix_proc(PInstTable tab, InstProc prefix_proc, Word prefix_proc_index)
+{
+  tab->prefix_proc = prefix_proc;
+  tab->prefix_proc_index = prefix_proc_index;
 }
 
 /*!------------------------------------------------------------------------
@@ -341,7 +202,7 @@ void RemoveInstTable(PInstTable tab, const char *Name)
     else if (!strcmp(tab->Entries[h0].Name, Name))
     {
       tab->Entries[h0].Name = NULL;
-      tab->Entries[h0].Proc = NULL;
+      memset(tab->Entries[h0].Procs, 0, sizeof(tab->Entries[h0].Procs));
       tab->Fill--;
       return;
     }
@@ -350,7 +211,7 @@ void RemoveInstTable(PInstTable tab, const char *Name)
   }
 }
 
-InstProc inst_fnc_table_search(PInstTable p_table, const char *p_name, Word *p_index)
+const TInstTableEntry *inst_table_search(PInstTable p_table, const char *p_name)
 {
   LongWord h0 = GetKey(p_name, p_table->Size);
 
@@ -359,23 +220,32 @@ InstProc inst_fnc_table_search(PInstTable p_table, const char *p_name, Word *p_i
     if (!p_table->Entries[h0].Name)
       return NULL;
     else if (!strcmp(p_table->Entries[h0].Name, p_name))
-    {
-      *p_index = p_table->Entries[h0].Index;
-      return p_table->Entries[h0].Proc;
-    }
+      return &p_table->Entries[h0];
     if ((LongInt)(++h0) == p_table->Size)
       h0 = 0;
   }
 }
 
+void inst_table_exec(const TInstTableEntry *p_inst_table_entry)
+{
+  size_t index;
+
+  for (index = 0; index < as_array_size(p_inst_table_entry->Procs); index++)
+    if (p_inst_table_entry->Procs[index])
+      p_inst_table_entry->Procs[index](p_inst_table_entry->Indices[index]);
+    else
+      return;
+}
+
 Boolean LookupInstTable(PInstTable tab, const char *Name)
 {
-  Word index;
-  InstProc proc = inst_fnc_table_search(tab, Name, &index);
+  const TInstTableEntry *p_inst_table_entry;
 
-  if (proc)
-    proc(index);
-  return !!proc;
+  p_inst_table_entry = inst_table_search(tab, Name);
+
+  if (p_inst_table_entry)
+    inst_table_exec(p_inst_table_entry);
+  return !!p_inst_table_entry;
 }
 
 /*!------------------------------------------------------------------------
@@ -408,7 +278,7 @@ void PrintInstTable(FILE *stream, PInstTable tab)
   for (z = 0; z < tab->Size; z++)
     if (tab->Entries[z].Name)
       fprintf(stream, "[%3d]: %-10s Index %4d Coll %2d\n", z,
-             tab->Entries[z].Name, tab->Entries[z].Index, tab->Entries[z].Coll);
+             tab->Entries[z].Name, tab->Entries[z].Indices[0], tab->Entries[z].Coll);
 }
 
 /*----------------------------------------------------------------------------*/

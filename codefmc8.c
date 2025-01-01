@@ -17,6 +17,7 @@
 #include "asmdef.h"
 #include "asmpars.h"
 #include "asmsub.h"
+#include "codepseudo.h"
 #include "intpseudo.h"
 #include "asmitree.h"
 #include "codevars.h"
@@ -891,6 +892,8 @@ static void InitFields(void)
 {
   InstTable = CreateInstTable(201);
 
+  add_null_pseudo(InstTable);
+
   AddFixed("SWAP"  , 0x10); AddFixed("DAA"   , 0x84);
   AddFixed("DAS"   , 0x94); AddFixed("RET"   , 0x20);
   AddFixed("RETI"  , 0x30); AddFixed("NOP"   , 0x00);
@@ -932,6 +935,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "CALLV", 0, DecodeCALLV);
   AddInstTable(InstTable, "PUSHW", 0, DecodeStack);
   AddInstTable(InstTable, "POPW" , 1, DecodeStack);
+  AddIntelPseudo(InstTable, eIntPseudoFlag_LittleEndian);
 }
 
 static void DeinitFields(void)
@@ -944,14 +948,6 @@ static void DeinitFields(void)
 
 static void MakeCode_F2MC8(void)
 {
-  /* Leeranweisung ignorieren */
-
-  if (Memo("")) return;
-
-  /* Pseudoanweisungen */
-
-  if (DecodeIntelPseudo(False)) return;
-
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }

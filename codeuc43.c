@@ -429,6 +429,8 @@ static void init_fields(void)
   add_fixed("IP",  0x32);
   AddInstTable(InstTable, "STM", 0x1480, decode_stm);
   add_fixed("NOP", NOPCode);
+
+  AddIntelPseudo(InstTable, eIntPseudoFlag_BigEndian);
 }
 
 /*!------------------------------------------------------------------------
@@ -451,18 +453,9 @@ static void deinit_fields(void)
 
 static void make_code_uc43(void)
 {
-  CodeLen = 0;
-
-  DontPrint = False;
-
   /* Empty Instruction */
 
   if (!*OpPart.str.p_str)
-    return;
-
-  /* Pseudo Instructions */
-
-  if (DecodeIntelPseudo(True))
     return;
 
   /* via table */

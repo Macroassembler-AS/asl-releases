@@ -74,7 +74,6 @@ typedef struct
 } tAdrResult;
 
 static ShortInt OpSize;
-static Byte *pCode;
 static LongInt Reg_P6, Reg_PM6;
 
 /*-------------------------------------------------------------------------*/
@@ -489,7 +488,7 @@ static Boolean DecodeBitAdr(const tStrComp *pArg, LongWord *pResult)
 static void DecodeFixed(Word Index)
 {
   if (ChkArgCnt(0, 0))
-    *pCode++ = Index;
+    BAsmCode[CodeLen++] = Index;
 }
 
 static void DecodeMOV(Word Index)
@@ -510,50 +509,50 @@ static void DecodeMOV(Word Index)
         switch (DecodeAdr(&ArgStr[2], MModImm | MModReg8 | (DestResult.Val == AccReg8 ? (MModShort | MModSFR | MModAbs | MModMem | MModPSW) : 0), &SrcResult))
         {
           case ModImm:
-            *pCode++ = 0xb8 | DestResult.Val;
-            *pCode++ = *SrcResult.Vals;
+            BAsmCode[CodeLen++] = 0xb8 | DestResult.Val;
+            BAsmCode[CodeLen++] = *SrcResult.Vals;
             break;
           case ModReg8:
             if (DestResult.Val == AccReg8)
-              *pCode++ = 0xd0 | SrcResult.Val;
+              BAsmCode[CodeLen++] = 0xd0 | SrcResult.Val;
             else
             {
-              *pCode++ = 0x24;
-              *pCode++ = (DestResult.Val << 4) | SrcResult.Val;
+              BAsmCode[CodeLen++] = 0x24;
+              BAsmCode[CodeLen++] = (DestResult.Val << 4) | SrcResult.Val;
             }
             break;
           case ModSFR:
-            *pCode++ = 0x10;
-            *pCode++ = *SrcResult.Vals;
+            BAsmCode[CodeLen++] = 0x10;
+            BAsmCode[CodeLen++] = *SrcResult.Vals;
             break;
           case ModShort:
-            *pCode++ = 0x20;
-            *pCode++ = *SrcResult.Vals;
+            BAsmCode[CodeLen++] = 0x20;
+            BAsmCode[CodeLen++] = *SrcResult.Vals;
             break;
           case ModAbs:
             if (SrcResult.AltBank)
-              *pCode++ = 0x01;
-            *pCode++ = 0x09;
-            *pCode++ = 0xf0;
-            *pCode++ = *SrcResult.Vals;
-            *pCode++ = 1[SrcResult.Vals];
+              BAsmCode[CodeLen++] = 0x01;
+            BAsmCode[CodeLen++] = 0x09;
+            BAsmCode[CodeLen++] = 0xf0;
+            BAsmCode[CodeLen++] = *SrcResult.Vals;
+            BAsmCode[CodeLen++] = 1[SrcResult.Vals];
             break;
           case ModMem:
             if (SrcResult.AltBank)
-              *pCode++ = 0x01;
+              BAsmCode[CodeLen++] = 0x01;
             if (SrcResult.Val == 0x16)
-              *pCode++ = 0x58 | *SrcResult.Vals;
+              BAsmCode[CodeLen++] = 0x58 | *SrcResult.Vals;
             else
             {
-              *pCode++ = 0x00 | SrcResult.Val;
-              *pCode++ = *SrcResult.Vals << 4;
-              memcpy(pCode, SrcResult.Vals + 1, SrcResult.Cnt - 1);
-              pCode += SrcResult.Cnt - 1;
+              BAsmCode[CodeLen++] = 0x00 | SrcResult.Val;
+              BAsmCode[CodeLen++] = *SrcResult.Vals << 4;
+              memcpy(&BAsmCode[CodeLen], SrcResult.Vals + 1, SrcResult.Cnt - 1);
+              CodeLen += SrcResult.Cnt - 1;
             }
             break;
           case ModPSW:
-            *pCode++ = 0x10;
-            *pCode++ = SFR_PSW;
+            BAsmCode[CodeLen++] = 0x10;
+            BAsmCode[CodeLen++] = SFR_PSW;
             break;
         }
         break;
@@ -566,22 +565,22 @@ static void DecodeMOV(Word Index)
         switch (DecodeAdr(&ArgStr[2], MModImm | MModReg8 | MModShort, &SrcResult))
         {
           case ModImm:
-            *pCode++ = 0x3a;
-            *pCode++ = *DestResult.Vals;
-            *pCode++ = *SrcResult.Vals;
+            BAsmCode[CodeLen++] = 0x3a;
+            BAsmCode[CodeLen++] = *DestResult.Vals;
+            BAsmCode[CodeLen++] = *SrcResult.Vals;
             break;
           case ModReg8:
             if (SrcResult.Val != AccReg8) WrError(ErrNum_InvAddrMode);
             else
             {
-              *pCode++ = 0x22;
-              *pCode++ = *DestResult.Vals;
+              BAsmCode[CodeLen++] = 0x22;
+              BAsmCode[CodeLen++] = *DestResult.Vals;
             }
             break;
           case ModShort:
-            *pCode++ = 0x38;
-            *pCode++ = *DestResult.Vals;
-            *pCode++ = *SrcResult.Vals;
+            BAsmCode[CodeLen++] = 0x38;
+            BAsmCode[CodeLen++] = *DestResult.Vals;
+            BAsmCode[CodeLen++] = *SrcResult.Vals;
             break;
         }
         break;
@@ -594,16 +593,16 @@ static void DecodeMOV(Word Index)
         switch (DecodeAdr(&ArgStr[2], MModImm | MModReg8, &SrcResult))
         {
           case ModImm:
-            *pCode++ = 0x2b;
-            *pCode++ = *DestResult.Vals;
-            *pCode++ = *SrcResult.Vals;
+            BAsmCode[CodeLen++] = 0x2b;
+            BAsmCode[CodeLen++] = *DestResult.Vals;
+            BAsmCode[CodeLen++] = *SrcResult.Vals;
             break;
           case ModReg8:
             if (SrcResult.Val != AccReg8) WrError(ErrNum_InvAddrMode);
             else
             {
-              *pCode++ = 0x12;
-              *pCode++ = *DestResult.Vals;
+              BAsmCode[CodeLen++] = 0x12;
+              BAsmCode[CodeLen++] = *DestResult.Vals;
             }
             break;
         }
@@ -617,16 +616,16 @@ static void DecodeMOV(Word Index)
         switch (DecodeAdr(&ArgStr[2], MModImm | MModReg8, &SrcResult))
         {
           case ModImm:
-            *pCode++ = 0x2b;
-            *pCode++ = SFR_PSW;
-            *pCode++ = *SrcResult.Vals;
+            BAsmCode[CodeLen++] = 0x2b;
+            BAsmCode[CodeLen++] = SFR_PSW;
+            BAsmCode[CodeLen++] = *SrcResult.Vals;
             break;
           case ModReg8:
             if (SrcResult.Val != AccReg8) WrError(ErrNum_InvAddrMode);
             else
             {
-              *pCode++ = 0x12;
-              *pCode++ = SFR_PSW;
+              BAsmCode[CodeLen++] = 0x12;
+              BAsmCode[CodeLen++] = SFR_PSW;
             }
             break;
         }
@@ -640,10 +639,10 @@ static void DecodeMOV(Word Index)
         switch (DecodeAdr(&ArgStr[2], MModImm, &SrcResult))
         {
           case ModImm:
-            *pCode++ = 0x09;
-            *pCode++ = 0xc0;
-            *pCode++ = *SrcResult.Vals;
-            *pCode++ = ~(*SrcResult.Vals);
+            BAsmCode[CodeLen++] = 0x09;
+            BAsmCode[CodeLen++] = 0xc0;
+            BAsmCode[CodeLen++] = *SrcResult.Vals;
+            BAsmCode[CodeLen++] = ~(*SrcResult.Vals);
             break;
         }
         break;
@@ -654,29 +653,29 @@ static void DecodeMOV(Word Index)
 
       case ModMem:
         if (DestResult.AltBank)
-          *pCode++ = 0x01;
+          BAsmCode[CodeLen++] = 0x01;
         if (DestResult.Val == 0x16)
-          *pCode++ = 0x50 | *DestResult.Vals;
+          BAsmCode[CodeLen++] = 0x50 | *DestResult.Vals;
         else
         {
-          *pCode++ = 0x00 | DestResult.Val;
-          *pCode++ = 0x80 | (*DestResult.Vals << 4);
-          memcpy(pCode, DestResult.Vals + 1, DestResult.Cnt - 1);
-          pCode += DestResult.Cnt - 1;
+          BAsmCode[CodeLen++] = 0x00 | DestResult.Val;
+          BAsmCode[CodeLen++] = 0x80 | (*DestResult.Vals << 4);
+          memcpy(&BAsmCode[CodeLen], DestResult.Vals + 1, DestResult.Cnt - 1);
+          CodeLen += DestResult.Cnt - 1;
         }
         if (!ChkAcc(&ArgStr[2]))
-          pCode = BAsmCode;
+          CodeLen = 0;
         break;
 
       case ModAbs:
         if (DestResult.AltBank)
-          *pCode++ = 0x01;
-        *pCode++ = 0x09;
-        *pCode++ = 0xf1;
-        *pCode++ = *DestResult.Vals;
-        *pCode++ = 1[DestResult.Vals];
+          BAsmCode[CodeLen++] = 0x01;
+        BAsmCode[CodeLen++] = 0x09;
+        BAsmCode[CodeLen++] = 0xf1;
+        BAsmCode[CodeLen++] = *DestResult.Vals;
+        BAsmCode[CodeLen++] = 1[DestResult.Vals];
         if (!ChkAcc(&ArgStr[2]))
-          pCode = BAsmCode;
+          CodeLen = 0;
         break;
     }
   }
@@ -701,31 +700,31 @@ static void DecodeXCH(Word Index)
         {
           case ModReg8:
             if (DestResult.Val == AccReg8)
-              *pCode++ = 0xd8 | SrcResult.Val;
+              BAsmCode[CodeLen++] = 0xd8 | SrcResult.Val;
             else if (SrcResult.Val == AccReg8)
-              *pCode++ = 0xd8 | DestResult.Val;
+              BAsmCode[CodeLen++] = 0xd8 | DestResult.Val;
             else
             {
-              *pCode++ = 0x25;
-              *pCode++ = (DestResult.Val << 4) | SrcResult.Val;
+              BAsmCode[CodeLen++] = 0x25;
+              BAsmCode[CodeLen++] = (DestResult.Val << 4) | SrcResult.Val;
             }
             break;
           case ModShort:
-            *pCode++ = 0x21;
-            *pCode++ = *SrcResult.Vals;
+            BAsmCode[CodeLen++] = 0x21;
+            BAsmCode[CodeLen++] = *SrcResult.Vals;
             break;
           case ModSFR:
-            *pCode++ = 0x01;
-            *pCode++ = 0x21;
-            *pCode++ = *SrcResult.Vals;
+            BAsmCode[CodeLen++] = 0x01;
+            BAsmCode[CodeLen++] = 0x21;
+            BAsmCode[CodeLen++] = *SrcResult.Vals;
             break;
           case ModMem:
             if (SrcResult.AltBank)
-              *pCode++ = 0x01;
-            *pCode++ = SrcResult.Val;
-            *pCode++ = (*SrcResult.Vals << 4) | 0x04;
-            memcpy(pCode, SrcResult.Vals + 1, SrcResult.Cnt - 1);
-            pCode += SrcResult.Cnt - 1;
+              BAsmCode[CodeLen++] = 0x01;
+            BAsmCode[CodeLen++] = SrcResult.Val;
+            BAsmCode[CodeLen++] = (*SrcResult.Vals << 4) | 0x04;
+            memcpy(&BAsmCode[CodeLen], SrcResult.Vals + 1, SrcResult.Cnt - 1);
+            CodeLen += SrcResult.Cnt - 1;
             break;
         }
         break;
@@ -741,14 +740,14 @@ static void DecodeXCH(Word Index)
             if (SrcResult.Val != AccReg8) WrError(ErrNum_InvAddrMode);
             else
             {
-              *pCode++ = 0x21;
-              *pCode++ = *DestResult.Vals;
+              BAsmCode[CodeLen++] = 0x21;
+              BAsmCode[CodeLen++] = *DestResult.Vals;
             }
             break;
           case ModShort:
-            *pCode++ = 0x39;
-            *pCode++ = *DestResult.Vals;
-            *pCode++ = *SrcResult.Vals;
+            BAsmCode[CodeLen++] = 0x39;
+            BAsmCode[CodeLen++] = *DestResult.Vals;
+            BAsmCode[CodeLen++] = *SrcResult.Vals;
             break;
         }
         break;
@@ -757,21 +756,21 @@ static void DecodeXCH(Word Index)
       case ModSFR:
         if (ChkAcc(&ArgStr[2]))
         {
-          *pCode++ = 0x01;
-          *pCode++ = 0x21;
-          *pCode++ = *DestResult.Vals;
+          BAsmCode[CodeLen++] = 0x01;
+          BAsmCode[CodeLen++] = 0x21;
+          BAsmCode[CodeLen++] = *DestResult.Vals;
         }
         break;
 
       case ModMem:
         if (DestResult.AltBank)
-          *pCode++ = 0x01;
-        *pCode++ = DestResult.Val;
-        *pCode++ = (*DestResult.Vals << 4) | 0x04;
-        memcpy(pCode, DestResult.Vals + 1, DestResult.Cnt - 1);
-        pCode += DestResult.Cnt - 1;
+          BAsmCode[CodeLen++] = 0x01;
+        BAsmCode[CodeLen++] = DestResult.Val;
+        BAsmCode[CodeLen++] = (*DestResult.Vals << 4) | 0x04;
+        memcpy(&BAsmCode[CodeLen], DestResult.Vals + 1, DestResult.Cnt - 1);
+        CodeLen += DestResult.Cnt - 1;
         if (!ChkAcc(&ArgStr[2]))
-          pCode = BAsmCode;
+          CodeLen = 0;
         break;
     }
   }
@@ -795,33 +794,33 @@ static void DecodeMOVW(Word Index)
         switch (DecodeAdr(&ArgStr[2], MModReg16 | MModImm | ((DestResult.Val == AccReg16) ? (MModSP | MModShort | MModSFR | MModMem) : 0), &SrcResult))
         {
           case ModReg16:
-            *pCode++ = 0x24;
-            *pCode++ = 0x08 | (DestResult.Val << 5) | (SrcResult.Val << 1);
+            BAsmCode[CodeLen++] = 0x24;
+            BAsmCode[CodeLen++] = 0x08 | (DestResult.Val << 5) | (SrcResult.Val << 1);
             break;
           case ModImm:
-            *pCode++ = 0x60 | (DestResult.Val << 1);
-            *pCode++ = *SrcResult.Vals;
-            *pCode++ = 1[SrcResult.Vals];
+            BAsmCode[CodeLen++] = 0x60 | (DestResult.Val << 1);
+            BAsmCode[CodeLen++] = *SrcResult.Vals;
+            BAsmCode[CodeLen++] = 1[SrcResult.Vals];
             break;
           case ModShort:
-            *pCode++ = 0x1c;
-            *pCode++ = *SrcResult.Vals;
+            BAsmCode[CodeLen++] = 0x1c;
+            BAsmCode[CodeLen++] = *SrcResult.Vals;
             break;
           case ModSFR:
-            *pCode++ = 0x11;
-            *pCode++ = *SrcResult.Vals;
+            BAsmCode[CodeLen++] = 0x11;
+            BAsmCode[CodeLen++] = *SrcResult.Vals;
             break;
           case ModSP:
-            *pCode++ = 0x11;
-            *pCode++ = SFR_SP;
+            BAsmCode[CodeLen++] = 0x11;
+            BAsmCode[CodeLen++] = SFR_SP;
             break;
           case ModMem:
             if (ChkMem1(&SrcResult))
             {
               if (SrcResult.AltBank)
-                *pCode++ = 0x01;
-              *pCode++ = 0x05;
-              *pCode++ = 0xe2 | (*SrcResult.Vals & 0x01);
+                BAsmCode[CodeLen++] = 0x01;
+              BAsmCode[CodeLen++] = 0x05;
+              BAsmCode[CodeLen++] = 0xe2 | (*SrcResult.Vals & 0x01);
             }
             break;
         }
@@ -838,15 +837,15 @@ static void DecodeMOVW(Word Index)
             if (SrcResult.Val != AccReg16) WrError(ErrNum_InvAddrMode);
             else
             {
-              *pCode++ = 0x13;
-              *pCode++ = SFR_SP;
+              BAsmCode[CodeLen++] = 0x13;
+              BAsmCode[CodeLen++] = SFR_SP;
             }
             break;
           case ModImm:
-            *pCode++ = 0x0b;
-            *pCode++ = SFR_SP;
-            *pCode++ = *SrcResult.Vals;
-            *pCode++ = 1[SrcResult.Vals];
+            BAsmCode[CodeLen++] = 0x0b;
+            BAsmCode[CodeLen++] = SFR_SP;
+            BAsmCode[CodeLen++] = *SrcResult.Vals;
+            BAsmCode[CodeLen++] = 1[SrcResult.Vals];
             break;
         }
         break;
@@ -862,15 +861,15 @@ static void DecodeMOVW(Word Index)
             if (SrcResult.Val != AccReg16) WrError(ErrNum_InvAddrMode);
             else
             {
-              *pCode++ = 0x1a;
-              *pCode++ = *DestResult.Vals;
+              BAsmCode[CodeLen++] = 0x1a;
+              BAsmCode[CodeLen++] = *DestResult.Vals;
             }
             break;
           case ModImm:
-            *pCode++ = 0x0c;
-            *pCode++ = *DestResult.Vals;
-            *pCode++ = *SrcResult.Vals;
-            *pCode++ = 1[SrcResult.Vals];
+            BAsmCode[CodeLen++] = 0x0c;
+            BAsmCode[CodeLen++] = *DestResult.Vals;
+            BAsmCode[CodeLen++] = *SrcResult.Vals;
+            BAsmCode[CodeLen++] = 1[SrcResult.Vals];
             break;
         }
         break;
@@ -886,15 +885,15 @@ static void DecodeMOVW(Word Index)
             if (SrcResult.Val != AccReg16) WrError(ErrNum_InvAddrMode);
             else
             {
-              *pCode++ = 0x13;
-              *pCode++ = *DestResult.Vals;
+              BAsmCode[CodeLen++] = 0x13;
+              BAsmCode[CodeLen++] = *DestResult.Vals;
             }
             break;
           case ModImm:
-            *pCode++ = 0x0b;
-            *pCode++ = *DestResult.Vals;
-            *pCode++ = *SrcResult.Vals;
-            *pCode++ = 1[SrcResult.Vals];
+            BAsmCode[CodeLen++] = 0x0b;
+            BAsmCode[CodeLen++] = *DestResult.Vals;
+            BAsmCode[CodeLen++] = *SrcResult.Vals;
+            BAsmCode[CodeLen++] = 1[SrcResult.Vals];
             break;
         }
         break;
@@ -904,11 +903,11 @@ static void DecodeMOVW(Word Index)
         if (ChkMem1(&DestResult))
         {
           if (DestResult.AltBank)
-            *pCode++ = 0x01;
-          *pCode++ = 0x05;
-          *pCode++ = 0xe6 | (*DestResult.Vals & 0x01);
+            BAsmCode[CodeLen++] = 0x01;
+          BAsmCode[CodeLen++] = 0x05;
+          BAsmCode[CodeLen++] = 0xe6 | (*DestResult.Vals & 0x01);
           if (!ChkAcc(&ArgStr[2]))
-            pCode = BAsmCode;
+            CodeLen = 0;
         }
         break;
     }
@@ -931,29 +930,29 @@ static void DecodeALU(Word Index)
         switch (DecodeAdr(&ArgStr[2], MModReg8 | ((DestResult.Val == AccReg8) ? (MModImm | MModShort | MModSFR | MModMem): 0), &SrcResult))
         {
           case ModReg8:
-            *pCode++ = 0x88 | Index;
-            *pCode++ = (DestResult.Val << 4) | SrcResult.Val;
+            BAsmCode[CodeLen++] = 0x88 | Index;
+            BAsmCode[CodeLen++] = (DestResult.Val << 4) | SrcResult.Val;
             break;
           case ModImm:
-            *pCode++ = 0xa8 | Index;
-            *pCode++ = *SrcResult.Vals;
+            BAsmCode[CodeLen++] = 0xa8 | Index;
+            BAsmCode[CodeLen++] = *SrcResult.Vals;
             break;
           case ModShort:
-            *pCode++ = 0x98 | Index;
-            *pCode++ = *SrcResult.Vals;
+            BAsmCode[CodeLen++] = 0x98 | Index;
+            BAsmCode[CodeLen++] = *SrcResult.Vals;
             break;
           case ModSFR:
-            *pCode++ = 0x01;
-            *pCode++ = 0x98 | Index;
-            *pCode++ = *SrcResult.Vals;
+            BAsmCode[CodeLen++] = 0x01;
+            BAsmCode[CodeLen++] = 0x98 | Index;
+            BAsmCode[CodeLen++] = *SrcResult.Vals;
             break;
           case ModMem:
             if (SrcResult.AltBank)
-              *pCode++ = 0x01;
-            *pCode++ = 0x00 | SrcResult.Val;
-            *pCode++ = 0x08 | (*SrcResult.Vals << 4) | Index;
-            memcpy(pCode, SrcResult.Vals + 1, SrcResult.Cnt - 1);
-            pCode += SrcResult.Cnt - 1;
+              BAsmCode[CodeLen++] = 0x01;
+            BAsmCode[CodeLen++] = 0x00 | SrcResult.Val;
+            BAsmCode[CodeLen++] = 0x08 | (*SrcResult.Vals << 4) | Index;
+            memcpy(&BAsmCode[CodeLen], SrcResult.Vals + 1, SrcResult.Cnt - 1);
+            CodeLen += SrcResult.Cnt - 1;
             break;
         }
         break;
@@ -966,14 +965,14 @@ static void DecodeALU(Word Index)
         switch (DecodeAdr(&ArgStr[2], MModImm | MModShort, &SrcResult))
         {
           case ModImm:
-            *pCode++ = 0x68 | Index;
-            *pCode++ = *DestResult.Vals;
-            *pCode++ = *SrcResult.Vals;
+            BAsmCode[CodeLen++] = 0x68 | Index;
+            BAsmCode[CodeLen++] = *DestResult.Vals;
+            BAsmCode[CodeLen++] = *SrcResult.Vals;
             break;
           case ModShort:
-            *pCode++ = 0x78 | Index;
-            *pCode++ = *SrcResult.Vals;
-            *pCode++ = *DestResult.Vals;
+            BAsmCode[CodeLen++] = 0x78 | Index;
+            BAsmCode[CodeLen++] = *SrcResult.Vals;
+            BAsmCode[CodeLen++] = *DestResult.Vals;
             break;
         }
         break;
@@ -986,10 +985,10 @@ static void DecodeALU(Word Index)
         switch (DecodeAdr(&ArgStr[2], MModImm, &SrcResult))
         {
           case ModImm:
-            *pCode++ = 0x01;
-            *pCode++ = 0x68 | Index;
-            *pCode++ = *DestResult.Vals;
-            *pCode++ = *SrcResult.Vals;
+            BAsmCode[CodeLen++] = 0x01;
+            BAsmCode[CodeLen++] = 0x68 | Index;
+            BAsmCode[CodeLen++] = *DestResult.Vals;
+            BAsmCode[CodeLen++] = *SrcResult.Vals;
             break;
         }
         break;
@@ -1012,22 +1011,22 @@ static void DecodeALU16(Word Index)
       switch (DecodeAdr(&ArgStr[2], MModImm | MModReg16 | MModShort | MModSFR, &Result))
       {
         case ModImm:
-          *pCode++ = 0x2c | Index;
-          *pCode++ = *Result.Vals;
-          *pCode++ = 1[Result.Vals];
+          BAsmCode[CodeLen++] = 0x2c | Index;
+          BAsmCode[CodeLen++] = *Result.Vals;
+          BAsmCode[CodeLen++] = 1[Result.Vals];
           break;
         case ModReg16:
-          *pCode++ = 0x88 | Vals[Index - 1];
-          *pCode++ = 0x08 | (Result.Val << 1);
+          BAsmCode[CodeLen++] = 0x88 | Vals[Index - 1];
+          BAsmCode[CodeLen++] = 0x08 | (Result.Val << 1);
           break;
         case ModShort:
-          *pCode++ = 0x1c | Index;
-          *pCode++ = *Result.Vals;
+          BAsmCode[CodeLen++] = 0x1c | Index;
+          BAsmCode[CodeLen++] = *Result.Vals;
           break;
         case ModSFR:
-          *pCode++ = 0x01;
-          *pCode++ = 0x1c | Index;
-          *pCode++ = *Result.Vals;
+          BAsmCode[CodeLen++] = 0x01;
+          BAsmCode[CodeLen++] = 0x1c | Index;
+          BAsmCode[CodeLen++] = *Result.Vals;
           break;
       }
     }
@@ -1043,8 +1042,8 @@ static void DecodeMULDIV(Word Index)
     switch (DecodeAdr(&ArgStr[1], MModReg8, &Result))
     {
       case ModReg8:
-        *pCode++ = 0x05;
-        *pCode++ = Index | Result.Val;
+        BAsmCode[CodeLen++] = 0x05;
+        BAsmCode[CodeLen++] = Index | Result.Val;
         break;
     }
   }
@@ -1059,11 +1058,11 @@ static void DecodeINCDEC(Word Index)
     switch (DecodeAdr(&ArgStr[1], MModReg8 | MModShort, &Result))
     {
       case ModReg8:
-        *pCode++ = 0xc0 | (Index << 3) | Result.Val;
+        BAsmCode[CodeLen++] = 0xc0 | (Index << 3) | Result.Val;
         break;
       case ModShort:
-        *pCode++ = 0x26 | Index;
-        *pCode++ = *Result.Vals;
+        BAsmCode[CodeLen++] = 0x26 | Index;
+        BAsmCode[CodeLen++] = *Result.Vals;
         break;
     }
   }
@@ -1078,11 +1077,11 @@ static void DecodeINCDECW(Word Index)
     switch (DecodeAdr(&ArgStr[1], MModReg16 | MModSP, &Result))
     {
       case ModReg16:
-        *pCode++ = 0x44 | (Index << 3) | Result.Val;
+        BAsmCode[CodeLen++] = 0x44 | (Index << 3) | Result.Val;
         break;
       case ModSP:
-        *pCode++ = 0x05;
-        *pCode++ = 0xc0 | Index;
+        BAsmCode[CodeLen++] = 0x05;
+        BAsmCode[CodeLen++] = 0xc0 | Index;
         break;
     }
   }
@@ -1103,8 +1102,8 @@ static void DecodeShift8(Word Index)
         Shift = EvalStrIntExpression(&ArgStr[2], UInt3, &OK);
         if (OK)
         {
-          *pCode++ = 0x30 | Hi(Index);
-          *pCode++ = Lo(Index) | (Shift << 3) | Result.Val;
+          BAsmCode[CodeLen++] = 0x30 | Hi(Index);
+          BAsmCode[CodeLen++] = Lo(Index) | (Shift << 3) | Result.Val;
         }
         break;
     }
@@ -1126,8 +1125,8 @@ static void DecodeShift16(Word Index)
         Shift = EvalStrIntExpression(&ArgStr[2], UInt3, &OK);
         if (OK)
         {
-          *pCode++ = 0x30 | Hi(Index);
-          *pCode++ = Lo(Index) | (Shift << 3) | (Result.Val << 1);
+          BAsmCode[CodeLen++] = 0x30 | Hi(Index);
+          BAsmCode[CodeLen++] = Lo(Index) | (Shift << 3) | (Result.Val << 1);
         }
         break;
     }
@@ -1146,9 +1145,9 @@ static void DecodeShift4(Word Index)
         if (ChkMem1(&Result))
         {
           if (Index)
-            *pCode++ = 0x01;
-          *pCode++ = 0x05;
-          *pCode++ = 0x8c | ((*Result.Vals & 1) << 1);
+            BAsmCode[CodeLen++] = 0x01;
+          BAsmCode[CodeLen++] = 0x05;
+          BAsmCode[CodeLen++] = 0x8c | ((*Result.Vals & 1) << 1);
         }
         break;
     }
@@ -1164,14 +1163,14 @@ static void DecodePUSHPOP(Word Index)
     switch (DecodeAdr(&ArgStr[1], MModReg16 | MModPSW | MModSFR, &Result))
     {
       case ModReg16:
-        *pCode++ = 0x34 | (Index << 3) | Result.Val;
+        BAsmCode[CodeLen++] = 0x34 | (Index << 3) | Result.Val;
         break;
       case ModPSW:
-        *pCode++ = 0x48 | Index;
+        BAsmCode[CodeLen++] = 0x48 | Index;
         break;
       case ModSFR:
-        *pCode++ = Index ? 0x29 : 0x43;
-        *pCode++ = *Result.Vals;
+        BAsmCode[CodeLen++] = Index ? 0x29 : 0x43;
+        BAsmCode[CodeLen++] = *Result.Vals;
         break;
     }
   }
@@ -1188,13 +1187,13 @@ static void DecodeCALL(Word Index)
     switch (DecodeAdr(&ArgStr[1], MModAbs | MModReg16, &Result))
     {
       case ModAbs:
-        *pCode++ = 0x28;
-        *pCode++ = *Result.Vals;
-        *pCode++ = 1[Result.Vals];
+        BAsmCode[CodeLen++] = 0x28;
+        BAsmCode[CodeLen++] = *Result.Vals;
+        BAsmCode[CodeLen++] = 1[Result.Vals];
         break;
       case ModReg16:
-        *pCode++ = 0x05;
-        *pCode++ = 0x58 | (Result.Val << 1);
+        BAsmCode[CodeLen++] = 0x05;
+        BAsmCode[CodeLen++] = 0x58 | (Result.Val << 1);
         break;
     }
   }
@@ -1219,8 +1218,8 @@ static void DecodeCALLF(Word Index)
       if (AdrWord < 0x800) WrError(ErrNum_UnderRange);
       else
       {
-        *pCode++ = 0x90 | (Hi(AdrWord) & 7);
-        *pCode++ = Lo(AdrWord);
+        BAsmCode[CodeLen++] = 0x90 | (Hi(AdrWord) & 7);
+        BAsmCode[CodeLen++] = Lo(AdrWord);
       }
     }
   }
@@ -1255,7 +1254,7 @@ static void DecodeCALLT(Word Index)
           if (AdrWord & 1) WrError(ErrNum_AddrMustBeEven);
           else
           {
-            *pCode++ = 0xe0 | ((AdrWord - 0x40) >> 1);
+            BAsmCode[CodeLen++] = 0xe0 | ((AdrWord - 0x40) >> 1);
           }
         }
       }
@@ -1289,20 +1288,20 @@ static void DecodeBR(Word Index)
           if (!mSymbolQuestionable(Result.ValSymFlags) && ((Addr < -128) || (Addr > 127))) WrError(ErrNum_JmpDistTooBig);
           else
           {
-            *pCode++ = 0x14;
-            *pCode++ = Addr & 0xff;
+            BAsmCode[CodeLen++] = 0x14;
+            BAsmCode[CodeLen++] = Addr & 0xff;
           }
         }
         else
         {
-          *pCode++ = 0x2c;
-          *pCode++ = *Result.Vals;
-          *pCode++ = 1[Result.Vals];
+          BAsmCode[CodeLen++] = 0x2c;
+          BAsmCode[CodeLen++] = *Result.Vals;
+          BAsmCode[CodeLen++] = 1[Result.Vals];
         }
         break;
       case ModReg16:
-        *pCode++ = 0x05;
-        *pCode++ = 0x48 | (Result.Val << 1);
+        BAsmCode[CodeLen++] = 0x05;
+        BAsmCode[CodeLen++] = 0x48 | (Result.Val << 1);
         break;
     }
   }
@@ -1323,8 +1322,8 @@ static void DecodeBranch(Word Index)
       if (!mSymbolQuestionable(Flags) && ((Addr < -128) || (Addr > 127))) WrError(ErrNum_JmpDistTooBig);
       else
       {
-        *pCode++ = Index;
-        *pCode++ = Addr & 0xff;
+        BAsmCode[CodeLen++] = Index;
+        BAsmCode[CodeLen++] = Addr & 0xff;
       }
     }
   }
@@ -1344,8 +1343,8 @@ static void DecodeDBNZ(Word Index)
     switch (DecodeAdr(&ArgStr[1], MModShort | MModReg8, &Result))
     {
       case ModShort:
-        *pCode++ = 0x3b;
-        *pCode++ = *Result.Vals;
+        BAsmCode[CodeLen++] = 0x3b;
+        BAsmCode[CodeLen++] = *Result.Vals;
         break;
       case ModReg8:
         if ((Result.Val < 2) || (Result.Val > 3))
@@ -1354,21 +1353,21 @@ static void DecodeDBNZ(Word Index)
           Result.Mode = ModNone;
         }
         else
-          *pCode++ = 0x30 | Result.Val;
+          BAsmCode[CodeLen++] = 0x30 | Result.Val;
         break;
     }
     if (Result.Mode != ModNone)
     {
       tSymbolFlags Flags;
 
-      Addr = EvalStrIntExpressionOffsWithFlags(&ArgStr[2], !!(*ArgStr[2].str.p_str == '$'), UInt16, &OK, &Flags) - (EProgCounter() + (pCode - BAsmCode) + 1);
+      Addr = EvalStrIntExpressionOffsWithFlags(&ArgStr[2], !!(*ArgStr[2].str.p_str == '$'), UInt16, &OK, &Flags) - (EProgCounter() + CodeLen + 1);
       if (!mSymbolQuestionable(Flags) && ((Addr < -128) || (Addr > 127)))
       {
         WrError(ErrNum_JmpDistTooBig);
-        pCode = BAsmCode;
+        CodeLen = 0;
       }
       else
-        *pCode++ = Addr & 0xff;
+        BAsmCode[CodeLen++] = Addr & 0xff;
     }
   }
 }
@@ -1387,8 +1386,8 @@ static void DecodeSEL(Word Index)
     Bank = EvalStrIntExpressionOffs(&ArgStr[1], 2, UInt2, &OK);
     if (OK)
     {
-      *pCode++ = 0x05;
-      *pCode++ = 0xa8 | Bank;
+      BAsmCode[CodeLen++] = 0x05;
+      BAsmCode[CodeLen++] = 0xa8 | Bank;
     }
   }
 }
@@ -1424,10 +1423,10 @@ static void DecodeMOV1(Word Index)
     }
     if (DecodeBitAdr(&ArgStr[ArgPos], &Bit))
     {
-      *pCode++ = 0x00 | ((Bit >> 16) & 0xff);
-      *pCode++ = ((2 - ArgPos) << 4) | ((Bit >> 8) & 0xff);
+      BAsmCode[CodeLen++] = 0x00 | ((Bit >> 16) & 0xff);
+      BAsmCode[CodeLen++] = ((2 - ArgPos) << 4) | ((Bit >> 8) & 0xff);
       if (Bit & 0x1000000)
-        *pCode++ = Bit & 0xff;
+        BAsmCode[CodeLen++] = Bit & 0xff;
     }
   }
 }
@@ -1450,10 +1449,10 @@ static void DecodeANDOR1(Word Index)
     }
     if (DecodeBitAdr(pArg, &Bit))
     {
-      *pCode++ = 0x00 | ((Bit >> 16) & 0xff);
-      *pCode++ = Index  | ((Bit >> 8) & 0xff);
+      BAsmCode[CodeLen++] = 0x00 | ((Bit >> 16) & 0xff);
+      BAsmCode[CodeLen++] = Index  | ((Bit >> 8) & 0xff);
       if (Bit & 0x1000000)
-        *pCode++ = Bit & 0xff;
+        BAsmCode[CodeLen++] = Bit & 0xff;
     }
   }
 }
@@ -1470,10 +1469,10 @@ static void DecodeXOR1(Word Index)
   {
     if (DecodeBitAdr(&ArgStr[2], &Bit))
     {
-      *pCode++ = 0x00 | ((Bit >> 16) & 0xff);
-      *pCode++ = 0x60 | ((Bit >> 8) & 0xff);
+      BAsmCode[CodeLen++] = 0x00 | ((Bit >> 16) & 0xff);
+      BAsmCode[CodeLen++] = 0x60 | ((Bit >> 8) & 0xff);
       if (Bit & 0x1000000)
-        *pCode++ = Bit & 0xff;
+        BAsmCode[CodeLen++] = Bit & 0xff;
     }
   }
 }
@@ -1487,21 +1486,21 @@ static void DecodeBit1(Word Index)
   if (!ChkArgCnt(1, 1));
   else if (!as_strcasecmp(ArgStr[1].str.p_str, "CY"))
   {
-    *pCode++ = 0x40 | (9 - (Index >> 4));
+    BAsmCode[CodeLen++] = 0x40 | (9 - (Index >> 4));
   }
   else if (DecodeBitAdr(&ArgStr[1], &Bit))
   {
     if ((Index >= 0x80) && ((Bit & 0xfffff800) == 0x01080000))
     {
-      *pCode++ = (0x130 - Index) | ((Bit >> 8) & 7);
-      *pCode++ = Bit & 0xff;
+      BAsmCode[CodeLen++] = (0x130 - Index) | ((Bit >> 8) & 7);
+      BAsmCode[CodeLen++] = Bit & 0xff;
     }
     else
     {
-      *pCode++ = 0x00 | ((Bit >> 16) & 0xff);
-      *pCode++ = Index | ((Bit >> 8) & 0xff);
+      BAsmCode[CodeLen++] = 0x00 | ((Bit >> 16) & 0xff);
+      BAsmCode[CodeLen++] = Index | ((Bit >> 8) & 0xff);
       if (Bit & 0x1000000)
-        *pCode++ = Bit & 0xff;
+        BAsmCode[CodeLen++] = Bit & 0xff;
     }
   }
 }
@@ -1524,33 +1523,33 @@ static void DecodeBrBit(Word Index)
     {
       if (Index == 0x80)
       {
-        *pCode++ = 0x70 | ((Bit >> 8) & 7);
-	*pCode++ = Bit & 0xff;
+        BAsmCode[CodeLen++] = 0x70 | ((Bit >> 8) & 7);
+	BAsmCode[CodeLen++] = Bit & 0xff;
       }
       else
       {
-        *pCode++ = 0x00 | ((Bit >> 16) & 0xff);
-	*pCode++ = (0x130 - Index) | ((Bit >> 8) & 0xff);
+        BAsmCode[CodeLen++] = 0x00 | ((Bit >> 16) & 0xff);
+	BAsmCode[CodeLen++] = (0x130 - Index) | ((Bit >> 8) & 0xff);
 	if (Bit & 0x1000000)
-          *pCode++ = Bit & 0xff;
+          BAsmCode[CodeLen++] = Bit & 0xff;
       }
     }
     else
     {
-      *pCode++ = 0x00 | ((Bit >> 16) & 0xff);
-      *pCode++ = (0x130 - Index) | ((Bit >> 8) & 0xff);
+      BAsmCode[CodeLen++] = 0x00 | ((Bit >> 16) & 0xff);
+      BAsmCode[CodeLen++] = (0x130 - Index) | ((Bit >> 8) & 0xff);
       if (Bit & 0x1000000)
-        *pCode++ = Bit & 0xff;
+        BAsmCode[CodeLen++] = Bit & 0xff;
     }
 
-    Addr = EvalStrIntExpressionOffsWithFlags(&ArgStr[2], !!(*ArgStr[2].str.p_str == '$'), UInt16, &OK, &Flags) - (EProgCounter() + (pCode - BAsmCode) + 1);
+    Addr = EvalStrIntExpressionOffsWithFlags(&ArgStr[2], !!(*ArgStr[2].str.p_str == '$'), UInt16, &OK, &Flags) - (EProgCounter() + CodeLen + 1);
     if (!mSymbolQuestionable(Flags) && ((Addr < -128) || (Addr > 127)))
     {
       WrError(ErrNum_JmpDistTooBig);
-      pCode = BAsmCode;
+      CodeLen = 0;
     }
     else
-      *pCode++ = Addr & 0xff;
+      BAsmCode[CodeLen++] = Addr & 0xff;
   }
 }
 
@@ -1565,6 +1564,8 @@ static void AddFixed(const char *NName, Word NCode)
 static void InitFields(void)
 {
   InstTable = CreateInstTable(201);
+
+  add_null_pseudo(InstTable);
 
   AddInstTable(InstTable, "MOV", 0, DecodeMOV);
   AddInstTable(InstTable, "XCH", 0, DecodeXCH);
@@ -1651,6 +1652,7 @@ static void InitFields(void)
   AddFixed("ADJBS", 0x0f);
 
   AddInstTable(InstTable, "BIT", 0, DecodeBIT);
+  AddIntelPseudo(InstTable, eIntPseudoFlag_LittleEndian);
 }
 
 static void DeinitFields(void)
@@ -1663,21 +1665,10 @@ static void DeinitFields(void)
 
 static void MakeCode_78K2(void)
 {
-  CodeLen = 0; DontPrint = False; OpSize = -1;
+  OpSize = eSymbolSizeUnknown;
 
-  /* zu ignorierendes */
-
-  if (Memo("")) return;
-
-  /* Pseudoanweisungen */
-
-  if (DecodeIntelPseudo(False)) return;
-
-  pCode = BAsmCode;
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
-  else
-    CodeLen = pCode - BAsmCode;
 }
 
 static void InitCode_78K2(void)

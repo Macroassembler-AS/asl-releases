@@ -184,3 +184,14 @@ myreg3re	reg	myreg3e
 		add	myreg1e,myreg2e,myreg3e
 		add	myreg1r,myreg2r,myreg3r
 		add	myreg1re,myreg2re,myreg3re
+
+;-----------------------------------------------------
+; standard Intel/MASM-style pseudo instructions
+
+	include "../t_dx/t_dn.inc"
+	include "../t_dx/t_db.inc"
+	include "../t_dx/t_dw.inc"
+	include "../t_dx/t_dd.inc"
+	include "../t_dx/t_dq.inc"
+	include "../t_dx/t_dt.inc"
+	include "../t_dx/t_do.inc"

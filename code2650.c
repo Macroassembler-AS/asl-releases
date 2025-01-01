@@ -35,6 +35,7 @@
 /* Local Variables */
 
 static CPUVar CPU2650;
+static Boolean splitted_arg;
 
 /*--------------------------------------------------------------------------*/
 /* Expression Parsers */
@@ -480,6 +481,18 @@ static void DecodeZero(Word code)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     check_no_splitted_arg(Word code)
+ * \brief  complain if pseudo op got derived by splitting off argument
+ * ------------------------------------------------------------------------ */
+
+static void check_no_splitted_arg(Word code)
+{
+  UNUSED(code);
+  if (splitted_arg)
+    WrStrErrorPos(ErrNum_InvArg, &ArgStr[1]);
+}
+
 /*--------------------------------------------------------------------------*/
 /* Code Table Handling */
 
@@ -636,8 +649,10 @@ static void InitFields(void)
   AddZero("ZBRR", 0x9b);
   AddZero("ZBSR", 0xbb);
 
+  inst_table_set_prefix_proc(InstTable, check_no_splitted_arg, 0);
   AddInstTable(InstTable, "RES", 1, DecodeIntelDS);
   AddInstTable(InstTable, "ACON", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString, DecodeIntelDW);
+  AddIntelPseudo(InstTable, eIntPseudoFlag_DynEndian);
 }
 
 static void DeinitFields(void)
@@ -652,23 +667,16 @@ static void MakeCode_2650(void)
 {
   char *pPos;
 
-  CodeLen = 0;
-
-  DontPrint = False;
-
   /* Nullanweisung */
 
   if ((*OpPart.str.p_str == '\0') && (ArgCnt == 0))
     return;
 
-  /* Pseudoanweisungen */
-
-  if (DecodeIntelPseudo(TargetBigEndian)) return;
-
   /* try to split off first (register) operand from instruction */
 
   pPos = strchr(OpPart.str.p_str, ',');
-  if (pPos)
+  splitted_arg = !!pPos;
+  if (splitted_arg)
   {
     InsertArg(1, strlen(OpPart.str.p_str));
     StrCompSplitRight(&OpPart, &ArgStr[1], pPos);

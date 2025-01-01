@@ -654,6 +654,8 @@ static void init_fields(void)
 {
   InstTable = CreateInstTable(101);
 
+  add_null_pseudo(InstTable);
+
   AddInstTable(InstTable, "LAS", 0xf0, decode_imm_4);
   AddInstTable(InstTable, "LSS", 0x28, decode_imm_3);
   AddInstTable(InstTable, "LTS", 0x38, decode_imm_3);
@@ -719,8 +721,8 @@ static void init_fields(void)
   AddInstTable(InstTable, "SLA", 0x1c, decode_srl_sla);
   AddInstTable(InstTable, "SRL", 0x1d, decode_srl_sla);
 
-  AddInstTable(InstTable, "DC", 0, DecodeMotoBYT);
-  AddInstTable(InstTable, "DS", 0, DecodeMotoDFS);
+  AddInstTable(InstTable, "DC", e_moto_pseudo_flags_le, DecodeMotoBYT);
+  AddInstTable(InstTable, "DS", e_moto_pseudo_flags_none, DecodeMotoDFS);
 }
 
 /*!------------------------------------------------------------------------
@@ -743,12 +745,6 @@ static void deinit_fields(void)
 
 static void make_code_cp3f(void)
 {
-  CodeLen = 0; DontPrint = False;
-
-  /* to be ignored */
-
-  if (Memo("")) return;
-
   /* pseudo instructions */
 
   if (!LookupInstTable(InstTable, OpPart.str.p_str))

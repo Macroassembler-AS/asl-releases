@@ -20,6 +20,7 @@
 #include "asmpars.h"
 #include "asmitree.h"
 #include "asmallg.h"
+#include "codepseudo.h"
 #include "intpseudo.h"
 #include "codevars.h"
 #include "errmsg.h"
@@ -2536,6 +2537,9 @@ static void AddBit(const char *NName, Word NCode)
 static void InitFields(void)
 {
   InstTable = CreateInstTable(403);
+
+  add_null_pseudo(InstTable);
+
   AddInstTable(InstTable, "MOV", 0, DecodeMOV);
   AddInstTable(InstTable, "LDC", 0, DecodeLDC_STC);
   AddInstTable(InstTable, "STC", 1, DecodeLDC_STC);
@@ -2645,6 +2649,7 @@ static void InitFields(void)
   AddBit("BTST"  ,11);
 
   AddInstTable(InstTable, "REG", 0, CodeREG);
+  AddIntelPseudo(InstTable, eIntPseudoFlag_LittleEndian);
 }
 
 static void DeinitFields(void)
@@ -2737,14 +2742,6 @@ static void InternSymbol_M16C(char *pArg, TempResult *pResult)
 static void MakeCode_M16C(void)
 {
   OpSize = AttrPartOpSize[0];
-
-  /* zu ignorierendes */
-
-  if (Memo("")) return;
-
-  /* Pseudoanweisungen */
-
-  if (DecodeIntelPseudo(False)) return;
 
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);

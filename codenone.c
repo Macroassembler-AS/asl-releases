@@ -23,9 +23,6 @@ LargeWord none_target_seglimit;
 
 static void make_code_none(void)
 {
-  CodeLen = 0;
-  DontPrint = False;
-
   if (Memo("")) return;
 
   WrError(ErrNum_NoTarget);

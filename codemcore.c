@@ -641,6 +641,17 @@ static void DecodeTrap(Word Index)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     check_pc_even(Word index)
+ * \brief  assure machine instruction  is at even address
+ * ------------------------------------------------------------------------ */
+
+static void check_pc_even(Word index)
+{
+  UNUSED(index);
+  if (Odd(EProgCounter())) WrError(ErrNum_AddrNotAligned);
+}
+
 /*--------------------------------------------------------------------------*/
 /* Codetabellenverwaltung */
 
@@ -697,6 +708,9 @@ static void InitFields(void)
   InstTable = CreateInstTable(201);
 
   AddInstTable(InstTable, "REG", 0, CodeREG);
+  AddMoto16Pseudo(InstTable, e_moto_pseudo_flags_be);
+
+  inst_table_set_prefix_proc(InstTable, check_pc_even, 0);
 
   InstrZ = 0;
   AddFixed("BKPT" , 0x0000, False);
@@ -842,36 +856,16 @@ static Boolean DecodeAttrPart_MCORE(void)
 
 static void MakeCode_MCORE(void)
 {
-  InstProc inst_proc;
-  Word inst_index;
-
-  CodeLen = 0;
-
-  OpSize = (AttrPartOpSize[0] != eSymbolSizeUnknown) ? AttrPartOpSize[0] : eSymbolSize32Bit;
-  DontPrint = False;
+  if (AttrPartOpSize[0] == eSymbolSizeUnknown)
+    AttrPartOpSize[0] = eSymbolSize32Bit;
+  OpSize = AttrPartOpSize[0];
 
   /* Nullanweisung */
 
   if ((*OpPart.str.p_str == '\0') && !*AttrPart.str.p_str && (ArgCnt == 0)) return;
 
-  /* Pseudoanweisungen */
-
-  if (DecodeMoto16Pseudo(OpSize,True)) return;
-
-  inst_proc = inst_fnc_table_search(InstTable, OpPart.str.p_str, &inst_index);
-  if (!inst_proc)
-  {
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
-    return;
-  }
-
-  /* Befehlszaehler ungerade ? */
-
-  if (Odd(EProgCounter())) WrError(ErrNum_AddrNotAligned);
-
-  /* alles aus der Tabelle */
-
-  inst_proc(inst_index);
 }
 
 static Boolean IsDef_MCORE(void)

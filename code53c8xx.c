@@ -19,6 +19,7 @@
 #include "headids.h"
 #include "strutil.h"
 #include "codevars.h"
+#include "codepseudo.h"
 #include "intpseudo.h"
 #include "errmsg.h"
 
@@ -981,6 +982,9 @@ static void AddReg(const char *NName, LargeWord Adr, Word Mask)
 static void InitFields(void)
 {
   InstTable = CreateInstTable(51);
+
+  add_null_pseudo(InstTable);
+
   AddInstTable(InstTable, "NOP"     , 0x80, DecodeFixed);
   AddInstTable(InstTable, "DISCONNECT" , 0x48, DecodeFixed);
   AddInstTable(InstTable, "JUMP"    , 0,    DecodeJmps);
@@ -1069,6 +1073,8 @@ static void InitFields(void)
   AddReg("SCRATCHI" , 0x78,                                             M_53C875 + M_53C895);
   AddReg("SCRATCHJ" , 0x7c,                                             M_53C875 + M_53C895);
   AddReg(NULL       , 0x00, 0);
+
+  AddIntelPseudo(InstTable, eIntPseudoFlag_LittleEndian);
 }
 
 static void DeinitFields(void)
@@ -1081,17 +1087,6 @@ static void DeinitFields(void)
 
 static void MakeCode_53c8xx(void)
 {
-  CodeLen = 0;
-  DontPrint = False;
-
-  /* zu ignorierendes */
-
-  if (Memo(""))
-    return;
-
-  if (DecodeIntelPseudo(False))
-    return;
-
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }

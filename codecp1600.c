@@ -710,6 +710,8 @@ static void InitFields(void)
 {
 	InstTable = CreateInstTable(128);
 
+  add_null_pseudo(InstTable);
+
 	/* Data Access Instructions */
 	AddRegAdrMVO("MVO", 0x0240);
 	AddRegRegMVO("MVO@", 0x0240);
@@ -829,11 +831,6 @@ static void DeinitFields(void)
 
 static void MakeCode_CP1600(void)
 {
-	CodeLen = 0;
-	DontPrint = False;
-
-	if (Memo("")) return;
-
 	if (!LookupInstTable(InstTable, OpPart.str.p_str))
 		WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }

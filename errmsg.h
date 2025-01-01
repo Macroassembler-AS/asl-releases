@@ -166,6 +166,7 @@ typedef enum
   ErrNum_UndefdForward = 1488,
   ErrNum_ContForward = 1489,
   ErrNum_InvFuncArgCnt = 1490,
+  ErrNum_DupFuncArgName = 1491,
   ErrNum_MsgMissingLTORG = 1495,
   ErrNum_InstructionNotSupported = 1500,
   ErrNum_FPUNotEnabled = 1501,

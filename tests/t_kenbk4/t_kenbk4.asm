@@ -99,3 +99,10 @@ mybit	bit	6,34h
 ; ROTATE [Direction], [Places], [Register]
 ; NOOP (no parameters)
 ; HALT (no parameters)
+
+;-----------------------------------------------------
+; standard Intel/MASM-style pseudo instructions
+
+	db	1,2,3
+	dw	3,2,1
+	dd	1000

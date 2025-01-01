@@ -62,105 +62,104 @@ static as_cmd_result_t cmd_write_version(Boolean negate, const char *p_arg, as_c
   return e_cmd_ok;
 }
 
-static as_cmd_result_t ProcessParam(const as_cmd_rec_t *p_cmd_recs, size_t cmd_rec_cnt, const char *O_Param,
-                                    const char *O_Next, Boolean AllowLink,
+static Boolean is_arg_leadin(char p)
+{
+  return (p == '-')
+#ifdef SLASHARGS
+      || (p == '/')
+#endif
+      || (p == '+');
+}
+
+static as_cmd_result_t ProcessParam(const as_cmd_rec_t *p_cmd_recs, size_t cmd_rec_cnt, const char *p_param,
+                                    const char *p_next, Boolean AllowLink,
                                     as_cmd_results_t *p_results)
 {
-  size_t Start;
   Boolean Negate;
-  size_t z, Search;
   as_cmd_result_t TempRes;
-  String Param, Next;
+  const char *p_act_next;
 
-  strmaxcpy(Param, O_Param, STRINGSIZE);
-  strmaxcpy(Next, O_Next, STRINGSIZE);
-
-  if ((*Next == '-')
-   || (*Next == '+')
-#ifdef SLASHARGS
-   || (*Next == '/')
-#endif
-   || (*Next == '@'))
-    *Next = '\0';
-  if (*Param == '@')
+  if (as_strcasecmp(p_param, "-intsyntax"))
+    p_act_next = (is_arg_leadin(*p_next) || (*p_next == '@')) ? "" : p_next;
+  else
+    p_act_next = p_next;
+  if (*p_param == '@')
   {
     if (AllowLink)
     {
-      return ProcessFile(Param + 1, p_cmd_recs, cmd_rec_cnt, p_results);
+      return ProcessFile(p_param + 1, p_cmd_recs, cmd_rec_cnt, p_results);
     }
     else
     {
       fprintf(stderr, "%s\n", catgetmessage(&MsgCat, Num_ErrMsgNoKeyInFile));
-      strmaxcpy(p_results->error_arg, O_Param, sizeof(p_results->error_arg));
+      strmaxcpy(p_results->error_arg, p_param, sizeof(p_results->error_arg));
       return e_cmd_err;
     }
   }
-  if ((*Param == '-')
-#ifdef SLASHARGS
-   || (*Param == '/')
-#endif
-   || (*Param == '+'))
+  if (is_arg_leadin(*p_param))
   {
-    Negate = (*Param == '+');
-    Start = 1;
+    size_t Search;
+    int cnv_up_lo = 0;
 
-    if (Param[Start] == '#')
+    Negate = (*p_param == '+');
+    p_param++;
+    if (*p_param == '#')
     {
-      for (z = Start + 1; z < (size_t)strlen(Param); z++)
-        Param[z] = as_toupper(Param[z]);
-      Start++;
+      cnv_up_lo = 1;
+      p_param++;
     }
-    else if (Param[Start] == '~')
+    else if (*p_param == '~')
     {
-      for (z = Start + 1; z < (size_t)strlen(Param); z++)
-        Param[z] = as_tolower(Param[z]);
-      Start++;
+      cnv_up_lo = -1;
+      p_param++;
     }
 
-    TempRes = e_cmd_ok;
-
-    Search = 0;
     for (Search = 0; Search < cmd_rec_cnt; Search++)
-      if ((strlen(p_cmd_recs[Search].p_ident) > 1) && (!as_strcasecmp(Param + Start, p_cmd_recs[Search].p_ident)))
+      if ((strlen(p_cmd_recs[Search].p_ident) > 1) && (!as_strcasecmp(p_param, p_cmd_recs[Search].p_ident)))
         break;
     if (Search < cmd_rec_cnt)
-      TempRes = p_cmd_recs[Search].callback(Negate, Next);
-    else if (!as_strcasecmp(Param + Start, "help"))
-      TempRes = cmd_write_help(Negate, Next, p_results);
-    else if (!as_strcasecmp(Param + Start, "version"))
-      TempRes = cmd_write_version(Negate, Next, p_results);
+      TempRes = p_cmd_recs[Search].callback(Negate, p_act_next);
+    else if (!as_strcasecmp(p_param, "help"))
+      TempRes = cmd_write_help(Negate, p_act_next, p_results);
+    else if (!as_strcasecmp(p_param, "version"))
+      TempRes = cmd_write_version(Negate, p_act_next, p_results);
 
     else
     {
-      for (z = Start; z < (size_t)strlen(Param); z++)
-        if (TempRes != e_cmd_err)
-        {
-          Search = 0;
-          for (Search = 0; Search < cmd_rec_cnt; Search++)
-            if ((strlen(p_cmd_recs[Search].p_ident) == 1) && (p_cmd_recs[Search].p_ident[0] == Param[z]))
-              break;
-          if (Search >= cmd_rec_cnt)
-            TempRes = e_cmd_err;
-          else
+      TempRes = e_cmd_ok;
+      for (; *p_param; p_param++)
+      {
+        char p = *p_param;
+
+        if (cnv_up_lo)
+          p = (cnv_up_lo > 0) ? as_toupper(p) : as_tolower(p);
+        Search = 0;
+        for (Search = 0; Search < cmd_rec_cnt; Search++)
+          if ((strlen(p_cmd_recs[Search].p_ident) == 1) && (p_cmd_recs[Search].p_ident[0] == p))
+            break;
+        if (Search >= cmd_rec_cnt)
+          TempRes = e_cmd_err;
+        else
+          switch (p_cmd_recs[Search].callback(Negate, p_act_next))
           {
-            switch (p_cmd_recs[Search].callback(Negate, Next))
-            {
-              case e_cmd_err:
-                TempRes = e_cmd_err;
-                break;
-              case e_cmd_arg:
-                TempRes = e_cmd_arg;
-                break;
-              case e_cmd_ok:
-                break;
-              case e_cmd_file:
-                break; /** **/
-            }
+            case e_cmd_err:
+              TempRes = e_cmd_err;
+              break;
+            case e_cmd_arg:
+              TempRes = e_cmd_arg;
+              p_act_next = "";
+              break;
+            case e_cmd_ok:
+              break;
+            case e_cmd_file:
+              break; /** **/
           }
-        }
+        if (TempRes == e_cmd_err)
+          break;
+      }
     }
     if (TempRes == e_cmd_err)
-      strmaxcpy(p_results->error_arg, Param, sizeof(p_results->error_arg));
+      strmaxcpy(p_results->error_arg, p_param, sizeof(p_results->error_arg));
     return TempRes;
   }
   else

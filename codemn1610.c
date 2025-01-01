@@ -1633,6 +1633,8 @@ static void InitFields(void)
 {
 	InstTable = CreateInstTable(128);
 
+  add_null_pseudo(InstTable);
+
 	/* Basic MN1610 Instructions */
 	
 	AddAdr("L",   0xc000);
@@ -1772,6 +1774,10 @@ static void InitFields(void)
 
 	AddInstTable(InstTable, "DC", 0, DecodeDC);
 	AddInstTable(InstTable, "DS", 0, DecodeDS);
+#if 0
+	/* AddIntelPseudo(eIntPseudoFlag_LittleEndian); */
+  AddInstTable(InstTable, "DC", e_moto_8_be, DecodeMotoDC);
+#endif
 	
 	StrCompAlloc(&Inner, STRINGSIZE);
 	StrCompAlloc(&InnerZ, STRINGSIZE);
@@ -1789,13 +1795,9 @@ static void DeinitFields(void)
 
 static void MakeCode_MN1610(void)
 {
-	CodeLen = 0;
-	DontPrint = False;
-
-	if (Memo("")) return;
-
-	/* if (DecodeIntelPseudo(False)) return; */
-	/* if (DecodeMoto16Pseudo(eSymbolSize16Bit, True)) return; */
+#if 0
+	AttrPartOpSize[0] = eSymbolSize16Bit;
+#endif
 	
 	if (!LookupInstTable(InstTable, OpPart.str.p_str))
 		WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);

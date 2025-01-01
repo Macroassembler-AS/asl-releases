@@ -682,9 +682,6 @@ static void MakeCode_9331(void)
 {
   int z;
 
-  CodeLen = 0;
-  DontPrint = False;
-
   /* TC9331 knows default instructions: may be NOP or GF command */
 
   if (Memo(""))

@@ -1,0 +1,6 @@
++------------------------- Test Application MC8008 --------------------------+
+|                                                                            |
+|         A memcpy() implementation for the Intel 8008, taken from the       |
+|         Wikipedia article about the 8008                                   |
+|                                                                            |
++----------------------------------------------------------------------------+

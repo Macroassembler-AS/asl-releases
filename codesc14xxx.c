@@ -222,6 +222,8 @@ static void InitFields(void)
 {
   InstTable = CreateInstTable(301);
 
+  add_null_pseudo(InstTable);
+
   InstrZ = 0;
 
   AddInstTable(InstTable, "DC", 0, DecodeDC);
@@ -407,10 +409,6 @@ static void DeinitFields(void)
 
 static void MakeCode_sc14xxx(void)
 {
-  /* Leeranweisung ignorieren */
-
-  if (Memo("")) return;
-
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }

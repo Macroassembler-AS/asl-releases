@@ -573,6 +573,17 @@ static void Code_lr2r(Word Index)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     check_pc_even(Word index)
+ * \brief  verify program counter is even before assembling machine instruction
+ * ------------------------------------------------------------------------ */
+
+static void check_pc_even(Word index)
+{
+  UNUSED(index);
+  if (Odd(EProgCounter())) WrError(ErrNum_AddrNotAligned);
+}
+
 /*--------------------------------------------------------------------------*/
 /* Dynamic Code Table Handling */
 
@@ -588,8 +599,7 @@ static void InitFields(void)
 {
   InstTable = CreateInstTable(207);
 
-  AddInstTable(InstTable, "REG", 0, CodeREG);
-
+  inst_table_set_prefix_proc(InstTable, check_pc_even, 0);
   AddInstTable(InstTable, "ADD"    , 0x1000, Code_3r);
   AddInstTable(InstTable, "AND"    , 0x3800, Code_3r);
   AddInstTable(InstTable, "EQ"     , 0x3000, Code_3r);
@@ -776,7 +786,6 @@ static void InitFields(void)
   AddInstTable(InstTable, "SETD"   , 0x1010, Code_r2r);
   AddInstTable(InstTable, "SETPT"  , 0x3810, Code_r2r);
 
-
   InstrZ = 0;
   Add_lr2r("SETCLK"  , 0xf810, 0x0fec);
   Add_lr2r("SETPS"   , 0xf800, 0x1fec);
@@ -787,6 +796,10 @@ static void InitFields(void)
   AddInstTable(InstTable, "BRU"    , 0x7300, Code_BRU);
   AddInstTable(InstTable, "BRF"    , 0x7800, Code_cbranch);
   AddInstTable(InstTable, "BRT"    , 0x7000, Code_cbranch);
+
+  inst_table_set_prefix_proc(InstTable, NULL, 0);
+  AddInstTable(InstTable, "REG", 0, CodeREG);
+  AddIntelPseudo(InstTable, eIntPseudoFlag_BigEndian);
 }
 
 static void DeinitFields(void)
@@ -800,39 +813,15 @@ static void DeinitFields(void)
 
 static void MakeCode_XCore(void)
 {
-  InstProc inst_proc;
-  Word inst_index;
-
-  CodeLen = 0;
-
-  DontPrint = False;
-
   /* Null Instruction */
 
   if ((*OpPart.str.p_str == '\0') && (ArgCnt == 0))
     return;
 
-  /* Pseudo Instructions */
-
-  if (DecodeIntelPseudo(True))
-    return;
-
   /* machine instruction in hash table? */
 
-  inst_proc = inst_fnc_table_search(InstTable, OpPart.str.p_str, &inst_index);
-  if (!inst_proc)
-  {
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
-    return;
-  }
-
-  /* Odd Program Counter ? */
-
-  if (Odd(EProgCounter())) WrError(ErrNum_AddrNotAligned);
-
-  /* assemble */
-
-  inst_proc(inst_index);
 }
 
 /*!------------------------------------------------------------------------

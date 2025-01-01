@@ -1533,6 +1533,9 @@ static void AddFixed(const char *NewName, Word NewCode)
 static void InitFields(void)
 {
   InstTable = CreateInstTable(103);
+
+  add_null_pseudo(InstTable);
+
   AddInstTable(InstTable, "MOV", 0, DecodeMOV);
   AddInstTable(InstTable, "XCH", 0, DecodeXCH);
   AddInstTable(InstTable, "MOVT", 0, DecodeMOVT);
@@ -1585,6 +1588,8 @@ static void InitFields(void)
   AddInstTable(InstTable, "AND1", InstrZ++, DecodeLog1);
   AddInstTable(InstTable, "OR1" , InstrZ++, DecodeLog1);
   AddInstTable(InstTable, "XOR1", InstrZ++, DecodeLog1);
+
+  AddIntelPseudo(InstTable, eIntPseudoFlag_BigEndian);
 }
 
 static void DeinitFields(void)
@@ -1596,19 +1601,7 @@ static void DeinitFields(void)
 
 static void MakeCode_75K0(void)
 {
-  CodeLen = 0;
-  DontPrint = False;
-  OpSize = -1;
-
-  /* zu ignorierendes */
-
-  if (Memo(""))
-    return;
-
-  /* Pseudoanweisungen */
-
-  if (DecodeIntelPseudo(True))
-    return;
+  OpSize = eSymbolSizeUnknown;
 
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);

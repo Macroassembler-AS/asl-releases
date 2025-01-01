@@ -59,3 +59,14 @@ myfreg3re	reg	myfreg3e
 		fadd	myfreg1e,myfreg2e,myfreg3e
 		fadd	myfreg1r,myfreg2r,myfreg3r
 		fadd	myfreg1re,myfreg2re,myfreg3re
+
+;-----------------------------------------------------
+; standard Intel/MASM-style pseudo instructions
+
+	include "../t_dx/t_dn.inc"
+	include "../t_dx/t_db.inc"
+	include "../t_dx/t_dw.inc"
+	include "../t_dx/t_dd.inc"
+	include "../t_dx/t_dq.inc"
+	include "../t_dx/t_dt.inc"
+	include "../t_dx/t_do.inc"

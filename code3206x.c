@@ -2679,8 +2679,6 @@ static void ChkPacket(void)
 
 static void MakeCode_3206X(void)
 {
-  CodeLen = 0; DontPrint = False;
-
   /* zu ignorierendes */
 
   if ((*OpPart.str.p_str == '\0') && (*LabPart.str.p_str == '\0'))

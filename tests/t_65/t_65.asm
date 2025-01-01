@@ -284,24 +284,26 @@
         smb5    $12
 
 	byt	0
-	db	255
 	byt	-128
-	db	'a'
 	byt	'ab'	; treated as "ab" due to length
-	db	"a"
 	byt	"ab"
 
 	adr	0
-	dw	65535
 	adr	-32768
-	dw	'a'
 	adr	'ab'
-	dw	"a"
 	adr	"ab"
 
 	ddb	'a'	; big endian storage
 	ddb	'ab'
 	ddb	"a"
 	ddb	"ab"
+
+	; 6502 supports Intel-style DB/DW/DS (Little Endian), with Motorola-style repetition
+
+_MOTO_REP equ	1
+
+	include	"../t_dx/t_db.inc"
+
+	include "../t_dx/t_dw.inc"
 
 	ds	10

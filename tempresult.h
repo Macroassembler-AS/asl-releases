@@ -77,8 +77,10 @@ struct sTempResult
 typedef struct sTempResult TempResult;
 
 extern void as_tempres_ini(TempResult *p_res);
+extern TempResult *as_tempres_dyn_ini(void);
 
 extern void as_tempres_free(TempResult *p_res);
+extern void as_tempres_dyn_free(TempResult *p_res);
 
 extern void as_tempres_set_none(TempResult *p_res);
 
@@ -102,6 +104,6 @@ extern int as_tempres_cmp(const TempResult *p_res1, const TempResult *p_res2);
 
 extern int TempResultToFloat(TempResult *pResult);
 
-extern int as_tempres_append_dynstr(struct as_dynstr *p_dest, const TempResult *pResult);
+extern int as_tempres_append_dynstr(struct as_dynstr *p_dest, const TempResult *pResult, int int_radix);
 
 #endif /* _TEMPRESULT_H */

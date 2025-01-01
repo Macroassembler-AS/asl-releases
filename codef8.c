@@ -353,6 +353,8 @@ static void InitFields(void)
 {
   InstTable = CreateInstTable(101);
 
+  add_null_pseudo(InstTable);
+
   AddFixed("ADC", 0x8e);
   AddFixed("AM" , 0x88);
   AddFixed("AMD", 0x89);
@@ -418,6 +420,16 @@ static void InitFields(void)
 
   AddInstTable(InstTable, "LR", 0, DecodeLR);
   AddInstTable(InstTable, "PORT", 0, DecodePORT);
+
+  /* DS is a machine instruction on F8, so we cannot use AddIntelPseudo(): */
+
+  AddInstTable(InstTable, "DN", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt, DecodeIntelDN);
+  AddInstTable(InstTable, "DB", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString, DecodeIntelDB);
+  AddInstTable(InstTable, "DW", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_AllowFloat, DecodeIntelDW);
+  AddInstTable(InstTable, "DD", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_AllowFloat, DecodeIntelDD);
+  AddInstTable(InstTable, "DQ", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_AllowFloat, DecodeIntelDQ);
+  AddInstTable(InstTable, "DT", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_AllowFloat, DecodeIntelDT);
+  AddInstTable(InstTable, "DO", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_AllowFloat, DecodeIntelDO);
 }
 
 static void DeinitFields(void)
@@ -429,19 +441,6 @@ static void DeinitFields(void)
 
 static void MakeCode_F8(void)
 {
-  CodeLen = 0; DontPrint = False;
-
-  /* zu ignorierendes */
-
-  if (Memo("")) return;
-
-  /* Pseudoanweisungen - DS is a machine instruction on F8 */
-
-  if (!Memo("DS"))
-  {
-    if (DecodeIntelPseudo(True)) return;
-  }
-
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }

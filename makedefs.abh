@@ -214,6 +214,6 @@ include $(OBJDIR)h_bpemu.dep
 include $(OBJDIR)h_be_le.dep
 include $(OBJDIR)h_stringlists.dep
 include $(OBJDIR)ushyph.dep
-include $(OBJDIR)ushyph.dep
+include $(OBJDIR)grhyph.dep
 include $(OBJDIR)umlaut.dep
 include $(OBJDIR)unumlaut.dep

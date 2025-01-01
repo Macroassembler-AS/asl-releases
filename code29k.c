@@ -1017,6 +1017,8 @@ static void InitFields(void)
   AddSP("INTE",161);
   AddSP("FPS", 162);
   AddSP(NULL ,   0);
+
+  AddIntelPseudo(InstTable, eIntPseudoFlag_BigEndian);
 }
 
 static void DeinitFields(void)
@@ -1056,17 +1058,9 @@ static void InternSymbol_29K(char *pArg, TempResult *pResult)
 
 static void MakeCode_29K(void)
 {
-  CodeLen = 0;
-  DontPrint = False;
-
   /* Nullanweisung */
 
   if (Memo("") && !*AttrPart.str.p_str && (ArgCnt == 0))
-    return;
-
-  /* Pseudoanweisungen */
-
-  if (DecodeIntelPseudo(True))
     return;
 
   if (!LookupInstTable(InstTable, OpPart.str.p_str))

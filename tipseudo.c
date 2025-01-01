@@ -579,9 +579,8 @@ static Boolean Is99(const char *pStr, Integer *pNum)
  * Global Functions
  *****************************************************************************/
 
-Boolean DecodeTIPseudo(void)
+Boolean decode_ti_qxx(void)
 {
-  static PInstTable InstTable;
   Integer Num;
 
   /* Qxx */
@@ -602,22 +601,37 @@ Boolean DecodeTIPseudo(void)
     return True;
   }
 
+  return False;
+}
+
+void add_ti_pseudo(PInstTable p_inst_table)
+{
+  AddInstTable(p_inst_table, "RES"    , 0, DecodeRES);
+  AddInstTable(p_inst_table, "BSS"    , 0, DecodeBSS_TI);
+  AddInstTable(p_inst_table, "DATA"   , 0, DecodeDATA_TI);
+  AddInstTable(p_inst_table, "STRING" , 0, DecodeSTRING);
+  AddInstTable(p_inst_table, "RSTRING", 0, DecodeRSTRING);
+  AddInstTable(p_inst_table, "BYTE"   , 0, DecodeBYTE);
+  AddInstTable(p_inst_table, "WORD"   , 0, DecodeWORD);
+  AddInstTable(p_inst_table, "LONG"   , 0, DecodeLONG);
+  AddInstTable(p_inst_table, "FLOAT"  , 0, DecodeFLOAT);
+  AddInstTable(p_inst_table, "DOUBLE" , 0, DecodeDOUBLE);
+  AddInstTable(p_inst_table, "EFLOAT" , 0, DecodeEFLOAT);
+  AddInstTable(p_inst_table, "BFLOAT" , 0, DecodeBFLOAT);
+  AddInstTable(p_inst_table, "TFLOAT" , 0, DecodeTFLOAT);
+}
+
+Boolean DecodeTIPseudo(void)
+{
+  static PInstTable InstTable;
+
+  if (decode_ti_qxx())
+    return True;
+
   if (!InstTable)
   {
     InstTable = CreateInstTable(23);
-    AddInstTable(InstTable, "RES"    , 0, DecodeRES);
-    AddInstTable(InstTable, "BSS"    , 0, DecodeBSS_TI);
-    AddInstTable(InstTable, "DATA"   , 0, DecodeDATA_TI);
-    AddInstTable(InstTable, "STRING" , 0, DecodeSTRING);
-    AddInstTable(InstTable, "RSTRING", 0, DecodeRSTRING);
-    AddInstTable(InstTable, "BYTE"   , 0, DecodeBYTE);
-    AddInstTable(InstTable, "WORD"   , 0, DecodeWORD);
-    AddInstTable(InstTable, "LONG"   , 0, DecodeLONG);
-    AddInstTable(InstTable, "FLOAT"  , 0, DecodeFLOAT);
-    AddInstTable(InstTable, "DOUBLE" , 0, DecodeDOUBLE);
-    AddInstTable(InstTable, "EFLOAT" , 0, DecodeEFLOAT);
-    AddInstTable(InstTable, "BFLOAT" , 0, DecodeBFLOAT);
-    AddInstTable(InstTable, "TFLOAT" , 0, DecodeTFLOAT);
+    add_ti_pseudo(InstTable);
   }
 
   return LookupInstTable(InstTable, OpPart.str.p_str);

@@ -77,6 +77,7 @@ Boolean MakeCrossList;	                 /* Querverweisliste ? */
 Boolean MakeSectionList;                 /* Sektionsliste ? */
 Boolean MakeIncludeList;                 /* Includeliste ? */
 Boolean DefRelaxedMode;                  /* alle Integer-Syntaxen zulassen ? */
+as_dynstr_t def_int_syntax;              /* default integer syntax modifiers */
 Word ListMask;                           /* Listingmaske */
 Boolean list_macro_handles;              /* add macros' symbol handles to listing? */
 ShortInt ExtendErrors;	                 /* erweiterte Fehlermeldungen */

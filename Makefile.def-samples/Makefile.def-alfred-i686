@@ -19,6 +19,9 @@ CFLAGS_GPP = $(CFLAGS_COMMON) $(CFLAGS_GCC_EXTRA) $(CFLAGS_CPPVER)
 CFLAGS_CLANGPP = $(CFLAGS_COMMON) $(CFLAGS_CLANGPP_EXTRA) $(CFLAGS_CPPVER)
 CFLAGS_TCC = $(CFLAGS_COMMON) $(CFLAGS_C) $(CFLAGS_TCC_EXTRA) $(CFLAGS_CVER)
 
+CFLAGS_ASAN = -fsanitize=address -static-libasan
+LDFLAGS_ASAN = $(CFLAGS_ASAN)
+
 # ...for host-side build tools:
 
 OBJDIR =
@@ -56,6 +59,17 @@ ifeq ($(TARG_OBJDIR),i686-linux/)
  ifeq ($(VALGRIND),1)
   TARG_RUNCMD = "valgrind --leak-check=full"
  endif
+endif
+
+# ASAN requires compilation & linking with different flags:
+
+ifeq ($(TARG_OBJDIR),i686-linux-asan/)
+ TARG_CC = gcc
+ TARG_CFLAGS = $(CFLAGS_ASAN) $(CFLAGS_GCC)
+ TARG_OBJEXTENSION = .o
+ TARG_LD = $(TARG_CC)
+ TARG_LDFLAGS = $(LDFLAGS_ASAN) $(LDFLAGS)
+ TARG_EXEXTENSION =
 endif
 
 # PPC build to test big endian

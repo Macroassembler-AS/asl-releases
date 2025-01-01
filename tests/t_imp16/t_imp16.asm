@@ -737,3 +737,14 @@ here	equ	.
 	expect	420
 	mpy	(ac3)
 	endexpect
+
+;-----------------------------------------------------
+; standard Intel/MASM-style pseudo instructions
+
+	;include "../t_dx/t_dn.inc"	; avoid padding warnings
+	;include "../t_dx/t_db.inc"
+	include "../t_dx/t_dw.inc"
+	include "../t_dx/t_dd.inc"
+	include "../t_dx/t_dq.inc"
+	include "../t_dx/t_dt.inc"
+	include "../t_dx/t_do.inc"

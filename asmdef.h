@@ -246,6 +246,7 @@ extern Boolean MakeCrossList;
 extern Boolean MakeSectionList;
 extern Boolean MakeIncludeList;
 extern Boolean DefRelaxedMode;
+extern as_dynstr_t def_int_syntax;
 extern Word ListMask;
 extern Boolean list_macro_handles;
 extern ShortInt ExtendErrors;

@@ -67,7 +67,7 @@
 
 \vspace{1cm}\par
 
-{\large Edition November 2024}
+{\large Edition Januar 2025}
 \end{raggedright}
 
 \clearpage
@@ -894,6 +894,10 @@ At the moment, the following switches are defined:
 \item{\tty{listline-prefix}: This option allows to modify the data that
       is printed in front of every source line in the listing.  The
       structure of the format string is described in \ref{SectListing}.}
+\item{\label{radix}\tty{RADIX}: This option changes the default number system
+      to a value between 2 and 36, thereby overriding the default of 10.
+      The value given by this switch can itself be overridden in the program
+      by the statement odf same name.}
 \item{\label{listradix}\tty{LISTRADIX}: By default, all numeric output in the listing
       (addresses, generated code, symbol values) is written in hexadecimal
       notation.  This switch requests usage of a different number system in the
@@ -1053,6 +1057,10 @@ chapters \ref{ChapShareMain} resp. \ref{ChapShareOrder}.
 \item{\tty{relaxed}: this switch enables the RELAXED mode right from the
       beginning of the program, which otherwise has to be enabled by the
       pseudo instruction of sane name(see section \ref{SectRELAXED}).}
+\item{\tty{intsyntax}: this switch allows to augment or reduce the list of
+      allowed integer constant syntaxes right from the beginning of the
+      program.  See section \ref{SectINTSYNTAX} for a list of allowed
+      arguments.}
 \item{\tty{supmode}: this switch enables right from the beginning of the
       program usage of machine instructions that may only be used in the
       processor's supervisor mode (see section \ref{SectSUPMODE}).}
@@ -1766,10 +1774,18 @@ ASCII     &               &             &             & A'..' \\
 \caption{Defined Numbering Systems and Notations\label{TabSystems}}
 \end{table*}
 In case the numbering system has not been explicitly stated by adding the
-special control characters listed in the table, \asname{} assumes the base given
-with the {\tt RADIX} statement (which has itself 10 as default).  This
-statement allows to set up 'unusual' numbering systems, i.e. others than
-2, 8, 10, or 16.
+special control characters listed in the table, the number system
+is derived as follows:
+\begin{itemize}
+\item{If a {\tt RADIX} statement was given, use the number system
+      given by it, otherwise:}
+\item{If a {\tt -radix} command line switch was given, use the number
+      system given by it, otherwise:}
+\item{Use decimal (base 10).}
+\end{itemize}
+Both the {\tt RADIX} statement and the  {\tt -radix} command line switch
+also allow to set up 'unusual' numbering systems, i.e. others than 2, 8, 10,
+or 16.
 
 Valid digits are numbers from 0 to 9 and letters from A to Z (value 10 to
 35) up to the numbering system's base minus one. An exception from this is
@@ -6847,8 +6863,7 @@ override builtin functions.  This is a possible source for phase
 errors.  Such definitions therefore should be done before the first
 call!
 
-The result's type may depend on the type of the input arguments as
-the arguments are textually inserted into the function's formula.
+The result's type may depend on the type of the input arguments.
 For example, the function
 \begin{verbatim}
 double  function x,x+x
@@ -7455,6 +7470,9 @@ some possible pitfalls to keep in mind which are described in section
 Independent of the current setting, the argument of {\tt RADIX} is {\em
 always decimal}; furthermore, no symbolic or formula expressions may be
 used as argument. Only use simple constant numbers!
+
+A {\tt RADIX} statement overrides a setting given by a {\tt -radix}
+command line switch.
 
 If the IM61x0 is the current target, the instructions \tty{DECIMAL} and
 \tty{OCTAL} are available as shortforms for \tty{RADIX 10} respectively
@@ -13081,6 +13099,10 @@ described by:
                 does not match the number of arguments defined in the
                 function definition.}
                {none}
+\errentry{1491}{duplicate function argument name}
+               {error}
+               {Two or more arguments of a function have the same name.}
+               {the argument with duplicate name.}
 \errentry{1495}{unresolved literals (missing LTORG)}
                {error}
                {At the end of the program, or just before switching to

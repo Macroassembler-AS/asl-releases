@@ -14,6 +14,7 @@
 
 #include "nls.h"
 #include "strutil.h"
+#include "bpemu.h"
 #include "chunks.h"
 #include "asmdef.h"
 #include "asmsub.h"
@@ -346,6 +347,44 @@ static void DecodeJmp(Word Index)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     decode_js(Word Index)
+ * \brief  decode JS (macro) instruction
+ * \return 
+ * ------------------------------------------------------------------------ */
+
+static void decode_js(Word Index)
+{
+  Byte reg;
+
+  UNUSED(Index);
+
+  if (!ChkArgCnt(2, 2));
+  else if (decode_ptr_reg(&ArgStr[1], &reg) != eIsReg) WrStrErrorPos(ErrNum_InvReg, &ArgStr[1]);
+  else
+  {
+    Boolean ok;
+    Word address = EvalStrIntExpression(&ArgStr[2], UInt16, &ok);
+
+    if (ok)
+    {
+      address--;
+      /* LDI H(address) */
+      BAsmCode[CodeLen++] = 0xc4;
+      BAsmCode[CodeLen++] = Hi(address);
+      /* XPAH Pn */
+      BAsmCode[CodeLen++] = 0x34 + reg;
+      /* LDI L(address) */
+      BAsmCode[CodeLen++] = 0xc4;
+      BAsmCode[CodeLen++] = Lo(address);
+      /* XPAL Pn */
+      BAsmCode[CodeLen++] = 0x30 + reg;
+      /* XPPC Pn */
+      BAsmCode[CodeLen++] = 0x3c + reg;
+    }
+  }
+}
+
 static void DecodeLD(Word Index)
 {
   if (ChkArgCnt(1, 1))
@@ -386,6 +425,8 @@ static void InitFields(void)
 {
   InstTable = CreateInstTable(201);
 
+  add_null_pseudo(InstTable);
+
   AddFixed("LDE" ,0x40); AddFixed("XAE" ,0x01); AddFixed("ANE" ,0x50);
   AddFixed("ORE" ,0x58); AddFixed("XRE" ,0x60); AddFixed("DAE" ,0x68);
   AddFixed("ADE" ,0x70); AddFixed("CAE" ,0x78); AddFixed("SIO" ,0x19);
@@ -406,10 +447,19 @@ static void InitFields(void)
 
   AddJmp("JMP" , 0x90); AddJmp("JP"  , 0x94); AddJmp("JZ"  , 0x98);
   AddJmp("JNZ" , 0x9c);
+  AddInstTable(InstTable, "JS", 0x00, decode_js);
 
   AddInstTable(InstTable, "ILD", 0xa8, DecodeLD);
   AddInstTable(InstTable, "DLD", 0xb8, DecodeLD);
   AddInstTable(InstTable, "REG" , 0, CodeREG);
+
+  AddIntelPseudo(InstTable, eIntPseudoFlag_DynEndian);
+  AddInstTable(InstTable, "BYTE", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt, DecodeIntelDB);
+  AddInstTable(InstTable, "DBYTE", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt, DecodeIntelDW);
+  AddInstTable(InstTable, ".BYTE", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt, DecodeIntelDB);
+  AddInstTable(InstTable, ".DBYTE", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt, DecodeIntelDW);
+  AddInstTable(InstTable, "ASCII", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowString, DecodeIntelDB);
+  AddInstTable(InstTable, ".ASCII", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowString, DecodeIntelDB);
 }
 
 static void DeinitFields(void)
@@ -438,16 +488,6 @@ static void InternSymbol_SCMP(char *pArg, TempResult *pResult)
 
 static void MakeCode_SCMP(void)
 {
-  CodeLen = 0; DontPrint = False;
-
-  /* zu ignorierendes */
-
-  if (Memo("")) return;
-
-  /* Pseudoanweisungen */
-
-  if (DecodeIntelPseudo(TargetBigEndian)) return;
-
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
@@ -463,7 +503,8 @@ static void SwitchTo_SCMP(void)
   SetIntConstMode(eIntConstModeC);
 
   PCSymbol = "$"; HeaderID = 0x6e; NOPCode = 0x08;
-  DivideChars = ","; HasAttrs = False;
+  DivideChars = ",";
+  HasAttrs = False; AttrChars = ".";
 
   ValidSegs = 1 << SegCode;
   Grans[SegCode] = 1; ListGrans[SegCode] = 1; SegInits[SegCode] = 0;

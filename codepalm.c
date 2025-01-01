@@ -1320,26 +1320,43 @@ static void decode_ret(Word code)
 }
 
 /*!------------------------------------------------------------------------
- * \fn     decode_pseudo(void)
- * \brief  handle pseudo instructions
- * \return True if handled
+ * \fn     decode_port(Word index)
+ * \brief  handle PORT instruction
  * ------------------------------------------------------------------------ */
 
-static Boolean decode_pseudo(void)
+static void decode_port(Word index)
 {
-  if (Memo("REG"))
-  {
-    CodeREG(0);
-    return True;
-  }
+  UNUSED(index);
+  CodeEquate(SegIO, 0, SegLimits[SegIO]);
+}
 
-  if (Memo("PORT"))
-  {
-    CodeEquate(SegIO, 0, SegLimits[SegIO]);
-    return True;
-  }
+/*!------------------------------------------------------------------------
+ * \fn     propagate_skip(Word index)
+ * \brief  propagate skip flag for non-machine instructions not generating code
+ * ------------------------------------------------------------------------ */
 
-  return False;
+static void propagate_skip(Word index)
+{
+  UNUSED(index);
+  this_was_skip = last_was_skip;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     make_pc_even(Word index)
+ * \brief  assure PC is even before assembling machine instructions
+ * ------------------------------------------------------------------------ */
+
+static void make_pc_even(Word index)
+{
+  UNUSED(index);
+
+  if (Odd(EProgCounter()))
+  {
+    if (DoPadding)
+      InsertPadding(1, False);
+    else
+      WrError(ErrNum_AddrNotAligned);
+  }
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1353,6 +1370,10 @@ static Boolean decode_pseudo(void)
 static void init_fields(void)
 {
   InstTable = CreateInstTable(201);
+
+  AddInstTable(InstTable, "", 0, propagate_skip);
+
+  inst_table_set_prefix_proc(InstTable, make_pc_even, 0);
 
   AddInstTable(InstTable, "NOP"  , NOPCode, decode_fixed); /* C */
   AddInstTable(InstTable, "HALT" , 0x0000 , decode_fixed); /* C */
@@ -1460,6 +1481,13 @@ static void init_fields(void)
   AddInstTable(InstTable, "CALL" , 0, decode_call); /* C */
   AddInstTable(InstTable, "RCALL" , 0, decode_rcall); /* C */
   AddInstTable(InstTable, "RET"  , 0, decode_ret); /* C */
+
+  inst_table_set_prefix_proc(InstTable, propagate_skip, 0);
+  AddInstTable(InstTable, "REG", 0, CodeREG);
+  AddInstTable(InstTable, "PORT", 0, decode_port);
+
+  inst_table_set_prefix_proc(InstTable, NULL, 0);
+  AddIntelPseudo(InstTable, eIntPseudoFlag_BigEndian);
 }
 
 /*!------------------------------------------------------------------------
@@ -1502,50 +1530,11 @@ static void intern_symbol_palm(char *p_arg, TempResult *p_result)
 
 static void make_code_palm(void)
 {
-  InstProc inst_proc;
-  Word inst_index;
-
-  CodeLen = 0;
-  DontPrint = False;
   this_was_skip = False;
 
-  /* to be ignored */
-
-  if (Memo(""))
-  {
-    this_was_skip = last_was_skip;
-    goto func_exit;
-  }
-
-  /* Pseudo Instructions */
-
-  if (decode_pseudo())
-  {
-    this_was_skip = last_was_skip;
-    goto func_exit;
-  }
-  if (DecodeIntelPseudo(True))
-    return;
-
-  inst_proc = inst_fnc_table_search(InstTable, OpPart.str.p_str, &inst_index);
-  if (!inst_proc)
-  {
+  if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
-    goto func_exit;
-  }
 
-  /* machine instructions may not begin on odd addresses */
-
-  if (Odd(EProgCounter()))
-  {
-    if (DoPadding)
-      InsertPadding(1, False);
-    else
-      WrError(ErrNum_AddrNotAligned);
-  }
-  inst_proc(inst_index);
-
-func_exit:
   last_was_skip = this_was_skip;
 }
 

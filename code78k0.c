@@ -18,6 +18,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmitree.h"
+#include "codepseudo.h"
 #include "intpseudo.h"
 #include "codevars.h"
 #include "errmsg.h"
@@ -1312,6 +1313,8 @@ static void InitFields(void)
 {
   InstTable = CreateInstTable(201);
 
+  add_null_pseudo(InstTable);
+
   AddInstTable(InstTable, "MOV"  , 0, DecodeMOV);
   AddInstTable(InstTable, "XCH"  , 0, DecodeXCH);
   AddInstTable(InstTable, "MOVW" , 0, DecodeMOVW);
@@ -1362,6 +1365,8 @@ static void InitFields(void)
 
   InstrZ = 0;
   AddBRel("BTCLR"); AddBRel("BT"); AddBRel("BF");
+
+  AddIntelPseudo(InstTable, eIntPseudoFlag_LittleEndian);
 }
 
 static void DeinitFields(void)
@@ -1373,17 +1378,7 @@ static void DeinitFields(void)
 
 static void MakeCode_78K0(void)
 {
-  CodeLen = 0;
-  DontPrint = False;
-  OpSize = 0;
-
-  /* zu ignorierendes */
-
-  if (Memo("")) return;
-
-  /* Pseudoanweisungen */
-
-  if (DecodeIntelPseudo(False)) return;
+  OpSize = eSymbolSize8Bit;
 
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);

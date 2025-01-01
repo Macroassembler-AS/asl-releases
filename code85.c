@@ -1374,6 +1374,8 @@ static void InitFields(void)
 {
   InstTable = CreateInstTable(201);
 
+  add_null_pseudo(InstTable);
+
   AddInstTable(InstTable, "MOV" , 0, DecodeMOV);
   AddInstTable(InstTable, "MVI" , 0, DecodeMVI);
   AddInstTable(InstTable, "LXI" , 0, DecodeLXI);
@@ -1498,6 +1500,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "RETEM", 0xedfd, DecodeRETEM);
 
   AddZ80Syntax(InstTable);
+  AddIntelPseudo(InstTable, eIntPseudoFlag_LittleEndian);
 }
 
 static void DeinitFields(void)
@@ -1509,17 +1512,7 @@ static void DeinitFields(void)
 
 static void MakeCode_85(void)
 {
-  CodeLen = 0;
-  DontPrint = False;
-  OpSize = 0;
-
-  /* zu ignorierendes */
-
-  if (Memo("")) return;
-
-  /* Pseudoanweisungen */
-
-  if (DecodeIntelPseudo(False)) return;
+  OpSize = eSymbolSize8Bit;
 
   /* suchen */
 

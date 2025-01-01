@@ -14,6 +14,8 @@
  * Global Functions
  *****************************************************************************/
 
-extern Boolean DecodeNatPseudo(void);
+struct sInstTable;
+
+extern void AddNatPseudo(struct sInstTable *InstTable);
 
 #endif /* _NATPSEUDO_H */

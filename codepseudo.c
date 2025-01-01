@@ -298,3 +298,19 @@ int NAME(const struct as_nonz_dynstr *p_str, int bytes_per_dword, Boolean big_en
 
 declare_string_2_xasm_code(string_2_dasm_code, LongWord, DAsmCode)
 declare_string_2_xasm_code(string_2_wasm_code, Word, WAsmCode)
+
+/*!------------------------------------------------------------------------
+ * \fn     add_null_pseudo(struct sInstTable *p_inst_table)
+ * \brief  add handle to ignore empty instruction
+ * \param  p_inst_table table to augment
+ * ------------------------------------------------------------------------ */
+
+void decode_null(Word code)
+{
+  UNUSED(code);
+}
+
+void add_null_pseudo(struct sInstTable *p_inst_table)
+{
+  AddInstTable(p_inst_table, "", 0, decode_null);
+}

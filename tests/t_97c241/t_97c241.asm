@@ -407,3 +407,14 @@ reg_rd14	equ	rd14
 		cpl.w	(reg_rw5  + reg_rd8  *4 + 12h)
 		cpl.d	(rd4  + rw9  *2 + 12h)
 		cpl.d	(reg_rd4  + reg_rw9  *2 + 12h)
+
+;-----------------------------------------------------
+; standard Intel/MASM-style pseudo instructions
+
+	include "../t_dx/t_dn.inc"
+	include "../t_dx/t_db.inc"
+	include "../t_dx/t_dw.inc"
+	include "../t_dx/t_dd.inc"
+	include "../t_dx/t_dq.inc"
+	include "../t_dx/t_dt.inc"
+	include "../t_dx/t_do.inc"

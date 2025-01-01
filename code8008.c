@@ -1072,6 +1072,8 @@ static void InitFields(void)
 
   SetDynamicInstTable(InstTable = CreateInstTable(503));
 
+  add_null_pseudo(InstTable);
+
   AddFixed("HLT" , 0x00, eSyntax808x);
   AddFixed("HALT", 0x00, eSyntaxZ80);
   AddFixed("NOP" , 0xc0, eSyntaxBoth); /* = MOV A,A */
@@ -1227,6 +1229,8 @@ static void InitFields(void)
 
   AddInstTable(InstTable, "PORT", 0, DecodePORT);
   AddZ80Syntax(InstTable);
+  AddInstTable(InstTable, "DFB", eIntPseudoFlag_LittleEndian | eIntPseudoFlag_AllowInt, DecodeIntelDB);
+  AddIntelPseudo(InstTable, eIntPseudoFlag_LittleEndian);
 }
 
 static void DeinitFields(void)
@@ -1239,16 +1243,6 @@ static void DeinitFields(void)
 
 static void MakeCode_8008(void)
 {
-  CodeLen = 0; DontPrint = False;
-
-  /* zu ignorierendes */
-
-  if (Memo("")) return;
-
-  /* Pseudoanweisungen */
-
-  if (DecodeIntelPseudo(False)) return;
-
   /* der Rest */
 
   if (!LookupInstTable(InstTable, OpPart.str.p_str))

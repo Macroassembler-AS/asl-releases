@@ -836,7 +836,7 @@ static void DecodeBit(Word Code)
   {
     if (!as_strcasecmp(ArgStr[1].str.p_str, "@L"))
     {
-      if (Memo("TESTP")) WrError(ErrNum_InvAddrMode);
+      if (3 == Code) WrError(ErrNum_InvAddrMode); /* !TESTP */
       else
       {
         if (Code == 2)
@@ -1158,6 +1158,9 @@ static void AddFixed(const char *NName, Byte NCode)
 static void InitFields(void)
 {
   InstTable = CreateInstTable(203);
+
+  add_null_pseudo(InstTable);
+
   AddInstTable(InstTable, "LD", 0, DecodeLD);
   AddInstTable(InstTable, "LDL", 0, DecodeLDL);
   AddInstTable(InstTable, "LDH", 0, DecodeLDH);
@@ -1193,11 +1196,12 @@ static void InitFields(void)
   AddFixed("RETI", 0x2b);
   AddFixed("NOP" , 0x00);
 
-  InstrZ = 0;
-  AddInstTable(InstTable, "SET", InstrZ++, DecodeBit);
-  AddInstTable(InstTable, "CLR", InstrZ++, DecodeBit);
-  AddInstTable(InstTable, "TEST", InstrZ++, DecodeBit);
-  AddInstTable(InstTable, "TESTP", InstrZ++, DecodeBit);
+  AddInstTable(InstTable, "SET", 0, DecodeBit);
+  AddInstTable(InstTable, "CLR", 1, DecodeBit);
+  AddInstTable(InstTable, "TEST", 2, DecodeBit);
+  AddInstTable(InstTable, "TESTP", 3, DecodeBit);
+
+  AddIntelPseudo(InstTable, eIntPseudoFlag_LittleEndian);
 }
 
 static void DeinitFields(void)
@@ -1209,19 +1213,7 @@ static void DeinitFields(void)
 
 static void MakeCode_47C00(void)
 {
-  CodeLen = 0;
-  DontPrint = False;
-  OpSize = -1;
-
-  /* zu ignorierendes */
-
-  if (Memo(""))
-    return;
-
-  /* Pseudoanweisungen */
-
-  if (DecodeIntelPseudo(False))
-    return;
+  OpSize = eSymbolSizeUnknown;
 
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);

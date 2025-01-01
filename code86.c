@@ -3528,6 +3528,8 @@ static void InitFields(void)
   InstTable = CreateInstTable(403);
   SetDynamicInstTable(InstTable);
 
+  add_null_pseudo(InstTable);
+
   AddInstTable(InstTable, "MOV"  , 0, DecodeMOV);
   AddInstTable(InstTable, "INC"  , 0, DecodeINCDEC);
   AddInstTable(InstTable, "DEC"  , 8, DecodeINCDEC);
@@ -3745,6 +3747,7 @@ static void InitFields(void)
   AddImm16("QTIN",   e_core_all_v55, 0x0fe2);
 
   AddInstTable(InstTable, "REG" , 0, CodeREG);
+  AddIntelPseudo(InstTable, eIntPseudoFlag_LittleEndian);
 }
 
 /*!------------------------------------------------------------------------
@@ -3773,24 +3776,10 @@ static void DeinitFields(void)
 
 static void MakeCode_86(void)
 {
-  CodeLen = 0;
-  DontPrint = False;
   OpSize = eSymbolSizeUnknown;
   PrefixLen = 0;
   NoSegCheck = False;
   UnknownFlag = False;
-
-  /* zu ignorierendes */
-
-  if (Memo(""))
-    return;
-
-  /* Pseudoanweisungen */
-
-  if (DecodeIntelPseudo(False))
-    return;
-
-  /* vermischtes */
 
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);

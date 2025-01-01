@@ -2867,6 +2867,18 @@ static void DecodeJRNG(Word Code)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     check_no_options(Word index)
+ * \brief  check that pseudo ops have no options
+ * ------------------------------------------------------------------------ */
+
+static void check_no_options(Word index)
+{
+  UNUSED(index);
+
+  if (OptionCnt > 0) WrError(ErrNum_WrongOptCnt);
+}
+
 /*------------------------------------------------------------------------*/
 
 static void AddFixed(const char *NName, Word NCode)
@@ -2933,6 +2945,9 @@ static void InitFields(void)
   Format = (char*)malloc(sizeof(char) * STRINGSIZE);
 
   InstTable = CreateInstTable(301);
+
+  add_null_pseudo(InstTable);
+
   AddInstTable(InstTable, "MOV", 0, DecodeMOV);
   AddInstTable(InstTable, "ADD", 0, DecodeADD_SUB);
   AddInstTable(InstTable, "SUB", 1, DecodeADD_SUB);
@@ -3064,7 +3079,9 @@ static void InitFields(void)
   AddInstTable(InstTable, "OR" , InstrZ++, DecodeLog);
   AddInstTable(InstTable, "XOR", InstrZ++, DecodeLog);
 
+  inst_table_set_prefix_proc(InstTable, check_no_options, 0);
   AddInstTable(InstTable, "REG", 0, CodeREG);
+  AddIntelPseudo(InstTable, eIntPseudoFlag_LittleEndian);
 }
 
 static void DeinitFields(void)
@@ -3141,16 +3158,6 @@ static void MakeCode_M16(void)
 
   DOpSize = AttrPartOpSize[0];
   for (z = 1; z <= ArgCnt; OpSize[z++] = eSymbolSizeUnknown);
-
-  /* zu ignorierendes */
-
-  if (Memo(""))
-    return;
-
-  /* Pseudoanweisungen */
-
-  if (DecodeIntelPseudo(False))
-    return;
 
   SplitOptions();
 

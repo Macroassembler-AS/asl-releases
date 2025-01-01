@@ -7,8 +7,8 @@
 CFLAGS_COMMON = -g -O3 -fomit-frame-pointer -Wall -Wundef -Wextra -Werror -pedantic -Wshift-count-overflow
 CFLAGS_C = -Wstrict-prototypes
 CFLAGS_GCC_EXTRA = -Wshift-overflow=2
-CFLAGS_CLANG_EXTRA = -Wshift-overflow
-CFLAGS_CLANGPP_EXTRA = -Wshift-overflow -Wno-deprecated -Wno-keyword-macro
+CFLAGS_CLANG_EXTRA = -Wshift-overflow -Wno-string-plus-int
+CFLAGS_CLANGPP_EXTRA = -Wshift-overflow -Wno-deprecated -Wno-keyword-macro -Wno-string-plus-int
 CFLAGS_TCC_EXTRA = -Wshift-overflow=2
 # leave this out by default, because it prohibits use of long long and long double data types:
 #CFLAGS_CVER = -ansi -std=c89
@@ -18,6 +18,9 @@ CFLAGS_CLANG = $(CFLAGS_COMMON) $(CFLAGS_C) $(CFLAGS_CLANG_EXTRA) $(CFLAGS_CVER)
 CFLAGS_GPP = $(CFLAGS_COMMON) $(CFLAGS_GCC_EXTRA) $(CFLAGS_CPPVER)
 CFLAGS_CLANGPP = $(CFLAGS_COMMON) $(CFLAGS_CLANGPP_EXTRA) $(CFLAGS_CPPVER)
 CFLAGS_TCC = $(CFLAGS_COMMON) $(CFLAGS_C) $(CFLAGS_TCC_EXTRA) $(CFLAGS_CVER)
+
+CFLAGS_ASAN = -fsanitize=address -static-libasan
+LDFLAGS_ASAN = $(CFLAGS_ASAN)
 
 # ...for host-side build tools:
 
@@ -60,6 +63,28 @@ ifeq ($(TARG_OBJDIR),x86_64-linux/)
  endif
 endif
 
+# ASAN requires compilation & linking with different flags:
+
+ifeq ($(TARG_OBJDIR),x86_64-linux-asan/)
+ TARG_CC = gcc
+ TARG_CFLAGS = $(CFLAGS_ASAN) $(CFLAGS_GCC)
+ #TARG_CC = clang
+ #TARG_CFLAGS = $(CFLAGS_CLANG)
+ #TARG_CC = g++
+ #TARG_CFLAGS = $(CFLAGS_ASAN) $(CFLAGS_GPP)
+ #TARG_CC = clang++
+ #TARG_CFLAGS = $(CFLAGS_CLANGPP)
+ #TARG_CC = tcc
+ #TARG_CFLAGS = $(CFLAGS_TCC)
+ TARG_OBJEXTENSION = $(HOST_OBJEXTENSION)
+ TARG_LD = $(TARG_CC)
+ TARG_LDFLAGS = $(LDFLAGS_ASAN) $(LDFLAGS)
+ TARG_EXEXTENSION = $(HOST_EXEXTENSION)
+ ifeq ($(VALGRIND),1)
+  TARG_RUNCMD = "valgrind --leak-check=full"
+ endif
+endif
+
 # build 32 bit Linux binary on 64 bit system
 # gcc-multilib cannot be installed together with cross compilers.
 # In such case, install&use 32 bit GCC also as cross compiler
@@ -71,6 +96,18 @@ ifeq ($(TARG_OBJDIR),i686-linux/)
  TARG_OBJEXTENSION = .o
  TARG_LD = $(TARG_CC)
  TARG_LDFLAGS = $(LDFLAGS)
+ TARG_EXEXTENSION =
+endif
+
+# ASAN requires compilation & linking with different flags:
+
+ifeq ($(TARG_OBJDIR),i686-linux-asan/)
+ TARG_CC = i686-linux-gnu-gcc
+ #TARG_CC = gcc -m32
+ TARG_CFLAGS = $(CFLAGS_ASAN) $(CFLAGS_GCC)
+ TARG_OBJEXTENSION = .o
+ TARG_LD = $(TARG_CC)
+ TARG_LDFLAGS = $(LDFLAGS_ASAN) $(LDFLAGS)
  TARG_EXEXTENSION =
 endif
 

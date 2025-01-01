@@ -513,6 +513,8 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
       msgno = Num_ErrMsgContForward; break;
     case ErrNum_InvFuncArgCnt:
       msgno = Num_ErrMsgInvFuncArgCnt; break;
+    case ErrNum_DupFuncArgName:
+      msgno = Num_ErrMsgDupFuncArgName; break;
     case ErrNum_MsgMissingLTORG:
       msgno = Num_ErrMsgMissingLTORG; break;
     case ErrNum_InstructionNotSupported:

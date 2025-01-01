@@ -17,6 +17,7 @@
 #include "asmitree.h"
 #include "headids.h"
 #include "codevars.h"
+#include "codepseudo.h"
 #include "intpseudo.h"
 #include "natpseudo.h"
 #include "errmsg.h"
@@ -370,6 +371,8 @@ static void InitFields(void)
 {
   InstTable = CreateInstTable(173);
 
+  add_null_pseudo(InstTable);
+
   FixedOrders = (FixedOrder*)malloc(sizeof(FixedOrder) * FixedOrderCnt);
   InstrZ = 0;
   AddFixed("ASC"  , 0x30,   M_CPUCOP410 | M_CPUCOP420 | M_CPUCOP440 | M_CPUCOP444);
@@ -447,6 +450,9 @@ static void InitFields(void)
   AddInstTable(InstTable, "JSRP"  , 0x00, DecodeJSRP);
 
   AddInstTable(InstTable, "JP"    , 0x00, DecodeJP);
+
+  AddNatPseudo(InstTable);
+  AddIntelPseudo(InstTable, eIntPseudoFlag_LittleEndian);
 }
 
 static void DeinitFields(void)
@@ -460,17 +466,6 @@ static void DeinitFields(void)
 
 static void MakeCode_COP4(void)
 {
-  CodeLen = 0; DontPrint = False;
-
-  /* zu ignorierendes */
-
-  if (*OpPart.str.p_str == '\0') return;
-
-  /* pseudo instructions */
-
-  if (DecodeNatPseudo()) return;
-  if (DecodeIntelPseudo(False)) return;
-
   /* machine instructions */
 
   if (!LookupInstTable(InstTable, OpPart.str.p_str))

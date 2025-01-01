@@ -87,24 +87,21 @@ static void DecodeFx(Word Shift)
   }
 }
 
-Boolean DecodeNatPseudo(void)
+/*!------------------------------------------------------------------------
+ * \fn     AddNatPseudo(PInstTable InstTable)
+ * \brief  merge National-style pseudo ops into hash table
+ * \param  InstTable hash table to augment
+ * ------------------------------------------------------------------------ */
+
+void AddNatPseudo(PInstTable InstTable)
 {
-  static PInstTable InstTable = NULL;
-
-  if (!InstTable)
-  {
-    InstTable = CreateInstTable(31);
-
-    AddInstTable(InstTable, "SFR"  , 0     , DecodeSFR);
-    AddInstTable(InstTable, "ADDR" , eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt , DecodeIntelDB);
-    AddInstTable(InstTable, "ADDRW", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt , DecodeIntelDW);
-    AddInstTable(InstTable, "BYTE" , eIntPseudoFlag_AllowInt , DecodeIntelDB);
-    AddInstTable(InstTable, "WORD" , eIntPseudoFlag_AllowInt , DecodeIntelDW);
-    AddInstTable(InstTable, "DSB"  , 0     , DecodeDSx);
-    AddInstTable(InstTable, "DSW"  , 1     , DecodeDSx);
-    AddInstTable(InstTable, "FB"   , 0     , DecodeFx);
-    AddInstTable(InstTable, "FW"   , 1     , DecodeFx);
-  }
-
-  return LookupInstTable(InstTable, OpPart.str.p_str);
+  AddInstTable(InstTable, "SFR"  , 0     , DecodeSFR);
+  AddInstTable(InstTable, "ADDR" , eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt , DecodeIntelDB);
+  AddInstTable(InstTable, "ADDRW", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt , DecodeIntelDW);
+  AddInstTable(InstTable, "BYTE" , eIntPseudoFlag_LittleEndian | eIntPseudoFlag_AllowInt , DecodeIntelDB);
+  AddInstTable(InstTable, "WORD" , eIntPseudoFlag_LittleEndian | eIntPseudoFlag_AllowInt , DecodeIntelDW);
+  AddInstTable(InstTable, "DSB"  , 0     , DecodeDSx);
+  AddInstTable(InstTable, "DSW"  , 1     , DecodeDSx);
+  AddInstTable(InstTable, "FB"   , 0     , DecodeFx);
+  AddInstTable(InstTable, "FW"   , 1     , DecodeFx);
 }

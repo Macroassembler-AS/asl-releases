@@ -3327,6 +3327,8 @@ static void InitFields(void)
   InstTable = CreateInstTable(301);
   SetDynamicInstTable(InstTable);
 
+  add_null_pseudo(InstTable);
+
   AddInstr("MOV"  , DecodeMOV, 0x000, 0x07);
   AddInstr("XCH"  , DecodeXCH, 0x000, 0x03);
   AddInstr("ADD"  , DecodeALU, 0x000, 0x07);
@@ -3434,6 +3436,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "CMPBKNC", 0x1526, DecodeStringString);
 
   AddInstTable(InstTable, "BIT", 0, DecodeBIT);
+  AddIntelPseudo(InstTable, eIntPseudoFlag_LittleEndian);
 }
 
 static void DeinitFields(void)
@@ -3446,18 +3449,8 @@ static void DeinitFields(void)
 
 static void MakeCode_78K4(void)
 {
-  CodeLen = 0; DontPrint = False; OpSize = -1;
+  OpSize = eSymbolSizeUnknown;
   AssumeByte = False;
-
-  /* zu ignorierendes */
-
-  if (Memo(""))
-    return;
-
-  /* Pseudoanweisungen */
-
-  if (DecodeIntelPseudo(False))
-    return;
 
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);

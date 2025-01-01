@@ -895,11 +895,6 @@ static void SetULowLims(void)
   LowLim8 = 0;
 }
 
-static Boolean DecodePseudo(void)
-{
-  return False;
-}
-
 static void AddPrefixes(void)
 {
   if (CodeLen != 0)
@@ -2330,6 +2325,9 @@ static void AddGASecond(const char *NName, Word NCode)
 static void InitFields(void)
 {
   InstTable = CreateInstTable(301);
+
+  add_null_pseudo(InstTable);
+
   AddInstTable(InstTable, "RLM", 0x0400, DecodeRLM_RRM);
   AddInstTable(InstTable, "RRM", 0x0500, DecodeRLM_RRM);
   AddInstTable(InstTable, "CHK", 0, DecodeCHK_CHKS);
@@ -2454,6 +2452,8 @@ static void InitFields(void)
   AddInstTable(InstTable, "CPSZ", 0, DecodeString);
   AddInstTable(InstTable, "CPSN", 1, DecodeString);
   AddInstTable(InstTable, "LDS" , 3, DecodeString);
+
+  AddIntelPseudo(InstTable, eIntPseudoFlag_LittleEndian);
 }
 
 static void DeinitFields(void)
@@ -2518,26 +2518,13 @@ static Boolean DecodeAttrPart_97C241(void)
 
 static void MakeCode_97C241(void)
 {
-  CodeLen = 0;
-  DontPrint = False;
   PrefUsed[0] = False;
   PrefUsed[1] = False;
   AdrInc = 0;
   MinOneIs0 = False;
   LowLim4 = -8; LowLim8 = -128;
 
-  /* zu ignorierendes */
-
-  if (Memo(""))
-    return;
-
   OpSize = AttrPartOpSize[0];
-
-  /* Pseudoanweisungen */
-
-  if (DecodePseudo()) return;
-
-  if (DecodeIntelPseudo(False)) return;
 
   if (LookupInstTable(InstTable, OpPart.str.p_str))
   {

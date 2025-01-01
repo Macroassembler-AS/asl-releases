@@ -1986,6 +1986,8 @@ static void InitFields(void)
   AddImm16Swap("ORIS"   , "ORIU"   , T25 << 26, M_403 | M_403C | M_505 | M_821 | M_601 | M_6000);
   AddImm16Swap("XORI"   , "XORIL"  , T26 << 26, M_403 | M_403C | M_505 | M_821 | M_601 | M_6000);
   AddImm16Swap("XORIS"  , "XORIU"  , T27 << 26, M_403 | M_403C | M_505 | M_821 | M_601 | M_6000);
+
+  AddIntelPseudo(InstTable, eIntPseudoFlag_DynEndian);
 }
 
 static void DeinitFields(void)
@@ -2019,17 +2021,9 @@ static void DeinitFields(void)
 
 static void MakeCode_601(void)
 {
-  CodeLen = 0;
-  DontPrint = False;
-
   /* Nullanweisung */
 
   if (Memo("") && !*AttrPart.str.p_str && (ArgCnt == 0))
-    return;
-
-  /* Pseudoanweisungen */
-
-  if (DecodeIntelPseudo(TargetBigEndian))
     return;
 
   if (!LookupInstTable(InstTable, OpPart.str.p_str))

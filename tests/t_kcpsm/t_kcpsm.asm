@@ -90,3 +90,12 @@ myregre	reg	myreg
 
 	org	0aah
 vari:
+
+;-----------------------------------------------------
+; standard Intel/MASM-style pseudo instructions
+
+	segment	code
+
+	db	128,255,-128,1
+	dw	32768,65535,-32768
+	dd	100000000

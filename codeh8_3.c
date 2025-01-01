@@ -2154,6 +2154,9 @@ static void AddBit2(const char *NName, Word NCode)
 static void InitFields(void)
 {
   InstTable = CreateInstTable(203);
+
+  add_null_pseudo(InstTable);
+
   AddInstTable(InstTable, "EEPMOV", 0, DecodeEEPMOV);
   AddInstTable(InstTable, "MOV", 0, DecodeMOV);
   AddInstTable(InstTable, "MOVTPE", 0x80, DecodeMOVTPE_MOVFPE);
@@ -2223,6 +2226,7 @@ static void InitFields(void)
 
   AddInstTable(InstTable, "REG", 0, CodeREG);
   AddInstTable(InstTable, "BIT", 0, DecodeBIT);
+  AddMoto16Pseudo(InstTable, e_moto_pseudo_flags_be);
 }
 
 static void DeinitFields(void)
@@ -2271,17 +2275,9 @@ static Boolean DecodeAttrPart_H8_3(void)
 
 static void MakeCode_H8_3(void)
 {
-  CodeLen = 0; DontPrint = False;
-
-  /* zu ignorierendes */
-
-  if (Memo("")) return;
-
   OpSize = eSymbolSizeUnknown;
   if (AttrPartOpSize[0] != eSymbolSizeUnknown)
     SetOpSize(AttrPartOpSize[0]);
-
-  if (DecodeMoto16Pseudo(OpSize, True)) return;
 
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);

@@ -593,6 +593,10 @@ Message ErrMsgInvFuncArgCnt
  "falsche Argumentzahl f&uuml;r Funktion"
  "wrong numbers of function arguments"
 
+Message ErrMsgDupFuncArgName
+ "doppelter Funktions-Argumentenname"
+ "duplicate function argument name"
+
 Message ErrMsgMissingLTORG
  "unaufgel&ouml;ste Literale (LTORG fehlt)"
  "unresolved literals (missing LTORG)"
@@ -1564,6 +1568,7 @@ Message InfoMessHelp
  "  -h                   : Hexadezimalzahlen mit Kleinbuchstaben\n" \
  "  -I                   : Include-Verschachtelungsliste ausgeben\n" \
  "  -i <Pfad>[:Pfad]...  : Pfadliste f&uuml;r Includedateien\n" \
+ "  -intsyntax <arg>[,arg] : Syntax f&uuml;r Ganzzahlen &auml;ndern\n" \
  "  -L                   : Listing auf Datei\n" \
  "  -listline-prefix <fmt> : Format des Pro-Zeile-Pr&auml;fix im Listing setzen\n" \
  "  -listradix <2...36>  : Zahlensystem im Listing\n" \
@@ -1579,8 +1584,9 @@ Message InfoMessHelp
  "  -p                   : Sharefile im Pascal-Format\n" \
  "  -plainbase           : PLAINBASE Modus im Default einschalten\n" \
  "  -q, -quiet           : Stiller Betrieb\n" \
- "  -relaxed             : beliebige Integer-Syntax im Default zulassen\n" \
  "  -r                   : Meldungen erzeugen, falls zus&auml;tzlicher Pass erforderlich\n" \
+ "  -radix <2...36>      : Default-Zahlensystem setzen\n" \
+ "  -relaxed             : beliebige Integer-Syntax im Default zulassen\n" \
  "  -s                   : Sektionsliste erzeugen\n" \
  "  -screenheight <#>    : Bildschirmh&ouml;he f&uuml;r Paging von '-help'\n" \
  "                         und '-cpu list' setzen\n" \
@@ -1621,6 +1627,7 @@ Message InfoMessHelp
  "  -h                   : use lower case in hexadecimal output\n" \
  "  -I                   : generate include nesting list\n" \
  "  -i <path>[;path]...  : list of paths for include files\n" \
+ "  -intsyntax <arg>[,arg] : modify syntax for integer constants\n" \
  "  -L                   : listing to file\n" \
  "  -l                   : listing to console\n" \
  "  -listline-prefix <fmt> : set format of listing per-line prefix\n" \
@@ -1637,6 +1644,7 @@ Message InfoMessHelp
  "  -plainbase           : PLAINBASE Modus im Default einschalten\n" \
  "  -q, -quiet           : silent operation\n" \
  "  -r                   : generate messages if repassing necessary\n" \
+ "  -radix <2...36>      : set default number system\n" \
  "  -relaxed             : allow arbitrary integer syntax by default\n" \
  "  -screenheight <#>    : set screen height for paging of '-help'\n" \
  "                         and '-cpu list'\n" \

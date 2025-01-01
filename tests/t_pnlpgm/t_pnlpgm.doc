@@ -1,6 +1,6 @@
-+----------------------  Test Application MIC51  ----------------------------+
++----------------------- Test Application PNLPGM ----------------------------+
 |                                                                            |
-|  This is a student's program from RWTH Aachen's microprocessor course.  It |
-|  tests the MCS51 (not 251!) codegenerator and makes heavy use of macros.   |
+|  Sample SC/MP program to program MM5204/4204 PROMs, taken from National's  |
+|  1978 Memory Applications Handbook.                                        |
 |                                                                            |
 +----------------------------------------------------------------------------+

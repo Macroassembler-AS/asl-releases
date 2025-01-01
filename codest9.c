@@ -1547,7 +1547,7 @@ static void DecodeJP_CALL(Word Code)
     {
       case ModIRReg:
         BAsmCode[0] = Hi(Code);
-        BAsmCode[1] = AdrVals[0] + Ord(Memo("CALL"));
+        BAsmCode[1] = AdrVals[0] | ((Code >> 1) & 1);
         CodeLen = 2;
         break;
       case ModAbs:
@@ -1863,6 +1863,8 @@ static void InitFields(void)
 {
   InstTable = CreateInstTable(201);
 
+  add_null_pseudo(InstTable);
+
   AddInstTable(InstTable, "LD", 0, DecodeLD);
   AddInstTable(InstTable, "LDW", 1, DecodeLD);
   AddInstTable(InstTable, "PEA", 0x01, DecodePEA_PEAU);
@@ -1934,6 +1936,8 @@ static void InitFields(void)
 
   AddLoad("LDPP", 0x00); AddLoad("LDDP", 0x10);
   AddLoad("LDPD", 0x01); AddLoad("LDDD", 0x11);
+
+  AddIntelPseudo(InstTable, eIntPseudoFlag_BigEndian);
 }
 
 static void DeinitFields(void)
@@ -1946,16 +1950,8 @@ static void DeinitFields(void)
 
 static void MakeCode_ST9(void)
 {
-  CodeLen = 0; DontPrint = False; OpSize = 0;
+  OpSize = 0;
   AbsSeg = (DPAssume == 1) ? SegData : SegCode;
-
-  /* zu ignorierendes */
-
-  if (Memo("")) return;
-
-  /* Pseudoanweisungen */
-
-  if (DecodeIntelPseudo(True)) return;
 
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);

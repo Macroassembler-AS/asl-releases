@@ -33,6 +33,20 @@ void as_tempres_ini(TempResult *p_res)
 }
 
 /*!------------------------------------------------------------------------
+ * \fn     as_tempres_dyn_ini(void)
+ * \brief  create instance of temp result and initialize
+ * \return * to result buffer or NULL
+ * ------------------------------------------------------------------------ */
+
+TempResult *as_tempres_dyn_ini(void)
+{
+  TempResult *p_res = (TempResult*)calloc(1, sizeof(*p_res));
+  if (p_res)
+    as_tempres_ini(p_res);
+  return p_res;
+}
+
+/*!------------------------------------------------------------------------
  * \fn     as_tempres_free(TempResult *p_res)
  * \brief  deinit temp result buffer
  * \param  p_res buffer to deinit
@@ -43,6 +57,18 @@ void as_tempres_free(TempResult *p_res)
   if (p_res->Typ == TempString)
     as_nonz_dynstr_free(&p_res->Contents.str);
   p_res->Typ = TempNone;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     as_tempres_dyn_free(TempResult *p_res)
+ * \brief  deinit & free temp result buffer
+ * \param  p_res buffer to deinit & free
+ * ------------------------------------------------------------------------ */
+
+void as_tempres_dyn_free(TempResult *p_res)
+{
+  as_tempres_free(p_res);
+  free(p_res);
 }
 
 /*!------------------------------------------------------------------------
@@ -256,19 +282,21 @@ int TempResultToFloat(TempResult *pResult)
 }
 
 /*!------------------------------------------------------------------------
- * \fn     as_tempres_append_dynstr(as_dynstr_t *p_dest, const TempResult *pResult)
+ * \fn     as_tempres_append_dynstr(as_dynstr_t *p_dest, const TempResult *pResult, int int_radix)
  * \brief  convert result to readable form
  * \param  p_dest where to write ASCII representation
  * \param  pResult result to convert
+ * \param  int_radix number system to use for integers
  * \return 0 or error code
  * ------------------------------------------------------------------------ */
 
-int as_tempres_append_dynstr(as_dynstr_t *p_dest, const TempResult *pResult)
+int as_tempres_append_dynstr(as_dynstr_t *p_dest, const TempResult *pResult, int int_radix)
 {
   switch (pResult->Typ)
   {
     case TempInt:
-      as_sdprcatf(p_dest, "%llld", pResult->Contents.Int);
+      /* TODO: use SystemStr */
+      as_sdprcatf(p_dest, (int_radix == 16) ? "%lllx" : "%llld", pResult->Contents.Int);
       break;
     case TempFloat:
       as_sdprcatf(p_dest, "%0.16e", pResult->Contents.Float);

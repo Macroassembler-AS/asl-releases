@@ -19,6 +19,7 @@
 #include "lstmacroexp.h"
 #include "errmsg.h"
 #include "addrspace.h"
+#include "stringlists.h"
 
 typedef enum
 {
@@ -109,6 +110,7 @@ typedef struct _TFunction
   struct _TFunction *Next;
   Byte ArguCnt;
   StringPtr Name, Definition;
+  StringList p_arg_list;
 } TFunction, *PFunction;
 
 typedef struct sEvalResult
@@ -144,6 +146,7 @@ struct sStrComp;
 struct as_nonz_dynstr;
 struct sRelocEntry;
 struct sSymbolEntry;
+struct sStringRec;
 
 extern tIntTypeDef IntTypeDefs[IntTypeCnt];
 extern LongInt MomLocHandle;
@@ -276,7 +279,7 @@ extern Boolean PopSymbol(const struct sStrComp *pSymName, const struct sStrComp 
 extern void ClearStacks(void);
 
 
-extern void EnterFunction(const struct sStrComp *pComp, char *FDefinition, Byte NewCnt);
+extern void EnterFunction(const struct sStrComp *pComp, const char *FDefinition, Byte NewCnt, StringList *p_arg_list);
 
 extern PFunction FindFunction(const char *Name);
 

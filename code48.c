@@ -21,6 +21,7 @@
 #include "asmpars.h"
 #include "asmallg.h"
 #include "asmitree.h"
+#include "codepseudo.h"
 #include "intpseudo.h"
 #include "codevars.h"
 #include "errmsg.h"
@@ -514,19 +515,19 @@ static void DecodeDIS_EN(Word Code)
         BAsmCode[0] = Code + 0x85;
       }
     }
-    else if ((Memo("EN")) && (!strcmp(ArgStr[1].str.p_str, "DMA")))
+    else if (!Code && !strcmp(ArgStr[1].str.p_str, "DMA"))
     {
       if (AChkCPUFlags(eCPUFlagUPIPort, &ArgStr[1]))
       {
-        BAsmCode[0] = Code + 0xe5;
+        BAsmCode[0] = 0xe5;
         CodeLen = 1;
       }
     }
-    else if ((Memo("EN")) && (!strcmp(ArgStr[1].str.p_str, "FLAGS")))
+    else if (!Code && !strcmp(ArgStr[1].str.p_str, "FLAGS"))
     {
       if (AChkCPUFlags(eCPUFlagUPIPort, &ArgStr[1]))
       {
-        BAsmCode[0] = Code + 0xf5;
+        BAsmCode[0] = 0xf5;
         CodeLen = 1;
       }
     }
@@ -1228,6 +1229,9 @@ static void add_clr_cpl(const char *p_name, Byte code)
 static void InitFields(void)
 {
   InstTable = CreateInstTable(203);
+
+  add_null_pseudo(InstTable);
+
   AddInstTable(InstTable, "ADD", 0x00, DecodeADD_ADDC);
   AddInstTable(InstTable, "ADDC", 0x10, DecodeADD_ADDC);
   AddInstTable(InstTable, "ORL", 0x00, DecodeANL_ORL_XRL);
@@ -1339,6 +1343,7 @@ static void InitFields(void)
   AddSel(NULL  , 0);
 
   AddInstTable(InstTable, "REG", 0, CodeREG);
+  AddIntelPseudo(InstTable, eIntPseudoFlag_LittleEndian);
 }
 
 static void DeinitFields(void)
@@ -1350,19 +1355,6 @@ static void DeinitFields(void)
 
 static void MakeCode_48(void)
 {
-  CodeLen = 0;
-  DontPrint = False;
-
-  /* zu ignorierendes */
-
-  if (Memo(""))
-    return;
-
-  /* Pseudoanweisungen */
-
-  if (DecodeIntelPseudo(False))
-    return;
-
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }

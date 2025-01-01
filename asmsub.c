@@ -892,7 +892,7 @@ void StrSym(const TempResult *t, Boolean WithSystem, as_dynstr_t *p_dest, unsign
       FloatString(p_dest->p_str, p_dest->capacity, t->Contents.Float);
       break;
     case TempString:
-      as_tempres_append_dynstr(p_dest, t);
+      as_tempres_append_dynstr(p_dest, t, 10);
       break;
     case TempReg:
       if (t->Contents.RegDescr.Dissect)

@@ -20,6 +20,7 @@
 #include "asmitree.h"
 #include "codevars.h"
 #include "headids.h"
+#include "codepseudo.h"
 #include "intpseudo.h"
 #include "errmsg.h"
 
@@ -132,6 +133,8 @@ static void InitFields(void)
 
   InstTable = CreateInstTable(107);
 
+  add_null_pseudo(InstTable);
+
   AddInstTable(InstTable, "TAY", Is1100 ? 0x20 : 0x24, DecodeFixed);
   AddInstTable(InstTable, "TYA", 0x23, DecodeFixed);
   AddInstTable(InstTable, "CLA", Is1100 ? 0x7f : 0x2f, DecodeFixed);
@@ -232,6 +235,7 @@ static void InitFields(void)
   {
     AddInstTable(InstTable, "COMC", 0x0b, DecodeFixed);
   }
+  AddIntelPseudo(InstTable, eIntPseudoFlag_BigEndian);
 }
 
 static void DeinitFields(void)
@@ -244,21 +248,6 @@ static void DeinitFields(void)
 
 static void MakeCode_TMS1(void)
 {
-  CodeLen = 0;
-  DontPrint = False;
-
-  /* zu ignorierendes */
-
-  if (Memo(""))
-    return;
-
-  /* Pseudoanweisungen */
-
-  if (DecodeIntelPseudo(True))
-    return;
-
-  /* remainder */
-
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }

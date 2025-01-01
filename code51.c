@@ -1303,13 +1303,10 @@ static void DecodeMOVH(Word Index)
   }
 }
 
-static void DecodeMOVZS(Word Index)
+static void DecodeMOVZS(Word code)
 {
   Byte HReg;
-  int z;
-  UNUSED(Index);
 
-  z = Ord(Memo("MOVS")) << 4;
   if (ChkArgCnt(2, 2)
    && ChkMinCPU(CPU80251))
   {
@@ -1326,7 +1323,7 @@ static void DecodeMOVZS(Word Index)
           switch (AdrMode)
           {
             case ModReg:
-             PutCode(0x10a + z);
+             PutCode(0x10a + code);
              BAsmCode[CodeLen++] = (HReg << 4) + AdrPart;
              break;
           }
@@ -2245,7 +2242,7 @@ static void DecodeBits(Word Index)
   if (!ChkArgCnt(1, 1));
   else if (!as_strcasecmp(ArgStr[1].str.p_str, "A"))
   {
-    if (Memo("SETB")) WrError(ErrNum_InvAddrMode);
+    if (z == 2) WrError(ErrNum_InvAddrMode);
     else
       PutCode(0xf4 - z);
   }
@@ -2384,17 +2381,14 @@ static void DecodeFixed(Word Index)
 }
 
 
-static void DecodeSFR(Word Index)
+static void DecodeSFR(Word is_sfrb)
 {
   Word AdrByte;
   Boolean OK;
   tSymbolFlags Flags;
   as_addrspace_t DSeg;
-  UNUSED(Index);
 
-  if (!ChkArgCnt(1, 1));
-  else if (Memo("SFRB") && !ChkMaxCPU(CPU80C390));
-  else
+  if (ChkArgCnt(1, 1))
   {
     AdrByte = EvalStrIntExpressionWithFlags(&ArgStr[1], (MomCPU >= CPU80251) ? UInt9 : UInt8, &OK, &Flags);
     if (OK && !mFirstPassUnknown(Flags))
@@ -2407,7 +2401,7 @@ static void DecodeSFR(Word Index)
         if (AddChunk(SegChunks + DSeg, AdrByte, 1, False))
           WrError(ErrNum_Overlap);
       }
-      if (Memo("SFRB"))
+      if (is_sfrb)
       {
         Byte BitStart;
 
@@ -2517,8 +2511,8 @@ static void InitFields(void)
   AddInstTable(InstTable, "XRL"  , 2, DecodeLogic);
   AddInstTable(InstTable, "MOVC" , 0, DecodeMOVC);
   AddInstTable(InstTable, "MOVH" , 0, DecodeMOVH);
-  AddInstTable(InstTable, "MOVZ" , 0, DecodeMOVZS);
-  AddInstTable(InstTable, "MOVS" , 0, DecodeMOVZS);
+  AddInstTable(InstTable, "MOVZ" , 0x00, DecodeMOVZS);
+  AddInstTable(InstTable, "MOVS" , 0x10, DecodeMOVZS);
   AddInstTable(InstTable, "MOVX" , 0, DecodeMOVX);
   AddInstTable(InstTable, "POP"  , 1, DecodeStack);
   AddInstTable(InstTable, "PUSH" , 0, DecodeStack);
@@ -2551,7 +2545,8 @@ static void InitFields(void)
   AddInstTable(InstTable, "SRL"  , 1, DecodeShift);
   AddInstTable(InstTable, "SLL"  , 3, DecodeShift);
   AddInstTable(InstTable, "SFR"  , 0, DecodeSFR);
-  AddInstTable(InstTable, "SFRB" , 1, DecodeSFR);
+  if (MomCPU <= CPU80C390)
+    AddInstTable(InstTable, "SFRB" , 1, DecodeSFR);
   AddInstTable(InstTable, "BIT"  , 0, DecodeBIT);
   AddInstTable(InstTable, "PORT" , 0, DecodePORT);
 
@@ -2591,6 +2586,7 @@ static void InitFields(void)
   AddBCond("JNB", 0x0030, CPU87C750);
 
   AddInstTable(InstTable, "REG"  , 0, CodeREG);
+  AddIntelPseudo(InstTable, eIntPseudoFlag_DynEndian);
 }
 
 static void DeinitFields(void)
@@ -2607,19 +2603,12 @@ static void DeinitFields(void)
 
 static void MakeCode_51(void)
 {
-  CodeLen = 0;
-  DontPrint = False;
-  OpSize = -1;
+  OpSize = eSymbolSizeUnknown;
   MinOneIs0 = False;
 
   /* zu ignorierendes */
 
   if (*OpPart.str.p_str == '\0') return;
-
-  /* Pseudoanweisungen */
-
-  if (DecodeIntelPseudo(TargetBigEndian))
-    return;
 
   /* suchen */
 

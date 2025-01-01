@@ -184,6 +184,8 @@ static void InitFields(void)
 {
 	InstTable = CreateInstTable(163);
 
+  add_null_pseudo(InstTable);
+
 	/* [1] Data Transfer */
 
 	AddImm8("LII",  0x00);
@@ -369,9 +371,11 @@ static void InitFields(void)
 	AddFixed("CUP", 0x4f);
 	AddFixed("CDN", 0x6f);
 	
-	init_moto8_pseudo(InstTable, e_moto_8_be);
+	add_moto8_pseudo(InstTable, e_moto_pseudo_flags_be);
   AddInstTable(InstTable, "DB", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_MotoRep, DecodeIntelDB);
   AddInstTable(InstTable, "DW", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_MotoRep, DecodeIntelDW);
+/*	AddIntelPseudo(eIntPseudoFlag_LittleEndian);	*/
+	AddMoto16Pseudo(InstTable, e_moto_pseudo_flags_be);
 }
 
 static void DeinitFields(void)
@@ -383,13 +387,7 @@ static void DeinitFields(void)
 
 static void MakeCode_SC61860(void)
 {
-	CodeLen = 0;
-	DontPrint = False;
-
-	if (Memo("")) return;
-
-/*	if (DecodeIntelPseudo(False)) return;	*/
-	if (DecodeMoto16Pseudo(eSymbolSize8Bit, True)) return;
+  AttrPartOpSize[0] = eSymbolSize8Bit;
 
 	if (!LookupInstTable(InstTable, OpPart.str.p_str))
 		WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);

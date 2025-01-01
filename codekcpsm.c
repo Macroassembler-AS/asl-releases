@@ -21,6 +21,7 @@
 #include "asmpars.h"
 #include "asmitree.h"
 #include "asmallg.h"
+#include "codepseudo.h"
 #include "intpseudo.h"
 #include "codevars.h"
 #include "headids.h"
@@ -533,6 +534,9 @@ static void AddCondition(const char *NName, Word NCode)
 static void InitFields(void)
 {
   InstTable = CreateInstTable(201);
+
+  add_null_pseudo(InstTable);
+
   AddInstTable(InstTable, "LOAD", 0, DecodeLOAD);
   AddInstTable(InstTable, "CALL", 0, DecodeCALL);
   AddInstTable(InstTable, "JUMP", 0, DecodeJUMP);
@@ -575,6 +579,8 @@ static void InitFields(void)
   AddCondition("C"  , 6); AddCondition("NC" , 7);
   AddCondition("Z"  , 4); AddCondition("NZ" , 5);
   AddCondition(NULL , 0);
+
+  AddIntelPseudo(InstTable, eIntPseudoFlag_BigEndian);
 }
 
 static void DeinitFields(void)
@@ -608,16 +614,6 @@ static void InternSymbol_KCPSM(char *pArg, TempResult *pResult)
 
 static void MakeCode_KCPSM(void)
 {
-  CodeLen = 0; DontPrint = False;
-
-  /* zu ignorierendes */
-
-  if (Memo("")) return;
-
-  /* Pseudoanweisungen */
-
-  if (DecodeIntelPseudo(True)) return;
-
   if (!LookupInstTable(InstTable, OpPart.str.p_str))
     WrStrErrorPos(ErrNum_UnknownInstruction, &OpPart);
 }
