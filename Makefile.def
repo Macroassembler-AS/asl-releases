@@ -8,7 +8,11 @@
 
 OBJDIR =
 CC = gcc
-CFLAGS = -g -O3 -march=athlon64 -fomit-frame-pointer -Wall
+CFLAGS = -g -O3 -fomit-frame-pointer -Wall
+#   If you want a build fully optimised for the particular CPU on which
+#   you're doing the build, uncomment the following. (It's not known how
+#   difference this actually makes.)
+#CFLAGS += -march=native
 HOST_OBJEXTENSION = .o
 LD = $(CC)
 LDFLAGS =
