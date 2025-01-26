@@ -9,22 +9,30 @@ with an extender). Target platforms cover a huge variety of 8- and
 
 The `upstream` branch of this repository contains the source code for
 every publicly available [source release][src] of the C version. The
-tools to do this and this documentation are on the `master` branch.
+tools to do this and this documentation are on the `main` branch.
 
 Pull requests (to improve the import system and its documentation) are
-accepted for the `master` branch. The `upstream` branch containing the
+accepted for the `main` branch. The `upstream` branch containing the
 vendor sources never contains patches, but there may be patch branches
 derived from imported vendor commits on `upstream`.
 
 ### Branches in this Repo
 
-- `master`: The import script and its documentation.
+- `main`: The import script and its documentation.
 - `upstream`: Imported ASL source code for each release.
 - `dev/cjs/current`: A recent version tested to build on Linux and
   assemble a small amount of 6502 and 6909 code. The build and test
   framework is in cjs's [8bitdev] repo.
 - `dev/NAME/...`: Branches for development, testing, and patches for
   particular versions of ASL.
+
+Note that the `main` branch was previously named `master`; if your clone
+still uses that old naming you can update with:
+
+    br -m master main
+    fetch -p r                  # remove tracking branch for `master`
+    br -u r/main main           # -u == --set-upstream
+    rem set-head r -a           # query remote for its default branch
 
 
 Building ASL
@@ -41,7 +49,7 @@ branch. However, as a quick guide for Linux:
     make -j8        # does not build docs
     make install    # optional, but needed for it to find libary include files
 
-There is also a `Makefile.def` on the `master` branch that should work with
+There is also a `Makefile.def` on the `main` branch that should work with
 most Linux systems and will install ASL under `/opt/asl-$VER`. However, it
 may or may not determine the version nubmer correctly as ASL has changed
 how it defines version numbers over time.
