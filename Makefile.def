@@ -43,7 +43,9 @@ VER != sed -n \
 VER := $(or $(VER),\
     bld$(shell sed -n -e 's/^\#define AS_VERSION_BUILD //p' version.h))
 VER := $(or $(VER),$(error Cannot extract ASL version number.))
-__INSTDIR=/opt/asl-${VER}
+
+#   For a different install path, set __INSTDIR before reaching this.
+__INSTDIR ?= /opt/asl-${VER}
 
 BINDIR = ${__INSTDIR}/bin
 INCDIR = ${__INSTDIR}/include/asl
