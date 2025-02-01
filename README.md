@@ -44,15 +44,21 @@ branch. However, as a quick guide for Linux:
     #   Debian/Ubuntu package manager and package names: tweak for your distro.
     sudo apt-get install build-essential texlive texlive-lang-german
     git checkout upstream
-    cp Makefile.def-samples/Makefile.def-x86_64-unknown-linux Makefile.def
-    #   edit Makefile.def to set install path
+    git show origin/main:gitignore    > .gitignore
+    git show origin/main:Makefile.def > Makefile.def
+    #   Edit Makefile.def to set install path if you wish.
     make -j8        # does not build docs
     make install    # optional, but needed for it to find libary include files
 
-There is also a `Makefile.def` on the `main` branch that should work with
-most Linux systems and will install ASL under `/opt/asl-$VER`. However, it
-may or may not determine the version nubmer correctly as ASL has changed
-how it defines version numbers over time.
+The `Makefile.def` above from the main branch should work on most Unix
+systems (including Linux and MacOS). It installs ASL under `/opt/asl-$VER`.
+(It sometimes may not determine the version nubmer correctly as ASL has
+changed how it defines version numbers over time.)
+
+If you wish to use one of the vendor-supplied `Makefile.def` files, you
+can instead copy it from `Makefile.def-samples/`, e.g.
+
+    cp Makefile.def-samples/Makefile.def-x86_64-unknown-linux Makefile.def
 
 
 Importing New ASL Releases
