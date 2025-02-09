@@ -1,7 +1,7 @@
 +------------------------ Test Application 6502U ----------------------------+
 |                                                                            |
 |  Hacker's corner: This tests the 'undocumented' instructions of the 6502/  |
-|  6510 processor, i.e. the things the processor does when yuo use undocu-   |
+|  6510 processor, i.e. the things the processor does when you use undocu-   |
 |  mented opcode bytes.  I do not recommend that, but it's your program...   |
 |                                                                            |
 +----------------------------------------------------------------------------+

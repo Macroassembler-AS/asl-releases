@@ -74,6 +74,7 @@ static const TFamilyDescr Descrs[] =
   { "TLCS-870"     , 0x0054, eHexFormatIntel   },
   { "TLCS-870/C"   , 0x0057, eHexFormatIntel   },
   { "TLCS-47xx"    , 0x0055, eHexFormatIntel   },
+  { "TLCS-42xx"    , 0x002b, eHexFormatIntel   },
   { "TLCS-9000 "   , 0x0056, eHexFormatMotoS   },
   { "TC9331"       , 0x005a, eHexFormatIntel   },
   { "16C8x"        , 0x0070, eHexFormatIntel   },

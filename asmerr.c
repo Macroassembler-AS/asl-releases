@@ -43,6 +43,8 @@ static Boolean treat_warnings_as_errors,
                def_warn_relative_set,
                warn_relative;
 
+static unsigned warn_registered;
+
 static void ClearExpectErrors(void)
 {
   tExpectError *pOld;
@@ -99,8 +101,6 @@ enum
 
 static unsigned registered_test_and_set(unsigned mask)
 {
-  static unsigned warn_registered;
-
   unsigned curr = warn_registered;
   warn_registered |= mask;
   return curr & mask;
@@ -327,6 +327,8 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
       msgno = Num_ErrMsgTreatedAsVector; break;
     case ErrNum_LargeIntAsFloat:
       msgno = Num_ErrMsgLargeIntAsFloat; break;
+    case ErrNum_CodeNotInCodeSegment:
+      msgno = Num_ErrMsgCodeNotInCodeSegment; break;
     case ErrNum_DoubleDef:
       msgno = Num_ErrMsgDoubleDef; break;
     case ErrNum_SymbolUndef:
@@ -1226,6 +1228,16 @@ static const as_cmd_rec_t cmd_params[] =
 };
 
 /*!------------------------------------------------------------------------
+ * \fn     initpass_asmerr(void)
+ * \brief  called before start of each pass
+ * ------------------------------------------------------------------------ */
+
+static void initpass_asmerr(void)
+{
+  warn_registered = 0;
+}
+
+/*!------------------------------------------------------------------------
  * \fn     asmerr_init(void)
  * \brief  module setup
  * ------------------------------------------------------------------------ */
@@ -1236,4 +1248,5 @@ void asmerr_init(void)
   warn_sign_extension = True;
   def_warn_relative = def_warn_relative_set = False;
   as_cmd_register(cmd_params, as_array_size(cmd_params));
+  AddInitPassProc(initpass_asmerr);
 }

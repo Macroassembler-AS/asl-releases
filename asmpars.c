@@ -1966,6 +1966,12 @@ func_exit2:
       LEAVE;
     }
 
+    else if (!strcmp(FName.str.p_str, "SYMEXIST"))
+    {
+      as_tempres_set_int(pErg, !!is_symbol_existing(&FArg));
+      LEAVE;
+    }
+
     else if (!strcmp(FName.str.p_str, "ASSUMEDVAL"))
     {
       unsigned IdxAssume;
@@ -3381,13 +3387,30 @@ Boolean IsSymbolDefined(const struct sStrComp *pName)
   as_tempres_free(&result);
   return ret;
 #else
-  Boolean error_on_find;
+  lookup_symbol_error_t error_on_find;
   PSymbolEntry pEntry = ExpandAndFindNode(pName, TempAll, True, e_expand_chk_upto, &error_on_find);
   if (error_on_find)
     WrStrErrorPos(ErrNum_InvSymName, pName);
 
   return pEntry && get_symbol_entry_flag(pEntry, defined);
 #endif
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     is_symbol_existing(const struct sStrComp *p_name)
+ * \brief  check whether symbol of given name exists
+ * \param  p_name name of symbol
+ * \return true if existing
+ * ------------------------------------------------------------------------ */
+
+Boolean is_symbol_existing(const struct sStrComp *p_name)
+{
+  lookup_symbol_error_t error_on_find;
+  PSymbolEntry p_entry = ExpandAndFindNode(p_name, TempAll, True, e_expand_chk_upto, &error_on_find);
+  if (error_on_find == e_lookup_error_namecheck)
+    WrStrErrorPos(ErrNum_InvSymName, p_name);
+
+  return !!p_entry;
 }
 
 /*!------------------------------------------------------------------------

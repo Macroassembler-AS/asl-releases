@@ -1281,11 +1281,16 @@ Word Granularity(void)
 }
 
 /*--------------------------------------------------------------------------*/
-/* Linstingbreite des aktuellen Segments holen */
+/* Listingbreite des aktuellen Segments holen */
 
 Word ListGran(void)
 {
   return ListGrans[ActPC];
+}
+
+Word gran_bits_unused(void)
+{
+  return grans_bits_unused[ActPC];
 }
 
 /*--------------------------------------------------------------------------*/

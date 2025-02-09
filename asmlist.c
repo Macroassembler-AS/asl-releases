@@ -27,7 +27,7 @@
 
 #define LISTLINE_PREFIX_TOTAL 40
 
-static unsigned SystemListLen8, SystemListLen16, SystemListLen32;
+static unsigned SystemListLen4, SystemListLen8, SystemListLen12, SystemListLen16, SystemListLen32;
 
 static as_dynstr_t list_buf;
 
@@ -44,6 +44,22 @@ static const char default_listline_prefix_format[] = "%i%n/%a";
 void as_list_set_max_pc(LargeWord max_pc)
 {
   String tmp;
+
+  switch (ListGran())
+  {
+    case 1:
+    case 2:
+      if (gran_bits_unused() && (gran_bits_unused() != 4))
+        goto warn;
+      break;
+    default:
+      if (gran_bits_unused())
+        goto warn;
+      break;
+    warn:
+      fprintf(stderr, "define SystemListLen for %u bits\n",
+              (unsigned)((ListGran() * 8) - gran_bits_unused()));
+  }
 
   as_snprintf(tmp, sizeof(tmp), "%1.*lllu", ListRadixBase, max_pc);
   max_pc_len = strlen(tmp);
@@ -102,7 +118,7 @@ void MakeList(const char *pSrcLine)
     if (EffLen < ActListGran)
     {
       CurrListGran = 1;
-      SystemListLen = SystemListLen8;
+      SystemListLen = act_list_gran_bits_unused ? SystemListLen4 : SystemListLen8;
     }
     else
     {
@@ -113,10 +129,10 @@ void MakeList(const char *pSrcLine)
           SystemListLen = SystemListLen32;
           break;
         case 2:
-          SystemListLen = SystemListLen16;
+          SystemListLen = act_list_gran_bits_unused ? SystemListLen12 : SystemListLen16;
           break;
         default:
-          SystemListLen = SystemListLen8;
+          SystemListLen = act_list_gran_bits_unused ? SystemListLen4 : SystemListLen8;
       }
     }
 
@@ -335,8 +351,12 @@ void asmlist_setup(void)
 {
   String Dummy;
 
+  SysString(Dummy, sizeof(Dummy), 0xf, ListRadixBase, 0, False, HexStartCharacter, SplitByteCharacter);
+  SystemListLen4 = strlen(Dummy);
   SysString(Dummy, sizeof(Dummy), 0xff, ListRadixBase, 0, False, HexStartCharacter, SplitByteCharacter);
   SystemListLen8 = strlen(Dummy);
+  SysString(Dummy, sizeof(Dummy), 0xfff, ListRadixBase, 0, False, HexStartCharacter, SplitByteCharacter);
+  SystemListLen12 = strlen(Dummy);
   SysString(Dummy, sizeof(Dummy), 0xffffu, ListRadixBase, 0, False, HexStartCharacter, SplitByteCharacter);
   SystemListLen16 = strlen(Dummy);
   SysString(Dummy, sizeof(Dummy), 0xfffffffful, ListRadixBase, 0, False, HexStartCharacter, SplitByteCharacter);

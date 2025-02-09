@@ -1148,6 +1148,19 @@ static void DecodePORT(Word Code)
   CodeEquate(SegIO, 0, SegLimits[SegIO]);
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     check_code_segment(Word code)
+ * \brief  checks whether code generation it attempted outside of code segment
+ * ------------------------------------------------------------------------ */
+
+static void check_code_segment(Word code)
+{
+  UNUSED(code);
+
+  if (ActPC != SegCode)
+    WrError(ErrNum_CodeNotInCodeSegment);
+}
+
 /*---------------------------------------------------------------------------*/
 
 static void AddFixed(const char *NName, Byte NCode)
@@ -1161,6 +1174,7 @@ static void InitFields(void)
 
   add_null_pseudo(InstTable);
 
+  inst_table_set_prefix_proc(InstTable, check_code_segment, 0);
   AddInstTable(InstTable, "LD", 0, DecodeLD);
   AddInstTable(InstTable, "LDL", 0, DecodeLDL);
   AddInstTable(InstTable, "LDH", 0, DecodeLDH);
@@ -1190,7 +1204,6 @@ static void InitFields(void)
   AddInstTable(InstTable, "B", 0, DecodeB);
   AddInstTable(InstTable, "CALLS", 0, DecodeCALLS);
   AddInstTable(InstTable, "CALL", 0, DecodeCALL);
-  AddInstTable(InstTable, "PORT", 0, DecodePORT);
 
   AddFixed("RET" , 0x2a);
   AddFixed("RETI", 0x2b);
@@ -1201,6 +1214,8 @@ static void InitFields(void)
   AddInstTable(InstTable, "TEST", 2, DecodeBit);
   AddInstTable(InstTable, "TESTP", 3, DecodeBit);
 
+  inst_table_set_prefix_proc(InstTable, NULL, 0);
+  AddInstTable(InstTable, "PORT", 0, DecodePORT);
   AddIntelPseudo(InstTable, eIntPseudoFlag_LittleEndian);
 }
 
@@ -1254,8 +1269,8 @@ static void SwitchTo_47C00(void)
 
   ValidSegs = (1 << SegCode) | (1 << SegData) | (1 << SegIO);
   Grans[SegCode] = 1; ListGrans[SegCode] = 1; SegInits[SegCode] = 0;
-  Grans[SegData] = 1; ListGrans[SegData] = 1; SegInits[SegData] = 0;
-  Grans[SegIO  ] = 1; ListGrans[SegIO  ] = 1; SegInits[SegIO  ] = 0;
+  Grans[SegData] = 1; ListGrans[SegData] = 1; SegInits[SegData] = 0; grans_bits_unused[SegData] = 4;
+  Grans[SegIO  ] = 1; ListGrans[SegIO  ] = 1; SegInits[SegIO  ] = 0; grans_bits_unused[SegIO  ] = 4;
   if (MomCPU == CPU47C00)
   {
     SegLimits[SegCode] = 0xfff;

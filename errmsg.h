@@ -71,6 +71,7 @@ typedef enum
   ErrNum_ReplacedByNOP = 470,
   ErrNum_TreatedAsVector = 480,
   ErrNum_LargeIntAsFloat = 490,
+  ErrNum_CodeNotInCodeSegment = 500,
   ErrNum_DoubleDef = 1000,
   ErrNum_SymbolUndef = 1010,
   ErrNum_InvSymName = 1020,

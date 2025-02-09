@@ -106,6 +106,7 @@ extern LargeWord EProgCounter(void);
 extern Word Granularity(void);
 
 extern Word ListGran(void);
+extern Word gran_bits_unused(void);
 
 extern void ChkSpace(Byte AddrSpace, unsigned AddrSpaceMask);
 

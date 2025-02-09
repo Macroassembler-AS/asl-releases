@@ -1,3 +1,9 @@
+2025-02-09 [1.42 Bld 283]
+
+- Addition    : new target TLCS-42
+- Addition    : add IFSYM(N)EXIST statements and SYMEXIST()
+                function
+
 2025-01-01 [1.42 Bld 282]
 
 - Addition    : new command line switch '-radix' to set

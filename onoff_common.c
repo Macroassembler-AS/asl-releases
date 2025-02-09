@@ -24,7 +24,7 @@ Boolean FPUAvail,    /* floating point co processor instructions allowed? */
         TargetBigEndian, /* Data storage Big Endian? */
         DoPadding,   /* align to even address? */
         Packing;     /* packed data storage? */
-unsigned registered;
+static unsigned registered;
 
 #define SupAllowedCmdName "SUPMODE"   /* Privileged instructions allowed */
 #define SupAllowedSymName "INSUPMODE"

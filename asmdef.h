@@ -217,6 +217,7 @@ extern LargeWord *Phases;
 extern Word Grans[SegCountPlusStruct];
 extern Word ListGrans[SegCountPlusStruct];
 extern ChunkList SegChunks[SegCountPlusStruct];
+extern Boolean grans_bits_unused[SegCountPlusStruct];
 extern as_addrspace_t ActPC;
 extern Boolean PCsUsed[SegCountPlusStruct];
 extern LargeWord *SegInits;
@@ -265,7 +266,8 @@ extern Word *WAsmCode;
 extern LongWord *DAsmCode;
 
 extern Boolean DontPrint;
-extern Word ActListGran;
+extern Word ActListGran,
+            act_list_gran_bits_unused;
 
 extern Boolean NumericErrors;
 extern Boolean CodeOutput;

@@ -1,33 +1,14 @@
-#ifndef _VERSION_H
-#define _VERSION_H
-/* version.h */
+#ifndef _CODE42C00_H
+#define _CODE42C00_H
+/* code42c00.h */
 /*****************************************************************************/
 /* SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only                     */
 /*                                                                           */
 /* ASL                                                                       */
 /*                                                                           */
-/* Keeps Version Number(s)                                                   */
+/* Target Toshiba TLCS-42                                                    */
 /*                                                                           */
 /*****************************************************************************/
 
-#include "datatypes.h"
-
-#define AS_VERSION_MAJOR 1
-#define AS_VERSION_MINOR 42
-#define AS_VERSION_BUILD 283
-
-/* The standard C stringification magic: */
-
-#define STR_STRING(x)   #x
-#define STR(x)          STR_STRING(x)
-
-extern const char *Version;
-extern LongInt VerNo;
-
-extern const char *InfoMessCopyright;
-
-extern LongInt Magic;
-
-extern void version_init(void);
-
-#endif /* _VERSION_H */
+extern void code42c00_init(void);
+#endif /* _CODE42C00_H */

@@ -109,6 +109,7 @@
 #include "code87c800.h"
 #include "code870c.h"
 #include "code47c00.h"
+#include "code42c00.h"
 #include "code97c241.h"
 #include "code9331.h"
 #include "code16c5x.h"
@@ -2352,6 +2353,7 @@ static void Produce_Code(void)
   const tStrComp *p_search_op_part;
 
   ActListGran = ListGran();
+  act_list_gran_bits_unused = gran_bits_unused();
   WasIF = WasMACRO = False;
 
   /* Makrosuche unterdruecken ? */
@@ -4464,6 +4466,7 @@ int main(int argc, char **argv)
     code87c800_init();
     code870c_init();
     code47c00_init();
+    code42c00_init();
     code97c241_init();
     code9331_init();
     code16c5x_init();

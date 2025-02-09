@@ -67,6 +67,7 @@ include $(TARG_OBJDIR)code90c141.dep
 include $(TARG_OBJDIR)code87c800.dep
 include $(TARG_OBJDIR)code870c.dep
 include $(TARG_OBJDIR)code47c00.dep
+include $(TARG_OBJDIR)code42c00.dep
 include $(TARG_OBJDIR)code97c241.dep
 include $(TARG_OBJDIR)code9331.dep
 include $(TARG_OBJDIR)code16c5x.dep

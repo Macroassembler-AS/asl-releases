@@ -239,6 +239,8 @@ extern void SetSymbolOrStructElemSize(const struct sStrComp *pName, tSymbolSize 
 
 extern Boolean IsSymbolDefined(const struct sStrComp *pName);
 
+extern Boolean is_symbol_existing(const struct sStrComp *p_name);
+
 extern Boolean IsSymbolUsed(const struct sStrComp *pName);
 
 extern Integer GetSymbolType(const struct sStrComp *pName);

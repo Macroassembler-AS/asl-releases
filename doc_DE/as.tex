@@ -49,7 +49,7 @@
 
 \vspace{1cm}\par
 
-{\large Stand Januar 2025}
+{\large Stand Februar 2025}
 \end{raggedright}
 
 \clearpage
@@ -261,6 +261,7 @@ folgende Prozessorfamilien implementiert:
 \item{Toshiba TLCS-90}
 \item{Toshiba TLCS-870(/C)}
 \item{Toshiba TLCS-47}
+\item{Toshiba TLCS-42}
 \item{Toshiba TLCS-9000}
 \item{Toshiba TC9331}
 \item{Microchip PIC16C54..16C57}
@@ -1611,9 +1612,20 @@ Den einzelnen Segmenttypen sind die in Tabelle \ref{TabSegNums}
 aufgelisteten Nummern zugeordnet.  Die aus der Ordnung normaler Symbole
 etwas herausfallenden Registersymbole sind n"aher in Abschnitt
 \ref{SectRegSyms} erl"autert.  Mit einem undefinierten Symbol als Argument
-liefert die \tty{SYMTYPE}-Funktion -1 als Ergebnis.  Ob ein Symbol "uberhaupt
-definiert ist, oder ein Formelausdruck keine bisher undefinierten Symbole
-enth"alt, l"a"st sich auch einfach mit der \tty{DEFINED}-Funktion abfragen.
+liefert die \tty{SYMTYPE}-Funktion -1 als Ergebnis.
+
+Ob ein Symbol definiert ist, kann mit den Funktionen \tty{DEFINED} bzw.
+\tty{SYMEXIST} gepr"uft werden.  Der Unterschied: \tty{SYMEXIST} liefert
+bei einer Vorw"artsdeklaration im ersten Durchlauf ein 'false' und bei
+weiteren Durchl"aufen ein 'true'.  Im Gegensatz dazu liefert \tty{DEFINED} nur
+dann ein 'true', wenn das Symbol im bis zu diesem Punkt assemblierten Code
+definiert wurde.  Bei Vorw"artsdeklarationen bleibt es also bei einem 'false',
+unabh"angig vom Durchlauf.
+
+\tty{DEFINED} akzeptiert nicht nur einen einfachen Symbolnamen, sondern auch
+einen kompletten Formelausdruck.  Der R"uckgabewert ist in so einem Fall
+nur dann 'true', falls der Ausdruck keine Symbole enth"alt, die nach der im
+vorigen Absatz gegebenen Erkl"arung undefiniert sind.
 \begin{table}[htb]
 \begin{center}
 \begin{tabular}{|l|c|}
@@ -2921,7 +2933,7 @@ f"ur \tty{BFINS} und \tty{BFEXT} verwendet werden.
 \subsection{PORT}
 \ttindex{PORT}
 
-{\em G"ultigkeit: PALM, 8008/8080/8085/8086, XA, Z80, Z8000, 320C2x/5x, TLCS-47, AVR,
+{\em G"ultigkeit: PALM, 8008/8080/8085/8086, XA, Z80, Z8000, 320C2x/5x, TLCS-42/47, AVR,
      F8, IMP-16}
 
 \tty{PORT} arbeitet analog zu \tty{SFR}, nur wird das Symbol dem I/O-Adre"sbereich
@@ -3881,6 +3893,14 @@ Momentan ist nur der Prozessorkern der TLCS-870/C-Familie implementiert.
 Diese drei Varianten der TLCS-47-Familie haben unterschiedlich gro"se
 RAM-und ROM-Adre"sbereiche, wodurch jeweils einige Befehle zur
 Bankumschaltung hinzukommen oder wegfallen.
+%%-----------
+\begin{cpulist}
+4240P, 4250N, 4260P, 4270N \\
+42C00Y, 42C40P, 42C50N, 42C60P, 42C70N\\
+\end{cpulist}
+Die CMOS-Varianten verf"ugen "uber zwei zus"atzliche Befehle.  Ansonsten
+unterscheiden die Varianten sich in der Anzahl der I/O-Ports und der
+Gr"o"se des Prorammspeichers.
 %%-----------
 \begin{cpulist}
    97C241
@@ -7342,13 +7362,21 @@ Ein \tty{ELSEIF} bezieht sich immer auf das letzte, noch nicht abgeschlossene \t
 \par
 Neben \tty{IF} sind noch folgende weitere bedingte Befehle definiert:
 \ttindex{IFDEF}\ttindex{IFNDEF}
+\ttindex{IFSYMEXIST}\ttindex{IFNSYMEXIST}
 \ttindex{IFUSED}\ttindex{IFNUSED}
 \ttindex{IFEXIST}\ttindex{IFNEXIST}
 \ttindex{IFB}\ttindex{IFNB}
 \begin{itemize}
-\item{\tty{IFDEF} $<$Ausdruck$>$ : wahr, falls das der Ausdruck keine Symbole
-      enth"alt, die bisher undefiniert sind.}
+\item{\tty{IFDEF} $<$Ausdruck$>$ : wahr, falls der Ausdruck keine Symbole
+      enth"alt, die im bis zu diesem Punkt assemblierten Quellcode (noch) nicht
+      definiert wurden.  ACHTUNG! Bei Vorw"artsdeklarationen liefert diese Abfrage
+      in allen Durchl"aufen  ein negatives Ergebnis!}
 \item{\tty{IFNDEF} $<$Ausdruck$>$ : Umkehrung zu \tty{IFDEF}}
+\item{\tty{IFSYMEXIST} $<$Symbol$>$ : wahr, falls dieses Symbol in der Symboltabelle
+      existiert.  ACHTUNG! Bei Vorw"artsdeklarationen liefert diese Abfrage im
+      ersten Durchlauf ein negatives Ergebnis, aber ein positives in allen
+      weiteren!}
+\item{\tty{IFNSYMEXIST} $<$Symbol$>$ : Umkehrung zu \tty{IFSYMEXIST}}
 \item{\tty{IFUSED} $<$Symbol$>$ : wahr, falls das Symbol bisher mindestens einmal
       benutzt wurde.}
 \item{\tty{IFNUSED} $<$Symbol$>$ : Umkehrung zu \tty{IFUSED}}
@@ -12955,6 +12983,12 @@ Angaben:
                 Wert ist aber au"serhalb dessen, was intern als Ganzzahl dargestellt
                 werden kann.  Die Zahl wird deswegen als Gleitkomma-Zahl gespeichert.}
                {das fragliche Argument}
+\errentry{ 500}{Code-Erzeugung ausserhalb des CODE-Segments}
+               {Warnung}
+               {Maschinencode kann nur innerhalb des CODE-Segments erzeugt werden. Die
+                anderen Adressr"aume verf"ugen nicht "uber die daf"ur erforderliche
+                Wortbreite.}
+               {keines}
 \errentry{1000}{Symbol doppelt definiert}
                {Fehler}
                {Einem Symbol wurde durch ein Label oder

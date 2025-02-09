@@ -67,7 +67,7 @@
 
 \vspace{1cm}\par
 
-{\large Edition Januar 2025}
+{\large Edition February 2025}
 \end{raggedright}
 
 \clearpage
@@ -265,6 +265,7 @@ following processor families have been implemented:
 \item{Toshiba TLCS-90}
 \item{Toshiba TLCS-870(/C)}
 \item{Toshiba TLCS-47}
+\item{Toshiba TLCS-42}
 \item{Toshiba TLCS-9000}
 \item{Toshiba TC9331}
 \item{Microchip PIC16C54..16C57}
@@ -1570,9 +1571,18 @@ The individual segment types have the assigned numbers listed in table
 \ref{TabSegNums}.  Register symbols which do not really fit into the order
 of normal symbols are explained in section \ref{SectRegSyms}.  The
 \tty{SYMTYPE} function delivers -1 as result when called with an undefined
-symbol as argument.  However, if all you want to know is whether a symbol
-is defined or not, or whether an expression contains no no symbols that are
-undefined so far, you may as well use the \tty{DEFINED} function.
+symbol as argument.
+
+The functions \tty{DEFINED} resp. \tty{SYMEXIST} allow to check whether a
+symbol is defined or not.  The difference between them: \tty{SYMEXIST} returns
+'false' for a forward declaration in pass one, and 'true' in subsequent passes.
+In contrast, \tty{DEFINED} consistently returns 'false' for forward declarations
+in all passes - the meaning is 'defined up to this point in the source'.
+
+\tty{DEFINED} not only accepts simple symbol names, but also complete
+formula expressions.  In this case, the return value is 'true' only if the
+expression does not contain any symbols that are undefined by the rule
+given in the previous paragraph.
 \begin{table}[htb]
 \begin{center}
 \begin{tabular}{|l|c|}
@@ -2835,7 +2845,7 @@ symbolically defined bit may also be used as argument for
 \subsection{PORT}
 \ttindex{PORT}
 
-{\em valid for: PALM, 8008/8080/8085/8086, XA, Z80, Z8000, 320C2x/5x, TLCS-47, AVR,
+{\em valid for: PALM, 8008/8080/8085/8086, XA, Z80, Z8000, 320C2x/5x, TLCS-42/47, AVR,
      F8, IMP-16}
 
 \tty{PORT} works similar to \tty{EQU}, just the symbol becomes assigned to the
@@ -3778,6 +3788,14 @@ implemented.
 These three variations of the TLCS-47-family have on-chip RAM and ROM
 of different size, which leads to several bank switching instructions
 being added or suppressed.
+%%-----------
+\begin{cpulist}
+4240P, 4250N, 4260P, 4270N \\
+42C00Y, 42C40P, 42C50N, 42C60P, 42C70N\\
+\end{cpulist}
+The CMOS variants support two additional instructions.  Otherwise, the
+variants differ in the number of I/O ports and the size of program
+memory.
 %%-----------
 \begin{cpulist}
    97C241
@@ -7124,14 +7142,23 @@ the last branch.
 \tty{ELSEIF} always refers to the innermost, unfinished \tty{IF} construct
 in case \tty{IF}'s are nested.
 
-\ttindex{IFDEF}\ttindex{IFNDEF}\ttindex{IFUSED}\ttindex{IFNUSED}
-\ttindex{IFEXIST}\ttindex{IFNEXIST}\ttindex{IFB}\ttindex{IFNB}
+\ttindex{IFDEF}\ttindex{IFNDEF}
+\ttindex{IFSYMEXIST}\ttindex{IFNSYMEXIST}
+\ttindex{IFUSED}\ttindex{IFNUSED}
+\ttindex{IFEXIST}\ttindex{IFNEXIST}
+\ttindex{IFB}\ttindex{IFNB}
 In addition to \tty{IF}, the following further conditional statements are
 defined:
 \begin{itemize}
 \item{\tty{IFDEF $<$expressionl$>$}: true if the expression does not contain
-      any symbols that are so far undefined.}
+      any symbols that are undefined by the source assembled up to this
+      point.  CAUTION! Querying forward declarations will return a 'false',
+      also in the second and subsequent passes.}
 \item{\tty{IFNDEF $<$expression$>$}: counterpart to \tty{IFDEF}.}
+\item{\tty{IFSYMEXIST $<$symbol$>$} : true if the queried symbol exists
+      in the symbol table.  CAUTION! Querying a forward declaration returns
+      false in the first pass, but true in all subsequent passes.}
+\item{\tty{IFNSYMEXIST $<$symbol$>$}: counterpart to \tty{IFSYMEXIST}.}
 \item{\tty{IFUSED $<$symbol$>$}: true if if the given symbol has been
       referenced at least once up to now.}
 \item{\tty{IFNUSED $<$symbol$>$}: counterpart to \tty{IFUSED}.}
@@ -12665,6 +12692,11 @@ described by:
                 integer.  The number is therefore stored as a floating point
                 number.}
                {the argument in question}
+\errentry{ 500}{code generation outside of CODE segment}
+               {warning}
+               {machine code can only be generated inside the CODE segment. All
+                other address spaces do not have the necessary word width.}
+               {none}
 \errentry{1000}{symbol double defined}
                {error}
                {A new value is assigned to a symbol, using a label or a
