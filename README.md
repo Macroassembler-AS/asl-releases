@@ -7,9 +7,11 @@ cross-assembler. Build platforms include a variety of Unix systems
 with an extender). Target platforms cover a huge variety of 8- and
 16-bit CPUs and microcontrollers.
 
-The `upstream` branch of this repository contains the source code for
-every publicly available [source release][src] of the C version. The
-tools to do this and this documentation are on the `main` branch.
+The `upstream` branch of this repository contains the source code for every
+publicly available [source release][src] of the C version, downloaded from
+the web site. The tools to do this and this documentation are on the `main`
+branch. There is also now a [git repo] available. (This was not available
+until recently, thus this import repo, which continues to be maintained.)
 
 Pull requests (to improve the import system and its documentation) are
 accepted for the `main` branch. The `upstream` branch containing the
@@ -89,6 +91,7 @@ versions.
 
 <!-------------------------------------------------------------------->
 [asl]: http://john.ccac.rwth-aachen.de:8000/as/
+[git repo]: http://john.ccac.rwth-aachen.de:8000/asl.git
 [src]: http://john.ccac.rwth-aachen.de:8000/ftp/as/source/c_version/
 
 [ghmas]: https://github.com/Macroassembler-AS
