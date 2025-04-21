@@ -35,6 +35,7 @@ static int max_pc_len;
 
 static char *p_listline_prefix_format = NULL;
 static const char default_listline_prefix_format[] = "%i%n/%a";
+static Boolean list_unknown_values = True;
 
 /*!------------------------------------------------------------------------
  * \fn     as_list_set_max_pc(LargeWord max_pc)
@@ -110,7 +111,6 @@ void MakeList(const char *pSrcLine)
         lnum_column_len[3] = { -1, -1, -1 };
     Word Index = 0, CurrListGran, SystemListLen;
     Boolean First = True;
-    LargeInt ThisWord;
 
     /* Not enough code to display even on 16/32 bit word?
        Then start dumping bytes right away: */
@@ -272,23 +272,40 @@ void MakeList(const char *pSrcLine)
            and we check after every word whether there is another
            full one: */
 
-        if ((Index < EffLen) && !DontPrint)
+        if ((Index >= EffLen) || DontPrint)
+          as_sdprcatf(&list_buf, "%*s", (int)(1 + SystemListLen), "");
+        else
         {
+          LargeWord ThisWord, ThisWordGuessed;
+
           switch (CurrListGran)
           {
             case 4:
               ThisWord = DAsmCode[Index >> 2];
+              ThisWordGuessed = get_dasmcode_guessed(Index >> 2);
               break;
             case 2:
               ThisWord = WAsmCode[Index >> 1];
+              ThisWordGuessed = get_wasmcode_guessed(Index >> 1);;
               break;
             default:
               ThisWord = BAsmCode[Index];
+              ThisWordGuessed = get_basmcode_guessed(Index);
           }
           as_sdprcatf(&list_buf, " %0*.*lllu", (int)SystemListLen, (int)ListRadixBase, ThisWord);
+          if (list_unknown_values && (ThisWordGuessed != 0))
+          {
+            char mask_buf[100];
+            char *p_val_end = list_buf.p_str + strlen(list_buf.p_str),
+                 *p_mask_end = mask_buf + as_snprintf(mask_buf, sizeof(mask_buf), "%0*.*lllu", (int)SystemListLen, (int)ListRadixBase, ThisWordGuessed);
+            while (p_mask_end > mask_buf)
+            {
+              p_val_end--;
+              if (*--p_mask_end != '0')
+                *p_val_end = '?';
+            }
+          }
         }
-        else
-          as_sdprcatf(&list_buf, "%*s", (int)(1 + SystemListLen), "");
 
         /* advance pointers & keep track of # of characters printed */
 
@@ -337,9 +354,29 @@ static as_cmd_result_t cmd_listline_prefix(Boolean negate, const char *p_arg)
   return negate ? e_cmd_ok : e_cmd_arg;
 }
 
+static as_cmd_result_t cmd_list_unknown_values(Boolean negate, const char *p_arg)
+{
+  UNUSED(p_arg);
+  if (negate)
+    return e_cmd_err;
+  list_unknown_values = True;
+  return e_cmd_ok;
+}
+
+static as_cmd_result_t cmd_no_list_unknown_values(Boolean negate, const char *p_arg)
+{
+  UNUSED(p_arg);
+  if (negate)
+    return e_cmd_err;
+  list_unknown_values = False;
+  return e_cmd_ok;
+}
+
 static const as_cmd_rec_t list_params[] =
 {
-  { "listline-prefix", cmd_listline_prefix }
+  { "listline-prefix", cmd_listline_prefix },
+  { "list-unknown-values", cmd_list_unknown_values },
+  { "no-list-unknown-values", cmd_no_list_unknown_values }
 };
 
 /*!------------------------------------------------------------------------

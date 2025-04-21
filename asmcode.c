@@ -40,6 +40,11 @@ PExportEntry ExportList, ExportLast;
 LongInt SectSymbolCounter;
 String SectSymbolName;
 
+static LongWord code_len_guessed = 0, max_code_len_guessed = 0;
+static Byte *basmcode_guessed;
+static Word *wasmcode_guessed;
+static LongWord *dasmcode_guessed;
+
 static void FlushBuffer(void)
 {
   if (CodeBufferFill > 0)
@@ -391,6 +396,303 @@ void InsertPadding(unsigned NumBytes, Boolean OnlyReserve)
 
   CodeLen = 0;
   DontPrint = SaveDontPrint;
+}
+
+void code_len_reset(void)
+{
+  CodeLen = code_len_guessed = 0;
+  DontPrint = False;
+}
+
+static void assure_max_code_len_guessed(LongWord new_max_len)
+{
+  if (new_max_len > max_code_len_guessed)
+  {
+    LongWord *p_new_code_len_guessed = max_code_len_guessed ?
+             (LongWord*)realloc(dasmcode_guessed, new_max_len) : (LongWord*)malloc(new_max_len);
+    if (!p_new_code_len_guessed)
+      return;
+    basmcode_guessed = (Byte *)p_new_code_len_guessed;
+    wasmcode_guessed = (Word *) p_new_code_len_guessed;
+    dasmcode_guessed = (LongWord *)p_new_code_len_guessed;
+    memset(&basmcode_guessed[max_code_len_guessed], 0x00, new_max_len - max_code_len_guessed);
+    max_code_len_guessed = new_max_len;
+  }
+}
+
+static void extend_zero_basmcode_guessed_len(LongWord new_len)
+{
+  assure_max_code_len_guessed(new_len);
+  if (new_len > code_len_guessed)
+  {
+    memset(&basmcode_guessed[code_len_guessed], 0x00, new_len - code_len_guessed);
+    code_len_guessed = new_len;
+  }
+}
+
+static void extend_zero_wasmcode_guessed_len(LongWord new_len)
+{
+  /* If actual granularity is smaller than 16 bits, code_len_guessed
+     must be counted in the smaller unit: */
+
+  if (Granularity() < 2)
+    extend_zero_basmcode_guessed_len(new_len * 2);
+  else
+  {
+    assure_max_code_len_guessed(new_len * 2);
+    if (new_len > code_len_guessed)
+    {
+      memset(&wasmcode_guessed[code_len_guessed], 0x00, (new_len - code_len_guessed) * 2);
+      code_len_guessed = new_len;
+    }
+  }
+}
+
+static void extend_zero_dasmcode_guessed_len(LongWord new_len)
+{
+  /* If actual granularity is smaller than 32 bits, code_len_guessed
+     must be counted in the smaller unit: */
+
+  if (Granularity() < 4)
+    extend_zero_wasmcode_guessed_len(new_len * 2);
+  else
+  {
+    assure_max_code_len_guessed(new_len * 4);
+    if (new_len > code_len_guessed)
+    {
+      memset(&dasmcode_guessed[code_len_guessed], 0x00, (new_len - code_len_guessed) * 4);
+      code_len_guessed = new_len;
+    }
+  }
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     set_basmcode_guessed(LongWord start, LongWord count, Byte value)
+ * \brief  set guessed mask of bytes
+ * \param  start start index of bytes to set
+ * \param  count # of bytes to set
+ * \param  value mask to set on bytes
+ * ------------------------------------------------------------------------ */
+
+void set_basmcode_guessed(LongWord start, LongWord count, Byte value)
+{
+  LongWord end = start + count;
+
+  if (end < start)
+    return;
+  extend_zero_basmcode_guessed_len(end);
+  memset(&basmcode_guessed[start], value, count);
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     copy_basmcode_guessed(LongWord dest, LongWord src, size_t count)
+ * \brief  replicate guessed mask of bytes
+ * \param  dest where to replicate to
+ * \param  src where to replicate from
+ * \param  count # of bytes to replicate
+ * ------------------------------------------------------------------------ */
+
+void copy_basmcode_guessed(LongWord dest, LongWord src, size_t count)
+{
+  LongWord dest_end = dest + count,
+           src_end = src + count;
+
+  if ((dest_end < dest) || (src_end < src))
+    return;
+  extend_zero_basmcode_guessed_len((dest_end > src_end) ? dest_end : src_end);
+  memcpy(&basmcode_guessed[dest], &basmcode_guessed[src], count);
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     or_basmcode_guessed(LongWord start, LongWord count, Byte value)
+ * \brief  augment guessed mask of bytes
+ * \param  start start index of bytes to set
+ * \param  count # of bytes to set
+ * \param  value mask of bits to set on ytes
+ * ------------------------------------------------------------------------ */
+
+void or_basmcode_guessed(LongWord start, LongWord count, Byte value)
+{
+  LongWord end = start + count;
+
+  if (end < start)
+    return;
+  extend_zero_basmcode_guessed_len(end);
+  for (; start < end; start++)
+    basmcode_guessed[start] |= value;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     get_basmcode_guessed(LongWord index)
+ * \brief  retrieve guessed mask of byte #n
+ * \param  index n-th DWord
+ * \return mask or zero if beyond code_len_guessed
+ * ------------------------------------------------------------------------ */
+
+Byte get_basmcode_guessed(LongWord index)
+{
+  return (index < code_len_guessed) ? basmcode_guessed[index] : 0;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     set_wasmcode_guessed(LongWord start, LongWord count, Word value)
+ * \brief  set guessed mask of 16-bit words
+ * \param  start start index of words to set
+ * \param  count # of words to set
+ * \param  value mask to set on words
+ * ------------------------------------------------------------------------ */
+
+void set_wasmcode_guessed(LongWord start, LongWord count, Word value)
+{
+  LongWord end = start + count;
+
+  if (end < start)
+    return;
+  extend_zero_wasmcode_guessed_len(end);
+  for (; start < end; start++)
+    wasmcode_guessed[start] = value;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     copy_wasmcode_guessed(LongWord dest, LongWord src, size_t count)
+ * \brief  replicate guessed mask of 16-bit words
+ * \param  dest where to replicate to
+ * \param  src where to replicate from
+ * \param  count # of words to replicate
+ * ------------------------------------------------------------------------ */
+
+void copy_wasmcode_guessed(LongWord dest, LongWord src, size_t count)
+{
+  LongWord dest_end = dest + count,
+           src_end = src + count;
+
+  if ((dest_end < dest) || (src_end < src))
+    return;
+  extend_zero_wasmcode_guessed_len((dest_end > src_end) ? dest_end : src_end);
+  memcpy(&wasmcode_guessed[dest], &wasmcode_guessed[src], count * 2);
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     or_wasmcode_guessed(LongWord start, LongWord count, Word value)
+ * \brief  augment guessed mask of 16 bit words
+ * \param  start start index of words to set
+ * \param  count # of words to set
+ * \param  value mask of bits to set on words
+ * ------------------------------------------------------------------------ */
+
+void or_wasmcode_guessed(LongWord start, LongWord count, Word value)
+{
+  LongWord end = start + count;
+
+  if (end < start)
+    return;
+  extend_zero_wasmcode_guessed_len(end);
+  for (; start < end; start++)
+    wasmcode_guessed[start] |= value;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     get_wasmcode_guessed(LongWord index)
+ * \brief  retrieve guessed mask of 16-bit word #n
+ * \param  index n-th DWord
+ * \return mask or zero if beyond code_len_guessed
+ * ------------------------------------------------------------------------ */
+
+Word get_wasmcode_guessed(LongWord index)
+{
+  return (index < code_len_guessed) ? wasmcode_guessed[index] : 0;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     dump_wasmcode_guessed(const char *p_title)
+ * \brief  dump guessed masks as 16-bit values
+ * \param  p_titleoptional dump title
+ * ------------------------------------------------------------------------ */
+
+void dump_wasmcode_guessed(const char *p_title)
+{
+  int z;
+
+  if (p_title) printf("%s:", p_title);
+  if (Granularity() < 2)
+  {
+    for (z = 0; z < CodeLen >> 1; z++) printf(" %04x", get_wasmcode_guessed(z));
+    if (CodeLen & 1) printf(" %02x", get_basmcode_guessed(CodeLen - 1));
+  }
+  else
+  {
+    for (z = 0; z < CodeLen; z++) printf(" %04x", get_wasmcode_guessed(z));
+  }
+  printf("\n");
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     set_dasmcode_guessed(LongWord start, LongWord count, LongWord value)
+ * \brief  set guessed mask of 32 bit words
+ * \param  start start index of dwords to set
+ * \param  count # of dwords to set
+ * \param  value mask to set on dwords
+ * ------------------------------------------------------------------------ */
+
+void set_dasmcode_guessed(LongWord start, LongWord count, LongWord value)
+{
+  LongWord end = start + count;
+
+  if (end < start)
+    return;
+  extend_zero_dasmcode_guessed_len(end);
+  for (; start < end; start++)
+    dasmcode_guessed[start] = value;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     copy_dasmcode_guessed(LongWord dest, LongWord src, size_t count)
+ * \brief  replicate guessed mask of 32-bit words
+ * \param  dest where to replicate to
+ * \param  src where to replicate from
+ * \param  count # of dwords to replicate
+ * ------------------------------------------------------------------------ */
+
+void copy_dasmcode_guessed(LongWord dest, LongWord src, size_t count)
+{
+  LongWord dest_end = dest + count,
+           src_end = src + count;
+
+  if ((dest_end < dest) || (src_end < src))
+    return;
+  extend_zero_dasmcode_guessed_len((dest_end > src_end) ? dest_end : src_end);
+  memcpy(&dasmcode_guessed[dest], &dasmcode_guessed[src], count * 4);
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     or_dasmcode_guessed(LongWord start, LongWord count, LongWord value)
+ * \brief  augment guessed mask of 32 bit words
+ * \param  start start index of dwords to set
+ * \param  count # of dwords to set
+ * \param  value mask of bits to set on dwords
+ * ------------------------------------------------------------------------ */
+
+void or_dasmcode_guessed(LongWord start, LongWord count, LongWord value)
+{
+  LongWord end = start + count;
+
+  if (end < start)
+    return;
+  extend_zero_dasmcode_guessed_len(end);
+  for (; start < end; start++)
+    dasmcode_guessed[start] |= value;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     get_dasmcode_guessed(LongWord index)
+ * \brief  retrieve guessed mask of 32-bit word #n
+ * \param  index n-th DWord
+ * \return mask or zero if beyond code_len_guessed
+ * ------------------------------------------------------------------------ */
+
+LongWord get_dasmcode_guessed(LongWord index)
+{
+  return (index < code_len_guessed) ? dasmcode_guessed[index] : 0;
 }
 
 void asmcode_init(void)

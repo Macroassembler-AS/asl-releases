@@ -152,10 +152,10 @@ static Boolean IsWRegCore(const char *pArg, Byte *pResult)
   if ((strlen(pArg) < 2) || (as_toupper(*pArg) != 'R')) return False;
   else
   {
-    Boolean OK;
+    char *p_end;
 
-    *pResult = ConstLongInt(pArg + 1, &OK, 10);
-    return OK && (*pResult <= 15);
+    *pResult = strtoul(pArg + 1, &p_end, 10);
+    return !*p_end && (*pResult <= 15);
   }
 }
 
@@ -195,10 +195,10 @@ static Boolean IsWRRegCore(const char *pArg, Byte *pResult)
   if ((strlen(pArg) < 3) || as_strncasecmp(pArg, "RR", 2)) return False;
   else
   {
-    Boolean OK;
+    char *p_end;
 
-    *pResult = ConstLongInt(pArg + 2, &OK, 10);
-    return OK && (*pResult <= 15);
+    *pResult = strtoul(pArg + 2, &p_end, 10);
+    return !*p_end && (*pResult <= 15);
   }
 }
 

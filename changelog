@@ -1,3 +1,14 @@
+2025-04-21 [1.42 Bld 284]
+
+- Change      : out-of-range displacement for (d16,PC)
+                and (d8,PC,Xn) on 68000 is now reported as
+                such
+- Bugfix      : correct encoding of LD (nnnn),SP on GBZ80
+- Addition    : Display values unknown in first pass as
+                question mark (may be disabled via command
+                line switch): implemented so far for 65xx,
+                Zx80, MCS-(2)51 and 8080/8085.
+
 2025-02-09 [1.42 Bld 283]
 
 - Addition    : new target TLCS-42

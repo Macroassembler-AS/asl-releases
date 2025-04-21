@@ -725,14 +725,14 @@ static Boolean DecodeAddrPart(const tStrComp *pArg, LongInt Disp, tAdrVals *pAdr
    base, i.e. |addr|(rn).  | is also the OR operator, and I don't want to get
    false positives on other targets on stuff like (...)|(...): */
 
-static int ShortQualifier(const char *pArg, int NextNonBlankPos, int SplitPos)
+static int ShortQualifier(const char *pArg, int LastNonBlankPos, int SplitPos)
 {
   int FirstNonBlankPos;
 
-  for (FirstNonBlankPos = 0; FirstNonBlankPos < NextNonBlankPos; FirstNonBlankPos++)
+  for (FirstNonBlankPos = 0; FirstNonBlankPos < LastNonBlankPos; FirstNonBlankPos++)
     if (!as_isspace(pArg[FirstNonBlankPos]))
       break;
-  return ((FirstNonBlankPos < NextNonBlankPos) && (pArg[FirstNonBlankPos] == '|') && (pArg[NextNonBlankPos] == '|')) ? SplitPos : -1;
+  return ((FirstNonBlankPos < LastNonBlankPos) && (pArg[FirstNonBlankPos] == '|') && (pArg[LastNonBlankPos] == '|')) ? SplitPos : -1;
 }
 
 static tAdrMode DecodeAdr(const tStrComp *pArg, unsigned ModeMask, tAdrVals *pAdrVals)

@@ -137,27 +137,27 @@ typedef struct
 static Boolean IsRegCore(const char *pArg, tRegInt *pValue, tSymbolSize *pSize)
 {
   int l = strlen(pArg);
-  Boolean OK;
+  char *p_end;
 
   if ((l < 2) || (as_toupper(*pArg) != 'R'))
     return False;
   else if ((l > 2) && (as_toupper(pArg[1]) == 'L'))
   {
-    *pValue = ConstLongInt(pArg + 2, &OK, 10) << 1;
+    *pValue = strtoul(pArg + 2, &p_end, 10) << 1;
     *pSize = eSymbolSize8Bit;
-    return (OK && (*pValue <= 15));
+    return (!*p_end && (*pValue <= 15));
   }
   else if ((l > 2) && (as_toupper(pArg[1]) == 'H'))
   {
-    *pValue = (ConstLongInt(pArg + 2, &OK, 10) << 1) + 1;
+    *pValue = (strtoul(pArg + 2, &p_end, 10) << 1) + 1;
     *pSize = eSymbolSize8Bit;
-    return (OK && (*pValue <= 15));
+    return (!*p_end && (*pValue <= 15));
   }
   else
   {
-    *pValue = ConstLongInt(pArg + 1, &OK, 10);
+    *pValue = strtoul(pArg + 1, &p_end, 10);
     *pSize = eSymbolSize16Bit;
-    return (OK && (*pValue <= 15));
+    return (!*p_end && (*pValue <= 15));
   }
 }
 

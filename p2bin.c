@@ -461,9 +461,6 @@ static as_cmd_result_t CMD_ByteMode(Boolean Negate, const char *pArg)
 
 static as_cmd_result_t CMD_StartHeader(Boolean Negate, const char *Arg)
 {
-  Boolean err;
-  ShortInt Sgn;
-
   if (Negate)
   {
     StartHeader = 0;
@@ -471,8 +468,10 @@ static as_cmd_result_t CMD_StartHeader(Boolean Negate, const char *Arg)
   }
   else
   {
-    Sgn = 1;
-    if (*Arg == '\0')
+    const char *p_end;
+    ShortInt Sgn = 1;
+
+    if (!*Arg)
       return e_cmd_err;
     switch (as_toupper(*Arg))
     {
@@ -482,8 +481,8 @@ static as_cmd_result_t CMD_StartHeader(Boolean Negate, const char *Arg)
       case 'L':
         Arg++;
     }
-    StartHeader = ConstLongInt(Arg, &err, 10);
-    if ((!err) || (StartHeader > 4))
+    StartHeader = as_cmd_strtol(Arg, &p_end);
+    if (*p_end || (StartHeader > 4))
       return e_cmd_err;
     StartHeader *= Sgn;
     return e_cmd_arg;
@@ -492,8 +491,6 @@ static as_cmd_result_t CMD_StartHeader(Boolean Negate, const char *Arg)
 
 static as_cmd_result_t CMD_EntryAdr(Boolean Negate, const char *Arg)
 {
-  Boolean err;
-
   if (Negate)
   {
     EntryAdrPresent = False;
@@ -501,20 +498,23 @@ static as_cmd_result_t CMD_EntryAdr(Boolean Negate, const char *Arg)
   }
   else
   {
-    EntryAdr = ConstLongInt(Arg, &err, 10);
-    if (err)
+    const char *p_end;
+    EntryAdr = as_cmd_strtol(Arg, &p_end);
+    if (!*p_end)
       EntryAdrPresent = True;
-    return (err) ? e_cmd_arg : e_cmd_err;
+    return *p_end ? e_cmd_err : e_cmd_arg;
   }
 }
 
 static as_cmd_result_t CMD_FillVal(Boolean Negate, const char *Arg)
 {
-  Boolean err;
-  UNUSED(Negate);
+  const char *p_end;
 
-  FillVal = ConstLongInt(Arg, &err, 10);
-  return err ? e_cmd_arg : e_cmd_err;
+  if (Negate || !*Arg)
+    return e_cmd_err;
+
+  FillVal = as_cmd_strtol(Arg, &p_end);
+  return *p_end ? e_cmd_err : e_cmd_arg;
 }
 
 static as_cmd_result_t CMD_CheckSum(Boolean Negate, const char *Arg)

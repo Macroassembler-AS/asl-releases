@@ -242,9 +242,9 @@ static Boolean check_mode_mask(const tStrComp *p_arg, tAdrMode address_mode, uns
   }
 }
 
-static int BaseQualifier(const char *pArg, int NextNonBlankPos, int SplitPos)
+static int BaseQualifier(const char *pArg, int LastNonBlankPos, int SplitPos)
 {
-  return (pArg[NextNonBlankPos] == ']') ? SplitPos : -1;
+  return (pArg[LastNonBlankPos] == ']') ? SplitPos : -1;
 }
 
 static void CutSize(tStrComp *pArg, tSymbolSize *pSize)

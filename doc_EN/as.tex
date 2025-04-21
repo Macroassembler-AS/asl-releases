@@ -67,7 +67,7 @@
 
 \vspace{1cm}\par
 
-{\large Edition February 2025}
+{\large Edition April 2025}
 \end{raggedright}
 
 \clearpage
@@ -895,6 +895,9 @@ At the moment, the following switches are defined:
 \item{\tty{listline-prefix}: This option allows to modify the data that
       is printed in front of every source line in the listing.  The
       structure of the format string is described in \ref{SectListing}.}
+\item{{\tt list-unknown-values} resp. {\tt no-list-unknown-values}: enables
+      or disables displaying question marks for values unknown in the
+      first pass.}
 \item{\label{radix}\tty{RADIX}: This option changes the default number system
       to a value between 2 and 36, thereby overriding the default of 10.
       The value given by this switch can itself be overridden in the program
@@ -1365,8 +1368,31 @@ sufficient, while eight digits are needed if the address space's size
 is 4 GBytes.
 
 The code produced is written behind \tty{address} in the field \tty{code},
-also in the number system defined by the list radix.  Depending on the processor type and actual
-segment the values are formatted either as bytes or 16/32-bit-words.
+also in the number system defined by the list radix.  Depending on the
+processor target and current address space, the values are formatted with
+different length.  In the simplemost case, the code may be shown as a
+sequence of 8 bit bytes.  Words of 16 or 32 bits may also be used, in
+case the address space is not byte-addressable, or the target processor's
+instruction words are longer than one byte.  For instance, the address
+space of the 68000 or the PDP-11 is byte-addressable, their machine instructions
+however have a length of 16 bits.  There are even a few cases when the
+word length is not a multiple of 8 bit, like 12 bits for the PDP-8.
+
+If forward references are used, the final values for parts of the
+machine code cannot be listed in the first pass. \asname{} will then
+make an assumption about the value that permits further assembly.  For
+a (growing) number of targets, these fields will be displayed with
+question marks.  The following targets currently support this feature:
+\begin{itemize}
+\item{65xx/65XXX}
+\item{8080/8085}
+\item{(e)Z80/Z180/Z380}
+\item{8051/80251}
+\end{itemize}
+In case these question marks conflict with further processing of the
+listing, this feature may be disabled via the \tty{-no-list-unknown-values}
+command line switch.
+
 If more code is generated than the field can take, additional lines
 will be  generated, in which case only this field is used.
 

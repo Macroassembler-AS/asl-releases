@@ -72,13 +72,13 @@ static CPUVar CPUMico8_05, CPUMico8_V3, CPUMico8_V31;
 
 static Boolean IsWRegCore(const char *pArg, LongWord *pValue)
 {
-  Boolean OK;
+  char *p_end;
 
   if ((strlen(pArg) < 2) || (as_toupper(*pArg) != 'R'))
     return False;
 
-  *pValue = ConstLongInt(pArg + 1, &OK, 10);
-  if (!OK)
+  *pValue = strtoul(pArg + 1, &p_end, 10);
+  if (*p_end)
     return False;
 
   return (*pValue < 32);

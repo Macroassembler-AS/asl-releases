@@ -208,10 +208,10 @@ static Boolean DecodeGenRegCore(const char *pArg, LongWord *pValue)
     return False;
   else
   {
-    Boolean OK;
+    char *p_end;
 
-    *pValue = ConstLongInt(pArg + 1, &OK, 10);
-    return (OK && (*pValue <= 31));
+    *pValue = strtoul(pArg + 1, &p_end, 10);
+    return (!*p_end && (*pValue <= 31));
   }
 }
 
@@ -229,10 +229,10 @@ static Boolean DecodeFPRegCore(const char *pArg, LongWord *pValue)
     return False;
   else
   {
-    Boolean OK;
+    char *p_end;
 
-    *pValue = ConstLongInt(pArg + 2, &OK, 10);
-    return OK && (*pValue <= 31);
+    *pValue = strtoul(pArg + 2, &p_end, 10);
+    return !*p_end && (*pValue <= 31);
   }
 }
 

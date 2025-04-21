@@ -697,7 +697,7 @@ void FloatString(char *pDest, size_t DestSize, as_float_t f)
 #define MaxLen (3 + AS_FLOAT_DIG)
   char *p, *d, ExpChar = HexStartCharacter + ('E' - 'A');
   sint n, ExpVal, nzeroes;
-  Boolean WithE, OK;
+  Boolean WithE;
 
   /* 1. mit Maximallaenge wandeln, fuehrendes Vorzeichen weg */
 
@@ -753,8 +753,10 @@ void FloatString(char *pDest, size_t DestSize, as_float_t f)
 
   if (WithE)
   {
+    char *p_end;
+
     p = strchr(pDest, ExpChar);
-    ExpVal = ConstLongInt(p + 1, &OK, 10);
+    ExpVal = strtol(p + 1, &p_end, 10);
   }
   else
   {

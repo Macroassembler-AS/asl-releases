@@ -1631,7 +1631,7 @@ static ASSUMERec ASSUME75s[] =
 
 static void SwitchTo_75K0(void *pUser)
 {
-  Boolean Err;
+  char *p_end;
   Word ROMEnd;
 
   pCurrCPUProps = (const tCPUProps*)pUser;
@@ -1645,7 +1645,7 @@ static void SwitchTo_75K0(void *pUser)
   Grans[SegCode] = 1; ListGrans[SegCode] = 1; SegInits[SegCode] = 0;
   Grans[SegData] = 1; ListGrans[SegData] = 1; SegInits[SegData] = 0;
   SegLimits[SegData] = 0xfff;
-  ROMEnd = ConstLongInt(&MomCPUName[3], &Err, 10);
+  ROMEnd = strtoul(&MomCPUName[3], &p_end, 10);
   if (ROMEnd > 2)
     ROMEnd %= 10;
   SegLimits[SegCode] = (ROMEnd << 10) - 1;

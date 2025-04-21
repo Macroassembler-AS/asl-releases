@@ -31,6 +31,17 @@
 
 #include "code68k.h"
 
+/* If set to one, the implicit subtraction of the current program counter
+   for PC-relative addressing is only done if the base symbol is from
+   CODE address space: */
+
+#define PCREL_ONLY_ON_CODESEG 0
+
+/* If set to one, allow An/PC-relative displacements of 0x8000...0xffff resp.
+   0x80 to 0xff, though the argument is a signed 16 resp. 8 bit value: */
+
+#define AN_PCREL_OUTDISP_ALLOW_SIGNEXT 0
+
 typedef enum
 {
   e68KGen1a, /* 68008/68000 */
@@ -40,6 +51,8 @@ typedef enum
   e68KGen2,  /* 68020/68030 */
   e68KGen3   /* 68040 */
 } tFamily;
+
+#define ExtAddrFamilyMask ((1 << e68KGen3) | (1 << e68KGen2) | (1 << eCPU32))
 
 typedef enum
 {
@@ -442,7 +455,7 @@ typedef struct
   Word ANummer, INummer;
   Boolean Long;
   Word Scale;
-  ShortInt Size;
+  tSymbolSize Size;
   LongInt Wert;
 } AdrComp;
 
@@ -670,9 +683,9 @@ static Boolean SplitBitField(tStrComp *pArg, Word *Erg)
   return True;
 }
 
-static Boolean SplitSize(tStrComp *pArg, ShortInt *DispLen, unsigned OpSizeMask)
+static Boolean SplitSize(tStrComp *pArg, tSymbolSize *DispLen, unsigned OpSizeMask)
 {
-  ShortInt NewLen = -1;
+  tSymbolSize NewLen = eSymbolSizeUnknown;
   int ArgLen = strlen(pArg->str.p_str);
 
   if ((ArgLen > 2) && (pArg->str.p_str[ArgLen - 2] == '.'))
@@ -681,19 +694,19 @@ static Boolean SplitSize(tStrComp *pArg, ShortInt *DispLen, unsigned OpSizeMask)
     {
       case 'B':
         if (OpSizeMask & 1)
-          NewLen = 0;
+          NewLen = eSymbolSize8Bit;
         else
           goto wrong;
         break;
       case 'W':
         if (OpSizeMask & 2)
-          NewLen = 1;
+          NewLen = eSymbolSize16Bit;
         else
           goto wrong;
         break;
       case 'L':
         if (OpSizeMask & 2)
-          NewLen = 2;
+          NewLen = eSymbolSize32Bit;
         else
           goto wrong;
         break;
@@ -702,7 +715,7 @@ static Boolean SplitSize(tStrComp *pArg, ShortInt *DispLen, unsigned OpSizeMask)
         WrError(ErrNum_InvOpSize);
         return False;
     }
-    if ((*DispLen != -1) && (*DispLen != NewLen))
+    if ((*DispLen != eSymbolSizeUnknown) && (*DispLen != NewLen))
     {
       WrError(ErrNum_ConfOpSizes);
       return False;
@@ -723,7 +736,7 @@ static Boolean ClassComp(AdrComp *C)
   C->ANummer = C->INummer = 0;
   C->Long = False;
   C->Scale = 0;
-  C->Size = -1;
+  C->Size = eSymbolSizeUnknown;
   C->Wert = 0;
 
   if ((*C->Comp.str.p_str == '[') && (C->Comp.str.p_str[comp_len - 1] == ']'))
@@ -827,10 +840,10 @@ is_disp:
     switch (as_toupper(C->Comp.str.p_str[comp_len - 1]))
     {
       case 'L':
-        C->Size = 2;
+        C->Size = eSymbolSize32Bit;
         break;
       case 'W':
-        C->Size = 1;
+        C->Size = eSymbolSize16Bit;
         break;
       default:
         return False;
@@ -838,7 +851,7 @@ is_disp:
     StrCompShorten(&C->Comp, 2);
   }
   else
-    C->Size = -1;
+    C->Size = eSymbolSizeUnknown;
   C->Art = Disp;
   return True;
 }
@@ -885,14 +898,14 @@ static Boolean IsDisp16(LongInt Disp)
   return ((Disp >= -32768) && (Disp <= 32767));
 }
 
-ShortInt GetDispLen(LongInt Disp)
+tSymbolSize GetDispLen(LongInt Disp)
 {
   if (IsDisp8(Disp))
-    return 0;
+    return eSymbolSize8Bit;
   else if (IsDisp16(Disp))
-    return 1;
+    return eSymbolSize16Bit;
   else
-    return 2;
+    return eSymbolSize32Bit;
 }
 
 static void ChkEven(LongInt Adr)
@@ -910,7 +923,7 @@ static void ChkEven(LongInt Adr)
   }
 }
 
-static void DecodeAbs(const tStrComp *pArg, ShortInt Size, tAdrResult *pResult)
+static void DecodeAbs(const tStrComp *pArg, tSymbolSize Size, tAdrResult *pResult)
 {
   Boolean ValOK;
   tSymbolFlags Flags;
@@ -927,11 +940,11 @@ static void DecodeAbs(const tStrComp *pArg, ShortInt Size, tAdrResult *pResult)
       ChkEven(HVal);
     HVal16 = HVal;
 
-    if (Size == -1)
-      Size = (IsShortAdr(HVal)) ? 1 : 2;
+    if (Size == eSymbolSizeUnknown)
+      Size = (IsShortAdr(HVal)) ? eSymbolSize16Bit : eSymbolSize32Bit;
     pResult->AdrMode = ModAbs;
 
-    if (Size == 1)
+    if (Size == eSymbolSize16Bit)
     {
       if (!IsShortAdr(HVal))
       {
@@ -955,18 +968,107 @@ static void DecodeAbs(const tStrComp *pArg, ShortInt Size, tAdrResult *pResult)
   }
 }
 
+static tSymbolSize deduce_outdisp_size_32_16(LongInt *p_disp, const tEvalResult *p_eval_result, const tStrComp *p_arg)
+{
+  if (IsDisp16(*p_disp))
+    return eSymbolSize16Bit;
+  else if (CheckFamilyCore(ExtAddrFamilyMask))
+    return eSymbolSize32Bit;
+  else if (mSymbolQuestionable(p_eval_result->Flags))
+  {
+    *p_disp &= 0x7fff;
+    return eSymbolSize16Bit;
+  }
+#if AN_PCREL_OUTDISP_ALLOW_SIGNEXT
+  else if ((*p_disp >= 0x8000) && (*p_disp <= 0xffff))
+  {
+    char str[40];
+    LargeWord v1 = *p_disp, v2 = v1 | 0xffff0000ul;
+
+    as_snprintf(str, sizeof(str), "%lllx -> %lllx", v1, v2);
+    WrXErrorPos(ErrNum_SignExtension, str, &p_arg->Pos);
+    *p_disp -= 0x10000ul;
+    return eSymbolSize16Bit;
+  }
+#endif
+  else
+  {
+    WrStrErrorPos((*p_disp > 0) ? ErrNum_OverRange : ErrNum_UnderRange, p_arg);
+    return eSymbolSizeUnknown;
+  }
+}
+
+static tSymbolSize deduce_outdisp_size_32_8(LongInt *p_disp, const tEvalResult *p_eval_result, const tStrComp *p_arg)
+{
+  if (IsDisp8(*p_disp))
+    return eSymbolSize8Bit;
+  else if (CheckFamilyCore(ExtAddrFamilyMask))
+    return GetDispLen(*p_disp);
+  else if (mSymbolQuestionable(p_eval_result->Flags))
+  {
+    *p_disp &= 0x7f;
+    return eSymbolSize8Bit;
+  }
+#if AN_PCREL_OUTDISP_ALLOW_SIGNEXT
+  else if ((*p_disp >= 0x80) && (*p_disp <= 0xff))
+  {
+    char str[40];
+    LargeWord v1 = *p_disp, v2 = v1 | 0xffffff00ul;
+
+    as_snprintf(str, sizeof(str), "%lllx -> %lllx", v1, v2);
+    WrXErrorPos(ErrNum_SignExtension, str, &p_arg->Pos);
+    *p_disp -= 0x100u;
+    return eSymbolSize8Bit;
+  }
+#endif
+  else
+  {
+    WrStrErrorPos((*p_disp > 0) ? ErrNum_OverRange : ErrNum_UnderRange, p_arg);
+    return eSymbolSizeUnknown;
+  }
+}
+
+/* Additional qualifier to detect patterns where the program counter ('*') is the outer
+   displacement or part of it:
+   - *(...      -> outer displacement
+   - 12345*(... -> no outer displacement
+   - sym*(...   -> no outer displacement
+   - sym+*(...  -> outer displacement
+   - (...)*(... -> no outer displacement
+ */
+
+static Boolean isalnum_ubar_par(char ch)
+{
+  return as_isalnum_ubar(ch) || (ch == ')');
+}
+
+static int pc_outdisp_qualifier(const char *p_arg, int last_non_blank_pos, int split_pos)
+{
+  int z;
+
+  if ((last_non_blank_pos < 0) || (p_arg[last_non_blank_pos] != '*'))
+    return -1;
+
+  for (z = last_non_blank_pos - 1; z >= 0; z--)
+  {
+    if (as_isspace(p_arg[z]))
+      continue;
+    break;
+  }
+  return ((z < 0) || !isalnum_ubar_par(p_arg[z])) ? split_pos : -1;
+}
+
 static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
 {
   Byte i;
   int ArgLen;
-  char *p;
+  int outdisp_split_pos;
   Word rerg;
-  Byte lklamm, rklamm, lastrklamm;
   Boolean doklamm;
 
   AdrComp AdrComps[3], OneComp;
   Byte CompCnt;
-  ShortInt OutDispLen = -1;
+  tSymbolSize OutDispLen = eSymbolSizeUnknown;
   Boolean PreInd;
 
   LongInt HVal;
@@ -975,13 +1077,11 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
   as_float_t DVal;
   int ret;
   Boolean ValOK;
-  tSymbolFlags Flags;
   Word SwapField[6];
   String ArgStr;
   tStrComp Arg;
   String CReg;
   tStrComp CRegArg;
-  const unsigned ExtAddrFamilyMask = (1 << e68KGen3) | (1 << e68KGen2) | (1 << eCPU32);
   IntType DispIntType;
   tSymbolSize RegSize;
 
@@ -1193,39 +1293,16 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
 
   /* Unterscheidung direkt<->indirekt: */
 
-  lklamm = 0;
-  rklamm = 0;
-  lastrklamm = 0;
-  doklamm = True;
-  for (p = Arg.str.p_str; *p; p++)
-  {
-    if (*p == '[')
-      doklamm = False;
-    if (*p == ']')
-      doklamm = True;
-    if (doklamm)
-    {
-      if (*p == '(')
-        lklamm++;
-      else if (*p == ')')
-      {
-        rklamm++;
-        lastrklamm = p - Arg.str.p_str;
-      }
-    }
-  }
-
-  if ((lklamm == 1) && (rklamm == 1) && (lastrklamm == ArgLen - 1))
+  outdisp_split_pos = FindDispBaseSplitWithQualifier(Arg.str.p_str, &ArgLen, pc_outdisp_qualifier, "()");
+  if (outdisp_split_pos >= 0)
   {
     tStrComp OutDisp, IndirComps, Remainder;
     char *pCompSplit;
 
     /* aeusseres Displacement abspalten, Klammern loeschen: */
 
-    p = strchr(Arg.str.p_str, '(');
-    *p = '\0';
-    StrCompSplitRef(&OutDisp, &IndirComps, &Arg, p);
-    OutDispLen = -1;
+    StrCompSplitRef(&OutDisp, &IndirComps, &Arg, &Arg.str.p_str[outdisp_split_pos]);
+    OutDispLen = eSymbolSizeUnknown;
     if (!SplitSize(&OutDisp, &OutDispLen, 7))
       return ModNone;
     StrCompShorten(&IndirComps, 1);
@@ -1359,33 +1436,45 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
 
         else
         {
+          tEvalResult eval_result;
+
           /* only try 32-bit displacement if explicitly requested, or 68020++ and no size given */
 
-          if (OutDispLen < 0)
-            DispIntType = CheckFamilyCore(ExtAddrFamilyMask) ? SInt32 : SInt16;
+          if (OutDispLen == eSymbolSizeUnknown)
+            DispIntType = CheckFamilyCore(ExtAddrFamilyMask) ? SInt32
+#if AN_PCREL_OUTDISP_ALLOW_SIGNEXT
+                        : Int16;
+#else
+                        : SInt16;
+#endif
           else
-            DispIntType = (OutDispLen >= 2) ? SInt32 : SInt16;
-          HVal = EvalStrIntExpression(&OutDisp, DispIntType, &ValOK);
-          if (!ValOK)
+            DispIntType = (OutDispLen >= eSymbolSize32Bit) ? SInt32 : SInt16;
+
+          HVal = EvalStrIntExpressionWithResult(&OutDisp, DispIntType, &eval_result);
+          if (!eval_result.OK)
             return ModNone;
-          if (ValOK && (HVal == 0) && ((MModAdrI & Erl) != 0) && (OutDispLen == -1))
+          if ((HVal == 0) && ((MModAdrI & Erl) != 0) && (OutDispLen == eSymbolSizeUnknown))
           {
             pResult->AdrPart = 0x10 + AdrComps[0].ANummer;
             pResult->AdrMode = ModAdrI;
             pResult->Cnt = 0;
             goto chk;
           }
-          if (OutDispLen == -1)
-            OutDispLen = (IsDisp16(HVal)) ? 1 : 2;
+          if (OutDispLen == eSymbolSizeUnknown)
+          {
+            OutDispLen = deduce_outdisp_size_32_16(&HVal, &eval_result, &OutDisp);
+            if (OutDispLen == eSymbolSizeUnknown)
+              return ModNone;
+          }
           switch (OutDispLen)
           {
-            case 1:                   /* d16(An) */
+            case eSymbolSize16Bit:    /* d16(An) */
               pResult->AdrPart = 0x28 + AdrComps[0].ANummer;
               pResult->AdrMode = ModDAdrI;
               pResult->Cnt = 2;
               pResult->Vals[0] = HVal & 0xffff;
               goto chk;
-            case 2:                   /* d32(An) */
+            case eSymbolSize32Bit:    /* d32(An) */
               pResult->AdrPart = 0x30 + AdrComps[0].ANummer;
               pResult->AdrMode = ModAIX;
               pResult->Cnt = 6;
@@ -1394,6 +1483,9 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
               pResult->Vals[2] = HVal & 0xffff;
               ACheckFamily(ExtAddrFamilyMask, pArg, pResult);
               goto chk;
+            default:
+              WrError(ErrNum_InternalError);
+              break;
           }
         }
       }
@@ -1402,66 +1494,63 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
 
       else
       {
+        tEvalResult eval_result;
+
         pResult->Vals[0] = (AdrComps[1].INummer << 12) + (Ord(AdrComps[1].Long) << 11) + (AdrComps[1].Scale << 9);
         pResult->AdrPart = 0x30 + AdrComps[0].ANummer;
 
         /* only try 32-bit displacement if explicitly requested, or 68020++ and no size given */
 
-        if (OutDispLen < 0)
-          DispIntType = CheckFamilyCore(ExtAddrFamilyMask) ? SInt32 : SInt8;
+        if (OutDispLen == eSymbolSizeUnknown)
+          DispIntType = CheckFamilyCore(ExtAddrFamilyMask) ? SInt32
+#if AN_PCREL_OUTDISP_ALLOW_SIGNEXT
+                      : Int8;
+#else
+                      : SInt8;
+#endif
         else
-          DispIntType = (OutDispLen >= 2) ? SInt32 : (OutDispLen >= 1 ? SInt16 : SInt8);
-        HVal = EvalStrIntExpression(&OutDisp, DispIntType, &ValOK);
-        if (ValOK)
-          switch (OutDispLen)
-          {
-            case eSymbolSize8Bit:
-              if (!IsDisp8(HVal))
-              {
-                WrError(ErrNum_OverRange);
-                ValOK = FALSE;
-              }
-              break;
-            case eSymbolSize16Bit:
-              if (!IsDisp16(HVal))
-              {
-                WrError(ErrNum_OverRange);
-                ValOK = FALSE;
-              }
-              break;
-          }
-        if (ValOK)
+          DispIntType = (OutDispLen >= eSymbolSize32Bit)
+                      ? SInt32
+                      : ((OutDispLen >= eSymbolSize16Bit) ? SInt16 : SInt8);
+        HVal = EvalStrIntExpressionWithResult(&OutDisp, DispIntType, &eval_result);
+        if (!eval_result.OK)
+          return ModNone;
+        if (OutDispLen == eSymbolSizeUnknown)
         {
-          if (OutDispLen == -1)
-            OutDispLen = GetDispLen(HVal);
-          switch (OutDispLen)
-          {
-            case 0:
-              pResult->AdrMode = ModAIX;
-              pResult->Cnt = 2;
-              pResult->Vals[0] += (HVal & 0xff);
-              if ((AdrComps[1].Scale != 0) && (!(pCurrCPUProps->SuppFlags & eFlagIdxScaling)))
-              {
-                WrStrErrorPos(ErrNum_AddrModeNotSupported, &AdrComps[1].Comp);
-                ClrAdrVals(pResult);
-              }
-              goto chk;
-            case 1:
-              pResult->AdrMode = ModAIX;
-              pResult->Cnt = 4;
-              pResult->Vals[0] += 0x120;
-              pResult->Vals[1] = HVal & 0xffff;
-              ACheckFamily(ExtAddrFamilyMask, pArg, pResult);
-              goto chk;
-            case 2:
-              pResult->AdrMode = ModAIX;
-              pResult->Cnt = 6;
-              pResult->Vals[0] += 0x130;
-              pResult->Vals[1] = HVal >> 16;
-              pResult->Vals[2] = HVal & 0xffff;
-              ACheckFamily(ExtAddrFamilyMask, pArg, pResult);
-              goto chk;
-          }
+          OutDispLen = deduce_outdisp_size_32_8(&HVal, &eval_result, &OutDisp);
+          if (OutDispLen == eSymbolSizeUnknown)
+            return ModNone;
+        }
+        switch (OutDispLen)
+        {
+          case eSymbolSize8Bit:
+            pResult->AdrMode = ModAIX;
+            pResult->Cnt = 2;
+            pResult->Vals[0] += (HVal & 0xff);
+            if ((AdrComps[1].Scale != 0) && (!(pCurrCPUProps->SuppFlags & eFlagIdxScaling)))
+            {
+              WrStrErrorPos(ErrNum_AddrModeNotSupported, &AdrComps[1].Comp);
+              ClrAdrVals(pResult);
+            }
+            goto chk;
+          case eSymbolSize16Bit:
+            pResult->AdrMode = ModAIX;
+            pResult->Cnt = 4;
+            pResult->Vals[0] += 0x120;
+            pResult->Vals[1] = HVal & 0xffff;
+            ACheckFamily(ExtAddrFamilyMask, pArg, pResult);
+            goto chk;
+          case eSymbolSize32Bit:
+            pResult->AdrMode = ModAIX;
+            pResult->Cnt = 6;
+            pResult->Vals[0] += 0x130;
+            pResult->Vals[1] = HVal >> 16;
+            pResult->Vals[2] = HVal & 0xffff;
+            ACheckFamily(ExtAddrFamilyMask, pArg, pResult);
+            goto chk;
+          default:
+            WrError(ErrNum_InternalError);
+            break;
         }
       }
     }
@@ -1474,20 +1563,36 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
 
       if (CompCnt == 1)
       {
-        HVal = EvalStrIntExpressionWithFlags(&OutDisp, Int32, &ValOK, &Flags) - (EProgCounter() + RelPos);
-        if (!ValOK)
-          return ModNone;
-        if (OutDispLen < 0)
+        tEvalResult eval_result;
+
+        if (OutDisp.str.p_str[0])
         {
-          if (mSymbolQuestionable(Flags) && !CheckFamilyCore(ExtAddrFamilyMask))
-            HVal &= 0x7fff;
-          OutDispLen = (IsDisp16(HVal)) ? 1 : 2;
+          HVal = EvalStrIntExpressionWithResult(&OutDisp, Int32, &eval_result);
+#if PCREL_ONLY_ON_CODESEG
+          if (eval_result.AddrSpaceMask & (1 << SegCode))
+#endif
+            HVal -= (EProgCounter() + RelPos);
+        }
+        else
+        {
+          HVal = 0;
+          eval_result.Flags = eSymbolFlag_None;
+          eval_result.AddrSpaceMask = 0;
+          eval_result.OK = True;
+        }
+        if (!eval_result.OK)
+          return ModNone;
+        if (OutDispLen == eSymbolSizeUnknown)
+        {
+          OutDispLen = deduce_outdisp_size_32_16(&HVal, &eval_result, &OutDisp); 
+          if (OutDispLen == eSymbolSizeUnknown)
+            return ModNone;
         }
         switch (OutDispLen)
         {
-          case 1:
+          case eSymbolSize16Bit:
             pResult->AdrPart = 0x3a;
-            if (!mSymbolQuestionable(Flags) && !IsDisp16(HVal))
+            if (!mSymbolQuestionable(eval_result.Flags) && !IsDisp16(HVal))
             {
               WrError(ErrNum_DistTooBig);
               return ModNone;
@@ -1496,7 +1601,7 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
             pResult->Cnt = 2;
             pResult->Vals[0] = HVal & 0xffff;
             goto chk;
-          case 2:
+          case eSymbolSize32Bit:
             pResult->AdrPart = 0x3b;
             pResult->AdrMode = ModPCIdx;
             pResult->Cnt = 6;
@@ -1505,6 +1610,9 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
             pResult->Vals[2] = HVal & 0xffff;
             ACheckFamily(ExtAddrFamilyMask, pArg, pResult);
             goto chk;
+          default:
+            WrError(ErrNum_InternalError);
+            break;
         }
       }
 
@@ -1512,21 +1620,37 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
 
       else
       {
+        tEvalResult eval_result;
+
         pResult->Vals[0] = (AdrComps[1].INummer << 12) + (Ord(AdrComps[1].Long) << 11) + (AdrComps[1].Scale << 9);
-        HVal = EvalStrIntExpressionWithFlags(&OutDisp, Int32, &ValOK, &Flags) - (EProgCounter() + RelPos);
-        if (!ValOK)
-          return ModNone;
-        if (OutDispLen < 0)
+        if (OutDisp.str.p_str[0])
         {
-          if (mSymbolQuestionable(Flags) && !CheckFamilyCore(ExtAddrFamilyMask))
-            HVal &= 0x7f;
-          OutDispLen = GetDispLen(HVal);
+          HVal = EvalStrIntExpressionWithResult(&OutDisp, Int32, &eval_result);
+#if PCREL_ONLY_ON_CODESEG
+          if (eval_result.AddrSpaceMask & (1 << SegCode))
+#endif
+            HVal -= (EProgCounter() + RelPos);
+        }
+        else
+        {
+          HVal = 0;
+          eval_result.Flags = eSymbolFlag_None;
+          eval_result.AddrSpaceMask = 0;
+          eval_result.OK = True;
+        }
+        if (!eval_result.OK)
+          return ModNone;
+        if (OutDispLen == eSymbolSizeUnknown)
+        {
+          OutDispLen = deduce_outdisp_size_32_8(&HVal, &eval_result, &OutDisp);
+          if (OutDispLen == eSymbolSizeUnknown)
+            return ModNone;
         }
         pResult->AdrPart = 0x3b;
         switch (OutDispLen)
         {
-          case 0:
-            if (!mSymbolQuestionable(Flags) && !IsDisp8(HVal))
+          case eSymbolSize8Bit:
+            if (!mSymbolQuestionable(eval_result.Flags) && !IsDisp8(HVal))
             {
               WrError(ErrNum_DistTooBig);
               return ModNone;
@@ -1540,8 +1664,8 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
               ClrAdrVals(pResult);
             }
             goto chk;
-          case 1:
-            if (!mSymbolQuestionable(Flags) && !IsDisp16(HVal))
+          case eSymbolSize16Bit:
+            if (!mSymbolQuestionable(eval_result.Flags) && !IsDisp16(HVal))
             {
               WrError(ErrNum_DistTooBig);
               return ModNone;
@@ -1552,7 +1676,7 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
             pResult->Vals[1] = HVal & 0xffff;
             ACheckFamily(ExtAddrFamilyMask, pArg, pResult);
             goto chk;
-          case 2:
+          case eSymbolSize32Bit:
             pResult->Vals[0] += 0x130;
             pResult->Cnt = 6;
             pResult->AdrMode = ModPCIdx;
@@ -1560,6 +1684,9 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
             pResult->Vals[2] = HVal & 0xffff;
             ACheckFamily(ExtAddrFamilyMask, pArg, pResult);
             goto chk;
+          default:
+            WrError(ErrNum_InternalError);
+            break;
         }
       }
     }
@@ -1580,22 +1707,22 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
       }
       else
       {
-        HVal = EvalStrIntExpression(&OutDisp, (OutDispLen != 1) ? SInt32 : SInt16, &ValOK);
+        HVal = EvalStrIntExpression(&OutDisp, (OutDispLen != eSymbolSize16Bit) ? SInt32 : SInt16, &ValOK);
         if (ValOK)
         {
-          if (OutDispLen == -1)
-            OutDispLen = IsDisp16(HVal) ? 1 : 2;
+          if (OutDispLen == eSymbolSizeUnknown)
+            OutDispLen = IsDisp16(HVal) ? eSymbolSize16Bit : eSymbolSize32Bit;
           switch (OutDispLen)
           {
-            case 0:
-            case 1:
+            case eSymbolSize8Bit:
+            case eSymbolSize16Bit:
               pResult->Vals[0] = pResult->Vals[0] + 0x0020;
               pResult->Vals[1] = HVal & 0xffff;
               pResult->AdrMode = ModAIX;
               pResult->Cnt = 4;
               ACheckFamily(ExtAddrFamilyMask, pArg, pResult);
               goto chk;
-            case 2:
+            case eSymbolSize32Bit:
               pResult->Vals[0] = pResult->Vals[0] + 0x0030;
               pResult->AdrMode = ModAIX;
               pResult->Cnt = 6;
@@ -1603,6 +1730,9 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
               pResult->Vals[2] = HVal & 0xffff;
               ACheckFamily(ExtAddrFamilyMask, pArg, pResult);
               goto chk;
+            default:
+              WrError(ErrNum_InternalError);
+              break;
           }
         }
       }
@@ -1730,12 +1860,12 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
             return ModNone;
           switch (AdrComps[0].Size)
           {
-            case -1:
+            case eSymbolSizeUnknown:
              if (IsDisp16(HVal))
                goto PCIs16;
              else
                goto PCIs32;
-            case 1:
+            case eSymbolSize16Bit:
               if (!IsDisp16(HVal))
               {
                 WrError(ErrNum_DistTooBig);
@@ -1748,7 +1878,7 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
               pResult->AdrMode = ModAIX;
               pResult->Cnt = 4;
               break;
-            case 2:
+            case eSymbolSize32Bit:
             PCIs32:
               pResult->Vals[1] = HVal >> 16;
               pResult->Vals[2] = HVal & 0xffff;
@@ -1756,6 +1886,9 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
               pResult->Vals[0] += 0x30;
               pResult->AdrMode = ModAIX;
               pResult->Cnt = 6;
+              break;
+            default:
+              WrError(ErrNum_InternalError);
               break;
           }
         }
@@ -1786,12 +1919,12 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
             return ModNone;
           switch (AdrComps[0].Size)
           {
-            case -1:
+            case eSymbolSizeUnknown:
               if (IsDisp16(HVal))
                 goto AnIs16;
               else
                 goto AnIs32;
-            case 1:
+            case eSymbolSize16Bit:
               if (!IsDisp16(HVal))
               {
                 WrError(ErrNum_DistTooBig);
@@ -1803,13 +1936,16 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
               pResult->AdrMode = ModAIX;
               pResult->Cnt = 4;
               break;
-            case 2:
+            case eSymbolSize32Bit:
             AnIs32:
               pResult->Vals[0] += 0x30;
               pResult->Vals[1] = HVal >> 16;
               pResult->Vals[2] = HVal & 0xffff;
               pResult->AdrMode = ModAIX;
               pResult->Cnt = 6;
+              break;
+            default:
+              WrError(ErrNum_InternalError);
               break;
           }
         }
@@ -1818,7 +1954,7 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
       /* aeusseres Displacement: */
 
       if (OutDisp.str.p_str[0])
-        HVal = EvalStrIntExpression(&OutDisp, (OutDispLen == 1) ? SInt16 : SInt32, &ValOK);
+        HVal = EvalStrIntExpression(&OutDisp, (OutDispLen == eSymbolSize16Bit) ? SInt16 : SInt32, &ValOK);
       else
       {
         HVal = 0;
@@ -1830,8 +1966,8 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
         pResult->Cnt = 0;
         return ModNone;
       }
-      if (OutDispLen == -1)
-        OutDispLen = IsDisp16(HVal) ? 1 : 2;
+      if (OutDispLen == eSymbolSizeUnknown)
+        OutDispLen = IsDisp16(HVal) ? eSymbolSize16Bit : eSymbolSize32Bit;
       if (*OutDisp.str.p_str == '\0')
       {
         pResult->Vals[0]++;
@@ -1840,17 +1976,20 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
       else
         switch (OutDispLen)
         {
-          case 0:
-          case 1:
+          case eSymbolSize8Bit:
+          case eSymbolSize16Bit:
             pResult->Vals[pResult->Cnt >> 1] = HVal & 0xffff;
             pResult->Cnt += 2;
             pResult->Vals[0] += 2;
             break;
-          case 2:
+          case eSymbolSize32Bit:
             pResult->Vals[(pResult->Cnt >> 1)    ] = HVal >> 16;
             pResult->Vals[(pResult->Cnt >> 1) + 1] = HVal & 0xffff;
             pResult->Cnt += 4;
             pResult->Vals[0] += 3;
+            break;
+          default:
+            WrError(ErrNum_InternalError);
             break;
         }
 

@@ -81,7 +81,7 @@ Boolean IsIndirect(const char *Asc)
 typedef struct
 {
   as_quoted_iterator_cb_data_t data;
-  int nest, split_pos, last_nonspace_pos;
+  int nest, split_pos, end_pos, last_nonspace_pos;
   char last_nonspace;
   tDispBaseSplitQualifier qualifier;
   const char *p_bracks;
@@ -104,11 +104,19 @@ static int disp_base_split_cb(const char *p_pos, as_quoted_iterator_cb_data_t *p
   disp_base_split_cb_data_t *p_data = (disp_base_split_cb_data_t*)p_cb_data;
   int pos = p_pos - p_cb_data->p_str;
 
+  /* The indirect part put into parentheses must be at the end of the expression.
+     So if any non-blank characters follow it, this was a mismatch: */
+
+  if (!as_isspace(*p_pos) && (p_data->split_pos >= 0) && (p_data->end_pos >= 0))
+  {
+    p_data->split_pos = p_data->end_pos = -1;
+  }
+
   if (*p_pos == p_data->p_bracks[0])
   {
     if (!p_data->nest)
     {
-      if ((p_data->last_nonspace_pos < 0) || as_isalnum(p_data->last_nonspace) || (p_data->last_nonspace == ')') || (p_data->last_nonspace == '\'') || (p_data->last_nonspace == '"'))
+      if ((p_data->last_nonspace_pos < 0) || as_isalnum_ubar(p_data->last_nonspace) || (p_data->last_nonspace == ')') || (p_data->last_nonspace == '\'') || (p_data->last_nonspace == '"'))
         p_data->split_pos = pos;
       else if (p_data->qualifier)
       {
@@ -120,7 +128,14 @@ static int disp_base_split_cb(const char *p_pos, as_quoted_iterator_cb_data_t *p
     p_data->nest++;
   }
   else if (*p_pos == p_data->p_bracks[1])
+  {
+    /* verify corresponding closing bracket is at end of expression */
+    if ((1 == p_data->nest) && (p_data->split_pos >= 0))
+    {
+      p_data->end_pos = pos;
+    }
     p_data->nest--;
+  }
   if (!as_isspace(*p_pos))
   {
     p_data->last_nonspace_pos = pos;
@@ -141,7 +156,8 @@ int FindDispBaseSplitWithQualifier(const char *pArg, int *pArgLen, tDispBaseSpli
   data.data.callback_before = False;
   data.data.qualify_quote = QualifyQuote;
   data.nest = 0;
-  data.split_pos = -1;
+  data.split_pos =
+  data.end_pos = -1;
   data.last_nonspace_pos = -1;
   data.last_nonspace = ' ';
   data.qualifier = Qualifier;
@@ -149,6 +165,10 @@ int FindDispBaseSplitWithQualifier(const char *pArg, int *pArgLen, tDispBaseSpli
 
   as_iterate_str_quoted(pArg, disp_base_split_cb, &data.data);
 
+  /* Did not find corresponding closing parenthese? */
+
+  if ((data.split_pos >= 0) && (data.end_pos < 0))
+    data.split_pos = -1;
   return data.split_pos;
 }
 

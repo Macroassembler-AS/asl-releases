@@ -142,10 +142,10 @@ static Boolean DecodeRegCore(const char *pArg, Word *pResult)
   }
   if ((as_toupper(*pArg) == 'R') && (strlen(pArg) >= 2) && (strlen(pArg) <= 3))
   {
-    Boolean OK;
+    char *p_end;
 
-    *pResult = ConstLongInt(pArg + 1, &OK, 10);
-    return OK && (*pResult < 16);
+    *pResult = strtoul(pArg + 1, &p_end, 10);
+    return !*p_end && (*pResult < 16);
   }
 
   return False;

@@ -134,14 +134,14 @@ static void DissectBit_AVR(char *pDest, size_t DestSize, LargeWord Inp)
 
 static Boolean DecodeRegCore(const char *pArg, Word *pResult)
 {
-  Boolean OK;
+  char *p_end;
   int l = strlen(pArg);
 
   if ((l < 2) || (l > 3) || (as_toupper(*pArg) != 'R'))
     return False;
 
-  *pResult = ConstLongInt(pArg + 1, &OK, 10);
-  return (OK
+  *pResult = strtoul(pArg + 1, &p_end, 10);
+  return (!*p_end
        && ((*pResult >= 16) || (pCurrCPUProps->Core != eCoreMinTiny))
        && (*pResult < 32));
 }

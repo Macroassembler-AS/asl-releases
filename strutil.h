@@ -84,8 +84,6 @@ extern size_t ReadLnCont(FILE *Datei, struct as_dynstr *p_line);
 
 extern int DigitVal(char ch, int Base);
 
-extern LargeInt ConstLongInt(const char *inp, Boolean *pErr, LongInt Base);
-
 extern char *ParenthPos(char *pHaystack, char Needle);
 
 extern int KillPrefBlanks(char *s);
@@ -117,5 +115,6 @@ extern void strutil_init(void);
 #define as_isupper(c) (!!isupper(__chartouint(c)))
 #define as_islower(c) (!!islower(__chartouint(c)))
 #define as_isalnum(c) (!!isalnum(__chartouint(c)))
+#define as_isalnum_ubar(c) (isalnum(__chartouint(c))||((c)=='_'))
 
 #endif /* _STRUTIL_H */

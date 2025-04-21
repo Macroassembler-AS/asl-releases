@@ -49,7 +49,7 @@
 
 \vspace{1cm}\par
 
-{\large Stand Februar 2025}
+{\large Stand April 2025}
 \end{raggedright}
 
 \clearpage
@@ -901,9 +901,12 @@ Momentan sind folgende Schalter definiert:
       bestimmt werden, die im Listing jeder Zeile vorangestellt
       werden.  Der Aufbau des daf"ur verwendeten Formatstrings ist in
       \ref{SectListing} beschrieben.}
+\item{{\tt list-unknown-values} bzw. {\tt no-list-unknown-values}: Schaltet
+      die Anzeige von im ersten Durchlauf unbekannten Werten als Fragezeichen
+      an bzw. aus.}
 \item{\label{radix}\tty{RADIX}: Stellt das Default-Zahlensystem auf
       einen Wert zwischen 2 und 36, anstelle von 10.  Dieser Wert kann
-      durch die gleichnamige Anweisung im Programm übersteuert werden.}
+      durch die gleichnamige Anweisung im Programm "ubersteuert werden.}
 \item{\label{listradix}\tty{LISTRADIX}: Defaultm"a"sig erfolgen alle Zahlenausgaben im Listing
       (Adressen, erzeugter Code, Symboltabelle) im Hexadezimalsystem.  Mit
       diesem Schalter kann ein beliebiges anderes Zahlensystem im Bereich
@@ -1077,7 +1080,7 @@ bzw. \ref{ChapShareOrder}.
       Pseudoanweisung (siehe Abschnitt \ref{SectRELAXED}) eingeschaltet
       werden mu"s.}
 \item{\tty{intsyntax}: Mit diesem Schalter kann man vom Beginn des Programms
-      an die Liste der erlaubten Schreibweisen für Ganzzahl-Konstanten
+      an die Liste der erlaubten Schreibweisen f"ur Ganzzahl-Konstanten
       erweitern oder reduzieren, analog zur gleichnamigen Pseudoanweisung
       (siehe Abschnitt \ref{SectINTSYNTAX} f"ur eine Liste erlauber
       Argumente).}
@@ -1402,8 +1405,31 @@ die Breite des Feldes: F"ur einen Prozessor mit 64 KByte Adre"sraum sind
 nur 4 Hex-Stellen erforderlich, bei 4 GByte dagegen acht.
 \par
 Der erzeugte Code selber steht dahinter im Feld \tty{Code}, ebenfalls
-im durch den List-Radix gegebenen Zahlensystem.  Je nach Prozessortyp und aktuellem Segment
-k"onnen die Werte entweder als Bytes oder 16/32-Bit-Worte formatiert sein.
+im durch den List-Radix gegebenen Zahlensystem.  Je nach Prozessortyp und
+aktuellem Segment bzw. Adre"sraum k"onnen die Werte dabei mit unterschiedlicher
+L"ange formatiert sein.  Das k"onnen Bytes mit 8 Bits sein, aber auch Worte
+mit 16 oder 32 Bits, wenn der gerade genutzte Adre"sraum nicht Byte-adressierbar
+ist, oder die Instruktionsworte des Prozessors l"anger als 8 Bit sind.  Dies
+ist z.B. beim 68000 oder der PDP-11 der Fall: Deren Adre"sraum ist Byte-weise
+organisiert, Instruktionsworte sind aber 16 Bit lang.  Bei einigen wenigen
+Targets sind auch L"angen m"oglich, die nicht ein mehrfaches von 8 Bit betragen,
+zum Beispiel 12 Bit bei der PDP-8.
+\par
+Bei Vorw"artsreferenzen gibt es im ersten Durchlauf die Situation, dass der
+endg"ultige Code gar nicht angegeben werden kann. \asname{} macht dann eine
+Annahme f"ur den Wert, der die weitere Assemblierung nicht st"ort.  Bei einer
+(zunehmenden) Zahl von Targets werden diese Felder im Code auch explizit
+mit Fragezeichen angezeigt.  Die folgenden Targets unterst"utzen dies aktuell:
+\begin{itemize}
+\item{65xx/65XXX}
+\item{8080/8085}
+\item{(e)Z80/Z180/Z380}
+\item{8051/80251}
+\end{itemize}
+Falls die Fragezeichen beim Weiterverarbeiten des Listings st"oren, k"ann
+diese Funktion "uber den Kommandozeilen-Schalter \tty{-no-list-unknown-values}
+abgeschaltet werden.
+\par
 Sollte mehr Code erzeugt worden sein, als in das Feld hineinpa"st, so
 werden im Anschlu"s an die Zeile weitere Zeilen erzeugt, in denen nur
 dieses Feld belegt ist.
@@ -5857,7 +5883,7 @@ zu verwenden.
 \par
 \tty{DB} und \tty{DW} auf 65xx- und 68xx-Plattformen verstehen neben
 dem \tty{DUP}-Operator zus"atzlich die 'Motorola-Variante' davon,
-nämlich eine in eckigen Klammern davor geschriebene Zahl von
+n"amlich eine in eckigen Klammern davor geschriebene Zahl von
 Wiederholungen.
 \par
 Auf verschiedenen Plattformen existieren Befehle mit identischer
@@ -5907,7 +5933,7 @@ akzeptiert aber neben String- und Integerargumenten auch Gleitkommawerte
 nicht}!
 
 Bei der Ablage von Gleitkommazahlen ist zu beachten, da"s diese keine h"ohere
-Genauigkeit und Wertebereich haben können als das auf dem Host-System verwendete
+Genauigkeit und Wertebereich haben k"onnen als das auf dem Host-System verwendete
 Format.  Handelt es sich dabei z.B. um das '"ubliche' IEEE 754 64-Bit-Format,
 so ist der Wertebereich auf ca. +/-$1.8*10^{308}$ beschr"ankt (siehe Variable
 \tty{FLOATMAX}), und die untersten zwei bzw. acht Bytes bei \tty{DT} bzw.

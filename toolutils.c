@@ -384,7 +384,7 @@ void DestroyRelocInfo(PRelocInfo PInfo)
 as_cmd_result_t CMD_FilterList(Boolean Negate, const char *Arg)
 {
   Byte FTemp;
-  Boolean err;
+  const char *p_end;
   char *p;
   int Search;
   String Copy;
@@ -398,8 +398,8 @@ as_cmd_result_t CMD_FilterList(Boolean Negate, const char *Arg)
     p = strchr(Copy,',');
     if (p != NULL)
       *p = '\0';
-    FTemp = ConstLongInt(Copy, &err, 10);
-    if (!err)
+    FTemp = as_cmd_strtol(Copy, &p_end);
+    if (*p_end)
       return e_cmd_err;
 
     for (Search = 0; Search < FilterCnt; Search++)
@@ -426,29 +426,28 @@ as_cmd_result_t CMD_Range(LongWord *pStartAddr, LongWord *pStopAddr,
                           Boolean *pStartAuto, Boolean *pStopAuto,
                           const char *Arg)
 {
-  const char *p;
+  const char *p, *p_end;
   String StartStr;
-  Boolean ok;
 
   p = strchr(Arg, '-');
   if (!p) return e_cmd_err;
 
   strmemcpy(StartStr, sizeof(StartStr), Arg, p - Arg);
   *pStartAuto = AddressWildcard(StartStr);
-  if (*pStartAuto)
-    ok = True;
-  else
-    *pStartAddr = ConstLongInt(StartStr, &ok, 10);
-  if (!ok)
-    return e_cmd_err;
+  if (!*pStartAuto)
+  {
+    *pStartAddr = as_cmd_strtol(StartStr, &p_end);
+    if (*p_end)
+      return e_cmd_err;
+  }
 
   *pStopAuto = AddressWildcard(p + 1);
-  if (*pStopAuto)
-    ok = True;
-  else
-    *pStopAddr = ConstLongInt(p + 1, &ok, 10);
-  if (!ok)
-    return e_cmd_err;
+  if (!*pStopAuto)
+  {
+    *pStopAddr = as_cmd_strtol(p + 1, &p_end);
+    if (*p_end)
+      return e_cmd_err;
+  }
 
   if (!*pStartAuto && !*pStopAuto && (*pStartAddr > *pStopAddr))
     return e_cmd_err;
@@ -490,7 +489,6 @@ Boolean FilterOK(Byte Header)
 Boolean RemoveOffset(char *Name, LongWord *Offset)
 {
   int z, Nest;
-  Boolean err;
 
   *Offset = 0;
   if ((*Name) && (Name[strlen(Name)-1] == ')'))
@@ -511,10 +509,12 @@ Boolean RemoveOffset(char *Name, LongWord *Offset)
       return False;
     else
     {
+      const char *p_end;
+
       Name[strlen(Name) - 1] = '\0';
-      *Offset = ConstLongInt(Name + z + 1, &err, 10);
+      *Offset = as_cmd_strtol(Name + z + 1, &p_end);
       Name[z] = '\0';
-      return err;
+      return !*p_end;
     }
   }
   else

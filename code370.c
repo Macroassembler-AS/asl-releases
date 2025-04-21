@@ -1298,22 +1298,27 @@ static Boolean IsDef_370(void)
 
 static void InternSymbol_370(char *Asc,  TempResult *Erg)
 {
-  Boolean OK;
-  String h;
+  char *p_end, prefix;
   LargeInt Num;
+  unsigned base;
 
   as_tempres_set_none(Erg);
   if ((strlen(Asc) < 2) || ((as_toupper(*Asc) != 'R') && (as_toupper(*Asc) != 'P')))
     return;
+  prefix = *Asc++;
 
-  strcpy(h, Asc + 1);
-  if ((*h == '0') && (strlen(h) > 1))
-    *h = '$';
-  Num = ConstLongInt(h, &OK, 10);
-  if (!OK || (Num < 0) || (Num > 255))
+  if ((*Asc == '0') && (strlen(Asc) > 1))
+  {
+    base = 16;
+    Asc++;
+  }
+  else
+    base = 10;
+  Num = strtoul(Asc, &p_end, base);
+  if (*p_end || (Num < 0) || (Num > 255))
     return;
 
-  if (as_toupper(*Asc) == 'P')
+  if (as_toupper(prefix) == 'P')
     Num += 0x1000;
   as_tempres_set_int(Erg, Num);
 }

@@ -157,7 +157,7 @@ clean: clean_doc
 #---------------------------------------------------------------------------
 # create distributions
 
-bindist: $(UNUMLAUTTARGET) all
+bindist-zip: $(UNUMLAUTTARGET) all
 	mkdir as
 	install as\bin as\include as\man as\lib as\doc
 	cd as

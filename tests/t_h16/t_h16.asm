@@ -255,7 +255,7 @@
 	instr:g.w	@r4+,@-r15
 	instr:g.w	@((*+$2a):8,pc),@((*+$234a):16,r2.w*8,pc)
 	instr:g.w	@($fe:8,@($0124:16,r4)),r7
-	instr:g.w	crO,@($23F5:16,pr7)
+	instr:g.w	cr0,@($23F5:16,pr7)
 	endm
 
 	irp		instr,adds,cmps,subs,movs

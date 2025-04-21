@@ -372,7 +372,7 @@ static void AppendScale(tStrComp *pArg, Byte Scale)
 
 static Boolean DecodeRegCore(const char *pArg, Byte *pResult, Byte *pPrefix)
 {
-  Boolean OK;
+  char *p_end;
 
   if (!as_strcasecmp(pArg, "SP"))
   {
@@ -395,8 +395,8 @@ static Boolean DecodeRegCore(const char *pArg, Byte *pResult, Byte *pPrefix)
   else
     return False;
 
-  *pResult = ConstLongInt(pArg + 1 + !!*pPrefix, &OK, 10);
-  return (OK && (*pResult <= 15));
+  *pResult = strtoul(pArg + 1 + !!*pPrefix, &p_end, 10);
+  return (!*p_end && (*pResult <= 15));
 }
 
 /*!------------------------------------------------------------------------

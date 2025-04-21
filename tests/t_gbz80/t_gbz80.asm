@@ -12,7 +12,7 @@
 	expect	1500
 	ex	af,af'		; 08
 	endexpect
-	ld	(1234h),sp	; 08
+	ld	(1234h),sp	; 08 34 12
 	add	hl,bc		; 09
 	ld	a,(bc)		; 0a
 	dec	bc		; 0b

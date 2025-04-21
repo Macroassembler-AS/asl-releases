@@ -144,7 +144,7 @@ static void InsertSinglePrefix(Byte Index)
 
 static Boolean DecodeRegCore(const char *pArg, Byte *pResult, tSymbolSize *pSize)
 {
-  Boolean OK;
+  char *p_end;
   int l = strlen(pArg);
 
   if (as_toupper(*pArg) != 'R')
@@ -167,8 +167,8 @@ static Boolean DecodeRegCore(const char *pArg, Byte *pResult, tSymbolSize *pSize
     default:
       return False;
   }
-  *pResult = ConstLongInt(pArg + 2, &OK, 10);
-  if (!OK || (*pResult > 15))
+  *pResult = strtoul(pArg + 2, &p_end, 10);
+  if (*p_end || (*pResult > 15))
     return False;
   if ((*pSize == eSymbolSize32Bit) && Odd(*pResult))
     return False;

@@ -52,16 +52,13 @@ static CPUVar CPUKCPSM3;
 
 static Boolean IsWRegCore(const char *pArg, LongWord *pResult)
 {
-  Boolean OK;
+  char *p_end;
 
   if ((strlen(pArg) < 2) || (as_toupper(*pArg) != 'S'))
     return False;
 
-  *pResult = ConstLongInt(pArg + 1, &OK, 16);
-  if (!OK)
-    return False;
-
-  return (*pResult < 16);
+  *pResult = strtoul(pArg + 1, &p_end, 16);
+  return !*p_end && (*pResult < 16);
 }
 
 /*!------------------------------------------------------------------------

@@ -696,7 +696,7 @@ static void ReadMacro(void)
 
   WasMACRO = True;
 
-  CodeLen = 0;
+  code_len_reset();
   Context.ErrFlag = False;
 
   /* Makronamen pruefen */
@@ -851,7 +851,7 @@ static Boolean ExpandMacro(PMacroRec OneMacro)
   Boolean NamedArgs;
   char *p;
 
-  CodeLen = 0;
+  code_len_reset();
 
   if ((NestMax > 0) && (OneMacro->UseCounter > NestMax)) WrError(ErrNum_RekMacro);
   else
@@ -2313,7 +2313,7 @@ void WriteCode(void)
   if ((ActPC != StructSeg) && (!ChkPC(PCs[ActPC] + CodeLen - 1)) && (CodeLen != 0))
   {
     WrError(ErrNum_AdrOverflow);
-    CodeLen = 0;
+    code_len_reset();
   }
   else
   {
@@ -2327,7 +2327,7 @@ void WriteCode(void)
       if (StructStack->StructRec->IsUnion)
       {
         BumpStructLength(StructStack->StructRec, CodeLen);
-        CodeLen = 0;
+        code_len_reset();
         NewPC = 0;
       }
     }
@@ -2498,7 +2498,7 @@ static void Produce_Code(void)
   else
   {
     StopfZahl = 0;
-    CodeLen = 0;
+    code_len_reset();
     DontPrint = False;
 
 #ifdef PROFILE_MEMO
@@ -2782,7 +2782,7 @@ static void ProcessFile(char *pFileName)
     /* Ergebnisfelder vorinitialisieren */
 
     DontPrint = False;
-    CodeLen = 0;
+    code_len_reset();
     *ListLine = '\0';
 
     NextDoLst = DoLst;
@@ -3650,8 +3650,9 @@ static as_cmd_result_t CMD_ListConsole(Boolean Negate, const char *Arg)
 
 static as_cmd_result_t CMD_ListRadix(Boolean Negate, const char *Arg)
 {
-  Boolean OK, new_zero_pad = False;
+  Boolean new_zero_pad = False;
   LargeWord NewListRadixBase;
+  const char *p_end;
 
   if (Negate)
   {
@@ -3665,8 +3666,10 @@ static as_cmd_result_t CMD_ListRadix(Boolean Negate, const char *Arg)
     new_zero_pad = True;
     Arg++;
   }
-  NewListRadixBase = ConstLongInt(Arg, &OK, 10);
-  if (!OK || (NewListRadixBase < 2) || (NewListRadixBase > 36))
+  if (!*Arg)
+    return e_cmd_err;
+  NewListRadixBase = as_cmd_strtol(Arg, &p_end);
+  if (*p_end || (NewListRadixBase < 2) || (NewListRadixBase > 36))
     return e_cmd_err;
   ListRadixBase = NewListRadixBase;
   ListPCZeroPad = new_zero_pad;
@@ -3675,7 +3678,7 @@ static as_cmd_result_t CMD_ListRadix(Boolean Negate, const char *Arg)
 
 static as_cmd_result_t CMD_screen_height(Boolean negate, const char *p_arg)
 {
-  Boolean ok;
+  const char *p_end;
   int new_screen_height;
 
   if (negate)
@@ -3683,8 +3686,8 @@ static as_cmd_result_t CMD_screen_height(Boolean negate, const char *p_arg)
     screen_height = 0;
     return e_cmd_ok;
   }
-  new_screen_height = ConstLongInt(p_arg, &ok, 10);
-  if (!ok)
+  new_screen_height = as_cmd_strtol(p_arg, &p_end);
+  if (*p_end || (new_screen_height < 0))
     return e_cmd_err;
   screen_height = new_screen_height;
   return e_cmd_arg;
@@ -3795,21 +3798,20 @@ static as_cmd_result_t CMD_CodeOutput(Boolean Negate, const char *Arg)
 
 static as_cmd_result_t CMD_MsgIfRepass(Boolean Negate, const char *Arg)
 {
-  Boolean OK;
-  UNUSED(Arg);
-
   MsgIfRepass = !Negate;
+
   if (MsgIfRepass)
   {
-    if (Arg[0] == '\0')
+    if (!*Arg)
     {
       PassNoForMessage = 1;
       return e_cmd_ok;
     }
     else
     {
-      PassNoForMessage = ConstLongInt(Arg, &OK, 10);
-      if (!OK)
+      const char *p_end;
+      PassNoForMessage = as_cmd_strtol(Arg, &p_end);
+      if (*p_end || (PassNoForMessage < 0))
       {
         PassNoForMessage = 1;
         return e_cmd_ok;
@@ -3964,19 +3966,18 @@ static as_cmd_result_t CMD_IncludeList(Boolean Negate, const char *Arg)
 
 static as_cmd_result_t CMD_ListMask(Boolean Negate, const char *Arg)
 {
-  Word erg;
-  Boolean OK;
-
-  if (Arg[0] == '\0')
+  if (!*Arg)
     return e_cmd_err;
   else
   {
-    erg = ConstLongInt(Arg, &OK, 10);
-    if ((!OK) || (erg > 511))
+    const char *p_end;
+    long mask = as_cmd_strtol(Arg, &p_end);
+
+    if (*p_end || (mask < 0) || (mask > 511))
       return e_cmd_err;
     else
     {
-      ListMask = Negate ? (ListMask & ~erg) : (ListMask | erg);
+      ListMask = Negate ? (ListMask & ~mask) : (ListMask | mask);
       return e_cmd_arg;
     }
   }
@@ -4211,24 +4212,22 @@ static as_cmd_result_t CMD_SetCPU(Boolean Negate, const char *Arg)
 
 static as_cmd_result_t CMD_NoICEMask(Boolean Negate, const char *Arg)
 {
-  Word erg;
-  Boolean OK;
-
   if (Negate)
   {
     NoICEMask = 1 << SegCode;
     return e_cmd_ok;
   }
-  else if (Arg[0] == '\0')
+  else if (!*Arg)
     return e_cmd_err;
   else
   {
-    erg = ConstLongInt(Arg, &OK, 10);
-    if (!OK || (erg >= (1 << SegCount)))
+    const char *p_end;
+    long mask = as_cmd_strtol(Arg, &p_end);
+    if (*p_end || (mask < 0) || (mask >= (1 << SegCount)))
       return e_cmd_err;
     else
     {
-      NoICEMask = erg;
+      NoICEMask = mask;
       return e_cmd_arg;
     }
   }
@@ -4241,14 +4240,14 @@ static as_cmd_result_t CMD_MaxErrors(Boolean Negate, const char *Arg)
     MaxErrors = 0;
     return e_cmd_ok;
   }
-  else if (Arg[0] == '\0')
+  else if (!*Arg)
     return e_cmd_err;
   else
   {
-    Boolean OK;
-    LongWord NewMaxErrors = ConstLongInt(Arg, &OK, 10);
+    const char *p_end;
+    long NewMaxErrors = as_cmd_strtol(Arg, &p_end);
 
-    if (!OK)
+    if (*p_end || (NewMaxErrors < 0))
       return e_cmd_err;
     MaxErrors = NewMaxErrors;
     return e_cmd_arg;
@@ -4272,14 +4271,14 @@ static as_cmd_result_t CMD_MaxIncludeLevel(Boolean Negate, const char *pArg)
     MaxErrors = DEFAULT_MAXINCLUDELEVEL;
     return e_cmd_ok;
   }
-  else if (pArg[0] == '\0')
+  else if (!pArg[0])
     return e_cmd_err;
   else
   {
-    Boolean OK;
-    Integer NewMaxIncludeLevel = ConstLongInt(pArg, &OK, 10);
+    const char *p_end;
+    Integer NewMaxIncludeLevel = as_cmd_strtol(pArg, &p_end);
 
-    if (!OK)
+    if (*p_end || (NewMaxIncludeLevel < 0))
       return e_cmd_err;
     MaxIncludeLevel = NewMaxIncludeLevel;
     return e_cmd_arg;

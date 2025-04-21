@@ -4605,10 +4605,10 @@ static as_cmd_result_t cmd_radix(Boolean negate, const char *p_arg)
     return e_cmd_err;
   else
   {
-    Boolean ok;
-    int new_def_radix_base = ConstLongInt(p_arg, &ok, 10);
+    const char *p_end;
+    int new_def_radix_base = as_cmd_strtol(p_arg, &p_end);
 
-    if (!ok || (new_def_radix_base < 2) || (new_def_radix_base > 36))
+    if (*p_end || (new_def_radix_base < 2) || (new_def_radix_base > 36))
       return e_cmd_err;
     def_radix_base = new_def_radix_base;
     return e_cmd_arg;

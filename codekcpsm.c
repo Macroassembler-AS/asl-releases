@@ -82,10 +82,10 @@ static Boolean IsWRegCore(const char *pArg, Word *pResult)
     retValue = False;
   else
   {
-    Boolean OK;
+    char *p_end;
 
-    *pResult = ConstLongInt(pArg + 1, &OK, 10);
-    if (!OK)
+    *pResult = strtoul(pArg + 1, &p_end, 10);
+    if (*p_end)
       retValue = False;
     else
       retValue = (*pResult <= 15);

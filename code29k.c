@@ -96,25 +96,25 @@ static Boolean ChkCPU(CPUVar Min)
 static Boolean DecodeRegCore(const char *pArg, LongWord *pResult)
 {
   int l = strlen(pArg);
-  Boolean OK;
+  char *p_end;
 
   if ((l >= 2) && (as_toupper(*pArg) == 'R'))
   {
-    *pResult = ConstLongInt(pArg + 1, &OK, 10);
-    return OK && (*pResult <= 255);
+    *pResult = strtoul(pArg + 1, &p_end, 10);
+    return !*p_end && (*pResult <= 255);
   }
   else if ((l >= 3) && (as_toupper(*pArg) == 'G') && (as_toupper(pArg[1]) == 'R'))
   {
-    *pResult = ConstLongInt(pArg + 2, &OK, 10);
-    if (!OK || (*pResult >= 128))
+    *pResult = strtoul(pArg + 2, &p_end, 10);
+    if (*p_end || (*pResult >= 128))
       return False;
     *pResult |= REG_LRMARK;
     return True;
   }
   else if ((l >= 3) && (as_toupper(*pArg) == 'L') && (as_toupper(pArg[1]) == 'R'))
   {
-    *pResult = ConstLongInt(pArg + 2, &OK, 10);
-    if (!OK || (*pResult >= 128))
+    *pResult = strtoul(pArg + 2, &p_end, 10);
+    if (*p_end || (*pResult >= 128))
       return False;
     *pResult |= 128 | REG_LRMARK;
     return True;
