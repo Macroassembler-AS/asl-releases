@@ -156,6 +156,7 @@ bit3		dbit	5,b
 		movw	#12345,r010
 		movw	#Targ(b),cat
 		movw	#(cat),cat
+		movw	#123(cat),cat		; F4 E8 7B 10 10
 
 		trap	7
 

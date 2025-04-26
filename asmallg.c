@@ -1343,12 +1343,11 @@ static void CodeRADIX(Word Index)
 {
   if (ChkArgCnt(1, 1))
   {
-    tEvalResult eval_result;
-    unsigned tmp = EvalStrIntExpressionWithResult(&ArgStr[1], UInt8, &eval_result);
+    const char *p_end;
+    long tmp = as_cmd_strtol(ArgStr[1].str.p_str, &p_end);
 
-    if (!eval_result.OK);
-    else if (mFirstPassUnknownOrQuestionable(eval_result.Flags)) WrStrErrorPos(ErrNum_FirstPassCalc, &ArgStr[1]);
-    else if (ChkRange(tmp, 2, 36))
+    if (*p_end) WrStrErrorPos(ErrNum_ExpectInt, &ArgStr[1]);
+    else if (ChkRangePos(tmp, 2, 36, &ArgStr[1]))
     {
       if (Index == 1)
         OutRadixBase = tmp;

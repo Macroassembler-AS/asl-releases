@@ -191,8 +191,8 @@ static void DecodeAdrRel(const tStrComp *pArg, Word Mask, Boolean AddrRel)
       }
       if (OK)
       {
-        *p = '(';
-        if (!as_strcasecmp(p, "(B)"))
+        StrCompShorten(&Right, 1);
+        if (!as_strcasecmp(Right.str.p_str, "B"))
         {
           AdrVals[0] = Hi(HVal);
           AdrVals[1] = Lo(HVal);
@@ -207,7 +207,7 @@ static void DecodeAdrRel(const tStrComp *pArg, Word Mask, Boolean AddrRel)
           {
             AdrVals[0] = HVal & 0xff;
             AdrCnt = 1;
-            AdrVals[1] = EvalStrIntExpression(&Arg, UInt8, &OK);
+            AdrVals[1] = EvalStrIntExpression(&Right, UInt8, &OK);
             if (OK)
             {
               AdrCnt = 2;
@@ -273,7 +273,7 @@ static void DecodeAdrRel(const tStrComp *pArg, Word Mask, Boolean AddrRel)
       HVal &= 0x7f;
     if (OK)
     {
-      StrCompShorten (&Right, 1);
+      StrCompShorten(&Right, 1);
       if (!as_strcasecmp(Right.str.p_str, "B"))
       {
         if (AddrRel)

@@ -1,3 +1,12 @@
+2025-04-26 [1.42 Bld 285]
+
+- Bugfix      : Revert RADIX and OUTRADIX to the documented
+                behaviour, i.e. expecting a plain number in
+                preferrably decimal, rather than an expression
+                in the current radix.
+- Bugfix      : Correct #off8(Rp) addressing mode parsing on
+                TMS370.
+
 2025-04-21 [1.42 Bld 284]
 
 - Change      : out-of-range displacement for (d16,PC)
