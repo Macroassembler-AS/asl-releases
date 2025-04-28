@@ -1,3 +1,12 @@
+2025-04-28 [1.42 Bld 286]
+
+- Bugfix      : Correct checksum computation for MOS Hex
+                format.
+- Bugfix      : Correct encoding of CPU16 BCLRW, BSETW,
+                MOVW, and MOVB instructions.
+- Bugfix      : Correct range of offsets for CPU16
+                MAC/RMAC instructions.
+
 2025-04-26 [1.42 Bld 285]
 
 - Bugfix      : Revert RADIX and OUTRADIX to the documented

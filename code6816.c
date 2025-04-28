@@ -578,13 +578,13 @@ static void DecodeMov(Word Index)
   }
   else if (!as_strcasecmp(ArgStr[3].str.p_str, "X"))
   {
-    BAsmCode[3] = EvalStrIntExpression(&ArgStr[2], SInt8, &OK);
+    BAsmCode[1] = EvalStrIntExpression(&ArgStr[2], SInt8, &OK);
     if (OK)
     {
       DecodeAdr(1, 1, eSymbolSizeUnknown, False, MModAbs);
       if (AdrMode == ModAbs)
       {
-        memcpy(BAsmCode + 1, AdrVals, 2);
+        memcpy(BAsmCode + 2, AdrVals, 2);
         BAsmCode[0] = 0x32 | Index;
         CodeLen = 4;
       }
@@ -617,10 +617,10 @@ static void DecodeMac(Word Index)
 
   if (ChkArgCnt(2, 2))
   {
-    Val = EvalStrIntExpression(&ArgStr[1], UInt4, &OK);
+    Val = EvalStrIntExpression(&ArgStr[1], SInt4, &OK) & 0x0f;
     if (OK)
     {
-      BAsmCode[1] = EvalStrIntExpression(&ArgStr[2], UInt4, &OK);
+      BAsmCode[1] = EvalStrIntExpression(&ArgStr[2], SInt4, &OK) & 0x0f;
       if (OK)
       {
         BAsmCode[1] |= (Val << 4);
@@ -678,20 +678,20 @@ static void DecodeBit16(Word Index)
     switch (AdrMode)
     {
       case ModImm:
-        memcpy(BAsmCode + 2, AdrVals, AdrCnt);
+        memcpy(BAsmCode + 4, AdrVals, AdrCnt);
         DecodeAdr(1, ArgCnt - 1, eSymbolSizeUnknown, False, MModDisp16 | MModAbs);
         switch (AdrMode)
         {
           case ModDisp16:
             BAsmCode[0] = 0x27;
             BAsmCode[1] = 0x08 | Index | AdrPart;
-            memcpy(BAsmCode + 4, AdrVals, AdrCnt);
+            memcpy(BAsmCode + 2, AdrVals, AdrCnt);
             CodeLen = 4 + AdrCnt;
             break;
           case ModAbs:
             BAsmCode[0] = 0x27;
             BAsmCode[1] = 0x38 | Index;
-            memcpy(BAsmCode + 4, AdrVals, AdrCnt);
+            memcpy(BAsmCode + 2, AdrVals, AdrCnt);
             CodeLen = 4 + AdrCnt;
             break;
         }

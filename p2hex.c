@@ -182,7 +182,7 @@ static void ProcessFile(const char *FileName, LongWord Offset)
            IntOffset = 0, MaxAdr;
   LongInt NextPos;
   LongWord ValidSegs;
-  Word ErgLen = 0, ChkSum = 0, RecCnt, Gran, HSeg;
+  Word ErgLen = 0, ChkSum, RecCnt, Gran, HSeg;
   String CBlockName;
 
   LongInt z;
@@ -303,16 +303,16 @@ static void ProcessFile(const char *FileName, LongWord Offset)
         if ((ErgLen % LineLen) !=0)
           RecCnt++;
 
-        /* relative Angaben ? */
+        /* relative addresses? */
 
         if (RelAdr)
           ErgStart -= StartAdr[InpSegment];
 
-        /* Auf Zieladressbereich verschieben */
+        /* move to target address range */
 
         ErgStart += Relocate;
 
-        /* Kopf einer Datenzeilengruppe */
+        /* head of group of data lines */
 
         switch (ActFormat)
         {
@@ -392,11 +392,11 @@ static void ProcessFile(const char *FileName, LongWord Offset)
             break;
         }
 
-        /* Datenzeilen selber */
+        /* data lines themselves */
 
         while (ErgLen > 0)
         {
-          /* evtl. Folgebank fuer Intel32 ausgeben */
+          /* next bank for Intel32? */
 
           if ((ActFormat == eHexFormatIntel32) && (FirstBank))
           {
@@ -422,13 +422,14 @@ static void ProcessFile(const char *FileName, LongWord Offset)
           else if (ActFormat == eHexFormatMico8)
             TransLen = min(4, TransLen);
 
-          /* Start der Datenzeile */
+          /* start of data line */
 
+          ChkSum = 0;
           switch (ActFormat)
           {
             case eHexFormatMotoS:
               chkio_fprintf(TargFile, TargName, "S%c%02X", '1' + MotRecType, Lo(TransLen + 3 + MotRecType));
-              ChkSum = TransLen + 3 + MotRecType;
+              ChkSum += TransLen + 3 + MotRecType;
               if (MotRecType >= 2)
               {
                 chkio_fprintf(TargFile, TargName, "%02X", Lo(ErgStart >> 24));
@@ -456,18 +457,16 @@ static void ProcessFile(const char *FileName, LongWord Offset)
               WrTransLen = (MultiMode < 2) ? TransLen : (TransLen / Gran);
               WrErgStart = (ErgStart - IntOffset) * ((MultiMode < 2) ? Gran : 1);
               chkio_fprintf(TargFile, TargName, ":%02X%04X00", Lo(WrTransLen), LoWord(WrErgStart));
-              ChkSum = Lo(WrTransLen) + Hi(WrErgStart) + Lo(WrErgStart);
+              ChkSum += Lo(WrTransLen) + Hi(WrErgStart) + Lo(WrErgStart);
 
               break;
             }
             case eHexFormatTek:
               chkio_fprintf(TargFile, TargName, "/%04X%02X%02X", LoWord(ErgStart), Lo(TransLen),
                             Lo(Lo(ErgStart) + Hi(ErgStart) + TransLen));
-              ChkSum = 0;
               break;
             case eHexFormatTiDSK:
               chkio_fprintf(TargFile, TargName, "9%04X", LoWord(/*Gran**/ErgStart));
-              ChkSum = 0;
               break;
             case eHexFormatAtmel:
               for (z = (AVRLen - 1) << 3; z >= 0; z -= 8)
@@ -484,7 +483,7 @@ static void ProcessFile(const char *FileName, LongWord Offset)
               break;
           }
 
-          /* Daten selber */
+          /* data itself */
 
           if (fread(Buffer, 1, TransLen, SrcFile) !=TransLen)
             chk_wr_read_error(FileName);
@@ -556,7 +555,7 @@ static void ProcessFile(const char *FileName, LongWord Offset)
                 }
           }
 
-          /* Ende Datenzeile */
+          /* end of data line */
 
           switch (ActFormat)
           {
