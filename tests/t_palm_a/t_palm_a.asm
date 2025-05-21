@@ -34,8 +34,8 @@
 	bra	*+127
 	endexpect
 
-	jmp	x'1234'		; ldhi pc,pc,2 ; dw x'1234'
-	lwi	r0,#x'1234'
+	jmp	x'1234'		; ldhi pc,pc,2 ; dw x'1234'-2
+	lwi	r0,#x'1232'
 
 	expect	1351		; cannot jump to odd addresses
 	jmp	x'1235'

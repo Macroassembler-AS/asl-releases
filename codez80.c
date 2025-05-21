@@ -11,6 +11,7 @@
 #include "stdinc.h"
 #include <ctype.h>
 #include <string.h>
+#include <assert.h>
 
 #include "nls.h"
 #include "strutil.h"
@@ -39,18 +40,19 @@
 
 typedef enum
 {
-  Pref_IN_N, Pref_IN_W, Pref_IB_W, Pref_IW_W, Pref_IB_N,
-  Pref_IN_LW, Pref_IB_LW, Pref_IW_LW, Pref_IW_N
-} PrefType;
-
-typedef enum
-{
   ePrefixNone,
+  ePrefixN,   /* default processing */
   ePrefixW,   /* word processing */
   ePrefixLW,  /* long word processing */
+  ePrefixIN,  /* no extra bytes in argument */
   ePrefixIB,  /* one byte more in argument */
   ePrefixIW   /* one word more in argument */
 } tOpPrefix;
+
+typedef struct
+{
+  tOpPrefix s_prefix, i_prefix;
+} ddir_prefix_pair_t;
 
 typedef enum
 {
@@ -196,8 +198,8 @@ static Boolean MayLW,             /* Instruktion erlaubt 32 Bit */
                ExtFlag,           /* Prozessor im 4GByte-Modus ? */
                LWordFlag;         /* 32-Bit-Verarbeitung ? */
 
-static PrefType CurrPrefix,       /* mom. explizit erzeugter Praefix */
-                LastPrefix;       /* von der letzten Anweisung generierter Praefix */
+static ddir_prefix_pair_t curr_prefix_pair, /* Mom. explizit erzeugter Praefix */
+                          last_prefix_pair; /* Von der letzten Anweisung generierter Praefix */
 
 static LongInt Reg_CBAR,
                Reg_BBR,
@@ -213,97 +215,13 @@ static const char Reg16Names[][3] = { "BC", "DE", "HL", "SP", "IX", "IY" };
 
 static tOpPrefix DecodePrefix(const char *pArg)
 {
-  const char *pPrefNames[] = { "W", "LW", "IB", "IW", NULL };
+  const char PrefNames[][3] = { "N", "W", "LW", "IN", "IB", "IW", "" };
   tOpPrefix Result;
 
-  for (Result = ePrefixW; pPrefNames[Result - 1]; Result++)
-    if (!as_strcasecmp(pArg, pPrefNames[Result - 1]))
+  for (Result = ePrefixN; PrefNames[Result - 1][0]; Result++)
+    if (!as_strcasecmp(pArg, PrefNames[Result - 1]))
       return Result;
   return ePrefixNone;
-}
-
-static Boolean ExtendPrefix(PrefType *Dest, tOpPrefix AddPrefix)
-{
-  Byte SPart,IPart;
-
-  switch (*Dest)
-  {
-    case Pref_IB_N:
-    case Pref_IB_W:
-    case Pref_IB_LW:
-      IPart = 1;
-      break;
-    case Pref_IW_N:
-    case Pref_IW_W:
-    case Pref_IW_LW:
-      IPart = 2;
-      break;
-    default:
-      IPart = 0;
-  }
-
-  switch (*Dest)
-  {
-    case Pref_IN_W:
-    case Pref_IB_W:
-    case Pref_IW_W:
-      SPart = 1;
-      break;
-    case Pref_IN_LW:
-    case Pref_IB_LW:
-    case Pref_IW_LW:
-      SPart = 2;
-      break;
-    default:
-      SPart = 0;
-  }
-
-  switch (AddPrefix)
-  {
-    case ePrefixW:
-      SPart = 1; break;
-    case ePrefixLW:
-      SPart = 2; break;
-    case ePrefixIB:
-      IPart = 1; break;
-    case ePrefixIW:
-      IPart = 2; break;
-    default:
-      return False;
-  }
-
-  switch ((IPart << 4) | SPart)
-  {
-    case 0x00:
-      *Dest = Pref_IN_N;
-      break;
-    case 0x01:
-      *Dest = Pref_IN_W;
-      break;
-    case 0x02:
-      *Dest = Pref_IN_LW;
-      break;
-    case 0x10:
-      *Dest = Pref_IB_N;
-      break;
-    case 0x11:
-      *Dest = Pref_IB_W;
-      break;
-    case 0x12:
-      *Dest = Pref_IB_LW;
-      break;
-    case 0x20:
-      *Dest = Pref_IW_N;
-      break;
-    case 0x21:
-      *Dest = Pref_IW_W;
-      break;
-    case 0x22:
-      *Dest = Pref_IW_LW;
-      break;
-  }
-
-  return True;
 }
 
 /*!------------------------------------------------------------------------
@@ -323,13 +241,78 @@ static void reset_adr_vals(adr_vals_t *p_vals)
 /*--------------------------------------------------------------------------*/
 /* Code fuer Praefix bilden */
 
-static void GetPrefixCode(PrefType inp, Byte *b1, Byte *b2)
+static void GetPrefixCode(Byte *p_dest, const ddir_prefix_pair_t *p_pair)
 {
-  int z;
+  switch (p_pair->i_prefix)
+  {
+    case ePrefixIW:
+      switch (p_pair->s_prefix)
+      {
+        case ePrefixLW:
+          p_dest[0] = 0xfd; p_dest[1] = 0xc2; break;
+        case ePrefixW:
+          p_dest[0] = 0xdd; p_dest[1] = 0xc2; break;
+        case ePrefixN:
+        case ePrefixNone:
+          p_dest[0] = 0xfd; p_dest[1] = 0xc3; break;
+        default:
+          assert(0);
+      }
+      break;
+    case ePrefixIB:
+      switch (p_pair->s_prefix)
+      {
+        case ePrefixLW:
+          p_dest[0] = 0xfd; p_dest[1] = 0xc1; break;
+        case ePrefixW:
+          p_dest[0] = 0xdd; p_dest[1] = 0xc1; break;
+        case ePrefixN:
+        case ePrefixNone:
+          p_dest[0] = 0xdd; p_dest[1] = 0xc3; break;
+        default:
+          assert(0);
+      }
+      break;
+    case ePrefixIN:
+    case ePrefixNone:
+      switch (p_pair->s_prefix)
+      {
+        case ePrefixLW:
+          p_dest[0] = 0xfd; p_dest[1] = 0xc0; break;
+        case ePrefixW:
+          p_dest[0] = 0xdd; p_dest[1] = 0xc0; break;
+        default:
+          assert(0);
+      }
+      break;
+    default:
+      assert(0);
+  }
+}
 
-  z = ((int)inp) - 1;
-  *b1 = 0xdd + ((z & 4) << 3);
-  *b2 = 0xc0 + (z & 3);
+static void prefix_pair_clear(ddir_prefix_pair_t *p_pair)
+{
+  p_pair->i_prefix = p_pair->s_prefix = ePrefixNone;
+}
+
+static Boolean prefix_pair_has_overrides(const ddir_prefix_pair_t *p_pair)
+{
+  return ((p_pair->i_prefix != ePrefixIN) && (p_pair->i_prefix != ePrefixNone))
+      || ((p_pair->s_prefix != ePrefixN) && (p_pair->s_prefix != ePrefixNone));
+}
+
+static Boolean prefix_pair_equal(const ddir_prefix_pair_t *p_pair1, const ddir_prefix_pair_t *p_pair2)
+{
+  return (p_pair1->i_prefix == p_pair2->i_prefix)
+      && (p_pair1->s_prefix == p_pair2->s_prefix);
+}
+
+static void prefix_pair_update(ddir_prefix_pair_t *p_pair, tOpPrefix prefix)
+{
+  if ((prefix == ePrefixIN) || (prefix == ePrefixIB) || (prefix == ePrefixIW))
+    p_pair->i_prefix = prefix;
+  else if ((prefix == ePrefixN) || (prefix == ePrefixW) || (prefix == ePrefixLW))
+    p_pair->s_prefix = prefix;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -337,19 +320,21 @@ static void GetPrefixCode(PrefType inp, Byte *b1, Byte *b2)
 
 static void ChangeDDPrefix(tOpPrefix Prefix)
 {
-  PrefType ActPrefix;
+  ddir_prefix_pair_t act_pair;
 
-  ActPrefix = LastPrefix;
-  if (ExtendPrefix(&ActPrefix, Prefix))
-    if (LastPrefix != ActPrefix)
+  act_pair = last_prefix_pair;
+  prefix_pair_update(&act_pair, Prefix);
+  if (!prefix_pair_equal(&last_prefix_pair, &act_pair))
+  {
+    if (prefix_pair_has_overrides(&last_prefix_pair))
+      RetractWords(2);
+    if (prefix_pair_has_overrides(&act_pair))
     {
-      int z;
-
-      if (LastPrefix != Pref_IN_N) RetractWords(2);
-      for (z = PrefixCnt - 1; z >= 0; z--) BAsmCode[2 + z] = BAsmCode[z];
+      memmove(&BAsmCode[2], &BAsmCode[0], PrefixCnt);
       PrefixCnt += 2;
-      GetPrefixCode(ActPrefix, BAsmCode + 0, BAsmCode + 1);
+      GetPrefixCode(BAsmCode + 0, &act_pair);
     }
+  }
 }
 
 /*--------------------------------------------------------------------------*/
@@ -367,18 +352,17 @@ static Boolean IndexPrefix(void)
 
 static Boolean InLongMode(void)
 {
-  switch (LastPrefix)
+  switch (last_prefix_pair.s_prefix)
   {
-    case Pref_IN_W:
-    case Pref_IB_W:
-    case Pref_IW_W:
+    case ePrefixW:
       return False;
-    case Pref_IN_LW:
-    case Pref_IB_LW:
-    case Pref_IW_LW:
+    case ePrefixLW:
       return MayLW;
-    default:
+    case ePrefixN:
+    case ePrefixNone:
       return LWordFlag && MayLW;
+    default:
+      return False;
   }
 }
 
@@ -608,6 +592,26 @@ DECLARE_AS_EVAL_CB(z80_eval_cb)
   }
 }
 
+static void z380_extend_ib_iw(adr_vals_t *p_vals, LongWord value)
+{
+  tOpPrefix this_op_prefix = ePrefixNone;
+
+  /* A previously given, explicit DDIR instruction may
+     request a longer operand than needed by value: */
+
+  if ((value > 0xfffffful) || (last_prefix_pair.i_prefix == ePrefixIW))
+    this_op_prefix = ePrefixIW;
+  else if ((value > 0xffffu) || (last_prefix_pair.i_prefix == ePrefixIB))
+    this_op_prefix = ePrefixIB;
+  if (this_op_prefix != ePrefixNone)
+  {
+    p_vals->values[p_vals->count++] = (value >> 16) & 0xff;
+    if (ePrefixIW == this_op_prefix)
+      p_vals->values[p_vals->count++] = ((value >> 24) & 0xff);
+    ChangeDDPrefix(this_op_prefix);
+  }
+}
+
 static void abs_2_adrvals(adr_vals_t *p_vals, LongWord address)
 {
   p_vals->value = address;
@@ -615,19 +619,10 @@ static void abs_2_adrvals(adr_vals_t *p_vals, LongWord address)
   p_vals->values[1] = (address >> 8) & 0xff;
   p_vals->count = 2;
 
-  /* Z380: prefix needed if address >=64K */
+  /* Z380: add more bytes and IB/IW prefix if necessary: */
 
-  if (ExtFlag && (address > 0xfffful))
-  {
-    p_vals->values[p_vals->count++] = (address >> 16) & 0xff;
-    if (address <= 0xfffffful)
-      ChangeDDPrefix(ePrefixIB);
-    else
-    {
-      p_vals->values[p_vals->count++] = ((address >> 24) & 0xff);
-      ChangeDDPrefix(ePrefixIW);
-    }
-  }
+  if (ExtFlag)
+    z380_extend_ib_iw(p_vals, address);
 
   /* eZ80: 24 bits if .IL mode */
 
@@ -756,9 +751,26 @@ static ShortInt DecodeAdr(const tStrComp *pArg, adr_vals_t *p_vals, unsigned Mod
 
         if (ModeMask & MModAbs)
         {
-          /* no range checking if Z380 address range is 32 bits - disp_acc is only a 32 bit value */
+          /* Z380: if previous prefix explicitly defined 16 or 24 bit address, check for it: */
 
-          if (ExtFlag);
+          if (ExtFlag)
+          {
+            switch (last_prefix_pair.i_prefix)
+            {
+              case ePrefixIB:
+                if(!mFirstPassUnknownOrQuestionable(disp_eval_result.Flags)
+                && !ChkRangeByType(disp_acc, UInt24, pArg))
+                  return adr_mode;
+                break;
+              case ePrefixIN:
+                if(!mFirstPassUnknownOrQuestionable(disp_eval_result.Flags)
+                && !ChkRangeByType(disp_acc, UInt16, pArg))
+                  return adr_mode;
+                break;
+              default:
+                break;
+            }
+          }
           else if (is_ez80())
           {
             if (!mFirstPassUnknownOrQuestionable(disp_eval_result.Flags))
@@ -909,25 +921,28 @@ static ShortInt DecodeAdr(const tStrComp *pArg, adr_vals_t *p_vals, unsigned Mod
     case eSymbolSize16Bit:
       if (InLongMode())
       {
-        LongWord ImmVal = EvalStrIntExpressionWithFlags(pArg, Int32, &OK, &p_vals->value_flags);
+        IntType range_type;
+        LongWord ImmVal;
+
+        switch (last_prefix_pair.i_prefix)
+        {
+          case ePrefixIN:
+            range_type = UInt16;
+            break;
+          case ePrefixIB:
+            range_type = UInt24;
+            break;
+          default:
+            range_type = Int32;
+        }
+        ImmVal = EvalStrIntExpressionWithFlags(pArg, range_type, &OK, &p_vals->value_flags);
         if (OK)
         {
           p_vals->values[0] = Lo(ImmVal);
           p_vals->values[1] = Hi(ImmVal);
           adr_mode = ModImm;
           p_vals->count = 2;
-          if (ImmVal <= 0xfffful);
-          else
-          {
-            p_vals->values[p_vals->count++] = (ImmVal >> 16) & 0xff;
-            if (ImmVal <= 0xfffffful)
-              ChangeDDPrefix(ePrefixIB);
-            else
-            {
-              p_vals->values[p_vals->count++] = (ImmVal >> 24) & 0xff;
-              ChangeDDPrefix(ePrefixIW);
-            }
-          }
+          z380_extend_ib_iw(p_vals, ImmVal);
         }
       }
       else if (is_ez80() && AttrPartOpSize[1] == eSymbolSize24Bit)
@@ -1907,7 +1922,7 @@ static void DecodeLD(Word IsLDW)
             break;
         }
         break;
-      case ModIndReg16:
+      case ModIndReg16: /* LD (R16),... */
       {
         Byte dest_reg = adr_vals.part;
 
@@ -2061,12 +2076,13 @@ static void DecodeLD(Word IsLDW)
         if (chk_core_mask(e_core_mask_z380))
         {
           adr_vals_t arg1_adr_vals = adr_vals;
+          Byte dest_prefix_cnt = PrefixCnt;
           OpSize = eSymbolSize8Bit;
           switch (DecodeAdr(&ArgStr[2], &adr_vals, MModAll))
           {
             case ModReg16:
               if (adr_vals.part == SPReg) WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[2]);
-              else if (PrefixCnt == 0) /* LD (SP+D),R16 */
+              else if (PrefixCnt == dest_prefix_cnt) /* LD (SP+D),R16 */
               {
                 if (adr_vals.part == HLReg)
                   adr_vals.part = 3;
@@ -2281,10 +2297,9 @@ static void DecodeALU8(Word Code)
       }
       else if (adr_vals.part == SPReg)
       {
-        OpSize = eSymbolSize16Bit;
+        OpSize = eSymbolSize16Bit; MayLW = True;
         if (DecodeAdr(&ArgStr[ArgCnt], &adr_vals, MModImm) == ModImm)
         {
-          PrefixCnt = 0;
           append_prefix(0xed);
           append_opcode(0x92);
           append_adr_vals(&adr_vals);
@@ -2405,12 +2420,12 @@ static void DecodeADD(Word Index)
         if (adr_vals.part == SPReg)
         {
           OpSize = is_z380() ? eSymbolSize16Bit : eSymbolSize8Bit;
+          MayLW = is_z380();
           switch (DecodeAdr(&ArgStr[2], &adr_vals, MModAll))
           {
             case ModImm:
               if (is_z380())
               {
-                PrefixCnt = 0;
                 append_prefix(0xed);
                 append_opcode(0x82);
                 append_adr_vals(&adr_vals);
@@ -2468,7 +2483,7 @@ static void DecodeADD(Word Index)
               else if (chk_core_mask(e_core_mask_z380))
               {
                 append_prefix(0xed);
-                append_opcode(0xc2);
+                append_opcode(0xc6);
                 append_adr_vals(&adr_vals);
               }
               break;
@@ -4186,18 +4201,29 @@ static void DecodeDDIR(Word Code)
    && chk_core_mask(e_core_mask_z380))
   {
     Boolean OK;
+    ddir_prefix_pair_t pair;
     tStrComp *p_arg;
 
     OK = True;
+    prefix_pair_clear(&pair);
     forallargs (p_arg, OK)
     {
-      OK = ExtendPrefix(&CurrPrefix, DecodePrefix(p_arg->str.p_str));
-      if (!OK) WrStrErrorPos(ErrNum_InvAddrMode, p_arg);
+      tOpPrefix this_prefix = DecodePrefix(p_arg->str.p_str);
+      if (ePrefixNone == this_prefix)
+      {
+        WrStrErrorPos(ErrNum_InvAddrMode, p_arg);
+        return;
+      }
+      prefix_pair_update(&pair, this_prefix);
     }
     if (OK)
     {
-      GetPrefixCode(CurrPrefix, BAsmCode + 0, BAsmCode + 1);
-      CodeLen = 2;
+      curr_prefix_pair = pair;
+      if (prefix_pair_has_overrides(&curr_prefix_pair))
+      {
+        GetPrefixCode(BAsmCode + 0, &curr_prefix_pair);
+        CodeLen = 2;
+      }
     }
   }
 }
@@ -4772,8 +4798,8 @@ static void MakeCode_Z80(void)
       break;
     case e_core_z380:
       /* Z380: letzten Praefix umkopieren */
-      LastPrefix = CurrPrefix;
-      CurrPrefix = Pref_IN_N;
+      last_prefix_pair = curr_prefix_pair;
+      prefix_pair_clear(&curr_prefix_pair);
       break;
     case e_core_ez80:
     {

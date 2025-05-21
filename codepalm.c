@@ -1156,7 +1156,7 @@ static void decode_jmp(Word code)
     Word addr_or_reg;
     adr_vals_t adr_vals;
 
-    /* Extra handling for auto-increment/deceement since it did not fit
+    /* Extra handling for auto-increment/decrement since it did not fit
        in here easily otherwise: */
 
     switch (chk_auto_increment(&ArgStr[1], eSymbolSize16Bit, &adr_vals))
@@ -1204,9 +1204,9 @@ static void decode_jmp(Word code)
 
           else
           {
-            /* JMP addr -> LDHI PC,PC,2 ; DW addr */
+            /* JMP addr -> LDHI PC,PC,2 ; DW addr-2 */
             put_code(0xd001);
-            put_code(addr_or_reg);
+            put_code((addr_or_reg - 2) & 0xffff);
           }
         }
         break;

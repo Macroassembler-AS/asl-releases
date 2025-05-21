@@ -67,7 +67,7 @@
 
 \vspace{1cm}\par
 
-{\large Edition April 2025}
+{\large Edition May 2025}
 \end{raggedright}
 
 \clearpage
@@ -9999,26 +9999,49 @@ done in 16 bits.  Zilog really should do something about this, otherwise
 the most positive description for the Z380 would be ''16-bit processor
 with 32-bit extensions''...
 
-The whole thing becomes complicated by the ability to override the operand
-size set by LW with the instruction prefixes \tty{DDIR W} resp.
-\tty{DDIR LW}.  \asname{} will note the occurrence of such instructions and will
-toggle setting for the instruction following directly.  By the way, one
-should never explicitly use other \tty{DDIR} variants than \tty{W} resp.
-\tty{LW}, as \asname{} will introduce them automatically when an operand is
-discovered that is too long.  Explicit usage might puzzle \asname{}.  The
-automatism is so powerful that in a case like this:
+The whole situation becomes complicated by by the usage of the instruction
+prexixes \tty{DDIR W/LW/IB/IW}.  These allow to override the word size
+and/or the length of immediate and absolute operands for the next instruction.
+\asname{} memorizes the explicit usage of these prefixes and will take this
+into account when assembling the following instruction.  The following
+cases have to be differentiated:
+
+If no \tty{DDIR} instruction preceded the current instruction, or a \tty{DDIR}
+instruction that contained no explicit specification of operand length, the
+operand length will be determined automatically.  For instance, a single
+\begin{verbatim}
+        LD      BC,12345678h
+\end{verbatim}
+will be augmented with a leading \tty{DDIR IW}.  However, in this case:
 \begin{verbatim}
         DDIR    LW
-        LD      BC,12345678h   ,
+        LD      BC,12345678h
 \end{verbatim}
-the necessary \tty{IW} prefix will automatically be merged into the previous
-instruction, resulting in
+the existing \tty{DDIR} will be augmented with a \tty{IW}, and the code
+generated is the same as for
 \begin{verbatim}
         DDIR    LW,IW
-        LD      BC,12345668h   .
+        LD      BC,12345678h
 \end{verbatim}
-The machine code that was first created for \tty{DDIR LW} is retracted and
-replaced, which is signified with an \tty{R} in the listing.
+The code generated previously for \tty{DDIR LW} is withdrawn, as can be seen
+from the \tty{R} marker in the listing.
+
+Explicit \tty{DDIR} prefixes containing \tty{IN}, \tty{IB}, or\tty{IW}
+may be used to enforce a certain operand length.  Arguments not fitting
+into the given operand size result in an error message, while shorter
+ones are zero-extended to achieve the requested length.  For instance,
+\begin{verbatim}
+        DDIR    IB
+        LD      BC,12345678h
+\end{verbatim}
+will result in an error message, since the constant cannot be represented
+in 24 bits.  Vice versa, in this example,
+\begin{verbatim}
+        DDIR    LW,IW
+        LD      BC,345678h
+\end{verbatim}
+the constant will be encoded with one byte more than absolutely
+necessary.
 
 %%---------------------------------------------------------------------------
 

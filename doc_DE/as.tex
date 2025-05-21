@@ -49,7 +49,7 @@
 
 \vspace{1cm}\par
 
-{\large Stand April 2025}
+{\large Stand Mai 2025}
 \end{raggedright}
 
 \clearpage
@@ -10222,22 +10222,28 @@ einmal etwas nachbessern, sonst kann man den Z380 selbst beim
 besten Willen nur als ,,16-Bit-Prozessor mit 32-Bit-Erweiterungen''
 bezeichnen...
 
-Kompliziert wird die Sache dadurch, da"s die mit LW eingestellte
-Operandengr"o"se f"ur einzelne Befehle mit den Pr"afixen \tty{DDIR W}
-und \tty{DDIR LW} "ubersteuert werden kann.  \asname{} merkt sich das
-Auftreten solcher Befehle und schaltet dann f"ur den n"achsten
-Prozessorbefehl automatisch mit um.  Andere \tty{DDIR}-Varianten
-als \tty{W} und \tty{LW} sollte man "ubrigens nie explizit
-verwenden, da \asname{} bei zu langen Operanden diese automatisch
-einsetzt, und das k"onnte zu Verwirrungen f"uhren.  Die Automatik
-geht "ubrigens so weit, da"s in der Befehlsfolge
+Kompliziert wird die Sache dadurch, da"s sowohl die mit LW eingestellte
+Operandengr"o"se, als auch die L"ange von immediate- und absoluten
+Operanden, f"ur einzelne Befehle mit den Pr"afixen \tty{DDIR W/LW/IB/IW}
+\asname{} merkt sich die Verwendung solcher Befehle und ber"ucksichtigt
+sie f"ur den n"achsten Befehl automatisch mit.  Dabei sind die folgenden
+F"alle zu unterscheiden:
+
+Ging gar kein \tty{DDIR}-Befehl voraus bzw. einer, der keine explizite
+Operandenl"ange enthielt (also weder \tty{IN}, \tty{IB}, noch \tty{IW}), so wird die
+Operandenl"ange automatisch festgelegt.  Ein eventuell erforderlicher
+\tty{DDIR}-Pr"afix wird automatisch eingef"ugt.  Ein einzelnes
+\begin{verbatim}
+        LD      BC,12345678h
+\end{verbatim}
+wird also automatisch um ein f"uhrendes \tty{DDIR IW} erg"anzt.  In diesem
+Fall jedoch:
 \begin{verbatim}
         DDIR    LW
         LD      BC,12345678h
 \end{verbatim}
-automatisch der erforderliche \tty{IW}-Pr"afix mit in die
-vorangehende Anweisung hineingezogen wird, effektiv wird also
-der Code
+wird der \tty{DDIR}-Pr"afix automatisch um ein \tty{IW} erg"anzt,
+effektiv wird also der Code f"ur
 \begin{verbatim}
         DDIR    LW,IW
         LD      BC,12345678h
@@ -10245,6 +10251,23 @@ der Code
 erzeugt.  Der im ersten Schritt erzeugte Code f"ur \tty{DDIR LW}
 wird verworfen, was an einem \tty{R} im Listing zu erkennen
 ist.
+
+Explizite \tty{DDIR}-Pr"afixe mit einem \tty{IN}, \tty{IB}, oder
+\tty{IW} k"onnen genutzt werden, um eine bestimmte Operandenl"ange
+zu erzwingen.  Zu lange Operanden f"uhren zu einer Fehlermeldung,
+k"urzere werden mit Nullen auf die geforderte L"ange gebracht.  Ein
+\begin{verbatim}
+        DDIR    IB
+        LD      BC,12345678h
+\end{verbatim}
+f"uhrt also zu einer Fehlermeldung, weil die Konstante nicht in 24
+Bit hineinpasst.  Umgekehrt wird hier
+\begin{verbatim}
+        DDIR    LW,IW
+        LD      BC,345678h
+\end{verbatim}
+die Konstante mit einem Byte mehr kodiert, als eigentlich
+erforderlich w"are.
 
 %%---------------------------------------------------------------------------
 

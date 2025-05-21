@@ -1,3 +1,20 @@
+2025-05-21 [1.42 Bld 287]
+
+- Bugfix      : Z380: correct encoding of 'add hl,(abs)'
+- Bugfix      : Z380: correct encoding of 'ld (sp+disp),r16'
+- Bugfix      : Z380: permit 24/32 bit operand for
+                'add/sub sp,nnnn'
+- Bugfix      : PALM: correct implementation of JMP
+                with absolute argument
+- Bugfix      : 68K: correct encoding of BFCHG/BFSET/BFCLR
+- Bugfix      : 68K: correct encoding MULS.L/MULU.L
+- Bugfix      : 68K: correct list of addressing modes for PMOVE <reg>,<ea>
+- Bugfix      : 68K: correct PMMU condition encoding
+- Bugfix      : 68K: correct offset for PC-relative addressing of PRESTORE
+- Bugfix      : 68K: correct allowed addressing modes for PRESTORE
+- Bugfix      : 68K: correct operand size handling for PFLUSHR
+- Change      : Z380: make DDIR prefix handling more flexible
+
 2025-04-28 [1.42 Bld 286]
 
 - Bugfix      : Correct checksum computation for MOS Hex

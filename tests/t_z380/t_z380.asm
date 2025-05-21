@@ -2,18 +2,19 @@
         include regz380
 
         extmode on
+	lwordmode on
 
         page    0
         relaxed on
 
-	ddir	w
-	ddir	ib,w
-	ddir	iw,w
-	ddir	ib
-	ddir	lw
-	ddir	ib,lw
-	ddir	iw,lw
-	ddir	iw
+	ddir	w		; DD C0
+	ddir	ib,w		; DD C1
+	ddir	iw,w		; DD C2
+	ddir	ib		; DD C3
+	ddir	lw		; FD C0
+	ddir	ib,lw		; FD C1
+	ddir	iw,lw		; FD C2
+	ddir	iw		; FD C3
 
 	cpl
 	cpl	a
@@ -63,21 +64,265 @@
         ret	m
         ret	s
 
-        jp	1234h
-        jp	123456h
-        ddir	ib
-        jp	123456h
-        ddir	iw
-        jp	123456h
-	ddir	w
-        jp	123456h
-        ddir	lw
-        jp	123456h
-        ddir	w,iw
-        jp	123456h
-        jp	12345678h
-        ddir	lw
-        jp	12345678h
+        ; explicit DDIR prefix with IN/IB/IW acts like explicit
+	; operand size definition for the following instruction:
+        ; - operands to long for given size will result in error
+	; - operands shorter than given size will be zero-extended
+
+	; ---------------------------
+	; play with operand size prefix, immediate operand case:
+
+	; no explicit setting:
+
+        jp	1234h		; -> no prefix, 16 bits 
+        jp	123456h		; -> IB prefix (DD C3), 24 bits
+	jp	12345678h	; -> IW prefix (FD C3), 32 bits
+
+	; requesting 16 bit operand:
+
+	ddir	in		; -> no prefix, 16 bits
+	jp	1234h
+	ddir	in		; -> no prefix, error
+	expect	1320
+	jp	123456h
+	endexpect
+	ddir	in		; -> no prefix, error
+	expect	1320
+	jp	12345678h
+	endexpect
+
+	; requesting 24 bit operand:
+
+	ddir	ib		; DD C3
+	jp	1234h		; no change of prefix, operand extended from 16 to 24 bits
+        ddir	ib		; DD C3
+        jp	123456h		; no change of prefix
+	ddir	ib		; DD C3
+	expect	1320
+	jp	12345678h	; -> error
+	endexpect
+
+	; requesting 32 bit operand:
+
+	ddir	iw		; FD C3
+	jp	1234h		; no change of prefix, operand extended from 16 to 32 bits
+        ddir	iw		; FD C3
+        jp	123456h		; no change of prefix, operand extended from 24 to 32 bits
+	ddir	iw		; FD C3
+	jp	12345678h	; no change of prefix
+
+	; no explicit length setting, but requesting 16 bit operation:
+
+	ddir	w		; DD C0
+	jp	1234h		; no change of prefix, 16 bits
+        ddir	w		; DD C0
+        jp	123456h		; prefix changed to ib,w (DD C1), 24 bits
+	ddir	w		; DD C0
+	jp	12345678h	; prefix changed to iw,w (DD C2), 32 bits
+
+	; requesting 16 bit operand and 16 bit operation:
+
+	ddir	in,w		; DD C0
+	jp	1234h		; no change of prefix, 16 bits
+        ddir	in,w		; DD C0
+	expect 1320
+        jp	123456h		; -> error
+	endexpect
+	ddir	in,w		; DD C0
+	expect	1320
+	jp	12345678h	; -> error
+	endexpect
+
+	; requesting 24 bit operand and 16 bit operation:
+
+	ddir	ib,w		; DD C1
+	jp	1234h		; no change of prefix, operand extended from 16 to 24 bits
+        ddir	ib,w		; DD C1
+        jp	123456h		; no change of prefix
+	ddir	ib,w		; DD C1
+	expect	1320
+	jp	12345678h	; -> error
+	endexpect
+
+	; requesting 32 bit operand and 16 bit operation:
+
+	ddir	iw,w		; DD C2
+	jp	1234h		; no change of prefix, operand extended from 16 to 32 bits
+        ddir	iw,w		; DD C2
+        jp	123456h		; no change of prefix, operand extended from 24 to 32 bits
+	ddir	iw,w		; DD C2
+	jp	12345678h	; no change of prefix
+
+	; no explicit length setting, but requesting 32 bit operation:
+
+	ddir	lw		; FD C0
+	jp	1234h		; no change of prefix, 16 bits
+        ddir	lw		; FD C0
+        jp	123456h		; prefix changed to ib,lw (FD C1), 24 bits
+	ddir	lw		; FD C0
+	jp	12345678h	; prefix changed to iw,lw (FD C2), 32 bits
+
+	; requesting 16 bit operand and 32 bit operation:
+
+	ddir	in,lw		; FD C0
+	jp	1234h		; no change of prefix, 16 bits
+        ddir	in,lw		; FD C0
+	expect 1320
+        jp	123456h		; -> error
+	endexpect
+	ddir	in,lw		; FD C0
+	expect	1320
+	jp	12345678h	; -> error
+	endexpect
+
+	; requesting 24 bit operand and 32 bit operation:
+
+	ddir	ib,lw		; FD C1
+	jp	1234h		; no change of prefix, operand extended from 16 to 24 bits
+        ddir	ib,lw		; FD C1
+        jp	123456h		; no change of prefix
+	ddir	ib,lw		; FD C1
+	expect	1320
+	jp	12345678h	; -> error
+	endexpect
+
+	; requesting 32 bit operand and 32 bit operation:
+
+	ddir	iw,lw		; FD C2
+	jp	1234h		; no change of prefix, operand extended from 16 to 32 bits
+        ddir	iw,lw		; FD C2
+        jp	123456h		; no change of prefix, operand extended from 24 to 32 bits
+	ddir	iw,lw		; FD C2
+	jp	12345678h	; no change of prefix
+
+	; ---------------------------
+	; play with operand size prefix, absolute address case:
+
+	; no explicit setting:
+
+        ld	hl,(1234h)	; -> no prefix, 16 bits 
+        ld	hl,(123456h)	; -> IB prefix (DD C3), 24 bits
+	ld	hl,(12345678h)	; -> IW prefix (FD C3), 32 bits
+
+	; requesting 16 bit operand:
+
+	ddir	in		; -> no prefix, 16 bits
+	ld	hl,(1234h)
+	ddir	in		; -> no prefix, error
+	expect	1320
+	ld	hl,(123456h)
+	endexpect
+	ddir	in		; -> no prefix, error
+	expect	1320
+	ld	hl,(12345678h)
+	endexpect
+
+	; requesting 24 bit operand:
+
+	ddir	ib		; DD C3
+	ld	hl,(1234h)	; no change of prefix, operand extended from 16 to 24 bits
+        ddir	ib		; DD C3
+        ld	hl,(123456h)	; no change of prefix
+	ddir	ib		; DD C3
+	expect	1320
+	ld	hl,(12345678h)	; -> error
+	endexpect
+
+	; requesting 32 bit operand:
+
+	ddir	iw		; FD C3
+	ld	hl,(1234h)	; no change of prefix, operand extended from 16 to 32 bits
+        ddir	iw		; FD C3
+        ld	hl,(123456h)	; no change of prefix, operand extended from 24 to 32 bits
+	ddir	iw		; FD C3
+	ld	hl,(12345678h)	; no change of prefix
+
+	; no explicit length setting, but requesting 16 bit operation:
+
+	ddir	w		; DD C0
+	ld	hl,(1234h)	; no change of prefix, 16 bits
+        ddir	w		; DD C0
+        ld	hl,(123456h)	; prefix changed to ib,w (DD C1), 24 bits
+	ddir	w		; DD C0
+	ld	hl,(12345678h)	; prefix changed to iw,w (DD C2), 32 bits
+
+	; requesting 16 bit operand and 16 bit operation:
+
+	ddir	in,w		; DD C0
+	ld	hl,(1234h)	; no change of prefix, 16 bits
+        ddir	in,w		; DD C0
+	expect 1320
+        ld	hl,(123456h)	; -> error
+	endexpect
+	ddir	in,w		; DD C0
+	expect	1320
+	ld	hl,(12345678h)	; -> error
+	endexpect
+
+	; requesting 24 bit operand and 16 bit operation:
+
+	ddir	ib,w		; DD C1
+	ld	hl,(1234h)	; no change of prefix, operand extended from 16 to 24 bits
+        ddir	ib,w		; DD C1
+        ld	hl,(123456h)	; no change of prefix
+	ddir	ib,w		; DD C1
+	expect	1320
+	ld	hl,(12345678h)	; -> error
+	endexpect
+
+	; requesting 32 bit operand and 16 bit operation:
+
+	ddir	iw,w		; DD C2
+	ld	hl,(1234h)	; no change of prefix, operand extended from 16 to 32 bits
+        ddir	iw,w		; DD C2
+        ld	hl,(123456h)	; no change of prefix, operand extended from 24 to 32 bits
+	ddir	iw,w		; DD C2
+	ld	hl,(12345678h)	; no change of prefix
+
+	; no explicit length setting, but requesting 32 bit operation:
+
+	ddir	lw		; FD C0
+	ld	hl,(1234h)	; no change of prefix, 16 bits
+        ddir	lw		; FD C0
+        ld	hl,(123456h)	; prefix changed to ib,lw (FD C1), 24 bits
+	ddir	lw		; FD C0
+	ld	hl,(12345678h)	; prefix changed to iw,lw (FD C2), 32 bits
+
+	; requesting 16 bit operand and 32 bit operation:
+
+	ddir	in,lw		; FD C0
+	ld	hl,(1234h)	; no change of prefix, 16 bits
+        ddir	in,lw		; FD C0
+	expect 1320
+        ld	hl,(123456h)	; -> error
+	endexpect
+	ddir	in,lw		; FD C0
+	expect	1320
+	ld	hl,(12345678h)	; -> error
+	endexpect
+
+	; requesting 24 bit operand and 32 bit operation:
+
+	ddir	ib,lw		; FD C1
+	ld	hl,(1234h)	; no change of prefix, operand extended from 16 to 24 bits
+        ddir	ib,lw		; FD C1
+        ld	hl,(123456h)	; no change of prefix
+	ddir	ib,lw		; FD C1
+	expect	1320
+	ld	hl,(12345678h)	; -> error
+	endexpect
+
+	; requesting 32 bit operand and 32 bit operation:
+
+	ddir	iw,lw		; FD C2
+	ld	hl,(1234h)	; no change of prefix, operand extended from 16 to 32 bits
+        ddir	iw,lw		; FD C2
+        ld	hl,(123456h)	; no change of prefix, operand extended from 24 to 32 bits
+	ddir	iw,lw		; FD C2
+	ld	hl,(12345678h)	; no change of prefix
+
+	; ----------------------------
+
         jp	z,4321h
         jp	nc,654321h
         jp	pe,87654321h
@@ -244,6 +489,8 @@
         sub	hl,(123456h)
         sub	hl,(12345678h)
         sub	sp,3412o
+	sub	sp,123456h
+	sub	sp,12345678h
 
 	subw	ix
         subw	hl,ix
@@ -267,6 +514,8 @@
 	add	ix,sp
 	add	hl,(12345678h)
 	add	sp,3412o
+	add	sp,123456h
+	add	sp,12345678h
 
 	addw	bc
 	addw	hl,hl
@@ -471,6 +720,7 @@
 	ld	de,(20000h)
 	ld	hl,(sp+5)
 	ld	de,(sp-200)
+	ld	bc,(sp+400000)
 	ld	ix,(hl)
 	ld	iy,(hl)
 	ld	ix,(iy)
@@ -503,6 +753,12 @@
 	ld	hl,i
 	ld	(sp),de
 	ld	(sp),ix
+	ld	(sp+56h),de
+	ld	(sp+56h),ix
+	ld	(sp+3456h),de
+	ld	(sp+3456h),ix
+	ld	(sp+123456h),de
+	ld	(sp+123456h),ix
 	ld	(hl),10
 	ldw	(hl),1000
 	ddir	lw
