@@ -1,3 +1,15 @@
+2025-05-25 [1.42 Bld 288]
+
+- Bugfix      : 68K: correct encoding of DIVS.L/DIVU.L
+                with 32-bit dest operand
+- Bugfix      : 68K: regard possible zero-length base
+                displacement for PC-relative addressing.
+- Bugfix      : 68K: preindexing must be used for indirect
+                addressing if index register is suppressed.
+- Addition    : Display values unknown in first pass as
+                question marks for 8048, 8051, TMDS370, AVR,
+                and 8086/V20...V55.
+
 2025-05-21 [1.42 Bld 287]
 
 - Bugfix      : Z380: correct encoding of 'add hl,(abs)'
@@ -7,7 +19,7 @@
 - Bugfix      : PALM: correct implementation of JMP
                 with absolute argument
 - Bugfix      : 68K: correct encoding of BFCHG/BFSET/BFCLR
-- Bugfix      : 68K: correct encoding MULS.L/MULU.L
+- Bugfix      : 68K: correct encoding of MULS.L/MULU.L
 - Bugfix      : 68K: correct list of addressing modes for PMOVE <reg>,<ea>
 - Bugfix      : 68K: correct PMMU condition encoding
 - Bugfix      : 68K: correct offset for PC-relative addressing of PRESTORE
@@ -26,6 +38,8 @@
 
 2025-04-26 [1.42 Bld 285]
 
+- Addition    : Display values unknown in first pass as
+                question marks for MCS-48 and AVR.
 - Bugfix      : Revert RADIX and OUTRADIX to the documented
                 behaviour, i.e. expecting a plain number in
                 preferrably decimal, rather than an expression

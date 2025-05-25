@@ -1834,10 +1834,12 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
       if (!PreInd)
         pResult->Vals[0] |= 0x0004;
 
-      /* Set post-indexed also for no index register for compatibility with older versions. */
+      /* 68K PRM says that IS=1 and I/IS=1xx is a reserved combination.
+         If index register is suppressed, pre-indexing must be used.  Do
+         not set bit 2: */
 
       if (AdrComps[2].Art == None)
-        pResult->Vals[0] |= 0x0040 | 0x0004;
+        pResult->Vals[0] |= 0x0040;
       else
         pResult->Vals[0] |= (AdrComps[2].INummer << 12) + (Ord(AdrComps[2].Long) << 11) + (AdrComps[2].Scale << 9);
 
@@ -1854,23 +1856,34 @@ static Byte DecodeAdr(const tStrComp *pArg, Word Erl, tAdrResult *pResult)
         }
         else
         {
-          HVal = EvalStrIntExpression(&AdrComps[0].Comp, Int32, &ValOK);
+          tSymbolFlags flags;
+
+          HVal = EvalStrIntExpressionWithFlags(&AdrComps[0].Comp, Int32, &ValOK, &flags);
           HVal -= EProgCounter() + RelPos;
           if (!ValOK)
             return ModNone;
           switch (AdrComps[0].Size)
           {
             case eSymbolSizeUnknown:
+             if (!HVal)
+               goto PCIs0;
              if (IsDisp16(HVal))
                goto PCIs16;
              else
                goto PCIs32;
             case eSymbolSize16Bit:
-              if (!IsDisp16(HVal))
+              if (!IsDisp16(HVal) && !mFirstPassUnknownOrQuestionable(flags))
               {
                 WrError(ErrNum_DistTooBig);
                 return ModNone;
               }
+              goto PCIs16;
+            PCIs0:
+              pResult->AdrPart = 0x3b;
+              pResult->Vals[0] += 0x10;
+              pResult->AdrMode = ModAIX;
+              pResult->Cnt = 2;
+              break;
             PCIs16:
               pResult->Vals[1] = HVal & 0xffff;
               pResult->AdrPart = 0x3b;
@@ -3520,11 +3533,13 @@ static void DecodeMUL_DIV(Word Code)
         WrStrErrorPos(ErrNum_InvReg, &ArgStr[2]);
         return;
       }
-      dh = 0;
+      dh = dl;
     }
     WAsmCode[1] = (dl << 12) | ((Code & 0x0100) << 3);
     if (dest_reg_pair)
-      WAsmCode[1] |= 0x400 | dh;
+      WAsmCode[1] |= 0x400;
+    if (dest_reg_pair || !is_mul)
+      WAsmCode[1] |= dh;
     RelPos = 4;
     if (DecodeAdr(&ArgStr[1], MModData | MModAdrI | MModPost | MModPre | MModDAdrI | MModAIX | MModPC | MModPCIdx | MModAbs | MModImm, &AdrResult))
     {

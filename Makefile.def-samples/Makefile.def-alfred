@@ -44,16 +44,22 @@ TARG_OBJDIR ?= x86_64-linux/
 # ...for the actual build targets.  This is the simple case for no cross-build:
 
 ifeq ($(TARG_OBJDIR),x86_64-linux/)
- TARG_CC = gcc
- TARG_CFLAGS = $(CFLAGS_GCC)
- #TARG_CC = clang
- #TARG_CFLAGS = $(CFLAGS_CLANG)
- #TARG_CC = g++
- #TARG_CFLAGS = $(CFLAGS_GPP)
- #TARG_CC = clang++
- #TARG_CFLAGS = $(CFLAGS_CLANGPP)
- #TARG_CC = tcc
- #TARG_CFLAGS = $(CFLAGS_TCC)
+ TARG_CC ?= gcc
+ ifeq ($(TARG_CC),gcc)
+  TARG_CFLAGS = $(CFLAGS_GCC)
+ endif
+ ifeq ($(TARG_CC),clang)
+  TARG_CFLAGS = $(CFLAGS_CLANG)
+ endif
+ ifeq ($(TARG_CC),g++)
+  TARG_CFLAGS = $(CFLAGS_GPP)
+ endif
+ ifeq ($(TARG_CC),clang++)
+  TARG_CFLAGS = $(CFLAGS_CLANGPP)
+ endif
+ ifeq ($(TARG_CC),tcc)
+  TARG_CFLAGS = $(CFLAGS_TCC)
+ endif
  TARG_OBJEXTENSION = $(HOST_OBJEXTENSION)
  TARG_LD = $(TARG_CC)
  TARG_LDFLAGS = $(LDFLAGS)
@@ -66,16 +72,22 @@ endif
 # ASAN requires compilation & linking with different flags:
 
 ifeq ($(TARG_OBJDIR),x86_64-linux-asan/)
- TARG_CC = gcc
- TARG_CFLAGS = $(CFLAGS_ASAN) $(CFLAGS_GCC)
- #TARG_CC = clang
- #TARG_CFLAGS = $(CFLAGS_CLANG)
- #TARG_CC = g++
- #TARG_CFLAGS = $(CFLAGS_ASAN) $(CFLAGS_GPP)
- #TARG_CC = clang++
- #TARG_CFLAGS = $(CFLAGS_CLANGPP)
- #TARG_CC = tcc
- #TARG_CFLAGS = $(CFLAGS_TCC)
+ TARG_CC ?= gcc
+ ifeq ($(TARG_CC),gcc)
+  TARG_CFLAGS = $(CFLAGS_ASAN) $(CFLAGS_GCC)
+ endif
+ ifeq ($(TARG_CC),clang)
+  TARG_CFLAGS = $(CFLAGS_CLANG)
+ endif
+ ifeq ($(TARG_CC),g++)
+  TARG_CFLAGS = $(CFLAGS_ASAN) $(CFLAGS_GPP)
+ endif
+ ifeq ($(TARG_CC),clang++)
+  TARG_CFLAGS = $(CFLAGS_CLANGPP)
+ endif
+ ifeq ($(TARG_CC),tcc)
+  TARG_CFLAGS = $(CFLAGS_TCC)
+ endif
  TARG_OBJEXTENSION = $(HOST_OBJEXTENSION)
  TARG_LD = $(TARG_CC)
  TARG_LDFLAGS = $(LDFLAGS_ASAN) $(LDFLAGS)

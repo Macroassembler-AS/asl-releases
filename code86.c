@@ -76,6 +76,7 @@ typedef enum
 static tAdrType AdrType;
 static Byte AdrMode;
 static Byte AdrVals[6];
+static tSymbolFlags adr_vals_flags;
 static tSymbolSize OpSize;
 static Boolean UnknownFlag;
 static unsigned ImmAddrSpaceMask;
@@ -347,6 +348,7 @@ static Byte SegAssumes[6];
 
 static void copy_adr_vals(int Dest)
 {
+  set_b_guessed(adr_vals_flags, CodeLen + Dest, AdrCnt, 0xff);
   memcpy(BAsmCode + CodeLen + Dest, AdrVals, AdrCnt);
 }
 
@@ -385,14 +387,16 @@ static void AddPrefix(Byte Prefix)
 }
 
 /*!------------------------------------------------------------------------
- * \fn     AddPrefixes(void)
+ * \fn     prepend_prefixes(void)
  * \brief  prepend stored prefixes
  * ------------------------------------------------------------------------ */
 
-static void AddPrefixes(void)
+static void prepend_prefixes(void)
 {
   if ((CodeLen != 0) && (PrefixLen != 0))
   {
+    copy_basmcode_guessed(PrefixLen, 0, CodeLen);
+    set_basmcode_guessed(0, PrefixLen, 0x00);
     memmove(BAsmCode + PrefixLen, BAsmCode, CodeLen);
     memcpy(BAsmCode, Prefixes, PrefixLen);
     CodeLen += PrefixLen;
@@ -401,7 +405,7 @@ static void AddPrefixes(void)
 
 /*!------------------------------------------------------------------------
  * \fn     AbleToSign(Word Arg)
- * \brief  can argument be written as 8-bit vlaue that will be sign extended?
+ * \brief  can argument be written as 8-bit value that will be sign extended?
  * \param  Arg value to check
  * \return True if yes
  * ------------------------------------------------------------------------ */
@@ -614,7 +618,9 @@ static tAdrType DecodeAdr(const tStrComp *pArg, unsigned type_mask)
   tStrComp Arg;
   int ArgLen = strlen(pArg->str.p_str);
 
-  AdrType = TypeNone; AdrCnt = 0;
+  AdrType = TypeNone;
+  AdrCnt = 0;
+  adr_vals_flags = eSymbolFlag_None;
   SegBuffer = -1; MomSegment = 0;
 
   /* A somewhat dirty hack to avoid
@@ -676,7 +682,8 @@ static tAdrType DecodeAdr(const tStrComp *pArg, unsigned type_mask)
   as_eval_cb_data_ini(&x86_eval_cb_data.cb_data, x86_eval_cb);
   x86_eval_cb_data.IndexBuf =
   x86_eval_cb_data.BaseBuf = 0;
-  DispAcc = 0; FoundSize = eSymbolSizeUnknown;
+  DispAcc = 0;
+  FoundSize = eSymbolSizeUnknown;
   StrCompRefRight(&Arg, pArg, 0);
   if (!as_strncasecmp(Arg.str.p_str, "WORD PTR", 8))
   {
@@ -752,6 +759,7 @@ static tAdrType DecodeAdr(const tStrComp *pArg, unsigned type_mask)
          goto chk_type;
       UnknownFlag = UnknownFlag || mFirstPassUnknown(EvalResult.Flags);
       MomSegment |= EvalResult.AddrSpaceMask;
+      adr_vals_flags |= EvalResult.Flags;
       if (FoundSize == eSymbolSizeUnknown)
         FoundSize = EvalResult.DataSize;
       if (pIndirStart)
@@ -785,6 +793,7 @@ static tAdrType DecodeAdr(const tStrComp *pArg, unsigned type_mask)
       UnknownFlag = UnknownFlag || mFirstPassUnknown(EvalResult.Flags);
       DispAcc += DispSum;
       MomSegment |= EvalResult.AddrSpaceMask;
+      adr_vals_flags |= EvalResult.Flags;
       if (FoundSize == eSymbolSizeUnknown)
         FoundSize = EvalResult.DataSize;
       Arg = OutRemainder;
@@ -816,7 +825,7 @@ static tAdrType DecodeAdr(const tStrComp *pArg, unsigned type_mask)
           WrStrErrorPos(ErrNum_UndefOpSizes, &Arg);
           break;
         case eSymbolSize8Bit:
-          if ((DispAcc <- 128) || (DispAcc > 255)) WrStrErrorPos(ErrNum_OverRange, &Arg);
+          if (((DispAcc <- 128) || (DispAcc > 255)) && !mFirstPassUnknownOrQuestionable(adr_vals_flags)) WrStrErrorPos(ErrNum_OverRange, &Arg);
           else
           {
             AdrType = TypeImm;
@@ -1019,7 +1028,7 @@ static void decode_mod_reg_core(Word code, Boolean no_seg_check, int start_index
     default:
       break;
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -1043,7 +1052,10 @@ static void append_rel(const tStrComp *p_arg)
       CodeLen = 0;
     }
     else
+    {
+      set_b_guessed(eval_result.Flags, CodeLen, 1, 0xff);
       BAsmCode[CodeLen++] = Lo(adr_word);
+    }
   }
   else
     CodeLen = 0;
@@ -1195,7 +1207,7 @@ static void DecodeMOV(Word Index)
         break;
     }
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -1234,7 +1246,7 @@ static void DecodeINCDEC(Word Index)
         break;
     }
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -1262,7 +1274,7 @@ static void DecodeINT(Word Index)
       }
     }
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -1283,12 +1295,12 @@ static void DecodeBrk(Word Index)
     if (OK)
     {
       CodeLen++;
-      AddPrefixes();
+      prepend_prefixes();
     }
     else
       CodeLen = 0;
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -1328,7 +1340,7 @@ static void DecodeINOUT(Word Index)
         break;
     }
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -1399,6 +1411,7 @@ static void DecodeCALLJMP(Word Index)
             else
             {
               BAsmCode[0] = 0xeb;
+              set_b_guessed(adr_vals_flags, 1, 1, 0xff);
               BAsmCode[1] = Lo(AdrWord);
               CodeLen = 2;
             }
@@ -1407,6 +1420,7 @@ static void DecodeCALLJMP(Word Index)
           {
             AdrWord -= EProgCounter() + 3;
             BAsmCode[0] = 0xe8 | Index;
+            set_b_guessed(adr_vals_flags, 1, 2, 0xff);
             BAsmCode[1] = Lo(AdrWord);
             BAsmCode[2] = Hi(AdrWord);
             CodeLen = 3;
@@ -1418,7 +1432,7 @@ static void DecodeCALLJMP(Word Index)
       }
     }
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -1466,6 +1480,7 @@ static void DecodePUSHPOP(Word Index)
         {
           BAsmCode[CodeLen] = 0x68;
           BAsmCode[CodeLen + 1] = AdrVals[0];
+          set_b_guessed(adr_vals_flags, CodeLen + 1, 1, 0xff);
           if (Sgn(AdrVals[0]) == AdrVals[1])
           {
             BAsmCode[CodeLen] += 2;
@@ -1473,6 +1488,7 @@ static void DecodePUSHPOP(Word Index)
           }
           else
           {
+            set_b_guessed(adr_vals_flags, CodeLen + 2, 1, 0xff);
             BAsmCode[CodeLen + 2] = AdrVals[1];
             CodeLen += 3;
           }
@@ -1482,7 +1498,7 @@ static void DecodePUSHPOP(Word Index)
         break;
     }
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -1519,7 +1535,7 @@ static void DecodeNOTNEG(Word Index)
         break;
     }
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -1622,7 +1638,7 @@ static void DecodeTEST(Word Index)
         break;
     }
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -1688,7 +1704,7 @@ static void DecodeXCHG(Word Index)
         break;
     }
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -1741,7 +1757,7 @@ static void DecodeCALLJMPF(Word Index)
       }
     }
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -1771,7 +1787,7 @@ static void DecodeENTER(Word Index)
       }
     }
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -1787,7 +1803,7 @@ static void DecodeFixed(Word Index)
   if (ChkArgCnt(0, 0)
    && check_core_mask(pOrder->core_mask))
     PutCode(pOrder->Code);
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -1822,7 +1838,7 @@ static void DecodeALU2(Word Index)
             CodeLen += 2 + AdrCnt;
             break;
           case TypeImm:
-            if (((BAsmCode[CodeLen+1] >> 3) & 7) == 0)
+            if (((BAsmCode[CodeLen + 1] >> 3) & 7) == 0)
             {
               BAsmCode[CodeLen] = (Index << 3) | 4 | OpSize;
               copy_adr_vals(1);
@@ -1876,7 +1892,7 @@ static void DecodeALU2(Word Index)
         break;
     }
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -1968,7 +1984,7 @@ static void DecodeFPUFixed(Word Code)
   if (ChkArgCnt(0, 0))
   {
     PutCode(Code);
-    AddPrefixes();
+    prepend_prefixes();
   }
 }
 
@@ -1989,7 +2005,7 @@ static void DecodeFPUSt(Word Code)
     {
       PutCode(Code);
       BAsmCode[CodeLen-1] |= AdrMode;
-      AddPrefixes();
+      prepend_prefixes();
     }
   }
 }
@@ -2047,7 +2063,7 @@ static void DecodeFLD(Word Code)
         break;
     }
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -2099,7 +2115,7 @@ static void DecodeFILD(Word Code)
         break;
     }
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -2143,7 +2159,7 @@ static void DecodeFBLD(Word Code)
         break;
     }
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -2205,7 +2221,7 @@ static void DecodeFST_FSTP(Word Code)
         break;
     }
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -2262,7 +2278,7 @@ static void DecodeFIST_FISTP(Word Code)
         break;
     }
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -2303,7 +2319,7 @@ static void DecodeFBSTP(Word Code)
         break;
     }
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -2357,7 +2373,7 @@ static void DecodeFCOM_FCOMP(Word Code)
         break;
     }
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -2406,7 +2422,7 @@ static void DecodeFICOM_FICOMP(Word Code)
         break;
     }
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -2500,7 +2516,7 @@ static void DecodeFADD_FMUL(Word Code)
     }
   } /* switch (ArgCnt) */
 
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -2569,7 +2585,7 @@ static void DecodeFIADD_FIMUL(Word Code)
       break;
   }
 
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -2607,7 +2623,7 @@ static void DecodeFADDP_FMULP(Word Code)
         break;
     }
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -2706,7 +2722,7 @@ static void DecodeFSUB_FSUBR_FDIV_FDIVR(Word Code)
     }
   }
 
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -2774,7 +2790,7 @@ static void DecodeFISUB_FISUBR_FIDIV_FIDIVR(Word Code)
     default:
       break;
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -2813,7 +2829,7 @@ static void DecodeFSUBP_FSUBRP_FDIVP_FDIVRP(Word Code)
         break;
     }
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -2842,7 +2858,7 @@ static void DecodeFPU16(Word Code)
         break;
     }
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -2870,7 +2886,7 @@ static void DecodeFSAVE_FRSTOR(Word Code)
         break;
     }
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -2898,7 +2914,7 @@ static void DecodeRept(Word Index)
       PutCode(StringOrders[z2].Code);
     }
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -2985,7 +3001,7 @@ static void DecodeMul(Word Index)
       }
       break;
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -3061,7 +3077,7 @@ static void DecodeShift(Word Index)
         break;
     }
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -3093,7 +3109,7 @@ static void DecodeROL4_ROR4(Word Code)
         break;
     }
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -3155,7 +3171,7 @@ static void DecodeBit1(Word Index)
     default:
       (void)ChkArgCnt(min_arg_cnt, 2);
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -3183,7 +3199,7 @@ static void DecodeBSCH(Word code)
       default:
         break;
     }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -3254,11 +3270,12 @@ static void DecodeINS_EXT(Word Code)
           CodeLen += 3;
           break;
         case TypeImm:
-          if (AdrVals[0] > 15) WrStrErrorPos(ErrNum_OverRange, &ArgStr[2]);
+          if ((AdrVals[0] > 15) && !mFirstPassUnknownOrQuestionable(adr_vals_flags)) WrStrErrorPos(ErrNum_OverRange, &ArgStr[2]);
           else
           {
             BAsmCode[CodeLen + 1] += 8;
-            BAsmCode[CodeLen + 3] = AdrVals[0];
+            BAsmCode[CodeLen + 3] = AdrVals[0] & 15;
+            set_b_guessed(adr_vals_flags, CodeLen + 3, 1, 0x0f);
             CodeLen += 4;
           }
           break;
@@ -3267,7 +3284,7 @@ static void DecodeINS_EXT(Word Code)
       }
     }
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -3314,7 +3331,7 @@ static void DecodeFPO2(Word Code)
       }
     }
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -3355,7 +3372,7 @@ static void DecodeBTCLR(Word Code)
       }
     }
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -3380,7 +3397,7 @@ static void DecodeReg16(Word Index)
         break;
     }
   }
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*!------------------------------------------------------------------------
@@ -3424,7 +3441,7 @@ static void DecodeString(Word Index)
   if (ChkArgCnt(0, 0)
    && check_core_mask(pOrder->core_mask))
     PutCode(pOrder->Code);
-  AddPrefixes();
+  prepend_prefixes();
 }
 
 /*---------------------------------------------------------------------------*/
