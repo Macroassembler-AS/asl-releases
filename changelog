@@ -1,3 +1,9 @@
+2025-06-10 [1.42 Bld 289]
+
+- Bugfix      : 68040: Add missing instructions FSNEG and FDNEG
+- Bugfix      : 68040: Add NC mode for cache operations
+- Bugfix      : TMS320C5x: Re-Allow multiple conditions for RETC and XC
+
 2025-05-25 [1.42 Bld 288]
 
 - Bugfix      : 68K: correct encoding of DIVS.L/DIVU.L

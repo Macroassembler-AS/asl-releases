@@ -829,7 +829,7 @@ static void DecodeNORM(Word Index)
 
 static void DecodeRETC(Word Index)
 {
-  if (!ChkArgCnt(1, 1));
+  if (!ChkArgCnt(1, ArgCntMax));
   else if (Index && !ChkMinCPU(CPU32050));
   else
   {
@@ -1012,7 +1012,7 @@ static void DecodeXC(Word Index)
 
   UNUSED(Index);
 
-  if (ChkArgCnt(2, 2)
+  if (ChkArgCnt(2, ArgCntMax)
    && ChkMinCPU(CPU32050))
   {
     Mode = EvalStrIntExpressionWithFlags(&ArgStr[1], UInt2, &OK, &Flags);

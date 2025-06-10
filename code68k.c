@@ -596,7 +596,9 @@ static Boolean CodeIndRegPair(tStrComp *pArg, Word *Erg1, Word *Erg2)
 
 static Boolean CodeCache(char *Asc, Word *Erg)
 {
-   if (!as_strcasecmp(Asc, "IC"))
+   if (!as_strcasecmp(Asc, "NC"))
+     *Erg = 0;
+   else if (!as_strcasecmp(Asc, "IC"))
      *Erg = 2;
    else if (!as_strcasecmp(Asc, "DC"))
      *Erg = 1;
@@ -6439,7 +6441,8 @@ static void InitFields(void)
   AddFPUOp("FLOG10" , 0x15, False, eFlagExtFPU);  AddFPUOp("FLOG2"  , 0x16, False, eFlagExtFPU);
   AddFPUOp("FABS"   , 0x18, False, eFlagNone  );  AddFPUOp("FSABS"  , 0x58, False, eFlagIntFPU);
   AddFPUOp("FDABS"  , 0x5c, False, eFlagIntFPU);  AddFPUOp("FCOSH"  , 0x19, False, eFlagExtFPU);
-  AddFPUOp("FNEG"   , 0x1a, False, eFlagNone  );  AddFPUOp("FACOS"  , 0x1c, False, eFlagExtFPU);
+  AddFPUOp("FNEG"   , 0x1a, False, eFlagNone  );  AddFPUOp("FSNEG"  , 0x5a, False, eFlagIntFPU);
+  AddFPUOp("FDNEG"  , 0x5e, False, eFlagIntFPU);  AddFPUOp("FACOS"  , 0x1c, False, eFlagExtFPU);
   AddFPUOp("FCOS"   , 0x1d, False, eFlagExtFPU);  AddFPUOp("FGETEXP", 0x1e, False, eFlagExtFPU);
   AddFPUOp("FGETMAN", 0x1f, False, eFlagExtFPU);  AddFPUOp("FDIV"   , 0x20, True , eFlagNone  );
   AddFPUOp("FSDIV"  , 0x60, False, eFlagIntFPU);  AddFPUOp("FDDIV"  , 0x64, True , eFlagIntFPU);
