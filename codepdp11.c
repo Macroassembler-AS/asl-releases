@@ -21,6 +21,7 @@
 #include "asmcode.h"
 #include "asmitree.h"
 #include "codevars.h"
+#include "assume.h"
 #include "codepseudo.h"
 #include "errmsg.h"
 #include "intpseudo.h"
@@ -37,7 +38,6 @@
 #define REG_SP 6
 
 #define APR_COUNT 8
-#define ASSUME_COUNT (2 * APR_COUNT)
 
 typedef enum
 {
@@ -2153,8 +2153,8 @@ static void switch_from_pdp11(void)
 
 static void switch_to_pdp11(void *p_user)
 {
-  static char *p_assume_reg_names = NULL;
-  static ASSUMERec *p_assumes = NULL;
+  static as_assume_rec_t *p_assumes = NULL;
+  static size_t assumes_count = 0;
   const TFamilyDescr *p_descr;
 
   p_curr_cpu_props = (const cpu_props_t*)p_user;
@@ -2206,35 +2206,21 @@ static void switch_to_pdp11(void *p_user)
     }
     if (!p_assumes)
     {
-      int apr_index, assume_index, l;
-      char *p_reg_name;
+      int apr_index;
 
-      if (!p_assume_reg_names)
-        p_assume_reg_names = (char*)malloc(ASSUME_COUNT * (4 + 1));
-      p_assumes = (ASSUMERec*)calloc(ASSUME_COUNT, sizeof(*p_assumes));
+      char reg_name[20];
 
-      p_reg_name = p_assume_reg_names;
       for (apr_index = 0; apr_index < APR_COUNT; apr_index++)
       {
-        l = as_snprintf(p_reg_name, 6, "PAR%c", apr_index + '0');
-        p_assumes[apr_index * 2].Name = p_reg_name;
-        p_assumes[apr_index * 2].Dest = &reg_par[apr_index];
-        p_reg_name += l + 1;
-        l = as_snprintf(p_reg_name, 6, "PDR%c", apr_index + '0');
-        p_assumes[apr_index * 2 + 1].Name = p_reg_name;
-        p_assumes[apr_index * 2 + 1].Dest = &reg_pdr[apr_index];
-        p_reg_name += l + 1;
-      }
-      for (assume_index = 0; assume_index < ASSUME_COUNT; assume_index++)
-      {
-        p_assumes[assume_index].Min = 0x0000;
-        p_assumes[assume_index].Max = 0xffff;
-        p_assumes[assume_index].NothingVal = 0x0000;
-        p_assumes[assume_index].pPostProc = update_apr;
+        as_snprintf(reg_name, sizeof(reg_name), "PAR%c", apr_index + '0');
+        assume_append(&p_assumes, &assumes_count, reg_name, &reg_par[apr_index],
+                      0x0000, 0xffff, 0x0000, update_apr);
+        as_snprintf(reg_name, sizeof(reg_name), "PDR%c", apr_index + '0');
+        assume_append(&p_assumes, &assumes_count, reg_name, &reg_pdr[apr_index],
+                      0x0000, 0xffff, 0x0000, update_apr);
       }
     }
-    pASSUMERecs = p_assumes;
-    ASSUMERecCnt = ASSUME_COUNT;
+    assume_set(p_assumes, assumes_count);
     update_apr();
   }
 

@@ -21,6 +21,7 @@
 #include "motpseudo.h"
 #include "asmitree.h"
 #include "codevars.h"
+#include "assume.h"
 #include "headids.h"
 #include "errmsg.h"
 #include "codepseudo.h"
@@ -57,8 +58,7 @@ static CPUVar CPUMN1610, CPUMN1613;
 static tSymbolSize OpSize;
 static LongInt BaseRegVals[4];
 
-#define ASSUMEMN1613Count 4
-static ASSUMERec ASSUMEMN1613[ASSUMEMN1613Count] =
+static as_assume_rec_t ASSUMEMN1613[] =
 {
   { "CSBR", BaseRegVals + 0, 0, 15, 16, NULL },
   { "SSBR", BaseRegVals + 1, 0, 15, 16, NULL },
@@ -1364,8 +1364,7 @@ static void SwitchTo_MN1610_Alt(void)
   {
     SegLimits[SegCode] = 0x3ffff;
     SegLimits[SegIO] = 0xffff;
-    pASSUMERecs = ASSUMEMN1613;
-    ASSUMERecCnt = ASSUMEMN1613Count;
+    assume_set(ASSUMEMN1613, as_array_size(ASSUMEMN1613));
   }
   else
   {

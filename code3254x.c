@@ -30,6 +30,7 @@
 #include "codevars.h"
 #include "fileformat.h"
 #include "headids.h"
+#include "assume.h"
 #include "errmsg.h"
 
 #include "code3254x.h"
@@ -2747,8 +2748,7 @@ static void SwitchFrom_32054x(void)
 
 static void SwitchTo_32054x(void)
 {
-#define ASSUME3254xCount (sizeof(ASSUME3254xs) / sizeof(*ASSUME3254xs))
-  static ASSUMERec ASSUME3254xs[] =
+  static as_assume_rec_t ASSUME3254xs[] =
   {
     {"CPL", &Reg_CPL, 0,      1,       0, NULL},
     {"DP" , &Reg_DP , 0,  0x1ff,   0x200, NULL},
@@ -2776,8 +2776,7 @@ static void SwitchTo_32054x(void)
   MakeCode = MakeCode_32054x;
   IsDef = IsDef_32054x;
 
-  pASSUMERecs = ASSUME3254xs;
-  ASSUMERecCnt = ASSUME3254xCount;
+  assume_set(ASSUME3254xs, as_array_size(ASSUME3254xs));
 
   InitFields();
   SwitchFrom = SwitchFrom_32054x;

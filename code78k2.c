@@ -18,6 +18,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmitree.h"
+#include "assume.h"
 #include "codepseudo.h"
 #include "intpseudo.h"
 #include "codevars.h"
@@ -1689,7 +1690,7 @@ static void SwitchFrom_78K2(void)
 
 static void SwitchTo_78K2(void)
 {
-  static const ASSUMERec ASSUME78K2s[] =
+  static const as_assume_rec_t ASSUME78K2s[] =
   {
     {"P6"  , &Reg_P6  , 0,  0xf,  0x10, NULL},
     {"PM6" , &Reg_PM6 , 0,  0xf,  0x10, NULL}
@@ -1711,8 +1712,7 @@ static void SwitchTo_78K2(void)
   Grans[SegCode] = 1; ListGrans[SegCode] = 1; SegInits[SegCode] = 0;
   SegLimits[SegCode] = 0xfffff;
 
-  pASSUMERecs = ASSUME78K2s;
-  ASSUMERecCnt = sizeof(ASSUME78K2s) / sizeof(ASSUME78K2s[0]);
+  assume_set(ASSUME78K2s, as_array_size(ASSUME78K2s));
 
   MakeCode = MakeCode_78K2; IsDef = IsDef_78K2;
   SwitchFrom = SwitchFrom_78K2; InitFields();

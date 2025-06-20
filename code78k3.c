@@ -18,6 +18,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmitree.h"
+#include "assume.h"
 #include "codepseudo.h"
 #include "intpseudo.h"
 #include "codevars.h"
@@ -2046,7 +2047,7 @@ static void SwitchFrom_78K3(void)
 
 static void SwitchTo_78K3(void)
 {
-  static const ASSUMERec ASSUME78K3s[] =
+  static const as_assume_rec_t ASSUME78K3s[] =
   {
     {"RSS" , &Reg_RSS , 0,  0x1,  0x0, NULL},
   };
@@ -2068,8 +2069,7 @@ static void SwitchTo_78K3(void)
   Grans[SegCode] = 1; ListGrans[SegCode] = 1; SegInits[SegCode] = 0;
   SegLimits[SegCode] = 0xffff;
 
-  pASSUMERecs = ASSUME78K3s;
-  ASSUMERecCnt = sizeof(ASSUME78K3s) / sizeof(ASSUME78K3s[0]);
+  assume_set(ASSUME78K3s, as_array_size(ASSUME78K3s));
 
   MakeCode = MakeCode_78K3;
   IsDef = IsDef_78K3;

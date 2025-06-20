@@ -19,6 +19,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmitree.h"
+#include "assume.h"
 #include "codepseudo.h"
 #include "intpseudo.h"
 #include "codevars.h"
@@ -1622,12 +1623,11 @@ static void SwitchFrom_75K0(void)
   DeinitFields();
 }
 
-static ASSUMERec ASSUME75s[] =
+static as_assume_rec_t ASSUME75s[] =
 {
   {"MBS", &MBSValue, 0, 0x0f, 0x10, NULL},
   {"MBE", &MBEValue, 0, 0x01, 0x01, CheckMBE}
 };
-#define ASSUME75Count (sizeof(ASSUME75s) / sizeof(*ASSUME75s))
 
 static void SwitchTo_75K0(void *pUser)
 {
@@ -1650,8 +1650,7 @@ static void SwitchTo_75K0(void *pUser)
     ROMEnd %= 10;
   SegLimits[SegCode] = (ROMEnd << 10) - 1;
 
-  pASSUMERecs = ASSUME75s;
-  ASSUMERecCnt = ASSUME75Count;
+  assume_set(ASSUME75s, as_array_size(ASSUME75s));
 
   MakeCode = MakeCode_75K0; IsDef = IsDef_75K0;
   SwitchFrom = SwitchFrom_75K0; InitFields();

@@ -21,6 +21,7 @@
 #include "intpseudo.h"
 #include "motpseudo.h"
 #include "codevars.h"
+#include "assume.h"
 #include "errmsg.h"
 
 #include "code7700.h"
@@ -108,7 +109,7 @@ static XYOrder *XYOrders;
 
 static CPUVar CPU65816, CPUM7700, CPUM7750, CPUM7751;
 
-static ASSUMERec ASSUME7700s[] =
+static as_assume_rec_t ASSUME7700s[] =
 {
   { "PG" , &Reg_PG , 0,   0xff,   0x100, NULL },
   { "DT" , &Reg_DT , 0,   0xff,   0x100, NULL },
@@ -1454,8 +1455,7 @@ static void SwitchTo_7700(void)
   Grans[SegCode] = 1; ListGrans[SegCode] = 1; SegInits[SegCode] = 0;
   SegLimits[SegCode] = 0xffffffl;
 
-  pASSUMERecs = ASSUME7700s;
-  ASSUMERecCnt = sizeof(ASSUME7700s) / sizeof(*ASSUME7700s);
+  assume_set(ASSUME7700s, as_array_size(ASSUME7700s));
 
   MakeCode = MakeCode_7700; IsDef = IsDef_7700;
   SwitchFrom = SwitchFrom_7700; InitFields();

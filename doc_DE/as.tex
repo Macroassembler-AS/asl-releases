@@ -1132,7 +1132,7 @@ Sofern Schalter keine Argumente ben"otigen und ihre Zusammenziehung
 keinen mehrbuchstabigen Schalter ergibt, k"onnen mehrere Schalter
 auch auf einen Rutsch angegeben werden, wie z.B im folgenden Beispiel:
 \begin{verbatim}
- as test*.asm firstprog -cl /i c:\as\8051\include
+ asl test*.asm firstprog -cl /i c:\as\8051\include
 \end{verbatim}
 Es werden alle Dateien TEST*.ASM sowie die Datei FIRSTPROG.ASM
 assembliert, wobei f"ur alle Dateien Listings auf der Konsole
@@ -2253,6 +2253,7 @@ VAL         & evaluiert Stringin-   & String       & abh. von \\
 EXPRTYPE    & liefert Typ des       & Integer,     & 0 \\
             & Arguments             & Gleitkomma,  & 1 \\
             &                       & String       & 2 \\
+FSIZE       & liefert Dateigr"o"se  & String       & Integer \\
 \hline
 \end{tabular}\end{center}
 \caption{vordefinierte Funktionen in \asname{} - Teil 2
@@ -2293,6 +2294,12 @@ dbstr   macro   arg
 im ersten bzw. -1, falls das Suchmuster nicht gefunden wurde.
 Analog zu \tty{SUBSTR} und \tty{CHARFROMSTR} hat das erste
 Zeichen den Positionswert 0.
+
+\tty{FSIZE} liefert die Gr"o"se einer Datei in Bytes.  Die
+Datei wird sowohl im aktuellen Verzeichnis gesucht, als auch
+relativ zum Verzeichnis der gerade assemblierten Quelldatei.
+Im Gegensatz zu \tty{INCLUDE} und \tty{BINCLUDE} wird jedoch
+nicht im Include-Pfad gesucht!
 
 Wenn eine Funktion auch Gleitkommaargumente erwartet, so soll
 dies nicht bedeuten, da"s man nicht z.B.

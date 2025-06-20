@@ -25,6 +25,7 @@
 #include "motpseudo.h"
 #include "intpseudo.h"
 #include "codevars.h"
+#include "assume.h"
 #include "errmsg.h"
 #include "cmdarg.h"
 
@@ -1549,7 +1550,7 @@ static Boolean IsDef_6809(void)
 static void SwitchTo_6809(void)
 {
 #define ASSUME09Count (sizeof(ASSUME09s) / sizeof(*ASSUME09s))
-  static const ASSUMERec ASSUME09s[] =
+  static const as_assume_rec_t ASSUME09s[] =
   {
     { "DPR", &DPRValue, 0, 0xff, 0x100, NULL }
   };
@@ -1580,8 +1581,7 @@ static void SwitchTo_6809(void)
   AddONOFF(plain_base_mode_cmd_name, &plain_base_mode, plain_base_mode_sym_name, False);
   target_used = True;
 
-  pASSUMERecs = ASSUME09s;
-  ASSUMERecCnt = ASSUME09Count;
+  assume_set(ASSUME09s, ASSUME09Count);
 }
 
 static as_cmd_result_t cmd_plain_base(Boolean negate, const char *p_arg)

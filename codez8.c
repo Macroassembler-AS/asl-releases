@@ -20,6 +20,7 @@
 #include "asmpars.h"
 #include "asmstructs.h"
 #include "asmitree.h"
+#include "assume.h"
 #include "asmallg.h"
 #include "codepseudo.h"
 #include "intpseudo.h"
@@ -2720,7 +2721,7 @@ static void AdaptRP01(void)
 
 #define ASSUMEeZ8Count 1
 #define ASSUMESuper8Count 3
-static ASSUMERec ASSUMEeZ8s[] =
+static as_assume_rec_t ASSUMEeZ8s[] =
 {
   {"RP"  , &RPVal  , 0, 0xff, 0x100, AdaptRP01},
   {"RP0" , &RP0Val , 0, 0xff, 0x100, NULL},
@@ -2771,8 +2772,7 @@ static void SwitchTo_Z8(void *pUser)
     SegLimits[SegData] = 0xff;
   }
 
-  pASSUMERecs = ASSUMEeZ8s;
-  ASSUMERecCnt = mIsSuper8() ? ASSUMESuper8Count : ASSUMEeZ8Count;
+  assume_set(ASSUMEeZ8s, mIsSuper8() ? ASSUMESuper8Count : ASSUMEeZ8Count);
 
   MakeCode = MakeCode_Z8;
   IsDef = IsDef_Z8;

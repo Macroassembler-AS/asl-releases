@@ -288,6 +288,19 @@ Boolean Odd(int inp)
   return ((inp & 1) == 1);
 }
 
+/* Instruct MinGW to perform wildcard expansion, since CMD.EXE
+   does not expand wildcards, unlike a UNIX shell.  An alternate
+   implementation may make use of glob(): 
+   glob_t glob = NULL;
+   glob(pattern, GLOB_NOCHECK, NULL, &glob);
+   ....
+   globfree(&glob);
+ */
+
+#if (defined _WIN32) && (defined __MINGW32__)
+int _dowildcard = -1;
+#endif
+
 Boolean DirScan(const char *Mask, charcallback callback)
 {
   char Name[1024];

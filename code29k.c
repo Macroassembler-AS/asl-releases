@@ -21,6 +21,7 @@
 #include "asmpars.h"
 #include "asmallg.h"
 #include "onoff_common.h"
+#include "assume.h"
 #include "asmitree.h"
 #include "codepseudo.h"
 #include "intpseudo.h"
@@ -1080,11 +1081,10 @@ static Boolean IsDef_29K(void)
 
 static void SwitchTo_29K(void)
 {
-  static ASSUMERec ASSUME29Ks[] =
+  static as_assume_rec_t ASSUME29Ks[] =
   {
     {"RBP", &Reg_RBP, 0, 0xff, 0x00000000, NULL}
   };
-  static const int ASSUME29KCount = sizeof(ASSUME29Ks) / sizeof(*ASSUME29Ks);
   TurnWords = True;
   SetIntConstMode(eIntConstModeC);
 
@@ -1104,8 +1104,7 @@ static void SwitchTo_29K(void)
   DissectReg = DissectReg_29K;
   onoff_supmode_add();
 
-  pASSUMERecs = ASSUME29Ks;
-  ASSUMERecCnt = ASSUME29KCount;
+  assume_set(ASSUME29Ks, as_array_size(ASSUME29Ks));
 
   SwitchFrom = DeinitFields; InitFields();
 }

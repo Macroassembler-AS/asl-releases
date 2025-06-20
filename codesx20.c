@@ -21,6 +21,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmitree.h"
+#include "assume.h"
 #include "codepseudo.h"
 #include "fourpseudo.h"
 #include "codevars.h"
@@ -607,8 +608,7 @@ static Boolean IsDef_SX20(void)
 static void SwitchTo_SX20(void)
 {
   const TFamilyDescr *pDescr = FindFamilyByName("SX20");
-#define ASSUMESX20Count (sizeof(ASSUMESX20s) / sizeof(*ASSUMESX20s))
-  static const ASSUMERec ASSUMESX20s[] =
+  static const as_assume_rec_t ASSUMESX20s[] =
   {
     { "FSR"   , &Reg_FSR   , 0,  0xff, 0, NULL },
     { "STATUS", &Reg_STATUS, 0,  0xff, 0, NULL },
@@ -636,8 +636,7 @@ static void SwitchTo_SX20(void)
   DissectBit = DissectBit_SX20;
   InitFields();
 
-  pASSUMERecs = ASSUMESX20s;
-  ASSUMERecCnt = ASSUMESX20Count;
+  assume_set(ASSUMESX20s, as_array_size(ASSUMESX20s));
 }
 
 void codesx20_init(void)

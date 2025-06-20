@@ -26,6 +26,7 @@
 #include "intpseudo.h"
 #include "motpseudo.h"
 #include "codevars.h"
+#include "assume.h"
 #include "errmsg.h"
 
 #include "codexa.h"
@@ -79,8 +80,7 @@ static Byte AdrVals[4];
 static tSymbolSize OpSize;
 static Boolean DoBranchExt; /* automatically extend branches */
 
-#define ASSUMEXACount 1
-static ASSUMERec ASSUMEXAs[ASSUMEXACount] =
+static as_assume_rec_t ASSUMEXAs[] =
 {
   {"DS", &Reg_DS, 0, 0xff, 0x100, NULL}
 };
@@ -2185,8 +2185,7 @@ static void SwitchTo_XA(void)
   AddONOFF(BranchExtCmdName, &DoBranchExt, BranchExtSymName , False);
   AddMoto16PseudoONOFF(False);
 
-  pASSUMERecs = ASSUMEXAs;
-  ASSUMERecCnt = ASSUMEXACount;
+  assume_set(ASSUMEXAs, as_array_size(ASSUMEXAs));
 }
 
 void codexa_init(void)

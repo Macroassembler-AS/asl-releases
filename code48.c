@@ -22,6 +22,7 @@
 #include "asmallg.h"
 #include "asmitree.h"
 #include "asmcode.h"
+#include "assume.h"
 #include "codepseudo.h"
 #include "intpseudo.h"
 #include "codevars.h"
@@ -1410,14 +1411,13 @@ static void InitCode_48(void)
 
 static void SwitchTo_48(void *pUser)
 {
-#define ASSUME48Count (sizeof(ASSUME48s) / sizeof(*ASSUME48s))
-  static ASSUMERec ASSUME48s[] =
+  static as_assume_rec_t ASSUME48s[] =
   {
     { "MB"   , &Reg_MB   , 0,  1, MB_NOTHING, NULL },
   };
 
   pCurrCPUProps = (const tCPUProps*)pUser;
-  ASSUME48s[0].Max = (pCurrCPUProps->CodeSize >> 11) & 3;
+  ASSUME48s[0].max_value = (pCurrCPUProps->CodeSize >> 11) & 3;
 
   TurnWords = False;
   SetIntConstMode(eIntConstModeIntel);
@@ -1450,8 +1450,7 @@ static void SwitchTo_48(void *pUser)
   SwitchFrom = SwitchFrom_48;
   InitFields();
 
-  pASSUMERecs = ASSUME48s;
-  ASSUMERecCnt = ASSUME48Count;
+  assume_set(ASSUME48s, as_array_size(ASSUME48s));
 }
 
 /* Limit code segment size only for variants known to have no

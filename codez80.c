@@ -24,6 +24,7 @@
 #include "nlmessages.h"
 #include "as.rsc"
 #include "onoff_common.h"
+#include "assume.h"
 #include "asmitree.h"
 #include "codepseudo.h"
 #include "intpseudo.h"
@@ -4973,7 +4974,7 @@ static void SwitchTo_Z80(void *p_user)
       break;
     case e_core_ez80:
     {
-      static const ASSUMERec assume_ez80[] =
+      static const as_assume_rec_t assume_ez80[] =
       {
         { "ADL"  , &Reg_ADL  , 0, 1   , 0, NULL },
         { "MBASE", &Reg_MBASE, 0, 0xff, 0, NULL }
@@ -4982,13 +4983,12 @@ static void SwitchTo_Z80(void *p_user)
       SegLimits[SegCode] = 0xfffffful;
       AttrChars = "."; HasAttrs = True;
       DecodeAttrPart = decode_attrpart_ez80;
-      pASSUMERecs = assume_ez80;
-      ASSUMERecCnt = as_array_size(assume_ez80);
+      assume_set(assume_ez80, as_array_size(assume_ez80));
       break;
     }
     case e_core_z180:
     {
-      static const ASSUMERec ASSUMEZ180s[] =
+      static const as_assume_rec_t ASSUMEZ180s[] =
       {
         { "CBAR" , &Reg_CBAR , 0,  0xff, 0xf0, check_cbar },
         { "CBR"  , &Reg_CBR  , 0,  0xff, 0   , update_z180_areas },
@@ -4996,8 +4996,7 @@ static void SwitchTo_Z80(void *p_user)
       };
 
       SegLimits[SegCode] = 0x7fffful;
-      pASSUMERecs = ASSUMEZ180s;
-      ASSUMERecCnt = as_array_size(ASSUMEZ180s);
+      assume_set(ASSUMEZ180s, as_array_size(ASSUMEZ180s));
       update_z180_areas();
       break;
     }

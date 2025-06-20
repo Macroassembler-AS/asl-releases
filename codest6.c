@@ -17,6 +17,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmitree.h"
+#include "assume.h"
 #include "asmstructs.h"
 #include "codepseudo.h"
 #include "motpseudo.h"
@@ -47,8 +48,7 @@ typedef struct
   IntType CodeAdrInt;
 } tCPUProps;
 
-#define ASSUMEST6Count 2
-static ASSUMERec ASSUMEST6s[ASSUMEST6Count] =
+static as_assume_rec_t ASSUMEST6s[] =
 {
   { "PRPR",    &PRPRVal  , 0, 0x03, 0x04, NULL },
   { "ROMBASE", &WinAssume, 0, 0x3f, 0x40, NULL },
@@ -893,8 +893,7 @@ static void SwitchTo_ST6(void *pUser)
   SegLimits[SegData] = 0xff;
 
   ASSUMEOffset = (SegLimits[SegCode] > 0xfff) ? 0 : 1;
-  pASSUMERecs = ASSUMEST6s + ASSUMEOffset;
-  ASSUMERecCnt = ASSUMEST6Count - ASSUMEOffset;
+  assume_set(ASSUMEST6s + ASSUMEOffset, as_array_size(ASSUMEST6s) - ASSUMEOffset);
 
   MakeCode = MakeCode_ST6;
   IsDef = IsDef_ST6;

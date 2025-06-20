@@ -34,6 +34,7 @@
 #include "intformat.h"
 #include "as_float.h"
 #include "chartrans.h"
+#include "assume.h"
 #include "dynstr_nls.h"
 #include "cmdarg.h"
 
@@ -1974,15 +1975,12 @@ func_exit2:
 
     else if (!strcmp(FName.str.p_str, "ASSUMEDVAL"))
     {
-      unsigned IdxAssume;
+      const as_assume_rec_t *p_rec = assume_lookup(FArg.str.p_str);
 
-      for (IdxAssume = 0; IdxAssume < ASSUMERecCnt; IdxAssume++)
-        if (!as_strcasecmp(FArg.str.p_str, pASSUMERecs[IdxAssume].Name))
-        {
-          as_tempres_set_int(pErg, *(pASSUMERecs[IdxAssume].Dest));
-          LEAVE;
-        }
-      WrStrErrorPos(ErrNum_SymbolUndef, &FArg);
+      if (p_rec)
+        as_tempres_set_int(pErg, *(p_rec->p_dest));
+      else
+        WrStrErrorPos(ErrNum_SymbolUndef, &FArg);
       LEAVE;
     }
 

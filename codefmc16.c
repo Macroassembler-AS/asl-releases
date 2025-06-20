@@ -19,6 +19,7 @@
 #include "asmsub.h"
 #include "asmallg.h"
 #include "onoff_common.h"
+#include "assume.h"
 #include "errmsg.h"
 #include "codepseudo.h"
 #include "intpseudo.h"
@@ -88,8 +89,7 @@ static ShortInt AdrMode, OpSize;
 
 static LongInt Reg_PCB, Reg_DTB, Reg_ADB, Reg_USB, Reg_SSB, Reg_DPR;
 
-#define ASSUMEF2MC16Count 6
-static ASSUMERec ASSUMEF2MC16s[ASSUMEF2MC16Count] =
+static as_assume_rec_t ASSUMEF2MC16s[] =
 {
   { "PCB"    , &Reg_PCB,     0x00, 0xff, 0x100, NULL },
   { "DTB"    , &Reg_DTB,     0x00, 0xff, 0x100, NULL },
@@ -2354,8 +2354,7 @@ static void SwitchTo_F2MC16(void)
 
   onoff_supmode_add();
 
-  pASSUMERecs = ASSUMEF2MC16s;
-  ASSUMERecCnt = ASSUMEF2MC16Count;
+  assume_set(ASSUMEF2MC16s, as_array_size(ASSUMEF2MC16s));
 
   NextDataSeg = 1; /* DTB */
 }

@@ -14,6 +14,9 @@
 #include "nls.h"
 #include "version.h"
 #include "das.rsc"
+#ifdef _USE_MSH
+# include "das.msh"
+#endif
 
 #include "deco68.h"
 #include "deco87c800.h"
@@ -132,9 +135,8 @@ static as_cmd_result_t ArgError(int MsgNum, const char *pArg)
 static as_cmd_result_t CMD_BinFile(Boolean Negate, const char *pArg)
 {
   LargeWord Start = 0, Len = 0, Gran = 1;
-  char *pStart = NULL, *pLen = NULL, *pGran = NULL;
+  char *pStart = NULL, *pLen = NULL, *pGran = NULL, *p_end;
   String Arg;
-  Boolean OK;
   tCodeChunk Chunk;
 
   if (Negate || !*pArg)
@@ -154,8 +156,8 @@ static as_cmd_result_t CMD_BinFile(Boolean Negate, const char *pArg)
 
   if (pStart && *pStart)
   {
-    Start = ConstLongInt(pStart, &OK, 10);
-    if (!OK)
+    Start = strtoul(pStart, &p_end, 10);
+    if (*p_end)
       return ArgError(Num_ErrMsgInvalidNumericValue, pStart);
   }
   else
@@ -163,8 +165,8 @@ static as_cmd_result_t CMD_BinFile(Boolean Negate, const char *pArg)
 
   if (pLen && *pLen)
   {
-    Len = ConstLongInt(pLen, &OK, 10);
-    if (!OK)
+    Len = strtoul(pLen, &p_end, 10);
+    if (*p_end)
       return ArgError(Num_ErrMsgInvalidNumericValue, pLen);
   }
   else
@@ -172,8 +174,8 @@ static as_cmd_result_t CMD_BinFile(Boolean Negate, const char *pArg)
 
   if (pGran && *pGran)
   {
-    Gran = ConstLongInt(pGran, &OK, 10);
-    if (!OK)
+    Gran = strtoul(pGran, &p_end, 10);
+    if (*p_end)
       return ArgError(Num_ErrMsgInvalidNumericValue, pGran);
   }
   else
@@ -338,9 +340,8 @@ static as_cmd_result_t CMD_HexFile(Boolean Negate, const char *pArg)
 static as_cmd_result_t CMD_EntryAddress(Boolean Negate, const char *pArg)
 {
   LargeWord Address;
-  char *pName = NULL;
+  char *pName = NULL, *p_end;
   String Arg, Str;
-  Boolean OK;
 
   if (Negate || !*pArg)
     return ArgError(Num_ErrMsgAddressArgumentMissing, NULL);
@@ -374,8 +375,8 @@ static as_cmd_result_t CMD_EntryAddress(Boolean Negate, const char *pArg)
 
       if (pVectorAddress && *pVectorAddress)
       {
-        VectorAddress = ConstLongInt(pVectorAddress, &OK, 10);
-        if (!OK)
+        VectorAddress = strtoul(pVectorAddress, &p_end, 10);
+        if (*p_end)
           return ArgError(Num_ErrMsgInvalidNumericValue, pVectorAddress);
       }
       else
@@ -383,8 +384,8 @@ static as_cmd_result_t CMD_EntryAddress(Boolean Negate, const char *pArg)
 
       if (pAddrLen && *pAddrLen)
       {
-        AddrLen = ConstLongInt(pAddrLen, &OK, 10);
-        if (!OK || (AddrLen > sizeof(Vector)))
+        AddrLen = strtoul(pAddrLen, &p_end, 10);
+        if (*p_end || (AddrLen > sizeof(Vector)))
           return ArgError(Num_ErrMsgInvalidNumericValue, pAddrLen);
       }
       else
@@ -425,8 +426,8 @@ static as_cmd_result_t CMD_EntryAddress(Boolean Negate, const char *pArg)
     }
     else
     {
-      Address = ConstLongInt(pArg, &OK, 10);
-      if (!OK)
+      Address = strtoul(pArg, &p_end, 10);
+      if (*p_end)
         return ArgError(Num_ErrMsgInvalidNumericValue, pArg);
     }
   }
@@ -443,9 +444,8 @@ static as_cmd_result_t CMD_EntryAddress(Boolean Negate, const char *pArg)
 static as_cmd_result_t CMD_Symbol(Boolean Negate, const char *pArg)
 {
   LargeWord Address;
-  char *pName = NULL;
+  char *pName = NULL, *p_end;
   String Arg;
-  Boolean OK;
 
   if (Negate || !*pArg)
     return ArgError(Num_ErrMsgSymbolArgumentMissing, NULL);
@@ -456,8 +456,8 @@ static as_cmd_result_t CMD_Symbol(Boolean Negate, const char *pArg)
 
   if (*Arg)
   {
-    Address = ConstLongInt(Arg, &OK, 10);
-    if (!OK)
+    Address = strtoul(Arg, &p_end, 10);
+    if (*p_end)
       return ArgError(Num_ErrMsgInvalidNumericValue, Arg);
   }
   else
@@ -523,7 +523,7 @@ static as_cmd_result_t CMD_PrintHelp(Boolean Negate, const char *Arg)
 
 static as_cmd_result_t CMD_screen_height(Boolean negate, const char *p_arg)
 {
-  Boolean ok;
+  char *p_end;
   int new_screen_height;
 
   if (negate)
@@ -531,8 +531,8 @@ static as_cmd_result_t CMD_screen_height(Boolean negate, const char *p_arg)
     screen_height = 0;
     return e_cmd_ok;
   }
-  new_screen_height = ConstLongInt(p_arg, &ok, 10);
-  if (!ok)
+  new_screen_height = strtoul(p_arg, &p_end, 10);
+  if (*p_end)
     return e_cmd_err;
   screen_height = new_screen_height;
   return e_cmd_arg;
@@ -639,7 +639,11 @@ int main(int argc, char **argv)
   dasmdef_init();
   cpulist_init();
   msg_level_init();
-  nlmessages_init("das.msg", *argv, MsgId1, MsgId2);
+#ifdef _USE_MSH
+  nlmessages_init_buffer(das_msh_data, sizeof(das_msh_data), MsgId1, MsgId2);
+#else
+  nlmessages_init_file("das.msg", *argv, MsgId1, MsgId2);
+#endif
   deco68_init();
   deco87c800_init();
   deco4004_init();

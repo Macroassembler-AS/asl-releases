@@ -195,15 +195,6 @@ typedef struct _TDefinement
   Byte Compiled[256];
 } TDefinement, *PDefinement;
 
-typedef struct _ASSUMERec
-{
-  const char *Name;
-  LongInt *Dest;
-  LongInt Min,Max;
-  LongInt NothingVal;
-  void (*pPostProc)(void);
-} ASSUMERec;
-
 extern StringPtr SourceFile;
 
 extern StringPtr CursUp;
@@ -227,8 +218,6 @@ extern Boolean ENDOccured;
 extern Boolean Retracted;
 extern Boolean ListToStdout,ListToNull;
 
-extern unsigned ASSUMERecCnt;
-extern const ASSUMERec *pASSUMERecs;
 extern void (*pASSUMEOverride)(void);
 
 extern Integer PassNo;

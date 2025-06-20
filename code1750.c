@@ -811,8 +811,6 @@ static void SwitchTo_1750(void)
   Grans[SegCode] = 2; ListGrans[SegCode] = 2; SegInits[SegCode] = 0;
   SegLimits[SegCode] = 0xffff;
 
-  ASSUMERecCnt = 0;
-
   MakeCode = MakeCode_1750;
   IsDef = IsDef_1750;
   SwitchFrom = SwitchFrom_1750; InitFields();

@@ -25,6 +25,7 @@
 #include "asmitree.h"
 #include "codevars.h"
 #include "cpu2phys.h"
+#include "assume.h"
 #include "function.h"
 #include "nlmessages.h"
 #include "as.rsc"
@@ -973,7 +974,7 @@ static void SwitchTo_68(void)
 
   if (MomCPU == CPU68HC11K4)
   {
-    static const ASSUMERec ASSUMEHC11s[] =
+    static const as_assume_rec_t ASSUMEHC11s[] =
     {
       {"MMSIZ" , &Reg_MMSIZ , 0, 0xff, 0, SetK4Ranges},
       {"MMWBR" , &Reg_MMWBR , 0, 0xff, 0, SetK4Ranges},
@@ -984,8 +985,7 @@ static void SwitchTo_68(void)
       {"CONFIG", &Reg_CONFIG, 0, 0xff, 0, SetK4Ranges},
     };
 
-    pASSUMERecs = ASSUMEHC11s;
-    ASSUMERecCnt = as_array_size(ASSUMEHC11s);
+    assume_set(ASSUMEHC11s, as_array_size(ASSUMEHC11s));
 
     SetK4Ranges();
   }

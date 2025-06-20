@@ -19,6 +19,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmitree.h"
+#include "assume.h"
 #include "codepseudo.h"
 #include "intpseudo.h"
 #include "codevars.h"
@@ -112,7 +113,7 @@ static ShortInt OpSize;
 static Boolean AssumeByte;
 
 static LongInt Reg_RSS, Reg_LOCATION;
-static ASSUMERec ASSUME78K4s[] =
+static as_assume_rec_t ASSUME78K4s[] =
 {
   {"RSS"      , &Reg_RSS      , 0,  0x1,  0x0, NULL},
   {"LOCATION" , &Reg_LOCATION , 0,  0xf,  0x0, NULL},
@@ -3494,8 +3495,7 @@ static void SwitchTo_78K4(void)
   Grans[SegCode] = 1; ListGrans[SegCode] = 1; SegInits[SegCode] = 0;
   SegLimits[SegCode] = 0xffffff;
 
-  pASSUMERecs = ASSUME78K4s;
-  ASSUMERecCnt = sizeof(ASSUME78K4s) / sizeof(ASSUME78K4s[0]);
+  assume_set(ASSUME78K4s, as_array_size(ASSUME78K4s));
 
   MakeCode = MakeCode_78K4;
   IsDef = IsDef_78K4;

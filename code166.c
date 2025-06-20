@@ -24,6 +24,7 @@
 #include "codepseudo.h"
 #include "intpseudo.h"
 #include "codevars.h"
+#include "assume.h"
 #include "errmsg.h"
 
 #include "code166.h"
@@ -70,8 +71,7 @@ static enum
 static Word MemPage;
 static Boolean ExtSFRs;
 
-#define ASSUME166Count 4
-static ASSUMERec ASSUME166s[ASSUME166Count] =
+static as_assume_rec_t ASSUME166s[] =
 {
   { "DPP0", DPPAssumes + 0, 0, 15, -1, NULL },
   { "DPP1", DPPAssumes + 1, 0, 15, -1, NULL },
@@ -2183,21 +2183,20 @@ static void SwitchTo_166(void)
   {
     MemInt = UInt18;
     MemInt2 = UInt2;
-    ASSUME166s[0].Max = 15;
+    ASSUME166s[0].max_value = 15;
     SegLimits[SegCode] = 0x3ffffl;
   }
   else
   {
     MemInt = UInt24;
     MemInt2 = UInt8;
-    ASSUME166s[0].Max = 1023;
+    ASSUME166s[0].max_value = 1023;
     SegLimits[SegCode] = 0xffffffl;
   }
   for (z = 1; z < 4; z++)
-    ASSUME166s[z].Max = ASSUME166s[0].Max;
+    ASSUME166s[z].max_value = ASSUME166s[0].max_value;
 
-  pASSUMERecs = ASSUME166s;
-  ASSUMERecCnt = ASSUME166Count;
+  assume_set(ASSUME166s, as_array_size(ASSUME166s));
 
   InitFields();
 }

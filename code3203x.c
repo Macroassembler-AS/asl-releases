@@ -28,6 +28,7 @@
 #include "tifloat.h"
 #include "headids.h"
 #include "onoff_common.h"
+#include "assume.h"
 #include "errmsg.h"
 
 #include "code3203x.h"
@@ -1867,8 +1868,7 @@ static void SwitchFrom_3203X(void)
 
 static void SwitchTo_3203X(void)
 {
-#define ASSUME3203Count sizeof(ASSUME3203s) / sizeof(*ASSUME3203s)
-  static ASSUMERec ASSUME3203s[] =
+  static as_assume_rec_t ASSUME3203s[] =
   {
     { "DP", &DPValue, -1, 0xff, 0x100, NULL }
   };
@@ -1905,8 +1905,7 @@ static void SwitchTo_3203X(void)
 
   onoff_packing_add(True);
 
-  pASSUMERecs = ASSUME3203s;
-  ASSUMERecCnt = ASSUME3203Count;
+  assume_set(ASSUME3203s, as_array_size(ASSUME3203s));
 
   MakeCode = MakeCode_3203X;
   IsDef = IsDef_3203X;

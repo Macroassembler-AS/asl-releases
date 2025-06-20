@@ -18,6 +18,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmitree.h"
+#include "assume.h"
 #include "codepseudo.h"
 #include "intpseudo.h"
 #include "codevars.h"
@@ -83,8 +84,7 @@ static Byte AdrVals[3];
 
 static LongInt DPAssume;
 
-#define ASSUMEST9Count 1
-static ASSUMERec ASSUMEST9s[ASSUMEST9Count] =
+static as_assume_rec_t ASSUMEST9s[] =
 {
   {"DP", &DPAssume, 0,  1, 0x0, NULL}
 };
@@ -2018,8 +2018,7 @@ static void SwitchTo_ST9(void)
   MakeCode=MakeCode_ST9; IsDef=IsDef_ST9;
   SwitchFrom=SwitchFrom_ST9; InternSymbol=InternSymbol_ST9;
 
-  pASSUMERecs = ASSUMEST9s;
-  ASSUMERecCnt = ASSUMEST9Count;
+  assume_set(ASSUMEST9s, as_array_size(ASSUMEST9s));
 
   InitFields();
 }

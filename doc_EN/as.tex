@@ -1109,7 +1109,7 @@ As long as switches require no arguments and their concatenation does
 not result in a multi-letter switch, it is possible to specify several
 switches at one time, as in the following example :
 \begin{verbatim}
- as test*.asm firstprog -cl /i c:\as\8051\include
+ asl test*.asm firstprog -cl /i c:\as\8051\include
 \end{verbatim}
 All files \tty{TEST*.ASM} as well as the file \tty{FIRSTPROG.ASM} will be
 assembled, whereby listings of all files are displayed on the
@@ -2195,6 +2195,7 @@ VAL         & evaluates contents   & string               & depends on \\
 EXPRTYPE    & delivers type of     & integer,             & 0 \\
             & argument             & float,               & 1 \\
             &                      & string               & 2 \\
+FSIZE       & delivers file size   & string               & integer \\
 \hline
 \end{tabular}\end{center}
 \caption{Functions Predefined by \asname{} - Part 2 (Integer and
@@ -2233,6 +2234,12 @@ dbstr   macro   arg
 within the first one resp. -1 if the search pattern was not found.
 Similarly to \tty{SUBSTR} and  \tty{CHARFROMSTR}, the first character
 has the position 0.
+
+\tty{FSIZE} returns the size of a file in bytes.  The file is
+searched for both in the current directory, and relative to
+the directory of the file currently being assembled.  Opposed
+to \tty{INCLUDE} and \tty{BINCLUDE}, the include path is
+not used to find the file!
 
 If a function expects floating point arguments, this does not mean it
 is impossible to write e.g.

@@ -20,6 +20,7 @@
 #include "asmsub.h"
 #include "asmallg.h"
 #include "asmitree.h"
+#include "assume.h"
 #include "codepseudo.h"
 #include "motpseudo.h"
 #include "intpseudo.h"
@@ -1676,15 +1677,13 @@ static void SwitchTo_6812(void)
 
   if (MomCPU >= CPU6812X)
   {
-#define ASSUME6812Count (sizeof(ASSUME6812s) / sizeof(*ASSUME6812s))
-   static const ASSUMERec ASSUME6812s[] =
-   {
-     { "DIRECT" , &Reg_Direct , 0,  0xff,  0x100, NULL },
-     { "GPAGE"  , &Reg_GPage  , 0,  0x7f,   0x80, NULL }
-   };
+    static const as_assume_rec_t ASSUME6812s[] =
+    {
+      { "DIRECT" , &Reg_Direct , 0,  0xff,  0x100, NULL },
+      { "GPAGE"  , &Reg_GPage  , 0,  0x7f,   0x80, NULL }
+    };
 
-   pASSUMERecs = ASSUME6812s;
-   ASSUMERecCnt = ASSUME6812Count;
+    assume_set(ASSUME6812s, as_array_size(ASSUME6812s));
   }
 }
 
