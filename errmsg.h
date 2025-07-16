@@ -285,6 +285,7 @@ typedef enum
   ErrNum_UnknownBitBltOpt = 2255,
   ErrNum_InvCBAR = 2260,
   ErrNum_InAccPageErr = 2270,
+  ErrNum_CurrPCInInAccPageErr = 2271,
   ErrNum_InAccFieldErr = 2280,
   ErrNum_TargInDiffField = 2281,
   ErrNum_InvCombination = 2290,

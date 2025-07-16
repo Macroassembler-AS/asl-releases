@@ -15,6 +15,8 @@
 
 struct sTempResult;
 
+extern void cpu_2_phys_set_current_check(void (*fnc)(void));
+
 extern void cpu_2_phys_area_clear(as_addrspace_t addr_space);
 extern void cpu_2_phys_area_add(as_addrspace_t addr_space, LargeWord cpu_start, LargeWord phys_start, LargeWord len);
 extern void cpu_2_phys_area_set_cpu_end(as_addrspace_t addr_space, LargeWord cpu_end);

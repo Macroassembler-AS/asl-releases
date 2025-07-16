@@ -40,6 +40,7 @@
 	EXWD
 	FILD
 	FILM
+	HALT		; not officially documented, may initiate infinite test cycle
 	INA
 	INB
 	INCA

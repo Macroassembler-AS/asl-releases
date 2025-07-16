@@ -1,0 +1,6 @@
++-------------------------- Test Application Z280 ---------------------------+
+|                                                                            |
+| This is a (synthetic) test of the Z80 instruction set.  It iterates once   |
+| over the base, DD/FD and ED pages.                                         |
+|                                                                            |
++----------------------------------------------------------------------------+

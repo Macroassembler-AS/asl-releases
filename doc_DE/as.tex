@@ -49,7 +49,7 @@
 
 \vspace{1cm}\par
 
-{\large Stand Juni 2025}
+{\large Stand Juli 2025}
 \end{raggedright}
 
 \clearpage
@@ -249,7 +249,7 @@ folgende Prozessorfamilien implementiert:
 \item{Atmel (Mega-)AVR}
 \item{AMD 29K}
 \item{Siemens 80C166/167}
-\item{Zilog Z80 (einschlie"slich undokumentierter Befehle), Z180, Z380, eZ80}
+\item{Zilog Z80 (einschlie"slich undokumentierter Befehle), Z180, Z280, Z380, eZ80}
 \item{Sharp LR35902 (,,Gameboy-Z80'')}
 \item{Sharp SC61860}
 \item{Sharp SC62015}
@@ -602,6 +602,7 @@ REGST6.INC        & Register- \& Makrodefinitionen ST6 (aktuell)\\
 REGST7.INC        & Register- \& Makrodefinitionen ST7 \\
 REGSTM8.INC       & Register- \& Makrodefinitionen STM8 \\
 REGST9.INC        & Register- \& Makrodefinitionen ST9 \\
+REGZ280.INC       & Registeradressen Z280 \\
 REGZ380.INC       & Registeradressen Z380 \\
 STDDEF04.INC      & Registeradressen 6804 \\
 STDDEF16.INC      & Befehlsmakros und Registeradressen \\
@@ -1422,10 +1423,12 @@ Annahme f"ur den Wert, der die weitere Assemblierung nicht st"ort.  Bei einer
 mit Fragezeichen angezeigt.  Die folgenden Targets unterst"utzen dies aktuell:
 \begin{itemize}
 \item{65xx/65XXX}
+\item{6800/6805/68HC08/68HC11}
 \item{8080/8085}
-\item{(e)Z80/Z180/Z380}
+\item{(e)Z80/Z180/Z280/Z380}
 \item{8048}
 \item{8051/80251}
+\item{8096/80196/80296}
 \item{8086/V20...V55}
 \item{AVR}
 \item{TMS370xxx}
@@ -2174,11 +2177,10 @@ bin"are UND-Verkn"upfung mit einer passenden Maske ist daher unvermeidlich!
 
 \subsection{Funktionen}
 
-Zus"atzlich zu den Operatoren definiert der Assembler noch eine Reihe
+Zus"atzlich zu den Operatoren definiert \asname{} noch eine Reihe
 in erster Linie transzendenter Funktionen mit Gleitkomma-Argument, die
 Tabellen \ref{TabFuncs1} und \ref{TabFuncs2} auflisten.
-\begin{table*}[htbp]
-\begin{center}\begin{tabular}{|l|l|l|l|}
+\begin{center}\begin{longtable}{|l|l|l|l|}
 \hline
 Name     & Funktion             & Argument & Ergebnis \\
 \hline
@@ -2218,12 +2220,10 @@ FIRSTBIT & niedrigstes 1-Bit    & Integer      & Integer \\
 LASTBIT  & h"ochstes 1-Bit      & Integer      & Integer \\
 BITPOS   & einziges 1-Bit       & Integer      & Integer \\
 \hline
-\end{tabular}\end{center}
 \caption{vordefinierte Funktionen in \asname{} - Teil 1 (Integer- und
          Gleitkomma-Funktionen)\label{TabFuncs1}}
-\end{table*}
-\begin{table*}[htb]
-\begin{center}\begin{tabular}{|l|l|l|l|}
+\end{longtable}\end{center}
+\begin{center}\begin{longtable}{|l|l|l|l|}
 \hline
 Name     & Funktion             & Argument & Ergebnis \\
 \hline
@@ -2255,10 +2255,9 @@ EXPRTYPE    & liefert Typ des       & Integer,     & 0 \\
             &                       & String       & 2 \\
 FSIZE       & liefert Dateigr"o"se  & String       & Integer \\
 \hline
-\end{tabular}\end{center}
 \caption{vordefinierte Funktionen in \asname{} - Teil 2
          (Integer- und String-Funk\-tio\-nen)\label{TabFuncs2}}
-\end{table*}
+\end{longtable}\end{center}
 Die Funktionen \tty{FIRSTBIT}, \tty{LASTBIT} und \tty{BITPOS} liefern
 als Ergebnis -1, falls "uberhaupt kein bzw. nicht genau ein Bit gesetzt
 ist. Zus"atzlich gibt \tty{BITPOS} in einem solchen Fall eine
@@ -3302,10 +3301,11 @@ Mittel der Wahl.
 \\ \hline
 \multicolumn{11}{|l|}{$^{1}$ Initialwert 80h. } \\
 \multicolumn{11}{|l|}{  Da der 8051 kein RAM jenseits 80h hat, mu"s der Initialwert f"ur den 8051} \\
-\multicolumn{11}{|l|}{  als Zielprozessor auf jeden Fall mit \tty{ORG} angepa"st werden!} \\
+\multicolumn{11}{|l|}{  als Zielprozessor auf jeden Fall mit \tty{ORG} angepa"st werden.} \\
 \hline
-\multicolumn{11}{|l|}{$^{2}$ Da der Z180 weiterhin logisch nur 64K ansprechen kann, ist der} \\
-\multicolumn{11}{|l|}{ganze Adre"sraum nur mittels \tty{PHASE}-Anweisungen erreichbar!} \\
+\multicolumn{11}{|l|}{$^{2}$ Da Z180 und Z280 weiterhin logisch nur 64K ansprechen k"onnen, ist der} \\
+\multicolumn{11}{|l|}{ganze Adre"sraum nur mittels \tty{PHASE}-Anweisungen oder passenden \tty{ASSUME}-} \\
+\multicolumn{11}{|l|}{Werten f"ur die MMU-Register erreichbar.} \\
 \hline
 \multicolumn{11}{|l|}{$^{3}$ Initialwert 400h.} \\
 \hline
@@ -3453,14 +3453,15 @@ noch ein paar mehr), bietet der 6811 neben weiteren Befehlen ein
 zweites Indexregister Y zur Adressierung.
 %%-----------
 \begin{cpulist}
-   6809/6309 und 6805/68HC08/68HCS08
+   6809/6809UNDOC/6309 und 6805/68HC08/68HCS08
 \end{cpulist}
 Diese Prozessoren sind zwar teilweise Quellcode-kompatibel zu den
 anderen 68xx-ern, haben aber ein anderes Bin"arcode-Format und einen
 deutlich eingeschr"ankteren (6805) bzw. erweiterten (6809) Befehlssatz.
 Der 6309 ist eine CMOS-Version des 6809, die zwar offiziell
 nur kompatibel zum 6809 ist, inoffiziell aber mehr Register und
-deutlich mehr Befehle besitzt (siehe \cite{Kaku}).
+deutlich mehr Befehle besitzt (siehe \cite{Kaku}).  6809UNDOC schaltet
+die undokumentierte {\tt HCF}-Instruktion frei.
 %%-----------
 \begin{cpulist}
    68HC12 $\longrightarrow$ 68HC12X
@@ -3823,6 +3824,7 @@ eingebauten Peripherie.
 \> $\rightarrow$ Z180 \\
 \> $\rightarrow$ eZ80190, eZ80L92, eZ80F91, \\
 \> eZ80F92, eZ80F93, \\
+\> $\rightarrow$ Z280 \\
 \> $\rightarrow$ Z380
 \end{cpulist}
 W"ahrend f"ur den Z180 nur die zus"atzlichen Befehle definiert sind
@@ -4522,7 +4524,7 @@ jeweils zugeh"origen Unterkapitel mit prozessorspezifischen Hinweisen beschriebe
 {\em
 \begin{itemize}
 \item{G"ultigkeit SUPMODE: 680x0, NS32xxx, PDP-11, i960, TLCS-900,
-      SH7000, i960, 29K, XA, PowerPC, M*CORE, V60 und TMS9900}
+      SH7000, i960, 29K, Z280, XA, PowerPC, M*CORE, V60 und TMS9900}
 \item{G"ultigkeit FPU: 680x0, NS32xxx, 80x86}
 \item{G"ultigkeit PMMU: 680x0, NS32xxx}
 \item{G"ultigkeit CUSTOM: NS32xxx}
@@ -5265,10 +5267,54 @@ Vorinitialisiert sind folgende \tty{ASSUME}s :
 Der Z180 besitzt eine eingebaute MMU, die den ,,logischen Adre"sraum'' des
 CPU-Kerns von 64 KByte auf einen physischen Adre"sraum von 512 KByte "ubersetzt.
 Das genaue Mapping wird durch die drei Register {\tt CBAR}, {\tt CBR} und {\tt BBR}
-gesteuert.  Im Gegensatz zum 68HC11K4 nimmt der Assembler aktuell keine 
-automatischen Umrechnungen von physischen auf logische Adressen vor, sondern
-h"alt lediglich intern Umrechnungstabellen vor.  Es ist aber m"oglich, diese
-unter Benutzung der {\tt phys2cpu()}-Funktion zu benutzen.
+gesteuert.  "Ahnlich wie beim 68HC11K4 nimmt \asname{} automatische Umrechnungen
+von physischen auf logische Adressen vor, und zwar sowohl f"ur absolute Adressen
+als auch Quelle und Ziel von relativen Spr"ungen.  Es ist ebenfalls m"oglich, auf
+die Mapping-Tabellen "uber die Funktionen {\tt phys2cpu()} und {\tt cpu2phys()}
+zuzugreifen.
+
+%%. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+\subsubsection{Z280}
+
+Beim Z280 kann man "uber das I-Bit im Trap Control Register festlegen, ob
+I/O-Zugriffe im User-Modus erlaubt sein sollen oder nicht.  Teilt man \asname{}
+"uber ein
+\begin{verbatim}
+   assume i:1
+\end{verbatim}
+mit, dass sie verboten sind, dann wird eine entsprechende Warnung ausgegeben,
+falls I/O-Befehle im User-Modus verwendet werden.
+
+Des weiteren enth"alt der Z280 eine MMU, um den logischen 64K-Adre"sraum der
+CPU auf die physikalisch adressierbaren 16 MByte abzubilden.  Ihre Funktion
+wird zum einen "uber das MMU Master Control Register ({\tt MMUMCR}) gesteuert,
+zum anderen "uber 32 Page Descriptor Register (({\tt UPD0...UPD15},
+{\tt SPD0...SPD15}).  Die aktuellen Werte aller Register k"onnen \asname{} via
+{\tt ASSUME}-Anweisungen mitgeteilt werden.
+
+F"ur die Berechnung des aktuellen Mappings werden die folgenden Bits
+des {\tt MMUMCR} beachtet:
+\begin{itemize}
+\item{Bit 15 (UTE): MMU im User-Modus einschalten}
+\item{Bit 14 (UPD): Programm/Data-Separation im User-Modus einschalten}
+\item{Bit 11 (STE): MMU im System-Modus einschalten}
+\item{Bit 10 (SPD): Programm/Data-Separation im System-Modus einschalten}
+\end{itemize}
+
+Die folgenden Bits von {\tt UPDn/SPDn} werden beachtet:
+\begin{itemize}
+\item{Bit 3 (V): Seite g"ultig/aktiv}
+\item{Bit 15...4 bzw. 15...5: Seitenadresse, also Bits 23...12
+      bzw. 23...13 der Startadresse im physischen Adressraum.}
+\end{itemize}
+
+Abh"angig von den Registerwerten kann die Adress"ubersetzung im System-
+und/oder User-Modus aktiv sein (STE und/oder UTE gesetzt), oder "uberhaupt
+nicht (sowohl STE als auch UTE nicht gesetzt).  Die aktuelle Einstellung
+von {\tt SUPMODE} hat deshalb auch einen Einflu"s auf das aktuelle Mapping.
+Falls es eingeschaltet ist, kann es f"ur Code- und Datenzugriffe gleich
+oder unterschiedlich sein (UPD/SPD nicht gesetzt oder gesetzt).
 
 %%. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
@@ -10082,7 +10128,7 @@ in unteilbare 16-Bit-Worte.  Diese kann auch explizit mit dem Argument
 
 %%---------------------------------------------------------------------------
 
-\section{Z80, Z380}
+\section{Z80, Z18, Z280, Z380}
 
 Der Z80 kennt zwei Arten von Spr"ungen: relativ ({\tt JR}) erlaubt Sprungdistanzen
 von -128 bis +127 Byte, w"ahrend man mit absoluten Spr"ungen ({\tt JP}) den
@@ -10090,7 +10136,7 @@ kompletten Adre"sraum erreicht.  \asname{} unterst"utzt einen Pseudobefehl
 {\tt J}, der anhand der Zieladresse und der Sprungbedingung automatisch die
 k"urzestm"ogliche Variante w"ahlt (relative Spr"unge sind nicht f"ur alle
 Bedingungen definiert).  Dies gilt auch f"ur alle vom Z80 abgeleiteten Targets,
-wie Z80UNDOC, Z180, RABBIT2000 und LR35902.
+wie Z80UNDOC, Z180, Z280, RABBIT2000 und LR35902.
 
 F"ur den Z380 wird {\tt J} ebenfalls angeboten, da der Z380 jedoch gr"o"sere
 Sprungdistanzen unterst"utzt, wird erst auf absolute Spr"unge ausgewichen,
@@ -10109,7 +10155,7 @@ Da es von Zilog naturgem"a"s keine Syntaxvorgaben f"ur die undokumentierten
 Befehle gibt und wohl auch nicht jeder den kompletten Satz kennt,
 ist es vielleicht sinnvoll, diese Befehle hier kurz aufzuz"ahlen:
 \par
-Wie auch beim Z380 und eZ80 ist es m"oglich, die Byte-H"alften von IX und IY
+Wie auch beim Z280/Z380 und eZ80 ist es m"oglich, die Byte-H"alften von IX und IY
 einzeln anzusprechen.  Im einzelnen sind dies folgende Varianten:
 \begin{verbatim}
  INC Rx              LD R,Rx             LD  Rx,n
@@ -14122,6 +14168,14 @@ Angaben:
                {Fehler}
                {Die Zieladresse liegt auf einer Speicherseite, die aktuell nicht
                 zugreifbar ist.}
+               {keines}
+\errentry{2271}{aktueller Programmz"ahler in nicht-zugreifbarer Seiter}
+               {Fehler}
+               {Die aktuell assemblierte Instruktion liegt auf einer physischen
+                Adresse, die nicht in den logischen Adre"sraum der CPU gemappt
+                ist.  Dies ist ein Problem bei PC-relativer Adressierung, weil
+                f"ur die Berechnung der Distanz die logische Adresse gebraucht
+                wird.}
                {keines}
 \errentry{2280}{Feld nicht zugreifbar}
                {Fehler}

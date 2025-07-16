@@ -127,9 +127,15 @@ static void GetCBlockName(char *pDest, size_t DestSize, unsigned Num)
     *pDest = '\0';
 }
 
-static void ParamError(Boolean InEnv, char *Arg)
+static void ParamError(Boolean InEnv, const char *Arg)
 {
   fprintf(stderr, "%s%s\n", getmessage(InEnv ? Num_ErrMsgInvEnvParam : Num_ErrMsgInvParam), Arg);
+  fprintf(stderr, "%s\n", getmessage(Num_ErrMsgProgTerm));
+}
+
+static void UnknownError(Boolean InEnv, const char *Arg)
+{
+  fprintf(stderr, "%s%s\n", getmessage(InEnv ? Num_ErrMsgInvEnvOption : Num_ErrMsgInvOption), Arg);
   fprintf(stderr, "%s\n", getmessage(Num_ErrMsgProgTerm));
 }
 
@@ -1108,10 +1114,16 @@ int main(int argc, char **argv)
   strcpy(CFormat, DefaultCFormat);
 
   as_cmd_register(P2HEXParams, as_array_size(P2HEXParams));
-  if (e_cmd_err == as_cmd_process(argc, argv, "P2HEXCMD", &cmd_results))
+  switch (as_cmd_process(argc, argv, "P2HEXCMD", &cmd_results))
   {
-    ParamError(cmd_results.error_arg_in_env, cmd_results.error_arg);
-    exit(1);
+    case e_cmd_err:
+      ParamError(cmd_results.error_arg_in_env, cmd_results.error_arg);
+      exit(1);
+    case e_cmd_unknown:
+      UnknownError(cmd_results.error_arg_in_env, cmd_results.error_arg);
+      exit(1);
+    default:
+      break;
   }
 
   if ((msg_level >= e_msg_level_verbose) || cmd_results.write_version_exit)

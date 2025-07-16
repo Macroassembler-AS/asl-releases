@@ -32,6 +32,7 @@ typedef struct
 } cpu_2_phys_area_list_t;
 
 static cpu_2_phys_area_list_t area_lists[SegCount];
+static void (*current_check)(void);
 
 /*!------------------------------------------------------------------------
  * \fn     cpu_2_phys_area_t *insert_area(cpu_2_phys_area_list_t *p_list, unsigned index)
@@ -91,6 +92,17 @@ static cpu_2_phys_area_list_t *get_list(as_addrspace_t addr_space)
 {
   assert(addr_space < SegCount);
   return &area_lists[addr_space];
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     cpu_2_phys_set_current_check(void (*fnc)(void))
+ * \brief  set function to check for up-to-date-ness of transalation tables
+ * \param  fnc new function to set
+ * ------------------------------------------------------------------------ */
+
+void cpu_2_phys_set_current_check(void (*fnc)(void))
+{
+  current_check = fnc;
 }
 
 /*!------------------------------------------------------------------------
@@ -334,9 +346,11 @@ void cpu_2_phys_area_dump(as_addrspace_t addr_space, FILE *p_file)
 
 Boolean def_phys_2_cpu(as_addrspace_t addr_space, LargeWord *p_address)
 {
-  cpu_2_phys_area_list_t *p_list = get_list(addr_space);
+  cpu_2_phys_area_list_t *p_list;
   size_t win;
 
+  if (current_check) current_check();
+  p_list = get_list(addr_space);
   for (win = 0; win < p_list->cnt; win++)
     if ((*p_address >= p_list->areas[win].phys_start) && (*p_address <= p_list->areas[win].phys_end))
     {
@@ -356,9 +370,11 @@ Boolean def_phys_2_cpu(as_addrspace_t addr_space, LargeWord *p_address)
 
 Boolean def_cpu_2_phys(as_addrspace_t addr_space, LargeWord *p_address)
 {
-  cpu_2_phys_area_list_t *p_list = get_list(addr_space);
+  cpu_2_phys_area_list_t *p_list;
   size_t win;
 
+  if (current_check) current_check();
+  p_list = get_list(addr_space);
   for (win = 0; win < p_list->cnt; win++)
     if ((*p_address >= p_list->areas[win].cpu_start) && (*p_address <= p_list->areas[win].cpu_end))
     {

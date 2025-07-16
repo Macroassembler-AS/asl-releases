@@ -4596,10 +4596,16 @@ int main(int argc, char **argv)
 #if defined(INCDIR)
   CMD_IncludeList(False, INCDIR);
 #endif
-  if (e_cmd_err == as_cmd_process(argc, argv, EnvName, &cmd_results))
+  switch (as_cmd_process(argc, argv, EnvName, &cmd_results))
   {
-    printf("%s%s\n", getmessage(cmd_results.error_arg_in_env ? Num_ErrMsgInvEnvParam : Num_ErrMsgInvParam), cmd_results.error_arg);
-    exit(4);
+    case e_cmd_err:
+      printf("%s%s\n", getmessage(cmd_results.error_arg_in_env ? Num_ErrMsgInvEnvParam : Num_ErrMsgInvParam), cmd_results.error_arg);
+      exit(4);
+    case e_cmd_unknown:
+      printf("%s%s\n", getmessage(cmd_results.error_arg_in_env ? Num_ErrMsgInvEnvOption : Num_ErrMsgInvOption), cmd_results.error_arg);
+      exit(4);
+    default:
+      break;
   }
 
   if ((msg_level >= e_msg_level_verbose) || cmd_results.write_version_exit)

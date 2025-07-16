@@ -100,6 +100,7 @@ static tAdrMode DecodeAdr(tStrComp *pArg, Word Mask, IntType MemIntType, Word *p
   int ArgLen;
   tEvalResult EvalResult;
 
+  *pResult = 0;
   if (!as_strcasecmp(pArg->str.p_str, "A"))
   {
     AdrMode = ModAcc;

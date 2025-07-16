@@ -754,6 +754,8 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
       msgno = Num_ErrMsgInvCBAR; break;
     case ErrNum_InAccPageErr:
       msgno = Num_ErrMsgInAccPageErr; break;
+    case ErrNum_CurrPCInInAccPageErr:
+      msgno = Num_ErrMsgCurrPCInInAccPageErr; break;
     case ErrNum_InAccFieldErr:
       msgno = Num_ErrMsgInAccFieldErr; break;
     case ErrNum_TargInDiffField:

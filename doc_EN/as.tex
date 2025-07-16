@@ -67,7 +67,7 @@
 
 \vspace{1cm}\par
 
-{\large Edition June 2025}
+{\large Edition July 2025}
 \end{raggedright}
 
 \clearpage
@@ -253,7 +253,7 @@ following processor families have been implemented:
 \item{Atmel (Mega-)AVR}
 \item{AMD 29K}
 \item{Siemens 80C166/167}
-\item{Zilog Z80 (including undocumented instructions), Z180, Z380, eZ80}
+\item{Zilog Z80 (including undocumented instructions), Z180, Z280, Z380, eZ80}
 \item{Sharp LR35902 (,,Gameboy Z80'')}
 \item{Sharp SC61860}
 \item{Sharp SC62015}
@@ -596,6 +596,7 @@ REGST7.INC        & register and macro definitions ST7 \\
 REGSTM8.INC       & register and macro definitions STM8 \\
 REGST9.INC        & register and macro definitions ST9 \\
 REGV60.INC        & register addresses NEC V60 \\
+REGZ280.INC       & register addresses Z280 \\
 REGZ380.INC       & register addresses Z380 \\
 STDDEF04.INC      & register addresses 6804 \\
 STDDEF16.INC      & instruction macros and register addresses \\
@@ -1385,10 +1386,12 @@ a (growing) number of targets, these fields will be displayed with
 question marks.  The following targets currently support this feature:
 \begin{itemize}
 \item{65xx/65XXX}
+\item{6800/6805/68HC08/68HC11}
 \item{8080/8085}
-\item{(e)Z80/Z180/Z380}
+\item{(e)Z80/Z180/Z280/Z380}
 \item{8048}
 \item{8051/80251}
+\item{8096/80196/80296}
 \item{8086/V20...V55}
 \item{AVR}
 \item{TMS370xxx}
@@ -2110,11 +2113,10 @@ fitting mask is therefore unavoidable!
 
 \subsection{Functions}
 
-In addition to the operators, the assembler defines another line of
+In addition to the operators, \asname{} defines another line of
 primarily transcendental functions with floating point arguments which are
 listed in tables \ref{TabFuncs1} and \ref{TabFuncs2}.
-\begin{table*}[htbp]
-\begin{center}\begin{tabular}{|l|l|l|l|}
+\begin{center}\begin{longtable}{|l|l|l|l|}
 \hline
 name     & meaning              & argument             & result \\
 \hline
@@ -2152,12 +2154,10 @@ INT      & integer part         & $arg \in \rz$        & floating point \\
 BITCNT   & number of one's      & integer              & integer \\
 FIRSTBIT & lowest 1-bit         & integer              & integer \\
 \hline
-\end{tabular}\end{center}
 \caption{Functions Predefined by \asname{} - Part 1 (Integer and
          Floating Point Functions \label{TabFuncs1}}
-\end{table*}
-\begin{table*}[htbp]
-\begin{center}\begin{tabular}{|l|l|l|l|}
+\end{longtable}\end{center}
+\begin{center}\begin{longtable}{|l|l|l|l|}
 \hline
 name        & meaning              & argument & result \\
 \hline
@@ -2197,10 +2197,9 @@ EXPRTYPE    & delivers type of     & integer,             & 0 \\
             &                      & string               & 2 \\
 FSIZE       & delivers file size   & string               & integer \\
 \hline
-\end{tabular}\end{center}
 \caption{Functions Predefined by \asname{} - Part 2 (Integer and
          String Functions \label{TabFuncs2}}
-\end{table*}
+\end{longtable}\end{center}
 The functions \tty{FIRSTBIT}, \tty{LASTBIT}, and \tty{BITPOS} return -1 as
 result if no resp. not exactly one bit is set.  \tty{BITPOS} additionally
 issues an error message in such a case.
@@ -3197,8 +3196,9 @@ desired result when used as argument for \tty{ORG}.  The
 \multicolumn{11}{|l|}{   As the 8051 does not have any RAM beyond 80h, this value has to be} \\
 \multicolumn{11}{|l|}{   adapted with ORG for the 8051 as target processor!}\\
 \hline
-\multicolumn{11}{|l|}{$^{2}$ As the Z180 still can address only 64K logically, the whole}\\
-\multicolumn{11}{|l|}{   address space can only be reached via \tty{PHASE} instructions!}\\
+\multicolumn{11}{|l|}{$^{2}$ As Z180 and Z280 are only capable of logically addressing 64 KBytes,}\\
+\multicolumn{11}{|l|}{   the full address space can only be used via \tty{PHASE} instructions}\\
+\multicolumn{11}{|l|}{   or by setting proper \tty{ASSUME} values for MMU registers.}\\
 \hline
 \multicolumn{11}{|l|}{$^{3}$ initial value 400h.}\\
 \hline
@@ -3357,14 +3357,15 @@ While the 6801 only offers a few additional instructions (and the
 much more instructions.
 %%-----------
 \begin{cpulist}
-   6809/6309 and 6805/68HC(S)08
+   6809/6809UNDOC/6309 and 6805/68HC(S)08
 \end{cpulist}
 These processors are partially source-code compatible to the other
 68xx processors, but they have a different binary code format and a
 significantly reduced (6805) resp. enhanced (6809) instruction set.
 The 6309 is a CMOS version of the 6809 which is officially only
 compatible to the 6809, but inofficially offers more registers and a
-lot of new instructions (see \cite{Kaku}).
+lot of new instructions (see \cite{Kaku}).  6809UNDOC enables the
+undocumented {\tt HCF} instruction.
 %%-----------
 \begin{cpulist}
    68HC12 $\longrightarrow$ 68HC12X
@@ -3723,6 +3724,7 @@ amount of on-chip peripherals.
 \> $\rightarrow$ Z180 \\
 \> $\rightarrow$ eZ80190, eZ80L92, eZ80F91, \\
 \> eZ80F92, eZ80F93, \\
+\> $\rightarrow$ Z280 \\
 \> $\rightarrow$ Z380
 \end{cpulist}
 While there are only a few additional instructions for the Z180, the
@@ -4397,7 +4399,7 @@ certain target supports such options.
 {\em
 \begin{itemize}
 \item{SUPMODE valid for: 680x0, NS32xxx, PDP-11, i960, TLCS-900,
-      SH7000, i960, 29K, XA, PowerPC, M*Core, V60, and TMS9900}
+      SH7000, i960, 29K, Z280, XA, PowerPC, M*Core, V60, and TMS9900}
 \item{FPU valid for: 680x0, NS32xxx, 80x86}
 \item{PMMU valid for: 680x0, NS32xxx}
 \item{CUSTOM valid for: NS32xxx}
@@ -5107,13 +5109,54 @@ preinitialized:
 
 \subsubsection{Z180}
 
-The Z180 contains a built-in MMU whicht maps the CPU core's ''logical''
+The Z180 contains a built-in MMU which maps the CPU core's ''logical''
 address space of 64 KBytes to a physical address space of 512 KBytes.  The
 precise mappig is defined via the the registers {\tt CBAR}, {\tt CBR} and
-{\tt BBR}.  Opposed to the 68HC11K4, the assembler will not perform any 
-automatic translations of physical to logical addresses; only an internal
-mapping table is kept.  It is however possible to access this table via
-the {\tt phys2cpu()} function.
+{\tt BBR}.  Similar to the 68HC11K4, \asname{} will perform automatic
+translations of physical to logical addresses, both for absolute addresses
+and source and target of relative branches.  It is also possible to access
+the mapping tables via the {\tt phys2cpu()} and {\tt cpu2phys()} functions.
+
+%%. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+\subsubsection{Z280}
+
+The Z280's I bit in the Trap Control Register allows to define whether I/O
+accesses are allowed in user mode or not.  If \asname{} has been told via
+\begin{verbatim}
+   assume i:1
+\end{verbatim}
+that they are forbidden, a warning is issued if I/O instructions are used in
+user mode.
+
+Furthermore, the Z280 contains a built-in MMU to translate the CPU's 64K
+address space to the 16 Mbytes physically addressable.  Its operation is
+controlled via the MMU master control register ({\tt MMUMCR}), and 32
+page descriptor registers ({\tt UPD0...UPD15}, {\tt SPD0...SPD15}).  The
+value of all these registers can be communicated to \asname{} via
+{\tt ASSUME} statements.
+
+The following bits of {\tt MMUMCR} are regarded:
+\begin{itemize}
+\item{Bit 15 (UTE): User Mode Translate Enable}
+\item{Bit 14 (UPD): User Node Program/Data Separation Enable}
+\item{Bit 11 (STE): System Mode Translate Enable}
+\item{Bit 10 (SPD): System Mode Program/Oata Separation Enable}
+\end{itemize}
+
+The following bits of {\tt UPDn/SPDn} are regarded:
+\begin{itemize}
+\item{Bit 3 (V): Valid Bit}
+\item{Bits 15...4 resp. 15...5: page frame address, i.e. bits 23...12
+      resp. 23...13 of the page address in physical address space.}
+\end{itemize}
+
+Depending on register values, there may be address translation
+in system and/or user mode (STE and/or UTE set), or no translation
+at all (both STE and UTE cleared).  The current setting of {\tt SUPMODE}
+therefore also has an influence on the current mapping tables.  If
+enabled, mapping for code and data accesses may be common or different
+(UPD/SPD cleared or set).
 
 %%. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
@@ -5136,7 +5179,6 @@ the default operating mode, i.e. the mode if no suffixes are given.  Furthermore
 the assembler can be told about the current value of MBASE (0 to 0ff hex) as
 well.  The default assumption for both values is zero, same as to the values
 set in the CPU after a reset.
-      
 
 %%. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
@@ -8753,8 +8795,7 @@ their operands can be found in the tables \ref{TabOLMS40Meta} and
 \ref{TabOLMS40MetaOps}, their practical use can be seen in the
 file \tty{t\_olms4.asm}.
 
-\begin{table*}
-\begin{center}\begin{tabular}{|l|l|}
+\begin{center}\begin{longtable}{|l|l|}
 \hline
 Meta Instruction          & Replaces \\
 \hline
@@ -8767,13 +8808,11 @@ Meta Instruction          & Replaces \\
 \tty{BCLR} {\em bit}            & \tty{RPB, RMB, RC} \\
 \tty{BTST} {\em bit}            & \tty{TAB, TMB, Tc} \\
 \hline
-\end{tabular}\end{center}
 \caption{Meta Instructions OLMS-40}
 \label{TabOLMS40Meta}
-\end{table*}
+\end{longtable}\end{center}
 
-\begin{table*}
-\begin{center}\begin{tabular}{|l|l|}
+\begin{center}\begin{longtable}{|l|l|}
 \hline
 Operand                 & Types \\
 \hline
@@ -8788,10 +8827,9 @@ Operand                 & Types \\
                         & \tty{(A)},{\em bitpos} \\
 {\em bitpos}            & \tty{0..3} \\
 \hline
-\end{tabular}\end{center}
 \caption{Operand Types for OLMS-40 Meta Instructions}
 \label{TabOLMS40MetaOps}
-\end{table*}
+\end{longtable}\end{center}
 
 %%---------------------------------------------------------------------------
 
@@ -9865,7 +9903,7 @@ may explicitly be selected by using the argument \verb!codesegsize=1!.
 
 %%---------------------------------------------------------------------------
 
-\section{Z80, Z380}
+\section{Z80, Z180, Z280, Z380}
 
 The Z80 supports two types of jump instructions: relative ({\tt JR}) supports
 jump distances from -128 to +127 bytes, while absolute jumps  ({\tt JP})
@@ -9873,7 +9911,7 @@ allow to reach the complete address space. \asname{} additionally supports
 a pseudo instruction {\tt J} which automatically selects the shortest
 possible variant, depending on the target address and the condition (relative
 jumps do not support all conditions).  This also applies to all targets
-'derived' from Z80, like Z80UNDOC, Z180, RABBIT2000, and LR35902.
+'derived' from Z80, like Z80UNDOC, Z180, Z280, RABBIT2000, and LR35902.
 
 {\tt J} is also offered for the Z380, but since the Z380 supports larger
 jump distances, absolute jumps will only be used if the largest possible
@@ -9893,7 +9931,7 @@ undocumented instructions; furthermore, not everyone might know the
 full set.  It might therefore make sense to list all instructions at
 this place:
 
-Similar to the Z380 and eZ80, it is possible to access the byte halves
+Similar to the Z280/Z380 and eZ80, it is possible to access the byte halves
 of IX and IY separately.  In detail, these are the instructions that allow
 this:
 \begin{verbatim}
@@ -13763,6 +13801,13 @@ described by:
                {error}
                {The target address is located in a memory page that is currently
                 inaccessible.}
+               {none}
+\errentry{2271}{current program counter in inaccessible page}
+               {error}
+               {The instruction currently being assembled is located on a physical
+                address that is not mapped into the CPU's logical address space.
+                This is an issue if PC-relative addressin is used, because the
+                logical address is needed to compute the distance.}
                {none}
 \errentry{2280}{field not accessible}
                {error}

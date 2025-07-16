@@ -116,7 +116,9 @@ static FlagOrder *FlagOrders;
 static BaseOrder *LEAOrders;
 static BaseOrder *ImmOrders;
 
-static CPUVar CPU6809, CPU6309;
+static CPUVar CPU6809,
+              CPU6809UNDOC,
+              CPU6309;
 
 /*-------------------------------------------------------------------------*/
 
@@ -1220,6 +1222,46 @@ static void DecodeBITMD_LDMD(Word Code)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     DecodeHCF(Word Code)
+ * \brief  handle HCF instruction
+ * \param  Code default machine code
+ * ------------------------------------------------------------------------ */
+
+static void DecodeHCF(Word Code)
+{
+  if (MomCPU != CPU6809UNDOC)
+  {
+    WrStrErrorPos(ErrNum_InstructionNotSupported, &OpPart);
+    return;
+  }
+  switch (ArgCnt)
+  {
+    case 0:
+      BAsmCode[0] = Code;
+      CodeLen = 1;
+      break;
+    case 1:
+    {
+      Boolean ok;
+      tSymbolFlags flags;
+
+      BAsmCode[0] = EvalStrIntExpressionWithFlags(&ArgStr[1], UInt8, &ok, &flags);
+      if (ok && mSymbolQuestionable(flags))
+        BAsmCode[0] = 0x14;
+      if ((BAsmCode[0] != 0x14) && (BAsmCode[0] != 0x15) && (BAsmCode[0] != 0xcd))
+      {
+        WrStrErrorPos(ErrNum_InvArg, &ArgStr[1]);
+        return;
+      }
+      CodeLen = 1;
+      break;
+    }
+    default:
+      (void)ChkArgCnt(0, 1);
+  }
+}
+
 /*-------------------------------------------------------------------------*/
 /* Erzeugung/Aufloesung Codetabellen */
 
@@ -1350,6 +1392,8 @@ static void InitFields(void)
   AddFixed("CLRF" , 0x115f, CPU6309); AddFixed("CLRS" , 0x1fd4, CPU6309);
   AddFixed("CLRV" , 0x1fd7, CPU6309); AddFixed("CLRX" , 0x1fd1, CPU6309);
   AddFixed("CLRY" , 0x1fd2, CPU6309);
+
+  AddInstTable(InstTable, "HCF", 0x14, DecodeHCF);
 
   InstrZ = 0;
   AddRel("BRA", 0x0020, 0x0016); AddRel("BRN", 0x0021, 0x1021);
@@ -1599,8 +1643,9 @@ static const as_cmd_rec_t onoff_params[] =
 
 void code6809_init(void)
 {
-  CPU6809 = AddCPU("6809", SwitchTo_6809);
-  CPU6309 = AddCPU("6309", SwitchTo_6809);
+  CPU6809      = AddCPU("6809"     , SwitchTo_6809);
+  CPU6809UNDOC = AddCPU("6809UNDOC", SwitchTo_6809);
+  CPU6309      = AddCPU("6309"     , SwitchTo_6809);
 
   as_cmd_register(onoff_params, as_array_size(onoff_params));
   AddInitPassProc(InitCode_6809);

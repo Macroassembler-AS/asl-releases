@@ -27,6 +27,7 @@
 #include "asmstructs.h"
 #include "errmsg.h"
 #include "codepseudo.h"
+#include "dyn_array.h"
 
 #include "as.rsc"
 
@@ -555,19 +556,26 @@ static void ExpandStruct_One(PStructRec StructRec, char *pVarPrefix, char *pStru
 
 #define DIMENSION_MAX 3
 
+typedef struct
+{
+  LargeInt Dimension;
+  LargeInt Index;
+  int CompVarNameLen;
+} dimension_t;
+
 void ExpandStruct(PStructRec StructRec, const char *p_struct_name)
 {
   String CompVarName, CompStructName;
   int z;
   unsigned DimensionCnt = 0, Dim;
-  LargeInt Dimensions[DIMENSION_MAX];
+  dimension_t *dimensions = NULL;
   tStrComp Arg;
   tEvalResult EvalResult;
 
   if (!LabPart.str.p_str[0])
   {
     WrError(ErrNum_StructNameMissing);
-    return;
+    goto func_exit;
   }
 
   /* currently, we only support array dimensions as arguments */
@@ -578,28 +586,32 @@ void ExpandStruct(PStructRec StructRec, const char *p_struct_name)
       if (DimensionCnt >= DIMENSION_MAX)
       {
         WrStrErrorPos(ErrNum_TooManyArrayDimensions, &ArgStr[z]);
-        return;
+        goto func_exit;
       }
       StrCompRefRight(&Arg, &ArgStr[z], 1);
       StrCompShorten(&Arg, 1);
-      Dimensions[DimensionCnt++] = EvalStrIntExpressionWithResult(&Arg, UInt32, &EvalResult);
+      dyn_array_rsv_end(dimensions, dimension_t, DimensionCnt);
+      dimensions[DimensionCnt].CompVarNameLen = 0;
+      dimensions[DimensionCnt].Index = 0;
+      dimensions[DimensionCnt].Dimension = EvalStrIntExpressionWithResult(&Arg, UInt32, &EvalResult);
       if (!EvalResult.OK)
-        return;
+        goto func_exit;
       if (EvalResult.Flags & eSymbolFlag_FirstPassUnknown)
       {
         WrStrErrorPos(ErrNum_FirstPassCalc, &Arg);
-        return;
+        goto func_exit;
       }
-      if (Dimensions[DimensionCnt - 1] <= 0)
+      if (dimensions[DimensionCnt].Dimension <= 0)
       {
         WrStrErrorPos(ErrNum_UnderRange, &Arg);
-        return;
+        goto func_exit;
       }
+      DimensionCnt++;
     }
     else
     {
       WrStrErrorPos(ErrNum_InvStructArgument, &ArgStr[z]);
-      return;
+      goto func_exit;
     }
 
   strmaxcpy(CompStructName, p_struct_name, sizeof(CompStructName));
@@ -611,8 +623,6 @@ void ExpandStruct(PStructRec StructRec, const char *p_struct_name)
   }
   else
   {
-    LargeInt Indices[DIMENSION_MAX];
-    int CompVarNameLens[DIMENSION_MAX];
     tStrComp LabelComp;
 
     /* Start with element [0,...,0] and build associated names.
@@ -621,11 +631,11 @@ void ExpandStruct(PStructRec StructRec, const char *p_struct_name)
 
     for (Dim = 0; Dim < DimensionCnt; Dim++)
     {
-      Indices[Dim] = 0;
-      CompVarNameLens[Dim] = strlen(CompVarName);
-      as_snprcatf(CompVarName, sizeof(CompVarName), "_%llu", (LargeWord)Indices[Dim]);
+      dimensions[Dim].Index = 0;
+      dimensions[Dim].CompVarNameLen = strlen(CompVarName);
+      as_snprcatf(CompVarName, sizeof(CompVarName), "_%llu", (LargeWord)dimensions[Dim].Index);
     }
-    while (Indices[0] < Dimensions[0])
+    while (dimensions[0].Index < dimensions[0].Dimension)
     {
       StrCompMkTemp(&LabelComp, CompVarName, sizeof(CompVarName));
       LabelHandle(&LabelComp, EProgCounter() + CodeLen, True);
@@ -634,12 +644,12 @@ void ExpandStruct(PStructRec StructRec, const char *p_struct_name)
 
       /* increase indices, ripple through 'carry' from minor to major indices */
 
-      Indices[DimensionCnt - 1]++;
+      dimensions[DimensionCnt - 1].Index++;
       for (Dim = DimensionCnt - 1; Dim > 0; Dim--)
-        if (Indices[Dim] >= Dimensions[Dim])
+        if (dimensions[Dim].Index >= dimensions[Dim].Dimension)
         {
-          Indices[Dim] = 0;
-          Indices[Dim - 1]++;
+          dimensions[Dim].Index = 0;
+          dimensions[Dim - 1].Index++;
         }
         else
           break;
@@ -647,17 +657,20 @@ void ExpandStruct(PStructRec StructRec, const char *p_struct_name)
       /* Dim now holds the most major (leftmost) index that changed.  Build up new element
          name, starting from that: */
 
-      CompVarName[CompVarNameLens[Dim]] = '\0';
+      CompVarName[dimensions[Dim].CompVarNameLen] = '\0';
       for (; Dim < DimensionCnt; Dim++)
       {
-        as_snprcatf(CompVarName, sizeof(CompVarName), "_%llu", (LargeWord)Indices[Dim]);
+        as_snprcatf(CompVarName, sizeof(CompVarName), "_%llu", (LargeWord)dimensions[Dim].Index);
         if (Dim + 1 < DimensionCnt)
-          CompVarNameLens[Dim + 1] = strlen(CompVarName);
+          dimensions[Dim + 1].CompVarNameLen = strlen(CompVarName);
       }
     }
   }
   BookKeeping();
   DontPrint = True;
+func_exit:
+  if (dimensions)
+    free(dimensions);
 }
 
 void asmstruct_init(void)

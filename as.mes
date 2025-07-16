@@ -1069,6 +1069,10 @@ Message ErrMsgInAccPageErr
  "Seite nicht zugreifbar"
  "page not accessible"
 
+Message ErrMsgCurrPCInInAccPageErr
+ "aktueller Programmz&auml;hler in nicht-zugreifbarer Seite"
+ "current program counter in inaccessible page"
+
 Message ErrMsgInAccFieldErr
  "Feld nicht zugreifbar"
  "field not accessible"
@@ -1539,12 +1543,20 @@ Message KeyWaitMsg
  "--- <ENTER> to go on ---"
 
 Message ErrMsgInvParam
- "ung&uuml;ltige Option (-help f&uuml; Hilfe): "
- "Invalid option (-help for help): "
+ "ung&uuml;ltiger Parameter (-help f&uuml; Hilfe): "
+ "invalid parameter (-help for help): "
 
 Message ErrMsgInvEnvParam
+ "ung&uuml;ltiger Environment-Parameter (-help f&uuml; Hilfe): "
+ "invalid parameter (-help for help): "
+
+Message ErrMsgInvOption
+ "ung&uuml;ltige Option (-help f&uuml; Hilfe): "
+ "invalid option (-help for help): "
+
+Message ErrMsgInvEnvOption
  "ung&uuml;ltige Environment-Option (-help f&uuml; Hilfe): "
- "Invalid environment option (-help for help): "
+ "invalid environment option (-help for help): "
 
 Message InvMsgSource
  "Quelldatei?"

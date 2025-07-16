@@ -216,6 +216,11 @@ static tRegEvalResult DecodeReg(const tStrComp *pArg, tSymbolSize *pSize, Byte *
     *pResult = RegDescr.Reg & ~REGSYM_FLAG_ALIAS;
     *pSize = EvalResult.DataSize;
   }
+  else
+  {
+    *pResult = 0;
+    *pSize = eSymbolSizeUnknown;
+  }
   return RegEvalResult;
 }
 

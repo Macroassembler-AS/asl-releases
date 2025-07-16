@@ -1,3 +1,13 @@
+2025-07-16 [1.42 Bld 291]
+
+- Addition    : Display values unknown in first pass as
+                question marks for MCS-96 and 6800/6805/68HC08/68HC11.
+- Bugfix      : Better differentiation of errors in command line
+                options and parameters
+- Addition    : Add HCF instruction for MC6800/6801/6809
+- Addition    : Add HALT instruction for SC61860
+- Addition    : Add Z280 as target
+
 2025-06-20 [1.42 Bld 290]
 
 - Bugfix      : Enable glob() wildcard expansion for Win32

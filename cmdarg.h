@@ -22,7 +22,8 @@ typedef enum
   e_cmd_ok,
   e_cmd_err,
   e_cmd_file,
-  e_cmd_arg
+  e_cmd_arg,
+  e_cmd_unknown
 } as_cmd_result_t;
 
 typedef as_cmd_result_t (*as_cmd_callback_t)(

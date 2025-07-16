@@ -310,6 +310,8 @@ static void InitFields(void)
 	AddFixed("SC", 0xd0);
 	AddFixed("RC", 0xd1);
 
+  AddFixed("HALT", 0x7b);
+
 	/* [3] Jump */
 
 	AddRel("JRNZ", 0x28);

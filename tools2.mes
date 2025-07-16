@@ -46,6 +46,14 @@ Message ErrMsgInvParam
  "Fehlerhafter Parameter (-help f&uuml;r Hilfe): "
  "invalid parameter (-help for help): "
 
+Message ErrMsgInvEnvOption
+ "Fehlerhafte Environment-Option (-help f&uuml;r Hilfe): "
+ "invalid environment option (-help for help): "
+
+Message ErrMsgInvOption
+ "Fehlerhafte Option (-help f&uuml;r Hilfe): "
+ "invalid option (-help for help): "
+
 Message ErrMsgTargMissing
  "Zieldateiangabe fehlt!"
  "destination file specification missing!"

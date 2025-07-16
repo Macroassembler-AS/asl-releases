@@ -88,7 +88,6 @@ extern void EraseFile(const char *FileName, LongWord Offset);
 
 extern Boolean AddressWildcard(const char *addr);
 
-
 extern void toolutils_init(const char *ProgPath);
 
 #endif /* _TOOLUTILS_H */

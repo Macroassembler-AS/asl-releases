@@ -30,6 +30,7 @@
 #include "asmstructs.h"
 #include "asmcode.h"
 #include "asmrelocs.h"
+#include "cpu2phys.h"
 #include "asmitree.h"
 #include "assume.h"
 #include "operator.h"
@@ -181,6 +182,7 @@ static void SetCPUCore(const tCPUDef *pCPUDef, const tStrComp *pCPUArgs)
   PageIsOccupied =
   ShiftIsOccupied = False;
   ChkPC = DefChkPC;
+  cpu_2_phys_set_current_check(NULL);
   assume_set(NULL, 0);
   pASSUMEOverride = NULL;
   pCommentLeadIn = Default_CommentLeadIn;
