@@ -28,6 +28,7 @@
 #include "codevars.h"
 #include "assume.h"
 #include "errmsg.h"
+#include "headids.h"
 
 #include "codexa.h"
 
@@ -2166,11 +2167,17 @@ static Boolean IsDef_XA(void)
 
 static void SwitchTo_XA(void)
 {
+  const TFamilyDescr *p_descr = FindFamilyByName("XA");
+
   TurnWords = False;
   SetIntConstMode(eIntConstModeIntel);
 
-  PCSymbol = "$"; HeaderID = 0x3c; NOPCode = 0x00;
-  DivideChars = ","; HasAttrs = True; AttrChars = ".";
+  PCSymbol = "$";
+  HeaderID = p_descr->Id;
+  NOPCode = 0x00;
+  DivideChars = ",";
+  HasAttrs = True;
+  AttrChars = ".";
 
   ValidSegs =(1 << SegCode) | (1 << SegData) | (1 << SegIO);
   Grans[SegCode ] = 1; ListGrans[SegCode ] = 1; SegInits[SegCode ] = 0;

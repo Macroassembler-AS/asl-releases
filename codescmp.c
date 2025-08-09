@@ -26,6 +26,7 @@
 #include "codevars.h"
 #include "codepseudo.h"
 #include "errmsg.h"
+#include "headids.h"
 
 #include "codescmp.h"
 
@@ -499,12 +500,17 @@ static Boolean IsDef_SCMP(void)
 
 static void SwitchTo_SCMP(void)
 {
+  const TFamilyDescr *p_descr = FindFamilyByName("SC/MP");
+
   TurnWords = False;
   SetIntConstMode(eIntConstModeC);
 
-  PCSymbol = "$"; HeaderID = 0x6e; NOPCode = 0x08;
+  PCSymbol = "$";
+  HeaderID = p_descr->Id;
+  NOPCode = 0x08;
   DivideChars = ",";
-  HasAttrs = False; AttrChars = ".";
+  HasAttrs = False;
+  AttrChars = ".";
 
   ValidSegs = 1 << SegCode;
   Grans[SegCode] = 1; ListGrans[SegCode] = 1; SegInits[SegCode] = 0;

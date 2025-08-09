@@ -30,6 +30,7 @@
 #include "fileformat.h"
 #include "errmsg.h"
 #include "intformat.h"
+#include "headids.h"
 
 #include "code51.h"
 
@@ -2691,11 +2692,13 @@ static void InternSymbol_51(char *pArg, TempResult *pResult)
 
 static void SwitchTo_51(void)
 {
+  const TFamilyDescr *p_descr = FindFamilyByName("MCS-(2)51");
+
   TurnWords = False;
   SetIntConstMode(eIntConstModeIntel);
 
   PCSymbol = "$";
-  HeaderID = 0x31;
+  HeaderID = p_descr->Id;
   NOPCode = 0x00;
   DivideChars = ",";
   HasAttrs = False;

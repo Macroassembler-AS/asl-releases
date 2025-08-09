@@ -58,8 +58,6 @@ extern int chkio_printf(const char *p_name, const char *p_fmt, ...)
 #endif
            ;
 
-extern Word Granularity(Byte Header, Byte Segment);
-
 extern void ReadRecordHeader(Byte *Header, Byte *Target, Byte* Segment,
                              Byte *Gran, const char *Name, FILE *f);
 

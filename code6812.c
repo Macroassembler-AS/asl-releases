@@ -26,6 +26,7 @@
 #include "intpseudo.h"
 #include "codevars.h"
 #include "errmsg.h"
+#include "headids.h"
 
 #include "code6812.h"
 
@@ -1644,11 +1645,13 @@ static Boolean ChkPC_6812X(LargeWord Addr)
 
 static void SwitchTo_6812(void)
 {
+  const TFamilyDescr *p_descr = FindFamilyByName("68HC12");
+
   TurnWords = False;
   SetIntConstMode(eIntConstModeMoto);
 
   PCSymbol = "*";
-  HeaderID = 0x66;
+  HeaderID = p_descr->Id;
   NOPCode = 0xa7;
   DivideChars = ",";
   HasAttrs = True;

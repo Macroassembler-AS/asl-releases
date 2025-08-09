@@ -499,6 +499,8 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
       msgno = Num_ErrMsgMissEndif; break;
     case ErrNum_InvIfConst:
       msgno = Num_ErrMsgInvIfConst; break;
+    case ErrNum_ForwardNonCurrent:
+      msgno = Num_ErrMsgForwardNonCurrent; break;
     case ErrNum_DoubleSection:
       msgno = Num_ErrMsgDoubleSection; break;
     case ErrNum_InvSection:

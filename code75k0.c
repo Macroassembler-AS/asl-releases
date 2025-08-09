@@ -25,6 +25,7 @@
 #include "codevars.h"
 #include "errmsg.h"
 #include "intformat.h"
+#include "headids.h"
 
 #include "code75k0.h"
 
@@ -1631,6 +1632,7 @@ static as_assume_rec_t ASSUME75s[] =
 
 static void SwitchTo_75K0(void *pUser)
 {
+  const TFamilyDescr *p_descr = FindFamilyByName("75K0");
   char *p_end;
   Word ROMEnd;
 
@@ -1638,8 +1640,11 @@ static void SwitchTo_75K0(void *pUser)
   TurnWords = False;
   SetIntConstMode(eIntConstModeIntel);
 
-  PCSymbol = "PC"; HeaderID = 0x7b; NOPCode = 0x60;
-  DivideChars = ","; HasAttrs = False;
+  PCSymbol = "PC";
+  HeaderID = p_descr->Id;
+  NOPCode = 0x60;
+  DivideChars = ",";
+  HasAttrs = False;
 
   ValidSegs = (1 << SegCode)|(1 << SegData);
   Grans[SegCode] = 1; ListGrans[SegCode] = 1; SegInits[SegCode] = 0;

@@ -27,6 +27,7 @@
 #include "intpseudo.h"
 #include "codevars.h"
 #include "errmsg.h"
+#include "headids.h"
 
 #include "code29k.h"
 
@@ -1085,11 +1086,13 @@ static void SwitchTo_29K(void)
   {
     {"RBP", &Reg_RBP, 0, 0xff, 0x00000000, NULL}
   };
+  const TFamilyDescr *p_descr = FindFamilyByName("29xxx");
+
   TurnWords = True;
   SetIntConstMode(eIntConstModeC);
 
   PCSymbol = "$";
-  HeaderID = 0x29;
+  HeaderID = p_descr->Id;
   NOPCode = 0x000000000;
   DivideChars = ",";
   HasAttrs = False;

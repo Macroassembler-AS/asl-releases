@@ -25,6 +25,9 @@
 #include "codepseudo.h"
 #include "intpseudo.h"
 #include "codevars.h"
+#include "headids.h"
+
+#include "codem16.h"
 
 #define REG_SP 15
 #define REG_FP 14
@@ -3198,11 +3201,13 @@ static void SwitchFrom_M16(void)
 
 static void SwitchTo_M16(void)
 {
+  const TFamilyDescr *p_descr = FindFamilyByName("M16");
+
   TurnWords = True;
   SetIntConstMode(eIntConstModeIntel);
 
   PCSymbol = "$";
-  HeaderID = 0x13;
+  HeaderID = p_descr->Id;
   NOPCode = 0x1bd6;
   DivideChars=",";
   HasAttrs = True;

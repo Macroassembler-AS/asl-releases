@@ -444,6 +444,9 @@ static void InitTableRow(int Index)
 
 static void NextTableColumn(void)
 {
+  if (!tex_if_query())
+    return;
+
   if (curr_tex_env != EnvTabular)
     tex_error("table separation char not within tabular environment");
 
@@ -641,6 +644,9 @@ static void GetSectionName(char *Dest, size_t DestSize)
 static void TeXFlushLine(Word Index)
 {
   UNUSED(Index);
+
+  if (!tex_if_query())
+    return;
 
   if (curr_tex_env == EnvTabular)
   {
@@ -1453,6 +1459,9 @@ static void TeXAddCaption(Word Index)
 static void TeXHorLine(Word Index)
 {
   UNUSED(Index);
+
+  if (!tex_if_query())
+    return;
 
   if (curr_tex_env != EnvTabular)
     tex_error("\\hline outside of a table");

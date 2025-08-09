@@ -23,6 +23,7 @@
 #include "intpseudo.h"
 #include "codevars.h"
 #include "errmsg.h"
+#include "headids.h"
 
 #include "codetms7.h"
 
@@ -1031,11 +1032,16 @@ static void SwitchFrom_TMS7(void)
 
 static void SwitchTo_TMS7(void)
 {
+  const TFamilyDescr *p_descr = FindFamilyByName("TMS7000");
+
   TurnWords = False;
   SetIntConstMode(eIntConstModeIntel);
 
-  PCSymbol = "$"; HeaderID = 0x73; NOPCode = 0x00;
-  DivideChars = ","; HasAttrs = False;
+  PCSymbol = "$";
+  HeaderID = p_descr->Id;
+  NOPCode = 0x00;
+  DivideChars = ",";
+  HasAttrs = False;
 
   ValidSegs=1 << SegCode;
   Grans[SegCode] = 1; ListGrans[SegCode] = 1; SegInits[SegCode] = 0;

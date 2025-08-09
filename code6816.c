@@ -28,6 +28,7 @@
 #include "intpseudo.h"
 #include "codevars.h"
 #include "assume.h"
+#include "headids.h"
 
 #include "code6816.h"
 
@@ -1117,12 +1118,13 @@ static void SwitchTo_6816(void)
   {
     { "EK" , &Reg_EK , 0 , 0xff , 0x100, NULL }
   };
+  const TFamilyDescr *p_descr = FindFamilyByName("68HC16");
 
   TurnWords = False;
   SetIntConstMode(eIntConstModeMoto);
 
   PCSymbol = "*";
-  HeaderID = 0x65;
+  HeaderID = p_descr->Id;
   NOPCode = 0x274c;
   DivideChars = ",";
   HasAttrs = True;

@@ -28,6 +28,7 @@
 #include "codevars.h"
 #include "errmsg.h"
 #include "operator.h"
+#include "headids.h"
 
 #include "code97c241.h"
 
@@ -2574,11 +2575,13 @@ static void SwitchFrom_97C241(void)
 
 static void SwitchTo_97C241(void)
 {
+  const TFamilyDescr *p_descr = FindFamilyByName("TLCS-9000");
+
   TurnWords = False;
   SetIntConstMode(eIntConstModeIntel);
 
   PCSymbol = "$";
-  HeaderID = 0x56;
+  HeaderID = p_descr->Id;
   NOPCode = 0x7fa0;
   DivideChars = ",";
   HasAttrs = True;

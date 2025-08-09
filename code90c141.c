@@ -24,6 +24,7 @@
 #include "intpseudo.h"
 #include "codevars.h"
 #include "errmsg.h"
+#include "headids.h"
 
 #include "code90c141.h"
 
@@ -1443,12 +1444,14 @@ static Boolean ChkMoreOneArg(void)
 
 static void SwitchTo_90C141(void)
 {
+  const TFamilyDescr *p_descr = FindFamilyByName("TLCS-90");
+
   TurnWords = False;
   SetIntConstMode(eIntConstModeIntel);
   SetIsOccupiedFnc = ChkMoreOneArg;
 
   PCSymbol = "$";
-  HeaderID = 0x53;
+  HeaderID = p_descr->Id;
   NOPCode = 0x00;
   DivideChars = ",";
   HasAttrs = False;

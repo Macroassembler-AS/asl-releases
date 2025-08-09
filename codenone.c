@@ -48,8 +48,11 @@ static void switch_to_none(void)
   TurnWords = False;
   SetIntConstMode(eIntConstModeMoto);
 
-  PCSymbol = ""; HeaderID = 0x00; NOPCode = 0x00;
-  DivideChars = ","; HasAttrs = True;
+  PCSymbol = "";
+  HeaderID = 0x00;
+  NOPCode = 0x00;
+  DivideChars = ",";
+  HasAttrs = True;
   AttrChars = ".";
 
   ValidSegs = 1 << SegCode;

@@ -26,6 +26,7 @@
 #include "errmsg.h"
 #include "ibmfloat.h"
 #include "chartrans.h"
+#include "headids.h"
 
 #include "codemn1610.h"
 
@@ -1815,11 +1816,13 @@ static void SwitchFrom_MN1610(void)
 
 static void SwitchTo_MN1610(void)
 {
+  const TFamilyDescr *p_descr = FindFamilyByName("MN161x");
+
 	TurnWords = True;
 	SetIntConstMode(eIntConstModeIBM); /*ConstModeC;*/
 
 	PCSymbol = "*";
-	HeaderID = 0x36;
+	HeaderID = p_descr->Id;
 	NOPCode = 0x7808;	/* MV R0,R0 */
 	DivideChars = ",";
 	HasAttrs = False;

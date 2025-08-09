@@ -23,6 +23,7 @@
 #include "assume.h"
 #include "errmsg.h"
 #include "strutil.h"
+#include "headids.h"
 
 #include "code96.h"
 
@@ -1407,11 +1408,13 @@ static as_assume_rec_t ASSUME96s[] =
 
 static void SwitchTo_96(void)
 {
+  const TFamilyDescr *p_descr = FindFamilyByName("MCS-96/196");
+
   TurnWords = False;
   SetIntConstMode(eIntConstModeIntel);
 
   PCSymbol = "$";
-  HeaderID = 0x39;
+  HeaderID = p_descr->Id;
   NOPCode = 0xfd;
   DivideChars = ",";
   HasAttrs = False;

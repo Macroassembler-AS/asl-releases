@@ -24,6 +24,7 @@
 #include "natpseudo.h"
 #include "codevars.h"
 #include "errmsg.h"
+#include "headids.h"
 
 #include "codecop8.h"
 
@@ -691,11 +692,13 @@ static void SwitchFrom_COP8(void)
 
 static void SwitchTo_COP8(void)
 {
+  const TFamilyDescr *p_descr = FindFamilyByName("COP8");
+
   TurnWords = False;
   SetIntConstMode(eIntConstModeC);
 
   PCSymbol = ".";
-  HeaderID = 0x6f;
+  HeaderID = p_descr->Id;
   NOPCode = 0xb8;
   DivideChars = ",";
   HasAttrs = False;

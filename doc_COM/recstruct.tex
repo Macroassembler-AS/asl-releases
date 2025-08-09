@@ -1,0 +1,16 @@
+\begin{verbatim}
+FileRecord = RECORD CASE RecordTypeOrFamilyHdr : UInt8 OF
+              $00:(Creator:ARRAY[] OF Char);
+              $01..
+              $7f:(StartAddress : UInt32;
+                   Length       : UInt16;
+                   Data         : ARRAY[0..Length-1] OF UInt8);
+              $80:(EntryAddress : UInt32);
+              $81:(FamilyHdr    : UInt8;
+                   Segment      : UInt8;
+                   Gran         : UInt8;
+                   StartAddress : UInt32;
+                   Length       : UInt16;
+                   Data         : ARRAY[0..Length-1] OF UInt8);
+             END
+\end{verbatim}

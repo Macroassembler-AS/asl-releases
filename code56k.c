@@ -23,6 +23,7 @@
 #include "chartrans.h"
 #include "codevars.h"
 #include "onoff_common.h"
+#include "headids.h"
 
 #include "code56k.h"
 
@@ -2936,11 +2937,13 @@ static void SwitchFrom_56K(void)
 
 static void SwitchTo_56K(void)
 {
+  const TFamilyDescr *p_descr = FindFamilyByName("DSP56000");
+
   TurnWords = True;
   SetIntConstMode(eIntConstModeMoto);
 
   PCSymbol = "*";
-  HeaderID = 0x09;
+  HeaderID = p_descr->Id;
   NOPCode = 0x000000;
   DivideChars = " \t";
   HasAttrs = False;

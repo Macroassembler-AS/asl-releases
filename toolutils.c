@@ -18,6 +18,7 @@
 #include "cmdarg.h"
 #include "stdhandl.h"
 #include "ioerrs.h"
+#include "headids.h"
 
 #include "nls.h"
 #include "nlmessages.h"
@@ -141,35 +142,6 @@ int chkio_printf(const char *p_name, const char *p_fmt, ...)
   return ret;
 }
 
-Word Granularity(Byte Header, Byte Segment)
-{
-  switch (Header)
-  {
-    case 0x09:
-    case 0x76:
-    case 0x7d:
-      return 4;
-    case 0x36: /* MN161x */
-    case 0x70:
-    case 0x71:
-    case 0x72:
-    case 0x74:
-    case 0x75:
-    case 0x77:
-    case 0x12:
-    case 0x6d:
-      return 2;
-    case 0x3b: /* AVR */
-    case 0x1a: /* PDK13..16 */
-    case 0x1b:
-    case 0x1c:
-    case 0x1d:
-      return (Segment == SegCode) ? 2 : 1;
-    default:
-      return 1;
-  }
-}
-
 void ReadRecordHeader(Byte *Header, Byte *CPU, Byte* Segment,
                       Byte *Gran, const char *Name, FILE *f)
 {
@@ -201,10 +173,13 @@ void ReadRecordHeader(Byte *Header, Byte *CPU, Byte* Segment,
     }
     else if (*Header <= 0x7f)
     {
+      const TFamilyDescr *p_descr;
+
       *CPU = *Header;
+      p_descr = FindFamilyById(*CPU);
       *Header = FileHeaderDataRec;
       *Segment = SegCode;
-      *Gran = Granularity(*CPU, *Segment);
+      *Gran = p_descr->get_granularity((as_addrspace_t)*Segment);
     }
   }
 }
@@ -219,7 +194,10 @@ void WriteRecordHeader(Byte *Header, Byte *CPU, Byte *Segment,
   }
   else if ((*Header == FileHeaderDataRec) || (*Header == FileHeaderRDataRec))
   {
-    if ((*Segment != SegCode) || (*Gran != Granularity(*CPU, *Segment)) || (*CPU >= 0x80))
+    const TFamilyDescr *p_descr = FindFamilyById(*CPU);
+    Word def_granularity = p_descr ? p_descr->get_granularity((as_addrspace_t)*Segment) : 1;
+
+    if ((*Segment != SegCode) || (*Gran != def_granularity) || (*CPU >= 0x80))
     {
       if (fwrite(Header, 1, 1, f))
         ChkIO(Name);

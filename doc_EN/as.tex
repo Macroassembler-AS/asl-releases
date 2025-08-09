@@ -67,7 +67,7 @@
 
 \vspace{1cm}\par
 
-{\large Edition July 2025}
+{\large Edition August 2025}
 \end{raggedright}
 
 \clearpage
@@ -1611,6 +1611,16 @@ symbol is defined or not.  The difference between them: \tty{SYMEXIST} returns
 'false' for a forward declaration in pass one, and 'true' in subsequent passes.
 In contrast, \tty{DEFINED} consistently returns 'false' for forward declarations
 in all passes - the meaning is 'defined up to this point in the source'.
+
+\label{sect_symused}
+The function \tty{SYMUSED} allows to query whether a symbol has been
+used at least once up to this point.  {\bf CAUTION!} The information
+of 'being used' is stored along with the symbol in the symbol table.
+In case of a forward reference, the symbol does not (yet) exist in the
+symbol table in pass one.  Therefore, forward references do not count
+as 'usage' in this case.  This situation may be avoided by using a
+\tty{FORWARD} declaration of the symbol, thereby making it known
+prior to its actual definiton.
 
 \tty{DEFINED} not only accepts simple symbol names, but also complete
 formula expressions.  In this case, the return value is 'true' only if the
@@ -7239,7 +7249,8 @@ defined:
       false in the first pass, but true in all subsequent passes.}
 \item{\tty{IFNSYMEXIST $<$symbol$>$}: counterpart to \tty{IFSYMEXIST}.}
 \item{\tty{IFUSED $<$symbol$>$}: true if if the given symbol has been
-      referenced at least once up to now.}
+      referenced at least once up to now.  See section \ref{sect_symused}
+      for exceptions from this.}
 \item{\tty{IFNUSED $<$symbol$>$}: counterpart to \tty{IFUSED}.}
 \item{\tty{IFEXIST $<$name$>$}: true if the given file exists.  The same
            rules for search paths and syntax apply as for the
@@ -7934,8 +7945,9 @@ explicitly specify the symbol's section:
 \end{verbatim}
 If a local symbol is referenced several times, the brackets can be saved
 by using a \tty{FORWARD} statement.  The symbol is thereby explicitly
-announced to be local, and \asname{} will only look in the local symbol table
-part when this symbol is referenced.  For our example, the statement
+announced to be local, and \asname{} will only look in the symbol table's
+part local to this section when this symbol is referenced.  In our
+example, the statement
 \begin{verbatim}
         FORWARD loop
 \end{verbatim}
@@ -7945,6 +7957,15 @@ should be placed at the position marked with \tty{***}.
 also prior to its first usage in a section to make sense.  It does not
 make sense to define a symbol private and public; this will be regarded as
 an error by \asname{}.
+
+Opposed to \tty{PUBLIC} and \tty{GLOBAL}, \tty{FORWARD} may also be used
+outside a section.  In this case, one of its properties is preserved: A
+'placeholder entry' is added to the symbol table.  It does not contain an
+actual value, and references to such a placeholder entry are treated like
+accessing a (yet) undefined symbol.  The 'used' flag will however be set.
+A \tty{FORWARD} declaration may therefore be useful if usage of it is
+checked via \tty{SYMUSED}, and if there are references in the source code
+prior to its actual definition.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -11716,22 +11737,7 @@ tries to keep the file as short as possible.
 Common to all records is a header byte which defines the record's type
 and its contents.  Written in a PASCALish way, the record structure
 can be described in the following way:
-\begin{verbatim}
-FileRecord = RECORD CASE Header:Byte OF
-              $00:(Creator:ARRAY[] OF Char);
-              $01..
-              $7f:(StartAdr : LongInt;
-                   Length   : Word;
-                   Data     : ARRAY[0..Length-1] OF Byte);
-              $80:(EntryPoint:LongInt);
-              $81:(Header   : Byte;
-                   Segment  : Byte;
-                   Gran     : Byte;
-                   StartAdr : LongInt;
-                   Length   : Word;
-                   Data     : ARRAY[0..Length-1] OF Byte);
-             END
-\end{verbatim}
+\input{../doc_COM/recstruct.tex}
 This description does not express fully that the length of data
 fields is variable and depends on the value of the \tty{Length} entries.
 
@@ -11753,7 +11759,7 @@ table \ref{TabHeader}).
 
 \begin{center}\begin{longtable}{|c|l||c|l|}
 \hline
-Header  & Family & Header  & Family \\
+FamilyHdr  & Family & FamilyHdr  & Family \\
 \hline
 \hline
 \endhead
@@ -13189,6 +13195,11 @@ described by:
                {The command structure in a \tty{IF}- or \tty{SWITCH}- sequence is
                 wrong.}
                {none}
+\errentry{1482}{FORWARD statement must reference to current section}
+               {error}
+               {\tty{FORWARD} directives must not reference symbols in
+                another (higher) section.}
+               {The symbol name in question}
 \errentry{1483}{section name double defined}
                {error}
                {In this program module a section with the same name still

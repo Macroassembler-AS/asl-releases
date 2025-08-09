@@ -27,6 +27,7 @@
 #include "codevars.h"
 #include "errmsg.h"
 #include "assume.h"
+#include "headids.h"
 
 #include "codeh8_5.h"
 
@@ -2060,11 +2061,17 @@ static void InitCode_H8_5(void)
 
 static void SwitchTo_H8_5(void)
 {
+  const TFamilyDescr *p_descr = FindFamilyByName("H8/500");
+
   TurnWords = True;
   SetIntConstMode(eIntConstModeMoto);
 
-  PCSymbol = "*"; HeaderID = 0x69; NOPCode = 0x00;
-  DivideChars = ","; HasAttrs = True; AttrChars = ".:";
+  PCSymbol = "*";
+  HeaderID = p_descr->Id;
+  NOPCode = 0x00;
+  DivideChars = ",";
+  HasAttrs = True;
+  AttrChars = ".:";
 
   ValidSegs = 1 << SegCode;
   Grans[SegCode] = 1; ListGrans[SegCode] = 1; SegInits[SegCode] = 0;

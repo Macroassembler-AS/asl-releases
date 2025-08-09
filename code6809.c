@@ -28,6 +28,7 @@
 #include "assume.h"
 #include "errmsg.h"
 #include "cmdarg.h"
+#include "headids.h"
 
 #include "code6809.h"
 
@@ -1593,17 +1594,17 @@ static Boolean IsDef_6809(void)
 
 static void SwitchTo_6809(void)
 {
-#define ASSUME09Count (sizeof(ASSUME09s) / sizeof(*ASSUME09s))
   static const as_assume_rec_t ASSUME09s[] =
   {
     { "DPR", &DPRValue, 0, 0xff, 0x100, NULL }
   };
+  const TFamilyDescr *p_descr = FindFamilyByName("6809");
 
   TurnWords = False;
   SetIntConstMode(eIntConstModeMoto);
 
   PCSymbol = "*";
-  HeaderID = 0x63;
+  HeaderID = p_descr->Id;
   NOPCode = 0x12;
   DivideChars = ",";
   HasAttrs = True;
@@ -1625,7 +1626,7 @@ static void SwitchTo_6809(void)
   AddONOFF(plain_base_mode_cmd_name, &plain_base_mode, plain_base_mode_sym_name, False);
   target_used = True;
 
-  assume_set(ASSUME09s, ASSUME09Count);
+  assume_set(ASSUME09s, as_array_size(ASSUME09s));
 }
 
 static as_cmd_result_t cmd_plain_base(Boolean negate, const char *p_arg)

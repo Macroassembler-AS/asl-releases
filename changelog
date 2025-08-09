@@ -1,3 +1,11 @@
+2025-08-09 [1.42 Bld 292]
+
+- Addition    : Add function SYMUSED(), which has similar
+                meaning as IF(N)USED.
+- Bugfix      : Correct MMU mapping for data accesses on Z180.
+- Change      : Remove address alignment checking for WORD on i960.
+- Addition    : Allow FORWARD declarations also outside of sections.
+
 2025-07-16 [1.42 Bld 291]
 
 - Addition    : Display values unknown in first pass as

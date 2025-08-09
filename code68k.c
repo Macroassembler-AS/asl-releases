@@ -28,6 +28,7 @@
 #include "codevars.h"
 #include "errmsg.h"
 #include "codepseudo.h"
+#include "headids.h"
 
 #include "code68k.h"
 
@@ -6616,11 +6617,13 @@ static Boolean IsDef_68K(void)
 
 static void SwitchTo_68K(void *pUser)
 {
+  const TFamilyDescr *p_descr = FindFamilyByName("680x0");
+
   TurnWords = True;
   SetIntConstMode(eIntConstModeMoto);
 
   PCSymbol = "*";
-  HeaderID = 0x01;
+  HeaderID = p_descr->Id;
   NOPCode = 0x4e71;
   DivideChars = ",";
   HasAttrs = True;

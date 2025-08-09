@@ -23,6 +23,7 @@
 #include "intpseudo.h"
 #include "codevars.h"
 #include "errmsg.h"
+#include "headids.h"
 
 #include "code6804.h"
 
@@ -456,11 +457,13 @@ static void SwitchFrom_6804(void)
 
 static void SwitchTo_6804(void)
 {
+  const TFamilyDescr *p_descr = FindFamilyByName("6804");
+
   TurnWords = False;
   SetIntConstMode(eIntConstModeMoto);
 
   PCSymbol = "PC";
-  HeaderID = 0x64;
+  HeaderID = p_descr->Id;
   NOPCode = 0x20;
   DivideChars = ",";
   HasAttrs = False;

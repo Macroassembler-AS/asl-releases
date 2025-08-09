@@ -26,6 +26,7 @@
 #include "asmitree.h"
 #include "codevars.h"
 #include "errmsg.h"
+#include "headids.h"
 
 #include "codemcore.h"
 
@@ -875,25 +876,31 @@ static Boolean IsDef_MCORE(void)
 
 static void SwitchTo_MCORE(void)
 {
+  const TFamilyDescr *p_descr = FindFamilyByName("M-CORE");
+
   TurnWords = True;
   SetIntConstMode(eIntConstModeMoto);
 
-   PCSymbol = "*"; HeaderID = 0x03; NOPCode = 0x1200; /* ==MOV r0,r0 */
-   DivideChars = ","; HasAttrs = True; AttrChars = ".";
+  PCSymbol = "*";
+  HeaderID = p_descr->Id;
+  NOPCode = 0x1200; /* ==MOV r0,r0 */
+  DivideChars = ",";
+  HasAttrs = True;
+  AttrChars = ".";
 
-   ValidSegs = (1 << SegCode);
-   Grans[SegCode] = 1; ListGrans[SegCode] = 2; SegInits[SegCode] = 0;
-   SegLimits[SegCode] = (LargeWord)IntTypeDefs[UInt32].Max;
+  ValidSegs = (1 << SegCode);
+  Grans[SegCode] = 1; ListGrans[SegCode] = 2; SegInits[SegCode] = 0;
+  SegLimits[SegCode] = (LargeWord)IntTypeDefs[UInt32].Max;
 
-   DecodeAttrPart = DecodeAttrPart_MCORE;
-   MakeCode = MakeCode_MCORE;
-   IsDef = IsDef_MCORE;
-   InternSymbol = InternSymbol_MCORE;
-   DissectReg = DissectReg_MCORE;
+  DecodeAttrPart = DecodeAttrPart_MCORE;
+  MakeCode = MakeCode_MCORE;
+  IsDef = IsDef_MCORE;
+  InternSymbol = InternSymbol_MCORE;
+  DissectReg = DissectReg_MCORE;
 
-   SwitchFrom = DeinitFields; InitFields();
-   onoff_supmode_add();
-   AddMoto16PseudoONOFF(True);
+  SwitchFrom = DeinitFields; InitFields();
+  onoff_supmode_add();
+  AddMoto16PseudoONOFF(True);
 }
 
 /*--------------------------------------------------------------------------*/

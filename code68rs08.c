@@ -25,6 +25,7 @@
 #include "intpseudo.h"
 #include "codevars.h"
 #include "errmsg.h"
+#include "headids.h"
 
 #include "code68rs08.h"
 
@@ -926,11 +927,13 @@ static void SwitchFrom_68rs08(void)
 
 static void SwitchTo_68rs08(void)
 {
+  const TFamilyDescr *p_descr = FindFamilyByName("68RS08");
+
   TurnWords = False;
   SetIntConstMode(eIntConstModeMoto);
 
   PCSymbol = "*";
-  HeaderID = 0x5e;
+  HeaderID = p_descr->Id;
   NOPCode = 0xac;
   DivideChars = ",";
   HasAttrs = True;

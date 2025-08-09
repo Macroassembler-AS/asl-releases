@@ -901,11 +901,10 @@ static void InitFields(void)
   AddMem("LDIS" , 0xc8, IntOp   , 2);
   AddMem("STIS" , 0xca, IntOp   , 1);
 
-  AddInstTable(InstTable, "WORD", 0, DecodeWORD);
+  inst_table_set_prefix_proc(InstTable, NULL, 0);
   AddInstTable(InstTable, "SPACE", 0, DecodeSPACE);
   AddInstTable(InstTable, "REG", 0, CodeREG);
-
-  inst_table_set_prefix_proc(InstTable, NULL, 0);
+  AddInstTable(InstTable, "WORD", 0, DecodeWORD);
   AddIntelPseudo(InstTable, eIntPseudoFlag_LittleEndian);
 }
 

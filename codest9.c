@@ -23,6 +23,7 @@
 #include "intpseudo.h"
 #include "codevars.h"
 #include "errmsg.h"
+#include "headids.h"
 
 #include "codest9.h"
 
@@ -2001,11 +2002,16 @@ static void InternSymbol_ST9(char *Asc, TempResult *Erg)
 
 static void SwitchTo_ST9(void)
 {
+  const TFamilyDescr *p_descr = FindFamilyByName("ST9");
+
   TurnWords = False;
   SetIntConstMode(eIntConstModeIntel);
 
-  PCSymbol = "PC"; HeaderID = 0x32; NOPCode = 0xff;
-  DivideChars = ","; HasAttrs = False;
+  PCSymbol = "PC";
+  HeaderID = p_descr->Id;
+  NOPCode = 0xff;
+  DivideChars = ",";
+  HasAttrs = False;
 
   ValidSegs = (1 << SegCode) | (1 << SegData) | ( 1 << SegReg);
   Grans[SegCode] = 1; ListGrans[SegCode] = 1; SegInits[SegCode] = 0;

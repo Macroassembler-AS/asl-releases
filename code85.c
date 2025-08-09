@@ -25,6 +25,7 @@
 #include "asmitree.h"
 #include "codevars.h"
 #include "errmsg.h"
+#include "headids.h"
 
 #include "code85.h"
 
@@ -1565,11 +1566,12 @@ static void SwitchFrom_85(void)
 
 static void SwitchTo_85(void)
 {
+  const TFamilyDescr *p_descr = FindFamilyByName("8080/8085");
   TurnWords = False;
   SetIntConstMode(eIntConstModeIntel);
 
   PCSymbol = "$";
-  HeaderID = 0x41;
+  HeaderID = p_descr->Id;
   NOPCode = 0x00;
   DivideChars = ",";
   HasAttrs = False;

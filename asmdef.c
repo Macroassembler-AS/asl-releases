@@ -445,19 +445,6 @@ Boolean is_page_pseudo(void)
   return oppart_leading_dot || !PageIsOccupied;
 }
 
-/*!------------------------------------------------------------------------
- * \fn     free_forward_symbol(PForwardSymbol p_symbol)
- * \brief  free entry from forward symbol list
- * \param  p_symbol entry to free
- * ------------------------------------------------------------------------ */
-
-void free_forward_symbol(PForwardSymbol p_symbol)
-{
-  free(p_symbol->Name); p_symbol->Name = NULL;
-  free(p_symbol->pErrorPos); p_symbol->pErrorPos = NULL;
-  free(p_symbol);
-}
-
 void asmdef_init(void)
 {
   SwitchFrom = NullProc;

@@ -21,6 +21,7 @@
 #include "fourpseudo.h"
 #include "codevars.h"
 #include "errmsg.h"
+#include "headids.h"
 
 
 typedef struct
@@ -312,11 +313,13 @@ static void SwitchFrom_4500(void)
 
 static void SwitchTo_4500(void)
 {
+  const TFamilyDescr *p_descr = FindFamilyByName("MELPS-4500");
+
   TurnWords = False;
   SetIntConstMode(eIntConstModeMoto);
 
   PCSymbol = "*";
-  HeaderID = 0x12;
+  HeaderID = p_descr->Id;
   NOPCode = 0x000;
   DivideChars = ",";
   HasAttrs = False;

@@ -205,7 +205,8 @@ static const char CHR_ae[3] = HYPHEN_CHR_ae,
                   CHR_AE[3] = HYPHEN_CHR_AE,
                   CHR_OE[3] = HYPHEN_CHR_OE,
                   CHR_UE[3] = HYPHEN_CHR_UE,
-                  CHR_sz[3] = HYPHEN_CHR_sz;
+                  CHR_sz[3] = HYPHEN_CHR_sz,
+                  CHR_mu[3] = HYPHEN_CHR_mu;
 
 static int visible_clen(char ch)
 {
@@ -225,6 +226,8 @@ static int visible_clen(char ch)
     return CharTab_GetLength(pCharacterTab, eCH_Ue);
   else if (ch == *CHR_sz)
     return CharTab_GetLength(pCharacterTab, eCH_sz);
+  else if (ch == *CHR_mu)
+    return 1;
   else
     return 1;
 }
@@ -268,6 +271,8 @@ static void outc(char ch)
     fputs(CharTab_GetNULTermString(pCharacterTab, eCH_Ue, Buf), p_outfile);
   else if (ch == *CHR_sz)
     fputs(CharTab_GetNULTermString(pCharacterTab, eCH_sz, Buf), p_outfile);
+  else if (ch == *CHR_mu)
+    fputs(CharTab_GetNULTermString(pCharacterTab, eCH_mu, Buf), p_outfile);
   else
     fputc(ch, p_outfile);
 }
@@ -488,6 +493,9 @@ static void InitTableRow(int Index)
 
 static void NextTableColumn(void)
 {
+  if (!tex_if_query())
+    return;
+
   if (curr_tex_env != EnvTabular)
     tex_error("table separation char not within tabular environment");
 
@@ -722,6 +730,9 @@ static void GetSectionName(char *Dest, size_t DestSize)
 static void TeXFlushLine(Word Index)
 {
   UNUSED(Index);
+
+  if (!tex_if_query())
+    return;
 
   if (curr_tex_env == EnvTabular)
   {
@@ -1250,11 +1261,9 @@ static void TeXAddReal(Word Index)
 
 static void TeXAddGreekMu(Word Index)
 {
-  char Buf[3];
-
   UNUSED(Index);
 
-  DoAddNormal(CharTab_GetNULTermString(pCharacterTab, eCH_mu, Buf), tex_backslash_token_sep_string);
+  DoAddNormal(HYPHEN_CHR_mu, tex_backslash_token_sep_string);
 }
 
 static void TeXAddGreekPi(Word Index)
@@ -1457,6 +1466,9 @@ static void TeXEndHead(Word Index)
 static void TeXHorLine(Word Index)
 {
   UNUSED(Index);
+
+  if (!tex_if_query())
+    return;
 
   if (curr_tex_env != EnvTabular)
     tex_error("\\hline outside of a table");

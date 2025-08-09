@@ -26,6 +26,7 @@
 #include "codevars.h"
 #include "assume.h"
 #include "errmsg.h"
+#include "headids.h"
 
 #include "code166.h"
 
@@ -2158,6 +2159,7 @@ static void SwitchFrom_166(void)
 
 static void SwitchTo_166(void)
 {
+  const TFamilyDescr *p_descr = FindFamilyByName("80C166/167");
   Byte z;
 
   TurnWords = False;
@@ -2165,7 +2167,7 @@ static void SwitchTo_166(void)
   OpSize = eSymbolSize16Bit;
 
   PCSymbol = "$";
-  HeaderID = 0x4c;
+  HeaderID = p_descr->Id;
   NOPCode = 0xcc00;
   DivideChars = ",";
   HasAttrs = False;

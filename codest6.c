@@ -24,6 +24,7 @@
 #include "codevars.h"
 #include "errmsg.h"
 #include "intformat.h"
+#include "headids.h"
 
 #include "codest6.h"
 
@@ -876,6 +877,7 @@ static void InternSymbol_ST6(char *pArg, TempResult *pErg)
 
 static void SwitchTo_ST6(void *pUser)
 {
+  const TFamilyDescr *p_descr = FindFamilyByName("ST6");
   int ASSUMEOffset;
 
   pCurrCPUProps = (const tCPUProps*)pUser;
@@ -883,8 +885,11 @@ static void SwitchTo_ST6(void *pUser)
   SetIntConstMode(eIntConstModeIntel);
   SetIsOccupiedFnc = TrueFnc;
 
-  PCSymbol = "PC"; HeaderID = 0x78; NOPCode = 0x04;
-  DivideChars = ","; HasAttrs = False;
+  PCSymbol = "PC";
+  HeaderID = p_descr->Id;
+  NOPCode = 0x04;
+  DivideChars = ",";
+  HasAttrs = False;
 
   ValidSegs = (1 << SegCode) | (1 << SegData);
   Grans[SegCode] = 1; ListGrans[SegCode] = 1; SegInits[SegCode] = 0;

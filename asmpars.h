@@ -209,6 +209,8 @@ extern void EnterRegSymbol(const struct sStrComp *pName, const tRegDescr *Value,
 
 #define EnterNonZStringSymbol(pName, pValue, MayChange) EnterNonZStringSymbolWithFlags(pName, pValue, MayChange, eSymbolFlag_None)
 
+extern void EnterNoneSymbol(const struct sStrComp *pName);
+
 extern void LookupSymbol(const struct sStrComp *pName, TempResult *pValue, Boolean WantRelocs, TempType ReqType,
                          as_eval_flags_t eval_flags, as_symbol_entry_flags_t *p_symbol_entry_flags);
 

@@ -26,6 +26,7 @@
 #include "motpseudo.h"
 #include "codevars.h"
 #include "errmsg.h"
+#include "headids.h"
 
 #include "code7000.h"
 
@@ -1450,11 +1451,13 @@ static void SwitchFrom_7000(void)
 
 static void SwitchTo_7000(void)
 {
+  const TFamilyDescr *p_descr = FindFamilyByName("SH7x00");
+
   TurnWords = True;
   SetIntConstMode(eIntConstModeMoto);
 
   PCSymbol = "*";
-  HeaderID = 0x6c;
+  HeaderID = p_descr->Id;
   NOPCode = 0x0009;
   DivideChars = ",";
   HasAttrs = True;

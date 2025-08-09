@@ -27,6 +27,7 @@
 #include "codevars.h"
 #include "nlmessages.h"
 #include "as.rsc"
+#include "headids.h"
 #include "code86.h"
 
 /*---------------------------------------------------------------------------*/
@@ -3862,12 +3863,17 @@ static void intern_symbol_86(char *p_arg, TempResult *p_result)
 
 static void SwitchTo_86(void *p_user)
 {
+  const TFamilyDescr *p_descr = FindFamilyByName("8086");
+
   p_curr_cpu_props = (const cpu_props_t*)p_user;
 
   TurnWords = False; SetIntConstMode(eIntConstModeIntel);
 
-  PCSymbol = "$"; HeaderID = 0x42; NOPCode = 0x90;
-  DivideChars = ","; HasAttrs = False;
+  PCSymbol = "$";
+  HeaderID = p_descr->Id;
+  NOPCode = 0x90;
+  DivideChars = ",";
+  HasAttrs = False;
 
   ValidSegs = (1 << SegCode) | (1 << SegData) | (1 << SegXData) | (1 << SegIO);
   Grans[SegCode ] = 1; ListGrans[SegCode ] = 1; SegInits[SegCode ] = 0;

@@ -21,6 +21,8 @@
 #include "codevars.h"
 #include "codepseudo.h"
 #include "fourpseudo.h"
+#include "headids.h"
+
 #include "codepdk.h"
 
 typedef enum
@@ -1183,6 +1185,7 @@ static void SwitchFrom_Padauk(void)
 
 static void SwitchTo_Padauk(void *pUser)
 {
+  const TFamilyDescr *p_descr;
   static const char CommentLeadIn[] = { ';', '\0', '/', '/', '\0', '\0' };
 
   pCurrCPUProps = (const tCPUProps*)pUser;
@@ -1190,8 +1193,34 @@ static void SwitchTo_Padauk(void *pUser)
   TurnWords = False;
   SetIntConstMode(eIntConstModeC);
 
+  switch (pCurrCPUProps->Core)
+  {
+    case eCorePDK13:
+      p_descr = FindFamilyByName("PDK13");
+      DataBitAdrIntType = UInt4;
+      IOMemBits = 5;
+      break;
+    case eCorePDK14:
+      p_descr = FindFamilyByName("PDK14");
+      DataBitAdrIntType = UInt6;
+      IOMemBits = 6;
+      break;
+    case eCorePDK15:
+      p_descr = FindFamilyByName("PDK15");
+      DataBitAdrIntType = UInt7;
+      IOMemBits = 7;
+      break;
+    case eCorePDK16:
+      p_descr = FindFamilyByName("PDK16");
+      DataBitAdrIntType = UInt9;
+      IOMemBits = 6;
+      break;
+    default:
+      p_descr = NULL;
+  }
+
   PCSymbol = "*";
-  HeaderID = 0x3b;
+  HeaderID = p_descr->Id;
   NOPCode = 0x0000;
   DivideChars = ",";
   pCommentLeadIn = CommentLeadIn;
@@ -1200,14 +1229,16 @@ static void SwitchTo_Padauk(void *pUser)
   ValidSegs = (1 << SegCode) | (1 << SegData) | (1 << SegIO);
   Grans[SegCode] = 2; ListGrans[SegCode] = 2; SegInits[SegCode] = 0;
   Grans[SegData] = 1; ListGrans[SegData] = 1; SegInits[SegData] = 0; SegLimits[SegData] = pCurrCPUProps->RAMEnd;
-  Grans[SegIO  ] = 1; ListGrans[SegIO  ] = 1; SegInits[SegIO  ] = 0;  SegLimits[SegIO] = pCurrCPUProps->IOAreaEnd;
+  Grans[SegIO  ] = 1; ListGrans[SegIO  ] = 1; SegInits[SegIO  ] = 0; SegLimits[SegIO  ] = pCurrCPUProps->IOAreaEnd;
 
   SegLimits[SegCode] = ((LongWord)pCurrCPUProps->FlashEndD16) << 4 | 0xf;
   CodeAdrIntType = GetSmallestUIntType(SegLimits[SegCode]);
   CodeWordIntType = GetUIntTypeByBits(13 + (pCurrCPUProps->Core - eCorePDK13));
   DataAdrIntType = GetSmallestUIntType(SegLimits[SegData]);
-  DataBitAdrIntType = (pCurrCPUProps->Core == eCorePDK13) ? UInt4 : DataAdrIntType;
   IOAdrIntType   = GetSmallestUIntType(SegLimits[SegIO  ]);
+  DataBitMemBits = Lo(IntTypeDefs[DataBitAdrIntType].SignAndWidth);
+  DataMemBits = 6 + (pCurrCPUProps->Core - eCorePDK13);
+  CodeMemBits = 10 + (pCurrCPUProps->Core - eCorePDK13);
 
 #if 0
   fprintf(stderr, "Data 0x%lx DataBit 0x%lx Code 0x%lx IO 0x%lx\n",
@@ -1216,32 +1247,6 @@ static void SwitchTo_Padauk(void *pUser)
           IntTypeDefs[CodeAdrIntType].Max,
           IntTypeDefs[IOAdrIntType].Max);
 #endif
-
-  switch (pCurrCPUProps->Core)
-  {
-    case eCorePDK13:
-      DataBitAdrIntType = UInt4;
-      IOMemBits = 5;
-      break;
-    case eCorePDK14:
-      DataBitAdrIntType = UInt6;
-      IOMemBits = 6;
-      break;
-    case eCorePDK15:
-      DataBitAdrIntType = UInt7;
-      IOMemBits = 7;
-      break;
-    case eCorePDK16:
-      DataBitAdrIntType = UInt9;
-      IOMemBits = 6;
-      break;
-    default:
-      break;
-  }
-  DataBitMemBits = Lo(IntTypeDefs[DataBitAdrIntType].SignAndWidth);
-
-  DataMemBits = 6 + (pCurrCPUProps->Core - eCorePDK13);
-  CodeMemBits = 10 + (pCurrCPUProps->Core - eCorePDK13);
 
   AccInstOffs = CoreMask((1 << eCorePDK14) | (1 << eCorePDK15)) ? 0x0060 : 0x0010;
 

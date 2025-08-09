@@ -29,6 +29,7 @@
 #include "errmsg.h"
 #include "onoff_common.h"
 #include "chartrans.h"
+#include "headids.h"
 
 #include "codeavr.h"
 
@@ -1194,6 +1195,8 @@ static Boolean ChkZeroArg(void)
 
 static void SwitchTo_AVR(void *pUser)
 {
+  const TFamilyDescr *p_descr = FindFamilyByName(CodeSegSize ? "AVR" : "AVR(CSEG8)");
+
   pCurrCPUProps = (const tCPUProps*)pUser;
 
   TurnWords = False;
@@ -1201,7 +1204,7 @@ static void SwitchTo_AVR(void *pUser)
   SetIsOccupiedFnc = ChkZeroArg;
 
   PCSymbol = "*";
-  HeaderID = CodeSegSize ? 0x3b : 0x3d;
+  HeaderID = p_descr->Id;
   NOPCode = 0x0000;
   DivideChars = ",";
   HasAttrs = False;

@@ -30,6 +30,7 @@
 #include "function.h"
 #include "nlmessages.h"
 #include "as.rsc"
+#include "headids.h"
 
 #include "code68.h"
 
@@ -965,11 +966,13 @@ static Boolean IsDef_68(void)
 
 static void SwitchTo_68(void)
 {
+  const TFamilyDescr *p_descr = FindFamilyByName("68xx");
+
   TurnWords = False;
   SetIntConstMode(eIntConstModeMoto);
 
   PCSymbol = "*";
-  HeaderID = 0x61;
+  HeaderID = p_descr->Id;
   NOPCode = 0x01;
   DivideChars = ",";
   HasAttrs = True;

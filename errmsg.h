@@ -159,6 +159,7 @@ typedef enum
   ErrNum_UnknownMacArg = 1465,
   ErrNum_MissEndif = 1470,
   ErrNum_InvIfConst = 1480,
+  ErrNum_ForwardNonCurrent = 1482,
   ErrNum_DoubleSection = 1483,
   ErrNum_InvSection = 1484,
   ErrNum_MissingEndSect = 1485,

@@ -9,6 +9,7 @@
 #define HYPHEN_CHR_OE "\326"
 #define HYPHEN_CHR_UE "\334"
 #define HYPHEN_CHR_sz "\337"
+#define HYPHEN_CHR_mu "\265"
 
 extern void BuildTree(char **Patterns);
 

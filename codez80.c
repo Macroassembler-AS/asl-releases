@@ -33,6 +33,7 @@
 #include "function.h"
 #include "onoff_common.h"
 #include "errmsg.h"
+#include "headids.h"
 
 #include "codez80.h"
 
@@ -466,24 +467,33 @@ static void update_z180_areas(void)
          bank_area_start = (Reg_CBAR & 0x0f) << 12;
 
     cpu_2_phys_area_clear(SegCode);
+    cpu_2_phys_area_clear(SegData);
 
     /* Common Area 0 */
 
     if (bank_area_start > 0)
+    {
       cpu_2_phys_area_add(SegCode, 0, 0, bank_area_start);
+      cpu_2_phys_area_add(SegData, 0, 0, bank_area_start);
+    }
 
     /* Bank Area */
 
     if (common_area_start > bank_area_start)
+    {
       cpu_2_phys_area_add(SegCode, bank_area_start, (Reg_BBR << 12) + bank_area_start, common_area_start - bank_area_start);
+      cpu_2_phys_area_add(SegData, bank_area_start, (Reg_BBR << 12) + bank_area_start, common_area_start - bank_area_start);
+    }
 
     /* Common Area 1 - always present since upper nibble of CBAR is always < 0x10 */
 
     cpu_2_phys_area_add(SegCode, common_area_start, (Reg_CBR << 12) + common_area_start, 0x10000ul - common_area_start);
+    cpu_2_phys_area_add(SegData, common_area_start, (Reg_CBR << 12) + common_area_start, 0x10000ul - common_area_start);
 
     /* this *SHOULD* be a NOP, since completely filled the 64K CPU space: */
 
     cpu_2_phys_area_fill(SegCode, 0, 0xffff);
+    cpu_2_phys_area_fill(SegData, 0, 0xffff);
   }
 }
 
@@ -6556,14 +6566,19 @@ static Boolean chk_pc_z380(LargeWord addr)
 
 static void SwitchTo_Z80(void *p_user)
 {
+  const TFamilyDescr *p_descr = FindFamilyByName("Zx80");
+
   p_curr_cpu_props = (const cpu_props_t*)p_user;
 
   TurnWords = False;
   SetIntConstMode(eIntConstModeIntel);
   SetIsOccupiedFnc = ChkMoreOneArg;
 
-  PCSymbol = "$"; HeaderID = 0x51; NOPCode = 0x00;
-  DivideChars = ","; HasAttrs = False;
+  PCSymbol = "$";
+  HeaderID = p_descr->Id;
+  NOPCode = 0x00;
+  DivideChars = ",";
+  HasAttrs = False;
 
   ValidSegs = 1 << SegCode;
   Grans[SegCode] = 1; ListGrans[SegCode] = 1; SegInits[SegCode] = 0;

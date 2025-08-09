@@ -29,6 +29,7 @@
 #include "asmstructs.h"
 #include "chunks.h"
 #include "trees.h"
+#include "fwd_sym.h"
 #include "operator.h"
 #include "function.h"
 #include "intformat.h"
@@ -1973,6 +1974,12 @@ func_exit2:
       LEAVE;
     }
 
+    else if (!strcmp(FName.str.p_str, "SYMUSED"))
+    {
+      as_tempres_set_int(pErg, !!IsSymbolUsed(&FArg));
+      LEAVE;
+    }
+
     else if (!strcmp(FName.str.p_str, "ASSUMEDVAL"))
     {
       const as_assume_rec_t *p_rec = assume_lookup(FArg.str.p_str);
@@ -2543,9 +2550,12 @@ static Boolean SymbolAdder(PTree *PDest, PTree Neu, void *pData)
     return False;
   }
 
-  /* tried to reassign a constant (EQU) a value with SET and vice versa ? */
+  /* Tried to reassign a constant (EQU) a value with SET and vice versa ?
+     Forwards may always be overwritten. */
 
-  else if (get_symbol_entry_flag((*Node), defined) && (EnterStruct->MayChange != get_symbol_entry_flag(*Node, changeable)) )
+  else if (get_symbol_entry_flag((*Node), defined)
+        && (EnterStruct->MayChange != get_symbol_entry_flag(*Node, changeable))
+        && ((*Node)->SymWert.Typ != TempNone) )
   {
     strmaxcpy(serr, (*Node)->Tree.Name, STRINGSIZE);
     if (EnterStruct->DoCross)
@@ -2556,6 +2566,11 @@ static Boolean SymbolAdder(PTree *PDest, PTree Neu, void *pData)
     FreeSymbolEntry(&NewEntry, TRUE);
     return False;
   }
+
+  /* Forward (none) definition shall not overwrite actual symbol type: */
+
+  else if (((*Node)->SymWert.Typ != TempNone) && (NewEntry->SymWert.Typ == TempNone))
+    return False;
 
   else
   {
@@ -2638,26 +2653,6 @@ static void EnterLocSymbol(PSymbolEntry Neu)
   FirstLocSymbol = (PSymbolEntry)TreeRoot;
 }
 
-static Boolean EnterSymbol_SearchAndUnchain(PSymbolEntry Neu, PForwardSymbol *pp_root, LongInt *p_override_section)
-{
-  PForwardSymbol p_run, p_prev;
-
-  for (p_run = *pp_root, p_prev= NULL;
-       p_run;
-       p_prev = p_run, p_run = p_run->Next)
-    if (!strcmp(p_run->Name, Neu->Tree.Name))
-    {
-      *p_override_section = p_run->DestSection;
-      if (!p_prev)
-        *pp_root = p_run->Next;
-      else
-        p_prev->Next = p_run->Next;
-      free_forward_symbol(p_run);
-      return True;
-    }
-  return False;
-}
-
 static void EnterSymbol(PSymbolEntry Neu, Boolean MayChange, LongInt ResHandle)
 {
   String CombName;
@@ -2680,17 +2675,17 @@ static void EnterSymbol(PSymbolEntry Neu, Boolean MayChange, LongInt ResHandle)
     /* FORWARD: just an info to avoid resolution to global symbol.  This symbol remains
        in current section: */
 
-    if (EnterSymbol_SearchAndUnchain(Neu, &(SectionStack->LocSyms), &override_section))
+    if (as_fwd_sym_search_and_move_dest_section(&(SectionStack->LocSyms), Neu->Tree.Name, &override_section))
     { }
 
     /* PUBLIC: relocate scope of symbol to given section: */
 
-    else if (EnterSymbol_SearchAndUnchain(Neu, &(SectionStack->GlobSyms), &override_section))
+    else if (as_fwd_sym_search_and_move_dest_section(&(SectionStack->GlobSyms), Neu->Tree.Name, &override_section))
       Neu->Tree.Attribute = override_section;
 
     /* GLOBAL: create copy with scope in given section: */
 
-    else if (EnterSymbol_SearchAndUnchain(Neu, &(SectionStack->ExportSyms), &override_section))
+    else if (as_fwd_sym_search_and_move_dest_section(&(SectionStack->ExportSyms), Neu->Tree.Name, &override_section))
     {
       strmaxcpy(CombName, Neu->Tree.Name, STRINGSIZE);
       RunSect = SectionStack;
@@ -3044,6 +3039,44 @@ void EnterRegSymbol(const struct sStrComp *pName, const tRegDescr *pDescr, tSymb
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     EnterNoneSymbol(const struct sStrComp *p_name)
+ * \brief  enter empty (forward) symbol
+ * \param  p_name unexpanded name
+ * ------------------------------------------------------------------------ */
+
+void EnterNoneSymbol(const struct sStrComp *p_name)
+{
+  LongInt dest_handle;
+  PSymbolEntry p_new;
+
+  if (symbol_name_reserved(p_name->str.p_str))
+  {
+    WrStrErrorPos(ErrNum_RsvdSymName, p_name);
+    return;
+  }
+
+  p_new = CreateSymbolEntry(p_name, &dest_handle, eSymbolFlag_None);
+  if (!p_new)
+    return;
+
+  as_tempres_set_none(&p_new->SymWert);
+  p_new->SymWert.AddrSpaceMask = 0;
+  p_new->SymWert.Flags = eSymbolFlag_None;
+  p_new->SymWert.DataSize = eSymbolSizeUnknown;
+  p_new->RefList = NULL;
+  p_new->SymWert.Relocs = NULL;
+
+  if ((MomLocHandle == -1) || (dest_handle != -2))
+  {
+    EnterSymbol(p_new, True, dest_handle);
+    if (MakeDebug)
+      PrintSymTree(p_new->Tree.Name);
+  }
+  else
+    EnterLocSymbol(p_new);
+}
+
 static void AddReference(PSymbolEntry Node)
 {
   PCrossRef Lauf, Neu;
@@ -3096,7 +3129,7 @@ static PSymbolEntry FindGlobNode_FNode(const char *Name, TempType SearchType, Lo
 
   if (Lauf)
   {
-    if (Lauf->SymWert.Typ & SearchType)
+    if ((Lauf->SymWert.Typ & SearchType) || (SearchType == TempAll))
     {
       if (MakeCrossList && DoRefs)
         AddReference(Lauf);
@@ -3108,21 +3141,18 @@ static PSymbolEntry FindGlobNode_FNode(const char *Name, TempType SearchType, Lo
   return Lauf;
 }
 
-static Boolean FindGlobNode_FSpec(const char *Name, PForwardSymbol Root)
-{
-  while ((Root) && (strcmp(Root->Name, Name)))
-    Root = Root->Next;
-  return (Root != NULL);
-}
 
 static PSymbolEntry FindGlobNode(const char *p_name, TempType SearchType, LongInt DestSection)
 {
   PSaveSection Lauf;
   PSymbolEntry Result = NULL;
 
-  if (SectionStack)
-    if (PassNo <= MaxSymPass)
-      if (FindGlobNode_FSpec(p_name, SectionStack->LocSyms)) DestSection = MomSectionHandle;
+#if 0
+  if (SectionStack
+   && (PassNo <= MaxSymPass)
+   && search_forward_symbol(SectionStack->LocSyms, p_name))
+     DestSection = MomSectionHandle;
+#endif
 
   if (DestSection == -2)
   {
@@ -3152,7 +3182,7 @@ static PSymbolEntry FindLocNode_FNode(const char *Name, TempType SearchType, Lon
 
   if (Lauf)
   {
-    if (!(Lauf->SymWert.Typ & SearchType))
+    if ((SearchType != TempAll) && !(Lauf->SymWert.Typ & SearchType))
       Lauf = NULL;
   }
 
@@ -3284,8 +3314,26 @@ void LookupSymbol(const struct sStrComp *pComp, TempResult *pValue, Boolean Want
   lookup_symbol_error_t lookup_error;
   PSymbolEntry pEntry = ExpandAndFindNode(pComp, ReqType, True, e_expand_chk_upto, &lookup_error);
 
-  if (pEntry && !get_symbol_entry_flag(pEntry, defined) && (eval_flags & e_eval_flag_undefined_is_unknown))
-    pEntry = NULL;
+  if (pEntry)
+  {
+    /* A pure forward definition is handled like a 'not found' at this place.  Only
+       set the flag that the entry was used: */
+
+    if (pEntry->SymWert.Typ == TempNone)
+    {
+      set_symbol_entry_flag(pEntry, used, True);
+      lookup_error = e_lookup_error_notfound;
+      pEntry = NULL;
+    }
+
+    /* Was it requested to tread yet-not-defined symbols as unknown? */
+
+    else if (!get_symbol_entry_flag(pEntry, defined) && (eval_flags & e_eval_flag_undefined_is_unknown))
+    {
+      lookup_error = e_lookup_error_notfound;
+      pEntry = NULL;
+    }
+  }
 
   if (pEntry)
   {
@@ -3503,9 +3551,10 @@ static void PrintSymbolList_PNode(PTree Tree, void *pData)
     else
       StrSym(pValue, False, &pContext->s1, ListRadixBase);
 
-    as_sdprintf(&pContext->sh, "%c%s : ", get_symbol_entry_flag(Node, used) ? ' ' : '*', Tree->Name);
+    as_sdprintf(&pContext->sh, "%c%s", get_symbol_entry_flag(Node, used) ? ' ' : '*', Tree->Name);
     if (Tree->Attribute != -1)
-      as_sdprcatf(&pContext->sh, " [%s]", GetSectionName(Tree->Attribute));
+      as_sdprcatf(&pContext->sh, "[%s]", GetSectionName(Tree->Attribute));
+    as_sdprcatf(&pContext->sh, " : ");
     l1 = (strlen(pContext->s1.p_str) + visible_strlen(pContext->sh.p_str) + 4);
     for (nBlanks = pContext->cwidth - 1 - l1; nBlanks < 0; nBlanks += pContext->cwidth);
     as_sdprcatf(&pContext->sh, "%s%s %c | ", Blanks(nBlanks), pContext->s1.p_str, SegShorts[addrspace_from_mask(pValue->AddrSpaceMask)]);

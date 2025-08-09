@@ -29,6 +29,9 @@
 #include "asmitree.h"
 #include "codepseudo.h"
 #include "codevars.h"
+#include "headids.h"
+
+#include "codemsp.h"
 
 typedef struct
 {
@@ -1623,10 +1626,17 @@ static Boolean IsDef_MSP(void)
 
 static void SwitchTo_MSP(void)
 {
-  TurnWords = False; SetIntConstMode(eIntConstModeIntel);
+  const TFamilyDescr *p_descr = FindFamilyByName("MSP430");
 
-  PCSymbol = "$"; HeaderID = 0x4a; NOPCode = 0x4303; /* = MOV #0,#0 */
-  DivideChars = ","; HasAttrs = True; AttrChars = ".";
+  TurnWords = False;
+  SetIntConstMode(eIntConstModeIntel);
+
+  PCSymbol = "$";
+  HeaderID = p_descr->Id;
+  NOPCode = 0x4303; /* = MOV #0,#0 */
+  DivideChars = ",";
+  HasAttrs = True;
+  AttrChars = ".";
 
   ValidSegs = 1 << SegCode;
   Grans[SegCode] = 1; ListGrans[SegCode] = 2; SegInits[SegCode] = 0;

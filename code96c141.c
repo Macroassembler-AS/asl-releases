@@ -31,6 +31,7 @@
 #include "codevars.h"
 #include "errmsg.h"
 #include "operator.h"
+#include "headids.h"
 
 #include "code96c141.h"
 
@@ -2806,12 +2807,14 @@ static Boolean ChkMoreOneArg(void)
 
 static void SwitchTo_96C141(void)
 {
+  const TFamilyDescr *p_descr = FindFamilyByName("TLCS-900");
+
   TurnWords = False;
   SetIntConstMode(eIntConstModeIntel);
   SetIsOccupiedFnc = ChkMoreOneArg;
 
   PCSymbol = "$";
-  HeaderID = 0x52;
+  HeaderID = p_descr->Id;
   NOPCode = 0x00;
   DivideChars = ",";
   HasAttrs = False;

@@ -23,6 +23,7 @@
 #include "intpseudo.h"
 #include "codevars.h"
 #include "errmsg.h"
+#include "headids.h"
 
 #include "code47c00.h"
 
@@ -1256,13 +1257,14 @@ static void SwitchTo_47C00(void)
   {
     { "DMB", &DMBAssume, 0, 3, 4, NULL }
   };
+  const TFamilyDescr *p_descr = FindFamilyByName("TLCS-47xx");
 
   TurnWords = False;
   SetIntConstMode(eIntConstModeIntel);
   SetIsOccupiedFnc = TrueFnc;
 
   PCSymbol = "$";
-  HeaderID = 0x55;
+  HeaderID = p_descr->Id;
   NOPCode = 0x00;
   DivideChars = ",";
   HasAttrs = False;

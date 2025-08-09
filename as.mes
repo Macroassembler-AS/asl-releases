@@ -565,6 +565,10 @@ Message ErrMsgInvIfConst
  "ung&uuml;ltiges IF-Konstrukt"
  "invalid IF-structure"
 
+Message ErrMsgForwardNonCurrent
+ "FORWARD-Anweisung mu&szlig; sich auf aktuelle Sektion beziehen"
+ "FORWARD statement must reference to current section"
+
 Message ErrMsgDoubleSection
  "doppelter Sektionsname"
  "section name double defined"

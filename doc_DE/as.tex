@@ -49,7 +49,7 @@
 
 \vspace{1cm}\par
 
-{\large Stand Juli 2025}
+{\large Stand August 2025}
 \end{raggedright}
 
 \clearpage
@@ -1654,6 +1654,15 @@ weiteren Durchl"aufen ein 'true'.  Im Gegensatz dazu liefert \tty{DEFINED} nur
 dann ein 'true', wenn das Symbol im bis zu diesem Punkt assemblierten Code
 definiert wurde.  Bei Vorw"artsdeklarationen bleibt es also bei einem 'false',
 unabh"angig vom Durchlauf.
+
+\label{sect_symused}
+Mittels der Funktion \tty{SYMUSED} kann abgefragt werden, ob ein Symbol
+bisher schon einmal verwendet wurde.  {\bf ACHTUNG:} Da diese Information
+am Symbol in der Symboltabelle nachgehalten wird, und da ein Symbol bei
+einer Vorw"artsreferenz im ersten Pass noch nicht in der Symboltabelle
+existiert, wird eine Vorw"artsreferenz in so einem Fall nicht als
+Benutzung gerechnet!  Diese Situation kann durch Verwendung des
+\tty{FORWARD}-Befehls vermieden werden.
 
 \tty{DEFINED} akzeptiert nicht nur einen einfachen Symbolnamen, sondern auch
 einen kompletten Formelausdruck.  Der R"uckgabewert ist in so einem Fall
@@ -7461,7 +7470,7 @@ Neben \tty{IF} sind noch folgende weitere bedingte Befehle definiert:
       weiteren!}
 \item{\tty{IFNSYMEXIST} $<$Symbol$>$ : Umkehrung zu \tty{IFSYMEXIST}}
 \item{\tty{IFUSED} $<$Symbol$>$ : wahr, falls das Symbol bisher mindestens einmal
-      benutzt wurde.}
+      benutzt wurde.  Siehe Abschnitt \ref{sect_symused} f"ur Ausnahmen davon.}
 \item{\tty{IFNUSED} $<$Symbol$>$ : Umkehrung zu \tty{IFUSED}}
 \item{\tty{IFEXIST} $<$Name:  $>$ : wahr, falls die angegebene Datei existiert.
       F"ur Schreibweise und Suchpfade gelten gleiche Regeln wie beim
@@ -8141,7 +8150,7 @@ Symbolnamen mit einem expliziten Bezug versehen:
 \end{verbatim}
 Falls ein lokales Symbol h"aufig referenziert wird, k"onnen die vielen
 Klammern mit dem \tty{FORWARD}-Befehl eingespart werden.  Das Symbol
-wird damit explizit als lokal angek"undigt.  \asname{} wird dann bei Zugriffen
+wird damit explizit als lokal angek"undigt.  \asname{} wird bei Zugriffen
 auf dieses Symbol automatisch nur im lokalen Symbolbereich suchen.
 In diesem Falle m"u"ste an der mit \tty{***} gekennzeichneten Stelle
 daf"ur der Befehl
@@ -8153,6 +8162,17 @@ Damit \tty{FORWARD} Sinn macht, mu"s es nicht nur vor der Definition des
 Symbols, sondern vor seiner ersten Benutzung in der Sektion gegeben werden.
 Ein Symbol gleichzeitig privat und "offentlich zu definieren, ergibt keinen
 Sinn und wird von \asname{} auch angemahnt.
+
+Im Gegensatz zu \tty{PUBLIC} und \tty{GLOBAL} darf \tty{FORWARD} auch
+au"serhalb von Sektionen verwendet werden.  In diesem Fall bleibt die
+Funktion erhalten, da"s in der Symboltabelle ein 'Platzhalter-Eintrag'
+angelegt wird.  Dieser enth"alt zwar keinen Wert, und die Bezugnahme auf
+so einen Eintrag wird wie der Zugriff auf ein (bisher) nicht definiertes
+Symbol behandelt.  Es wird in so einem Fall aber das Used-Flag an diesem
+Platzhalter-Eintrag gesetzt.  Eine \tty{FORWARD}-Deklaration eines
+Symbols kann daher n"utzlich sein, wenn ein Symbol per \tty{SYMUSED} auf
+Benutzung gepr"uft werden soll, und es Referenzen vor seiner eigentlichen
+Definition im Quellcode gibt.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -12004,22 +12024,7 @@ zu lassen.
 Allen Records ist gemein ist ein Header-Byte, das den Typ des Records
 und die damit folgenden Datenstrukturen festlegt.  In einer Pascal-artigen
 Form l"a"st sich die Record-Struktur folgenderma"sen beschreiben:
-\begin{verbatim}
-FileRecord = RECORD CASE Header:Byte OF
-              $00:(Creator:ARRAY[] OF Char);
-              $01..
-              $7f:(StartAdr : LongInt;
-                   Length   : Word;
-                   Data     : ARRAY[0..Length-1] OF Byte);
-              $80:(EntryPoint:LongInt);
-              $81:(Header   : Byte;
-                   Segment  : Byte;
-                   Gran     : Byte;
-                   StartAdr : LongInt;
-                   Length   : Word;
-                   Data     : ARRAY[0..Length-1] OF Byte);
-             END
-\end{verbatim}
+\input{../doc_COM/recstruct.tex}
 Was in dieser Schreibweise nicht ganz zum Ausdruck kommt, ist, da"s
 die L"ange von Datenfeldern variabel ist und von {\tt Length} abh"angt.
 \par
@@ -12041,7 +12046,7 @@ Daten bzw. der folgende  Code bestimmt ist (siehe Tabelle \ref{TabHeader}).
 
 \begin{center}\begin{longtable}{|c|l||c|l|}
 \hline
-Header & Familie & Header & Familie \\
+FamilyHdr & Familie & FamilyHdr & Familie \\
 \hline
 \hline
 \endhead
@@ -13521,6 +13526,11 @@ Angaben:
                {Die Reihenfolge der Befehle in einem \tty{IF}-
 	        oder \tty{SWITCH}-Konstrukt stimmt nicht.}
                {keines}
+\errentry{1482}{FORWARD-Anweisung mu"s sich auf aktuelle Sektion beziehen}
+               {Fehler}
+               {\tty{FORWARD}-Direktiven d"urfen sich nicht auf Symbole in
+                einer anderen (h"oheren) Sektion beziehen.}
+               {der fragliche Symbolname}
 \errentry{1483}{doppelter Sektionsname}
                {Fehler}
                {Es existiert bereits eine Sektion gleichen

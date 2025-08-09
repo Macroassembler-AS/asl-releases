@@ -29,6 +29,9 @@
 #include "nlmessages.h"
 #include "chartrans.h"
 #include "as.rsc"
+#include "headids.h"
+
+#include "code3206x.h"
 
 /*---------------------------------------------------------------------------*/
 
@@ -2980,12 +2983,14 @@ static Boolean Chk34Arg(void)
 
 static void SwitchTo_3206X(void)
 {
+  const TFamilyDescr *p_descr = FindFamilyByName("TMS320C6x");
+
   TurnWords = False;
   SetIntConstMode(eIntConstModeIntel);
   SetIsOccupiedFnc = Chk34Arg;
 
   PCSymbol = "$";
-  HeaderID = 0x47;
+  HeaderID = p_descr->Id;
   NOPCode = 0x00000000;
   DivideChars = ",";
   HasAttrs = True;

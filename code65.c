@@ -1,4 +1,3 @@
-
 /* code65.c */
 /*****************************************************************************/
 /* SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only                     */
@@ -26,6 +25,7 @@
 #include "codevars.h"
 #include "errmsg.h"
 #include "assume.h"
+#include "headids.h"
 
 #include "code65.h"
 
@@ -2466,11 +2466,13 @@ static Boolean ChkZeroArgs(void)
 
 static void SwitchTo_65(void)
 {
+  const TFamilyDescr *p_descr = FindFamilyByName("65xx");
+
   TurnWords = False;
   SetIntConstMode(eIntConstModeMoto);
 
   PCSymbol = "*";
-  HeaderID = 0x11;
+  HeaderID = p_descr->Id;
   NOPCode = 0xea;
   DivideChars = ",";
   HasAttrs = False;
