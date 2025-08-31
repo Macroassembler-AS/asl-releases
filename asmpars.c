@@ -30,6 +30,7 @@
 #include "chunks.h"
 #include "trees.h"
 #include "fwd_sym.h"
+#include "fwd_refs.h"
 #include "operator.h"
 #include "function.h"
 #include "intformat.h"
@@ -136,7 +137,7 @@ char TmpSymCounterVal[10];     /* representation as string                   */
 TTmpSymLog TmpSymLog[LOCSYMSIGHT];
 LongInt TmpSymLogDepth;
 
-LongInt LocHandleCnt;          /* mom. verwendeter lokaler Handle            */
+static LongInt next_loc_handle;
 
 typedef struct sSymbolEntry
 {
@@ -220,11 +221,22 @@ static const char inf_name[] = "INF";
 static Boolean inf_reserved;
 static int def_radix_base;
 
-void InitPass_AsmPars(void)
+/*!------------------------------------------------------------------------
+ * \fn     initpass_asmpars(void)
+ * \brief  module-specific pass initialization
+ * ------------------------------------------------------------------------ */
+
+void initpass_asmpars(void)
 {
   RadixBase = def_radix_base;
   OutRadixBase = 16;
+  next_loc_handle = LOC_HANDLE_OFFSET;
 }
+
+/*!------------------------------------------------------------------------
+ * \fn     AsmParsInit(void)
+ * \brief  initialize/register module
+ * ------------------------------------------------------------------------ */
 
 void AsmParsInit(void)
 {
@@ -236,9 +248,10 @@ void AsmParsInit(void)
   FirstStack = NULL;
   FirstFunction = NULL;
   DoRefs = True;
-  InitPass_AsmPars();
   RegistersDefined = False;
-  AddInitPassProc(InitPass_AsmPars);
+
+  initpass_asmpars();
+  AddInitPassProc(initpass_asmpars);
 }
 
 /*!------------------------------------------------------------------------
@@ -1214,11 +1227,8 @@ func_exit:
 
 typedef enum { e_expand_chk_none, e_expand_chk_upto, e_expand_chk_empty_upto } expand_chk_t;
 
-static PSymbolEntry ExpandAndFindNode(
-#ifdef __PROTOS__
-const struct sStrComp *pComp, TempType SearchType, Boolean SearchLocal, expand_chk_t chk, lookup_symbol_error_t *p_lookup_error
-#endif
-);
+static PSymbolEntry ExpandAndFindNodeRet(const struct sStrComp *pName, struct sStrComp *p_expanded_name, TempType SearchType, Boolean SearchLocal, expand_chk_t chk, lookup_symbol_error_t *p_lookup_error);
+static PSymbolEntry ExpandAndFindNode(const struct sStrComp *pName, TempType SearchType, Boolean SearchLocal, expand_chk_t chk, lookup_symbol_error_t *p_lookup_error);
 
 /*!------------------------------------------------------------------------
  * \fn     EvalResultClear(tEvalResult *pResult)
@@ -2117,7 +2127,21 @@ func_exit2:
 
   /* plain symbol */
 
-  LookupSymbol(&CopyComp, pErg, True, TempAll, eval_flags, NULL);
+  {
+    String exp_name_buf;
+    tStrComp exp_name;
+
+    StrCompMkTemp(&exp_name, exp_name_buf, sizeof(exp_name_buf));
+    LookupSymbolRet(&CopyComp, &exp_name, pErg, True, TempAll, eval_flags, NULL);
+
+    /* no forward reference entries if just ifdef was queried: */
+
+    if ((pErg->Flags & eSymbolFlag_FirstPassUnknown)
+     && !(eval_flags & e_eval_flag_undefined_is_unknown))
+    {
+      as_forward_ref_add(exp_name.str.p_str);
+    }
+  }
 
 func_exit:
 
@@ -2521,6 +2545,7 @@ static Boolean SymbolAdder(PTree *PDest, PTree Neu, void *pData)
   if (!PDest)
   {
     set_symbol_entry_flag(NewEntry, defined, True);
+    /* usage by possible forward references is updated on-demand in update_and_get_used() */
     set_symbol_entry_flag(NewEntry, used, False);
     set_symbol_entry_flag(NewEntry, changeable, EnterStruct->MayChange);
     NewEntry->RefList = NULL;
@@ -3141,7 +3166,6 @@ static PSymbolEntry FindGlobNode_FNode(const char *Name, TempType SearchType, Lo
   return Lauf;
 }
 
-
 static PSymbolEntry FindGlobNode(const char *p_name, TempType SearchType, LongInt DestSection)
 {
   PSaveSection Lauf;
@@ -3252,7 +3276,7 @@ static PSymbolEntry FindNode(const tStrComp *p_exp_name, TempType SearchType, Bo
 }
 
 /*!------------------------------------------------------------------------
- * \fn     ExpandAndFindNode(const struct sStrComp *pComp, TempType SearchType, Boolean SearchLocal, expand_chk_t chk, lookup_symbol_error_t *p_lookup_error)
+ * \fn     ExpandAndFindNode(const struct sStrComp *pName, TempType SearchType, Boolean SearchLocal, expand_chk_t chk, lookup_symbol_error_t *p_lookup_error)
  * \brief  expand, optionally check and find node in global and/or local symbol table
  * \param  pComp name of symbol to expand & search
  * \param  SearchType data type to search for
@@ -3262,17 +3286,14 @@ static PSymbolEntry FindNode(const tStrComp *p_exp_name, TempType SearchType, Bo
  * \return * to node or NULL
  * ------------------------------------------------------------------------ */
 
-PSymbolEntry ExpandAndFindNode(const struct sStrComp *pComp, TempType SearchType, Boolean SearchLocal, expand_chk_t chk, lookup_symbol_error_t *p_lookup_error)
+PSymbolEntry ExpandAndFindNodeRet(const struct sStrComp *pName, struct sStrComp *p_exp_name, TempType SearchType, Boolean SearchLocal, expand_chk_t chk, lookup_symbol_error_t *p_lookup_error)
 {
-  String exp_name_buf;
-  tStrComp exp_name;
-  const tStrComp *p_exp_name;
+  const tStrComp *p_exp_name_ret;
   const char *pKlPos;
 
   if (p_lookup_error) *p_lookup_error = e_lookup_error_none;
-  StrCompMkTemp(&exp_name, exp_name_buf, sizeof(exp_name_buf));
-  p_exp_name = ExpandStrSymbol(&exp_name, pComp, !CaseSensitive);
-  if (!p_exp_name)
+  p_exp_name_ret = ExpandStrSymbol(p_exp_name, pName, !CaseSensitive);
+  if (!p_exp_name_ret)
   {
     if (p_lookup_error) *p_lookup_error = e_lookup_error_expand;
     return NULL;
@@ -3282,15 +3303,24 @@ PSymbolEntry ExpandAndFindNode(const struct sStrComp *pComp, TempType SearchType
   {
     /* just [...] without symbol name itself is not valid */
 
-    pKlPos = strchr(p_exp_name->str.p_str, '[');
-    if ((pKlPos == p_exp_name->str.p_str) || (ChkSymbNameUpTo(p_exp_name->str.p_str, pKlPos) != pKlPos))
+    pKlPos = strchr(p_exp_name_ret->str.p_str, '[');
+    if ((pKlPos == p_exp_name_ret->str.p_str) || (ChkSymbNameUpTo(p_exp_name->str.p_str, pKlPos) != pKlPos))
     {
       if (p_lookup_error) *p_lookup_error = e_lookup_error_namecheck;
       return NULL;
     }
   }
 
-  return FindNode(p_exp_name, SearchType, SearchLocal, p_lookup_error);
+  return FindNode(p_exp_name_ret, SearchType, SearchLocal, p_lookup_error);
+}
+
+PSymbolEntry ExpandAndFindNode(const struct sStrComp *pName, TempType SearchType, Boolean SearchLocal, expand_chk_t chk, lookup_symbol_error_t *p_lookup_error)
+{
+  String exp_name_buf;
+  tStrComp exp_name;
+
+  StrCompMkTemp(&exp_name, exp_name_buf, sizeof(exp_name_buf));
+  return ExpandAndFindNodeRet(pName, &exp_name, SearchType, SearchLocal, chk, p_lookup_error);
 }
 
 /**
@@ -3308,11 +3338,11 @@ void SetSymbolType(const tStrComp *pName, Byte NTyp)
 }
 **/
 
-void LookupSymbol(const struct sStrComp *pComp, TempResult *pValue, Boolean WantRelocs, TempType ReqType,
+void LookupSymbolRet(const struct sStrComp *pComp, struct sStrComp *p_exp_name, TempResult *pValue, Boolean WantRelocs, TempType ReqType,
                   as_eval_flags_t eval_flags, as_symbol_entry_flags_t *p_symbol_entry_flags)
 {
   lookup_symbol_error_t lookup_error;
-  PSymbolEntry pEntry = ExpandAndFindNode(pComp, ReqType, True, e_expand_chk_upto, &lookup_error);
+  PSymbolEntry pEntry = ExpandAndFindNodeRet(pComp, p_exp_name, ReqType, True, e_expand_chk_upto, &lookup_error);
 
   if (pEntry)
   {
@@ -3326,7 +3356,7 @@ void LookupSymbol(const struct sStrComp *pComp, TempResult *pValue, Boolean Want
       pEntry = NULL;
     }
 
-    /* Was it requested to tread yet-not-defined symbols as unknown? */
+    /* Was it requested to treat yet-not-defined symbols as unknown? */
 
     else if (!get_symbol_entry_flag(pEntry, defined) && (eval_flags & e_eval_flag_undefined_is_unknown))
     {
@@ -3355,7 +3385,12 @@ void LookupSymbol(const struct sStrComp *pComp, TempResult *pValue, Boolean Want
         pValue->Flags |= eSymbolFlag_Questionable;
       pValue->Flags |= eSymbolFlag_UsesForwards;
     }
-    set_symbol_entry_flag(pEntry, used, True);
+
+    /* If this is part of an IFDEF query, accesses to the symbol shall not set the
+       'used' flag: */
+
+    if (!(eval_flags & e_eval_flag_undefined_is_unknown))
+      set_symbol_entry_flag(pEntry, used, True);
   }
 
   else switch (lookup_error)
@@ -3386,6 +3421,15 @@ void LookupSymbol(const struct sStrComp *pComp, TempResult *pValue, Boolean Want
   }
 }
 
+void LookupSymbol(const struct sStrComp *pComp, TempResult *pValue, Boolean WantRelocs, TempType ReqType,
+                  as_eval_flags_t eval_flags, as_symbol_entry_flags_t *p_symbol_entry_flags)
+{
+  String exp_name_buf;
+  tStrComp exp_name;
+
+  StrCompMkTemp(&exp_name, exp_name_buf, sizeof(exp_name_buf));
+  LookupSymbolRet(pComp, &exp_name, pValue, WantRelocs, ReqType, eval_flags, p_symbol_entry_flags);
+}
 /*!------------------------------------------------------------------------
  * \fn     SetSymbolOrStructElemSize(const struct sStrComp *pName, tSymbolSize Size)
  * \brief  set (integer) data size associated with a symbol
@@ -3460,6 +3504,20 @@ Boolean is_symbol_existing(const struct sStrComp *p_name)
 }
 
 /*!------------------------------------------------------------------------
+ * \fn     update_and_get_used(TSymbolEntry *p_entry)
+ * \brief  retrieve the 'used flag of a node, an possibly update it before
+ * \param  p_entry symbol in question
+ * \return True if used
+ * ------------------------------------------------------------------------ */
+
+static Boolean update_and_get_used(TSymbolEntry *p_entry)
+{
+  if (!get_symbol_entry_flag(p_entry, used))
+    set_symbol_entry_flag(p_entry, used, as_forward_ref_search_and_mark(p_entry->Tree.Name, p_entry->Tree.Attribute));
+  return get_symbol_entry_flag(p_entry, used);
+}
+
+/*!------------------------------------------------------------------------
  * \fn     IsSymbolUsed(const struct sStrComp *pName)
  * \brief  check whether symbol nas been used so far
  * \param  pName unexpanded symbol name
@@ -3473,7 +3531,7 @@ Boolean IsSymbolUsed(const struct sStrComp *pName)
   if (lookup_error == e_lookup_error_namecheck)
     WrStrErrorPos(ErrNum_InvSymName, pName);
 
-  return pEntry && get_symbol_entry_flag(pEntry, used);
+  return pEntry && update_and_get_used(pEntry);
 }
 
 /*!------------------------------------------------------------------------
@@ -3545,13 +3603,15 @@ static void PrintSymbolList_PNode(PTree Tree, void *pData)
     TListContext *pContext = (TListContext*) pData;
     int l1, nBlanks;
     const TempResult *pValue = &Node->SymWert;
+    Boolean symbol_used;
 
     if ((pValue->Typ == TempInt) && DissectBit && (pValue->AddrSpaceMask & (1 << SegBData)))
       DissectBit(pContext->s1.p_str, pContext->s1.capacity, pValue->Contents.Int);
     else
       StrSym(pValue, False, &pContext->s1, ListRadixBase);
 
-    as_sdprintf(&pContext->sh, "%c%s", get_symbol_entry_flag(Node, used) ? ' ' : '*', Tree->Name);
+    symbol_used = update_and_get_used(Node);
+    as_sdprintf(&pContext->sh, "%c%s", symbol_used ? ' ' : '*', Tree->Name);
     if (Tree->Attribute != -1)
       as_sdprcatf(&pContext->sh, "[%s]", GetSectionName(Tree->Attribute));
     as_sdprcatf(&pContext->sh, " : ");
@@ -3560,7 +3620,7 @@ static void PrintSymbolList_PNode(PTree Tree, void *pData)
     as_sdprcatf(&pContext->sh, "%s%s %c | ", Blanks(nBlanks), pContext->s1.p_str, SegShorts[addrspace_from_mask(pValue->AddrSpaceMask)]);
     PrintSymbolList_AddOut(pContext->sh.p_str, pContext);
     pContext->Sum++;
-    if (!get_symbol_entry_flag(Node, used))
+    if (!symbol_used)
       pContext->USum++;
   }
 }
@@ -3674,7 +3734,7 @@ static void PrintDebSymbols_PNode(PTree Tree, void *pData)
     fprintf(DebContext->f, "%s", DebContext->s.p_str); ChkIO(ErrNum_FileWriteError);
   }
   fprintf(DebContext->f, "%s %-3d %d %d\n", Blanks(25 - l1), Node->SymWert.DataSize,
-          get_symbol_entry_flag(Node, used), get_symbol_entry_flag(Node, changeable));
+          update_and_get_used(Node), get_symbol_entry_flag(Node, changeable));
   ChkIO(ErrNum_FileWriteError);
 }
 
@@ -3736,7 +3796,7 @@ void PrintNoISymbols(FILE *f)
 
 void PrintSymbolTree(void)
 {
-  DumpTree((PTree)FirstSymbol);
+  DumpTree(Debug, (PTree)FirstSymbol);
 }
 
 static void ClearSymbolList_ClearNode(PTree Node, void *pData)
@@ -4320,6 +4380,46 @@ void PrintDebSections(FILE *f)
   }
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     get_section_parent(LongInt section_handle)
+ * \brief  retrieve parent of section
+ * \param  section_handle child section
+ * \return section handle of parent or -2
+ * ------------------------------------------------------------------------ */
+
+LongInt get_section_parent(LongInt section_handle)
+{
+  PCToken p_run = FirstSection;
+
+  if (section_handle <= 0)
+    return -2;
+  while ((section_handle > 0) && p_run)
+  {
+    p_run = p_run->Next;
+    section_handle--;
+  }
+  return p_run ? p_run->Parent : -2;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     is_sub_section(LongInt child, LongInt parent)
+ * \brief  check whether one section is direct or indirect child of another section
+ * \param  child possible child
+ * \param  parent possible parent
+ * \return True if yes
+ * ------------------------------------------------------------------------ */
+
+Boolean is_sub_section(LongInt child, LongInt parent)
+{
+  while (child >= 0)
+  {
+    child = get_section_parent(child);
+    if (child == parent)
+      return True;
+  }
+  return False;
+}
+
 void ClearSectionList(void)
 {
   PCToken Tmp;
@@ -4439,7 +4539,7 @@ void ClearCrossList(void)
 
 LongInt GetLocHandle(void)
 {
-  return LocHandleCnt++;
+  return next_loc_handle++;
 }
 
 void PushLocHandle(LongInt NewLoc)
@@ -4479,6 +4579,7 @@ static void PrintRegList_PNode(PTree Tree, void *pData)
   {
     TListContext *pContext = (TListContext*) pData;
     String tmp, tmp2;
+    Boolean symbol_used;
 
     if (Node->SymWert.Contents.RegDescr.Dissect)
       Node->SymWert.Contents.RegDescr.Dissect(tmp2, sizeof(tmp2), Node->SymWert.Contents.RegDescr.Reg, Node->SymWert.DataSize);
@@ -4487,7 +4588,8 @@ static void PrintRegList_PNode(PTree Tree, void *pData)
     *tmp = '\0';
     if (Tree->Attribute != -1)
       as_snprcatf(tmp, sizeof(tmp), "[%s]", GetSectionName(Tree->Attribute));
-    as_snprcatf(tmp, sizeof(tmp), "%c%s --> %s", get_symbol_entry_flag(Node, used) ? ' ' : '*', Tree->Name, tmp2);
+    symbol_used = update_and_get_used(Node);
+    as_snprcatf(tmp, sizeof(tmp), "%c%s --> %s", symbol_used ? ' ' : '*', Tree->Name, tmp2);
     if ((int)strlen(tmp) > pContext->cwidth - 3)
     {
       if (*pContext->Zeilenrest.p_str)
@@ -4508,7 +4610,7 @@ static void PrintRegList_PNode(PTree Tree, void *pData)
       }
     }
     pContext->Sum++;
-    if (!get_symbol_entry_flag(Node, used))
+    if (!symbol_used)
       pContext->USum++;
   }
 }

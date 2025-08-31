@@ -1147,24 +1147,11 @@ Boolean asmerr_check_fp_dispose_result(int ret, const struct sStrComp *p_arg)
 }
 
 /*!------------------------------------------------------------------------
- * \fn     AsmErrPassInit(void)
- * \brief  module initialization prior to (another) pass through sources
- * ------------------------------------------------------------------------ */
-
-void AsmErrPassInit(void)
-{
-  ErrorCount = 0;
-  WarnCount = 0;
-  ClearExpectErrors();
-  InExpect = False;
-}
-
-/*!------------------------------------------------------------------------
- * \fn     AsmErrPassExit(void)
+ * \fn     exit_pass(void)
  * \brief  module checks & cleanups after a pass through sources
  * ------------------------------------------------------------------------ */
 
-void AsmErrPassExit(void)
+static void exit_pass(void)
 {
   if (InExpect)
     WrError(ErrNum_MissingENDEXPECT);
@@ -1232,12 +1219,16 @@ static const as_cmd_rec_t cmd_params[] =
 };
 
 /*!------------------------------------------------------------------------
- * \fn     initpass_asmerr(void)
+ * \fn     init_pass(void)
  * \brief  called before start of each pass
  * ------------------------------------------------------------------------ */
 
-static void initpass_asmerr(void)
+static void init_pass(void)
 {
+  ErrorCount = 0;
+  WarnCount = 0;
+  ClearExpectErrors();
+  InExpect = False;
   warn_registered = 0;
 }
 
@@ -1252,5 +1243,6 @@ void asmerr_init(void)
   warn_sign_extension = True;
   def_warn_relative = def_warn_relative_set = False;
   as_cmd_register(cmd_params, as_array_size(cmd_params));
-  AddInitPassProc(initpass_asmerr);
+  AddInitPassProc(init_pass);
+  add_exit_pass_proc(exit_pass);
 }

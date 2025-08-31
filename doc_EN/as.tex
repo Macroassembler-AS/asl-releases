@@ -67,7 +67,7 @@
 
 \vspace{1cm}\par
 
-{\large Edition August 2025}
+{\large Edition September 2025}
 \end{raggedright}
 
 \clearpage
@@ -1386,7 +1386,7 @@ a (growing) number of targets, these fields will be displayed with
 question marks.  The following targets currently support this feature:
 \begin{itemize}
 \item{65xx/65XXX}
-\item{6800/6805/68HC08/68HC11}
+\item{6800/6805/68HC08/6809/68HC11/68HC12}
 \item{8080/8085}
 \item{(e)Z80/Z180/Z280/Z380}
 \item{8048}
@@ -1614,13 +1614,25 @@ in all passes - the meaning is 'defined up to this point in the source'.
 
 \label{sect_symused}
 The function \tty{SYMUSED} allows to query whether a symbol has been
-used at least once up to this point.  {\bf CAUTION!} The information
-of 'being used' is stored along with the symbol in the symbol table.
-In case of a forward reference, the symbol does not (yet) exist in the
-symbol table in pass one.  Therefore, forward references do not count
-as 'usage' in this case.  This situation may be avoided by using a
-\tty{FORWARD} declaration of the symbol, thereby making it known
-prior to its actual definiton.
+used at least once up to this point.  This includes references made
+to a symbol prior to its definition, i.e. forward references, in case
+one of these conditions is fulfilled:
+\begin{itemize}
+\item{Both the forward reference and the definition are done in the
+      global symbol name space, i.e. outside of expanded macro bodies
+      and sections.}
+\item{The forward reference is done inside a section, but outside of
+      an expanded macro body, and the definition is also done outside
+      of an expanded macro body, and either in the same section, one
+      of its parent sections, or globally.}
+\item{The forward reference is done inside an expanded macro body, and
+      the definition is done in the same macro body.}
+\end{itemize}
+If a symbol shall be tested for usage, and if there are usages that
+do not match any of these conditions, there is still the option to
+announce the existence of a symbol via a \tty{FORWARD} declaration.
+This effectively creates an 'empty' entry in the symbol table, that
+can hold the usage flag even before actual definition of the symbol.
 
 \tty{DEFINED} not only accepts simple symbol names, but also complete
 formula expressions.  In this case, the return value is 'true' only if the

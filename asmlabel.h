@@ -20,8 +20,6 @@ extern void LabelHandle(const struct sStrComp *pName, LargeWord Value, Boolean F
 
 extern void LabelModify(LargeWord OldValue, LargeWord NewValue);
 
-extern void AsmLabelPassInit(void);
-
 extern void asmlabel_init(void);
 
 #endif /* _ASMLABEL_H */

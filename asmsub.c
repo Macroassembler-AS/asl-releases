@@ -61,7 +61,7 @@ static Byte *ValidSymChar;
 /****************************************************************************/
 /* Modulinitialisierung */
 
-void AsmSubPassInit(void)
+static void initpass_asmsub(void)
 {
   PageLength = 60;
   PageWidth = 0;
@@ -1676,14 +1676,23 @@ typedef struct sProcStore
 } tProcStore;
 
 static tProcStore *pInitPassProcStore = NULL,
+                  *p_exit_pass_proc_store = NULL,
                   *pClearUpProcStore = NULL;
 
-void InitPass(void)
+void exec_init_pass_fncs(void)
 {
   tProcStore *pStore;
 
   for (pStore = pInitPassProcStore; pStore; pStore = pStore->pNext)
     pStore->Proc();
+}
+
+void exec_exit_pass_fncs(void)
+{
+  tProcStore *p_store;
+
+  for (p_store = p_exit_pass_proc_store; p_store; p_store = p_store->pNext)
+    p_store->Proc();
 }
 
 void ClearUp(void)
@@ -1701,6 +1710,15 @@ void AddInitPassProc(SimpProc NewProc)
   pNewStore->pNext = pInitPassProcStore;
   pNewStore->Proc = NewProc;
   pInitPassProcStore = pNewStore;
+}
+
+void add_exit_pass_proc(SimpProc new_proc)
+{
+  tProcStore *p_new_store = (tProcStore*)calloc(1, sizeof(*p_new_store));
+
+  p_new_store->pNext = p_exit_pass_proc_store;
+  p_new_store->Proc = new_proc;
+  p_exit_pass_proc_store = p_new_store;
 }
 
 void AddClearUpProc(SimpProc NewProc)
@@ -2129,5 +2147,6 @@ void asmsub_init(void)
   }
 #endif
 
+  AddInitPassProc(initpass_asmsub);
   version_init();
 }

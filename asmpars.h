@@ -21,6 +21,8 @@
 #include "addrspace.h"
 #include "stringlists.h"
 
+#define LOC_HANDLE_OFFSET 1000000
+
 typedef enum
 {
   UInt0
@@ -109,7 +111,7 @@ typedef struct _TFunction
 {
   struct _TFunction *Next;
   Byte ArguCnt;
-  StringPtr Name, Definition;
+  char  *Name, *Definition;
   StringList p_arg_list;
 } TFunction, *PFunction;
 
@@ -154,11 +156,12 @@ extern LongInt TmpSymCounter,
                FwdSymCounter,
                BackSymCounter;
 extern char TmpSymCounterVal[10];
-extern LongInt LocHandleCnt;
 extern LongInt MomLocHandle;
 
 
 extern void AsmParsInit(void);
+
+extern void AsmParsPassInit(void);
 
 extern void InitTmpSymbols(void);
 
@@ -211,6 +214,8 @@ extern void EnterRegSymbol(const struct sStrComp *pName, const tRegDescr *Value,
 
 extern void EnterNoneSymbol(const struct sStrComp *pName);
 
+extern void LookupSymbolRet(const struct sStrComp *pName, struct sStrComp *p_exp_name, TempResult *pValue, Boolean WantRelocs, TempType ReqType,
+                            as_eval_flags_t eval_flags, as_symbol_entry_flags_t *p_symbol_entry_flags);
 extern void LookupSymbol(const struct sStrComp *pName, TempResult *pValue, Boolean WantRelocs, TempType ReqType,
                          as_eval_flags_t eval_flags, as_symbol_entry_flags_t *p_symbol_entry_flags);
 
@@ -280,6 +285,7 @@ extern Boolean PushSymbol(const struct sStrComp *pSymName, const struct sStrComp
 
 extern Boolean PopSymbol(const struct sStrComp *pSymName, const struct sStrComp *pStackName);
 
+
 extern void ClearStacks(void);
 
 
@@ -310,6 +316,10 @@ extern LongInt GetSectionHandle(const char *SName, Boolean AddEmpt, LongInt Pare
 extern const char *GetSectionName(LongInt Handle);
 
 extern void SetMomSection(LongInt Handle);
+
+extern LongInt get_section_parent(LongInt section_handle);
+
+extern Boolean is_sub_section(LongInt child, LongInt parent);
 
 extern void AddSectionUsage(LongInt Start, LongInt Length);
 

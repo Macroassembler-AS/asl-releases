@@ -49,7 +49,7 @@
 
 \vspace{1cm}\par
 
-{\large Stand August 2025}
+{\large Stand September 2025}
 \end{raggedright}
 
 \clearpage
@@ -1423,7 +1423,7 @@ Annahme f"ur den Wert, der die weitere Assemblierung nicht st"ort.  Bei einer
 mit Fragezeichen angezeigt.  Die folgenden Targets unterst"utzen dies aktuell:
 \begin{itemize}
 \item{65xx/65XXX}
-\item{6800/6805/68HC08/68HC11}
+\item{6800/6805/68HC08/6809/68HC11/68HC12}
 \item{8080/8085}
 \item{(e)Z80/Z180/Z280/Z380}
 \item{8048}
@@ -1657,12 +1657,25 @@ unabh"angig vom Durchlauf.
 
 \label{sect_symused}
 Mittels der Funktion \tty{SYMUSED} kann abgefragt werden, ob ein Symbol
-bisher schon einmal verwendet wurde.  {\bf ACHTUNG:} Da diese Information
-am Symbol in der Symboltabelle nachgehalten wird, und da ein Symbol bei
-einer Vorw"artsreferenz im ersten Pass noch nicht in der Symboltabelle
-existiert, wird eine Vorw"artsreferenz in so einem Fall nicht als
-Benutzung gerechnet!  Diese Situation kann durch Verwendung des
-\tty{FORWARD}-Befehls vermieden werden.
+bisher schon einmal verwendet wurde.  Dies schlie"st auch Bez"uge auf
+ein Symbol ein, die {\em vor} seiner Definition erfolgen, falls
+eine der folgenden Bedingungen erf"ullt ist:
+\begin{itemize}
+\item{Sowohl die Vorw"artsreferenz als auch die Definition erfolgen im
+      globalen Symbol-Namensraum, d.h. au"serhalb von Sektionen oder
+      expandierten Makro-Rümpfen.}
+\item{Die Vorw"artsreferenz erfolgt in einer Sektion, aber au"serhalb
+      eines expandierten Makro-Rumpfes, und die Definition erfolgt ebenfalls
+      au"serhalb eines expandierten Makro-Rumpfes, in der selben Sektion, oder
+      einer Eltern-Sektion dieser Sektion, oder global.}
+\item{Die Vorw"artsreferenz erfolgt innerhalb eines expandierten Makro-Rumpfes,
+      und die Definition im selben Makro-Rumpf.}
+\end{itemize}
+Falls ein Symbol auf Benutzung gepr"uft werden soll und es Vorw"artsreferenzen
+gibt, die keine dieser drei Situationen erf"ullt, bleibt die M"oglichkeit,
+ein Symbol vor der ersten Vorw"artsreferenz mittels des \tty{FORWARD}-Befehls
+anzuk"undigen.  Es wird dann quasi ein 'Leereintrag' in der Symboltabelle
+angelegt, an dem Vorw"artsreferenzen explizit vermerkt werden k"onnen.
 
 \tty{DEFINED} akzeptiert nicht nur einen einfachen Symbolnamen, sondern auch
 einen kompletten Formelausdruck.  Der R"uckgabewert ist in so einem Fall

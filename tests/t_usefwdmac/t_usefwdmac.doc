@@ -1,0 +1,7 @@
++-------------------- Test Application t_usefwdmac --------------------------+
+|                                                                            |
+| Starting with 1.42 Build 293, SYMUSED() also works if symbols have been    |
+| referenced only before being defined in the source code.  This plays a bit |
+| with the situations that may occur if labels local to macros are queried:  |
+|                                                                            |
++----------------------------------------------------------------------------+

@@ -54,6 +54,7 @@
 #include "asmallg.h"
 #include "onoff_common.h"
 #include "codepseudo.h"
+#include "fwd_refs.h"
 #include "as.h"
 
 #include "codenone.h"
@@ -2484,7 +2485,7 @@ static void Produce_Code(void)
       else
         strmaxcpy(ListLine, "(MACRO)", STRINGSIZE);
       if (expanded)
-        as_snprcatf(ListLine, STRINGSIZE, "[%lu]", (unsigned long)FirstInputTag->LocHandle);
+        as_snprcatf(ListLine, STRINGSIZE, "[%lu]", (unsigned long)(FirstInputTag->LocHandle - LOC_HANDLE_OFFSET));
 
       /* Macro call itself must not appear in expanded output.  However, a label
          in the same line that is not consumed by the macro must.  In this case,
@@ -2893,7 +2894,6 @@ static void AssembleFile_InitPass(void)
   FirstOutputTag = NULL;
 
   MomLocHandle = -1;
-  LocHandleCnt = 0;
   SectSymbolCounter = 0;
 
   SectionStack = NULL;
@@ -2904,8 +2904,7 @@ static void AssembleFile_InitPass(void)
   for (z = 0; z < SegCount; z++)
     pPhaseStacks[z] = NULL;
 
-  InitPass();
-  AsmLabelPassInit();
+  exec_init_pass_fncs();
 
   ActPC = SegCode;
   PCs[ActPC] = 0;
@@ -3050,7 +3049,7 @@ static void AssembleFile_ExitPass(void)
   UnsetCPU();
   ClearLocStack();
   ClearStacks();
-  AsmErrPassExit();
+  exec_exit_pass_fncs();
   for (z = 0; z < SegCount; z++)
     while (pPhaseStacks[z])
     {
@@ -3209,8 +3208,6 @@ static void AssembleFile(char *Name)
     /* Durchlauf initialisieren */
 
     AssembleFile_InitPass();
-    AsmSubPassInit();
-    AsmErrPassInit();
     if (msg_level >= e_msg_level_normal)
     {
       as_snprintf(Tmp, sizeof(Tmp), "%s", getmessage(Num_InfoMessPass));
@@ -4395,6 +4392,7 @@ int main(int argc, char **argv)
     cpulist_init();
     asmsub_init();
     asmpars_init();
+    as_forward_ref_init();
     intformat_init();
 
     asmmac_init();

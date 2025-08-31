@@ -1,33 +1,22 @@
-#ifndef _VERSION_H
-#define _VERSION_H
-/* version.h */
+#ifndef _FWD_REFS_H
+#define _FWD_REFS_H
+/* fwd_refs.h */
 /*****************************************************************************/
 /* SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only                     */
 /*                                                                           */
 /* ASL                                                                       */
 /*                                                                           */
-/* Keeps Version Number(s)                                                   */
+/* Store and resolve symbol forward references for the purpose of symbol     */
+/* usage tracking                                                            */
 /*                                                                           */
 /*****************************************************************************/
 
 #include "datatypes.h"
 
-#define AS_VERSION_MAJOR 1
-#define AS_VERSION_MINOR 42
-#define AS_VERSION_BUILD 293
+extern void as_forward_ref_add(const char *p_expanded_name);
 
-/* The standard C stringification magic: */
+extern Boolean as_forward_ref_search_and_mark(const char *p_name, LongInt attribute);
 
-#define STR_STRING(x)   #x
-#define STR(x)          STR_STRING(x)
+extern void as_forward_ref_init(void);
 
-extern const char *Version;
-extern LongInt VerNo;
-
-extern const char *InfoMessCopyright;
-
-extern LongInt Magic;
-
-extern void version_init(void);
-
-#endif /* _VERSION_H */
+#endif /* _FWD_REFS_H */

@@ -11,6 +11,7 @@
 #include "stdinc.h"
 #include <string.h>
 #include <ctype.h>
+#include <assert.h>
 
 #include "be_le.h"
 #include "nls.h"
@@ -86,20 +87,41 @@ void DestroyTree(PTree *Tree, TTreeCallback Callback, void *pData)
   }
 }
 
-static void DumpTreeIter(PTree Tree, LongInt Level)
+void DumpTreeNode(FILE *p_file, TTree *p_tree, int indent)
+{
+  if (indent > 0)
+    fprintf(p_file, "%*s", indent, "");
+  fprintf(p_file, "%s", p_tree->Name);
+  if (p_tree->Attribute >= 0)
+    fprintf(p_file, "(%d)", (int)p_tree->Attribute);
+}
+
+static void DumpTreeIter(FILE *p_file, PTree Tree, LongInt Level)
 {
   ChkStack();
   if (Tree)
   {
-    if (Tree->Left) DumpTreeIter(Tree->Left, Level + 1);
-    fprintf(Debug,"%*s%s\n", 6 * Level, "", Tree->Name);
-    if (Tree->Right) DumpTreeIter(Tree->Right, Level + 1);
+    if (Tree->Left) DumpTreeIter(p_file, Tree->Left, Level + 1);
+    DumpTreeNode(p_file, Tree, 6 * Level);
+    fprintf(p_file, "\n");
+    if (Tree->Right) DumpTreeIter(p_file, Tree->Right, Level + 1);
   }
 }
 
-void DumpTree(PTree Tree)
+void DumpTree(FILE *p_file, PTree Tree)
 {
-  DumpTreeIter(Tree, 0);
+  DumpTreeIter(p_file, Tree, 0);
+}
+
+void DumpTreePath(FILE *p_file, const as_tree_path_t *p_path)
+{
+  size_t z;
+  for (z = 0; z < p_path->length; z++)
+  {
+    fprintf(p_file, "->");
+    DumpTreeNode(p_file, p_path->path[z], 0);
+    fprintf(p_file, "[%d]", p_path->state[z]);
+  }
 }
 
 PTree SearchTree(PTree Tree, const char *Name, LongInt Attribute)
@@ -230,4 +252,233 @@ Boolean EnterTree(PTree *PDest, PTree Neu, TTreeAdder Adder, void *pData)
   }
 
   return Result;
+}
+
+#define DBG_FIND_TREE 0
+
+#if DBG_FIND_TREE
+
+#include <stdarg.h>
+
+static int tree_dbg_printf(const char *p_fmt, ...)
+{
+  va_list ap;
+  int ret;
+  va_start(ap, p_fmt);
+  ret = vfprintf(stderr, p_fmt, ap);
+  va_end(ap);
+  return ret;
+}
+
+#define tree_dbg_node(p_node) DumpTreeNode(stderr, p_node, 0)
+#define tree_dbg_path(p_path) DumpTreePath(stderr, p_path)
+#define tree_dbg_tree(p_tree) DumpTree(stderr, p_tree)
+
+#else /* !DBG_FIND_TREE */
+
+static int tree_dbg_printf(const char *p_fmt, ...)
+{
+  UNUSED(p_fmt);
+  return 0;
+}
+
+#define tree_dbg_node(p_node) do { (void)p_node; } while (0)
+#define tree_dbg_path(p_path) do { (void)p_path; } while (0)
+#define tree_dbg_tree(p_tree) do { (void)p_tree; } while (0)
+
+#endif /* DBG_FIND_TREE */
+
+/*!------------------------------------------------------------------------
+ * \fn     find_tree_first(TTree *p_tree, const char *p_name, as_tree_path_t *p_path)
+ * \brief  find first occurence of symbol with given name
+ * \param  p_tree tree to search
+ * \param  p_name symbol name to search
+ * \param  p_path tracks path in tree for find_tree_next()
+ * \return * to first entry or NULL if not found
+ * ------------------------------------------------------------------------ */
+
+static void add_path(as_tree_path_t *p_path, TTree *p_tree, int state)
+{
+  assert(p_path->length < as_array_size(p_path->path));
+  p_path->state[p_path->length] = state;
+  p_path->path[p_path->length++] = p_tree;
+}
+
+static TTree *find_min_for_recursive(TTree *p_tree, const char *p_name, as_tree_path_t *p_path)
+{
+  int this_cmp;
+
+  if (!p_tree)
+    return NULL;
+  tree_dbg_printf(" cmp to '");
+  tree_dbg_node(p_tree);
+  this_cmp = StrCmp(p_name, p_tree->Name, -1, p_tree->Attribute);
+  tree_dbg_printf("' -> this_cmp %d\n", this_cmp);
+
+  if (this_cmp == 0)
+  {
+    add_path(p_path, p_tree, 0);
+    return p_tree;
+  }
+  else if (this_cmp < 0)
+  {
+    TTree *p_candidate;
+    size_t save_path_length;
+
+    add_path(p_path, p_tree, -1);
+    save_path_length = p_path->length;
+    p_candidate = find_min_for_recursive(p_tree->Left, p_name, p_path);
+    if (!p_candidate)
+    {
+      p_path->length = save_path_length;
+      p_path->state[p_path->length - 1] = 0;
+      return p_tree;
+    }
+    else
+      return p_candidate;
+  }
+  else
+  {
+    add_path(p_path, p_tree, 1);
+    return find_min_for_recursive(p_tree->Right, p_name, p_path);
+  }
+}
+
+static TTree *find_min_for_iterative(TTree *p_tree, const char *p_name, as_tree_path_t *p_path)
+{
+  TTree *p_ret;
+
+  for (p_ret = p_tree; p_ret;)
+  {
+    int cmp_res;
+
+    tree_dbg_printf(" cmp to '");
+    tree_dbg_node(p_ret);
+    tree_dbg_printf("'\n");
+
+    assert(p_path->length < as_array_size(p_path->path));
+    p_path->path[p_path->length] = p_ret;
+    p_path->state[p_path->length] =
+    cmp_res = StrCmp(p_name, p_ret->Name, -1, p_ret->Attribute);
+    p_path->length++;
+    if (cmp_res < 0)
+      p_ret = p_ret->Left;
+    else if (cmp_res > 0)
+      p_ret = p_ret->Right;
+    else
+      break;
+  }
+  return p_ret;
+}
+
+TTree *find_tree_first(TTree *p_tree, const char *p_name, as_tree_path_t *p_path)
+{
+  TTree *p_ret;
+
+  tree_dbg_printf("find_tree_first '%s'\n", p_name);
+  tree_dbg_tree(p_tree);
+
+  p_path->length = 0;
+  p_ret = p_tree;
+  p_ret = find_min_for_recursive(p_tree, p_name, p_path);
+  (void)find_min_for_iterative;
+  (void)find_min_for_recursive;
+  if (p_ret && strcmp(p_ret->Name, p_name))
+  {
+    tree_dbg_printf("->element '%s' does not match, ignore\n", p_ret->Name);
+    p_ret = NULL;
+  }
+  /* We return the end of p_path.  If it is no exact match, the associated
+     state might be !=0.  Force to 0 so find_tree_next() does not return the
+     same node again: */
+  if (p_ret && p_path->length && (p_path->path[p_path->length - 1] == p_ret))
+    p_path->state[p_path->length - 1] = 0;
+
+  if (p_ret)
+  {
+    tree_dbg_printf("->found '");
+    tree_dbg_node(p_ret);
+    tree_dbg_printf("', path (length %u): ", (unsigned)p_path->length);
+    tree_dbg_path(p_path);
+    tree_dbg_printf("\n");
+  }
+
+  return p_ret;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     find_tree_next(const char *p_name, as_tree_path_t *p_path)
+ * \brief  retrieve successor element in tree
+ * \param  p_name selector name
+ * \param  p_path current position in tree
+ * \return next element or NULL if end of tree or no more symbols of given name
+ * ------------------------------------------------------------------------ */
+
+static TTree *find_tree_next_sub(TTree *p_sub, as_tree_path_t *p_path)
+{
+  if (!p_sub)
+    return NULL;
+  if (p_sub->Left)
+  {
+    add_path(p_path, p_sub, -1);
+    return find_tree_next_sub(p_sub->Left, p_path);
+  }
+  else
+  {
+    add_path(p_path, p_sub, 0);
+    return p_sub;
+  }
+}
+
+TTree *find_tree_next(const char *p_name, as_tree_path_t *p_path)
+{
+  TTree *p_ret;
+  size_t node_index;
+
+  tree_dbg_printf("find_tree_next: ");
+  tree_dbg_path(p_path);
+  tree_dbg_printf("\n");
+
+again:
+  if (!p_path->length)
+    return NULL;
+  node_index = p_path->length - 1;
+
+  /* Iterate in tree, using path: */
+
+  if (p_path->state[node_index] == 0)
+  {
+    p_ret = find_tree_next_sub(p_path->path[node_index]->Right, p_path);
+    if (!p_ret)
+    {
+      tree_dbg_printf("-> was on node self, and no right subtree\n");
+      p_path->length--;
+      goto again;
+    }
+    else
+    {
+      tree_dbg_printf("-> was on node self, and right subtree\n");
+      p_path->state[node_index] = 1;
+    }
+  }
+  else if (p_path->state[node_index] < 0)
+  {
+    p_path->state[node_index] = 0;
+    p_ret = p_path->path[node_index];
+  }
+
+  /* Successor in tree, but carrying different name: end of list of symbols
+     with same name reached: */
+
+  if (p_ret && strcmp(p_ret->Name, p_name))
+    p_ret = NULL;
+
+  tree_dbg_printf("-> return ");
+  if (p_ret)
+    tree_dbg_node(p_ret);
+  else
+    tree_dbg_printf("NULL");
+  tree_dbg_printf("\n");
+
+  return p_ret;
 }
