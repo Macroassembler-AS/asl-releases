@@ -1,3 +1,9 @@
+2025-09-15 [1.42 Bld 294]
+
+- Bugfix      : Correct attribute forwarding of ~ and ~~
+                operators.
+- Bugfix      : Correct NEC V60 IN instruction opcode.
+
 2025-08-31 [1.42 Bld 293]
 
 - Addition    : Display values unknown in first pass as

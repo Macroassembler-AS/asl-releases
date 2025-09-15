@@ -2483,7 +2483,7 @@ static void DecodeBit(Word code)
 static void DecodeIN_OUT(Word code)
 {
   tAdrVals src_adr_vals, dest_adr_vals;
-  Boolean is_out = !!(Hi(code) & 1);
+  Boolean is_out = !!(code & 1);
 
   if (ChkArgCnt(2, 2)
    && chk_sup_mode(code)
@@ -2794,9 +2794,8 @@ static void InitFields(void)
   AddInstTable(InstTable, "MOVS", 0x0a, DecodeMOVS_MOVZ);
   AddInstTable(InstTable, "MOVT", 0x19, DecodeMOVT);
   AddInstTable(InstTable, "MOVZ", 0x0b, DecodeMOVS_MOVZ);
-  /* TODO: 0x31 for IN is guessed, same opcode for IN & OUT in manual? */
-  AddInstTable(InstTable, "IN" , CODE_FLAG_SUPMODE | 0x0031, DecodeIN_OUT);
-  AddInstTable(InstTable, "OUT", CODE_FLAG_SUPMODE | 0x0121, DecodeIN_OUT);
+  AddInstTable(InstTable, "IN" , CODE_FLAG_SUPMODE | 0x0020, DecodeIN_OUT);
+  AddInstTable(InstTable, "OUT", CODE_FLAG_SUPMODE | 0x0021, DecodeIN_OUT);
   AddInstTable(InstTable, "RVBIT", 0x08, DecodeArith_B);
   AddInstTable(InstTable, "RVBYTE", 0x2c, DecodeArith_W);
   AddInstTable(InstTable, "LDPR", CODE_FLAG_SUPMODE | CODE_FLAG_OP2_IMM | 0x12, DecodeArith_W);
