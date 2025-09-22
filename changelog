@@ -1,3 +1,10 @@
+2025-09-12 [1.42 Bld 295]
+
+- Bugfix      : 6809: Correct range for 8 bit displacements
+- Bugfix      : 6809: Add missing error message for using
+                immediate addressing on read/modify/write
+                instructions.
+
 2025-09-15 [1.42 Bld 294]
 
 - Bugfix      : Correct attribute forwarding of ~ and ~~

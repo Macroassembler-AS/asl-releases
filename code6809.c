@@ -170,7 +170,7 @@ static unsigned ChkZero(const char *s, Byte *Erg)
 
 static Boolean MayShort(Integer Arg)
 {
-  return ((Arg >= -128) && (Arg < 127));
+  return ((Arg >= -128) && (Arg <= 127));
 }
 
 static Boolean IsZeroOrEmpty(const tStrComp *pArg)
@@ -265,7 +265,12 @@ static adr_mode_t DecodeAdr(int ArgStartIdx, int ArgEndIdx,
         if (OK)
           p_vals->cnt = 1;
         break;
+      case eSymbolSizeUnknown:
+        WrStrErrorPos(ErrNum_InvAddrMode, pStartArg);
+        OK = False;
+        break;
       default:
+        WrStrErrorPos(ErrNum_InvOpSize, pStartArg);
         OK = False;
         break;
     }
