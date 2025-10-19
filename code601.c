@@ -18,6 +18,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmallg.h"
+#include "asmcode.h"
 #include "onoff_common.h"
 #include "asmitree.h"
 #include "intpseudo.h"
@@ -304,59 +305,86 @@ static Boolean DecodeFPReg(const tStrComp *pArg, LongWord *pValue)
   return (RegEvalResult == eIsReg);
 }
 
-static Boolean DecodeCondReg(const tStrComp *pComp, LongWord *Erg)
-{
-  Boolean OK, Result;
+/*!------------------------------------------------------------------------
+ * \fn     DecodeCondReg(const tStrComp *p_comp, LongWord *p_ret, LongWord *p_guess_mask)
+ * \brief  handle condition code field index argument
+ * \param  p_comp source argument
+ * \param  p_ret encoded condition code field index
+ * \param  p_guess_mask associated guess flag bits
+ * \return True if parsing OK
+ * ------------------------------------------------------------------------ */
 
-  *Erg = EvalStrIntExpression(pComp, UInt3, &OK) << 2;
-  Result = (OK && (*Erg <= 31));
-  if (!Result)
-    WrStrErrorPos(ErrNum_InvAddrMode, pComp);
-  return Result;
+static Boolean DecodeCondReg(const tStrComp *p_comp, LongWord *p_ret, LongWord *p_guess_mask)
+{
+  Boolean OK;
+  tSymbolFlags flags;
+
+  *p_ret = EvalStrIntExpressionWithFlags(p_comp, UInt3, &OK, &flags) << 2;
+  *p_guess_mask = (mFirstPassUnknownOrQuestionable(flags) ? 7 : 0) << 2;
+  return OK;
 }
 
-static Boolean DecodeCondBit(const tStrComp *pComp, LongWord *Erg)
-{
-  Boolean OK, Result;
+/*!------------------------------------------------------------------------
+ * \fn     DecodeCondBit(const tStrComp *p_comp, LongWord *p_ret, LongWord *p_guess_mask)
+ * \brief  handle condition code bit argument
+ * \param  p_comp source argument
+ * \param  p_ret encoded condition code
+ * \param  p_guess_mask associated guess flag bits
+ * \return True if parsing OK
+ * ------------------------------------------------------------------------ */
 
-  *Erg = EvalStrIntExpression(pComp, UInt5, &OK);
-  Result = (OK && (*Erg <= 31));
-  if (!Result)
-    WrStrErrorPos(ErrNum_InvAddrMode, pComp);
-  return Result;
+static Boolean DecodeCondBit(const tStrComp *p_comp, LongWord *p_ret, LongWord *p_guess_mask)
+{
+  Boolean OK;
+  tSymbolFlags flags;
+
+  *p_ret = EvalStrIntExpressionWithFlags(p_comp, UInt5, &OK, &flags);
+  *p_guess_mask = mFirstPassUnknownOrQuestionable(flags) ? 31 : 0;
+  return OK;
 }
 
-static Boolean DecodeRegDisp(tStrComp *pComp, LongWord *Erg)
+/*!------------------------------------------------------------------------
+ * \fn     DecodeRegDisp(tStrComp *p_comp, LongWord *p_ret, LongWord *p_guess_mask)
+ * \brief  parse register/displacement argument
+ * \param  p_comp source argument
+ * \param  p_ret encoded result
+ * \param  p_guess_mask associated guess flag bits
+ * \return True if parsing OK
+ * ------------------------------------------------------------------------ */
+
+static Boolean DecodeRegDisp(tStrComp *p_comp, LongWord *p_ret, LongWord *p_guess_mask)
 {
   char *p;
-  int l = strlen(pComp->str.p_str);
+  int l = strlen(p_comp->str.p_str);
   LongInt Disp;
   Boolean OK;
+  tSymbolFlags flags;
   tStrComp DispArg, RegArg;
 
-  if (pComp->str.p_str[l - 1] != ')')
+  if (p_comp->str.p_str[l - 1] != ')')
   {
-    WrStrErrorPos(ErrNum_InvAddrMode, pComp);
+    WrStrErrorPos(ErrNum_InvAddrMode, p_comp);
     return False;
   }
-  pComp->str.p_str[l - 1] = '\0';  l--;
-  p = pComp->str.p_str + l - 1;
-  while ((p >= pComp->str.p_str) && (*p != '('))
+  p_comp->str.p_str[--l] = '\0';
+  p = p_comp->str.p_str + l - 1;
+  while ((p >= p_comp->str.p_str) && (*p != '('))
     p--;
-  if (p < pComp->str.p_str)
+  if (p < p_comp->str.p_str)
   {
-    WrStrErrorPos(ErrNum_InvAddrMode, pComp);
+    WrStrErrorPos(ErrNum_InvAddrMode, p_comp);
     return False;
   }
-  StrCompSplitRef(&DispArg, &RegArg, pComp, p);
-  if (!DecodeGenReg(&RegArg, Erg))
+  StrCompSplitRef(&DispArg, &RegArg, p_comp, p);
+  if (!DecodeGenReg(&RegArg, p_ret))
     return False;
   *p = '\0';
-  Disp = EvalStrIntExpression(&DispArg, Int16, &OK);
+  Disp = EvalStrIntExpressionWithFlags(&DispArg, Int16, &OK, &flags);
   if (!OK)
     return False;
 
-  *Erg = (*Erg << 16) + (Disp & 0xffff);
+  *p_ret = (*p_ret << 16) + (Disp & 0xffff);
+  *p_guess_mask = mFirstPassUnknownOrQuestionable(flags) ? 0xffff : 0;
   return True;
 }
 
@@ -419,15 +447,16 @@ static void DecodeReg1(Word Index)
 static void DecodeCReg1(Word Index)
 {
   const BaseOrder *pOrder = CReg1Orders + Index;
-  LongWord Dest;
+  LongWord Dest, dest_guess_mask;
 
   if (!ChkArgCnt(1, 1));
   else if (ChkExactCPUMask(pOrder->CPUMask, CPU403) < 0);
-  else if (!DecodeCondReg(&ArgStr[1], &Dest));
+  else if (!DecodeCondReg(&ArgStr[1], &Dest, &dest_guess_mask));
   else if (Dest & 3) WrStrErrorPos(ErrNum_AddrMustBeAligned, &ArgStr[1]);
   else
   {
     CodeLen = 4;
+    or_dasmcode_guessed(0, 1, dest_guess_mask << 21);
     PutCode(pOrder->Code + (Dest << 21));
   }
 }
@@ -437,13 +466,14 @@ static void DecodeCReg1(Word Index)
 static void DecodeCBit1(Word Index)
 {
   const BaseOrder *pOrder = CBit1Orders + Index;
-  LongWord Dest;
+  LongWord Dest, dest_guess_mask;
 
   if (ChkArgCnt(1, 1)
    && (ChkExactCPUMask(pOrder->CPUMask, CPU403) >= 0)
-   && DecodeCondBit(&ArgStr[1], &Dest))
+   && DecodeCondBit(&ArgStr[1], &Dest, &dest_guess_mask))
   {
     CodeLen = 4;
+    or_dasmcode_guessed(0, 1, dest_guess_mask << 21);
     PutCode(pOrder->Code + (Dest << 21));
   }
 }
@@ -487,17 +517,18 @@ static void DecodeReg2(Word Index)
 static void DecodeCReg2(Word Index)
 {
   const BaseOrder *pOrder = CReg2Orders + Index;
-  LongWord Dest, Src1;
+  LongWord Dest, Src1, dest_guess_mask, src1_guess_mask;
 
   if (!ChkArgCnt(2, 2));
   else if (ChkExactCPUMask(pOrder->CPUMask, CPU403) < 0);
-  else if (!DecodeCondReg(&ArgStr[1], &Dest));
+  else if (!DecodeCondReg(&ArgStr[1], &Dest, &dest_guess_mask));
   else if (Dest & 3) WrStrErrorPos(ErrNum_AddrMustBeAligned, &ArgStr[1]);
-  else if (!DecodeCondReg(&ArgStr[2], &Src1));
+  else if (!DecodeCondReg(&ArgStr[2], &Src1, &src1_guess_mask));
   else if (Src1 & 3) WrStrErrorPos(ErrNum_AddrMustBeAligned, &ArgStr[2]);
   else
   {
     CodeLen = 4;
+    or_dasmcode_guessed(0, 1, (dest_guess_mask << 21) | (src1_guess_mask << 16));
     PutCode(pOrder->Code + (Dest << 21) + (Src1 << 16));
   }
 }
@@ -601,15 +632,17 @@ static void DecodeCReg3(Word Index)
   const BaseOrder *pOrder = CReg3Orders + Index;
   const tStrComp *pArg2 = (ArgCnt == 2) ? &ArgStr[1] : &ArgStr[2],
                  *pArg3 = (ArgCnt == 2) ? &ArgStr[2] : &ArgStr[3];
-  LongWord Src2, Src1, Dest;
+  LongWord Src2, Src1, Dest,
+           src2_guess_mask, src1_guess_mask, dest_guess_mask;
 
   if (ChkArgCnt(2, 3)
    && (ChkExactCPUMask(pOrder->CPUMask, CPU403) >= 0)
-   && DecodeCondBit(&ArgStr[1], &Dest)
-   && DecodeCondBit(pArg2, &Src1)
-   && DecodeCondBit(pArg3, &Src2))
+   && DecodeCondBit(&ArgStr[1], &Dest, &dest_guess_mask)
+   && DecodeCondBit(pArg2, &Src1, &src1_guess_mask)
+   && DecodeCondBit(pArg3, &Src2, &src2_guess_mask))
   {
     CodeLen = 4;
+    or_dasmcode_guessed(0, 1, (dest_guess_mask << 21) | (src1_guess_mask << 16) | (src2_guess_mask << 11));
     PutCode(pOrder->Code + (Dest << 21) + (Src1 << 16) + (Src2 << 11));
   }
 }
@@ -699,13 +732,14 @@ static void DecodeFReg4(Word Index)
 static void DecodeRegDispOrder(Word Index)
 {
   const BaseOrder *pOrder = RegDispOrders + Index;
-  LongWord Src1, Dest;
+  LongWord Src1, Dest, src1_guess_mask;
 
   if (ChkArgCnt(2, 2)
    && (ChkExactCPUMask(pOrder->CPUMask, CPU403) >= 0)
    && DecodeGenReg(&ArgStr[1], &Dest)
-   && DecodeRegDisp(&ArgStr[2], &Src1))
+   && DecodeRegDisp(&ArgStr[2], &Src1, &src1_guess_mask))
   {
+    or_dasmcode_guessed(0, 1, src1_guess_mask);
     PutCode(pOrder->Code + (Dest << 21) + Src1);
     CodeLen = 4;
   }
@@ -716,13 +750,14 @@ static void DecodeRegDispOrder(Word Index)
 static void DecodeFRegDisp(Word Index)
 {
   const BaseOrder *pOrder = FRegDispOrders + Index;
-  LongWord Src1, Dest;
+  LongWord Src1, Dest, src1_guess_mask;
 
   if (ChkArgCnt(2, 2)
    && (ChkExactCPUMask(pOrder->CPUMask, CPU403) >= 0)
    && DecodeFPReg(&ArgStr[1], &Dest)
-   && DecodeRegDisp(&ArgStr[2], &Src1))
+   && DecodeRegDisp(&ArgStr[2], &Src1, &src1_guess_mask))
   {
+    or_dasmcode_guessed(0, 1, src1_guess_mask);
     PutCode(pOrder->Code + (Dest << 21) + Src1);
     CodeLen = 4;
   }
@@ -741,9 +776,12 @@ static void DecodeReg2Imm(Word Index)
    && DecodeGenReg(&ArgStr[1], &Dest)
    && DecodeGenReg(&ArgStr[2], &Src1))
   {
-    Src2 = EvalStrIntExpression(&ArgStr[3], UInt5, &OK);
+    tSymbolFlags flags;
+
+    Src2 = EvalStrIntExpressionWithFlags(&ArgStr[3], UInt5, &OK, &flags);
     if (OK)
     {
+      or_d_guessed(flags, 0, 1, 0x1f << 11);
       PutCode(pOrder->Code + (Src1 << 21) + (Dest << 16) + (Src2 << 11));
       CodeLen = 4;
     }
@@ -765,10 +803,13 @@ static void DecodeImm16(Word Index)
    && DecodeGenReg(&ArgStr[1], &Dest)
    && DecodeGenReg(pArg2, &Src1))
   {
-    Imm = EvalStrIntExpression(pArg3, Int16, &OK);
+    tSymbolFlags flags;
+
+    Imm = EvalStrIntExpressionWithFlags(pArg3, Int16, &OK, &flags);
     if (OK)
     {
       CodeLen = 4;
+      or_d_guessed(flags, 0, 1, 0x1f << 11);
       PutCode(pOrder->Code + (Dest << 21) + (Src1 << 16) + (Imm & 0xffff));
     }
   }
@@ -789,10 +830,13 @@ static void DecodeImm16Swap(Word Index)
    && DecodeGenReg(&ArgStr[1], &Dest)
    && DecodeGenReg(pArg2, &Src1))
   {
-    Imm = EvalStrIntExpression(pArg3, Int16, &OK);
+    tSymbolFlags flags;
+
+    Imm = EvalStrIntExpressionWithFlags(pArg3, Int16, &OK, &flags);
     if (OK)
     {
       CodeLen = 4;
+      or_d_guessed(flags, 0, 1, 0x1f << 11);
       PutCode(pOrder->Code + (Dest << 16) + (Src1 << 21) + (Imm & 0xffff));
     }
   }
@@ -825,9 +869,12 @@ static void DecodeLSWI_STSWI(Word Code)
    && DecodeGenReg(&ArgStr[1], &Dest)
    && DecodeGenReg(&ArgStr[2], &Src1))
   {
-    Src2 = EvalStrIntExpression(&ArgStr[3], UInt5, &OK);
+    tSymbolFlags flags;
+
+    Src2 = EvalStrIntExpressionWithFlags(&ArgStr[3], UInt5, &OK, &flags);
     if (OK)
     {
+      or_d_guessed(flags, 0, 1, 0x1f << 11);
       PutCode((T31 << 26) + (LCode << 1) + (Dest << 21) + (Src1 << 16) + (Src2 << 11));
       CodeLen = 4;
     }
@@ -860,12 +907,15 @@ static void DecodeMTFB_MTTB(Word Code)
   if (ChkArgCnt(1, 2)
    && DecodeGenReg(pArg1, &Dest))
   {
-    Src1 = EvalStrIntExpression(pArg2, UInt10, &OK);
+    tSymbolFlags flags;
+
+    Src1 = EvalStrIntExpressionWithFlags(pArg2, UInt10, &OK, &flags);
     if (OK)
     {
       if ((Src1 == 268) || (Src1 == 269) || (Src1 == 284) || (Src1 == 285))
       {
         SwapCode(&Src1);
+        or_d_guessed(flags, 0, 1, 0x3ff << 11);
         PutCode((T31 << 26) + (Dest << 21) + (Src1 << 11) + (LCode << 1));
         CodeLen = 4;
       }
@@ -885,10 +935,13 @@ static void DecodeMFSPR_MTSPR(Word Code)
   if (ChkArgCnt(2, 2)
    && DecodeGenReg(pArg1, &Dest))
   {
-    Src1 = EvalStrIntExpression(pArg2, UInt10, &OK);
+    tSymbolFlags flags;
+
+    Src1 = EvalStrIntExpressionWithFlags(pArg2, UInt10, &OK, &flags);
     if (OK)
     {
       SwapCode(&Src1);
+      or_d_guessed(flags, 0, 1, 0x3ff << 11);
       PutCode((T31 << 26) + (Dest << 21) + (Src1 << 11) + (LCode << 1));
       CodeLen = 4;
     }
@@ -906,10 +959,13 @@ static void DecodeMFDCR_MTDCR(Word Code)
    && (ChkExactCPUList(ErrNum_InstructionNotSupported, CPU403, CPU403C, CPUNone) >= 0)
    && DecodeGenReg(pArg1, &Dest))
   {
-    Src1 = EvalStrIntExpression(pArg2, UInt10, &OK);
+    tSymbolFlags flags;
+
+    Src1 = EvalStrIntExpressionWithFlags(pArg2, UInt10, &OK, &flags);
     if (OK)
     {
       SwapCode(&Src1);
+      or_d_guessed(flags, 0, 1, 0x3ff << 11);
       PutCode((T31 << 26) + (Dest << 21) + (Src1 << 11) + (LCode << 1));
       CodeLen = 4;
     }
@@ -926,9 +982,12 @@ static void DecodeMFSR_MTSR(Word Code)
   if (ChkArgCnt(2, 2)
    && DecodeGenReg(pArg1, &Dest))
   {
-    Src1 = EvalStrIntExpression(pArg2, UInt4, &OK);
+    tSymbolFlags flags;
+
+    Src1 = EvalStrIntExpressionWithFlags(pArg2, UInt4, &OK, &flags);
     if (OK)
     {
+      or_d_guessed(flags, 0, 1, 0xf << 16);
       PutCode((T31 << 26) + (Dest << 21) + (Src1 << 16) + (LCode << 1));
       CodeLen = 4;
       ChkSup();
@@ -938,18 +997,20 @@ static void DecodeMFSR_MTSR(Word Code)
 
 static void DecodeMTCRF(Word Code)
 {
-  LongWord Src1, Dest;
-  Boolean OK;
+  LongWord Src1;
 
   UNUSED(Code);
 
   if (ChkArgCnt(1, 2)
    && DecodeGenReg(&ArgStr[ArgCnt], &Src1))
   {
-    OK = True;
-    Dest = (ArgCnt == 1) ? 0xff : EvalStrIntExpression(&ArgStr[1], UInt8, &OK);
+    Boolean OK = True;
+    tSymbolFlags flags = eSymbolFlag_None;
+    LongWord Dest = (ArgCnt == 1) ? 0xff : EvalStrIntExpressionWithFlags(&ArgStr[1], UInt8, &OK, &flags);
+
     if (OK)
     {
+      or_d_guessed(flags, 0, 1, 0xff << 12);
       PutCode((T31 << 26) + (Src1 << 21) + (Dest << 12) + (144 << 1));
       CodeLen = 4;
     }
@@ -958,17 +1019,20 @@ static void DecodeMTCRF(Word Code)
 
 static void DecodeMTFSF(Word Code)
 {
-  LongWord Dest, Src1;
-  Boolean OK;
+  LongWord Src1;
 
   UNUSED(Code);
 
   if (ChkArgCnt(2, 2)
    && DecodeFPReg(&ArgStr[2], &Src1))
   {
-    Dest = EvalStrIntExpression(&ArgStr[1], UInt8, &OK);
+    tSymbolFlags flags;
+    Boolean OK;
+    LongWord Dest = EvalStrIntExpressionWithFlags(&ArgStr[1], UInt8, &OK, &flags);
+
     if (OK)
     {
+      or_d_guessed(flags, 0, 1, 0xff << 17);
       PutCode((T63 << 26) + (Dest << 17) + (Src1 << 11) + (711 << 1) + ExtractPoint(Code));
       CodeLen = 4;
     }
@@ -977,17 +1041,21 @@ static void DecodeMTFSF(Word Code)
 
 static void DecodeMTFSFI(Word Code)
 {
-  LongWord Dest, Src1;
-  Boolean OK;
+  LongWord Dest, dest_guess_mask;
 
   if (!ChkArgCnt(2, 2));
-  else if (!DecodeCondReg(&ArgStr[1], &Dest));
+  else if (!DecodeCondReg(&ArgStr[1], &Dest, &dest_guess_mask));
   else if (Dest & 3) WrStrErrorPos(ErrNum_AddrMustBeAligned, &ArgStr[1]);
   else
   {
-    Src1 = EvalStrIntExpression(&ArgStr[2], UInt4, &OK);
+    tSymbolFlags flags;
+    Boolean OK;
+    LongWord Src1 = EvalStrIntExpressionWithFlags(&ArgStr[2], UInt4, &OK, &flags);
+
     if (OK)
     {
+      or_dasmcode_guessed(0, 1, dest_guess_mask << 21);
+      or_d_guessed(flags, 0, 1, 0xf << 12);
       PutCode((T63 << 26) + (Dest << 21) + (Src1 << 12) + (134 << 1) + ExtractPoint(Code));
       CodeLen = 4;
     }
@@ -996,9 +1064,7 @@ static void DecodeMTFSFI(Word Code)
 
 static void DecodeRLMI(Word Code)
 {
-  Integer Imm;
-  LongWord Dest, Src1, Src2, Src3;
-  Boolean OK;
+  LongWord Dest, Src1, Src2;
 
   if (ChkArgCnt(5, 5)
    && ChkMinCPU(CPU6000)
@@ -1006,12 +1072,17 @@ static void DecodeRLMI(Word Code)
    && DecodeGenReg(&ArgStr[2], &Src1)
    && DecodeGenReg(&ArgStr[3], &Src2))
   {
-    Src3 = EvalStrIntExpression(&ArgStr[4], UInt5, &OK);
+    Boolean OK;
+    tSymbolFlags src3_flags;
+    LongWord Src3 = EvalStrIntExpressionWithFlags(&ArgStr[4], UInt5, &OK, &src3_flags);
     if (OK)
     {
-      Imm = EvalStrIntExpression(&ArgStr[5], UInt5, &OK);
+      tSymbolFlags imm_flags;
+      Integer Imm = EvalStrIntExpressionWithFlags(&ArgStr[5], UInt5, &OK, &imm_flags);
       if (OK)
       {
+        or_d_guessed(src3_flags, 0, 1, 0x1f << 6);
+        or_d_guessed(imm_flags, 0, 1, 0x1f << 1);
         PutCode((T22 << 26) + (Src1 << 21) + (Dest << 16)
                      + (Src2 << 11) + (Src3 << 6) + (Imm << 1) + ExtractPoint(Code));
         CodeLen = 4;
@@ -1022,21 +1093,24 @@ static void DecodeRLMI(Word Code)
 
 static void DecodeRLWNM(Word Code)
 {
-  Integer Imm;
-  LongWord Dest, Src1, Src2, Src3;
-  Boolean OK;
+  LongWord Dest, Src1, Src2;
 
   if (ChkArgCnt(5, 5)
    && DecodeGenReg(&ArgStr[1], &Dest)
    && DecodeGenReg(&ArgStr[2], &Src1)
    && DecodeGenReg(&ArgStr[3], &Src2))
   {
-    Src3 = EvalStrIntExpression(&ArgStr[4], UInt5, &OK);
+    Boolean OK;
+    tSymbolFlags src3_flags;
+    LongWord Src3 = EvalStrIntExpressionWithFlags(&ArgStr[4], UInt5, &OK, &src3_flags);
     if (OK)
     {
-      Imm = EvalStrIntExpression(&ArgStr[5], UInt5, &OK);
+      tSymbolFlags imm_flags;
+      Integer Imm = EvalStrIntExpressionWithFlags(&ArgStr[5], UInt5, &OK, &imm_flags);
       if (OK)
       {
+        or_d_guessed(src3_flags, 0, 1, 0x1f << 6);
+        or_d_guessed(imm_flags, 0, 1, 0x1f << 1);
         PutCode((T23 << 26) + (Src1 << 21) + (Dest << 16)
                      + (Src2 << 11) + (Src3 << 6) + (Imm << 1) + ExtractPoint(Code));
         CodeLen = 4;
@@ -1047,23 +1121,28 @@ static void DecodeRLWNM(Word Code)
 
 static void DecodeRLWIMI_RLWINM(Word Code)
 {
-  Integer Imm;
-  LongWord Dest, Src1, Src2, Src3, LCode = Code & 0x7fff;
-  Boolean OK;
+  LongWord Dest, Src1, LCode = Code & 0x7fff;
 
   if (ChkArgCnt(5, 5)
    && DecodeGenReg(&ArgStr[1], &Dest)
    && DecodeGenReg(&ArgStr[2], &Src1))
   {
-    Src2 = EvalStrIntExpression(&ArgStr[3], UInt5, &OK);
+    Boolean OK;
+    tSymbolFlags src2_flags;
+    LongWord Src2 = EvalStrIntExpressionWithFlags(&ArgStr[3], UInt5, &OK, &src2_flags);
     if (OK)
     {
-      Src3 = EvalStrIntExpression(&ArgStr[4], UInt5, &OK);
+      tSymbolFlags src3_flags;
+      LongWord Src3 = EvalStrIntExpressionWithFlags(&ArgStr[4], UInt5, &OK, &src3_flags);
       if (OK)
       {
-        Imm = EvalStrIntExpression(&ArgStr[5], UInt5, &OK);
+        tSymbolFlags imm_flags;
+        Integer Imm = EvalStrIntExpressionWithFlags(&ArgStr[5], UInt5, &OK, &imm_flags);
         if (OK)
         {
+          or_d_guessed(src2_flags, 0, 1, 0x1f << 11);
+          or_d_guessed(src3_flags, 0, 1, 0x1f << 6);
+          or_d_guessed(imm_flags, 0, 1, 0x1f << 1);
           PutCode((T20 << 26) + (Dest << 16) + (Src1 << 21)
                 + (Src2 << 11) + (Src3 << 6) + (Imm << 1)
                 + (LCode << 26) + ExtractPoint(Code));
@@ -1091,8 +1170,7 @@ static void DecodeTLBIE(Word Code)
 
 static void DecodeTW(Word Code)
 {
-  LongWord Src1, Src2, Dest;
-  Boolean OK;
+  LongWord Src1, Src2;
 
   UNUSED(Code);
 
@@ -1100,9 +1178,12 @@ static void DecodeTW(Word Code)
    && DecodeGenReg(&ArgStr[2], &Src1)
    && DecodeGenReg(&ArgStr[3], &Src2))
   {
-    Dest = EvalStrIntExpression(&ArgStr[1], UInt5, &OK);
+    Boolean OK;
+    tSymbolFlags dest_flags;
+    LongWord Dest = EvalStrIntExpressionWithFlags(&ArgStr[1], UInt5, &OK, &dest_flags);
     if (OK)
     {
+      or_d_guessed(dest_flags, 0, 1, 0x1f << 21);
       PutCode((T31 << 26) + (Dest << 21) + (Src1 << 16) + (Src2 << 11) + (4 << 1));
       CodeLen = 4;
     }
@@ -1111,21 +1192,24 @@ static void DecodeTW(Word Code)
 
 static void DecodeTWI(Word Code)
 {
-  Integer Imm;
-  LongWord Dest, Src1;
-  Boolean OK;
+  LongWord Src1;
 
   UNUSED(Code);
 
   if (ChkArgCnt(3, 3)
    && DecodeGenReg(&ArgStr[2], &Src1))
   {
-    Imm = EvalStrIntExpression(&ArgStr[3], Int16, &OK);
+    Boolean OK;
+    tSymbolFlags imm_flags;
+    Integer Imm = EvalStrIntExpressionWithFlags(&ArgStr[3], Int16, &OK, &imm_flags);
     if (OK)
     {
-      Dest = EvalStrIntExpression(&ArgStr[1], UInt5, &OK);
+      tSymbolFlags dest_flags;
+      LongWord Dest = EvalStrIntExpressionWithFlags(&ArgStr[1], UInt5, &OK, &dest_flags);
       if (OK)
       {
+        or_d_guessed(imm_flags, 0, 1, 0xffff);
+        or_d_guessed(dest_flags, 0, 1, 0x1f << 21);
         PutCode((T3 << 26) + (Dest << 21) + (Src1 << 16) + (Imm & 0xffff));
         CodeLen = 4;
       }
@@ -1135,17 +1219,17 @@ static void DecodeTWI(Word Code)
 
 static void DecodeWRTEEI(Word Code)
 {
-  LongWord  Src1;
-  Boolean OK;
-
   UNUSED(Code);
 
   if (ChkArgCnt(1, 1)
    && (ChkExactCPUList(ErrNum_InstructionNotSupported, CPU403, CPU403C, CPUNone) >= 0))
   {
-    Src1 = EvalStrIntExpression(&ArgStr[1], UInt1, &OK) << 15;
+    Boolean OK;
+    tSymbolFlags src1_flags;
+    LongWord Src1 = EvalStrIntExpressionWithFlags(&ArgStr[1], UInt1, &OK, &src1_flags) << 15;
     if (OK)
     {
+      or_d_guessed(src1_flags, 0, 1, 1 << 0);
       PutCode((T31 << 26) + Src1 + (163 << 1));
       CodeLen = 4;
     }
@@ -1154,8 +1238,7 @@ static void DecodeWRTEEI(Word Code)
 
 static void DecodeCMP_CMPL(Word Code)
 {
-  LongWord Src1, Src2, Src3, Dest, LCode = Code;
-  Boolean OK;
+  LongWord Src1, Src2, Dest, LCode = Code, dest_guess_mask;
   const tStrComp *pArg4 = (ArgCnt == 3) ? &ArgStr[3] : &ArgStr[4],
                  *pArg3 = (ArgCnt == 3) ? &ArgStr[2] : &ArgStr[3],
                  *pArg2 = (ArgCnt == 3) ? &ZeroComp : &ArgStr[2];
@@ -1163,13 +1246,17 @@ static void DecodeCMP_CMPL(Word Code)
   if (!ChkArgCnt(3, 4));
   else if (!DecodeGenReg(pArg4, &Src2));
   else if (!DecodeGenReg(pArg3, &Src1));
-  else if (!DecodeCondReg(&ArgStr[1], &Dest));
+  else if (!DecodeCondReg(&ArgStr[1], &Dest, &dest_guess_mask));
   else if (Dest & 3) WrStrErrorPos(ErrNum_AddrMustBeAligned, &ArgStr[1]);
   else
   {
-    Src3 = EvalStrIntExpression(pArg2, UInt1, &OK);
+    Boolean OK;
+    tSymbolFlags src3_flags;
+    LongWord Src3 = EvalStrIntExpressionWithFlags(pArg2, UInt1, &OK, &src3_flags);
     if (OK)
     {
+      or_d_guessed(src3_flags, 0, 1, 1 << 21);
+      or_dasmcode_guessed(0, 1, dest_guess_mask << 21);
       PutCode((T31 << 26) + (Dest << 21) + (Src3 << 21) + (Src1 << 16)
                    + (Src2 << 11) + (LCode << 1));
       CodeLen = 4;
@@ -1181,15 +1268,16 @@ static void DecodeCMP_CMPL(Word Code)
 
 static void DecodeFCMPO_FCMPU(Word Code)
 {
-  LongWord Src1, Src2, Dest, LCode = Code;
+  LongWord Src1, Src2, Dest, LCode = Code, dest_guess_mask;
 
   if (!ChkArgCnt(3, 3));
   else if (!DecodeFPReg(&ArgStr[3], &Src2));
   else if (!DecodeFPReg(&ArgStr[2], &Src1));
-  else if (!DecodeCondReg(&ArgStr[1], &Dest));
+  else if (!DecodeCondReg(&ArgStr[1], &Dest, &dest_guess_mask));
   else if (Dest & 3) WrStrErrorPos(ErrNum_AddrMustBeAligned, &ArgStr[1]);
   else
   {
+    or_dasmcode_guessed(0, 1, dest_guess_mask << 21);
     PutCode((T63 << 26) + (Dest << 21) + (Src1 << 16) + (Src2 << 11) + (LCode << 1));
     CodeLen = 4;
   }
@@ -1197,25 +1285,30 @@ static void DecodeFCMPO_FCMPU(Word Code)
 
 static void DecodeCMPI_CMPLI(Word Code)
 {
-  LongWord Src1, Src2, Src3, Dest, LCode = Code;
-  Boolean OK;
+  LongWord Src1, Src3, Dest, LCode = Code, dest_guess_mask;
   const tStrComp *pArg4 = (ArgCnt == 3) ? &ArgStr[3] : &ArgStr[4],
                  *pArg3 = (ArgCnt == 3) ? &ArgStr[2] : &ArgStr[3],
                  *pArg2 = (ArgCnt == 3) ? &ZeroComp : &ArgStr[2];
 
   if (ChkArgCnt(3, 4))
   {
-    Src2 = EvalStrIntExpression(pArg4, Int16, &OK);
+    Boolean OK;
+    tSymbolFlags src2_flags;
+    LongWord Src2 = EvalStrIntExpressionWithFlags(pArg4, Int16, &OK, &src2_flags);
     if (OK)
     {
       if (!DecodeGenReg(pArg3, &Src1));
-      else if (!DecodeCondReg(&ArgStr[1], &Dest));
+      else if (!DecodeCondReg(&ArgStr[1], &Dest, &dest_guess_mask));
       else if (Dest & 3) WrStrErrorPos(ErrNum_AddrMustBeAligned, &ArgStr[1]);
       else
       {
-        Src3 = EvalStrIntExpression(pArg2, UInt1, &OK);
+        tSymbolFlags src3_flags;
+        Src3 = EvalStrIntExpressionWithFlags(pArg2, UInt1, &OK, &src3_flags);
         if (OK)
         {
+          or_d_guessed(src2_flags, 0, 1, 0xffff);
+          or_d_guessed(src3_flags, 0, 1, 1 << 21);
+          or_dasmcode_guessed(0, 1, dest_guess_mask << 21);
           PutCode((T10 << 26) + (Dest << 21) + (Src3 << 21)
                        + (Src1 << 16) + (Src2 & 0xffff) + (LCode << 26));
           CodeLen = 4;
@@ -1246,6 +1339,7 @@ static void DecodeB_BL_BA_BLA(Word Code)
       else if ((Dist & 3) != 0) WrError(ErrNum_DistIsOdd);
       else
       {
+        or_d_guessed(Flags, 0, 1, 0x03fffffc);
         PutCode((T18 << 26) + (Dist & 0x03fffffc) + LCode);
         CodeLen = 4;
       }
@@ -1255,20 +1349,21 @@ static void DecodeB_BL_BA_BLA(Word Code)
 
 static void DecodeBC_BCL_BCA_BCLA(Word Code)
 {
-  LongWord LCode = Code, Src1, Src2;
-  LongInt Dist;
-  Boolean OK;
-  tSymbolFlags Flags;
+  LongWord LCode = Code;
 
   if (ChkArgCnt(3, 3))
   {
-    Src1 = EvalStrIntExpression(&ArgStr[1], UInt5, &OK); /* BO */
+    Boolean OK;
+    tSymbolFlags src1_flags;
+    LongWord Src1 = EvalStrIntExpressionWithFlags(&ArgStr[1], UInt5, &OK, &src1_flags); /* BO */
     if (OK)
     {
-      Src2 = EvalStrIntExpression(&ArgStr[2], UInt5, &OK); /* BI */
+      tSymbolFlags src2_flags;
+      LongWord Src2 = EvalStrIntExpressionWithFlags(&ArgStr[2], UInt5, &OK, &src2_flags); /* BI */
       if (OK)
       {
-        Dist = EvalStrIntExpressionWithFlags(&ArgStr[3], Int32, &OK, &Flags); /* ADR */
+        tSymbolFlags Flags;
+        LongInt Dist = EvalStrIntExpressionWithFlags(&ArgStr[3], Int32, &OK, &Flags); /* ADR */
         if (OK)
         {
           if (!(Code & 2))
@@ -1278,6 +1373,9 @@ static void DecodeBC_BCL_BCA_BCLA(Word Code)
           else if ((Dist & 3) != 0) WrError(ErrNum_DistIsOdd);
           else
           {
+            or_d_guessed(src1_flags, 0, 1, 0x1f << 21);
+            or_d_guessed(src2_flags, 0, 1, 0x1f << 16);
+            or_d_guessed(Flags, 0, 1, 0xfffc);
             PutCode((T16 << 26) + (Src1 << 21) + (Src2 << 16) + (Dist & 0xfffc) + LCode);
             CodeLen = 4;
           }
@@ -1289,17 +1387,21 @@ static void DecodeBC_BCL_BCA_BCLA(Word Code)
 
 static void DecodeBCCTR_BCCTRL_BCLR_BCLRL(Word Code)
 {
-  LongWord Src1, Src2, LCode = Code;
-  Boolean OK;
+  LongWord LCode = Code;
 
   if (ChkArgCnt(2, 2))
   {
-    Src1 = EvalStrIntExpression(&ArgStr[1], UInt5, &OK);
+    Boolean OK;
+    tSymbolFlags src1_flags;
+    LongWord Src1 = EvalStrIntExpressionWithFlags(&ArgStr[1], UInt5, &OK, &src1_flags);
     if (OK)
     {
-      Src2 = EvalStrIntExpression(&ArgStr[2], UInt5, &OK);
+      tSymbolFlags src2_flags;
+      LongWord Src2 = EvalStrIntExpressionWithFlags(&ArgStr[2], UInt5, &OK, &src2_flags);
       if (OK)
       {
+        or_d_guessed(src1_flags, 0, 1, 0x1f << 21);
+        or_d_guessed(src2_flags, 0, 1, 0x1f << 16);
         PutCode((T19 << 26) + (Src1 << 21) + (Src2 << 16) + LCode);
         CodeLen = 4;
       }
@@ -1309,17 +1411,19 @@ static void DecodeBCCTR_BCCTRL_BCLR_BCLRL(Word Code)
 
 static void DecodeTLBRE_TLBWE(Word Code)
 {
-  LongWord Src1, Src2, Src3, LCode = Code;
-  Boolean OK;
+  LongWord Src1, Src2, LCode = Code;
 
   if (ChkArgCnt(3, 3)
    && ChkExactCPU(CPU403C)
    && DecodeGenReg(&ArgStr[1], &Src1)
    && DecodeGenReg(&ArgStr[2], &Src2))
   {
-    Src3 = EvalStrIntExpression(&ArgStr[3], UInt1, &OK);
+    Boolean OK;
+    tSymbolFlags src3_flags;
+    LongWord Src3 = EvalStrIntExpressionWithFlags(&ArgStr[3], UInt1, &OK, &src3_flags);
     if (OK)
     {
+      or_d_guessed(src3_flags, 0, 1, 1 << 11);
       PutCode((T31 << 26) + (Src1 << 21) + (Src2 << 16) +
               (Src3 << 11) + (946 << 1) + (LCode << 1));
       CodeLen = 4;

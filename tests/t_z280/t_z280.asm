@@ -84,6 +84,10 @@
 	adc	iy,iy		; FD ED 6A
 	adc	iy,sp		; FD ED 7A
 
+	add	hl,a		; ED 6D
+	add	ix,a		; DD ED 6D
+	add	iy,a		; FD ED 6D
+
 	add	a,a		; 87
 	add	a
 	add	a,b		; 80

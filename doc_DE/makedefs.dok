@@ -12,10 +12,10 @@ $(DOC_DE_DIR)as.pdf: $(DOC_DE_DIR)as.tex $(INCFILES)
 	pdflatex -aux-directory=$(DOC_DE_DIR) -output-directory=$(DOC_DE_DIR) $(DOC_DE_DIR)as
 
 $(DOC_DE_DIR)as.dvi: $(DOC_DE_DIR)as.tex $(INCFILES)
-	latex  -aux-directory=$(DOC_DE_DIR) -output-directory=$(DOC_DE_DIR) $(DOC_DE_DIR)as
-	latex  -aux-directory=$(DOC_DE_DIR) -output-directory=$(DOC_DE_DIR) $(DOC_DE_DIR)as
+	latex -aux-directory=$(DOC_DE_DIR) -output-directory=$(DOC_DE_DIR) $(DOC_DE_DIR)as
+	latex -aux-directory=$(DOC_DE_DIR) -output-directory=$(DOC_DE_DIR) $(DOC_DE_DIR)as
 	makeindex $(DOC_DE_DIR)as
-	latex  -aux-directory=$(DOC_DE_DIR) -output-directory=$(DOC_DE_DIR) $(DOC_DE_DIR)as
+	latex -aux-directory=$(DOC_DE_DIR) -output-directory=$(DOC_DE_DIR) $(DOC_DE_DIR)as
 
 $(DOC_DE_DIR)as.doc: $(DOC_DE_DIR)as.tex  $(INCFILES) $(TEX2DOCTARGET)
 	$(CURRDIR)$(TEX2DOCTARGET) $(TEX2DOC_FLAGS) $(DOC_DE_DIR)as.tex $(DOC_DE_DIR)as.doc

@@ -27,7 +27,9 @@
 
 #define LISTLINE_PREFIX_TOTAL 40
 
-static unsigned SystemListLen4, SystemListLen8, SystemListLen12, SystemListLen16, SystemListLen32;
+static unsigned SystemListLen4, SystemListLen8,
+                SystemListLen12, SystemListLen16,
+                SystemListLen24, SystemListLen32;
 
 static as_dynstr_t list_buf;
 
@@ -51,6 +53,10 @@ void as_list_set_max_pc(LargeWord max_pc)
     case 1:
     case 2:
       if (gran_bits_unused() && (gran_bits_unused() != 4))
+        goto warn;
+      break;
+    case 4:
+      if (gran_bits_unused() && (gran_bits_unused() != 8))
         goto warn;
       break;
     default:
@@ -126,7 +132,7 @@ void MakeList(const char *pSrcLine)
       switch (CurrListGran)
       {
         case 4:
-          SystemListLen = SystemListLen32;
+          SystemListLen = act_list_gran_bits_unused ? SystemListLen24 : SystemListLen32;
           break;
         case 2:
           SystemListLen = act_list_gran_bits_unused ? SystemListLen12 : SystemListLen16;
@@ -396,6 +402,8 @@ void asmlist_setup(void)
   SystemListLen12 = strlen(Dummy);
   SysString(Dummy, sizeof(Dummy), 0xffffu, ListRadixBase, 0, False, HexStartCharacter, SplitByteCharacter);
   SystemListLen16 = strlen(Dummy);
+  SysString(Dummy, sizeof(Dummy), 0xfffffful, ListRadixBase, 0, False, HexStartCharacter, SplitByteCharacter);
+  SystemListLen24 = strlen(Dummy);
   SysString(Dummy, sizeof(Dummy), 0xfffffffful, ListRadixBase, 0, False, HexStartCharacter, SplitByteCharacter);
   SystemListLen32 = strlen(Dummy);
 }
