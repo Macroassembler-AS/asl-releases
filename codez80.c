@@ -2661,7 +2661,7 @@ static void DecodeLD(Word IsLDW)
             if ((OpSize == eSymbolSize16Bit) && !chk_core_mask(e_core_mask_z280))
               return;
             append_prefix(0xdd);
-            append_opcode((OpSize == eSymbolSize16Bit) ? 0x21 : 0x3e);
+            append_opcode((OpSize == eSymbolSize16Bit) ? 0x11 : 0x3e);
             append_adr_vals(&arg1_adr_vals);
             append_adr_vals(&adr_vals);
             break;

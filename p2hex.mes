@@ -27,9 +27,15 @@ Message ErrMsgAdrOverflow
 ;------------------------------------------------------------------------------
 ; Ansagen
 
-Message InfoMessHead2
- " <Quelldatei(en)> <Zieldatei> [Optionen]"
- " <source file(s)> <target file> [options]"
+Message InfoMessUsage1
+ "<Quelldatei(en)> <Zieldatei> [Optionen]"
+ "<source file(s)> <target file> [options]"
+Message InfoMessUsage2
+ "-o <Zieldatei> <Quelldatei(en)> [Optionen]"
+ "-o <target file> <source file(s)> [options]"
+Message InfoMessUsage3
+ "<Quell/Zieldatei> [Optionen]"
+ "<source/target file> [options]"
 
 Message Byte
  "byte"
@@ -42,13 +48,14 @@ Message Bytes
 Message InfoMessHelp
  "\n" \
  "Optionen:\n" \
+ "  -o <Name>         : Zieldateinamen setzen\n" \
  "  -f <Headerliste>  : auszufilternde Records\n" \
  "  -r <Start>-<Stop> : auszufilternder Adre&szlig;bereich\n" \
  "  -R <offset>       : Adressen um Offset verschieben\n" \
  "                      ($ oder 0x = erste bzw. letzte auftauchende Adresse)\n" \
  "  -segment <Name>   : Quellsegment w&auml;hlen\n" \
  "  -a                : Adressen relativ zum Start ausgeben\n" \
- "  -l <L&auml;nge>   : L&auml;nge Datenzeile in Bytes\n" \
+ "  -l <L&auml;nge>        : L&auml;nge Datenzeile in Bytes\n" \
  "  -i <0|1|2>        : Terminierer f&uuml;r Intel-Hexfiles\n" \
  "  -m <0..3>         : Multibyte-Modus\n" \
  "  -F <Format>       : Zielformat\n" \
@@ -61,12 +68,13 @@ Message InfoMessHelp
  "  -e <Adresse>      : Startadresse festlegen\n" \
  "  -k                : Quelldateien autom. l&ouml;schen\n" \
  "  -avrlen <2|3>     : Adre&szlig;feldl&auml;nge Atmel-Format setzen\n" \
- "  -q, -quiet        : Stiller Betrieb\n" \
- "  -v                : wortreicher Betrieb\n" \
+ "  -q, -quiet        : stiller Betrieb\n" \
+ "  -v                : ausf&uuml;hrliche Ausgaben\n" \
  "  -help             : nur Hilfe ausgeben\n" \
  "  -version          : nur Versionsinfo ausgeben\n"
  "\n" \
  "options:\n" \
+ "  -o <name>         : set target file name\n" \
  "  -f <header list>  : records to filter out\n" \
  "  -r <start>-<stop> : address range to filter out\n" \
  "  -R <offset>       : relocate addresses by offset\n" \

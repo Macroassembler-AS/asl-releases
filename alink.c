@@ -515,8 +515,7 @@ int main(int argc, char **argv)
   {
     char *ph1, *ph2;
 
-    chkio_printf(OutName, "%s%s%s\n", getmessage(Num_InfoMessHead1), as_cmdarg_get_executable_name(),
-                 getmessage(Num_InfoMessHead2));
+    chkio_printf(OutName, "%s%s %s\n", getmessage(Num_InfoMessUsage), as_cmdarg_get_executable_name(), getmessage(Num_InfoMessUsage1));
     for (ph1 = getmessage(Num_InfoMessHelp), ph2 = strchr(ph1,'\n'); ph2; ph1 = ph2+1, ph2 = strchr(ph1,'\n'))
     {
       *ph2 = '\0';

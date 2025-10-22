@@ -62,9 +62,9 @@ Message MessExportInfo
  "<export. symbol>    "
  "<exported symbol>   "
 
-Message InfoMessHead2
- " [Optionen] [Programmdateiname(n)]"
- " [options] [name of program file(s)]"
+Message InfoMessUsage1
+ "[Optionen] [Programmdateiname(n)]"
+ "[options] [name of program file(s)]"
 
 Message InfoMessHelp
  "\n" \

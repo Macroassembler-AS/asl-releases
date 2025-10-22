@@ -40,6 +40,8 @@ static Byte FilterBytes[100];
 Word FileID = 0x1489;       /* Dateiheader Eingabedateien */
 const char *OutName = "STDOUT";   /* Pseudoname Output */
 
+String target_name;
+
 static TMsgCat MsgCat;
 
 Boolean QuietMode, Verbose;
@@ -447,6 +449,22 @@ as_cmd_result_t CMD_Verbose(Boolean Negate, const char *Arg)
 
   Verbose = !Negate;
   return e_cmd_ok;
+}
+
+as_cmd_result_t cmd_target_name(Boolean negate, const char *p_arg)
+{
+  if (negate)
+  {
+    *target_name = '\0';
+    return e_cmd_ok;
+  }
+  else if (!p_arg || !*p_arg)
+    return e_cmd_err;
+  else
+  {
+    strmaxcpy(target_name, p_arg, sizeof target_name);
+    return e_cmd_arg;
+  }
 }
 
 Boolean FilterOK(Byte Header)

@@ -2,10 +2,10 @@
 ;****************************************************************************
 ;* Makroassembler AS 							    *
 ;* 									    *
-;* Headerdatei BIND.RSC - enthaelt Stringdefinitionen fuer BIND             *
+;* Headerdatei PBIND.MES - enthaelt Stringdefinitionen fuer PBIND           *
 ;* 									    *
 ;* Historie : 28.1.1997 Grundsteinlegung                                    *
-;*           24. 3.2000 added byte messages                                  *
+;*           24. 3.2000 added byte messages                                 *
 ;*                                                                          *
 ;****************************************************************************
 
@@ -23,9 +23,12 @@ Message ErrMsgTargetMissing
 ;-----------------------------------------------------------------------------
 ; Ansagen
 
-Message InfoMessHead2
- " <Quelldatei(en)> <Zieldatei> [Optionen]"
- " <source file(s)> <target file> [options]"
+Message InfoMessUsage1
+ "<Quelldatei(en)> <Zieldatei> [Optionen]"
+ "<source file(s)> <target file> [options]"
+Message InfoMessUsage2
+ "-o <Zieldatei> <Quelldatei(en)> [Optionen]"
+ "-o <target file> <source file(s)> [options]"
 
 Message Byte
  "byte"
@@ -38,14 +41,16 @@ Message Bytes
 Message InfoMessHelp
  "\n" \
  "Optionen:\n" \
+ "  -o <Name>        : Zieldateinamen setzen\n" \
  "  -f <Headerliste> : auszufilternde Records\n" \
  "  -help            : nur Hilfe ausgeben\n" \
- "  -q, -quiet       : Stiller Betrieb\n" \
- "  -v               : wortreicher Betrieb\n" \
+ "  -q, -quiet       : stiller Betrieb\n" \
+ "  -v               : ausf&uuml;hrliche Ausgaben\n" \
  "  -version         : nur Versionsinfo ausgeben\n" \
  "\n"
  "\n" \
  "options:\n" \
+ "  -o <name>        : set target file name\n" \
  "  -f <header list> : records to filter out\n" \
  "  -help            : print help and exit\n" \
  "  -q, -quiet       : silent operation\n" \

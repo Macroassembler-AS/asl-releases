@@ -1063,14 +1063,14 @@ static const as_cmd_rec_t P2HEXParams[] =
   { "M"        , CMD_MinMoto },
   { "SEGMENT"  , CMD_ForceSegment },
   { "AVRLEN"   , CMD_AVRLen },
-  { "CFORMAT"  , CMD_CFormat }
+  { "CFORMAT"  , CMD_CFormat },
+  { "o"        , cmd_target_name }
 };
 
 static Word ChkSum;
 
 int main(int argc, char **argv)
 {
-  char *p_target_name;
   const char *p_src_name;
   as_cmd_results_t cmd_results;
   StringRecPtr p_src_run;
@@ -1112,6 +1112,7 @@ int main(int argc, char **argv)
   Relocate = 0;
   ForceSegment = SegNone;
   strcpy(CFormat, DefaultCFormat);
+  *target_name = '\0';
 
   as_cmd_register(P2HEXParams, as_array_size(P2HEXParams));
   switch (as_cmd_process(argc, argv, "P2HEXCMD", &cmd_results))
@@ -1137,8 +1138,12 @@ int main(int argc, char **argv)
   if (cmd_results.write_help_exit)
   {
     char *ph1, *ph2;
+    const char *p_usage_msg = getmessage(Num_InfoMessUsage);
+    int usage_msg_len = strlen(p_usage_msg);
 
-    chkio_printf(OutName, "%s%s%s\n", getmessage(Num_InfoMessHead1), as_cmdarg_get_executable_name(), getmessage(Num_InfoMessHead2));
+    chkio_printf(OutName, "%s%s %s\n", p_usage_msg, as_cmdarg_get_executable_name(), getmessage(Num_InfoMessUsage1));
+    chkio_printf(OutName, "%*.*s%s %s\n", usage_msg_len, usage_msg_len, "", as_cmdarg_get_executable_name(), getmessage(Num_InfoMessUsage2));
+    chkio_printf(OutName, "%*.*s%s %s\n", usage_msg_len, usage_msg_len, "", as_cmdarg_get_executable_name(), getmessage(Num_InfoMessUsage3));
     for (ph1 = getmessage(Num_InfoMessHelp), ph2 = strchr(ph1, '\n'); ph2; ph1 = ph2 + 1, ph2 = strchr(ph1, '\n'))
     {
       *ph2 = '\0';
@@ -1156,20 +1161,24 @@ int main(int argc, char **argv)
     exit(1);
   }
 
-  p_target_name = MoveAndCutStringListLast(&cmd_results.file_arg_list);
-  if (!p_target_name || !*p_target_name)
+  if (!*target_name)
   {
-    chkio_fprintf(stderr, OutName, "%s\n", getmessage(Num_ErrMsgTargMissing));
-    if (p_target_name) free(p_target_name);
-    p_target_name = NULL;
-    exit(1);
+    char *p_target_name = MoveAndCutStringListLast(&cmd_results.file_arg_list);
+    if (!p_target_name || !*p_target_name)
+    {
+      chkio_fprintf(stderr, OutName, "%s\n", getmessage(Num_ErrMsgTargMissing));
+      if (p_target_name) free(p_target_name);
+      p_target_name = NULL;
+      exit(1);
+    }
+    strmaxcpy(target_name, p_target_name, sizeof target_name);
+    free(p_target_name);
   }
 
-  strmaxcpy(TargName, p_target_name, STRINGSIZE);
+  strmaxcpy(TargName, target_name, STRINGSIZE);
   if (!RemoveOffset(TargName, &Dummy))
   {
-    strmaxcpy(TargName, p_target_name, STRINGSIZE);
-    free(p_target_name); p_target_name = NULL;
+    strmaxcpy(TargName, target_name, STRINGSIZE);
     ParamError(False, TargName);
   }
 
@@ -1177,10 +1186,9 @@ int main(int argc, char **argv)
 
   if (StringListEmpty(cmd_results.file_arg_list))
   {
-    AddStringListLast(&cmd_results.file_arg_list, p_target_name);
+    AddStringListLast(&cmd_results.file_arg_list, target_name);
     DelSuffix(TargName);
   }
-  free(p_target_name); p_target_name = NULL;
   AddSuffix(TargName, STRINGSIZE, HexSuffix);
   Filename2CName(CTargName, TargName);
   NumCBlocks = 0;

@@ -1,3 +1,10 @@
+2025-10-22 [1.42 Bld 297]
+
+- Addition    : Provide -o command line switch for PBIND,
+                P2HEX and P2BIN.
+- Bugfix      : VAX: add missing REG instruction.
+- Bugfix      : Z280: correct encoding of LDW (addr),nn .
+
 2025-10-19 [1.42 Bld 296]
 
 - Addition    : Display values unknown in first pass as

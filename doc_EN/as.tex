@@ -1097,7 +1097,7 @@ chapters \ref{ChapShareMain} resp. \ref{ChapShareOrder}.
 \item{{\tt wrelative} resp. {\tt wno-relative}: instructs the assembler
       to issue warnings if a relative jump instead of an absolute is
       possible (only for Z80 target).}
-\item{{\tt wsign-extension} resp. {\tt wno-sign-extension}: instructs
+\item{{\tt wimplicit-sign-extension} resp. {\tt wno-implicit-sign-extension}: instructs
       the assembler to issue warnings about implicit sign extensions
       (onlx 68K, MOVEQ).}
 \item{\tty{compmode}: This switch instructs the assembler to operate by
@@ -2441,7 +2441,8 @@ necessary.  Which is the essence you should learn from this section?
 
 {\em valid for: PowerPC, M-Core, XGate, 4004/4040, MCS-48/(2)51, 8086,
      80C16x, AVR, XS1, Z8, KCPSM, Mico8, MSP430(X), ST9, M16, M16C, H8/300,
-     H8/500, SH7x00, H16, i960, XA, 29K, TLCS-9000, KENBAK, SC/MP}
+     H8/500, SH7x00, H16, i960, XA, 29K, TLCS-9000, KENBAK, SC/MP,
+     PDP-11, VAX}
 
 Sometimes it is desirable not only to assign symbolic names to memory
 addresses or constants, but also to a register, to emphasize its function
@@ -12027,8 +12028,8 @@ backslash.  The \tty{0x} variant is definitely more comfortable in this case.
 Otherwise, calling conventions and variations are equivalent to those
 of \asname{} (except for PLIST and AS2MSG); i.e. it is possible to store
 frequently used parameters in an environment variable (whose name is
-constructed by appending CMD to the program's name, i.e. \tty{BINDCMD} for
-BIND), to negate options, and to use all upper- resp. lower-case
+constructed by appending CMD to the program's name, i.e. \tty{PBINDCMD} for
+PBIND), to negate options, and to use all upper- resp. lower-case
 writing (for details on this, see section \ref{SectCallConvention}).
 
 Address specifications always relate to the granularity of the
@@ -12075,25 +12076,26 @@ to examine a file's contents before one continues to process it.
 
 %%---------------------------------------------------------------------------
 
-\section{BIND}
+\section{PBIND}
 
-BIND is a program that allows to concatenate the records of several
+PBIND is a program that allows to concatenate the records of several
 code files into a single file.  A filter function is available that
 can be used to copy only records of certain types.  Used in this way,
-BIND can also be used to split a code file into several files.
+PBIND can also be used to split a code file into several files.
 
-The general syntax of BIND is
+The general syntax of PBIND is
 \begin{verbatim}
-   BIND <source file(s)> <target file> [options]
+   PBIND [options] <source file(s)> [target file]
 \end{verbatim}
-Just like \asname{}, BIND regards all command line arguments that do not
-start with a \tty{+, -} or \tty{/} as file specifications, of which the last one
-must designate the destination file.  All other file specifications
-name sources, which may again contain wildcards.
+Just like \asname{}, PBIND regards all command line arguments that do not
+start with a \tty{+, -} or \tty{/} as file specifications.  If no
+\tty{-o} was used, the last of them is assumed to be the target file.
+All other file specifications name sources, which may contain wildcards.
 
-Currently, BIND defines only one command line option:
+Currently, PBIND defines only two command line options:
 \begin{itemize}
-\item{\tty{f $<$Header[,Header]$>$}: sets a list of record headers that should
+\item{\tty{o $<$name$>$}: specifies the output/target file.}
+\item{\tty{f $<$header[,header]$>$}: sets a list of record headers that should
       be copied.  Records with other header IDs will
       not be copied.  Without such an option, all
       records will be copied.  The headers given in
@@ -12102,10 +12104,10 @@ Currently, BIND defines only one command line option:
       Individual headers in this list are separated
       with commas.}
 \end{itemize}
-For example, to filter all MCS-51 code out of a code file, use BIND
+For example, to filter all MCS-51 code out of a code file, use PBIND
 in the following way:
 \begin{verbatim}
-   BIND <source name> <target name> -f $31
+   PBIND <source name> <target name> -f $31
 \end{verbatim}
 If a file name misses an extension, the extension \tty{P} will be added
 automatically.
@@ -12114,12 +12116,12 @@ automatically.
 
 \section{P2HEX}
 
-P2HEX is an extension of BIND.  It has all command line options of BIND and
-uses the same conventions for file names.  In contrary to BIND, the
+P2HEX is an extension of PBIND.  It has all command line options of PBIND and
+uses the same conventions for source and destination file names.  Different to PBIND, the
 target file is written as a Hex file, i.e. as a sequence of lines
 which represent the code as ASCII hex numbers.
 
-P2HEX knows nine different target formats, which can be selected via the
+P2HEX knows ten different target formats, which can be selected via the
 command line parameter \tty{F}:
 \begin{itemize}
 \item{Motorola S-Records (\tty{-F Moto)})}
@@ -12325,7 +12327,7 @@ any further need after P2HEX has been run.  The command line option
 allows to instruct P2HEX to erase them automatically after
 conversion.
 
-In contrast to BIND, P2HEX will not produce an empty target file if
+In contrast to PBIND, P2HEX will not produce an empty target file if
 only one file name (i.e. the target name) has been given.  Instead,
 P2HEX will use the corresponding code file.  Therefore, a minimal
 call in the style of

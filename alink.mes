@@ -71,9 +71,9 @@ Message Bytes
  "bytes"
  "Bytes"
 
-Message InfoMessHead2
- " <Quelldatei(en)> <Zieldatei> [Optionen]"
- " <source file(s)> <target file> [options]"
+Message InfoMessUsage1
+ "<Quelldatei(en)> <Zieldatei> [Optionen]"
+ "<source file(s)> <target file> [options]"
 
 Message InfoMessHelp
  "\n" \

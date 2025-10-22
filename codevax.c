@@ -1,4 +1,4 @@
-/* codepdp11.c */
+/* codevax.c */
 /*****************************************************************************/
 /* SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only                     */
 /*                                                                           */
@@ -27,7 +27,7 @@
 #include "intpseudo.h"
 #include "decpseudo.h"
 #include "decfloat.h"
-#include "codepdp11.h"
+#include "codevax.h"
 
 typedef enum
 {
@@ -178,7 +178,7 @@ static Boolean decode_reg_core(const char *p_arg, Byte *p_result, tSymbolSize *p
 
 /*!------------------------------------------------------------------------
  * \fn     dissect_reg_vax(char *p_dest, size_t dest_size, tRegInt value, tSymbolSize inp_size)
- * \brief  dissect register symbols - PDP-11 variant
+ * \brief  dissect register symbols - VAX variant
  * \param  p_dest destination buffer
  * \param  dest_size destination buffer size
  * \param  value numeric register value
@@ -1698,6 +1698,8 @@ static void init_fields(void)
   AddInstTable(InstTable, "D_FLOATING", eIntPseudoFlag_LittleEndian | eIntPseudoFlag_AllowFloat | eIntPseudoFlag_DECFormat , DecodeIntelDQ);
   AddInstTable(InstTable, "G_FLOATING", eIntPseudoFlag_LittleEndian | eIntPseudoFlag_AllowFloat | eIntPseudoFlag_DECGFormat, DecodeIntelDQ);
   AddInstTable(InstTable, "H_FLOATING", eIntPseudoFlag_LittleEndian | eIntPseudoFlag_AllowFloat | eIntPseudoFlag_DECFormat , DecodeIntelDO);
+
+  AddInstTable(InstTable, "REG", 0, CodeREG);
 }
 
 /*!------------------------------------------------------------------------
@@ -1725,7 +1727,6 @@ static void deinit_fields(void)
 static void intern_symbol_vax(char *p_arg, TempResult *p_result)
 {
   Byte reg_num;
-  (void)p_arg; (void)p_result;
 
   if (decode_reg_core(p_arg, &reg_num, &p_result->DataSize))
   {
@@ -1801,9 +1802,7 @@ static void switch_to_vax(void *p_user)
   IsDef = is_def_vax;
   SwitchFrom = switch_from_vax;
   InternSymbol = intern_symbol_vax;
-#if 0
   DissectReg = dissect_reg_vax;
-#endif
   multi_char_le = True;
 
   init_fields();

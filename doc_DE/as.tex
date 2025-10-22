@@ -1119,7 +1119,7 @@ bzw. \ref{ChapShareOrder}.
 \item{{\tt wrelative} bzw. {\tt wno-relative}: Weist den Assembler an,
       Warnungen auszugeben, falls ein relativer anstelle eines absoluten
       Sprungs m"oglich ist (nur f"ur Z80-Target).}
-\item{{\tt wsign-extension} bzw. {\tt wno-sign-extension}: Weist den
+\item{{\tt wimplicit-sign-extension} bzw. {\tt wno-implicit-sign-extension}: Weist den
       Assembler an, Warnungen "uber implizite Vorzeichen-Erweiterungen
       auszugeben (nur 68K, MOVEQ).}
 \item{\tty{compmode}: Dieser Schalter weist den Assembler an, im Default
@@ -2510,7 +2510,8 @@ einmal sein.  Was sollte man als Erkenntnis aus diesem Abschnitt mitnehmen?
 
 {\em G"ultigkeit: PowerPC, M-Core, XGate, 4004/4040, MCS-48/(2)51, 8086,
      80C16x, AVR, XS1, Z8, KCPSM, Mico8, MSP430(X), ST9, M16, M16C, H8/300,
-     H8/500, SH7x00, H16, i960, XA, 29K, TLCS-9000, KENBAK, SC/MP}
+     H8/500, SH7x00, H16, i960, XA, 29K, TLCS-9000, KENBAK, SC/MP,
+     PDP-11, VAX}
 
 Manchmal ist es erw"unscht, nicht nur einer Speicheradresse oder einer
 Konstanten, sondern auch einem Register einen symbolischen Namen zuzuweisen,
@@ -12317,7 +12318,7 @@ einem Dollarzeichen direkt einen Backslash voranzustellen.  Die
 Ansonsten folgen die Aufrufkonventionen und -variationen (bis auf PLIST
 und AS2MSG) denen von \asname{}, d.h. man kann dauernd gebrauchte Schalter in
 einer Environmentvariablen ablegen (deren Name sich aus dem Anh"angen von
-CMD an den Programmnamen ergibt, z.B. BINDCMD f"ur BIND), Optionen
+CMD an den Programmnamen ergibt, z.B. PBINDCMD f"ur PBIND), Optionen
 negieren und Gro"s-bzw. Kleinschreibung erzwingen (n"aheres zu dem Wie in
 Abschnitt \ref{SectCallConvention}).
 \par
@@ -12365,25 +12366,27 @@ weiterbearbeitet.
 
 %%---------------------------------------------------------------------------
 
-\section{BIND}
+\section{PBIND}
 
-BIND ist ein Programm, mit dem man die Records mehrerer Codedateien
+PBIND ist ein Programm, mit dem man die Records mehrerer Codedateien
 in eine Datei zusammenkopieren kann.  Die dabei vorhandene Filterfunktion
 erlaubt es aber auch, nur Records eines bestimmten Typs zu "ubernehmen.
-Auf diese Weise kann BIND auch dazu verwendet werden, um eine Codedatei
+Auf diese Weise kann PBIND auch dazu verwendet werden, um eine Codedatei
 in mehrere aufzuspalten.
 \par
-Die allgemeine Syntax von BIND lautet
+Die allgemeine Syntax von PBIND lautet
 \begin{verbatim}
-   BIND <Quelldatei(en)> <Zieldatei> [Optionen]
+   PBIND [Optionen] <Quelldatei(en)> [Zieldatei]
 \end{verbatim}
-Wie auch \asname{} betrachtet BIND alle nicht mit einem +, - oder / eingeleiteten
-Parameter als Dateiangaben, von denen die letzte die Zieldatei angeben
-mu"s.  Alle anderen Dateiangaben bezeichnen Quellen, diese Angaben d"urfen
+Wie auch \asname{} betrachtet PBIND alle nicht mit einem +, - oder / eingeleiteten
+Parameter als Dateiangaben.  Falls keine \tty{-o} Option angegeben wurde, wird
+die letzte davon als Zieldatei angenommen.
+Alle anderen Dateiangaben bezeichnen Quellen, diese Angaben d"urfen
 auch wieder Jokerzeichen enthalten.
 \par
-An Optionen definiert BIND momentan nur eine:
+An Optionen definiert PBIND momentan nur zwei:
 \begin{itemize}
+\item{\tty{o $<$Datei$>$}: spezifiziert die Ausgabe/Zieldatei.}
 \item{\tty{f $<$Header[,Header...]$>$}: gibt eine Liste von Header-IDs
       an, die kopiert werden sollen.  Alle anderen Records werden
       nicht kopiert.  Ohne diese Angabe werden alle Records kopiert.
@@ -12392,9 +12395,9 @@ An Optionen definiert BIND momentan nur eine:
       einzelnen Header-Nummern in der Liste werden durch Kommas getrennt.}
 \end{itemize}
 Um z.B. alle MCS-51-Codeteile aus einer Programmdatei auszusieben,
-benutzt man BIND folgenderma"sen:
+benutzt man PBIND folgenderma"sen:
 \begin{verbatim}
-   BIND <Quellname> <Zielname> -f $31
+   PBIND <Quellname> <Zielname> -f $31
 \end{verbatim}
 Fehlt bei einer Dateiangabe eine Endung, so wird automatisch die Endung
 P angef"ugt.
@@ -12403,13 +12406,13 @@ P angef"ugt.
 
 \section{P2HEX}
 
-P2HEX ist eine Erweiterung von BIND.  Es besitzt alle
-Kommandozeilenoptionen von BIND und hat die gleichen Konventionen
-bzgl. Dateinamen.  Im Gegensatz zu BIND wird die Zieldatei aber als
-Hexfile ausgegeben, d.h. als eine Folge von Zeilen, die den Code als
-ASCII-Hexzahlen enthalten.
+P2HEX ist eine Erweiterung von PBIND.  Es besitzt alle
+Kommandozeilenoptionen von PBIND und hat die gleichen Konventionen
+bez"uglich Quell- und Ziel-Dateinamen.  Im Gegensatz zu PBIND wird
+die Zieldatei aber als Hexfile ausgegeben, d.h. als eine Folge von
+Zeilen, die den Code als ASCII-Hexzahlen enthalten.
 \par
-P2HEX kennt neun verschiedene Zielformate, die "uber den
+P2HEX kennt zehn verschiedene Zielformate, die "uber den
 Kommandozeilenparameter \bb{F} ausgew"ahlt werden k"onnen:
 \begin{itemize}
 \item{Motorola S-Record (\tty{-F Moto})}
@@ -12615,7 +12618,7 @@ option
 \end{verbatim}
 kann man P2HEX anweisen, diese automatisch nach der Konversion zu l"oschen.
 \par
-Anders als BIND erzeugt P2HEX keine Leerdatei, wenn nur ein Dateiname
+Anders als PBIND erzeugt P2HEX keine leere Datei, wenn nur ein Dateiname
 (=Zieldatei) angegeben wurde, sondern bearbeitet die dazugeh"orige
 Codedatei.  Es ist also ein Minimalaufruf \`a la
 \begin{verbatim}

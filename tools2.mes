@@ -11,7 +11,7 @@
 ;-----------------------------------------------------------------------------
 ; Durchsagen
 
-Message InfoMessHead1
+Message InfoMessUsage
  "Aufruf: "
  "usage: "
 
