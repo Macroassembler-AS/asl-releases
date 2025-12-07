@@ -136,6 +136,7 @@ static const TFamilyDescr Descrs[] =
   { "COP8"         , 0x006f, eHexFormatIntel   , get_granularity_default },
   { "SC14XXX"      , 0x006d, eHexFormatIntel   , get_granularity_16      },
   { "NS32000"      , 0x0008, eHexFormatIntel   , get_granularity_default },
+  { "WE32xxx"      , 0x002c, eHexFormatIntel   , get_granularity_default },
   { "ACE"          , 0x0067, eHexFormatIntel   , get_granularity_default },
   { "CP-3F"        , 0x000f, eHexFormatIntel   , get_granularity_default },
   { "F8"           , 0x0044, eHexFormatIntel   , get_granularity_default },

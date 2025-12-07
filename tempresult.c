@@ -269,7 +269,13 @@ int TempResultToFloat(TempResult *pResult)
   switch (pResult->Typ)
   {
     case TempInt:
-      pResult->Contents.Float = pResult->Contents.Int;
+      pResult->Contents.Float =
+#ifdef HAS128
+      /* Weird problems converting negative int128_t values
+         to long double when Valgrind is active: */
+                                (QuadInt)
+#endif
+                                pResult->Contents.Int;
       pResult->Typ = TempFloat;
       break;
     case TempFloat:

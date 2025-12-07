@@ -600,7 +600,7 @@ static void DecodePORT(Word Index)
 {
   UNUSED(Index);
 
-  CodeEquate(SegIO, 0x400, 0x7ff);
+  code_equate_range(SegIO, 0x400, 0x7ff);
 }
 
 static void DecodeBIT(Word Index)

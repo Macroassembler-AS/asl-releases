@@ -1147,7 +1147,7 @@ static void DecodePORT(Word Code)
 {
   UNUSED(Code);
 
-  CodeEquate(SegIO, 0, SegLimits[SegIO]);
+  code_equate_segment(SegIO);
 }
 
 /*!------------------------------------------------------------------------

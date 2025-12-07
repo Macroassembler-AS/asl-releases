@@ -20,7 +20,6 @@ Boolean HostBigEndian;
 
 const char *Integ16Format, *Integ32Format, *Integ64Format;
 const char *IntegerFormat, *LongIntFormat, *QuadIntFormat;
-const char *LargeIntFormat, *LargeHIntFormat;
 
 /*****************************************************************************/
 
@@ -342,6 +341,10 @@ static void CheckDataTypes(void)
   CheckSingle(sizeof(QuadInt), 8, "QuadInt");
   CheckSingle(sizeof(QuadWord), 8, "QuadWord");
 #endif
+#ifdef HAS128
+  CheckSingle(sizeof(OctaInt), 16, "OctaInt");
+  CheckSingle(sizeof(OctaWord), 16, "OctaWord");
+#endif
 #ifdef IEEEFLOAT_8_DOUBLE
   CheckSingle(sizeof(as_float_t),  8, "as_float_t");
 #endif
@@ -378,27 +381,6 @@ static const char *AssignSingle(int size)
   }
 }
 
-static const char *AssignHSingle(int size)
-{
-  if (size == sizeof(short))
-    return "%x";
-  else if (size == sizeof(int))
-    return "%x";
-  else if (size == sizeof(long))
-    return "%lx";
-#if AS_HAS_LONGLONG
-  else if (size == sizeof(long long))
-    return "%llx";
-#endif
-  else
-  {
-    fprintf(stderr,
-            "Configuration error: cannot assign format string for integer of size %d\n", size);
-    exit(255);
-    return "";
-  }
-}
-
 static void AssignFormats(void)
 {
 #ifdef HAS16
@@ -408,8 +390,6 @@ static void AssignFormats(void)
 #ifdef HAS64
   QuadIntFormat = Integ64Format = AssignSingle(8);
 #endif
-  LargeIntFormat = AssignSingle(sizeof(LargeInt));
-  LargeHIntFormat = AssignHSingle(sizeof(LargeInt));
 }
 
 void be_le_init(void)

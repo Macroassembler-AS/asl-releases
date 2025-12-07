@@ -21,7 +21,6 @@ extern Boolean HostBigEndian;
 
 extern const char *Integ16Format, *Integ32Format, *Integ64Format;
 extern const char *IntegerFormat, *LongIntFormat, *QuadIntFormat;
-extern const char *LargeIntFormat, *LargeHIntFormat;
 
 
 extern void WSwap(void *Field, int Cnt);

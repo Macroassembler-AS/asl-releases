@@ -67,7 +67,7 @@
 
 \vspace{1cm}\par
 
-{\large Edition October 2025}
+{\large Edition December 2025}
 \end{raggedright}
 
 \clearpage
@@ -240,6 +240,7 @@ following processor families have been implemented:
 \item{DEC PDP-11}
 \item{DEC VAX}
 \item{Western Digital WD16}
+\item{AT\&T WE32100/we32200 (''Bellmac32'')}
 \item{Intel 4004/4040}
 \item{Intel MCS-48/41, including Siemens SAB80C382, and the OKI
       variants}
@@ -366,7 +367,7 @@ are automatically processed as being local.
 
 For the assembler, symbols may have either integer, string or floating
 point values.  These will be stored - like interim values in formulas -
-with a width of 32 bits for integer values, 80 or 64 bits for floating
+with a width of 32, 64, or 128 bits for integer values, 80 or 64 bits for floating
 point values, and 255 characters for strings.  For a couple of micro
 controllers, there is the possibility to classify symbols by segmentation.
 So the assembler has a (limited) possibility to recognize accesses to
@@ -1090,9 +1091,13 @@ chapters \ref{ChapShareMain} resp. \ref{ChapShareOrder}.
       display of precise error positions in macro bodies!}
 \item{{\tt maxerrors [n]}: instructs the assembler to terminate
       assembly after the given number of errors.}
-\item{{\tt maxerrors [n]}: instructs the assembler to terminate
+\item{{\tt maxinclevel [n]}: instructs the assembler to terminate
       assembly if the include nesting level exceeds the given limit
       (default is 200).}
+\item{{\tt maxsympass [n]}: defines up to which pass unresolved forward
+      references are allowed.  Changing from the default value (1) to
+      a higher one may be needed in special cases, like chained
+      forwardreferences.}
 \item{{\tt Werror}: instructs the assembler to treat warnings as errors.}
 \item{{\tt wrelative} resp. {\tt wno-relative}: instructs the assembler
       to issue warnings if a relative jump instead of an absolute is
@@ -1535,6 +1540,8 @@ name          & meaning \\
 TRUE          & logically ''true'' \\
 FALSE         & logically ''false'' \\
 CONSTPI       & Pi (3.1415.....) \\
+INTWIDTH      & bit width of internal integer arithmetic \\
+HAS64         & internal integer arithmetic uses at leat 64 bitt \\
 FLOATMAX      & largest representable floating point number \\
 VERSION       & version of \asname{} in BCD-coding, \\
               & e.g. 1331 hex for version 1.33p1 \\
@@ -3565,6 +3572,14 @@ instructions to process strings, packed decimal numbers or
 certain floating point formats, are not available in hardware.
 %%-----------
 \begin{cpulist}
+   WE32100 $\rightarrow$ WE32200
+\end{cpulist}
+The third generation of the WE32xxx processor features sixteen
+additional CPU registers, and along with them, new addressing
+modes like indexed and auto-increment/decrement.  Furthermore,
+new instructions were added.
+%%-----------
+\begin{cpulist}
    CP-3F, LP8000, M380
 \end{cpulist}
 The chipset's processor element was sold by AEG/Olympia, GI,
@@ -4466,18 +4481,20 @@ message.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-\subsection{ACCMODE}
+\subsection{ACCMODEresp. EXECMODE}
 \ttindex{ACCMODE}
+\ttindex{EXECMODE}
 
 {\em
 \begin{itemize}
-\item{valid for: VAX}
+\item{valid for: VAX (ACCMODE),\\
+      Bellmac32 (EXECMODE)}
 \end{itemize}
 }
 
-The VAX not only knows a user and supervisor mode, it supports four privilege
+VAX and WE32xxx not only know a user and supervisor mode, they supports four privilege
 levels of this type.  Going from more to less rights, these are named Kernel,
-Executive, Supervisor, and User.  The {\tt ACCMODE} instruction informs the
+Executive, Supervisor, and User.  The {\tt ACCMODE} resp. {\tt EXECMODE} instruction informs the
 assembler about the access mode the following code is executed within.  Not
 all machine instructions are allowed in all modes.  Valid arguments are either
 the mode names mentioned before, or a number between zero (kernel mode) to
@@ -5747,7 +5764,7 @@ valid for: \= Intel (except for 4004/4040), Zilog, Toshiba,\\
            \> NEC, TMS370, Siemens, AMD, MELPS7700/65816,\\
            \> M16(C), National, ST9, Atmel, TMS70Cxx, TMS1000,\\
            \> Signetics, $\mu$PD77230, Fairchild, Intersil,\\
-           \> XS1, SC62015
+           \> XS1, SC62015, WE32xxx
 \end{tabbing}}
 
 These commands are - one could say - the Intel counterpart to \tty{DS} and
@@ -5814,6 +5831,9 @@ but different names:
       resp. \tty{DW}, however only accept integer arguments.}
 \item{\tty{LWORD} resp. \tty{QUAD} on VAXwork like \tty{DD} resp. \tty{DQ},
       however only accept integer arguments.}
+\ttindex{HALF}
+\item{\tty{BYTE} works on WE32xxx like \tty{DB}, \tty{HALF} like \tty{DW},
+      and \tty{WORD} like \tty{DD}.}
 \ttindex{BYTE}\ttindex{WORD}\ttindex{LWORD}\ttindex{QUAD}
 \ttindex{FLOAT}\ttindex{DOUBLE}
 \item{The Renesas RX target provides:
@@ -5888,7 +5908,7 @@ Otherwise, these instructions work like \tty{DD} and \tty{DQ}.
 {\em\begin{tabbing}
 valid for: \= Intel, Zilog, Toshiba, NEC, TMS370, Siemens, AMD, \\
            \> M16(C), National, ST9, TMS7000, TMS1000, Intersil, \\
-           \> 6502, 68xx \\
+           \> 6502, 68xx, WE32xxx \\
 \end{tabbing}}
 
 With this instruction, you can reserve a memory area:
@@ -13165,6 +13185,14 @@ described by:
                {The control register used by a \tty{MOVEC} is not (yet) available
                 for the processor defined by the \tty{CPU} command.}
                {none}
+\errentry{1442}{register is not accessible in current execution modee}
+               {error}
+               {This register may only be accessed in kernel mode.}
+               {The register in question}
+\errentry{1443}{register is read-only in current execution mode}
+               {error}
+               {This register may only be written in kernel mode.}
+               {The register in question}
 \errentry{1445}{invalid register}
                {error}
                {The register used, although valid, cannot be used in this
@@ -14258,6 +14286,7 @@ Additionally, there are:
       instruction.}
 \end{itemize}
 
+\newcommand{\pcsymname}[0]{Program Counter Symbol}
 \input{../doc_COM/pscpu.tex}
 
 %%===========================================================================

@@ -586,11 +586,7 @@ static void CodeRORG(Word Index)
   if (*AttrPart.str.p_str != '\0') WrError(ErrNum_UseLessAttr);
   else if (ChkArgCnt(1, 1))
   {
-#ifndef HAS64
-    HVal = EvalStrIntExpressionWithFlags(&ArgStr[1], SInt32, &ValOK, &Flags);
-#else
-    HVal = EvalStrIntExpressionWithFlags(&ArgStr[1], Int64, &ValOK, &Flags);
-#endif
+    HVal = EvalStrIntExpressionWithFlags(&ArgStr[1], LargeSIntType, &ValOK, &Flags);
     if (mFirstPassUnknown(Flags)) WrError(ErrNum_FirstPassCalc);
     else if (ValOK)
     {

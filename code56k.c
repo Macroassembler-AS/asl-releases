@@ -1056,7 +1056,7 @@ static void PrError(void)
 
 static void DecodeSFR(Word space)
 {
-  CodeEquate((as_addrspace_t)space, 0, MemLimit);
+  code_equate_range((as_addrspace_t)space, 0, MemLimit);
 }
 
 static void DecodeDS(Word Code)

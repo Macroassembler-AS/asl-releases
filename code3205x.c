@@ -1033,7 +1033,7 @@ static void DecodePORT(Word Code)
 {
   UNUSED(Code);
 
-  CodeEquate(SegIO, 0, 65535);
+  code_equate_type(SegIO, UInt16);
 }
 
 /* ---------------------------------------------------------------------- */

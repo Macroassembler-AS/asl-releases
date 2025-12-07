@@ -1036,7 +1036,7 @@ static void decode_jmpp_jint(Word code)
 static void decode_port(Word code)
 {
   UNUSED(code);
-  CodeEquate(SegIO, 0, SegLimits[SegIO]);
+  code_equate_type(SegIO, UInt7);
 }
 
 /*!------------------------------------------------------------------------

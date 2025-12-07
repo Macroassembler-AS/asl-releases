@@ -1247,6 +1247,12 @@ typedef unsigned int as_uint32_t;
 #define AS_64_IS_LONG
 #define LOCALE_NLS
 
+#ifdef __SIZEOF_INT128__
+typedef __uint128_t as_uint128_t;
+typedef __int128_t as_int128_t;
+# define HAS128
+#endif
+
 #endif /* __linux__ || __FreeBSD__ || __NetBSD__ || __APPLE__ */
 
 /*---------------------------------------------------------------------------*/
@@ -1426,6 +1432,12 @@ typedef unsigned long as_uint64_t;
 # undef AS_HAS_LONGLONG
 # define AS_HAS_LONGLONG 0
 #endif /* AS_64_IS_LONG */
+
+#ifdef HAS128
+# ifndef HAS64
+#  error have 128 but no 64 bit integer
+# endif
+#endif
 
 /* Some VAX compilers internally seem to use D float
    and are unable to parse the G float DBL_MAX literal

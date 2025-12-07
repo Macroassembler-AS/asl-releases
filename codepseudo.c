@@ -178,38 +178,55 @@ int FindDispBaseSplitWithQualifier(const char *pArg, int *pArgLen, tDispBaseSpli
  * Result:      -
  *****************************************************************************/
 
-void CodeEquate(as_addrspace_t DestSeg, LargeInt Min, LargeInt Max)
+static void code_equate_core(LargeInt value, as_addrspace_t dest_seg)
 {
-  Boolean OK;
-  tSymbolFlags Flags;
-  LargeInt Erg;
+  TempResult t;
 
+  PushLocHandle(-1);
+  EnterIntSymbol(&LabPart, value, dest_seg, False);
+  PopLocHandle();
+  if (MakeUseList)
+    if (AddChunk(SegChunks + dest_seg, value, 1, False)) WrError(ErrNum_Overlap);
+
+  as_tempres_ini(&t);
+  as_tempres_set_int(&t, value);
+  SetListLineVal(&t);
+  as_tempres_free(&t);
+}
+
+void code_equate_type(as_addrspace_t dest_seg, IntType int_type)
+{
   if (ChkArgCnt(1, 1))
   {
-    Erg = EvalStrIntExpressionWithFlags(&ArgStr[1], Int32, &OK, &Flags);
-    if (OK && !mFirstPassUnknown(Flags))
+    Boolean ok;
+    tSymbolFlags flags;
+    LargeInt value;
+
+    value = EvalStrIntExpressionWithFlags(&ArgStr[1], int_type, &ok, &flags);
+    if (ok && !mFirstPassUnknown(flags))
+      code_equate_core(value, dest_seg);
+  }
+}
+
+void code_equate_range(as_addrspace_t dest_seg, LargeInt min_value, LargeInt max_value)
+{
+  if (ChkArgCnt(1, 1))
+  {
+    Boolean ok;
+    tSymbolFlags flags;
+    LargeInt value;
+
+    value = EvalStrIntExpressionWithFlags(&ArgStr[1], LargeIntType, &ok, &flags);
+    if (ok && !mFirstPassUnknown(flags))
     {
-      if (Min > Erg) WrError(ErrNum_UnderRange);
+      if (min_value > value) WrError(ErrNum_UnderRange);
       else if (
 #ifndef HAS64
-        (!(Max & 0x80000000ul)) &&   /* cannot check >=2G range if LargeInt is 32 bits */
+        (!(max_value & 0x80000000ul)) &&   /* cannot check >=2G range if LargeInt is 32 bits */
 #endif
-        (Erg > Max)) WrError(ErrNum_OverRange);
+        (value > max_value)) WrError(ErrNum_OverRange);
       else
-      {
-        TempResult t;
-
-        PushLocHandle(-1);
-        EnterIntSymbol(&LabPart, Erg, DestSeg, False);
-        PopLocHandle();
-        if (MakeUseList)
-          if (AddChunk(SegChunks + DestSeg, Erg, 1, False)) WrError(ErrNum_Overlap);
-
-        as_tempres_ini(&t);
-        as_tempres_set_int(&t, Erg);
-        SetListLineVal(&t);
-        as_tempres_free(&t);
-      }
+        code_equate_core(value, dest_seg);
     }
   }
 }

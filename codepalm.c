@@ -1327,7 +1327,7 @@ static void decode_ret(Word code)
 static void decode_port(Word index)
 {
   UNUSED(index);
-  CodeEquate(SegIO, 0, SegLimits[SegIO]);
+  code_equate_type(SegIO, UInt4);
 }
 
 /*!------------------------------------------------------------------------

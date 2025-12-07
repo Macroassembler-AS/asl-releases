@@ -2600,7 +2600,7 @@ static void DecodeMOV(Word Code)
 static void CodePORT(Word code)
 {
   UNUSED(code);
-  CodeEquate(SegIO, 0, SegLimits[SegIO]);
+  code_equate_type(SegIO, UInt24);
 }
 
 /*--------------------------------------------------------------------------*/

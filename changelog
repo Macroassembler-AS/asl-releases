@@ -1,3 +1,14 @@
+2025-12-07 [1.42 Bld 298]
+
+- Addition    : Internally use 128 bit integer arithmetic on
+                some platforms.
+- Bugfix      : TLCS-42: Correct range check of PORT instruction.
+- Change      : Allow both unsigned and signed 32 bit displacements
+                for 68020 and above.
+- Addition    : Add -maxsympass option to change pass # up to which
+                forward references are allowed.
+- Addition    : Add WE32xxx as target.
+
 2025-10-22 [1.42 Bld 297]
 
 - Addition    : Provide -o command line switch for PBIND,

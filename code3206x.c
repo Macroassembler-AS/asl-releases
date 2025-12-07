@@ -742,14 +742,12 @@ static Boolean DecodePseudo(void)
           }
           case TempInt:
           ToInt:
-#ifdef HAS64
             if (!RangeCheck(t.Contents.Int, Int32))
             {
               OK = False;
               WrStrErrorPos(ErrNum_OverRange, pArg);
             }
             else
-#endif
               DAsmCode[cnt++] = t.Contents.Int;
             break;
           case TempFloat:

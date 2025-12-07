@@ -111,6 +111,19 @@ tIntTypeDef IntTypeDefs[IntTypeCnt] =
   { 0x8040, 0, 0, 0 }, /* SInt64 */
   { 0x0040, 0, 0, 0 }, /* UInt64 */
   { 0xc040, 0, 0, 0 }, /* Int64 */
+#else
+  { 0x0000, 0, 0, 0 },
+  { 0x0000, 0, 0, 0 },
+  { 0x0000, 0, 0, 0 },
+#endif
+#ifdef HAS128
+  { 0x8080, 0, 0, 0 }, /* SInt128 */
+  { 0x0080, 0, 0, 0 }, /* UInt128 */
+  { 0xc080, 0, 0, 0 }, /* Int128 */
+#else
+  { 0x0000, 0, 0, 0 },
+  { 0x0000, 0, 0, 0 },
+  { 0x0000, 0, 0, 0 },
 #endif
 };
 
@@ -263,10 +276,14 @@ void AsmParsInit(void)
 
 static Boolean range_not_checkable(IntType type)
 {
-#ifndef HAS64
-  return (((int)type) >= ((int)SInt32));
+#ifdef HAS128
+  return (((int)type) >= ((int)SInt128));
 #else
+#ifdef HAS64
   return (((int)type) >= ((int)SInt64));
+#else
+  return (((int)type) >= ((int)SInt32));
+#endif
 #endif
 }
 
@@ -3765,9 +3782,9 @@ static void PrNoISection(PTree Tree, void *pData)
 
   if ((Node->SymWert.AddrSpaceMask & NoICEMask) && (Node->Tree.Attribute == pContext->Handle) && (Node->SymWert.Typ == TempInt))
   {
-    errno = 0; fprintf(pContext->f, "DEFINE %s 0x", Node->Tree.Name); ChkIO(ErrNum_FileWriteError);
-    errno = 0; fprintf(pContext->f, LargeHIntFormat, Node->SymWert.Contents.Int); ChkIO(ErrNum_FileWriteError);
-    errno = 0; fprintf(pContext->f, "\n"); ChkIO(ErrNum_FileWriteError);
+    String buf;
+    as_snprintf(buf, sizeof(buf), "DEFINE %s 0x%lllx\n", Node->Tree.Name, Node->SymWert.Contents.Int);
+    fputs(buf, pContext->f); ChkIO(ErrNum_FileWriteError);
   }
 }
 
@@ -3781,17 +3798,16 @@ void PrintNoISymbols(FILE *f)
   IterTree((PTree)FirstSymbol, PrNoISection, &Context);
   Context.Handle++;
   for (CurrSection = FirstSection; CurrSection; CurrSection = CurrSection->Next)
-   if (ChunkSum(&CurrSection->Usage)>0)
-   {
-     fprintf(f, "FUNCTION %s ", CurrSection->Name); ChkIO(ErrNum_FileWriteError);
-     fprintf(f, LargeIntFormat, ChunkMin(&CurrSection->Usage)); ChkIO(ErrNum_FileWriteError);
-     fprintf(f, "\n"); ChkIO(ErrNum_FileWriteError);
-     IterTree((PTree)FirstSymbol, PrNoISection, &Context);
-     Context.Handle++;
-     fprintf(f, "}FUNC "); ChkIO(ErrNum_FileWriteError);
-     fprintf(f, LargeIntFormat, ChunkMax(&CurrSection->Usage)); ChkIO(ErrNum_FileWriteError);
-     fprintf(f, "\n"); ChkIO(ErrNum_FileWriteError);
-   }
+    if (ChunkSum(&CurrSection->Usage) > 0)
+    {
+      String buf;
+      as_snprintf(buf, sizeof(buf), "FUNCTION %s %llld\n", CurrSection->Name, ChunkMin(&CurrSection->Usage));
+      fputs(buf, f); ChkIO(ErrNum_FileWriteError);
+      IterTree((PTree)FirstSymbol, PrNoISection, &Context);
+      Context.Handle++;
+      as_snprintf(buf, sizeof(buf), "}FUNC %llld\n", ChunkMax(&CurrSection->Usage));
+      fputs(buf, f); ChkIO(ErrNum_FileWriteError);
+    }
 }
 
 void PrintSymbolTree(void)

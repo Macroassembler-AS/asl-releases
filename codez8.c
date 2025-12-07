@@ -2398,7 +2398,7 @@ static void DecodeSFR(Word Code)
 {
   UNUSED(Code);
 
-  CodeEquate(SegData, 0, mIsZ8Encore() ? 0xfff : 0xff);
+  code_equate_type(SegData, mIsZ8Encore() ? UInt12 : UInt8);
 }
 
 static void DecodeDEFBIT(Word Code)

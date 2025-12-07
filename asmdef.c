@@ -226,7 +226,6 @@ void AsmDefInit(void)
 
   DoLst = eLstMacroExpAll;
   PassNo = 1;
-  MaxSymPass = 1;
 
   LineSum = 0;
 

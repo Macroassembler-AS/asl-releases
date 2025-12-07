@@ -103,6 +103,7 @@ extern char SrcSuffix[],IncSuffix[],PrgSuffix[],LstSuffix[],
 #define TimeName         "TIME"
 #define VerName          "VERSION"    /* speichert Versionsnummer */
 #define CaseSensName     "CASESENSITIVE" /* zeigt Gross/Kleinunterscheidung an */
+#define IntWidthName     "INTWIDTH"   /* bit width of internal integer aritmetic */
 #define Has64Name        "HAS64"         /* arbeitet Parser mit 64-Bit-Integers ? */
 #define ArchName         "ARCHITECTURE"  /* Zielarchitektur von AS */
 #define AttrName         "ATTRIBUTE"  /* Attributansprache in Makros */

@@ -2215,6 +2215,26 @@ _start		instr	3
 _next
 		endm
 
+;-------------------------------------------------
+; Some VAX instructions allow dealing with octa words
+; (128 bits).  Immediate arguments >= 2^64 currently
+; work only on hosts with 128 bit arithmetic support.
+; On all others, just enter the machine code as hex
+; constants:
+
+		if	intwidth>=128
+		message "has128"
+		movo	#0x123456789abcdef0123456789abcdef0,r0
+		elseif
+		message	"no128"
+		byte	0xfd,0x7d,0x8f
+		lword	0x9abcdef0,0x12345678,0x9abcdef0,0x12345678
+		byte	0x50
+		endif
+
+;-------------------------------------------------
+
+
 		byte	1,2,3		; 01 02 03
 		;expect
 		;byte	"dontdothat"

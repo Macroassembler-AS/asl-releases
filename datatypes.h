@@ -32,14 +32,31 @@ typedef as_uint64_t QuadWord;
 typedef as_int64_t QuadInt;
 #endif
 
-#ifdef HAS64
+#ifdef HAS128
+typedef as_uint128_t OctaWord;
+typedef as_int128_t OctaInt;
+#endif
+
+/* On pure 32 bit platforms, avoid warnings about shift
+   count being equal to operand size: */
+
+#ifdef HAS128
+typedef OctaInt LargeInt;
+typedef OctaWord LargeWord;
+# define LARGEBITS 128
+#define largeint_shr32(l) (l >>= 32)
+#else
+# ifdef HAS64
 typedef QuadInt LargeInt;
 typedef QuadWord LargeWord;
-#define LARGEBITS 64
-#else
+# define LARGEBITS 64
+#define largeint_shr32(l) (l >>= 32)
+# else
 typedef LongInt LargeInt;
 typedef LongWord LargeWord;
-#define LARGEBITS 32
+# define LARGEBITS 32
+#define largeint_shr32(l) (l = 0)
+# endif
 #endif
 
 typedef signed int sint;

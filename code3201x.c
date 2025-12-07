@@ -349,7 +349,7 @@ static void DecodePORT(Word Code)
 {
   UNUSED(Code);
 
-  CodeEquate(SegIO, 0, 7);
+  code_equate_type(SegIO, UInt3);
 }
 
 static void DecodeDATA_3201x(Word Code)

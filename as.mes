@@ -521,6 +521,14 @@ Message ErrMsgInvPMMUType
  "ung&uuml;ltiger PMMU-Typ"
  "invalid PMMU type"
 
+Message ErrMsgRegAccessibleOnlyInExecMode
+ "Register im aktuellen Ausf&uuml;hrungsmodus nicht zugreifbar"
+ "register is not accessible in current execution mode"
+
+Message ErrMsgRegReadOnlyInExecMode
+ "Register darf im aktuellen Ausf&uuml;hrungsmodus nur gelesen werden"
+ "register is read-only in current execution mode"
+
 Message ErrMsgInvCtrlReg
  "ung&uuml;ltiges Kontrollregister"
  "invalid control register"
@@ -1598,6 +1606,7 @@ Message InfoMessHelp
  "  -M                   : Makrodefinitionen extrahieren\n" \
  "  -maxerrors <Anzahl>  : Assemblierung nach <Anzahl> Fehlern abbrechen\n" \
  "  -maxinclevel <Anzahl>: Include-Verschachtelungstiefe auf <Anzahl> begrenzen\n" \
+ "  -maxsympass <Nummer> : Unaufgel&ouml;ste Vorw&auml;rtsreferenzen bis Pass <Nummer> erlauben\n" \
  "  -n                   : Fehlermeldungen mit Nummer\n" \
  "  -olist <Name>        : Namen der Listdatei neu setzen\n" \
  "  -o <Name>            : Namen der Code-Datei neu setzen\n" \
@@ -1658,6 +1667,7 @@ Message InfoMessHelp
  "  -M                   : extract macro definitions\n" \
  "  -maxerrors <number>  : terminate assembly after <number> errors\n" \
  "  -maxinclevel <number>: limit include nesting level to <number>\n" \
+ "  -maxsympass <number> : allow unresolved forward references up to Pass <number>\n" \
  "  -n                   : add error #s to error messages\n" \
  "  -olist <nname>       : change name of list file\n" \
  "  -o <name>            : change name of code file\n" \

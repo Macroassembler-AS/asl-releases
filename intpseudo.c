@@ -1266,30 +1266,20 @@ func_exit:
 static Boolean Put48I_To_4(LargeWord l, tSymbolFlags flags, struct sLayoutCtx *pCtx)
 {
   unsigned z;
-  Byte *p_dest;
-  Byte nibble;
-#ifndef HAS64
-  /* TempResult is TempInt, so sign-extend */
-  Byte s_ext = (l & 0x80000000ul) ? 0xf : 0x0;
-#endif
+  Byte *p_dest, highest_src;
 
   if (!IncMaxCodeLen(pCtx, 12))
     return False;
 
   p_dest = BAsmCode + pCtx->CurrCodeFill.FullWordCnt + (pCtx->LoHiMap ? 12 : 0);
-  for (z = 0; z < 12; z++)
+  for (z = 0; z < min(12, LARGEBITS / 4); z++, l >>= 4)
   {
-#ifndef HAS64
-    if (z >= 8)
-      nibble = s_ext;
-    else
-#endif
-    {
-      nibble = l & 0xf;
-      l >>= 4;
-    }
-    *(pCtx->LoHiMap ? --p_dest : p_dest++) = nibble;
+    highest_src = l & 0xf;
+    *(pCtx->LoHiMap ? --p_dest : p_dest++) = highest_src;
   }
+  /* TempResult is TempInt, so sign-extend */
+  for (; z < 12; z++)
+    *(pCtx->LoHiMap ? --p_dest : p_dest++) = (highest_src & 0x8) ? 0xf : 0x0;
   set_b_guessed(flags, pCtx->CurrCodeFill.FullWordCnt, 12, 0xf);
   pCtx->CurrCodeFill.FullWordCnt += 12;
   return True;
@@ -1297,20 +1287,21 @@ static Boolean Put48I_To_4(LargeWord l, tSymbolFlags flags, struct sLayoutCtx *p
 
 static Boolean Put48I_To_8(LargeWord l, tSymbolFlags flags, struct sLayoutCtx *pCtx)
 {
+  unsigned z;
+  Byte *p_dest, highest_src = 0;
+
   if (!IncMaxCodeLen(pCtx, 6))
     return False;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (0 ^ pCtx->LoHiMap)      ] = (l      ) & 0xff;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (1 ^ pCtx->LoHiMap)      ] = (l >>  8) & 0xff;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (2 ^ (pCtx->LoHiMap & 1))] = (l >> 16) & 0xff;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (3 ^ (pCtx->LoHiMap & 1))] = (l >> 24) & 0xff;
-#ifdef HAS64
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (4 ^ pCtx->LoHiMap)      ] = (l >> 32) & 0xff;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (5 ^ pCtx->LoHiMap)      ] = (l >> 40) & 0xff;
-#else
+
+  p_dest = BAsmCode + pCtx->CurrCodeFill.FullWordCnt + (pCtx->LoHiMap ? 6 : 0);
+  for (z = 0; z < min(6, LARGEBITS / 8); z++, l >>= 8)
+  {
+    highest_src = l & 0xff;
+    *(pCtx->LoHiMap ? --p_dest : p_dest++) = highest_src;
+  }
   /* TempResult is TempInt, so sign-extend */
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (4 ^ pCtx->LoHiMap)      ] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (5 ^ pCtx->LoHiMap)      ] = (l & 0x80000000ul) ? 0xff : 0x00;
-#endif
+  for (; z < 6; z++)
+    *(pCtx->LoHiMap ? --p_dest : p_dest++) = (highest_src & 0x80) ? 0xff : 0x0;
   set_b_guessed(flags, pCtx->CurrCodeFill.FullWordCnt, 6, 0xff);
   pCtx->CurrCodeFill.FullWordCnt += 6;
   return True;
@@ -1340,18 +1331,21 @@ static Boolean Put48F_To_8(as_float_t t, tSymbolFlags flags, struct sLayoutCtx *
 
 static Boolean Put48I_To_16(LargeWord l, tSymbolFlags flags, struct sLayoutCtx *pCtx)
 {
-  int LoHiMap = pCtx->LoHiMap ? 2 : 0; /* 5 or 0 -> 2 or 0 */
+  unsigned z;
+  Word *p_dest, highest_src = 0;
 
   if (!IncMaxCodeLen(pCtx, 3))
     return False;
-  WAsmCode[pCtx->CurrCodeFill.FullWordCnt + (0 ^ LoHiMap)      ] = (l      ) & 0xffff;
-  WAsmCode[pCtx->CurrCodeFill.FullWordCnt + (1 ^ (LoHiMap & 1))] = (l >> 16) & 0xffff;
-#ifdef HAS64
-  WAsmCode[pCtx->CurrCodeFill.FullWordCnt + (2 ^ LoHiMap)      ] = (l >> 32) & 0xffff;
-#else
+
+  p_dest = WAsmCode + pCtx->CurrCodeFill.FullWordCnt + (pCtx->LoHiMap ? 3 : 0);
+  for (z = 0; z < min(3, LARGEBITS / 16); z++, l >>= 16)
+  {
+    highest_src = l & 0xffff;
+    *(pCtx->LoHiMap ? --p_dest : p_dest++) = highest_src;
+  }
   /* TempResult is TempInt, so sign-extend */
-  WAsmCode[pCtx->CurrCodeFill.FullWordCnt + (2 ^ LoHiMap)      ] = (l & 0x80000000ul) ? 0xffff : 0x0000;
-#endif
+  for (; z < 3; z++)
+    *(pCtx->LoHiMap ? --p_dest : p_dest++) = (highest_src & 0x8000) ? 0xffff : 0x0000;
   set_w_guessed(flags, pCtx->CurrCodeFill.FullWordCnt, 3, 0xffffu);
   pCtx->CurrCodeFill.FullWordCnt += 3;
   return True;
@@ -1382,17 +1376,19 @@ static Boolean Put48F_To_16(as_float_t t, tSymbolFlags flags, struct sLayoutCtx 
 
 static Boolean Put48I_To_32(LargeWord l, tSymbolFlags flags, struct sLayoutCtx *pCtx)
 {
-  int LoHiMap = pCtx->LoHiMap ? 2 : 0; /* 5 or 0 -> 2 or 0 */
+  int z;
+  LongWord highest_src = 0, *p_dest;
 
   if (!IncMaxCodeLen(pCtx, 2))
     return False;
-  DAsmCode[pCtx->CurrCodeFill.FullWordCnt + (0 ^ LoHiMap)] = (l      ) & 0xfffffffful;
-#ifdef HAS64
-  DAsmCode[pCtx->CurrCodeFill.FullWordCnt + (1 ^ LoHiMap)] = (l >> 32) & 0x0000fffful;
-#else
-  /* TempResult is TempInt, so sign-extend */
-  DAsmCode[pCtx->CurrCodeFill.FullWordCnt + (1 ^ LoHiMap)] = (l & 0x80000000ul) ? 0xfffful : 0x0000ul;
-#endif
+  p_dest = DAsmCode + pCtx->CurrCodeFill.FullWordCnt + (pCtx->LoHiMap ? 2 : 0);
+  for (z = 0; z < min(2, LARGEBITS / 32); z++, largeint_shr32(l))
+  {
+    highest_src = l & 0xfffffffful;
+    *(pCtx->LoHiMap ? --p_dest : p_dest++) = highest_src & (z ? 0xfffffffful : 0x0000fffful);
+  }
+  for (; z < 2; z++)
+    *(pCtx->LoHiMap ? --p_dest : p_dest++) = ((highest_src & 0x80000000ul) ? 0xfffffffful : 0x00000000ul) & (z ? 0xfffffffful : 0x0000fffful);
   if (pCtx->LoHiMap)
   {
     set_d_guessed(flags, pCtx->CurrCodeFill.FullWordCnt    , 1, 0xffffu);
@@ -1505,37 +1501,17 @@ func_exit:
 
 static Boolean Put64I_To_4(LargeWord l, tSymbolFlags flags, struct sLayoutCtx *pCtx)
 {
+  unsigned z;
+  Byte highest_src = 0;
+
   if (!IncMaxCodeLen(pCtx, 16))
     return False;
   set_b_guessed(flags, pCtx->CurrCodeFill.FullWordCnt, 16, 0xf);
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + ( 0 ^ pCtx->LoHiMap)] = (l >>  0) & 0xf;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + ( 1 ^ pCtx->LoHiMap)] = (l >>  4) & 0xf;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + ( 2 ^ pCtx->LoHiMap)] = (l >>  8) & 0xf;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + ( 3 ^ pCtx->LoHiMap)] = (l >> 12) & 0xf;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + ( 4 ^ pCtx->LoHiMap)] = (l >> 16) & 0xf;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + ( 5 ^ pCtx->LoHiMap)] = (l >> 20) & 0xf;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + ( 6 ^ pCtx->LoHiMap)] = (l >> 24) & 0xf;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + ( 7 ^ pCtx->LoHiMap)] = (l >> 28) & 0xf;
-#ifdef HAS64
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + ( 8 ^ pCtx->LoHiMap)] = (l >> 32) & 0xf;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + ( 9 ^ pCtx->LoHiMap)] = (l >> 36) & 0xf;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (10 ^ pCtx->LoHiMap)] = (l >> 40) & 0xf;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (11 ^ pCtx->LoHiMap)] = (l >> 44) & 0xf;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (12 ^ pCtx->LoHiMap)] = (l >> 48) & 0xf;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (13 ^ pCtx->LoHiMap)] = (l >> 52) & 0xf;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (14 ^ pCtx->LoHiMap)] = (l >> 56) & 0xf;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (15 ^ pCtx->LoHiMap)] = (l >> 60) & 0xf;
-#else
+  for (z = 0; z < min(16, LARGEBITS / 4); z++, l >>= 4)
+    BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (z ^ pCtx->LoHiMap)] = highest_src = l & 0xf;
   /* TempResult is TempInt, so sign-extend */
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + ( 8 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + ( 9 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (10 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (11 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (12 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (13 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (14 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (15 ^ pCtx->LoHiMap)] = (l & 0x80000000ul) ? 0xf : 0x0;
-#endif
+  for (; z < 16; z++)
+    BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (z ^ pCtx->LoHiMap)] = (highest_src & 0x8) ? 0xf : 0x0;
   pCtx->CurrCodeFill.FullWordCnt += 16;
   return True;
 }
@@ -1597,25 +1573,16 @@ static Boolean Put64F_To_4(as_float_t t, tSymbolFlags flags, struct sLayoutCtx *
 
 static Boolean Put64I_To_8(LargeWord l, tSymbolFlags flags, struct sLayoutCtx *pCtx)
 {
+  int z;
+  Byte higest_src = 0x00;
+
   if (!IncMaxCodeLen(pCtx, 8))
     return False;
   set_b_guessed(flags, pCtx->CurrCodeFill.FullWordCnt, 8, 0xff);
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (0 ^ pCtx->LoHiMap)] = (l      ) & 0xff;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (1 ^ pCtx->LoHiMap)] = (l >>  8) & 0xff;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (2 ^ pCtx->LoHiMap)] = (l >> 16) & 0xff;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (3 ^ pCtx->LoHiMap)] = (l >> 24) & 0xff;
-#ifdef HAS64
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (4 ^ pCtx->LoHiMap)] = (l >> 32) & 0xff;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (5 ^ pCtx->LoHiMap)] = (l >> 40) & 0xff;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (6 ^ pCtx->LoHiMap)] = (l >> 48) & 0xff;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (7 ^ pCtx->LoHiMap)] = (l >> 56) & 0xff;
-#else
-  /* TempResult is TempInt, so sign-extend */
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (4 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (5 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (6 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (7 ^ pCtx->LoHiMap)] = (l & 0x80000000ul) ? 0xff : 0x00;
-#endif
+  for (z = 0; z < min(8, LARGEBITS / 8); z++, l >>= 8)
+    BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (z ^ pCtx->LoHiMap)] = higest_src = l & 0xff;
+  for (; z < 8; z++)
+    BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (z ^ pCtx->LoHiMap)] = (higest_src & 0x80) ? 0xff : 0x00;
   pCtx->CurrCodeFill.FullWordCnt += 8;
   return True;
 }
@@ -1654,19 +1621,17 @@ static Boolean Put64F_To_8(as_float_t t, tSymbolFlags flags, struct sLayoutCtx *
 
 static Boolean Put64I_To_16(LargeWord l, tSymbolFlags flags, struct sLayoutCtx *pCtx)
 {
+  int z;
+  Word highest_src = 0;
+
   if (!IncMaxCodeLen(pCtx, 4))
     return False;
   set_w_guessed(flags, pCtx->CurrCodeFill.FullWordCnt, 4, 0xffffu);
-  WAsmCode[pCtx->CurrCodeFill.FullWordCnt + (0 ^ pCtx->LoHiMap)] = (l      ) & 0xffff;
-  WAsmCode[pCtx->CurrCodeFill.FullWordCnt + (1 ^ pCtx->LoHiMap)] = (l >> 16) & 0xffff;
-#ifdef HAS64
-  WAsmCode[pCtx->CurrCodeFill.FullWordCnt + (2 ^ pCtx->LoHiMap)] = (l >> 32) & 0xffff;
-  WAsmCode[pCtx->CurrCodeFill.FullWordCnt + (3 ^ pCtx->LoHiMap)] = (l >> 48) & 0xffff;
-#else
+  for (z = 0; z < min(4, LARGEBITS / 16); z++, l >>= 16)
+    WAsmCode[pCtx->CurrCodeFill.FullWordCnt + (z ^ pCtx->LoHiMap)] = highest_src = l & 0xffff;
   /* TempResult is TempInt, so sign-extend */
-  WAsmCode[pCtx->CurrCodeFill.FullWordCnt + (2 ^ pCtx->LoHiMap)] =
-  WAsmCode[pCtx->CurrCodeFill.FullWordCnt + (3 ^ pCtx->LoHiMap)] = (l & 0x80000000ul) ? 0xffff : 0x0000;
-#endif
+  for (; z < 4; z++)
+    WAsmCode[pCtx->CurrCodeFill.FullWordCnt + (z ^ pCtx->LoHiMap)] = (highest_src & 0x8000) ? 0xffff : 0x0000;
   pCtx->CurrCodeFill.FullWordCnt += 4;
   return True;
 }
@@ -1695,16 +1660,17 @@ static Boolean Put64F_To_16(as_float_t t, tSymbolFlags flags, struct sLayoutCtx 
 
 static Boolean Put64I_To_32(LargeWord l, tSymbolFlags flags, struct sLayoutCtx *pCtx)
 {
+  int z;
+  LongWord highest_src;
+
   if (!IncMaxCodeLen(pCtx, 2))
     return False;
   set_d_guessed(flags, pCtx->CurrCodeFill.FullWordCnt, 2, 0xfffffffful);
-  DAsmCode[pCtx->CurrCodeFill.FullWordCnt + (0 ^ pCtx->LoHiMap)] = (l      ) & 0xfffffffful;
-#ifdef HAS64
-  DAsmCode[pCtx->CurrCodeFill.FullWordCnt + (1 ^ pCtx->LoHiMap)] = (l >> 32) & 0xfffffffful;
-#else
+  for (z = 0; z < min(2, LARGEBITS / 32); z++, largeint_shr32(l))
+    DAsmCode[pCtx->CurrCodeFill.FullWordCnt + (z ^ pCtx->LoHiMap)] = highest_src = l & 0xfffffffful;
   /* TempResult is TempInt, so sign-extend */
-  DAsmCode[pCtx->CurrCodeFill.FullWordCnt + (1 ^ pCtx->LoHiMap)] = (l & 0x80000000ul) ? 0xfffffffful : 0x00000000ul;
-#endif
+  for (; z < 2; z++)
+    DAsmCode[pCtx->CurrCodeFill.FullWordCnt + (z ^ pCtx->LoHiMap)] = (highest_src & 0x80000000ul) ? 0xfffffffful : 0x00000000ul;
   pCtx->CurrCodeFill.FullWordCnt += 2;
   return True;
 }
@@ -1748,10 +1714,14 @@ static Boolean LayoutQuadWord(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
     ToInt:
       if (pCtx->Put64I)
       {
-        if (!pCtx->Put64I(t.Contents.Int, t.Flags, pCtx))
-          LEAVE;
-        Cnt = 8;
-        Result = True;
+        if (!mFirstPassUnknownOrQuestionable(t.Flags) && !RangeCheck(t.Contents.Int, Int64)) WrStrErrorPos(ErrNum_OverRange, pExpr);
+        else
+        {
+          if (!pCtx->Put64I(t.Contents.Int, t.Flags, pCtx))
+            LEAVE;
+          Cnt = 8;
+          Result = True;
+        }
         break;
       }
       else
@@ -2161,53 +2131,16 @@ func_exit:
 
 static Boolean Put128I_To_4(LargeWord l, tSymbolFlags flags, Boolean orig_negative, struct sLayoutCtx *pCtx)
 {
+  int z;
+
   if (!IncMaxCodeLen(pCtx, 32))
     return False;
   set_b_guessed(flags, pCtx->CurrCodeFill.FullWordCnt, 32, 0xf);
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + ( 0 ^ pCtx->LoHiMap)] = (l >>  0) & 0xf;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + ( 1 ^ pCtx->LoHiMap)] = (l >>  4) & 0xf;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + ( 2 ^ pCtx->LoHiMap)] = (l >>  8) & 0xf;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + ( 3 ^ pCtx->LoHiMap)] = (l >> 12) & 0xf;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + ( 4 ^ pCtx->LoHiMap)] = (l >> 16) & 0xf;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + ( 5 ^ pCtx->LoHiMap)] = (l >> 20) & 0xf;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + ( 6 ^ pCtx->LoHiMap)] = (l >> 24) & 0xf;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + ( 7 ^ pCtx->LoHiMap)] = (l >> 28) & 0xf;
-#ifdef HAS64
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + ( 8 ^ pCtx->LoHiMap)] = (l >> 32) & 0xf;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + ( 9 ^ pCtx->LoHiMap)] = (l >> 36) & 0xf;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (10 ^ pCtx->LoHiMap)] = (l >> 40) & 0xf;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (11 ^ pCtx->LoHiMap)] = (l >> 44) & 0xf;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (12 ^ pCtx->LoHiMap)] = (l >> 48) & 0xf;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (13 ^ pCtx->LoHiMap)] = (l >> 52) & 0xf;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (14 ^ pCtx->LoHiMap)] = (l >> 56) & 0xf;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (15 ^ pCtx->LoHiMap)] = (l >> 60) & 0xf;
-#else
+  for (z = 0; z < min(32, LARGEBITS / 4); z++, l >>= 4)
+    BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (z ^ pCtx->LoHiMap)] = l & 0xf;
   /* TempResult is TempInt, so sign-extend */
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + ( 8 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + ( 9 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (10 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (11 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (12 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (13 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (14 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (15 ^ pCtx->LoHiMap)] =
-#endif
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (16 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (17 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (18 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (19 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (20 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (21 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (22 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (23 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (24 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (25 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (26 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (27 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (28 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (29 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (30 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (31 ^ pCtx->LoHiMap)] = orig_negative ? 0xff : 0x00;
+  for (; z < 32; z++)
+    BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (z ^ pCtx->LoHiMap)] = orig_negative ? 0xff : 0x00;
 
   pCtx->CurrCodeFill.FullWordCnt += 32;
   return True;
@@ -2277,42 +2210,16 @@ static Boolean Put128F_To_4(as_float_t t, tSymbolFlags flags, struct sLayoutCtx 
 
 static Boolean Put128I_To_8(LargeWord l, tSymbolFlags flags, Boolean orig_negative, struct sLayoutCtx *pCtx)
 {
+  int z;
+
   if (!IncMaxCodeLen(pCtx, 16))
     return False;
   set_b_guessed(flags, pCtx->CurrCodeFill.FullWordCnt, 16, 0xff);
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (0 ^ pCtx->LoHiMap)] = (l      ) & 0xff;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (1 ^ pCtx->LoHiMap)] = (l >>  8) & 0xff;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (2 ^ pCtx->LoHiMap)] = (l >> 16) & 0xff;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (3 ^ pCtx->LoHiMap)] = (l >> 24) & 0xff;
-#ifdef HAS64
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (4 ^ pCtx->LoHiMap)] = (l >> 32) & 0xff;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (5 ^ pCtx->LoHiMap)] = (l >> 40) & 0xff;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (6 ^ pCtx->LoHiMap)] = (l >> 48) & 0xff;
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (7 ^ pCtx->LoHiMap)] = (l >> 56) & 0xff;
+  for (z = 0; z < min(16, LARGEBITS / 8); z++, l >>= 8)
+    BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (z ^ pCtx->LoHiMap)] = l & 0xff;
   /* TempResult is TempInt, so sign-extend */
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (8 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (9 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (10 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (11 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (12 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (13 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (14 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (15 ^ pCtx->LoHiMap)] = orig_negative ? 0xff : 0x00;
-#else
-  /* TempResult is TempInt, so sign-extend */
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (4 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (5 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (6 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (7 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (8 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (9 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (10 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (11 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (12 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (13 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (14 ^ pCtx->LoHiMap)] =
-  BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (15 ^ pCtx->LoHiMap)] = orig_negative ? 0xff : 0x00;
-#endif
+  for (; z < 16; z++)
+    BAsmCode[pCtx->CurrCodeFill.FullWordCnt + (z ^ pCtx->LoHiMap)] = orig_negative ? 0xff : 0x00;
   pCtx->CurrCodeFill.FullWordCnt += 16;
   return True;
 }
@@ -2348,28 +2255,16 @@ static Boolean Put128F_To_8(as_float_t t, tSymbolFlags flags, struct sLayoutCtx 
 
 static Boolean Put128I_To_16(LargeWord l, tSymbolFlags flags, Boolean orig_negative, struct sLayoutCtx *pCtx)
 {
+  int z;
+
   if (!IncMaxCodeLen(pCtx, 8))
     return False;
   set_w_guessed(flags, pCtx->CurrCodeFill.FullWordCnt, 8, 0xffffu);
-  WAsmCode[pCtx->CurrCodeFill.FullWordCnt + (0 ^ pCtx->LoHiMap)] = (l      ) & 0xffff;
-  WAsmCode[pCtx->CurrCodeFill.FullWordCnt + (1 ^ pCtx->LoHiMap)] = (l >> 16) & 0xffff;
-#ifdef HAS64
-  WAsmCode[pCtx->CurrCodeFill.FullWordCnt + (2 ^ pCtx->LoHiMap)] = (l >> 32) & 0xffff;
-  WAsmCode[pCtx->CurrCodeFill.FullWordCnt + (3 ^ pCtx->LoHiMap)] = (l >> 48) & 0xffff;
+  for (z = 0; z < min(8, LARGEBITS / 16); z++, l >>= 16)
+    WAsmCode[pCtx->CurrCodeFill.FullWordCnt + (z ^ pCtx->LoHiMap)] = l & 0xffff;
   /* TempResult is TempInt, so sign-extend */
-  WAsmCode[pCtx->CurrCodeFill.FullWordCnt + (4 ^ pCtx->LoHiMap)] =
-  WAsmCode[pCtx->CurrCodeFill.FullWordCnt + (5 ^ pCtx->LoHiMap)] =
-  WAsmCode[pCtx->CurrCodeFill.FullWordCnt + (6 ^ pCtx->LoHiMap)] =
-  WAsmCode[pCtx->CurrCodeFill.FullWordCnt + (7 ^ pCtx->LoHiMap)] = orig_negative ? 0xffff : 0x0000;
-#else
-  /* TempResult is TempInt, so sign-extend */
-  WAsmCode[pCtx->CurrCodeFill.FullWordCnt + (2 ^ pCtx->LoHiMap)] =
-  WAsmCode[pCtx->CurrCodeFill.FullWordCnt + (3 ^ pCtx->LoHiMap)] =
-  WAsmCode[pCtx->CurrCodeFill.FullWordCnt + (4 ^ pCtx->LoHiMap)] =
-  WAsmCode[pCtx->CurrCodeFill.FullWordCnt + (5 ^ pCtx->LoHiMap)] =
-  WAsmCode[pCtx->CurrCodeFill.FullWordCnt + (6 ^ pCtx->LoHiMap)] =
-  WAsmCode[pCtx->CurrCodeFill.FullWordCnt + (7 ^ pCtx->LoHiMap)] = orig_negative ? 0xffff : 0x0000;
-#endif
+  for (; z < 8; z++)
+    WAsmCode[pCtx->CurrCodeFill.FullWordCnt + (z ^ pCtx->LoHiMap)] = orig_negative ? 0xffff : 0x0000;
   pCtx->CurrCodeFill.FullWordCnt += 8;
   return True;
 }
@@ -2402,21 +2297,16 @@ static Boolean Put128F_To_16(as_float_t t, tSymbolFlags flags, struct sLayoutCtx
 
 static Boolean Put128I_To_32(LargeWord l, tSymbolFlags flags, Boolean orig_negative, struct sLayoutCtx *pCtx)
 {
+  int z;
+
   if (!IncMaxCodeLen(pCtx, 4))
     return False;
   set_d_guessed(flags, pCtx->CurrCodeFill.FullWordCnt, 4, 0xfffffffful);
-  DAsmCode[pCtx->CurrCodeFill.FullWordCnt + (0 ^ pCtx->LoHiMap)] = (l      ) & 0xfffffffful;
-#ifdef HAS64
-  DAsmCode[pCtx->CurrCodeFill.FullWordCnt + (1 ^ pCtx->LoHiMap)] = (l >> 32) & 0xfffffffful;
+  for (z = 0; z < min(4, LARGEBITS / 32); z++, largeint_shr32(l))
+    DAsmCode[pCtx->CurrCodeFill.FullWordCnt + (z ^ pCtx->LoHiMap)] = l & 0xfffffffful;
   /* TempResult is TempInt, so sign-extend */
-  DAsmCode[pCtx->CurrCodeFill.FullWordCnt + (2 ^ pCtx->LoHiMap)] =
-  DAsmCode[pCtx->CurrCodeFill.FullWordCnt + (3 ^ pCtx->LoHiMap)] = orig_negative ? 0xfffffffful : 0x00000000ul;
-#else
-  /* TempResult is TempInt, so sign-extend */
-  DAsmCode[pCtx->CurrCodeFill.FullWordCnt + (1 ^ pCtx->LoHiMap)] =
-  DAsmCode[pCtx->CurrCodeFill.FullWordCnt + (2 ^ pCtx->LoHiMap)] =
-  DAsmCode[pCtx->CurrCodeFill.FullWordCnt + (3 ^ pCtx->LoHiMap)] = orig_negative ? 0xfffffffful : 0x00000000ul;
-#endif
+  for (; z < 4; z++)
+    DAsmCode[pCtx->CurrCodeFill.FullWordCnt + (z ^ pCtx->LoHiMap)] = orig_negative ? 0xfffffffful : 0x00000000;
   pCtx->CurrCodeFill.FullWordCnt += 4;
   return True;
 }
@@ -2462,10 +2352,14 @@ static Boolean LayoutOctaWord(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
     ToInt:
       if (pCtx->Put128I)
       {
-        if (!pCtx->Put128I(t.Contents.Int, t.Flags, t.Contents.Int < 0, pCtx))
-          LEAVE;
-        Cnt = 16;
-        Result = True;
+        if (!mFirstPassUnknownOrQuestionable(t.Flags) && !RangeCheck(t.Contents.Int, Int128)) WrStrErrorPos(ErrNum_OverRange, pExpr);
+        else
+        {
+          if (!pCtx->Put128I(t.Contents.Int, t.Flags, t.Contents.Int < 0, pCtx))
+            LEAVE;
+          Cnt = 16;
+          Result = True;
+        }
         break;
       }
       else

@@ -148,6 +148,8 @@ typedef enum
   ErrNum_InvFPUType = 1431,
   ErrNum_InvPMMUType = 1432,
   ErrNum_InvCtrlReg = 1440,
+  ErrNum_RegAccessibleOnlyInExecMode = 1442,
+  ErrNum_RegReadOnlyInExecMode = 1443,
   ErrNum_InvPMMUReg = 1444,
   ErrNum_InvReg = 1445,
   ErrNum_DoubleReg = 1446,

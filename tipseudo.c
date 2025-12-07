@@ -761,14 +761,12 @@ static void DecodeDATA_TI34x(Word Code)
         {
           case TempInt:
           ToInt:
-#ifdef HAS64
             if (!RangeCheck(t.Contents.Int, Int32))
             {
               OK = False;
               WrError(ErrNum_OverRange);
             }
             else
-#endif
               DAsmCode[CodeLen++] = t.Contents.Int;
             break;
           case TempFloat:

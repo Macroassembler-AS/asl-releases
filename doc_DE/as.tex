@@ -49,7 +49,7 @@
 
 \vspace{1cm}\par
 
-{\large Stand Oktober 2025}
+{\large Stand Dezember 2025}
 \end{raggedright}
 
 \clearpage
@@ -236,6 +236,7 @@ folgende Prozessorfamilien implementiert:
 \item{DEC PDP-11}
 \item{DEC VAX}
 \item{Western Digital WD16}
+\item{AT\&T WE32100/32200 (''Bellmac32'')}
 \item{Intel 4004/4040}
 \item{Intel MCS-48/41, einschlie"slich Siemens SAB80C382 und der
       OKI-Varianten}
@@ -363,7 +364,7 @@ automatisch als lokal betrachtet.
 \par
 Symbole k"onnen f"ur den Assembler sowohl Integer-, String- als auch
 Gleitkommawerte haben.  Diese werden --- wie Zwischenergebnisse bei Formeln
---- mit einer Breite von 32 Bit f"ur Integerwerte, 80/64 Bit f"ur
+--- mit einer Breite von 32, 64, oder 128 Bit f"ur Integerwerte, 80/64 Bit f"ur
 Gleitkommawerte und 255 Zeichen f"ur Strings gespeichert.  F"ur eine Reihe
 von Mikrokontrollern besteht die M"oglichkeit, durch Segmentbildung die
 Symbole bestimmten Klassen zuzuordnen.  Dem Assembler kann man auf diese
@@ -1114,6 +1115,10 @@ bzw. \ref{ChapShareOrder}.
       Anzahl von Fehlern die Assemblierung abzubrechen.}
 \item{{\tt maxinclevel [n]}: Weist den Assembler an, nach der gegebenen
       Include-Verschachtelungstiefe abzubrechen (Default ist 200).}
+\item{{\tt maxsympass [n]}: Definiert, bis zu welchen Pass unaufgel"oste
+      Vorw"artsreferenzen erlaubt sind.  Eine Umstellung auf einen
+      Wert gr"o"ser als den Vorgabewert (1) kann in Sonderf"allen, wie
+      bei verketteten Vorw"artsreferenzen erforderlich sein.}
 \item{{\tt Werror}: Weist den Assembler an, Warnungen als Fehler zu
       behandeln.}
 \item{{\tt wrelative} bzw. {\tt wno-relative}: Weist den Assembler an,
@@ -1573,11 +1578,13 @@ Name             & Bedeutung \\
 \tty{TRUE}             & logisch ,,wahr'' \\
 \tty{FALSE}            & logisch ,,falsch'' \\
 \tty{CONSTPI}          & Kreiszahl Pi (3.1415.....) \\
+\tty{INTWIDTH}         & Bitbreite interne Integer-Arithmetik \\
+\tty{HAS64}            & interne Integer-Arithmetik verwendet mindestens 64 Bit \\
 \tty{FLOATMAX}         & gr"o"ste darstellbare Gleitkommazahl \\
 \tty{VERSION}          & Version von \asname{} in BCD-Kodierung, \\
                        & z.B. 1331 hex f"ur Version 1.33p1 \\
 \tty{ARCHITECTURE}     & Zielplattform, f"ur die \asname{} "ubersetzt wurde, \\
-                       & in der Form Prozesor-Hersteller-Betriebssystem \\
+                       & in der Form Prozessor-Hersteller-Betriebssystem \\
 \tty{DATE}             & Datum und \\
 \tty{TIME}             & Zeitpunkt der Assemblierung (Beginn) \\
 \tty{MOMCPU}           & momentan gesetzte Ziel-CPU \\
@@ -3666,6 +3673,14 @@ oder bestimmten Gleitkommaformaten, sind nicht immer in
 Hardware implementiert.
 %%-----------
 \begin{cpulist}
+   WE32100 $\rightarrow$ WE32200
+\end{cpulist}
+Die dritte Generation des WE32xxx-Prozessors bietet sechzehn
+zus"atzliche CPU-Register, und mit diesen zusammen neue
+Adressierungsmodi wie Indiziert oder Auto-Inkrement und -Dekrement.
+Des weiteren wurden neue Maschinenbefehle hinzu gef"ugt.
+%%-----------
+\begin{cpulist}
    CP-3F, LP8000, M380
 \end{cpulist}
 Das Prozessorelement des Chipsatzes ist von AEG/Olympia, GI
@@ -4589,18 +4604,20 @@ eine Warnung, bei \tty{PMMU} und \tty{FPU} eine echte Fehlermeldung.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-\subsection{ACCMODE}
+\subsection{ACCMODE bzw. EXECMODE}
 \ttindex{ACCMODE}
+\ttindex{EXECMODE}
 
 {\em
 \begin{itemize}
-\item{G"ultigkeit: VAX}
+\item{G"ultigkeit: VAX (ACCMODE),\\
+      WE32xxx (EXECMODE)}
 \end{itemize}
 }
 
-Die VAX kennt nicht nur einen Supervisor- un User-Mode, sonder vier derartige
+VAX und WE32xxx kennen nicht nur einen Supervisor- un User-Mode, sondern vier derartige
 Privilegstufen.  Mit absteigenden Rechten heissen diese Zugriffs-Modi Kernel,
-Executive, Supervisor und User.  Mit dem {\tt ACCMODE}-Befehl teilt man dem
+Executive, Supervisor und User.  Mit dem {\tt ACCMODE} bzw. {\tt EXECMODE}-Befehl teilt man dem
 Assembler mit, in welchen Modus der folgende Code ausgef"uhrt wird.  Je nach
 Modus sind nicht alle Maschinenbefehle erlaubt.  Als Argument sind entweder
 die genannten Namen der vier Modi zul"assig, oder eine Zahl von Null
@@ -5911,7 +5928,7 @@ G"ultigkeit: \= Intel (au"ser 4004/4040), Zilog, Toshiba, NEC, TMS370,\\
              \> Siemens, AMD, M16(C), MELPS7700/65816, National, ST9,\\
              \> Atmel, TMS7000, TMS1000, $\mu$PD77230, Signetics,\\
              \> Fairchild, Intersil,\\
-             \> XS1, SC62015
+             \> XS1, SC62015, WE32xxx
 \end{tabbing}}
 
 Diese Befehle stellen sozusagen das Intel-Gegenst"uck zu \tty{DS}
@@ -5987,6 +6004,9 @@ Funktionalit"at, jedoch anderem Namen:
       WD16 wie \tty{DB} bzw. \tty{DW}, akzeptieren aber nur Ganzzahl-Argumente.}
 \item{\tty{LWORD} bzw. \tty{QUAD} funktionieren auf der VAX wie \tty{DD}
       bzw. \tty{DQ}, akzeptieren aber nur Ganzzahl-Argumente.}
+\ttindex{HALF}
+\item{\tty{BYTE} funktionieren auf WE32xxx wie \tty{DB}, \tty{HALF}
+      wie \tty{DW}, und \tty{WORD} wie \tty{DD}.}
 \ttindex{BYTE}\ttindex{WORD}\ttindex{LWORD}\ttindex{QUAD}
 \ttindex{FLOAT}\ttindex{DOUBLE}
 \item{Auf dem Renesas RX existieren:
@@ -6062,7 +6082,8 @@ Die Befehle funktionieren ansonsten wie \tty{DD} und \tty{DQ}.
 
 {\em\begin{tabbing}
 G"ultigkeit: \= Intel, Zilog, Toshiba, NEC, TMS370, Siemens, AMD, M16(C),\\
-             \> National, ST9, TMS7000, TMS1000, Intersil, 6502, 68xx
+             \> National, ST9, TMS7000, TMS1000, Intersil, 6502, 68xx,\\
+             \> WE32xxx \\
 \end{tabbing}}
 
 Dieser Befehl stellt eine Kurzschreibweise dar, um Speicherbereiche
@@ -13493,6 +13514,14 @@ Angaben:
 	        Kontrollregister  kennt der mit CPU gesetzte Prozessor
 	        (noch) nicht.}
                {keines}
+\errentry{1442}{Register im aktuellen Ausf"uhrungsmodus nicht zugreifbar}
+               {Fehler}
+               {Dieses Register ist nur im Kernel-Modus zugreifbar.}
+               {das fragliche Register}
+\errentry{1443}{Register darf im aktuellen Ausf"uhrungsmodus nur gelesen werden}
+               {Fehler}
+               {Dieses Register ist nur im Kernel-Modus schreibbar.}
+               {das fragliche Register}
 \errentry{1445}{Ung"ultiges Register}
                {Fehler}
                {Das benutzte Register ist zwar prinzipiell
@@ -14681,6 +14710,7 @@ Zus"atzlich existieren:
       ist.}
 \end{itemize}
 
+\newcommand{\pcsymname}{Symbol f"ur Programmz"ahler}
 \input{../doc_COM/pscpu.tex}
 
 %%===========================================================================

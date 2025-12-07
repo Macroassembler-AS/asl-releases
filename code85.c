@@ -1376,7 +1376,7 @@ static void DecodePORT(Word Index)
 {
   UNUSED(Index);
 
-  CodeEquate(SegIO, 0, 0xff);
+  code_equate_type(SegIO, UInt8);
 }
 
 /*--------------------------------------------------------------------------------------------------------*/

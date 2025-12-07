@@ -796,62 +796,33 @@ static void EnterLWord(LargeWord l, Boolean BigEndian)
   CodeLen += 4;
 }
 
+void mot_64_to_16(Word *p_dest, LargeWord src, Boolean big_endian)
+{
+  unsigned swap_mask = big_endian ? 3 : 0, z;
+  Word highest_src = 0;
+
+  for (z = 0; z < min(4, (LARGEBITS / 16)); z++, src >>= 16)
+    p_dest[z ^ swap_mask] = highest_src = src & 0xffffu;
+  /* TempResult is LargeInt, so sign-extend if size is less than 64 bits */
+  for (; z < 4; z++)
+    p_dest[z ^ swap_mask] = (highest_src & 0x8000) ? 0xffff : 0x0000;
+}
+
 static void EnterQWord(LargeWord q, Boolean BigEndian)
 {
   if (ListGran() == 1)
   {
-    if (BigEndian)
-    {
-#ifdef HAS64
-      BAsmCode[CodeLen    ] = (q >> 56) & 0xff;
-      BAsmCode[CodeLen + 1] = (q >> 48) & 0xff;
-      BAsmCode[CodeLen + 2] = (q >> 40) & 0xff;
-      BAsmCode[CodeLen + 3] = (q >> 32) & 0xff;
-#else
-      /* TempResult is LargeInt, so sign-extend */
-      BAsmCode[CodeLen    ] =
-      BAsmCode[CodeLen + 1] =
-      BAsmCode[CodeLen + 2] =
-      BAsmCode[CodeLen + 3] = (q & 0x80000000ul) ? 0xff : 0x00;
-#endif
-      BAsmCode[CodeLen + 4] = (q >> 24) & 0xff;
-      BAsmCode[CodeLen + 5] = (q >> 16) & 0xff;
-      BAsmCode[CodeLen + 6] = (q >>  8) & 0xff;
-      BAsmCode[CodeLen + 7] = (q      ) & 0xff;
-    }
-    else
-    {
-      BAsmCode[CodeLen    ] = (q      ) & 0xff;
-      BAsmCode[CodeLen + 1] = (q >>  8) & 0xff;
-      BAsmCode[CodeLen + 2] = (q >> 16) & 0xff;
-      BAsmCode[CodeLen + 3] = (q >> 24) & 0xff;
-#ifdef HAS64
-      BAsmCode[CodeLen + 4] = (q >> 32) & 0xff;
-      BAsmCode[CodeLen + 5] = (q >> 40) & 0xff;
-      BAsmCode[CodeLen + 6] = (q >> 48) & 0xff;
-      BAsmCode[CodeLen + 7] = (q >> 56) & 0xff;
-#else
-      /* TempResult is LargeInt, so sign-extend */
-      BAsmCode[CodeLen + 4] =
-      BAsmCode[CodeLen + 5] =
-      BAsmCode[CodeLen + 6] =
-      BAsmCode[CodeLen + 7] = (q & 0x80000000ul) ? 0xff : 0x00;
-#endif
-    }
+    unsigned swap_mask = BigEndian ? 7 : 0, z;
+    Byte highest_src = 0;
+
+    for (z = 0; z < min(8, (LARGEBITS / 8)); z++, q >>= 8)
+      BAsmCode[CodeLen + (z ^ swap_mask)] = highest_src = q & 0xff;
+    /* TempResult is LargeInt, so sign-extend */
+    for (; z < 8; z++)
+      BAsmCode[CodeLen + (z ^ swap_mask)] = (highest_src & 0x80) ? 0xff : 0x00;
   }
   else
-  {
-#ifdef HAS64
-    WAsmCode[(CodeLen >> 1)    ] = (q >> 48) & 0xffff;
-    WAsmCode[(CodeLen >> 1) + 1] = (q >> 32) & 0xffff;
-#else
-    /* TempResult is LargeInt, so sign-extend */
-    WAsmCode[(CodeLen >> 1)    ] =
-    WAsmCode[(CodeLen >> 1) + 1] = (q & 0x80000000ul) ? 0xffff : 0x00;
-#endif
-    WAsmCode[(CodeLen >> 1) + 2] = (q >> 16) & 0xffff;
-    WAsmCode[(CodeLen >> 1) + 3] = (q      ) & 0xffff;
-  }
+    mot_64_to_16(&WAsmCode[CodeLen >> 1], q, BigEndian);
   CodeLen += 8;
 }
 
@@ -1151,11 +1122,7 @@ void DecodeMotoDC(Word flags)
       break;
     case eSymbolSize64Bit:
       EnterInt = EnterQWord;
-#ifdef HAS64
       IntTypeEnum = Int64;
-#else
-      IntTypeEnum = Int32;
-#endif
       break;
     case eSymbolSizeFloat16Bit:
       ConvertFloat = as_float_2_ieee2;

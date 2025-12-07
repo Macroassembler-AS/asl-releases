@@ -2372,7 +2372,7 @@ static void decode_port(Word code)
 {
   UNUSED(code);
 
-  CodeEquate(SegIO, 0, 65535);
+  code_equate_type(SegIO, UInt16);
 }
 
 /*-------------------------------------------------------------------------*/

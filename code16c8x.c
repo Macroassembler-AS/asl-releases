@@ -205,7 +205,7 @@ static void DecodeSFR(Word Index)
 {
   UNUSED(Index);
 
-  CodeEquate(SegData, 0, 511);
+  code_equate_type(SegData, UInt9);
 }
 
 static void DecodeDATA_16C8x(Word Index)

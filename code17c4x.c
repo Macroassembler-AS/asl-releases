@@ -235,7 +235,7 @@ static void DecodeSFR(Word Code)
 {
   UNUSED(Code);
 
-  CodeEquate(SegData, 0, 0xff);
+  code_equate_type(SegData, UInt8);
 }
 
 static void DecodeDATA_17C4x(Word Code)

@@ -473,7 +473,7 @@ static void DecodePORT(Word Code)
 {
   UNUSED(Code);
 
-  CodeEquate(SegIO, 0, 15);
+  code_equate_type(SegIO, UInt4);
 }
 
 /* ---------------------------------------------------------------------- */
