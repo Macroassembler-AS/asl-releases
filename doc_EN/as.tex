@@ -5870,6 +5870,21 @@ with zeros.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+\subsection{D1}
+\ttindex{D1}
+
+{\em\begin{tabbing}
+valid for: \= MCS-51 \\
+\end{tabbing}}
+
+\tty{D1} works the same way as \ttindex{DB} and \ttindex{DN}.  The difference
+however is that it defines or reserves only a single bit.  This instruction
+therefore only makes sense if an address space is addressed bitwise.  Currently,
+this is only the case for the 8051's {\tt BITDATA} segment if the {\tt BITSEGSIZE:1}
+option has been used.
+
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 \subsection{FLT2, FLT3, FLT4}
 \ttindex{FLT2}\ttindex{FLT3}\ttindex{FLT4}
 
@@ -9459,6 +9474,28 @@ is optimal for the given target address.  The options are \tty{SJMP,
 AJMP}, or \tty{LJMP} for \tty{JMP} resp. \tty{ACALL} or \tty{LCALL} for
 \tty{CALL}.  Of course it is still possible to use these variants
 directly, in case one wants to force a certain coding.
+
+For historical reasons, the {\tt BITDATA} segment is by default {\em not}
+actually organized in bits.  This means that a statement like this:
+\begin{verbatim}
+flag db ?
+\end{verbatim}
+will increase the program counter only by one, and not by eight.  There is
+an implicit assumption that a byte in the {\tt BITDATA} segment is actually
+only a bit, and if one is not only reserving memory, only the values zero and
+one should be stored in these bytes.  This property is indeed not intuitive,
+but is due to the fact that earlier versions of \asname{} did not support
+address spaces with a word with other than eight, sixteen or thitry-two bits.
+And when it became possible to handle other widths, changing the (default)
+word size would have broken existing code.
+
+So if the {\tt BITDATA} segment shall actually be organized in bits, this
+has to be requested explicitly when selecting the target:
+\begin{verbatim}
+        cpu     8051:bitsegsize=1
+\end{verbatim}
+Furthermore, keep in mind that the output of P2BIN or P2HEX for this segment
+will still use one byte per bit.
 
 %%---------------------------------------------------------------------------
 

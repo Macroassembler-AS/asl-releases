@@ -4,6 +4,8 @@
 
 hi_src	reg	%r16
 
+	org	0x8000
+
 	; Auto Pre-Decrement
 	movb	-(%r0),r1		; 87 5B 00 41
 	movb	-(%r14),r1		; 87 5B 0E 41
@@ -238,9 +240,43 @@ entry:	nop
 
 	clrx				; 0B
 
-	;dtb				; 29
+	; DT is similar to 68K DBRA:
+	dtb	%r4,.			; 29 44 FD
+	dtb	%r4,.+3			; 29 44 00
+	dtb	%r4,.+130		; 29 44 7F
+	expect	1370
+	dtb	%r4,.+131
+	endexpect
+	dtb	%r4,.-125		; 29 44 80
+	expect	1370
+	dtb	%r4,.-126
+	endexpect
 
-	;dth				; 19
+	dth	%r4,.			; 19 44 FC FF
+	dth	%r4,.+4			; 19 44 00 00
+	dth	%r4,.+32771		; 19 44 FF 7F
+	expect	1370
+	dth	%r4,.+32772
+	endexpect
+	dth	%r4,.-32764		; 19 44 00 80
+	expect	1370
+	dth	%r4,.-32765
+	endexpect
+
+	dt	%r4,.			; 29 44 FD
+	dt	%r4,.+3			; 29 44 00
+	dt	%r4,.+130		; 29 44 7F
+	dt	%r4,.+131		; 19 44 7F 00
+	dt	%r4,.+32771		; 19 44 FF 7F
+	expect	1370
+	dt	%r4,.+32772
+	endexpect
+	dt	%r4,.-125		; 29 44 80
+	dt	%r4,.-126		; 19 44 7E FF
+	dt	%r4,.-32764		; 19 44 00 80
+	expect	1370
+	dt	%r4,.-32765
+	endexpect
 
 	;packb				; 0E
 
@@ -252,21 +288,156 @@ entry:	nop
 	subpb3	%r3,*$0x1005,%r2	; DB 43 EF 05 10 00 00 42
 	subpb	%r3,*$0x1005,%r2
 
-	;tedtb				; 4D
+	; TccDT is similar to 68K DBcc:
 
-	;tedth				; 0D
+	tedtb	%r4,.			; 4D 44 FD
+	tedtb	%r4,.+3			; 4D 44 00
+	tedtb	%r4,.+130		; 4D 44 7F
+	expect	1370
+	tedtb	%r4,.+131
+	endexpect
+	tedtb	%r4,.-125		; 4D 44 80
+	expect	1370
+	tedtb	%r4,.-126
+	endexpect
 
-	;tgdtb				; 6D
+	tedth	%r4,.			; 0D 44 FC FF
+	tedth	%r4,.+4			; 0D 44 00 00
+	tedth	%r4,.+32771		; 0D 44 FF 7F
+	expect	1370
+	tedth	%r4,.+32772
+	endexpect
+	tedth	%r4,.-32764		; 0D 44 00 80
+	expect	1370
+	tedth	%r4,.-32765
+	endexpect
 
-	;tgdth				; 2D
+	tedt	%r4,.			; 4D 44 FD
+	tedt	%r4,.+3			; 4D 44 00
+	tedt	%r4,.+130		; 4D 44 7F
+	tedt	%r4,.+131		; 0D 44 7F 00
+	tedt	%r4,.+32771		; 0D 44 FF 7F
+	expect	1370
+	tedt	%r4,.+32772
+	endexpect
+	tedt	%r4,.-125		; 4D 44 80
+	tedt	%r4,.-126		; 0D 44 7E FF
+	tedt	%r4,.-32764		; 0D 44 00 80
+	expect	1370
+	tedt	%r4,.-32765
+	endexpect
 
-	;tgedtb				; 5D
 
-	;tgedth				; 1D
+	tgdtb	%r4,.			; 6D 44 FD
+	tgdtb	%r4,.+3			; 6D 44 00
+	tgdtb	%r4,.+130		; 6D 44 7F
+	expect	1370
+	tgdtb	%r4,.+131
+	endexpect
+	tgdtb	%r4,.-125		; 6D 44 80
+	expect	1370
+	tgdtb	%r4,.-126
+	endexpect
 
-	;tnedtb				; 7D
+	tgdth	%r4,.			; 2D 44 FC FF
+	tgdth	%r4,.+4			; 2D 44 00 00
+	tgdth	%r4,.+32771		; 2D 44 FF 7F
+	expect	1370
+	tgdth	%r4,.+32772
+	endexpect
+	tgdth	%r4,.-32764		; 2D 44 00 80
+	expect	1370
+	tgdth	%r4,.-32765
+	endexpect
 
-	;tnedth				; 3D
+	tgdt	%r4,.			; 6D 44 FD
+	tgdt	%r4,.+3			; 6D 44 00
+	tgdt	%r4,.+130		; 6D 44 7F
+	tgdt	%r4,.+131		; 2D 44 7F 00
+	tgdt	%r4,.+32771		; 2D 44 FF 7F
+	expect	1370
+	tgdt	%r4,.+32772
+	endexpect
+	tgdt	%r4,.-125		; 6D 44 80
+	tgdt	%r4,.-126		; 2D 44 7E FF
+	tgdt	%r4,.-32764		; 2D 44 00 80
+	expect	1370
+	tgdt	%r4,.-32765
+	endexpect
+
+	tgedtb	%r4,.			; 5D 44 FD
+	tgedtb	%r4,.+3			; 5D 44 00
+	tgedtb	%r4,.+130		; 5D 44 7F
+	expect	1370
+	tgedtb	%r4,.+131
+	endexpect
+	tgedtb	%r4,.-125		; 5D 44 80
+	expect	1370
+	tgedtb	%r4,.-126
+	endexpect
+
+	tgedth	%r4,.			; 1D 44 FC FF
+	tgedth	%r4,.+4			; 1D 44 00 00
+	tgedth	%r4,.+32771		; 1D 44 FF 7F
+	expect	1370
+	tgedth	%r4,.+32772
+	endexpect
+	tgedth	%r4,.-32764		; 1D 44 00 80
+	expect	1370
+	tgedth	%r4,.-32765
+	endexpect
+
+	tgedt	%r4,.			; 5D 44 FD
+	tgedt	%r4,.+3			; 5D 44 00
+	tgedt	%r4,.+130		; 5D 44 7F
+	tgedt	%r4,.+131		; 1D 44 7F 00
+	tgedt	%r4,.+32771		; 1D 44 FF 7F
+	expect	1370
+	tgedt	%r4,.+32772
+	endexpect
+	tgedt	%r4,.-125		; 5D 44 80
+	tgedt	%r4,.-126		; 1D 44 7E FF
+	tgedt	%r4,.-32764		; 1D 44 00 80
+	expect	1370
+	tgedt	%r4,.-32765
+	endexpect
+
+	tnedtb	%r4,.			; 7D 44 FD
+	tnedtb	%r4,.+3			; 7D 44 00
+	tnedtb	%r4,.+130		; 7D 44 7F
+	expect	1370
+	tnedtb	%r4,.+131
+	endexpect
+	tnedtb	%r4,.-125		; 7D 44 80
+	expect	1370
+	tnedtb	%r4,.-126
+	endexpect
+
+	tnedth	%r4,.			; 3D 44 FC FF
+	tnedth	%r4,.+4			; 3D 44 00 00
+	tnedth	%r4,.+32771		; 3D 44 FF 7F
+	expect	1370
+	tnedth	%r4,.+32772
+	endexpect
+	tnedth	%r4,.-32764		; 3D 44 00 80
+	expect	1370
+	tnedth	%r4,.-32765
+	endexpect
+
+	tnedt	%r4,.			; 7D 44 FD
+	tnedt	%r4,.+3			; 7D 44 00
+	tnedt	%r4,.+130		; 7D 44 7F
+	tnedt	%r4,.+131		; 3D 44 7F 00
+	tnedt	%r4,.+32771		; 3D 44 FF 7F
+	expect	1370
+	tnedt	%r4,.+32772
+	endexpect
+	tnedt	%r4,.-125		; 7D 44 80
+	tnedt	%r4,.-126		; 3D 44 7E FF
+	tnedt	%r4,.-32764		; 3D 44 00 80
+	expect	1370
+	tnedt	%r4,.-32765
+	endexpect
 
 	;unpackb			; 0F
 

@@ -27,7 +27,7 @@
 
 #define LISTLINE_PREFIX_TOTAL 40
 
-static unsigned SystemListLen4, SystemListLen8,
+static unsigned SystemListLen1, SystemListLen4, SystemListLen8,
                 SystemListLen12, SystemListLen16,
                 SystemListLen24, SystemListLen32;
 
@@ -51,6 +51,9 @@ void as_list_set_max_pc(LargeWord max_pc)
   switch (ListGran())
   {
     case 1:
+      if (gran_bits_unused() && (gran_bits_unused() != 4) && (gran_bits_unused() != 7))
+        goto warn;
+      break;
     case 2:
       if (gran_bits_unused() && (gran_bits_unused() != 4))
         goto warn;
@@ -121,25 +124,19 @@ void MakeList(const char *pSrcLine)
     /* Not enough code to display even on 16/32 bit word?
        Then start dumping bytes right away: */
 
-    if (EffLen < ActListGran)
+    CurrListGran = (EffLen < ActListGran) ? 1 : ActListGran;
+    switch (CurrListGran)
     {
-      CurrListGran = 1;
-      SystemListLen = act_list_gran_bits_unused ? SystemListLen4 : SystemListLen8;
-    }
-    else
-    {
-      CurrListGran = ActListGran;
-      switch (CurrListGran)
-      {
-        case 4:
-          SystemListLen = act_list_gran_bits_unused ? SystemListLen24 : SystemListLen32;
-          break;
-        case 2:
-          SystemListLen = act_list_gran_bits_unused ? SystemListLen12 : SystemListLen16;
-          break;
-        default:
-          SystemListLen = act_list_gran_bits_unused ? SystemListLen4 : SystemListLen8;
-      }
+      case 4:
+        SystemListLen = act_list_gran_bits_unused ? SystemListLen24 : SystemListLen32;
+        break;
+      case 2:
+        SystemListLen = act_list_gran_bits_unused ? SystemListLen12 : SystemListLen16;
+        break;
+      default:
+        SystemListLen = act_list_gran_bits_unused
+                      ? ((act_list_gran_bits_unused == 7) ? SystemListLen1 : SystemListLen4)
+                      : SystemListLen8;
     }
 
     if (TurnWords && (Gran != ActListGran) && (1 == ActListGran))
@@ -394,6 +391,8 @@ void asmlist_setup(void)
 {
   String Dummy;
 
+  SysString(Dummy, sizeof(Dummy), 0x1, ListRadixBase, 0, False, HexStartCharacter, SplitByteCharacter);
+  SystemListLen1 = strlen(Dummy);
   SysString(Dummy, sizeof(Dummy), 0xf, ListRadixBase, 0, False, HexStartCharacter, SplitByteCharacter);
   SystemListLen4 = strlen(Dummy);
   SysString(Dummy, sizeof(Dummy), 0xff, ListRadixBase, 0, False, HexStartCharacter, SplitByteCharacter);

@@ -54,6 +54,7 @@ typedef enum
 
 struct sInstTable;
 
+extern void DecodeIntelD1(Word Flags);
 extern void DecodeIntelDN(Word Flags);
 extern void DecodeIntelDB(Word Flags);
 extern void DecodeIntelDW(Word Flags);

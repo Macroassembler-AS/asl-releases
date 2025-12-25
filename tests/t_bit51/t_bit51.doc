@@ -1,0 +1,6 @@
++----------------------  Test Application BIT51   ---------------------------+
+|                                                                            |
+|  This tests the option to treat the MCS-51 BITDATA segement as actually    |
+|  bit-organized, i.e. 'DB' occupies eight locations instead of one.         |
+|                                                                            |
++----------------------------------------------------------------------------+

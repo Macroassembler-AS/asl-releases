@@ -453,7 +453,8 @@ static Boolean decode_adr(tStrComp *p_arg, adr_vals_t *p_result, LongWord pc_val
 
   /* Deferred modifier? */
 
-  if ((deferred = (arg.str.p_str[0] == '*')))
+  deferred = (arg.str.p_str[0] == '*');
+  if (deferred)
   {
     StrCompIncRefLeft(&arg, 1);
     KillPrefBlanksStrCompRef(&arg);
@@ -561,7 +562,6 @@ static Boolean decode_adr(tStrComp *p_arg, adr_vals_t *p_result, LongWord pc_val
           return check_mode_mask(mode_mask, MModImm, p_arg, p_result);
         }
       }
-      break;
     }
   }
 
@@ -947,6 +947,72 @@ static void decode_var_arg(Word index)
 }
 
 /*!------------------------------------------------------------------------
+ * \fn     append_branch(tSymbolSize disp_size, Byte disp8_inc, const tStrComp *p_arg)
+ * \brief  handle append branch displacement to code
+ * \param  disp_size displacement size to be used (8/16/auto)
+ * \param  disp8_inc opcode increment for 8 bit displacement
+ * \param  p_arg source argument containing target address
+ * ------------------------------------------------------------------------ */
+
+static Boolean append_branch(tSymbolSize disp_size, Byte disp8_inc, const tStrComp *p_arg)
+{
+  tSymbolFlags flags;
+  Boolean ok;
+  LongWord dest;
+  LongInt dist;
+
+  dest = EvalStrIntExpressionWithFlags(p_arg, UInt32, &ok, &flags);
+  if (!ok)
+    return False;
+
+  switch (disp_size)
+  {
+    case eSymbolSize8Bit:
+      dist = dest - (EProgCounter() + CodeLen + 1);
+    is_8:
+      if (!mFirstPassUnknownOrQuestionable(flags) && !RangeCheck(dist, SInt8))
+      {
+        WrStrErrorPos(ErrNum_JmpDistTooBig, &ArgStr[1]);
+        return False;
+      }
+      else
+      {
+        set_b_guessed(flags, CodeLen, 1, 0xff);
+        BAsmCode[CodeLen++] = dist & 0xff;
+      }
+      break;
+    case eSymbolSize16Bit:
+      dist = dest - (EProgCounter() + CodeLen + 2);
+    is_16:
+      if (!mFirstPassUnknownOrQuestionable(flags) && !RangeCheck(dist, SInt16))
+      {
+        WrStrErrorPos(ErrNum_JmpDistTooBig, &ArgStr[1]);
+        return False;
+      }
+      else
+      {
+        set_b_guessed(flags, CodeLen, 2, 0xff);
+        BAsmCode[CodeLen++] = dist & 0xff;
+        BAsmCode[CodeLen++] = (dist >> 8) & 0xff;
+      }
+      break;
+    default:
+      dist = dest - (EProgCounter() + CodeLen + 1);
+      if (RangeCheck(dist, SInt8))
+      {
+        BAsmCode[0] += disp8_inc;
+        goto is_8;
+      }
+      else
+      {
+        dist--;
+        goto is_16;
+      }
+  }
+  return True;
+}
+
+/*!------------------------------------------------------------------------
  * \fn     decode_branch(Word index)
  * \brief  handle branch instructions
  * \param  index opcode & displacement size
@@ -954,55 +1020,43 @@ static void decode_var_arg(Word index)
 
 static void decode_branch(Word index)
 {
-  Byte opcode = Lo(index);
-  tSymbolSize disp_size = (tSymbolSize)((index >> 8) & 0xff);
-  tSymbolFlags flags;
-  Boolean ok;
-  LongWord dest;
-  LongInt dist;
-
   if (!ChkArgCnt(1, 1))
     return;
 
-  dest = EvalStrIntExpressionWithFlags(&ArgStr[1], UInt32, &ok, &flags);
-  if (!ok)
+  append_opcode(Lo(index));
+  if (!append_branch((tSymbolSize)((index >> 8) & 0xff), 0x01, &ArgStr[1]))
+    CodeLen = 0;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     decode_decrement_branch(Word index)
+ * \brief  handle [Tcc]DT<B|H> instructions
+ * \param  index opcode & displacement size
+ * ------------------------------------------------------------------------ */
+
+static void decode_decrement_branch(Word code)
+{
+  adr_vals_t adr_vals;
+  Byte opcode = Lo(code);
+
+  if (!ChkArgCnt(2, 2))
     return;
 
-  switch (disp_size)
+  if (MomCPU < cpu_32200)
   {
-    case eSymbolSize8Bit:
-      dist = dest - (EProgCounter() + 2);
-    is_8:
-      if (!mFirstPassUnknownOrQuestionable(flags) && !RangeCheck(dist, SInt8)) WrStrErrorPos(ErrNum_JmpDistTooBig, &ArgStr[1]);
-      else
-      {
-        append_opcode(opcode);
-        set_b_guessed(flags, CodeLen, 1, 0xff);
-        BAsmCode[CodeLen++] = dist & 0xff;
-      }
-      break;
-    case eSymbolSize16Bit:
-      dist = dest - (EProgCounter() + 3);
-    is_16:
-      if (!mFirstPassUnknownOrQuestionable(flags) && !RangeCheck(dist, SInt16)) WrStrErrorPos(ErrNum_JmpDistTooBig, &ArgStr[1]);
-      else
-      {
-        append_opcode(opcode);
-        set_b_guessed(flags, CodeLen, 2, 0xff);
-        BAsmCode[CodeLen++] = dist & 0xff;
-        BAsmCode[CodeLen++] = (dist >> 8) & 0xff;
-      }
-      break;
-    default:
-      dist = dest - (EProgCounter() + 2);
-      if (RangeCheck(dist, SInt8))
-        goto is_8;
-      else
-      {
-        dist--;
-        goto is_16;
-      }
+    WrStrErrorPos(ErrNum_InstructionNotSupported, &OpPart);
+    return;
   }
+  append_opcode(opcode);
+
+  if (decode_adr(&ArgStr[1], &adr_vals, EProgCounter() + CodeLen, MModReg | MModMem))
+  {
+    append_adr_vals(&adr_vals);
+    if (!append_branch((tSymbolSize)((code >> 8) & 0xff), ((opcode & 0x0f) == 0x09) ? 0x10 : 0x40, &ArgStr[2]))
+      CodeLen = 0;
+  }
+  else
+    CodeLen = 0;
 }
 
 /*!------------------------------------------------------------------------
@@ -1320,6 +1374,22 @@ static void add_branch(const char *p_name, Word code)
   add_branch_core(name, eSymbolSize16Bit, code);
 }
 
+static void add_decrement_branch_core(const char *p_name, tSymbolSize op_size, Word code)
+{
+  AddInstTable(InstTable, p_name, (((Word)(op_size & 0xff)) << 8) | code, decode_decrement_branch);
+}
+
+static void add_decrement_branch(const char *p_name, Word code)
+{
+  char name[20];
+
+  add_decrement_branch_core(p_name, eSymbolSizeUnknown, code);
+  as_snprintf(name, sizeof(name), "%sB", p_name);
+  add_decrement_branch_core(name, eSymbolSize8Bit, code + (((code & 0x0f) == 0x09) ? 0x10 : 0x40));
+  as_snprintf(name, sizeof(name), "%sH", p_name);
+  add_decrement_branch_core(name, eSymbolSize16Bit, code);
+}
+
 static void init_fields(void)
 {
   InstTable = CreateInstTable(403);
@@ -1421,6 +1491,14 @@ static void init_fields(void)
   add_branch("BR"  , 0x7a);
   add_branch("BSB" , 0x36);
 
+  /* Encoding of [Tcc]DTx instructions is a bit guessed: */
+
+  add_decrement_branch("DT", 0x19);
+  add_decrement_branch("TEDT", 0x0d);
+  add_decrement_branch("TGDT", 0x2d);
+  add_decrement_branch("TGEDT", 0x1d);
+  add_decrement_branch("TNEDT", 0x3d);
+
   AddInstTable(InstTable, "RESTORE", 0x18, decode_save_restore);
   AddInstTable(InstTable, "SAVE", 0x10, decode_save_restore);
   AddInstTable(InstTable, "EXTOP", 0x0114, decode_byte_op);
@@ -1449,17 +1527,7 @@ static void init_fields(void)
   /* need detail info about these WE32200 instructions: */
 
   add_("CASWI", "+", 0x09);
-	add_("DTB", "+", 0x29);
-  add_("DTH", "+", 0x19);
-	add_("PACKB", "+", 0x0e);
-  add_("TEDTB", "+", 0x4d);
-  add_("TEDTH", "+", 0x0d);
-  add_("TGDTB", "+", 0x6d);
-  add_("TGDTH", "+", 0x2d);
-  add_("TGEDTB", "+", 0x5d);
-  add_("TGEDTH", "+", 0x1d);
-  add_("TNEDTB", "+", 0x7d);
-  add_("TNEDTH", "+", 0x3d);
+  add_("PACKB", "+", 0x0e);
   add_("UNPACKB", "+", 0x0f);
 #endif
 

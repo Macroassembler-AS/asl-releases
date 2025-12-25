@@ -24,7 +24,7 @@ for t in $SUBDIRS; do
   fi
   # valgrind --leak-check=yes  ...
   ${RUNCMD} ../../${OBJDIR}asl${TARG_EXEXTENSION} `cat asflags` $QUIET -Werror -i ../../include $t.asm | tee $t.log
-  ${RUNCMD} ../../${OBJDIR}p2bin${TARG_EXEXTENSION} $QUIET -k -l 0 -r 0x-0x $t
+  ${RUNCMD} ../../${OBJDIR}p2bin${TARG_EXEXTENSION} `cat p2binflags` $QUIET -k -l 0 -r 0x-0x $t
   if test "$V" = "1"; then
    echo +---------------------------------------------------------------+
   fi

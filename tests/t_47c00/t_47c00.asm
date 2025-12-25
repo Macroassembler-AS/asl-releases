@@ -6,16 +6,16 @@
 
 	segment	data
 
-nvar1	db	?
-nvar2	db	?
+nvar1	dn	?
+nvar2	dn	?
 	align	4
-bvar	db	2 dup (?)
+bvar	dn	2 dup (?)
 
 
 	segment	io
 
-port1	db	?
-port2	db	?
+port1	dn	?
+port2	dn	?
 port3	port	7
 
 	segment	code

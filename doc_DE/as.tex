@@ -6044,6 +6044,22 @@ so ist der Wertebereich auf ca. +/-$1.8*10^{308}$ beschr"ankt (siehe Variable
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+\subsection{D1}
+\ttindex{D1}
+
+{\em\begin{tabbing}
+G"ultigkeit: \= MCS-51 \\
+\end{tabbing}}
+
+\tty{D1} funktioniert analog zu \ttindex{DB} und \ttindex{DN}, der
+Unterschied ist aber, da"s hiermit nur ein einzelnes Bit abgelegt bzw.
+reserviert wird.  Diese Anweisung ergibt daher auch nur in Adre"sr"aumen
+eine Sinn, die bitweise adressiert werden.  Das ist aktuell nur im
+{\tt BITDATA}-Segment des 8051 der Fall, falls die {\tt BITSEGSIZE:1}-Option
+benutzt wurde.
+
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 \subsection{FLT2, FLT3, FLT4}
 \ttindex{FLT2}\ttindex{FLT3}\ttindex{FLT4}
 
@@ -9676,6 +9692,30 @@ von Spr"ungen mit diesen Befehlen w"ahlt \asname{} je nach Adre"slage automatisc
 die optimale Variante, d.h. \tty{SJMP/AJMP/LJMP} f"ur \tty{JMP} und
 \tty{ACALL/LCALL} f"ur \tty{CALL}.  Es ist nat"urlich weiterhin m"oglich,
 die Varianten direkt zu verwenden, um eine bestimmte Kodierung zu erzwingen.
+
+Aus historischen Gr"unde ist das {\tt BITDATA}-Segment im Default
+{\em nicht} bitweise organisiert, d. h. eine Anweisung wie
+\begin{verbatim}
+flag db ?
+\end{verbatim}
+setzt den Programmz"ahler nur um eins weiter, und nicht um acht.  Es ist
+quasi implizit vereinbart, dass Bytes in Wirklichkeit nur Bits sind - und
+wer nicht nur Speicher reserviert, sollte nur Null und eins als Werte
+ablegen. Dieses etwas unintuitive Verhalten ist der Tatsache geschuldet,
+da"s fr"uhere Versionen von \asname{} schlicht keine Adre"sr"aume mit
+einer Wortbreite unterst"utzten, die nicht 8, 16 oder 32 Bit war.  Und 
+als es dann m"oglich war, h"atte eine harte Umstellung dazu gef"uhrt, da"s
+existierende Programme nicht mehr wie vorher funktionieren.
+
+Wer ein in Bits organisiertes {\tt BITDATA}-Segment haben m"ochte, mu"s
+dieses daher explizit anfordern, indem bei der Auswahl des Ziels eine
+Option angegeben wird:
+\begin{verbatim}
+	cpu     8051:bitsegsize=1
+\end{verbatim}
+Des weiteren ist zu beachten, da"s bei der Ausgabe von in diesem Segment
+abgelegten Daten mittels P2BIN oder P2HEX ein einzelnes Bit nach wie vor
+ein komplettes Byte belegt.
 
 %%---------------------------------------------------------------------------
 

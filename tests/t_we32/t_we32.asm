@@ -215,6 +215,21 @@ bit	equ	7
 	bcch	.-32766
 	endexpect
 
+	bcc	.			; 53 FE
+	bcc	.+2			; 53 00
+	bcc	.+129			; 53 7F
+	bcc	.+130			; 52 7F 00
+	bcc	.+32770			; 52 FF 7F
+	expect	1370
+	bcc	.+32771
+	endexpect
+	bcc	.-126			; 53 80
+	bcc	.-127			; 52 7E FF
+	bcc	.-32765			; 52 00 80
+	expect	1370
+	bcc	.-32766
+	endexpect
+
 	bcsb	.			; 5B FE
 	bcsb	.+2			; 5B 00
 	bcsb	.+129			; 5B 7F
@@ -237,6 +252,21 @@ bit	equ	7
 	bcsh	.-32766
 	endexpect
 
+	bcs	.			; 5B FE
+	bcs	.+2			; 5B 00
+	bcs	.+129			; 5B 7F
+	bcs	.+130			; 5A 7F 00
+	bcs	.+32770			; 5A FF 7F
+	expect	1370
+	bcs	.+32771
+	endexpect
+	bcs	.-126			; 5B 80
+	bcs	.-127			; 5A 7E FF
+	bcs	.-32765			; 5A 00 80
+	expect	1370
+	bcs	.-32766
+	endexpect
+
 	beb	.			; 7F FE
 	beb	.+2			; 7F 00
 	beb	.+129			; 7F 7F
@@ -246,17 +276,6 @@ bit	equ	7
 	beb	.-126			; 7F 80
 	expect	1370
 	beb	.-127
-	endexpect
-
-	beub	.			; 6F FE
-	beub	.+2			; 6F 00
-	beub	.+129			; 6F 7F
-	expect	1370
-	beub	.+130
-	endexpect
-	beub	.-126			; 6F 80
-	expect	1370
-	beub	.-127
 	endexpect
 
 	beh	.			; 7E FD FF
@@ -270,6 +289,32 @@ bit	equ	7
 	beh	.-32766
 	endexpect
 
+	be	.			; 7F FE
+	be	.+2			; 7F 00
+	be	.+129			; 7F 7F
+	be	.+130			; 7E 7F 00
+	be	.+32770			; 7E FF 7F
+	expect	1370
+	be	.+32771
+	endexpect
+	be	.-126			; 7F 80
+	be	.-127			; 7E 7E FF
+	be	.-32765			; 7E 00 80
+	expect	1370
+	be	.-32766
+	endexpect
+
+	beub	.			; 6F FE
+	beub	.+2			; 6F 00
+	beub	.+129			; 6F 7F
+	expect	1370
+	beub	.+130
+	endexpect
+	beub	.-126			; 6F 80
+	expect	1370
+	beub	.-127
+	endexpect
+
 	beuh	.			; 6E FD FF
 	beuh	.+3			; 6E 00 00
 	beuh	.+32770			; 6E FF 7F
@@ -279,6 +324,21 @@ bit	equ	7
 	beuh	.-32765			; 6E 00 80
 	expect	1370
 	beuh	.-32766
+	endexpect
+
+	beu	.			; 6F FE
+	beu	.+2			; 6F 00
+	beu	.+129			; 6F 7F
+	beu	.+130			; 6E 7F 00
+	beu	.+32770			; 6E FF 7F
+	expect	1370
+	beu	.+32771
+	endexpect
+	beu	.-126			; 6F 80
+	beu	.-127			; 6E 7E FF
+	beu	.-32765			; 6E 00 80
+	expect	1370
+	beu	.-32766
 	endexpect
 
 	bgb	.			; 47 FE
@@ -303,6 +363,21 @@ bit	equ	7
 	bgh	.-32766
 	endexpect
 
+	bg	.			; 47 FE
+	bg	.+2			; 47 00
+	bg	.+129			; 47 7F
+	bg	.+130			; 46 7F 00
+	bg	.+32770			; 46 FF 7F
+	expect	1370
+	bg	.+32771
+	endexpect
+	bg	.-126			; 47 80
+	bg	.-127			; 46 7E FF
+	bg	.-32765			; 46 00 80
+	expect	1370
+	bg	.-32766
+	endexpect
+
 	bgeb	.			; 43 FE
 	bgeb	.+2			; 43 00
 	bgeb	.+129			; 43 7F
@@ -323,6 +398,21 @@ bit	equ	7
 	bgeh	.-32765			; 42 00 80
 	expect	1370
 	bgeh	.-32766
+	endexpect
+
+	bge	.			; 43 FE
+	bge	.+2			; 43 00
+	bge	.+129			; 43 7F
+	bge	.+130			; 42 7F 00
+	bge	.+32770			; 42 FF 7F
+	expect	1370
+	bge	.+32771
+	endexpect
+	bge	.-126			; 43 80
+	bge	.-127			; 42 7E FF
+	bge	.-32765			; 42 00 80
+	expect	1370
+	bge	.-32766
 	endexpect
 
 	bgeub	.			; 53 FE
@@ -347,6 +437,21 @@ bit	equ	7
 	bgeuh	.-32766
 	endexpect
 
+	bgeu	.			; 53 FE
+	bgeu	.+2			; 53 00
+	bgeu	.+129			; 53 7F
+	bgeu	.+130			; 52 7F 00
+	bgeu	.+32770			; 52 FF 7F
+	expect	1370
+	bgeu	.+32771
+	endexpect
+	bgeu	.-126			; 53 80
+	bgeu	.-127			; 52 7E FF
+	bgeu	.-32765			; 52 00 80
+	expect	1370
+	bgeu	.-32766
+	endexpect
+
 	bgub	.			; 57 FE
 	bgub	.+2			; 57 00
 	bgub	.+129			; 57 7F
@@ -367,6 +472,21 @@ bit	equ	7
 	bguh	.-32765			; 56 00 80
 	expect	1370
 	bguh	.-32766
+	endexpect
+
+	bgu	.			; 57 FE
+	bgu	.+2			; 57 00
+	bgu	.+129			; 57 7F
+	bgu	.+130			; 56 7F 00
+	bgu	.+32770			; 56 FF 7F
+	expect	1370
+	bgu	.+32771
+	endexpect
+	bgu	.-126			; 57 80
+	bgu	.-127			; 56 7E FF
+	bgu	.-32765			; 56 00 80
+	expect	1370
+	bgu	.-32766
 	endexpect
 
 	bitb	%r0,{uhalf}%r1		; 3B 40 E2 41
@@ -395,6 +515,21 @@ bit	equ	7
 	blh	.-32766
 	endexpect
 
+	bl	.			; 4B FE
+	bl	.+2			; 4B 00
+	bl	.+129			; 4B 7F
+	bl	.+130			; 4A 7F 00
+	bl	.+32770			; 4A FF 7F
+	expect	1370
+	bl	.+32771
+	endexpect
+	bl	.-126			; 4B 80
+	bl	.-127			; 4A 7E FF
+	bl	.-32765			; 4A 00 80
+	expect	1370
+	bl	.-32766
+	endexpect
+
 	bleb	.			; 4F FE
 	bleb	.+2			; 4F 00
 	bleb	.+129			; 4F 7F
@@ -415,6 +550,21 @@ bit	equ	7
 	bleh	.-32765			; 4E 00 80
 	expect	1370
 	bleh	.-32766
+	endexpect
+
+	ble	.			; 4F FE
+	ble	.+2			; 4F 00
+	ble	.+129			; 4F 7F
+	ble	.+130			; 4E 7F 00
+	ble	.+32770			; 4E FF 7F
+	expect	1370
+	ble	.+32771
+	endexpect
+	ble	.-126			; 4F 80
+	ble	.-127			; 4E 7E FF
+	ble	.-32765			; 4E 00 80
+	expect	1370
+	ble	.-32766
 	endexpect
 
 	bleub	.			; 5F FE
@@ -439,6 +589,21 @@ bit	equ	7
 	bleuh	.-32766
 	endexpect
 
+	bleu	.			; 5F FE
+	bleu	.+2			; 5F 00
+	bleu	.+129			; 5F 7F
+	bleu	.+130			; 5E 7F 00
+	bleu	.+32770			; 5E FF 7F
+	expect	1370
+	bleu	.+32771
+	endexpect
+	bleu	.-126			; 5F 80
+	bleu	.-127			; 5E 7E FF
+	bleu	.-32765			; 5E 00 80
+	expect	1370
+	bleu	.-32766
+	endexpect
+
 	blub	.			; 5B FE
 	blub	.+2			; 5B 00
 	blub	.+129			; 5B 7F
@@ -461,6 +626,21 @@ bit	equ	7
 	bluh	.-32766
 	endexpect
 
+	blu	.			; 5B FE
+	blu	.+2			; 5B 00
+	blu	.+129			; 5B 7F
+	blu	.+130			; 5A 7F 00
+	blu	.+32770			; 5A FF 7F
+	expect	1370
+	blu	.+32771
+	endexpect
+	blu	.-126			; 5B 80
+	blu	.-127			; 5A 7E FF
+	blu	.-32765			; 5A 00 80
+	expect	1370
+	blu	.-32766
+	endexpect
+
 	bneb	.			; 77 FE
 	bneb	.+2			; 77 00
 	bneb	.+129			; 77 7F
@@ -470,17 +650,6 @@ bit	equ	7
 	bneb	.-126			; 77 80
 	expect	1370
 	bneb	.-127
-	endexpect
-
-	bneub	.			; 67 FE
-	bneub	.+2			; 67 00
-	bneub	.+129			; 67 7F
-	expect	1370
-	bneub	.+130
-	endexpect
-	bneub	.-126			; 67 80
-	expect	1370
-	bneub	.-127
 	endexpect
 
 	bneh	.			; 76 FD FF
@@ -494,6 +663,32 @@ bit	equ	7
 	bneh	.-32766
 	endexpect
 
+	bne	.			; 77 FE
+	bne	.+2			; 77 00
+	bne	.+129			; 77 7F
+	bne	.+130			; 76 7F 00
+	bne	.+32770			; 76 FF 7F
+	expect	1370
+	bne	.+32771
+	endexpect
+	bne	.-126			; 77 80
+	bne	.-127			; 76 7E FF
+	bne	.-32765			; 76 00 80
+	expect	1370
+	bne	.-32766
+	endexpect
+
+	bneub	.			; 67 FE
+	bneub	.+2			; 67 00
+	bneub	.+129			; 67 7F
+	expect	1370
+	bneub	.+130
+	endexpect
+	bneub	.-126			; 67 80
+	expect	1370
+	bneub	.-127
+	endexpect
+
 	bneuh	.			; 66 FD FF
 	bneuh	.+3			; 66 00 00
 	bneuh	.+32770			; 66 FF 7F
@@ -503,6 +698,21 @@ bit	equ	7
 	bneuh	.-32765			; 66 00 80
 	expect	1370
 	bneuh	.-32766
+	endexpect
+
+	bneu	.			; 67 FE
+	bneu	.+2			; 67 00
+	bneu	.+129			; 67 7F
+	bneu	.+130			; 66 7F 00
+	bneu	.+32770			; 66 FF 7F
+	expect	1370
+	bneu	.+32771
+	endexpect
+	bneu	.-126			; 67 80
+	bneu	.-127			; 66 7E FF
+	bneu	.-32765			; 66 00 80
+	expect	1370
+	bneu	.-32766
 	endexpect
 
 	bpt				; 2E
@@ -529,6 +739,21 @@ bit	equ	7
 	brh	.-32766
 	endexpect
 
+	br	.			; 7B FE
+	br	.+2			; 7B 00
+	br	.+129			; 7B 7F
+	br	.+130			; 7A 7F 00
+	br	.+32770			; 7A FF 7F
+	expect	1370
+	br	.+32771
+	endexpect
+	br	.-126			; 7B 80
+	br	.-127			; 7A 7E FF
+	br	.-32765			; 7A 00 80
+	expect	1370
+	br	.-32766
+	endexpect
+
 	bsbb	.			; 37 FE
 	bsbb	.+2			; 37 00
 	bsbb	.+129			; 37 7F
@@ -549,6 +774,21 @@ bit	equ	7
 	bsbh	.-32765			; 36 00 80
 	expect	1370
 	bsbh	.-32766
+	endexpect
+
+	bsb	.			; 37 FE
+	bsb	.+2			; 37 00
+	bsb	.+129			; 37 7F
+	bsb	.+130			; 36 7F 00
+	bsb	.+32770			; 36 FF 7F
+	expect	1370
+	bsb	.+32771
+	endexpect
+	bsb	.-126			; 37 80
+	bsb	.-127			; 36 7E FF
+	bsb	.-32765			; 36 00 80
+	expect	1370
+	bsb	.-32766
 	endexpect
 
 	bvcb	.			; 63 FE
@@ -573,6 +813,21 @@ bit	equ	7
 	bvch	.-32766
 	endexpect
 
+	bvc	.			; 63 FE
+	bvc	.+2			; 63 00
+	bvc	.+129			; 63 7F
+	bvc	.+130			; 62 7F 00
+	bvc	.+32770			; 62 FF 7F
+	expect	1370
+	bvc	.+32771
+	endexpect
+	bvc	.-126			; 63 80
+	bvc	.-127			; 62 7E FF
+	bvc	.-32765			; 62 00 80
+	expect	1370
+	bvc	.-32766
+	endexpect
+
 	bvsb	.			; 6B FE
 	bvsb	.+2			; 6B 00
 	bvsb	.+129			; 6B 7F
@@ -593,6 +848,21 @@ bit	equ	7
 	bvsh	.-32765			; 6A 00 80
 	expect	1370
 	bvsh	.-32766
+	endexpect
+
+	bvs	.			; 6B FE
+	bvs	.+2			; 6B 00
+	bvs	.+129			; 6B 7F
+	bvs	.+130			; 6A 7F 00
+	bvs	.+32770			; 6A FF 7F
+	expect	1370
+	bvs	.+32771
+	endexpect
+	bvs	.-126			; 6B 80
+	bvs	.-127			; 6A 7E FF
+	bvs	.-32765			; 6A 00 80
+	expect	1370
+	bvs	.-32766
 	endexpect
 
 	call	-(3*4)(%sp),func1	; 2C CC F4 CF 01

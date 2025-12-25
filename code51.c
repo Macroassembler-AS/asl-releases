@@ -104,6 +104,7 @@ typedef struct
 
 static tSymbolSize OpSize;
 static Boolean MinOneIs0;
+static LongInt bit_seg_size;
 
 static Boolean SrcMode;
 
@@ -2500,6 +2501,13 @@ static void DecodePORT(Word Index)
     code_equate_type(SegIO, UInt9);
 }
 
+static void decode_d1(Word flags)
+{
+  if ((ActPC != SegBData) || !bit_seg_size) WrXError(ErrNum_InvSegment, "!BITDATA");
+  else
+    DecodeIntelD1(flags);
+}
+
 /*-------------------------------------------------------------------------*/
 /* dynamische Codetabellenverwaltung */
 
@@ -2620,6 +2628,7 @@ static void InitFields(void)
 
   AddInstTable(InstTable, "REG"  , 0, CodeREG);
   AddIntelPseudo(InstTable, eIntPseudoFlag_DynEndian);
+  AddInstTable(InstTable, "D1", eIntPseudoFlag_DynEndian | eIntPseudoFlag_AllowInt, decode_d1);
 }
 
 static void DeinitFields(void)
@@ -2690,9 +2699,10 @@ static void InternSymbol_51(char *pArg, TempResult *pResult)
   }
 }
 
-static void SwitchTo_51(void)
+static void SwitchTo_51(void *p_user)
 {
   const TFamilyDescr *p_descr = FindFamilyByName("MCS-(2)51");
+  UNUSED(p_user);
 
   TurnWords = False;
   SetIntConstMode(eIntConstModeIntel);
@@ -2742,6 +2752,7 @@ static void SwitchTo_51(void)
     SegLimits[SegIData] = 0xff;
     Grans[SegBData] = 1; ListGrans[SegBData] = 1; SegInits[SegBData] = 0;
     SegLimits[SegBData] = 0xff;
+    grans_bits_unused[SegBData] = bit_seg_size ? 7 : 0;
   }
 
   MakeCode = MakeCode_51;
@@ -2759,16 +2770,22 @@ static void SwitchTo_51(void)
 
 void code51_init(void)
 {
-  CPU87C750 = AddCPU("87C750", SwitchTo_51);
-  CPU8051   = AddCPU("8051"  , SwitchTo_51);
-  CPU8052   = AddCPU("8052"  , SwitchTo_51);
-  CPU80C320 = AddCPU("80C320", SwitchTo_51);
-  CPU80501  = AddCPU("80C501", SwitchTo_51);
-  CPU80502  = AddCPU("80C502", SwitchTo_51);
-  CPU80504  = AddCPU("80C504", SwitchTo_51);
-  CPU80515  = AddCPU("80515" , SwitchTo_51);
-  CPU80517  = AddCPU("80517" , SwitchTo_51);
-  CPU80C390 = AddCPU("80C390", SwitchTo_51);
-  CPU80251  = AddCPU("80C251", SwitchTo_51);
-  CPU80251T = AddCPU("80C251T", SwitchTo_51);
+  static const tCPUArg mcs51_args[] =
+  {
+    { "BITSEGSIZE" , 0, 1, 0, &bit_seg_size },
+    { NULL         , 0, 0, 0, NULL          }
+  };
+
+  CPU87C750 = AddCPUUserWithArgs("87C750", SwitchTo_51, NULL, NULL, mcs51_args);
+  CPU8051   = AddCPUUserWithArgs("8051"  , SwitchTo_51, NULL, NULL, mcs51_args);
+  CPU8052   = AddCPUUserWithArgs("8052"  , SwitchTo_51, NULL, NULL, mcs51_args);
+  CPU80C320 = AddCPUUserWithArgs("80C320", SwitchTo_51, NULL, NULL, mcs51_args);
+  CPU80501  = AddCPUUserWithArgs("80C501", SwitchTo_51, NULL, NULL, mcs51_args);
+  CPU80502  = AddCPUUserWithArgs("80C502", SwitchTo_51, NULL, NULL, mcs51_args);
+  CPU80504  = AddCPUUserWithArgs("80C504", SwitchTo_51, NULL, NULL, mcs51_args);
+  CPU80515  = AddCPUUserWithArgs("80515" , SwitchTo_51, NULL, NULL, mcs51_args);
+  CPU80517  = AddCPUUserWithArgs("80517" , SwitchTo_51, NULL, NULL, mcs51_args);
+  CPU80C390 = AddCPUUserWithArgs("80C390", SwitchTo_51, NULL, NULL, mcs51_args);
+  CPU80251  = AddCPUUserWithArgs("80C251", SwitchTo_51, NULL, NULL, mcs51_args);
+  CPU80251T = AddCPUUserWithArgs("80C251T", SwitchTo_51, NULL, NULL, mcs51_args);
 }

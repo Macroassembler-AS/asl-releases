@@ -1,3 +1,11 @@
+2025-12-25  [1.42 Bld 299]
+
+- Addition    : MCS-51 BITDATA segment may optionally be organized
+                in bits instead of bytes.
+- Bugfix      : WE32xxx: Correct opcode of generic branches if
+                8 bit displacement was chosen.
+- Addition    : Implement WE32200 decrement-and-branch instructions.
+
 2025-12-07 [1.42 Bld 298]
 
 - Addition    : Internally use 128 bit integer arithmetic on

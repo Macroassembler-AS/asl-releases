@@ -1667,7 +1667,7 @@ Message InfoMessHelp
  "  -M                   : extract macro definitions\n" \
  "  -maxerrors <number>  : terminate assembly after <number> errors\n" \
  "  -maxinclevel <number>: limit include nesting level to <number>\n" \
- "  -maxsympass <number> : allow unresolved forward references up to Pass <number>\n" \
+ "  -maxsympass <number> : allow unresolved forward references up to pass <number>\n" \
  "  -n                   : add error #s to error messages\n" \
  "  -olist <nname>       : change name of list file\n" \
  "  -o <name>            : change name of code file\n" \
