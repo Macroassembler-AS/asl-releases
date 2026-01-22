@@ -13,10 +13,14 @@ the web site. The tools to do this and this documentation are on the `main`
 branch. There is also now a [git repo] available. (This was not available
 until recently, thus this import repo, which continues to be maintained.)
 
-Pull requests (to improve the import system and its documentation) are
-accepted for the `main` branch. The `upstream` branch containing the
-vendor sources never contains patches, but there may be patch branches
-derived from imported vendor commits on `upstream`.
+Pull requests to improve the import system and its documentation are
+accepted for the `main` branch. Queries about and patches for the source
+code itself (the `upstream` branch) should be sent to the [mailing list];
+if you put them here they will be ignored.
+
+Note that while `upstream` branch containing the vendor sources never
+contains patches (just the originally released source), there may be patch
+branches derived from imported vendor commits on `upstream`.
 
 ### Branches in this Repo
 
@@ -92,6 +96,7 @@ versions.
 <!-------------------------------------------------------------------->
 [asl]: http://john.ccac.rwth-aachen.de:8000/as/
 [git repo]: http://john.ccac.rwth-aachen.de:8000/asl.git
+[mailing list]: http://john.ccac.rwth-aachen.de:8000/as/list.html
 [src]: http://john.ccac.rwth-aachen.de:8000/ftp/as/source/c_version/
 
 [ghmas]: https://github.com/Macroassembler-AS
