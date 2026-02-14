@@ -1,3 +1,4 @@
+;SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only
 ;* as.mes
 ;*****************************************************************************
 ;* AS-Portierung                                                             *
@@ -254,6 +255,10 @@ Message ErrMsgLargeIntAsFloat
 Message ErrMsgCodeNotInCodeSegment
  "Code-Erzeugung ausserhalb des CODE-Segments"
  "code generation outside of CODE segment"
+
+Message ErrMsgWillOverwriteSP
+ "Befehl wird SP &uuml;berschreiben"
+ "instruction will overwrite SP"
 
 ;*****
 
@@ -761,6 +766,10 @@ Message ErrMsgOpenWHILE
  "WHILE ohne ENDM"
  "WHILE without ENDM"
 
+Message ErrMsgENDMOutsideMacro
+ "ENDM au&szlig;erhalb eines Makrorumpfes"
+ "ENDM used outside of macro"
+
 Message ErrMsgDoubleMacro
  "doppelte Makrodefinition"
  "macro double defined"
@@ -779,7 +788,7 @@ Message ErrMsgNoPosArg
 
 Message ErrMsgEXITMOutsideMacro
  "EXITM au&szlig;erhalb eines Makrorumpfes"
- "EXITM not called from within macro"
+ "EXITM used outside of macro"
 
 Message ErrMsgFirstPassCalc
  "Ausdruck mu&szlig; im ersten Pass berechenbar sein"

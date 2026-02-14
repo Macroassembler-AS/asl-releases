@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only
+
 # tell source files to include .msh files
 
 MSX_FLAGS=-D_USE_MSH

@@ -12,6 +12,8 @@
 
 extern char *GetErrorPos(void);
 
+extern void as_rebuild_main_inst_tables(void);
+
 extern void WriteCode(void);
 
 #endif /* _AS_H */

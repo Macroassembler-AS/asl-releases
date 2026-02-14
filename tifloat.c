@@ -127,3 +127,95 @@ int as_float_2_ti5(as_float_t inp, LongWord *p_dest_l, LongWord *p_dest_h)
   *p_dest_h = exponent & 0xff;
  return 0;
 }
+
+/*!------------------------------------------------------------------------
+ * \fn     as_float_2_tms340_flt4(as_float_t inp, Byte *p_dest, Boolean needs_big)
+ * \brief  convert float to TMS340 single (32 bit) float binary representation
+ * \param  inp input number
+ * \param  p_dest where to write binary data
+ * \param  needs_big req's big endian?
+ * \return >=0 if conversion was successful, <0 for error
+ * ------------------------------------------------------------------------ */
+
+int as_float_2_tms340_flt4(as_float_t inp, Byte *p_dest, Boolean needs_big)
+{
+  as_float_dissect_t dissect;
+  int index_mask = needs_big ? 3 : 0;
+
+  /* Dissect */
+
+  as_float_dissect(&dissect, inp);
+
+  /* No idea if Inf/NaN can be represented in target format: */
+
+  if ((dissect.fp_class != AS_FP_NORMAL)
+   && (dissect.fp_class != AS_FP_SUBNORMAL))
+    return -EINVAL;
+
+  /* Format uses explicit leading one representing 1.0 portion in mantissa.
+     as_float_dissect already delivers that: */
+
+  as_float_round(&dissect, 23);
+
+  /* Bias is 128: */
+
+  if (dissect.exponent > 127)
+    return -E2BIG;
+  dissect.exponent += 128;
+
+  p_dest[3 ^ index_mask] = ((dissect.negative & 1) << 7)
+                         | ((dissect.exponent >> 1) & 0x7f);
+  p_dest[2 ^ index_mask] = ((dissect.exponent & 1) << 7)
+                         | as_float_mantissa_extract(&dissect, 0, 7);
+  p_dest[1 ^ index_mask] = as_float_mantissa_extract(&dissect, 7, 8);
+  p_dest[0 ^ index_mask] = as_float_mantissa_extract(&dissect, 15, 8);
+  return 4;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     as_float_2_tms340_flt8(as_float_t inp, Byte *p_dest, Boolean needs_big)
+ * \brief  convert float to TMS340 double (64 bit) float binary representation
+ * \param  inp input number
+ * \param  p_dest where to write binary data
+ * \param  needs_big req's big endian?
+ * \return >=0 if conversion was successful, <0 for error
+ * ------------------------------------------------------------------------ */
+
+int as_float_2_tms340_flt8(as_float_t inp, Byte *p_dest, Boolean needs_big)
+{
+  as_float_dissect_t dissect;
+  int index_mask = needs_big ? 7 : 0;
+
+  /* Dissect */
+
+  as_float_dissect(&dissect, inp);
+
+  /* No idea if Inf/NaN can be represented in target format: */
+
+  if ((dissect.fp_class != AS_FP_NORMAL)
+   && (dissect.fp_class != AS_FP_SUBNORMAL))
+    return -EINVAL;
+
+  /* Format uses explicit leading one representing 1.0 portion in mantissa.
+     as_float_dissect already delivers that: */
+
+  as_float_round(&dissect, 52);
+
+  /* Bias is 1024: */
+
+  if (dissect.exponent > 1023)
+    return -E2BIG;
+  dissect.exponent += 1024;
+
+  p_dest[7 ^ index_mask] = ((dissect.negative & 1) << 7)
+                         | ((dissect.exponent >> 4) & 0x7f);
+  p_dest[6 ^ index_mask] = ((dissect.exponent & 15) << 4)
+                         | as_float_mantissa_extract(&dissect, 0, 4);
+  p_dest[5 ^ index_mask] = as_float_mantissa_extract(&dissect, 4, 8);
+  p_dest[4 ^ index_mask] = as_float_mantissa_extract(&dissect, 12, 8);
+  p_dest[3 ^ index_mask] = as_float_mantissa_extract(&dissect, 20, 8);
+  p_dest[2 ^ index_mask] = as_float_mantissa_extract(&dissect, 28, 8);
+  p_dest[1 ^ index_mask] = as_float_mantissa_extract(&dissect, 36, 8);
+  p_dest[0 ^ index_mask] = as_float_mantissa_extract(&dissect, 44, 8);
+  return 8;
+}

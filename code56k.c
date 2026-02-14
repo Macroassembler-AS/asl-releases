@@ -3051,12 +3051,15 @@ static void SwitchTo_56K(void)
   }
 
   ValidSegs = (1 << SegCode) | (1 << SegXData) | (1 << SegYData);
-  Grans[SegCode ] = 4; ListGrans[SegCode ] = 4; SegInits[SegCode ] = 0;
-  SegLimits[SegCode ] = MemLimit; grans_bits_unused[SegCode ] = 8;
-  Grans[SegXData] = 4; ListGrans[SegXData] = 4; SegInits[SegXData] = 0;
-  SegLimits[SegXData] = MemLimit; grans_bits_unused[SegXData] = 8;
-  Grans[SegYData] = 4; ListGrans[SegYData] = 4; SegInits[SegYData] = 0;
-  SegLimits[SegYData] = MemLimit; grans_bits_unused[SegYData] = 8;
+  Grans[SegCode ] = ListGrans[SegCode ] = 4;
+  grans_bits_unused[SegCode ] = list_grans_bits_unused[SegCode ] = 8;
+  SegInits[SegCode ] = 0; SegLimits[SegCode ] = MemLimit;
+  Grans[SegXData] = ListGrans[SegXData] = 4;
+  grans_bits_unused[SegXData] = list_grans_bits_unused[SegXData] = 8;
+  SegInits[SegXData] = 0; SegLimits[SegXData] = MemLimit;
+  Grans[SegYData] = ListGrans[SegYData] = 4;
+  grans_bits_unused[SegYData] = list_grans_bits_unused[SegYData] = 8;
+  SegInits[SegYData] = 0; SegLimits[SegYData] = MemLimit;
 
   onoff_packing_add(True);
 

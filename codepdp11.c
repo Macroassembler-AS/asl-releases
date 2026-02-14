@@ -32,8 +32,6 @@
 #include "decfloat.h"
 #include "codepdp11.h"
 
-#define default_regsyms_name "DEFAULT_REGSYMS"
-
 #define REG_PC 7
 #define REG_SP 6
 
@@ -114,7 +112,6 @@ typedef struct
 
 static const cpu_props_t *p_curr_cpu_props;
 static tSymbolSize op_size;
-static Boolean default_regsyms;
 static LongInt *reg_par, *reg_pdr;
 
 static Boolean is_wd16(void)
@@ -2191,7 +2188,7 @@ static void switch_to_pdp11(void *p_user)
     onoff_ext_add(e_ext_fp11, False);
   if (p_curr_cpu_props->opt_flags & e_cpu_flag_cis)
     onoff_ext_add(e_ext_cis, False);
-  if (!ext_test_and_set(0x80))
+  if (!onoff_ext_test_and_set(e_onoff_ext_reg_default_regsyms))
     SetFlag(&default_regsyms, default_regsyms_name, True);
 
   /* create list of PDP-11 paging registers upon first use */

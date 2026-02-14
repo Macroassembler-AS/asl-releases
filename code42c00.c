@@ -718,13 +718,17 @@ static void switch_to_42c00(void *p_user)
   SetIsOccupiedFnc = TrueFnc;
 
   ValidSegs = (1 << SegCode) | (1 << SegData) | (1 << SegIO);
-  Grans[SegCode] = ListGrans[SegCode] =
-  Grans[SegData] = 1; ListGrans[SegData] = 
-  Grans[SegIO] = 1; ListGrans[SegIO] = 1;
-  grans_bits_unused[SegData] = grans_bits_unused[SegIO] = 4;
+
+  Grans[SegCode] = ListGrans[SegCode] = 1;
   SegInits[SegCode] = SegInits[SegData] = SegInits[SegIO] = 0;
   SegLimits[SegCode] = (p_curr_cpu_props->flags & e_cpu_flag_rom_1k) ? 1023 : 511;
+
+  Grans[SegData] = ListGrans[SegData] = 1;
+  list_grans_bits_unused[SegData] = grans_bits_unused[SegData] = 4;
   SegLimits[SegData] = 31;
+
+  Grans[SegIO] = ListGrans[SegIO] = 1;
+  list_grans_bits_unused[SegIO] = grans_bits_unused[SegIO] = 4;
   SegLimits[SegIO] = (p_curr_cpu_props->flags & e_cpu_flag_io_23) ? 5 : 2;
 
   MakeCode = make_code_42c00;

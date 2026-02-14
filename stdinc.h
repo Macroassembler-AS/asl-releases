@@ -52,6 +52,12 @@
 
 #define as_array_size(a) (sizeof(a)/sizeof(*(a)))
 
+#define as_abort(msg) \
+do { \
+  fputs(msg, stderr); \
+  abort(); \
+} while (0)
+
 #ifndef M_PI
 # define M_PI 3.1415926535897932385E0
 #endif

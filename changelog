@@ -1,4 +1,21 @@
-2025-12-25  [1.42 Bld 299]
+2026-02-14 [1.42 Bld 300]
+
+- Bugfix      : Re-add resources to Windows binaries
+- Addition    : Implement WE32200 CASWI, PACKB, and UNPACKB
+                instructions.
+- Bugfix      : Switch WE32200 HALF and WORD instruction to
+                big endian, since data storage is big endian,
+                opposed to operands within instructions (!)
+- Bugfix      : Correct PC-relative addressing on WE32xxx
+- Addition    : Support WE32xxx MAU instructions
+- Addition    : Add FPGA variant of uPD650 that supports
+                a 2048 byte address space.
+- Addition    : Add TMS340 target
+- Change      : If MCS-51 BITDATA segment is organized in
+                bits, they will be stored in packed form
+                (eight bits per byte) in output file.
+
+2025-12-25 [1.42 Bld 299]
 
 - Addition    : MCS-51 BITDATA segment may optionally be organized
                 in bits instead of bytes.

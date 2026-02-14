@@ -223,6 +223,48 @@ void WriteRecordHeader(Byte *Header, Byte *CPU, Byte *Segment,
   }
 }
 
+Byte record_gran_bits(Byte gran_encoded)
+{
+  return (gran_encoded >= 0xf8)
+       ? (256 - gran_encoded)
+       : gran_encoded * 8;
+}
+
+LongWord record_byte_address(LongWord target_word_address, Byte gran_encoded)
+{
+  return (gran_encoded > 0xf8)
+       ? (target_word_address / (8 / (256 - gran_encoded)))
+       : (target_word_address * gran_encoded);
+}
+
+LongWord record_target_word_last_address(LongWord target_word_start_address, LongWord length_bytes, Byte gran_encoded)
+{
+  return (gran_encoded > 0xf8)
+       ? (target_word_start_address + (((LongWord)length_bytes * 8) / (256 - gran_encoded)) - 1)
+       : (target_word_start_address + (length_bytes / gran_encoded) - 1);
+}
+
+LongWord record_target_word_length(LongWord byte_length, Byte gran_encoded)
+{
+  return (gran_encoded > 0xf8)
+       ? (byte_length * 8 / record_gran_bits(gran_encoded))
+       : (byte_length / gran_encoded);
+}
+
+LongWord record_byte_length(LongWord target_word_first_address, LongWord target_word_last_address, Byte gran_encoded)
+{
+  return (gran_encoded > 0xf8)
+       ? ((target_word_last_address - target_word_first_address + 1) / (8 / (256 - gran_encoded)))
+       : ((target_word_last_address - target_word_first_address + 1) * gran_encoded);
+}
+
+LongWord record_byte_offset(LongWord target_word_act_address, LongWord target_word_start_address, Byte gran_encoded)
+{
+  return (gran_encoded > 0xf8)
+       ? ((target_word_act_address - target_word_start_address) / (8 / (256 - gran_encoded)))
+       : ((target_word_act_address - target_word_start_address) * gran_encoded);
+}
+
 void SkipRecord(Byte Header, const char *Name, FILE *f)
 {
   int Length;

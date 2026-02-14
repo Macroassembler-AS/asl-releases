@@ -40,7 +40,7 @@
 
 #ifdef __TURBOC__
 #ifdef __DPMI16__
-#define STKSIZE 32256
+#define STKSIZE 32200
 #else
 #define STKSIZE 49152
 #endif
@@ -1293,6 +1293,11 @@ Word ListGran(void)
 Word gran_bits_unused(void)
 {
   return grans_bits_unused[ActPC];
+}
+
+Word list_gran_bits_unused(void)
+{
+  return list_grans_bits_unused[ActPC];
 }
 
 /*--------------------------------------------------------------------------*/

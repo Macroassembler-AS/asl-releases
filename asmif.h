@@ -32,8 +32,9 @@ typedef struct _TIfSave
 extern Boolean IfAsm;
 extern PIfSave FirstIfSave;
 
-
 extern Boolean CodeIFs(void);
+
+extern void as_if_augment_main_inst_tables(void);
 
 extern void AsmIFInit(void);
 

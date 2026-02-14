@@ -329,6 +329,8 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
       msgno = Num_ErrMsgLargeIntAsFloat; break;
     case ErrNum_CodeNotInCodeSegment:
       msgno = Num_ErrMsgCodeNotInCodeSegment; break;
+    case ErrNum_WillOverwriteSP:
+      msgno = Num_ErrMsgWillOverwriteSP; break;
     case ErrNum_DoubleDef:
       msgno = Num_ErrMsgDoubleDef; break;
     case ErrNum_SymbolUndef:
@@ -602,6 +604,8 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
       msgno = Num_ErrMsgOpenWHILE; break;
     case ErrNum_EXITMOutsideMacro:
       msgno = Num_ErrMsgEXITMOutsideMacro; break;
+    case ErrNum_ENDMOutsideMacro:
+      msgno = Num_ErrMsgENDMOutsideMacro; break;
     case ErrNum_TooManyMacParams:
       msgno = Num_ErrMsgTooManyMacParams; break;
     case ErrNum_UndefKeyArg:

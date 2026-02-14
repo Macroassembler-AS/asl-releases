@@ -715,7 +715,7 @@ static void SwitchTo_6100(void)
 	ValidSegs = (1 << SegCode);
 	Grans[SegCode] = 2;
 	ListGrans[SegCode] = 2;
-  grans_bits_unused[SegCode] = 4;
+  grans_bits_unused[SegCode] = list_grans_bits_unused[SegCode] = 4;
 	SegInits[SegCode] = 0x0000;
 	if (MomCPU >= CPU6120)
 		SegLimits[SegCode] = 0x7fff;

@@ -30,8 +30,19 @@
 #include "headids.h"
 #include "symbolsize.h"
 #include "asmcode.h"
+#include "onoff_common.h"
 
 #include "codewe32.h"
+
+#define MAU_ID 0ul
+#define MAU_OPCODE_DTOF 0x11
+#define MAU_OPCODE_ITOF 0x10
+#define MAU_OPCODE_FTOD 0x12
+#define MAU_OPCODE_FTOI 0x0f
+#define MAU_OPCODE_MOVE 0x07
+#define DEF_F_IMPLICIT 3
+
+#define DISSECT_MAU_COMMAND 0
 
 typedef enum
 {
@@ -39,15 +50,19 @@ typedef enum
   ModReg = 0,
   ModImm = 1,
   ModMem = 2,
-  ModLit = 3,
-  ModBranch = 4
+  ModAuto = 3,
+  ModLit = 4,
+  ModBranch = 5,
+  ModFReg = 6
 } adr_mode_t;
 
 #define MModReg (1 << ModReg)
 #define MModImm (1 << ModImm)
 #define MModMem (1 << ModMem)
+#define MModAuto (1 << ModAuto)
 #define MModLit (1 << ModLit)
 #define MModBranch (1 << ModBranch)
+#define MModFReg (1 << ModFReg)
 #define MModExpand (1 << 7)
 
 typedef enum
@@ -80,8 +95,11 @@ typedef struct
   unsigned count;
   Byte vals[20], val_guess_mask;
   unsigned val_offset;
+  tSymbolSize val_size;
   tSymbolFlags val_flags;
 } adr_vals_t;
+
+typedef enum { replace_dest_never, replace_dest_opt, replace_dest_always } replace_dest_t;
 
 static CPUVar cpu_32100, cpu_32200;
 
@@ -129,6 +147,7 @@ static const char xtra_reg_names[7][5] =
 static Boolean decode_reg_core(const char *p_arg, Byte *p_result, tSymbolSize *p_size)
 {
   int z;
+  Byte max_reg;
 
   if (*p_arg == '%')
     p_arg++;
@@ -141,33 +160,44 @@ static Boolean decode_reg_core(const char *p_arg, Byte *p_result, tSymbolSize *p
       return True;
     }
 
-  if (as_toupper(*p_arg) != 'R')
-    return False;
-
-  switch (strlen(p_arg))
+  switch (as_toupper(*p_arg++))
   {
-    case 2:
-    {
-      if (as_isdigit(p_arg[1]))
-      {
-        *p_result = p_arg[1] - '0';
-        *p_size = eSymbolSize32Bit;
-        return True;
-      }
+    case 'R':
+      *p_size = eSymbolSize32Bit;
+      max_reg = (MomCPU >= cpu_32200) ? 31 : 15;
       break;
-    }
-    case 3:
-      if (as_isdigit(p_arg[2]) && ((p_arg[1] >= '0') && (p_arg[1] <= '3')))
-      {
-        *p_result = (10 * (p_arg[1] - '0')) + (p_arg[2] - '0');
-        *p_size = eSymbolSize32Bit;
-        return *p_result <= ((MomCPU >= cpu_32200) ? 31 : 15);
-      }
+    case 'S':
+      *p_size = eSymbolSizeFloat32Bit;
+      max_reg = (MomCPU >= cpu_32200) ? 7 : 3;
+      break;
+    case 'D':
+      *p_size = eSymbolSizeFloat64Bit;
+      max_reg = (MomCPU >= cpu_32200) ? 7 : 3;
+      break;
+    case 'X':
+      *p_size = eSymbolSizeFloat96Bit;
+      max_reg = (MomCPU >= cpu_32200) ? 7 : 3;
+      break;
+    case 'F':
+      *p_size = eSymbolSize80Bit;
+      max_reg = (MomCPU >= cpu_32200) ? 7 : 3;
       break;
     default:
-      break;
+      return False;
   }
-  return False;
+
+  if (!as_isdigit(*p_arg))
+    return False;
+  *p_result = *p_arg++ - '0';
+  if (*p_arg)
+  {
+    if (!as_isdigit(*p_arg) || (max_reg < 10))
+      return False;
+     *p_result = (*p_result * 10) + (*p_arg++ - '0');
+  }
+  if (*p_arg)
+    return False;
+  return *p_result <= max_reg;
 }
 
 /*!------------------------------------------------------------------------
@@ -193,6 +223,18 @@ static void dissect_reg_we32(char *p_dest, size_t dest_size, tRegInt value, tSym
         as_snprintf(p_dest, dest_size, "R%u", r_num);
       break;
     }
+    case eSymbolSizeFloat32Bit:
+      as_snprintf(p_dest, dest_size, "S%u", value & 7);
+      break;
+    case eSymbolSizeFloat64Bit:
+      as_snprintf(p_dest, dest_size, "D%u", value & 7);
+      break;
+    case eSymbolSizeFloat96Bit:
+      as_snprintf(p_dest, dest_size, "X%u", value & 7);
+      break;
+    case eSymbolSize80Bit:
+      as_snprintf(p_dest, dest_size, "F%u", value & 7);
+      break;
     default:
       as_snprintf(p_dest, dest_size, "%d-%u", (int)inp_size, (unsigned)value);
   }
@@ -201,7 +243,22 @@ static void dissect_reg_we32(char *p_dest, size_t dest_size, tRegInt value, tSym
 /*-------------------------------------------------------------------------*/
 /* Address Expression Decoder */
 
-static tRegEvalResult decode_reg(const tStrComp *p_arg, Byte *p_result, Boolean must_be_reg)
+static tErrorNum chk_reg_size(tSymbolSize req_size, tSymbolSize act_size)
+{
+  /* 'any size' or exact match */
+  if ((act_size == eSymbolSizeUnknown)
+   || (req_size == eSymbolSizeUnknown)
+   || (req_size == act_size))
+    return ErrNum_None;
+  /* integer requested, but got something else: */
+  else if (req_size == eSymbolSize32Bit)
+    return ErrNum_IntButFloat;
+  /* float requested */
+  else
+    return ((act_size == eSymbolSizeFloat32Bit) || (act_size == eSymbolSizeFloat64Bit) || (act_size == eSymbolSizeFloat96Bit) || (act_size == eSymbolSize80Bit)) ? ErrNum_None : ErrNum_FloatButInt;
+}
+
+static tRegEvalResult decode_reg(const tStrComp *p_arg, Byte *p_result, tSymbolSize *p_size, tSymbolSize req_size, Boolean must_be_reg)
 {
   tRegDescr reg_descr;
   tEvalResult eval_result;
@@ -215,7 +272,19 @@ static tRegEvalResult decode_reg(const tStrComp *p_arg, Byte *p_result, Boolean 
   else
     reg_eval_result = EvalStrRegExpressionAsOperand(p_arg, &reg_descr, &eval_result, eSymbolSizeUnknown, must_be_reg);
 
+  if (reg_eval_result == eIsReg)
+  {
+    tErrorNum error_num = chk_reg_size(req_size, eval_result.DataSize);
+
+    if (error_num)
+    {
+      WrStrErrorPos(error_num, p_arg);
+      reg_eval_result = must_be_reg ? eIsNoReg : eRegAbort;
+    }
+  }
+
   *p_result = reg_descr.Reg & ~REGSYM_FLAG_ALIAS;
+  if (p_size) *p_size = eval_result.DataSize;
   return reg_eval_result;
 }
 
@@ -231,6 +300,7 @@ static Boolean reset_adr_vals(adr_vals_t *p_vals)
   p_vals->count = 0;
   p_vals->val_offset = 0;
   p_vals->val_flags = eSymbolFlag_None;
+  p_vals->val_size = eSymbolSizeUnknown;
   p_vals->val_guess_mask = 0xff;
   return False;
 }
@@ -245,15 +315,18 @@ static Boolean reset_adr_vals(adr_vals_t *p_vals)
  * \return True if success
  * ------------------------------------------------------------------------ */
 
-static Boolean check_mode_mask(unsigned mode_mask, unsigned act_mask, tStrComp *p_arg, adr_vals_t *p_result)
+static Boolean check_mode_mask(unsigned mode_mask, adr_mode_t act_mode, tStrComp *p_arg, adr_vals_t *p_result)
 {
-  if (!(mode_mask & act_mask))
+  if (!(mode_mask & (1 << act_mode)))
   {
     WrStrErrorPos(ErrNum_InvAddrMode, p_arg);
     return reset_adr_vals(p_result);
   }
   else
+  {
+    p_result->mode = act_mode;
     return True;
+  }
 }
 
 static void append_adr_vals_int(adr_vals_t *p_result, LongWord value, tSymbolSize op_size)
@@ -377,7 +450,7 @@ static Boolean is_pre_excrement(const tStrComp *p_arg, Byte *p_result, tRegEvalR
   StrCompCopySub(&reg_comp, p_arg, 2, arg_len - 3);
   KillPrefBlanksStrComp(&reg_comp);
   KillPostBlanksStrComp(&reg_comp);
-  *p_reg_eval_result = decode_reg(&reg_comp, p_result, False);
+  *p_reg_eval_result = decode_reg(&reg_comp, p_result, NULL, eSymbolSize32Bit, False);
   return (*p_reg_eval_result != eIsNoReg);
 }
 
@@ -397,7 +470,7 @@ static Boolean is_post_excrement(const tStrComp *p_arg, Byte *p_result, tRegEval
   StrCompCopySub(&reg_comp, p_arg, 1, arg_len - 3);
   KillPrefBlanksStrComp(&reg_comp);
   KillPostBlanksStrComp(&reg_comp);
-  *p_reg_eval_result = decode_reg(&reg_comp, p_result, False);
+  *p_reg_eval_result = decode_reg(&reg_comp, p_result, NULL, eSymbolSize32Bit, False);
   return (*p_reg_eval_result != eIsNoReg);
 }
 
@@ -462,29 +535,36 @@ static Boolean decode_adr(tStrComp *p_arg, adr_vals_t *p_result, LongWord pc_val
 
   /* Plain register? */
 
-  switch (decode_reg(&arg, &reg, False))
+  switch (decode_reg(&arg, &reg, &p_result->val_size, (mode_mask & MModFReg) ? eSymbolSizeFloat96Bit : eSymbolSize32Bit, False))
   {
     case eIsReg:
     {
-      Boolean is_write = (mode_mask & ~MModExpand) == (MModReg | MModMem);
+      if (mode_mask & MModFReg)
+      {
+        p_result->vals[p_result->count++] = (reg & 0x0f) | 0x40;
+        return check_mode_mask(mode_mask, ModFReg, p_arg, p_result);
+      }
+      else
+      {
+        Boolean is_write = (mode_mask & ~MModExpand) == (MModReg | MModMem | MModAuto);
 
-      if (!check_ext_regs(reg, p_arg))
-        return False;
-      else if (deferred || (reg == REG_PC))
-      {
-        WrStrErrorPos(ErrNum_InvAddrMode, p_arg);
-        return False;
+        if (!check_ext_regs(reg, p_arg))
+          return False;
+        else if (deferred || (reg == REG_PC))
+        {
+          WrStrErrorPos(ErrNum_InvAddrMode, p_arg);
+          return False;
+        }
+        if (is_write && (curr_exec_mode > 0) && ((reg == REG_PSW) || (reg == REG_PCBP) || (reg == REG_ISP)))
+        {
+          WrStrErrorPos(ErrNum_RegReadOnlyInExecMode, p_arg);
+          return False;
+        }
+        if (reg >= 16)
+          p_result->vals[p_result->count++] = 0xcb;
+        p_result->vals[p_result->count++] = (reg & 0x0f) | 0x40;
+        return check_mode_mask(mode_mask, ModReg, p_arg, p_result);
       }
-      if (is_write && (curr_exec_mode > 0) && ((reg == REG_PSW) || (reg == REG_PCBP) || (reg == REG_ISP)))
-      {
-        WrStrErrorPos(ErrNum_RegReadOnlyInExecMode, p_arg);
-        return False;
-      }
-      p_result->mode = ModReg;
-      if (reg >= 16)
-        p_result->vals[p_result->count++] = 0xcb;
-      p_result->vals[p_result->count++] = (reg & 0x0f) | 0x40;
-      return check_mode_mask(mode_mask, MModReg, p_arg, p_result);
     }
     case eRegAbort:
       return reset_adr_vals(p_result);
@@ -528,7 +608,7 @@ static Boolean decode_adr(tStrComp *p_arg, adr_vals_t *p_result, LongWord pc_val
         if (is_literal(imm_value, op_size, &lit_value))
         {
           append_adr_vals_int(p_result, lit_value, eSymbolSize8Bit);
-          return check_mode_mask(mode_mask, MModLit, p_arg, p_result);
+          return check_mode_mask(mode_mask, ModLit, p_arg, p_result);
         }
         else
         {
@@ -559,7 +639,7 @@ static Boolean decode_adr(tStrComp *p_arg, adr_vals_t *p_result, LongWord pc_val
               break;
           }
           append_adr_vals_int(p_result, imm_value, imm_op_size);
-          return check_mode_mask(mode_mask, MModImm, p_arg, p_result);
+          return check_mode_mask(mode_mask, ModImm, p_arg, p_result);
         }
       }
     }
@@ -575,7 +655,7 @@ static Boolean decode_adr(tStrComp *p_arg, adr_vals_t *p_result, LongWord pc_val
       return False;
     p_result->vals[p_result->count++] = deferred ? 0xef : 0x7f;
     append_adr_vals_int(p_result, address, eSymbolSize32Bit);
-    return check_mode_mask(mode_mask, MModMem,  p_arg, p_result);
+    return check_mode_mask(mode_mask, ModMem, p_arg, p_result);
   }
 
   /* (Rn)+, -(Rn), (Rn)-, +(Rn) */
@@ -597,7 +677,7 @@ static Boolean decode_adr(tStrComp *p_arg, adr_vals_t *p_result, LongWord pc_val
     }
     p_result->vals[p_result->count++] = 0x5b;
     p_result->vals[p_result->count++] = reg | pre_post;
-    return check_mode_mask(mode_mask, MModMem, &arg, p_result);
+    return check_mode_mask(mode_mask, ModAuto, &arg, p_result);
   }
 
   /* [disp](%rn) */
@@ -620,7 +700,7 @@ static Boolean decode_adr(tStrComp *p_arg, adr_vals_t *p_result, LongWord pc_val
       p_reg_sep = QuotPos(reg_arg.str.p_str, ',');
       if (p_reg_sep)
         StrCompSplitRef(&reg_arg, &reg_arg_remainder, &reg_arg, p_reg_sep);
-      if ((decode_reg(&reg_arg, &reg, True) != eIsReg)
+      if ((decode_reg(&reg_arg, &reg, NULL, eSymbolSize32Bit, True) != eIsReg)
        || (reg == REG_PSW)
        || !check_ext_regs(reg, p_arg))
         return reset_adr_vals(p_result);
@@ -659,7 +739,7 @@ static Boolean decode_adr(tStrComp *p_arg, adr_vals_t *p_result, LongWord pc_val
         p_result->vals[p_result->count++] = 0xcf;
         append_adr_vals_int(p_result, 0, eSymbolSize8Bit);
       }
-      return check_mode_mask(mode_mask, MModMem,  p_arg, p_result);
+      return check_mode_mask(mode_mask, ModMem, p_arg, p_result);
     }
 
     else
@@ -675,7 +755,7 @@ static Boolean decode_adr(tStrComp *p_arg, adr_vals_t *p_result, LongWord pc_val
         p_result->vals[p_result->count++] = ((reg == REG_AP) ? 0x70 : 0x60) | (disp & 0xf);
         p_result->val_offset = 0;
         p_result->val_guess_mask = 0x0f;
-        return check_mode_mask(mode_mask, MModMem,  p_arg, p_result);
+        return check_mode_mask(mode_mask, ModMem, p_arg, p_result);
       }
       
       /* Displacement with single register */
@@ -707,7 +787,7 @@ static Boolean decode_adr(tStrComp *p_arg, adr_vals_t *p_result, LongWord pc_val
         return reset_adr_vals(p_result);
       }
 
-      return check_mode_mask(mode_mask, MModMem,  p_arg, p_result);
+      return check_mode_mask(mode_mask, ModMem, p_arg, p_result);
     }
   }
 
@@ -730,12 +810,12 @@ static Boolean decode_adr(tStrComp *p_arg, adr_vals_t *p_result, LongWord pc_val
     StrCompShorten(&index_arg, 1);
     KillPostBlanksStrComp(&index_arg);
 
-    switch (decode_reg(&base_arg, &base_reg, False))
+    switch (decode_reg(&base_arg, &base_reg, NULL, eSymbolSize32Bit, False))
     {
       case eRegAbort:
         return reset_adr_vals(p_result);
       case eIsReg:
-        switch (decode_reg(&index_arg, &index_reg, False))
+        switch (decode_reg(&index_arg, &index_reg, NULL, eSymbolSize32Bit, False))
         {
           case eRegAbort:
             return reset_adr_vals(p_result);
@@ -759,7 +839,7 @@ static Boolean decode_adr(tStrComp *p_arg, adr_vals_t *p_result, LongWord pc_val
             }
             p_result->vals[p_result->count++] = 0xdb;
             p_result->vals[p_result->count++] = (index_reg << 4) | (base_reg & 0xf);
-            return check_mode_mask(mode_mask, MModMem,  p_arg, p_result);
+            return check_mode_mask(mode_mask, ModMem, p_arg, p_result);
           default:
             break;
         }
@@ -774,13 +854,23 @@ static Boolean decode_adr(tStrComp *p_arg, adr_vals_t *p_result, LongWord pc_val
   address = EvalStrIntExpressionWithFlags(&arg, UInt32, &ok, &p_result->val_flags);
   if (ok)
   {
-    LongInt disp = address - (pc_value + 1);
+    LongInt disp = address - pc_value;
 
     append_reg_disp(p_result, disp, REG_PC, deferred);
-    return check_mode_mask(mode_mask, MModMem,  p_arg, p_result);
+    return check_mode_mask(mode_mask, ModMem, p_arg, p_result);
   }
 
   return False;
+}
+
+static Boolean decode_adr_non_destructive(const tStrComp *p_arg, adr_vals_t *p_result, LongWord pc_value, unsigned mode_mask)
+{
+  String tmp_arg_str;
+  tStrComp tmp_arg;
+
+  StrCompMkTemp(&tmp_arg, tmp_arg_str, sizeof(tmp_arg_str));
+  StrCompCopy(&tmp_arg, p_arg);
+  return decode_adr(&tmp_arg, p_result, pc_value, mode_mask);
 }
 
 /*!------------------------------------------------------------------------
@@ -873,6 +963,238 @@ static void append_opcode(Word op_code)
   BAsmCode[CodeLen++] = Lo(op_code);
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     encode_f_size(tSymbolSize op_size)
+ * \brief  convert floating point symbol size to MAU command op size
+ * \param  op_size symbol size
+ * \return 0..2
+ * ------------------------------------------------------------------------ */
+
+static LongWord encode_f_size(tSymbolSize op_size)
+{
+  switch (op_size)
+  {
+    case eSymbolSizeFloat32Bit: return 0;
+    case eSymbolSizeFloat64Bit: return 1;
+    case eSymbolSizeFloat96Bit: return 2;
+    case eSymbolSize32Bit: return 0;
+    case eSymbolSizeFloatDec96Bit: return 2;
+    default: as_abort("encode_f_size: unhandled symbol size\n");
+  }
+}
+
+#if DISSECT_MAU_COMMAND
+/*!------------------------------------------------------------------------
+ * \fn     dissect_mau_command(LongWord command)
+ * \brief  debug help for MAU command words
+ * \param  command command to dissect
+ * ------------------------------------------------------------------------ */
+
+static void dissect_mau_command(LongWord command)
+{
+  static const char instr_names[32][6] =
+  {
+    "<0>", "<1>", "ADD", "SUB", "DIV", "REM", "MUL", "MOVE",
+    "RDASR", "WRASR", "CMP", "CMPE", "ABS", "SQRT", "RTOI", "FTOI",
+    "ITOF", "DTOF", "FTOD", "NOP", "EROF", "<21>", "<22>", "NEG",
+    "LDR", "<25>", "CMPS", "CMPES", "sin", "cos", "atan", "pi",
+  };
+  static const char mem_sizes[] = { 's', 'd', 't' },
+                    reg_sizes[] = { 's', 'd', 'x' };
+  unsigned op, z;
+
+  printf("%s ", instr_names[(command >> 10) & 31]);
+  for (z = 7; z >= 4; z -= 3)
+  {
+    op = (command >> z) & 7;
+    if (op < 4)
+      printf("%%f%u", op + ((command >> (17 + (z / 7))) & 4));
+    else if (op < 7)
+      printf("m%c", mem_sizes[op & 3]);
+    printf(",");
+  }
+  op = command & 15;
+  if (op < 12)
+    printf("%%%c%u", reg_sizes[op >> 2], (op & 3) + ((command >> 16) & 4));
+  else if (op < 15)
+    printf("m%c", mem_sizes[op & 3]);
+  printf("\n");
+}
+#endif /* DISSECT_MAU_COMMAND */
+
+/*!------------------------------------------------------------------------
+ * \fn     set_mau_command_op(LongWord *p_command, unsigned op_index, unsigned op_value)
+ * \brief  set op1/op2/op3 field im MAU command word
+ * \param  p_command command word to update
+ * \param  op_index 0/1/2 for op1/op2/op3
+ * \param  op_value value to insert
+ * ------------------------------------------------------------------------ */
+
+static void set_mau_command_op(LongWord *p_command, unsigned op_index, unsigned op_value)
+{
+  unsigned op_shift;
+  LongWord op_mask;
+
+  switch (op_index)
+  {
+    case 0:
+      op_shift = 7;
+      op_mask = 7;
+      break;
+    case 1:
+      op_shift = 4;
+      op_mask = 7;
+      break;
+    case 2:
+      op_shift = 0;
+      op_mask = 15;
+      break;
+    default:
+      return;
+  }
+  *p_command &= ~(op_mask << op_shift);
+  *p_command |= ((LongWord)op_value & op_mask) << op_shift;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     set_mau_command_op_reg(LongWord *p_command, unsigned op_index, unsigned reg_num, tSymbolSize op_size)
+ * \brief  set op1/op2/op3 field im MAU command word to MAU register
+ * \param  p_command command word to update
+ * \param  op_index 0/1/2 for op1/op2/op3
+ * \param  reg_num register #
+ * \param  op_size register's size (32/64/96 bit)
+ * ------------------------------------------------------------------------ */
+
+static void set_mau_reg_bank(LongWord *p_command, unsigned op_index, unsigned bank_value)
+{
+  unsigned op_shift;
+
+  if (op_index > 2)
+    return;
+  op_shift = 20 - op_index;
+  *p_command &= ~(1 << op_shift);
+  *p_command |= ((LongWord)bank_value & 1) << op_shift;
+}
+
+static void set_mau_command_op_reg(LongWord *p_command, unsigned op_index, unsigned reg_num, tSymbolSize op_size)
+{
+  switch (op_index)
+  {
+    case 0:
+    case 1:
+      set_mau_command_op(p_command, op_index, reg_num & 3);
+      break;
+    case 2:
+      set_mau_command_op(p_command, op_index, (encode_f_size(op_size) << 2) | (reg_num & 3));
+  }
+  set_mau_reg_bank(p_command, op_index, (reg_num >> 2) & 1);
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     set_mau_command_op_mem(LongWord *p_command, unsigned op_index, tSymbolSize op_size)
+ * \brief  set op1/op2/op3 field im MAU command word to memory operand
+ * \param  p_command command word to update
+ * \param  op_index 0/1/2 for op1/op2/op3
+ * \param  op_size memory operand's size (32/64/96 bit)
+ * ------------------------------------------------------------------------ */
+
+static void set_mau_command_op_mem(LongWord *p_command, unsigned op_index, tSymbolSize op_size)
+{
+  set_mau_command_op(p_command, op_index, ((2 == op_index) ? 0x0c : 0x04) | encode_f_size(op_size));
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     set_mau_command_op_none(LongWord *p_command, unsigned op_index)
+ * \brief  set op1/op2/op3 field im MAU command word to no operand
+ * \param  p_command command word to update
+ * \param  op_index 0/1/2 for op1/op2/op3
+ * ------------------------------------------------------------------------ */
+
+static void set_mau_command_op_none(LongWord *p_command, unsigned op_index)
+{
+  set_mau_command_op(p_command, op_index, (op_index == 2) ? 0x0f : 0x07);
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     set_mau_command_op_from_adr_vals(LongWord *p_command, unsigned op_index, const adr_vals_t *p_adr_vals, tSymbolSize symbol_size)
+ * \brief  set op1/op2/op3 field im MAU command word from encoded addressing mode
+ * \param  p_command command word to update
+ * \param  op_index 0/1/2 for op1/op2/op3
+ * \param  p_adr_vals encoded addressing mode
+ * \param  symbol_size operand type/size
+ * ------------------------------------------------------------------------ */
+
+static void set_mau_command_op_from_adr_vals(LongWord *p_command, unsigned op_index, const adr_vals_t *p_adr_vals, tSymbolSize symbol_size)
+{
+  if (p_adr_vals->mode == ModFReg)
+    set_mau_command_op_reg(p_command, op_index,
+                           extract_reg_num(p_adr_vals),
+                           (p_adr_vals->val_size == eSymbolSize80Bit) ? symbol_size : p_adr_vals->val_size);
+  else
+    set_mau_command_op_mem(p_command, op_index, symbol_size);
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     append_mau_opcode(unsigned mem_op_mask, tSymbolSize size)
+ * \brief  deduce SPOP opcode depending on number and size of memory operands
+ * \param  mem_op_mask bit mask of MAU operands in memory (bit 0=op1,...)
+ * \param  size used data type
+ * ------------------------------------------------------------------------ */
+
+static void append_mau_opcode(unsigned mem_op_mask, tSymbolSize size)
+{
+  Byte opcode_size_offs;
+
+  switch (GetSymbolSizeBytes(size))
+  {
+    case 4:
+      opcode_size_offs = 0x20; break;
+    case 8:
+      opcode_size_offs = 0x00; break;
+    case 12:
+      opcode_size_offs = 0x04; break;
+    default:
+      as_abort("append_mau_opcode: unhandled symbol size\n");
+  }
+
+  switch (mem_op_mask)
+  {
+    case 0x00:
+      append_opcode(0x32); /* SPOP */
+      break;
+    case 0x01:
+    case 0x02:
+      append_opcode(0x02 + opcode_size_offs); /* SPOPRx */
+      break;
+    case 0x04:
+      append_opcode(0x13 + opcode_size_offs); /* SPOPWx */
+      break;
+    case 0x05:
+    case 0x06:
+      append_opcode(0x03 + opcode_size_offs); /* SPOPx2 */
+      break;
+    default:
+      as_abort("append_mau_opcode: unhandled mem_op_mask\n");
+  }
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     append_copro_command(LongWord command)
+ * \brief  append command word for coprocessors
+ * \param  command word to append to code
+ * ------------------------------------------------------------------------ */
+
+static void append_copro_command(LongWord command)
+{
+  unsigned z;
+
+#if DISSECT_MAU_COMMAND
+  dissect_mau_command(command);
+#endif
+  for (z = 0; z < 4; z++, command >>= 8)
+    BAsmCode[CodeLen++] = command & 0xff;
+}
+
 /*--------------------------------------------------------------------------*/
 /* Instruction Handlers */
 
@@ -885,7 +1207,6 @@ static void append_opcode(Word op_code)
 static void decode_gen(Word index)
 {
   const gen_order_t *p_order = &gen_orders[index];
-  unsigned tot_count;
   size_t z;
 
   if (!ChkArgCnt(p_order->arg_cnt, p_order->arg_cnt))
@@ -904,7 +1225,6 @@ static void decode_gen(Word index)
   }
 
   append_opcode(p_order->code);
-  tot_count = code_len(p_order->code);
   for (z = 0; z < p_order->arg_cnt; z++)
   {
     Boolean ret;
@@ -913,14 +1233,13 @@ static void decode_gen(Word index)
     /* Decode n-th argument */
 
     op_size = p_order->op_size[z];
-    ret = decode_adr(&ArgStr[z + 1], &adr_vals, EProgCounter() + tot_count, p_order->adr_mode_mask[z]);
+    ret = decode_adr(&ArgStr[z + 1], &adr_vals, EProgCounter(), p_order->adr_mode_mask[z]);
     if (!ret)
     {
       CodeLen = 0;
       return;
     }
     append_adr_vals(&adr_vals);
-    tot_count += adr_vals.count;
   }
 }
 
@@ -964,11 +1283,10 @@ static Boolean append_branch(tSymbolSize disp_size, Byte disp8_inc, const tStrCo
   dest = EvalStrIntExpressionWithFlags(p_arg, UInt32, &ok, &flags);
   if (!ok)
     return False;
-
+  dist = dest - EProgCounter();
   switch (disp_size)
   {
     case eSymbolSize8Bit:
-      dist = dest - (EProgCounter() + CodeLen + 1);
     is_8:
       if (!mFirstPassUnknownOrQuestionable(flags) && !RangeCheck(dist, SInt8))
       {
@@ -982,7 +1300,6 @@ static Boolean append_branch(tSymbolSize disp_size, Byte disp8_inc, const tStrCo
       }
       break;
     case eSymbolSize16Bit:
-      dist = dest - (EProgCounter() + CodeLen + 2);
     is_16:
       if (!mFirstPassUnknownOrQuestionable(flags) && !RangeCheck(dist, SInt16))
       {
@@ -997,17 +1314,13 @@ static Boolean append_branch(tSymbolSize disp_size, Byte disp8_inc, const tStrCo
       }
       break;
     default:
-      dist = dest - (EProgCounter() + CodeLen + 1);
       if (RangeCheck(dist, SInt8))
       {
         BAsmCode[0] += disp8_inc;
         goto is_8;
       }
       else
-      {
-        dist--;
         goto is_16;
-      }
   }
   return True;
 }
@@ -1049,7 +1362,7 @@ static void decode_decrement_branch(Word code)
   }
   append_opcode(opcode);
 
-  if (decode_adr(&ArgStr[1], &adr_vals, EProgCounter() + CodeLen, MModReg | MModMem))
+  if (decode_adr(&ArgStr[1], &adr_vals, EProgCounter(), MModReg | MModMem))
   {
     append_adr_vals(&adr_vals);
     if (!append_branch((tSymbolSize)((code >> 8) & 0xff), ((opcode & 0x0f) == 0x09) ? 0x10 : 0x40, &ArgStr[2]))
@@ -1069,7 +1382,7 @@ static void decode_save_restore(Word opcode)
 {
   adr_vals_t adr_vals;
 
-  if (ChkArgCnt(1, 1) && decode_adr(&ArgStr[1], &adr_vals, EProgCounter() + code_len(opcode), MModReg))
+  if (ChkArgCnt(1, 1) && decode_adr(&ArgStr[1], &adr_vals, EProgCounter(), MModReg))
   {
     if (extract_reg_num(&adr_vals) > 9) WrStrErrorPos(ErrNum_Unpredictable, &ArgStr[1]);
     append_opcode(opcode);
@@ -1133,23 +1446,310 @@ static void decode_coprocessor_op(Word opcode)
   if (!ok)
     return;
   append_opcode(Lo(opcode));
-  for (z = 0; z < 4; z++, value >>= 8)
-  {
-    set_b_guessed(flags, CodeLen, 1, 0xff);
-    BAsmCode[CodeLen++] = value & 0xff;
-  }
+  set_b_guessed(flags, CodeLen, 4, 0xff);
+  append_copro_command(value);
 
   for (z = 0; z < num_operands; z++)
   {
     adr_vals_t adr_vals;
 
-    if (!decode_adr(&ArgStr[z + 2], &adr_vals, EProgCounter() + CodeLen, MModMem))
+    if (!decode_adr(&ArgStr[z + 2], &adr_vals, EProgCounter(), MModMem))
     {
       CodeLen = 0;
       return;
     }
     append_adr_vals(&adr_vals);
   }
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     decode_mau_op(Word code)
+ * \brief  Process MAU operations
+ * \param  code operation code, operand count, and operand size
+ * ------------------------------------------------------------------------ */
+
+static void decode_mau_op_core(Word code, replace_dest_t replace_dest)
+{
+  Byte op_used = (code >> 13) & 7, mem_op_mask;
+  LongWord command = (((code >> 8) & 0x1f) << 10) | (MAU_ID << 24);
+  Boolean req_32200 = !!(code & 0x80);
+  tSymbolSize op_size = (tSymbolSize)(code & 0x7f);
+  unsigned num_args = as_bit_count(op_used);
+  int arg_index, arg_indices[3], op_index;
+  adr_vals_t op_adr_vals[3];
+
+  if (!FPUAvail)
+  {
+    WrStrErrorPos(ErrNum_FPUNotEnabled, &OpPart);
+    return;
+  }
+  if (req_32200 && (MomCPU < cpu_32200))
+  {
+    WrStrErrorPos(ErrNum_InstructionNotSupported, &OpPart);
+    return;
+  }
+
+  switch (replace_dest)
+  {
+    case replace_dest_never:
+      if (!ChkArgCnt(num_args, num_args))
+        return;
+      break;
+    case replace_dest_opt:
+      if (!ChkArgCnt(num_args - 1, num_args))
+        return;
+      break;
+    case replace_dest_always:
+      if (!ChkArgCnt(num_args - 1, num_args - 1))
+        return;
+      break;
+  }
+
+  /* Match src/dest operands with source code arguments.
+     If ArgCnt < num_args, last (source) argument will also be used as destination: */
+
+  for (op_index = 0, arg_index = 1; op_index < 3; op_index++)
+    if (op_used & (1 << op_index))
+    {
+      arg_indices[op_index] = arg_index;
+      if (arg_index < ArgCnt)
+        arg_index++;
+    }
+    else
+      arg_indices[op_index] = -1;
+
+  /* Now parse the source arguments a first time: */
+
+  for (op_index = 0; op_index < 3; op_index++)
+    if (op_used & (1 << op_index))
+    {
+      /* Source arguments may be evaluated more than once. Since decode_adr() destroys source,
+         work with copies: */
+      if (!decode_adr_non_destructive(&ArgStr[arg_indices[op_index]], &op_adr_vals[op_index], EProgCounter(), MModFReg | MModMem))
+        return;
+    }
+    else
+      reset_adr_vals(&op_adr_vals[op_index]);
+
+  /* In case we have two memory source operands, src2 has to be loaded
+     with a separate MOVE instruction:
+   */
+
+  if ((op_used & (1 << 0))
+   && (op_adr_vals[0].mode != ModFReg)
+   && (op_used & (1 << 1))
+   && (op_adr_vals[1].mode != ModFReg))
+  {
+    Byte f_implicit;
+    LongWord move_command = (MAU_ID << 24) | (MAU_OPCODE_MOVE << 10);
+
+    /* The temporary register for src2 is %f3 or dst if dst is a MAU register: */
+
+    if ((op_used & (1 << 2)) && (op_adr_vals[2].mode == ModFReg))
+      f_implicit = extract_reg_num(&op_adr_vals[2]);
+    else
+      f_implicit = DEF_F_IMPLICIT;
+
+    /* Construct MOVE from src2 to implicit register: */
+
+    append_mau_opcode(1 << 0, op_size);
+    set_mau_command_op_from_adr_vals(&move_command, 0, &op_adr_vals[1], op_size); /* op1 = src2 */
+    set_mau_command_op_none(&move_command, 1); /* op2 = none */
+    set_mau_command_op_reg(&move_command, 2, f_implicit, op_size);  /* op3 = tmp reg */
+    append_copro_command(move_command);
+    append_adr_vals(&op_adr_vals[1]);
+
+    /* Change src2 to implicit register: */
+
+    reset_adr_vals(&op_adr_vals[1]);
+    op_adr_vals[1].mode = ModFReg;
+    op_adr_vals[1].vals[op_adr_vals[1].count++] = 0x40 | f_implicit;
+
+    /* Re-evaluate src1 & dest if they might use PC-relative addressing: */
+
+    for (op_index = 0; op_index < 3; op_index += 2)
+      if (op_used & (1 << op_index))
+      {
+        if (!decode_adr_non_destructive(&ArgStr[arg_indices[op_index]], &op_adr_vals[op_index], EProgCounter() + CodeLen, MModFReg | MModMem))
+        {
+          CodeLen = 0;
+          return;
+        }
+      }
+  }
+
+  /* Now construct the non-implicit instruction: */
+
+  mem_op_mask = 0;
+  for (op_index = 0; op_index < 3; op_index++)
+    if (op_used & (1 << op_index))
+    {
+      set_mau_command_op_from_adr_vals(&command, op_index, &op_adr_vals[op_index], op_size);
+      if (op_adr_vals[op_index].mode == ModMem)
+        mem_op_mask |= 1 << op_index;
+    }
+    else
+      set_mau_command_op_none(&command, op_index);
+
+  /* write out opcode, command word and address operands: */
+
+  append_mau_opcode(mem_op_mask, op_size);
+  append_copro_command(command);
+  for (op_index = 0; op_index < 3; op_index++)
+    if (mem_op_mask & (1 << op_index))
+      append_adr_vals(&op_adr_vals[op_index]);
+}
+
+static void decode_mau_op_with_dest(Word code)
+{
+  decode_mau_op_core(code, replace_dest_never);
+}
+
+static void decode_mau_op_with_opt_dest(Word code)
+{
+  decode_mau_op_core(code, replace_dest_opt);
+}
+
+static void decode_mau_op_without_dest(Word code)
+{
+  decode_mau_op_core(code, replace_dest_always);
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     decode_mau_move(Word code)
+ * \brief  handle MAU data transfer/conversion instructions
+ * \param  code MAU opcode & operand sizes
+ * ------------------------------------------------------------------------ */
+
+static void decode_mau_move(Word code)
+{
+  tSymbolSize op_size[2];
+  LongWord op_code = (code >> 11) & 31;
+  adr_vals_t op_adr_vals[2];
+  unsigned op_index, mem_op_mask;
+
+  if (!FPUAvail)
+  {
+    WrStrErrorPos(ErrNum_FPUNotEnabled, &OpPart);
+    return;
+  }
+  if (!ChkArgCnt(2, 2))
+    return;
+
+  op_size[0] = (tSymbolSize)((code >> 5) & 31);
+  op_size[1] = (tSymbolSize)((code >> 0) & 31);
+  for (op_index = 0; op_index < 2; op_index++)
+  {
+    /* Source arguments may be evaluated more than once. Since decode_adr() destroys source,
+       work with copies: */
+    if (!decode_adr_non_destructive(&ArgStr[op_index + 1], &op_adr_vals[op_index], EProgCounter(), MModMem | MModFReg))
+      return;
+    if (!is_symbol_size_float(op_size[op_index]) && (op_adr_vals[op_index].mode == ModFReg))
+    {
+      WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[op_index + 1]);
+      return;
+    }
+  }
+
+  if ((op_adr_vals[0].mode == ModMem)
+   && (op_adr_vals[1].mode == ModMem)
+   && (GetSymbolSizeBytes(op_size[0]) != GetSymbolSizeBytes(op_size[1])))
+  {
+    LongWord command;
+
+    command = (MAU_ID << 24);
+    switch (op_size[0])
+    {
+      case eSymbolSizeFloatDec96Bit:
+        command = (MAU_OPCODE_DTOF << 10); break;
+      case eSymbolSize32Bit:
+        command = (MAU_OPCODE_ITOF << 10); break;
+      default:
+        command = (MAU_OPCODE_MOVE << 10); break;
+    }
+    set_mau_command_op_from_adr_vals(&command, 0, &op_adr_vals[0], op_size[0]);
+    set_mau_command_op_none(&command, 1);
+    set_mau_command_op_reg(&command, 2, DEF_F_IMPLICIT, eSymbolSizeFloat96Bit);
+    append_mau_opcode(0x01, op_size[0]);
+    append_copro_command(command);
+    append_adr_vals(&op_adr_vals[0]);
+
+    decode_adr_non_destructive(&ArgStr[2], &op_adr_vals[1], EProgCounter() + CodeLen, MModMem | MModFReg);
+    command = (MAU_ID << 24);
+    switch (op_size[1])
+    {
+      case eSymbolSizeFloatDec96Bit:
+        command = (MAU_OPCODE_FTOD << 10); break;
+      case eSymbolSize32Bit:
+        command = (MAU_OPCODE_FTOI << 10); break;
+      default:
+        command = (MAU_OPCODE_MOVE << 10); break;
+    }
+    set_mau_command_op_reg(&command, 0, DEF_F_IMPLICIT, eSymbolSizeFloat96Bit);
+    set_mau_command_op_none(&command, 1);
+    set_mau_command_op_from_adr_vals(&command, 2, &op_adr_vals[1], op_size[1]);
+    append_mau_opcode(0x04, op_size[1]);
+    append_copro_command(command);
+    append_adr_vals(&op_adr_vals[1]);
+  }
+  else
+  {
+    LongWord command = (op_code << 10) | (MAU_ID << 24);
+    tSymbolSize spop_op_size = op_size[0];
+
+    mem_op_mask = 0;
+    set_mau_command_op_none(&command, 1);
+    for (op_index = 0; op_index < 2; op_index++)
+    {
+      set_mau_command_op_from_adr_vals(&command, op_index * 2, &op_adr_vals[op_index], op_size[op_index]);
+      if (op_adr_vals[op_index].mode == ModMem)
+      {
+        mem_op_mask |= 1 << (op_index * 2);
+        spop_op_size = op_size[op_index];
+      }
+    }
+    append_mau_opcode(mem_op_mask, spop_op_size);
+    append_copro_command(command);
+    for (op_index = 0; op_index < 2; op_index++)
+      if (op_adr_vals[op_index].mode == ModMem)
+        append_adr_vals(&op_adr_vals[op_index]);
+  }
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     decode_mau_op_mem(Word code)
+ * \brief  handle MAU operation with single word argument (register save/restore)
+ * \param  code argument position in MAU command (op1/op3) and opcode
+ * ------------------------------------------------------------------------ */
+
+static void decode_mau_op_mem(Word code)
+{
+  adr_vals_t adr_vals;
+  LongWord command;
+  unsigned op_index = Hi(code);
+
+  if (!FPUAvail)
+  {
+    WrStrErrorPos(ErrNum_FPUNotEnabled, &OpPart);
+    return;
+  }
+
+  if (!ChkArgCnt(1, 1)
+   || !decode_adr(&ArgStr[1], &adr_vals, EProgCounter(), MModMem | MModFReg))
+    return;
+  if (adr_vals.mode == ModFReg)
+  {
+    WrStrErrorPos(ErrNum_InvAddrMode, &ArgStr[op_index + 1]);
+    return;
+  }
+
+  command = (MAU_ID << 24) | (Lo(code) << 10);
+  set_mau_command_op_from_adr_vals(&command, op_index, &adr_vals, eSymbolSize32Bit);
+  set_mau_command_op_none(&command, 1);
+  set_mau_command_op_none(&command, op_index ^ 2);
+  append_mau_opcode(1 << op_index, eSymbolSize32Bit);
+  append_copro_command(command);
+  append_adr_vals(&adr_vals);
 }
 
 /*!------------------------------------------------------------------------
@@ -1191,17 +1791,19 @@ static unsigned get_adr_mode_mask(char specifier)
 {
   switch (as_toupper(specifier))
   {
-    case 'R':
-      return MModImm | MModLit | MModMem | MModReg;
-    case 'W':
-    case 'M':
-      return MModMem | MModReg;
-    case 'V':
-      return MModMem | MModImm | MModReg;
-    case 'B':
-      return MModBranch;
-    case 'A':
+    case 'R': /* operand is readable */
+      return MModImm | MModLit | MModMem | MModAuto | MModReg;
+    case 'W': /* operand is writable */
+    case 'M': /* operand is modifyable */
+      return MModMem | MModAuto | MModReg;
+    case 'V': /* operand in memory, no auto-increment/decrement */
       return MModMem;
+    case 'B': /* operand is branch address */
+      return MModBranch;
+    case 'A': /* operand has address in memory */
+      return MModMem | MModAuto;
+    case 'C': /* operand is CPU register */
+      return MModReg;
     default:
       abort();
       return 0;
@@ -1390,9 +1992,46 @@ static void add_decrement_branch(const char *p_name, Word code)
   add_decrement_branch_core(name, eSymbolSize16Bit, code);
 }
 
+static void add_mau_op_allsize(const char *p_name, InstProc inst_proc, Word op_used, Word command, Boolean req_32200)
+{
+  char name[20];
+  Word base_code = (!!req_32200 << 7) | (command << 8) | (op_used << 13);
+
+  as_snprintf(name, sizeof(name), p_name, 'S');
+  AddInstTable(InstTable, name, eSymbolSizeFloat32Bit | base_code, inst_proc);
+  as_snprintf(name, sizeof(name), p_name, 'D');
+  AddInstTable(InstTable, name, eSymbolSizeFloat64Bit | base_code, inst_proc);
+  as_snprintf(name, sizeof(name), p_name, 'X');
+  AddInstTable(InstTable, name, eSymbolSizeFloat96Bit | base_code, inst_proc);
+}
+
+static void add_mau_mov_allsize_src(const char *p_name, tSymbolSize other_size, Word command)
+{
+  char name[20];
+
+  as_snprintf(name, sizeof(name), p_name, 'S');
+  AddInstTable(InstTable, name, (command << 11) | (eSymbolSizeFloat32Bit << 5) | other_size, decode_mau_move);
+  as_snprintf(name, sizeof(name), p_name, 'D');
+  AddInstTable(InstTable, name, (command << 11) | (eSymbolSizeFloat64Bit << 5) | other_size, decode_mau_move);
+  as_snprintf(name, sizeof(name), p_name, 'X');
+  AddInstTable(InstTable, name, (command << 11) | (eSymbolSizeFloat96Bit << 5) | other_size, decode_mau_move);
+}
+
+static void add_mau_mov_allsize_dest(const char *p_name, tSymbolSize other_size, Word command)
+{
+  char name[20];
+
+  as_snprintf(name, sizeof(name), p_name, 'S');
+  AddInstTable(InstTable, name, (command << 11) | (other_size << 5) | eSymbolSizeFloat32Bit, decode_mau_move);
+  as_snprintf(name, sizeof(name), p_name, 'D');
+  AddInstTable(InstTable, name, (command << 11) | (other_size << 5) | eSymbolSizeFloat64Bit, decode_mau_move);
+  as_snprintf(name, sizeof(name), p_name, 'X');
+  AddInstTable(InstTable, name, (command << 11) | (other_size << 5) | eSymbolSizeFloat96Bit, decode_mau_move);
+}
+
 static void init_fields(void)
 {
-  InstTable = CreateInstTable(403);
+  InstTable = CreateInstTable(607);
   SetDynamicInstTable(InstTable);
   var_arg_op_cnt = InstrZ = 0;
 
@@ -1523,19 +2162,72 @@ static void init_fields(void)
   add_allsize("EXTF%c", add_four_op, "rrrw", 0xcf);
   add_allsize("INSF%c", add_four_op, "rrrw", 0xcb);
 
-#if 0
-  /* need detail info about these WE32200 instructions: */
+  add_three_op("CASWI",  eSymbolSize32Bit, "+ccv", 0x09);
+  add_two_op("PACKB", eSymbolSize16Bit, "+-r-w", 0x0e);
+  add_three_op("UNPACKB", eSymbolSize32Bit, "+-r-r-w", 0x0f);
 
-  add_("CASWI", "+", 0x09);
-  add_("PACKB", "+", 0x0e);
-  add_("UNPACKB", "+", 0x0f);
-#endif
+  add_mau_op_allsize("MFADD%c3", decode_mau_op_with_dest, 0x7, 0x02, False);
+  add_mau_op_allsize("MFADD%c2", decode_mau_op_without_dest, 0x7, 0x02, False);
+  add_mau_op_allsize("MFADD%c", decode_mau_op_with_opt_dest, 0x7, 0x02, False);
+  add_mau_op_allsize("MFDIV%c3", decode_mau_op_with_dest, 0x7, 0x04, False);
+  add_mau_op_allsize("MFDIV%c2", decode_mau_op_without_dest, 0x7, 0x04, False);
+  add_mau_op_allsize("MFDIV%c", decode_mau_op_with_opt_dest, 0x7, 0x04, False);
+  add_mau_op_allsize("MFMUL%c3", decode_mau_op_with_dest, 0x7, 0x06, False);
+  add_mau_op_allsize("MFMUL%c2", decode_mau_op_without_dest, 0x7, 0x06, False);
+  add_mau_op_allsize("MFMUL%c", decode_mau_op_with_opt_dest, 0x7, 0x06, False);
+  add_mau_op_allsize("MFSUB%c3", decode_mau_op_with_dest, 0x7, 0x03, False);
+  add_mau_op_allsize("MFSUB%c2", decode_mau_op_without_dest, 0x7, 0x03, False);
+  add_mau_op_allsize("MFSUB%c", decode_mau_op_with_opt_dest, 0x7, 0x03, False);
+  add_mau_op_allsize("MFREM%c3", decode_mau_op_with_dest, 0x7, 0x05, False);
+  add_mau_op_allsize("MFREM%c2", decode_mau_op_without_dest, 0x7, 0x05, False);
+  add_mau_op_allsize("MFREM%c", decode_mau_op_with_opt_dest, 0x7, 0x05, False);
+
+  add_mau_op_allsize("MFABS%c2", decode_mau_op_with_dest, 0x5, 0x0c, False);
+  add_mau_op_allsize("MFABS%c1", decode_mau_op_without_dest, 0x5, 0x0c, False);
+  add_mau_op_allsize("MFABS%c", decode_mau_op_with_opt_dest, 0x5, 0x0c, False);
+  add_mau_op_allsize("MFNEG%c2", decode_mau_op_with_dest, 0x5, 0x17, False);
+  add_mau_op_allsize("MFNEG%c1", decode_mau_op_without_dest, 0x5, 0x17, False);
+  add_mau_op_allsize("MFNEG%c", decode_mau_op_with_opt_dest, 0x5, 0x17, False);
+  add_mau_op_allsize("MFSQR%c2", decode_mau_op_with_dest, 0x5, 0x0d, False);
+  add_mau_op_allsize("MFSQR%c1", decode_mau_op_without_dest, 0x5, 0x0d, False);
+  add_mau_op_allsize("MFSQR%c", decode_mau_op_with_opt_dest, 0x5, 0x0d, False);
+  add_mau_op_allsize("MFRND%c2", decode_mau_op_with_dest, 0x5, 0x0e, False);
+  add_mau_op_allsize("MFRND%c1", decode_mau_op_without_dest, 0x5, 0x0e, False);
+  add_mau_op_allsize("MFRND%c", decode_mau_op_with_opt_dest, 0x5, 0x0e, False);
+
+  add_mau_op_allsize("MFATAN%c2", decode_mau_op_with_dest, 0x5, 0x1e, True);
+  add_mau_op_allsize("MFATAN%c1", decode_mau_op_without_dest, 0x5, 0x1e, True);
+  add_mau_op_allsize("MFATAN%c", decode_mau_op_with_opt_dest, 0x5, 0x1e, True);
+  add_mau_op_allsize("MFCOS%c2", decode_mau_op_with_dest, 0x5, 0x1d, True);
+  add_mau_op_allsize("MFCOS%c1", decode_mau_op_without_dest, 0x5, 0x1d, True);
+  add_mau_op_allsize("MFCOS%c", decode_mau_op_with_opt_dest, 0x5, 0x1d, True);
+  add_mau_op_allsize("MFSIN%c2", decode_mau_op_with_dest, 0x5, 0x1c, True);
+  add_mau_op_allsize("MFSIN%c1", decode_mau_op_without_dest, 0x5, 0x1c, True);
+  add_mau_op_allsize("MFSIN%c", decode_mau_op_with_opt_dest, 0x5, 0x1c, True);
+
+  add_mau_op_allsize("MFCMP%c", decode_mau_op_with_dest, 0x03, 0x0a, False);
+  add_mau_op_allsize("MFCMPT%c", decode_mau_op_with_dest, 0x03, 0x0b, False);
+
+  add_mau_mov_allsize_dest("MMOV10%c", eSymbolSizeFloatDec96Bit, MAU_OPCODE_DTOF);
+  add_mau_mov_allsize_src("MMOV%c10", eSymbolSizeFloatDec96Bit, MAU_OPCODE_FTOD);
+  add_mau_mov_allsize_dest("MMOVW%c", eSymbolSize32Bit, MAU_OPCODE_ITOF);
+  add_mau_mov_allsize_src("MMOV%cW", eSymbolSize32Bit, MAU_OPCODE_FTOI);
+  add_mau_mov_allsize_dest("MMOVD%c", eSymbolSizeFloat64Bit, MAU_OPCODE_MOVE);
+  add_mau_mov_allsize_dest("MMOVS%c", eSymbolSizeFloat32Bit, MAU_OPCODE_MOVE);
+  add_mau_mov_allsize_dest("MMOVX%c", eSymbolSizeFloat96Bit, MAU_OPCODE_MOVE);
+
+  AddInstTable(InstTable, "MMOVFA", 0x0208, decode_mau_op_mem);
+  AddInstTable(InstTable, "MMOVFD", 0x0219, decode_mau_op_mem); /* guessed */
+  AddInstTable(InstTable, "MMOVTA", 0x0009, decode_mau_op_mem);
+  AddInstTable(InstTable, "MMOVTD", 0x0018, decode_mau_op_mem);
 
   AddInstTable(InstTable, exec_mode_name, 0, decode_exec_mode);
   AddInstTable(InstTable, "REG", 0, CodeREG);
-  AddInstTable(InstTable, "WORD", eIntPseudoFlag_LittleEndian | eIntPseudoFlag_AllowInt, DecodeIntelDD);
-  AddInstTable(InstTable, "HALF", eIntPseudoFlag_LittleEndian | eIntPseudoFlag_AllowInt, DecodeIntelDW);
-  AddInstTable(InstTable, "BYTE", eIntPseudoFlag_LittleEndian | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString, DecodeIntelDB);
+  AddInstTable(InstTable, "WORD", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt, DecodeIntelDD);
+  AddInstTable(InstTable, "HALF", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt, DecodeIntelDW);
+  AddInstTable(InstTable, "BYTE", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString, DecodeIntelDB);
+  AddInstTable(InstTable, "FLT", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowFloat, DecodeIntelDD);
+  AddInstTable(InstTable, "DOUBLE", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowFloat, DecodeIntelDQ);
   AddInstTable(InstTable, "DS", 0, DecodeIntelDS);
 }
 
@@ -1645,6 +2337,7 @@ static void switch_to_we32(void)
 
   init_fields();
 
+  onoff_fpu_add();
   if (!curr_exec_mode_set)
     set_exec_mode(3);
 }

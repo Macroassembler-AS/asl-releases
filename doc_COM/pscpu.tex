@@ -1,3 +1,4 @@
+%% SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only
  \subsubsection{Motorola 680x0/MCF5xxx}
 
 {\em Default Integer Syntax: Motorola}
@@ -295,7 +296,8 @@ LONG        \> OCTA        \> REG         \> QUAD         \> WORD \\
 
 {\tt\begin{tabbing}
 \hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\kill
-BYTE        \> DS          \> EXECMODE    \> HALF         \> WORD \\
+BYTE        \> DOUBLE      \> DS          \> EXECMODE    \> FLT \\
+FPU         \> HALF        \> REG         \> WORD \\
 \end{tabbing}}
 
 \subsubsection{Olympia CP-3F/GI LP8000/SGS M380}
@@ -441,7 +443,7 @@ PACKING    \> PORT       \> REG         \> RES          \> SFR \\
 \hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\kill
 ASSUME     \> DB          \> DD          \> DN          \> DO \\
 DQ         \> DS          \> DT          \> DW          \> EMULATED \\
-ERG        \> SUPMODE \\
+REG        \> SUPMODE \\
 \end{tabbing}}
 
 \subsubsection{Siemens 80C166/167}
@@ -713,6 +715,17 @@ Qxx        \> RES         \> RSTRING     \> STRING      \> WORD \\
 \hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\kill
 BSS         \> DATA        \> DOUBLE     \> PACKING     \> SINGLE \\
 WORD \\
+\end{tabbing}}
+
+\subsubsection{Texas Instruments TMS340xx}
+
+{\em Default Integer Syntax: Intel}
+
+{\tt\begin{tabbing}
+\hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\kill
+BES        \> BSS         \> BYTE        \> COPROC      \> DOUBLE \\
+EVEN       \> FIELD       \> FLOAT       \> LONG        \> REG \\
+SPACE      \> WORD \\
 \end{tabbing}}
 
 \subsubsection{Texas Instruments TMS99xx}

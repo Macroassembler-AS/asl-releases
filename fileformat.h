@@ -27,6 +27,11 @@
 #define FileHeaderRRelocRec 0x84   /* relokatibler Datenrecord mit Symbolen */
 #define FileHeaderRelocInfo 0x85   /* Relokationsinformationen */
 
+/* Special values for address space granularities not a multiple of 8: */
+
+#define FileGranularity_1   0xff   /* -1 -> one bit per word */
+#define FileGranularity_4   0xfc   /* -4 -> one nibble per word */
+
 /* Definition der im Code liegenden, zu patchenden Typen:
 
    Dazu wird ein 32-Bit-Wert verwendet.  Das oberste Byte gibt den Basistyp

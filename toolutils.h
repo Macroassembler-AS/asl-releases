@@ -66,6 +66,18 @@ extern void ReadRecordHeader(Byte *Header, Byte *Target, Byte* Segment,
 extern void WriteRecordHeader(Byte *Header, Byte *Target, Byte* Segment,
                               Byte *Gran, const char *Name, FILE *f);
 
+extern Byte record_gran_bits(Byte gran_encoded);
+
+extern LongWord record_byte_address(LongWord target_word_address, Byte gran_encoded);
+
+extern LongWord record_target_word_last_address(LongWord target_word_start_address, LongWord length_bytes, Byte gran_encoded);
+
+extern LongWord record_target_word_length(LongWord byte_length, Byte gran_encoded);
+
+extern LongWord record_byte_length(LongWord target_word_first_address, LongWord target_word_last_address, Byte gran_encoded);
+
+extern LongWord record_byte_offset(LongWord target_word_act_address, LongWord target_word_start_address, Byte gran_encoded);
+
 extern void SkipRecord(Byte Header, const char *Name, FILE *f);
 
 extern PRelocInfo ReadRelocInfo(FILE *f);

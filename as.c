@@ -36,6 +36,7 @@
 #include "chunks.h"
 #include "console.h"
 #include "asminclist.h"
+#include "asmitree.h"
 #include "asmfnums.h"
 #include "asmdef.h"
 #include "cpulist.h"
@@ -57,6 +58,7 @@
 #include "fwd_refs.h"
 #include "as.h"
 
+#include "codevars.h"
 #include "codenone.h"
 #include "code68k.h"
 #include "code56k.h"
@@ -128,6 +130,7 @@
 #include "code3205x.h"
 #include "code3254x.h"
 #include "code3206x.h"
+#include "code340xx.h"
 #include "code9900.h"
 #include "codetms7.h"
 #include "code370.h"
@@ -176,7 +179,7 @@
 /**          Code21xx};**/
 
 static long StartTime, StopTime;
-static Boolean GlobErrFlag;
+static Boolean GlobErrFlag, ResetLastLabel;
 static unsigned MacroNestLevel = 0;
 
 /*=== Zeilen einlesen ======================================================*/
@@ -281,21 +284,8 @@ static POutputTag GenerateOUTProcessor(SimpProc Processor, tErrorNum OpenErrMsg)
 /* werden gebraucht, um festzustellen, ob innerhalb eines Makrorumpfes weitere
    Makroschachtelungen auftreten */
 
-static Boolean MacroStart(void)
-{
-  return ((Memo("MACRO")) || (Memo("IRP")) || (Memo("IRPC")) || (Memo("REPT")) || (Memo("WHILE")));
-}
-
-static Boolean MacroEnd(void)
-{
-  if (Memo("ENDM"))
-  {
-    WasMACRO = True;
-    return True;
-  }
-  else
-    return False;
-}
+static Boolean MacroStart(void);
+static Boolean MacroEnd(void);
 
 typedef void (*tMacroArgCallback)(Boolean CtrlArg, const tStrComp *pArg, void *pUser);
 
@@ -686,7 +676,7 @@ static void ProcessMACROArgs(Boolean CtrlArg, const tStrComp *pArg, void *pUser)
   }
 }
 
-static void ReadMacro(void)
+static void ReadMacro(Word code)
 {
   PSaveSection RunSection;
   PMacroRec OneMacro;
@@ -696,6 +686,7 @@ static void ReadMacro(void)
   tStrComp macro_name;
   const tStrComp *p_macro_name;
 
+  UNUSED(code);
   WasMACRO = True;
 
   code_len_reset();
@@ -1022,13 +1013,14 @@ static Boolean ExpandMacro(PMacroRec OneMacro)
 /*-------------------------------------------------------------------------*/
 /* vorzeitiger Abbruch eines Makros */
 
-static void ExpandEXITM(void)
+static void ExpandEXITM(Word code)
 {
+  UNUSED(code);
   WasMACRO = True;
 
   if (!ChkArgCnt(0, 0));
-  else if (!FirstInputTag) WrError(ErrNum_EXITMOutsideMacro);
-  else if (!FirstInputTag->IsMacro) WrError(ErrNum_EXITMOutsideMacro);
+  else if (!FirstInputTag) WrStrErrorPos(ErrNum_EXITMOutsideMacro, &OpPart);
+  else if (!FirstInputTag->IsMacro) WrStrErrorPos(ErrNum_EXITMOutsideMacro, &OpPart);
   else if (IfAsm)
   {
     FirstInputTag->Cleanup(FirstInputTag);
@@ -1040,10 +1032,11 @@ static void ExpandEXITM(void)
 /*-------------------------------------------------------------------------*/
 /* discard first argument */
 
-static void ExpandSHIFT(void)
+static void ExpandSHIFT(Word code)
 {
   PInputTag RunTag;
 
+  UNUSED(code);
   WasMACRO = True;
 
   if (!ChkArgCnt(0, 0));
@@ -1294,10 +1287,12 @@ static void ProcessIRPArgs(Boolean CtrlArg, const tStrComp *pArg, void *pUser)
   }
 }
 
-static Boolean ExpandIRP(void)
+static void ExpandIRP(Word code)
 {
   PInputTag Tag;
   tExpandIRPContext Context;
+
+  UNUSED(code);
 
   WasMACRO = True;
 
@@ -1306,7 +1301,8 @@ static Boolean ExpandIRP(void)
   if (!IfAsm)
   {
     AddWaitENDM_Processor();
-    return True;
+    ResetLastLabel = False;
+    return;
   }
 
   /* 1. Parameter pruefen */
@@ -1331,7 +1327,8 @@ static Boolean ExpandIRP(void)
     ClearStringList(&(Context.Params));
     free(Context.pOutputTag);
     AddWaitENDM_Processor();
-    return False;
+    ResetLastLabel = True;
+    return;
   }
 
   /* 2. Tag erzeugen */
@@ -1353,7 +1350,7 @@ static Boolean ExpandIRP(void)
 
   FirstOutputTag = Context.pOutputTag;
 
-  return True;
+  ResetLastLabel = False;
 }
 
 /*--- IRPC: dito fuer Zeichen eines Strings ---------------------------------*/
@@ -1463,11 +1460,12 @@ static void ProcessIRPCArgs(Boolean CtrlArg, const tStrComp *pArg, void *pUser)
   }
 }
 
-static Boolean ExpandIRPC(void)
+static void ExpandIRPC(Word code)
 {
   PInputTag Tag;
   tExpandIRPCContext Context;
 
+  UNUSED(code);
   WasMACRO = True;
 
   /* 0. terminate if conditinal assembly bites */
@@ -1475,7 +1473,8 @@ static Boolean ExpandIRPC(void)
   if (!IfAsm)
   {
     AddWaitENDM_Processor();
-    return True;
+    ResetLastLabel = False;
+    return;
   }
 
   /* 1.Parameter pruefen */
@@ -1498,7 +1497,8 @@ static Boolean ExpandIRPC(void)
   {
     ClearStringList(&(Context.pOutputTag->ParamNames));
     AddWaitENDM_Processor();
-    return False;
+    ResetLastLabel = True;
+    return;
   }
 
   /* 2. Tag erzeugen */
@@ -1520,7 +1520,7 @@ static Boolean ExpandIRPC(void)
   Context.pOutputTag->Tag = Tag;
   FirstOutputTag = Context.pOutputTag;
 
-  return True;
+  ResetLastLabel = False;
 }
 
 /*--- Repetition -----------------------------------------------------------*/
@@ -1668,11 +1668,13 @@ static void ProcessREPTArgs(Boolean CtrlArg, const tStrComp *pArg, void *pUser)
   }
 }
 
-static Boolean ExpandREPT(void)
+static void ExpandREPT(Word code)
 {
   PInputTag Tag;
   POutputTag Neu;
   tExpandREPTContext Context;
+
+  UNUSED(code);
 
   WasMACRO = True;
 
@@ -1681,7 +1683,8 @@ static Boolean ExpandREPT(void)
   if (!IfAsm)
   {
     AddWaitENDM_Processor();
-    return True;
+    ResetLastLabel = False;
+    return;
   }
 
   /* 1. Repetitionszahl ermitteln */
@@ -1700,7 +1703,8 @@ static Boolean ExpandREPT(void)
   if (Context.ErrFlag)
   {
     AddWaitENDM_Processor();
-    return False;
+    ResetLastLabel = True;
+    return;
   }
 
   /* 2. Tag erzeugen */
@@ -1723,7 +1727,7 @@ static Boolean ExpandREPT(void)
   Neu->Tag       = Tag;
   FirstOutputTag = Neu;
 
-  return True;
+  ResetLastLabel = False;
 }
 
 /*- bedingte Wiederholung -------------------------------------------------------*/
@@ -1894,11 +1898,13 @@ static void ProcessWHILEArgs(Boolean CtrlArg, const tStrComp *pArg, void *pUser)
   }
 }
 
-static Boolean ExpandWHILE(void)
+static void ExpandWHILE(Word code)
 {
   PInputTag Tag;
   POutputTag Neu;
   tExpandWHILEContext Context;
+
+  UNUSED(code);
 
   WasMACRO = True;
 
@@ -1907,7 +1913,8 @@ static Boolean ExpandWHILE(void)
   if (!IfAsm)
   {
     AddWaitENDM_Processor();
-    return True;
+    ResetLastLabel = False;
+    return;
   }
 
   /* 1. Bedingung ermitteln */
@@ -1927,7 +1934,8 @@ static Boolean ExpandWHILE(void)
   if (Context.ErrFlag)
   {
     AddWaitENDM_Processor();
-    return False;
+    ResetLastLabel = True;
+    return;
   }
 
   /* 2. Tag erzeugen */
@@ -1950,7 +1958,57 @@ static Boolean ExpandWHILE(void)
   Neu->Tag       = Tag;
   FirstOutputTag = Neu;
 
-  return True;
+  ResetLastLabel = False;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     MacroStart(void)
+ * \brief  check whether the current instruction will open another macro nesting level
+ * \return True if yes
+ * ------------------------------------------------------------------------ */
+
+static Boolean MacroStart(void)
+{
+  const TInstTableEntry *p_entry =
+    inst_table_search(oppart_leading_dot
+                      ? main_inst_table_leading_dot
+                      : main_inst_table_no_leading_dot,
+                      OpPart.str.p_str);
+
+  return p_entry &&
+         ((p_entry->Procs[0] == ReadMacro)
+       || (p_entry->Procs[0] == ExpandIRP)
+       || (p_entry->Procs[0] == ExpandIRPC)
+       || (p_entry->Procs[0] == ExpandREPT)
+       || (p_entry->Procs[0] == ExpandWHILE));
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     MacroEnd(void)
+ * \brief  check for end of macro body
+ * \return True if yes
+ * ------------------------------------------------------------------------ */
+
+static Boolean MacroEnd(void)
+{
+  if (Memo("ENDM") || (!HasAttrs && Memo(".ENDM")))
+  {
+    WasMACRO = True;
+    return True;
+  }
+  else
+    return False;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     misplaced_endm(Word code)
+ * \brief  handle misplaced ENDM outside of macro body
+ * ------------------------------------------------------------------------ */
+
+static void misplaced_endm(Word code)
+{
+  UNUSED(code);
+  WrStrErrorPos(ErrNum_ENDMOutsideMacro, &OpPart);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -2088,12 +2146,13 @@ static void ExpandINCLUDE_Core(const tStrComp *pArg, Boolean SearchPath)
 }
 
 /*!------------------------------------------------------------------------
- * \fn     ExpandINCLUDE(void)
+ * \fn     ExpandINCLUDE(Word code)
  * \brief  Handle INCLUDE statement
  * ------------------------------------------------------------------------ */
 
-static void ExpandINCLUDE(void)
+static void ExpandINCLUDE(Word code)
 {
+  UNUSED(code);
   if (!IfAsm)
     return;
 
@@ -2337,9 +2396,12 @@ void WriteCode(void)
     {
       PCsUsed[ActPC] = True;
       if (DontPrint)
+      {
+        flush_bytes();
         NewRecord(PCs[ActPC] + CodeLen);
+      }
       else
-        WriteBytes();
+        as_code_write_bytes(CodeLen);
     }
     PCs[ActPC] = NewPC;
   }
@@ -2349,13 +2411,14 @@ static void Produce_Code(void)
 {
   PMacroRec OneMacro;
   PStructRec OneStruct;
-  Boolean SearchMacros, Found, IsMacro = False, IsStruct = False, ResetLastLabel = True;
+  Boolean SearchMacros, IsMacro = False, IsStruct = False;
   tStrComp non_upper_case_op_part;
   String non_upper_case_op_part_buf;
   const tStrComp *p_search_op_part;
 
+  ResetLastLabel = True;
   ActListGran = ListGran();
-  act_list_gran_bits_unused = gran_bits_unused();
+  act_list_gran_bits_unused = list_gran_bits_unused();
   WasIF = WasMACRO = False;
 
   /* Makrosuche unterdruecken ? */
@@ -2392,7 +2455,7 @@ static void Produce_Code(void)
 
   /* otherwise generate code: check for macro/structs here */
 
-  IsMacro = (SearchMacros) && (FoundMacro(&OneMacro, p_search_op_part));
+  IsMacro = SearchMacros && FoundMacro(&OneMacro, p_search_op_part);
   if (IsMacro)
     WasMACRO = True;
   if (!IsMacro)
@@ -2411,67 +2474,10 @@ static void Produce_Code(void)
       LabelHandle(&LabPart, EProgCounter(), False);
   }
 
-  Found = False;
-  switch (*OpPart.str.p_str)
-  {
-    case 'I':
-      /* Makroliste ? */
-      Found = True;
-      if (Memo("IRP")) ResetLastLabel = !ExpandIRP();
-      else if (Memo("IRPC")) ResetLastLabel = !ExpandIRPC();
-      else Found = False;
-      break;
-    case 'R':
-      /* Repetition ? */
-      Found = True;
-      if (Memo("REPT")) ResetLastLabel = !ExpandREPT();
-      else Found = False;
-      break;
-    case 'W':
-      /* bedingte Repetition ? */
-      Found = True;
-      if (Memo("WHILE")) ResetLastLabel = !ExpandWHILE();
-      else Found = False;
-      break;
-  }
-
-  /* bedingte Assemblierung ? */
-
-  if (!Found)
-    WasIF = Found = CodeIFs();
-
-  if (!Found)
-    switch (*OpPart.str.p_str)
-    {
-      case 'M':
-        /* Makrodefinition ? */
-        Found = True;
-        if (Memo("MACRO")) ReadMacro();
-        else Found = False;
-        break;
-      case 'E':
-        /* Abbruch Makroexpansion ? */
-        Found = True;
-        if (Memo("EXITM")) ExpandEXITM();
-        else Found = False;
-        break;
-      case 'S':
-        /* shift macro arguments ? */
-        Found = True;
-        if (memo_shift_pseudo() || (ShiftIsOccupied && Memo("SHFT"))) ExpandSHIFT();
-        else Found = False;
-        break;
-      case 'I':
-        /* Includefile? */
-        Found = True;
-        if (Memo("INCLUDE"))
-          ExpandINCLUDE();
-        else
-          Found = False;
-        break;
-    }
-
-  if (Found);
+  if (LookupInstTable(oppart_leading_dot
+                    ? main_inst_table_leading_dot
+                    : main_inst_table_no_leading_dot,
+                    OpPart.str.p_str));
 
   /* Makroaufruf ? */
 
@@ -2550,6 +2556,38 @@ static void Produce_Code(void)
      externe Referenzen liegengeblieben sind. */
 
   SetRelocs(NULL);
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     as_rebuild_main_inst_tables(void)
+ * \brief  rebuild the instruction tables holding instructions not overwritable
+ * ------------------------------------------------------------------------ */
+
+void as_rebuild_main_inst_tables(void)
+{
+  DestroyInstTable(main_inst_table_no_leading_dot);
+  DestroyInstTable(main_inst_table_leading_dot);
+
+  main_inst_table_no_leading_dot = CreateInstTable(57);
+  if (HasAttrs)
+    main_inst_table_leading_dot = CreateInstTable(57);
+  else
+    main_inst_table_leading_dot = NULL;
+
+  as_augment_main_inst_tables(".IRP", 0, ExpandIRP, False);
+  as_augment_main_inst_tables(".IRPC", 0, ExpandIRPC, False);
+  as_augment_main_inst_tables(".REPT", 0, ExpandREPT, False);
+  as_augment_main_inst_tables(".WHILE", 0, ExpandWHILE, False);
+
+  as_if_augment_main_inst_tables();
+
+  as_augment_main_inst_tables(".MACRO", 0, ReadMacro, False);
+  as_augment_main_inst_tables(".EXITM", 0, ExpandEXITM, False);
+  as_augment_main_inst_tables(".INCLUDE", 0, ExpandINCLUDE, False);
+  as_augment_main_inst_tables(".SHIFT", 0, ExpandSHIFT, ShiftIsOccupied);
+  as_augment_main_inst_tables(".ENDM", 0, misplaced_endm, False);
+  if (ShiftIsOccupied)
+    as_augment_main_inst_tables(".SHFT", 0, ExpandSHIFT, False);
 }
 
 /*--- Zeile in Listing zerteilen -------------------------------------------*/
@@ -2802,6 +2840,12 @@ static void ProcessFile(char *pFileName)
     }
 
     MakeList(OneLine.p_str);
+
+    /* Do the transfer of a partial byte in bitwise segment from end to (next)
+       beginning after printing the listing: */
+
+    transfer_partial_byte();
+
     DoLst = NextDoLst;
     IncDepth = NextIncDepth;
     if (MaxIncDepth < IncDepth)
@@ -4502,6 +4546,7 @@ int main(int argc, char **argv)
     code3205x_init();
     code32054x_init();
     code3206x_init();
+    code340xx_init();
     code9900_init();
     codetms7_init();
     code370_init();

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only
+
 $(TARG_OBJDIR)./ioerrs.msg: ioerrs.mes header.mes $(RESCOMPTARGET)
 	$(CURRDIR)$(RESCOMPTARGET) ioerrs.mes -m $@
 $(TARG_OBJDIR)./ioerrs.msh: ioerrs.mes header.mes $(RESCOMPTARGET)

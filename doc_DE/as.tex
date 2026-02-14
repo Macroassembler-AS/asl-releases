@@ -1,3 +1,5 @@
+%% SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only
+
 %%TITLE Bedienungsanleitung Makroassembler AS
 \documentclass[12pt,a4paper,twoside]{report}
 %% Try \usepackage[german]{babel} if your Tex distribution does not provide the german sty file:
@@ -49,7 +51,7 @@
 
 \vspace{1cm}\par
 
-{\large Stand Dezember 2025}
+{\large Stand Januar 2026}
 \end{raggedright}
 
 \clearpage
@@ -280,6 +282,7 @@ folgende Prozessorfamilien implementiert:
 \item{Texas Instruments TMS320C20x/TMS320C5x}
 \item{Texas Instruments TMS320C54x}
 \item{Texas Instruments TMS320C6x}
+\item{Texas Instruments TMS340xx}
 \item{Texas Instruments TMS99xx/TMS99xxx}
 \item{Texas Instruments TMS7000}
 \item{Texas Instruments TMS1000}
@@ -2516,9 +2519,9 @@ einmal sein.  Was sollte man als Erkenntnis aus diesem Abschnitt mitnehmen?
 \label{SectRegSyms} \ttindex{Registersymbole}
 
 {\em G"ultigkeit: PowerPC, M-Core, XGate, 4004/4040, MCS-48/(2)51, 8086,
-     80C16x, AVR, XS1, Z8, KCPSM, Mico8, MSP430(X), ST9, M16, M16C, H8/300,
-     H8/500, SH7x00, H16, i960, XA, 29K, TLCS-9000, KENBAK, SC/MP,
-     PDP-11, VAX}
+     80C16x, AVR, XS1, Z8, KCPSM, Mico8, TMS340xx, MSP430(X), ST9, M16,
+     M16C, H8/300, H8/500, SH7x00, H16, i960, XA, 29K, TLCS-9000, KENBAK,
+     SC/MP, PDP-11, VAX}
 
 Manchmal ist es erw"unscht, nicht nur einer Speicheradresse oder einer
 Konstanten, sondern auch einem Register einen symbolischen Namen zuzuweisen,
@@ -3022,8 +3025,11 @@ PIO_Ctrl   PORT PIO_Port_A+3
 \subsection{REG und NAMEREG}
 \ttindex{REG}\ttindex{NAMEREG}
 
-{\em G"ultigkeit: 680x0, AVR, M*Core, ST9, 80C16x, Z8000, KCPSM, \\
-     PDP-11, WD16 \\
+{\em G"ultigkeit: 680x0, PowerPC, PALM, M*Core, XGate, H8,\\
+     SH7x00, H16, M16(C), PDP-11, WD16, VAX, 4004, MCS-48/51,\\
+     8086, i960, XA, AVR, 29xxx,  80C16x, Z8, Z80, Z8000,\\
+     KCPSM(3), LatticeMico8, TLCS-9000, ST9, MSP430(X), V60,\\
+     SC/MP, NS32xxx, WE32xxx, XCore, KENBAK\\
      (\tty{NAMEREG} nur f"ur KCPSM(3)), LatticeMico8, MSP430(X)}
 
 Obwohl immer mit gleicher Syntax, hat diese Anweisung von Prozessor
@@ -3040,10 +3046,20 @@ Register- als auch symbolischer Name als Argumente angegeben, z.B. so:
      NAMEREG  s08, treg
 \end{verbatim}
 
-Auf der PDP-11 darf \tty{REG} zus"atzlich ohne Namen im Label-Feld benutzt
+Auf PDP-11 und TMS340xx darf \tty{REG} zus"atzlich ohne Namen im Label-Feld benutzt
 werden.  Es wird dann als einziges Argument entweder \tty{ON} oder \tty{OFF}
-erwartet, und damit werden die eingebauten Register-Aliase (\tty{Rn} = \tty{\%n},
-\tty{SP} = \tty{R6}, \tty{PC} = \tty{R7}) ein- und ausgeschaltet.  Sie
+erwartet, und damit werden die eingebauten Register-Aliase:
+\begin{itemize}
+\item{PDP-11: \tty{Rn} = \tty{\%n}, \tty{SP} = \tty{R6}, \tty{PC} = \tty{R7}}
+\item{TMS340xx: \tty{SADDR} = \tty{B0}, \tty{SPTCH} = \tty{B1},
+                \tty{DADDR} = \tty{B2}, \tty{DPTCH} = \tty{B3},
+                \tty{OFFSET} = \tty{B4}, \tty{WSTART} = \tty{B5},
+                \tty{WEND} = \tty{B6}, \tty{DYDX} = \tty{B7},
+                \tty{COLOR0} = \tty{B8}, \tty{COLOR1} = \tty{B9},
+                \tty{COUNT} = \tty{B10}, \tty{INC1} = \tty{B11},
+                \tty{INC2} = \tty{B12}, \tty{PATTRN1} = \tty{B13}}
+\end{itemize}
+ein- und ausgeschaltet.  Sie
 sind im Default verf"ugbar, und sollten nur abgeschaltet werden, wenn
 sie mit eigenen Symbolnamen in einem Programm kollidieren.  Die augenblickliche
 Einstellung l"a"st sich aus dem Symbol \tty{DEFAULT\_REGSYMS} lesen.
@@ -4138,6 +4154,16 @@ C5x-Prozessoren wird von \asname{} momentan nicht ausgenutzt.
 Dies ist momentan der Repr"asentant f"ur die TMS320C54x-Familie...
 %%-----------
 \begin{cpulist}
+   32060
+\end{cpulist}
+%%-----------
+\begin{cpulist}
+   34010 $\rightarrow$ 34020
+\end{cpulist}
+Der TMS34020 unterst"utzt eine vollen 4 GBit-Adres"raum, zus"atzliche
+Maschinenbefehle sowie eine Koprozessor-Schnittstelle.
+%%-----------
+\begin{cpulist}
    TI990/4, TI990/10, TI990/12 \\
 \> TMS9900, TMS9940, TMS9995, TMS99105, TMS99110
 \end{cpulist}
@@ -4291,14 +4317,18 @@ differieren zum Teil in den Reset-Werten einiger Register!
 \begin{cpulist}
    uPD550, uPD554, uPD652, \\
 \> uPD547, uPD552, uPD651, \\
-\> uPD546, uPD553, uPD556, uPD557, uPD650
+\> uPD546, uPD553, uPD556, uPD557, uPD650, iso650
 \end{cpulist}
 Die drei Gruppen vom Controllers geh"oren jeweils zur
 $\mu$COM-45-, $\mu$COM-44- und $\mu$COM-43-Familie. Die
 ersten beiden Familien implementieren eine Untermenge
 des $\mu$COM-43-Befehlssatzes.  Ansonsten unterscheiden
 die Varianten sich in der Menge des integrierten ROM-
-und RAM-Speichers.
+und RAM-Speichers.  iso650 ist eine FPGA-Implementierung
+des uPD650 und unterscheidet sich vom 'Original' in der
+Gr"o"se des Adre"sraumes.  Dieser ist nicht auf 2000 Byte
+beschr"ankt, sondern erstreckt sich "uber die vollen 2048
+Byte.
 %%-----------
 \begin{cpulist}
    7566 $\leftrightarrow$ 7508
@@ -4566,7 +4596,7 @@ jeweils zugeh"origen Unterkapitel mit prozessorspezifischen Hinweisen beschriebe
 \begin{itemize}
 \item{G"ultigkeit SUPMODE: 680x0, NS32xxx, PDP-11, i960, TLCS-900,
       SH7000, i960, 29K, Z280, XA, PowerPC, M*CORE, V60 und TMS9900}
-\item{G"ultigkeit FPU: 680x0, NS32xxx, 80x86}
+\item{G"ultigkeit FPU: 680x0, NS32xxx, 80x86, WE32xxx}
 \item{G"ultigkeit PMMU: 680x0, NS32xxx}
 \item{G"ultigkeit CUSTOM: NS32xxx}
 \end{itemize}
@@ -4680,6 +4710,18 @@ Einstellung kann aus einem gleichnamigen Symbol ausgelesen werden.
 \bb{ACHTUNG!}  Der \tty{CPU}-Befehl besetzt f"ur 680x0-Argumente implizit
 diese Einstellung vor!  \tty{FULLPMMU} mu"s also auf jeden Fall nach dem
 \tty{CPU}-Befehl kommen!
+
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+\subsection{COPROC}
+\ttindex{COPROC}
+
+{\em G"ultigkeit: TMS34020}
+
+Mit diesem Befehl wird festgelegt, welche Id (Adresse) in Koprozessor-
+Befehle eingesetzt werden soll, wenn keine explizite Id angegeben wurde.
+Der Default f"ur diesen Wert wiederum ist Null.  Erlaubte Werte sind von
+0 bis 7.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -6005,10 +6047,24 @@ Funktionalit"at, jedoch anderem Namen:
 \item{\tty{LWORD} bzw. \tty{QUAD} funktionieren auf der VAX wie \tty{DD}
       bzw. \tty{DQ}, akzeptieren aber nur Ganzzahl-Argumente.}
 \ttindex{HALF}
-\item{\tty{BYTE} funktionieren auf WE32xxx wie \tty{DB}, \tty{HALF}
-      wie \tty{DW}, und \tty{WORD} wie \tty{DD}.}
-\ttindex{BYTE}\ttindex{WORD}\ttindex{LWORD}\ttindex{QUAD}
+\item{\tty{BYTE} funktioniert auf WE32xxx wie \tty{DB}, \tty{HALF}
+      wie \tty{DW}, und \tty{WORD} wie \tty{DD}, akzeptiert aber nur
+      Ganzzahl-Argumente.}
+\item{\tty{DOUBLE} funktionieren auf WE32xxx wie \tty{DQ}, akzeptiert
+      aber nur Gleitkomma-Argumente)}
+\ttindex{BYTE}\ttindex{STRING}
+\ttindex{WORD}\ttindex{LONG}\ttindex{INT}
 \ttindex{FLOAT}\ttindex{DOUBLE}
+\item{Auf dem TI TMS340xx existieren:
+      \begin{itemize}
+      \item{\tty{BYTE} (wie \tty{DB}, nur Ganzzahl-Argumente)}
+      \item{\tty{STRING} (wie \tty{DB}, nur Zeichenketten-Argumente)}
+      \item{\tty{WORD} (wie \tty{DW}, nur Ganzzahl-Argumente)}
+      \item{\tty{LONG} oder \tty{INT} (wie \tty{DD}, nur Ganzzahl-Argumente)}
+      \item{\tty{FLOAT} (wie \tty{DD}, nur Gleitkomma-Argumente)}
+      \item{\tty{DOUBLE} (wie \tty{DQ}, nur Gleitkomma-Argumente)}
+      \end{itemize}}
+\ttindex{LWORD}\ttindex{QUAD}
 \item{Auf dem Renesas RX existieren:
       \begin{itemize}
       \item{\tty{BYTE} (wie \tty{DB})}
@@ -6057,6 +6113,18 @@ reserviert wird.  Diese Anweisung ergibt daher auch nur in Adre"sr"aumen
 eine Sinn, die bitweise adressiert werden.  Das ist aktuell nur im
 {\tt BITDATA}-Segment des 8051 der Fall, falls die {\tt BITSEGSIZE:1}-Option
 benutzt wurde.
+
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+\subsection{FLT}
+\ttindex{FLT}
+
+{\em\begin{tabbing}
+G"ultigkeit: \= WE32xxx \\
+\end{tabbing}}
+
+\tty{FLT} funktioniert analog zu \tty{DD}, legt jedoch ausschlie"slich
+Gleitkomma-Konstanten im IEEE-Format mit einfacher Genauigkeit ab.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -6349,6 +6417,20 @@ verrechnet haben sollte...
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+\subsection{FIELD}
+\ttindex{FIELD}
+ 
+{\em G"ultigkeit: TMS340xx}
+ 
+\tty{FIELD} legt im Speicher ein Bitfeld mit einer bestimmten Länge und Wert
+ab.  Das zweite Argument ist die L"ange des Feldes (1 bis 32 Bit), das erste
+ist der darin abzulegende (Integer-)Wert.  Der erlaubte Wertebereich ist von
+der L"ange abh"angig und kann wahlweise vorzeichenlos oder vorzeichenbehaftet
+im Zweierkomplement sein.  F"ur ein Bitfeld mit 16 Bit L"ange geht der erlaubte
+Wertebereich z.B. von -32768 bis +65535.
+
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 \subsection{DATA}
 \ttindex{DATA}
 
@@ -6586,6 +6668,17 @@ macht den Programmz"ahler gerade.  Wird \tty{ALIGN} in dieser Form mit nur
 einem Argument verwendet, ist der Inhalt des dadurch frei bleibenden
 Speicherbereichs nicht definiert.  Alternativ kann als zweites Argument ein
 (Byte-)Wert angegeben werden, mit dem dieser Bereich gef"ullt wird.
+
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ 
+\subsection{EVEN}
+\ttindex{EVEN}
+ 
+{\em G"ultigkeit: TMS340xx}
+
+\tty{EVEN} ist eine Spezialisierung von \tty{ALIGN}.  Der Befehl inkrementiert
+den Programmzähler so weit, da"s er ein mehrfaches von 16 Bit ist, also passend
+zum Beispiel zur Ablage von Prozessorbefehlen.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -12161,12 +12254,15 @@ Startadresse und L"ange angeben: W"ahrend die Startadresse sich auf die
 Granularit"at bezieht, erfolgt die L"angenangabe immer in Bytes!  W"are
 die Startadresse z.B. \$300 und die L"ange 12, so w"are die sich
 ergebende Endadresse bei einer Granularit"at von 1 \$30b, bei einer
-Granularit"at von z.B. 4 jedoch \$303!  Andere Granularit"aten als eins
+Granularit"at von z.B. 4 jedoch \$303.  Andere Granularit"aten als eins
 sind selten und treten in erster Linie bei Signalprozessoren auf, die
 nicht  auf Einzelbyteverarbeitung ausgelegt sind deren Datenspeicher z.B.
 aus 64kWorten zu 16 Bit besteht (DSP56K).  Der sich ergebende Speicherplatz
 betr"agt dann zwar 128 KByte, er ist aber in $2^{16}$ Worten organisiert,
-die mit Adressen von 0,1,2,...65535 adressiert werden!
+die mit Adressen von 0,1,2,...65535 adressiert werden.  Granularit"aten
+kleiner als 8 Bit werden mit Werten von \$f9..\$ff kodiert.  Falls das
+kleinste adressierbare Element ein Bit ist, ist die Granularit"at \$ff,
+ist sie ein Nibble, ist die Granularit"at \$fc.
 \par
 Die Startadresse ist 32-bittig, unabh"angig von der Adre"sbreite der
 jeweiligen Prozessorfamilie.  Im Gegensatz dazu ist die L"angenangabe
@@ -13180,6 +13276,13 @@ Angaben:
                 anderen Adressr"aume verf"ugen nicht "uber die daf"ur erforderliche
                 Wortbreite.}
                {keines}
+\errentry{ 510}{Befehl wird SP "uberschreiben}
+               {Warnung}
+               {Dieser Befehl benutzt neben dem explizit genannten
+                noch das Folgeregister f"ur das doppelt lange Ergebnis.
+                Das Folgeregister ist in diesem Fall aber der
+                Stackpointer.}
+               {das Zielargument der Anweisung}
 \errentry{1000}{Symbol doppelt definiert}
                {Fehler}
                {Einem Symbol wurde durch ein Label oder
@@ -13874,7 +13977,13 @@ Angaben:
                 Makro-Konstrukten ab.  Dieser Befehl macht nur innerhalb
                 von Makros Sinn und es wurde versucht, ihn au"serhalb
                 aufzurufen.}
-               {keines}
+               {Der fragliche EXITM-Befehl}
+\errentry{1806}{ENDM au"serhalb eines Makrorumpfes}
+               {Fehler}
+               {\tty{ENDM} schlie"st die Definition eines Makros oder einen
+                \tty{REPT/IRP/WHILE}-Block ab.  Au"serhalt davon ergibt
+                er keinen Sinn.}
+               {Der fragliche ENDM-Befehl}
 \errentry{1810}{mehr als 10 Makroparameter}
                {Fehler}
                {Ein Makro darf h"ochstens 10 Parameter haben.}

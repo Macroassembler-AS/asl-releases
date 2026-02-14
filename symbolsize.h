@@ -10,6 +10,8 @@
 /*                                                                           */
 /*****************************************************************************/
 
+#include "datatypes.h"
+
 typedef enum
 {
   eSymbolSizeUnknown = -1,
@@ -40,5 +42,7 @@ DefCPPOps_Enum(tSymbolSize)
 extern const char *GetSymbolSizeName(tSymbolSize Size);
 
 extern unsigned GetSymbolSizeBytes(tSymbolSize Size);
+
+extern Boolean is_symbol_size_float(tSymbolSize size);
 
 #endif /* _SYMBOLSIZE_H */

@@ -44,6 +44,8 @@ TARG_EXEXTENSION = $(HOST_EXEXTENSION)
 #TARG_EXEXTENSION = .exe
 #TARG_RUNCMD = wine
 #TEX2DOC_FLAGS=-codepage 1252
+#RC_CC = i686-w64-mingw32-windres
+#MAKEDEFS_RC = makedefs.rc
 
 # cross Build with MinGW64
 
@@ -56,6 +58,8 @@ TARG_EXEXTENSION = $(HOST_EXEXTENSION)
 #TARG_EXEXTENSION = .exe
 #TARG_RUNCMD = wine
 #TEX2DOC_FLAGS=-codepage 1252
+#RC_CC = x86_64-w64-mingw32-windres
+#MAKEDEFS_RC = makedefs.rc
 
 # Build PPC binaries, e.g. to test support for big endian host systems
 # On Debian, install the following:

@@ -1317,6 +1317,21 @@ char TabCompressed(char in)
   return (in == '\t') ? ' ' : (as_isprint(in) ? in : '*');
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     as_bit_count(LongWord i)
+ * \brief  count set bits in i
+ * \return # of bits set
+ * ------------------------------------------------------------------------ */
+
+unsigned as_bit_count(LongWord i)
+{
+  i = i - ((i >> 1) & 0x55555555);
+  i = (i & 0x33333333) + ((i >> 2) & 0x33333333);
+  i = (i + (i >> 4)) & 0x0F0F0F0F;
+  i *= 0x01010101;
+  return  i >> 24;
+}
+
 /*--------------------------------------------------------------------------*/
 
 void strutil_init(void)

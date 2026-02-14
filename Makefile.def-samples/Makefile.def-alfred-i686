@@ -114,6 +114,8 @@ ifeq ($(TARG_OBJDIR),i686-w32/)
  TARG_EXEXTENSION = .exe
  TARG_RUNCMD = wine
  TEX2DOC_FLAGS=-codepage 1252
+ RC_CC = i686-w64-mingw32-windres
+ MAKEDEFS_RC = makedefs.rc
 endif
 
 # -------------------------------------------------------------------------

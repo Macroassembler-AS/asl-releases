@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only
+
 include $(TARG_OBJDIR)codepseudo$(DEPEXTENSION)
 include $(TARG_OBJDIR)intpseudo$(DEPEXTENSION)
 include $(TARG_OBJDIR)motpseudo$(DEPEXTENSION)
@@ -85,6 +87,7 @@ include $(TARG_OBJDIR)code3203x$(DEPEXTENSION)
 include $(TARG_OBJDIR)code3205x$(DEPEXTENSION)
 include $(TARG_OBJDIR)code3254x$(DEPEXTENSION)
 include $(TARG_OBJDIR)code3206x$(DEPEXTENSION)
+include $(TARG_OBJDIR)code340xx$(DEPEXTENSION)
 include $(TARG_OBJDIR)code9900$(DEPEXTENSION)
 include $(TARG_OBJDIR)codetms7$(DEPEXTENSION)
 include $(TARG_OBJDIR)code370$(DEPEXTENSION)

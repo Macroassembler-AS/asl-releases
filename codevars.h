@@ -26,6 +26,11 @@
 extern int InstrZ;
 extern int AdrCnt;
 
-extern PInstTable InstTable;
+struct sInstTable;
+extern struct sInstTable *InstTable,
+                         *main_inst_table_no_leading_dot,
+                         *main_inst_table_leading_dot;
+
+extern void as_augment_main_inst_tables(const char *p_name, Word arg, InstProc proc, Boolean nodot_occupied);
 
 #endif /* _CODEVARS_H */

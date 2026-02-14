@@ -55,33 +55,41 @@ void LabelReset(void)
 
 Boolean LabelPresent(void)
 {
+  const char *p_op_part = OpPart.str.p_str;
+
   if (!*LabPart.str.p_str)
     return False;
   if (IsDef())
     return False;
 
-  switch (*OpPart.str.p_str)
+  if (!HasAttrs && (*p_op_part == '.'))
+    p_op_part++;
+
+  switch (*p_op_part)
   {
     case '=':
       return !Memo("=");
     case ':':
       return !Memo(":=");
-    case '.':
-      return !Memo(".SET") && !Memo(".EQU");
     case 'M':
-      return !Memo("MACRO");
+      return !!strcmp(p_op_part, "MACRO");
     case 'F':
-      return !Memo("FUNCTION");
+      return !!strcmp(p_op_part, "FUNCTION");
     case 'L':
-      return !Memo("LABEL");
+      return !!strcmp(p_op_part, "LABEL");
     case 'S':
-      return !memo_set_pseudo() && (!(Memo("STRUCT") || Memo("STRUC")));
+      return !(!strcmp(p_op_part, "SET") && is_set_pseudo())
+          && strcmp(p_op_part, "STRUCT")
+          && strcmp(p_op_part, "STRUC");
     case 'E':
-      if (Memo("EQU") || Memo("ENDSTRUCT") || Memo("ENDS") || Memo("ENDSTRUC") || Memo("ENDUNION"))
-        return False;
-      return !Memo("EVAL");
+      return strcmp(p_op_part, "EQU")
+          && strcmp(p_op_part, "ENDSTRUCT")
+          && strcmp(p_op_part, "ENDS")
+          && strcmp(p_op_part, "ENDSTRUC")
+          && strcmp(p_op_part, "ENDUNION")
+          && strcmp(p_op_part, "EVAL");
     case 'U':
-      return !Memo("UNION");
+      return !!strcmp(p_op_part, "UNION");
     default:
       return True;
   }

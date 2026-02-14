@@ -19,7 +19,9 @@ extern LongInt SectSymbolCounter;
 extern PPatchEntry PatchList, PatchLast;
 extern PExportEntry ExportList, ExportLast;
 
-extern void DreheCodes(void);
+extern Boolean last_basmcode_bit_field_set_be;
+
+extern void as_code_swap_bytes(void);
 
 extern void NewRecord(LargeWord NStart);
 
@@ -27,7 +29,10 @@ extern void OpenFile(void);
 
 extern void CloseFile(void);
 
-extern void WriteBytes(void);
+extern void as_code_write_bytes(LongInt this_code_len);
+
+extern void transfer_partial_byte(void);
+extern void flush_bytes(void);
 
 extern void RetractWords(Word Cnt);
 
@@ -35,32 +40,54 @@ extern void InsertPadding(unsigned NumBytes, Boolean OnlyReserve);
 
 extern void code_len_reset(void);
 
+extern void set_basmcode_bit_field_le(unsigned start, LongWord field_value, unsigned field_length);
+extern LongWord get_basmcode_bit_field_le(unsigned start, unsigned field_length);
+extern void set_basmcode_bit_field_be(unsigned start, LongWord field_value, unsigned field_length);
+extern LongWord get_basmcode_bit_field_be(unsigned start, unsigned field_length);
+extern void set_basmcode_bit_field_ve(unsigned start, LongWord field_value, unsigned field_length, Boolean big_endian);
+extern LongWord get_basmcode_bit_field_ve(unsigned start, unsigned field_length, Boolean big_endian);
+
+extern void set_basmcode_guessed_bit_field_le(unsigned start, unsigned field_length);
+extern LongWord get_basmcode_guessed_bit_field_le(unsigned start, unsigned field_length);
+#define set_b_bit_field_guessed_le(flags, start, field_length) \
+        do { if (mFirstPassUnknownOrQuestionable(flags)) set_basmcode_guessed_bit_field_le(start, field_length); } while (0)
+
+extern void set_basmcode_guessed_bit_field_be(unsigned start, unsigned field_length);
+extern LongWord get_basmcode_guessed_bit_field_be(unsigned start, unsigned field_length);
+#define set_b_bit_field_guessed_be(flags, start, field_length) \
+        do { if (mFirstPassUnknownOrQuestionable(flags)) set_basmcode_guessed_bit_field_be(start, field_length); } while (0)
+
+extern void set_basmcode_guessed_bit_field_ve(unsigned start, unsigned field_length, Boolean big_endian);
+extern LongWord get_basmcode_guessed_bit_field_ve(unsigned start, unsigned field_length, Boolean big_endian);
+#define set_b_bit_field_guessed_ve(flags, start, field_length, big_endian) \
+        do { if (mFirstPassUnknownOrQuestionable(flags)) set_basmcode_guessed_bit_field_ve(start, field_length, big_endian); } while (0)
+
 extern void set_basmcode_guessed(LongWord start, LongWord count, Byte value);
-#define set_b_guessed(flags, offs, len, value) \
-        do { if (mFirstPassUnknownOrQuestionable(flags)) set_basmcode_guessed(offs, len, value); } while (0)
+#define set_b_guessed(flags, start, count, value) \
+        do { if (mFirstPassUnknownOrQuestionable(flags)) set_basmcode_guessed(start, count, value); } while (0)
 extern void copy_basmcode_guessed(LongWord dest, LongWord src, size_t count);
 extern void or_basmcode_guessed(LongWord start, LongWord count, Byte value);
-#define or_b_guessed(flags, offs, len, value) \
-        do { if (mFirstPassUnknownOrQuestionable(flags)) or_basmcode_guessed(offs, len, value); } while (0)
+#define or_b_guessed(flags, start, count, value) \
+        do { if (mFirstPassUnknownOrQuestionable(flags)) or_basmcode_guessed(start, count, value); } while (0)
 extern Byte get_basmcode_guessed(LongWord index);
 
 extern void set_wasmcode_guessed(LongWord start, LongWord count, Word value);
-#define set_w_guessed(flags, offs, len, value) \
-        do { if (mFirstPassUnknownOrQuestionable(flags)) set_wasmcode_guessed(offs, len, value); } while (0)
+#define set_w_guessed(flags, start, count, value) \
+        do { if (mFirstPassUnknownOrQuestionable(flags)) set_wasmcode_guessed(start, count, value); } while (0)
 extern void copy_wasmcode_guessed(LongWord dest, LongWord src, size_t count);
 extern void or_wasmcode_guessed(LongWord start, LongWord count, Word value);
-#define or_w_guessed(flags, offs, len, value) \
-        do { if (mFirstPassUnknownOrQuestionable(flags)) or_wasmcode_guessed(offs, len, value); } while (0)
+#define or_w_guessed(flags, start, count, value) \
+        do { if (mFirstPassUnknownOrQuestionable(flags)) or_wasmcode_guessed(start, count, value); } while (0)
 extern Word get_wasmcode_guessed(LongWord index);
 extern void dump_wasmcode_guessed(const char *p_title);
 
 extern void set_dasmcode_guessed(LongWord start, LongWord count, LongWord value);
-#define set_d_guessed(flags, offs, len, value) \
-        do { if (mFirstPassUnknownOrQuestionable(flags)) set_dasmcode_guessed(offs, len, value); } while (0)
+#define set_d_guessed(flags, start, count, value) \
+        do { if (mFirstPassUnknownOrQuestionable(flags)) set_dasmcode_guessed(start, count, value); } while (0)
 extern void copy_dasmcode_guessed(LongWord dest, LongWord src, size_t count);
 extern void or_dasmcode_guessed(LongWord start, LongWord count, LongWord value);
-#define or_d_guessed(flags, offs, len, value) \
-        do { if (mFirstPassUnknownOrQuestionable(flags)) or_dasmcode_guessed(offs, len, value); } while (0)
+#define or_d_guessed(flags, start, count, value) \
+        do { if (mFirstPassUnknownOrQuestionable(flags)) or_dasmcode_guessed(start, count, value); } while (0)
 extern LongWord get_dasmcode_guessed(LongWord index);
 
 extern void asmcode_init(void);

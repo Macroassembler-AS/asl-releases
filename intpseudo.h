@@ -45,7 +45,8 @@ typedef enum
   eIntPseudoFlag_ASCIC = 1 << 9,
   eIntPseudoFlag_ASCID = eIntPseudoFlag_ASCIZ | eIntPseudoFlag_ASCIC,
   eIntPseudoFlag_ASCIAll = eIntPseudoFlag_ASCIZ | eIntPseudoFlag_ASCIC,
-  eIntPseudoFlag_MotoRep = 1 << 10
+  eIntPseudoFlag_MotoRep = 1 << 10,
+  eIntPseudoFlag_TMS340Format = 1 << 11
 } int_pseudo_flags_t;
 
 #ifdef __cplusplus

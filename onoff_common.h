@@ -27,6 +27,7 @@
 #define CustomAvailSymName "CUSTOM"
 #define BranchExtCmdName  "BRANCHEXT"
 #define BranchExtSymName  "BRANCHEXT"
+#define default_regsyms_name "DEFAULT_REGSYMS"
 
 extern Boolean FPUAvail,
                PMMUAvail,
@@ -35,7 +36,8 @@ extern Boolean FPUAvail,
                CompMode,
                TargetBigEndian,
                DoPadding,
-               Packing;
+               Packing,
+               default_regsyms;
 
 /* NOTE: will have to switch this to #define as soon as
    everything up to 2**15 is used up - 16 bit compilers
@@ -60,7 +62,13 @@ enum
   e_onoff_reg_z80syntax = 1 << 14
 };
 
+enum
+{
+  e_onoff_ext_reg_default_regsyms = 1 << 7
+};
+
 extern unsigned onoff_test_and_set(unsigned mask);
+extern unsigned onoff_ext_test_and_set(unsigned mask);
 
 extern void onoff_fpu_add(void);
 extern void onoff_pmmu_add(void);

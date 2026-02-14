@@ -531,6 +531,7 @@ static const cpu_props_t cpu_props[] =
   { "uPD556", 1999, 95, e_ucom_43 }, /* ROM is external */
   { "uPD557", 1999, 95, e_ucom_43 },
   { "uPD650", 1999, 95, e_ucom_43 },
+  { "iso650", 2047, 95, e_ucom_43 },
   { "uPD651",  999, 63, e_ucom_44 },
   { "uPD652",  999, 31, e_ucom_45 },
   { "",          0,  0, e_ucom_45 }

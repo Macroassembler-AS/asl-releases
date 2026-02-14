@@ -93,7 +93,7 @@ static void OpenTarget(void)
   TargFile = fopen(TargName, OPENWRMODE);
   if (!TargFile)
     ChkIO(TargName);
-  RealFileLen = ((StopAdr - StartAdr + 1) * MaxGran) / SizeDiv;
+  RealFileLen = record_byte_length(StartAdr, StopAdr, MaxGran) / SizeDiv;
 
   AHeader = abs(StartHeader);
   if (StartHeader != 0)
@@ -247,13 +247,13 @@ static void ProcessFile(const char *FileName, LongWord Offset)
       {
         InpStart += Offset;
         ErgStart = max(StartAdr, InpStart);
-        ErgStop = min(StopAdr, InpStart + (InpLen/Gran) - 1);
+        ErgStop = min(StopAdr, record_target_word_last_address(InpStart, InpLen, Gran));
         if (ErgStop == StopAdr)
           last_byte_no_pad = True;
         doit = (ErgStop >= ErgStart);
         if (doit)
         {
-          ErgLen = (ErgStop + 1 - ErgStart) * Gran;
+          ErgLen = record_byte_length(ErgStart, ErgStop, Gran);
           if (AddChunk(&UsedList, ErgStart, ErgStop - ErgStart + 1, True))
             chkio_fprintf(stderr, OutName, " %s\n", getmessage(Num_ErrMsgOverlap));
         }
@@ -263,12 +263,12 @@ static void ProcessFile(const char *FileName, LongWord Offset)
       {
         /* an Anfang interessierender Daten */
 
-        if (fseek(SrcFile, (ErgStart - InpStart) * Gran, SEEK_CUR) == -1)
+        if (fseek(SrcFile, record_byte_offset(ErgStart, InpStart, Gran), SEEK_CUR) == -1)
           ChkIO(FileName);
 
         /* in Zieldatei an passende Stelle */
 
-        if (fseek(TargFile, (((ErgStart - StartAdr) * Gran)/SizeDiv) + abs(StartHeader), SEEK_SET) == -1)
+        if (fseek(TargFile, (record_byte_offset(ErgStart, StartAdr, Gran) / SizeDiv) + abs(StartHeader), SEEK_SET) == -1)
           ChkIO(TargName);
 
         /* umkopieren */
@@ -376,11 +376,11 @@ static void MeasureFile(const char *FileName, LongWord Offset)
       if (NextPos > FileSize(f))
         FormatError(FileName, getmessage(Num_FormatInvRecordLenMsg));
 
-      if (FilterOK(Header) && (Segment == ValidSegment))
+      if (FilterOK(Header) && (Segment == ValidSegment) && (Length > 0))
       {
         Adr += Offset;
-        EndAdr = Adr + (Length/Gran)-1;
-        if (Gran > MaxGran)
+        EndAdr = record_target_word_last_address(Adr, Length, Gran);
+        if (record_gran_bits(Gran) > record_gran_bits(MaxGran))
           MaxGran = Gran;
         if (StartAuto)
           if (StartAdr > Adr)
@@ -688,7 +688,7 @@ int main(int argc, char **argv)
   }
   AddSuffix(TargName, STRINGSIZE, BinSuffix);
 
-  MaxGran = 1;
+  MaxGran = 0;
   if (StartAuto || StopAuto)
   {
     if (StartAuto)

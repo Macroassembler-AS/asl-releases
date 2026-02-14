@@ -18,4 +18,8 @@ extern int as_float_2_ti4(as_float_t inp, LongWord *p_dest);
 
 extern int as_float_2_ti5(as_float_t Inp, LongWord *p_dest_l, LongWord *p_dest_h);
 
+extern int as_float_2_tms340_flt4(as_float_t inp, Byte *p_dest, Boolean needs_big);
+
+extern int as_float_2_tms340_flt8(as_float_t inp, Byte *p_dest, Boolean needs_big);
+
 #endif /* _TIFLOAT_H */

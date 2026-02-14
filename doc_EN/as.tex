@@ -1,3 +1,5 @@
+%% SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only
+
 %% Hi Folks,
 %%
 %% this is a release of the English AS manual.  I haven't
@@ -67,7 +69,7 @@
 
 \vspace{1cm}\par
 
-{\large Edition December 2025}
+{\large Edition Januar 2026}
 \end{raggedright}
 
 \clearpage
@@ -284,6 +286,7 @@ following processor families have been implemented:
 \item{Texas Instruments TMS320C20x/TMS320C5x}
 \item{Texas Instruments TMS320C54x}
 \item{Texas Instruments TMS320C6x}
+\item{Texas Instruments TMS340xx}
 \item{Texas Instruments TMS99xx/99xxx}
 \item{Texas Instruments TMS7000}
 \item{Texas Instruments TMS1000}
@@ -2447,9 +2450,9 @@ necessary.  Which is the essence you should learn from this section?
 \label{SectRegSyms} \ttindex{Register Symbols}
 
 {\em valid for: PowerPC, M-Core, XGate, 4004/4040, MCS-48/(2)51, 8086,
-     80C16x, AVR, XS1, Z8, KCPSM, Mico8, MSP430(X), ST9, M16, M16C, H8/300,
-     H8/500, SH7x00, H16, i960, XA, 29K, TLCS-9000, KENBAK, SC/MP,
-     PDP-11, VAX}
+     80C16x, AVR, XS1, Z8, KCPSM, Mico8, TMS340xx, MSP430(X), ST9, M16,
+     M16C, H8/300, H8/500, SH7x00, H16, i960, XA, 29K, TLCS-9000, KENBAK,
+     SC/MP, PDP-11, VAX}
 
 Sometimes it is desirable not only to assign symbolic names to memory
 addresses or constants, but also to a register, to emphasize its function
@@ -2935,8 +2938,11 @@ PIO_ctrl   port PIO_port_A+3
 \subsection{REG and NAMEREG}
 \ttindex{REG}\ttindex{NAMEREG}
 
-{\em valid for: 680x0, AVR, M*Core, ST9, 80C16x, Z8000, KCPSM, \\
-     PDP-11, WD16 \\
+{\em valid for: 680x0, PowerPC, PALM, M*Core, XGate, H8,\\
+     SH7x00, H16, M16(C), PDP-11, WD16, VAX, 4004, MCS-48/51,\\
+     8086, i960, XA, AVR, 29xxx,  80C16x, Z8, Z80, Z8000,\\
+     KCPSM(3), LatticeMico8, TLCS-9000, ST9, MSP430(X), V60,\\
+     SC/MP, NS32xxx, WE32xxx, XCore, KENBAK\\
      ({\tt NAMEREG} valid only for KCPSM(3)), LatticeMico8, MSP430(X)}
 
 Though it always has the same syntax, this instruction has a slightly
@@ -2953,10 +2959,20 @@ symbolic name are given as arguments, for example:
      NAMEREG  s08, treg
 \end{verbatim}
 
-On the PDP-11, \tty{REG} may additionally be used without a name in the
+On PDP-11 and TMS340xx, \tty{REG} may additionally be used without a name in the
 label field.  It then expects a single \tty{ON} or \tty{OFF} as argument
-and enables or disables the built-in register aliases (\tty{Rn} = \tty{\%n},
-\tty{SP} = \tty{R6}, \tty{PC} = \tty{R7}).  They are available by default,
+and enables or disables the built-in register aliases:
+\begin{itemize}
+\item{PDP-11: \tty{Rn} = \tty{\%n}, \tty{SP} = \tty{R6}, \tty{PC} = \tty{R7}}
+\item{TMS340xx: \tty{SADDR} = \tty{B0}, \tty{SPTCH} = \tty{B1},
+                \tty{DADDR} = \tty{B2}, \tty{DPTCH} = \tty{B3},
+                \tty{OFFSET} = \tty{B4}, \tty{WSTART} = \tty{B5},
+                \tty{WEND} = \tty{B6}, \tty{DYDX} = \tty{B7},
+                \tty{COLOR0} = \tty{B8}, \tty{COLOR1} = \tty{B9},
+                \tty{COUNT} = \tty{B10}, \tty{INC1} = \tty{B11},
+                \tty{INC2} = \tty{B12}, \tty{PATTRN1} = \tty{B13}}
+\end{itemize}
+They are available by default,
 and should only be disabled if they conflict with own synmbol names in a
 program. The current setting may be read from the symbol \tty{DEFAULT\_REGSYMS}.
 
@@ -4027,6 +4043,16 @@ C5x processors is currently not used by \asname{}.
 This one at the moment represents the TMS320C54x family...
 %%-----------
 \begin{cpulist}
+   32060
+\end{cpulist}
+%%-----------
+\begin{cpulist}
+   34010 $\rightarrow$ 34020
+\end{cpulist}
+The TMS34020 supports a full 4 Gbit address space, additional
+machine instructions, and a coprocessor interface.
+%%-----------
+\begin{cpulist}
    TI990/4, TI990/10, TI990/12 \\
 \> TMS9900, TMS9940, TMS9995, TMS99105, TMS99110
 \end{cpulist}
@@ -4175,12 +4201,15 @@ values of some registers!
 \begin{cpulist}
    uPD550, uPD554, uPD652, \\
 \> uPD547, uPD552, uPD651, \\
-\> uPD546, uPD553, uPD556, uPD557, uPD650
+\> uPD546, uPD553, uPD556, uPD557, uPD650, iso650
 \end{cpulist}
 These three groups of controllers belong to the $\mu$COM-45,
 $\mu$COM-44, amd $\mu$COM-43 family.  The first two families
 implement a subset of the $\mu$COM-43 instruction set.  Otherwise,
 the chips differ by the amount of on-chip ROM and RAM.
+iso650 is an FPGA implementation of the uPD650.  It differs from
+the 'original' in its address space's size.  It is not limited
+to 2000 bytes, and supports the full 2048 bytes.
 %%-----------
 \begin{cpulist}
    7500 $\leftrightarrow$ 7508
@@ -4441,7 +4470,7 @@ certain target supports such options.
 \begin{itemize}
 \item{SUPMODE valid for: 680x0, NS32xxx, PDP-11, i960, TLCS-900,
       SH7000, i960, 29K, Z280, XA, PowerPC, M*Core, V60, and TMS9900}
-\item{FPU valid for: 680x0, NS32xxx, 80x86}
+\item{FPU valid for: 680x0, NS32xxx, 80x86, WE32xxx}
 \item{PMMU valid for: 680x0, NS32xxx}
 \item{CUSTOM valid for: NS32xxx}
 \end{itemize}
@@ -4556,6 +4585,17 @@ from a symbol with the same name.  \bb{CAUTION!} The \tty{CPU} instruction
 implicitly sets or resets this switch when its argument is a 68xxx
 processor!  \tty{FULLPMMU} therefore has to be written after the \tty{CPU}
 instruction!
+
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+\subsection{COPROC}
+\ttindex{COPROC}
+
+{\em valid for: TMS34020}
+
+This instruction defines the default id (address) to be inserted into
+coprocessor instructions if no explicit id was given.  The default for this
+value itself is zero.  Allowed values range from zero to seven.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -5833,9 +5873,22 @@ but different names:
       however only accept integer arguments.}
 \ttindex{HALF}
 \item{\tty{BYTE} works on WE32xxx like \tty{DB}, \tty{HALF} like \tty{DW},
-      and \tty{WORD} like \tty{DD}.}
-\ttindex{BYTE}\ttindex{WORD}\ttindex{LWORD}\ttindex{QUAD}
+      and \tty{WORD} like \tty{DD}, however only stores integer values.}
+\item{\tty{DOUBLE} works on WE32xxx like \tty{DQ}, however only stores
+      floating point values.}
+\ttindex{BYTE}\ttindex{STRING}
+\ttindex{WORD}\ttindex{LONG}\ttindex{INT}
 \ttindex{FLOAT}\ttindex{DOUBLE}
+\item{The TMS340xx target provides:
+      \begin{itemize}
+      \item{\tty{BYTE} (like \tty{DB}, only integer arguments)}
+      \item{\tty{STRING} (like \tty{DB}, only character string arguments)}
+      \item{\tty{WORD} (like \tty{DW}, only integer arguments)}
+      \item{\tty{LONG} or \tty{INT} (like \tty{DD}, only integer arguments)}
+      \item{\tty{FLOAT} (like \tty{DD}, only floating point arguments)}
+      \item{\tty{DOUBLE} (like \tty{DQ}, only floating point arguments)}
+      \end{itemize}}
+\ttindex{LWORD}\ttindex{QUAD}
 \item{The Renesas RX target provides:
       \begin{itemize}
       \item{\tty{BYTE} (like \tty{DB})}
@@ -5882,6 +5935,18 @@ however is that it defines or reserves only a single bit.  This instruction
 therefore only makes sense if an address space is addressed bitwise.  Currently,
 this is only the case for the 8051's {\tt BITDATA} segment if the {\tt BITSEGSIZE:1}
 option has been used.
+
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+\subsection{FLT}
+\ttindex{FLT}
+
+{\em\begin{tabbing}
+valid for: \= WE32xxx \\
+\end{tabbing}}
+
+\tty{FLT} works the same way as \ttindex{DD}, it however only stores floating
+point numbers in IEEE single precision format.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -6166,6 +6231,20 @@ Please do not flame me in case I calculated something wrong on my
 HP28...
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ 
+\subsection{FIELD}
+\ttindex{FIELD}
+ 
+{\em valid for: TMS340xx}
+ 
+\tty{FIELD} stores a bitfield of given length and value in memory. Its second
+argument defines the field's length (1 to 32 bits), while the first argument
+defines the (integer) value to be stored in the field.  The value's allowed
+range depends on the field length and includes both unsigned and two's complement
+signed values.  For instance, if the field length is 16 bits, allowed values
+range from -32768 to +65535.
+ 
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 \subsection{DATA}
 \ttindex{DATA}
@@ -6390,6 +6469,17 @@ only one argument, the contents of the skipped memory space is not defined.
 An optinal second argument may be used to define the (byte) value
 used to fill the area.
 
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ 
+\subsection{EVEN}
+\ttindex{EVEN}
+ 
+{\em valid for: TMS340xx}
+
+\tty{EVEN} is a specialization of \tty{ALIGN}. The instruction increments the
+program counter so it becomes a muliple of 16 bits.  This is for example the
+proper alignment for processor instructions.
+ 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 \subsection{LTORG}
@@ -11868,12 +11958,15 @@ describe the block's start address and its length: While the start
 address refers to the granularity, the \tty{Length} value is always
 expressed in bytes!  For example, if the start address is \$300 and
 the length is 12, the resulting end address would be \$30b for a
-granularity of 1, however \$303 for a granularity of 4!  Granularities
+granularity of 1, however \$303 for a granularity of 4.  Granularities
 that differ from 1 are rare and mostly appear in DSP CPU's that are
 not designed for byte processing.  For example, a DSP56K's address
 space is organized in 64 Kwords of 16 bits.  The resulting storage
 capacity is 128 Kbytes, however it is organized as $2^{16}$ words that
-are addressed with addresses 0,1,2,...65535!
+are addressed with addresses 0,1,2,...65535.  Granularities
+smaller than 8 bits are encoded asvalues of \$f9 to \$ff.  In case
+the smalles addressablelement is one bit, the granularity is \$ff,
+while it is \$fc for a nibble.
 
 The start address is always 32 bits in size, independent of the
 processor family.  In contrast, the length specification has only 16
@@ -12875,6 +12968,12 @@ described by:
                {machine code can only be generated inside the CODE segment. All
                 other address spaces do not have the necessary word width.}
                {none}
+\errentry{ 510}{instruction will overwrite SPt}
+               {warning}
+               {Aside from the explicitly named register, this instruction
+                uses the subsequent register for the double-length result.
+                However, the subsequent register would be the stack pointer.}
+               {the instruction's destination register}
 \errentry{1000}{symbol double defined}
                {error}
                {A new value is assigned to a symbol, using a label or a
@@ -13516,12 +13615,18 @@ described by:
                {An incomplete WHILE block was found. Probably an
                 \tty{ENDM} statement is missing.}
                {none}
-\errentry{1805}{EXITM not called from within macro}
+\errentry{1805}{EXITM used outside of macro}
                {error}
                {\tty{EXITM} is designed to terminate a macro expansion.  This
                 instruction only makes sense within macros and an attempt
                 was made to call it in the absence of macros.}
-               {none}
+               {The \tty{EXITM} statement in question}
+\errentry{1806}{ENDM used outside of macro}
+               {error}
+               {\tty{ENDM} finalizes either a macro's definition or a
+                \tty{REPT/IRP/WHILE} block.  Using it outside of either
+                makes no sense.}
+               {The \tty{ENDM} statement in question}
 \errentry{1810}{more than 10 macro parameters}
                {error}
                {A macro cannot have more than 10 parameters}

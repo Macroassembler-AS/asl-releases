@@ -1,7 +1,9 @@
+# SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only
+
 BASEARCHFILES = *.c *.h *.hpp *.ico man/*.1 \
             INSTALL README README.OS2 README.DOS README.LANGS TODO Makefile Makefile.dos Makefile.def.tmpl \
             COPYING install.sh install.bat install.cmd instw32.cmd marks.asm \
-            *.mes makedefs.src makedefs.files makedefs.str makedefs.abh makedefs.mi makedefs.mx rscdeps asl.def \
+            *.mes makedefs.src makedefs.files makedefs.str makedefs.abh makedefs.mi makedefs.mx makedefs.nul rscdeps asl.def \
             include/*.inc include/avr/*.inc include/ez80/*.inc \
             include/s12z/*.inc include/s12z/vh/*.inc include/s12z/vca/*.inc include/s12z/vc/*.inc \
             include/coldfire/*.inc \

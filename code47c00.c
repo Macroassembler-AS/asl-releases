@@ -1270,9 +1270,13 @@ static void SwitchTo_47C00(void)
   HasAttrs = False;
 
   ValidSegs = (1 << SegCode) | (1 << SegData) | (1 << SegIO);
-  Grans[SegCode] = 1; ListGrans[SegCode] = 1; SegInits[SegCode] = 0;
-  Grans[SegData] = 1; ListGrans[SegData] = 1; SegInits[SegData] = 0; grans_bits_unused[SegData] = 4;
-  Grans[SegIO  ] = 1; ListGrans[SegIO  ] = 1; SegInits[SegIO  ] = 0; grans_bits_unused[SegIO  ] = 4;
+  Grans[SegCode] = ListGrans[SegCode] = 1; SegInits[SegCode] = 0;
+  Grans[SegData] = ListGrans[SegData] = 1;
+  list_grans_bits_unused[SegData] = grans_bits_unused[SegData] = 4;
+  SegInits[SegData] = 0;
+  Grans[SegIO  ] = ListGrans[SegIO  ] = 1;
+  list_grans_bits_unused[SegIO  ] = grans_bits_unused[SegIO  ] = 4;
+  SegInits[SegIO  ] = 0;
   if (MomCPU == CPU47C00)
   {
     SegLimits[SegCode] = 0xfff;

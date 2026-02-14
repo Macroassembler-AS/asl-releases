@@ -133,6 +133,7 @@ static void SetNSeg(as_addrspace_t NSeg, Boolean force_setup)
 {
   if ((ActPC != NSeg) || !PCsUsed[ActPC] || force_setup)
   {
+    flush_bytes();
     ActPC = NSeg;
     if (!PCsUsed[ActPC])
       PCs[ActPC] = SegInits[ActPC];
@@ -216,6 +217,8 @@ static void SetCPUCore(const tCPUDef *pCPUDef, const tStrComp *pCPUArgs)
   if (pCPUDef->Number)
     none_target_seglimit = SegLimits[SegCode];
 
+  as_rebuild_main_inst_tables();
+
   DontPrint = True;
 }
 
@@ -265,8 +268,10 @@ void UnsetCPU(void)
 {
   as_addrspace_t seg;
 
+  flush_bytes();
   for (seg = SegNone; seg < SegCountPlusStruct; seg++)
-    grans_bits_unused[seg] = 0;
+    grans_bits_unused[seg] =
+    list_grans_bits_unused[seg] = 0;
   literals_chk_alldone();
   if (SwitchFrom)
   {
@@ -1754,7 +1759,7 @@ static void CodeBINCLUDE(Word Index)
           Curr = (Rest <= 256) ? Rest : 256;
           errno = 0; RLen = fread(BAsmCode, 1, Curr, F); ChkIO(ErrNum_FileReadError);
           CodeLen = RLen;
-          WriteBytes();
+          as_code_write_bytes(CodeLen);
           PCs[ActPC] += CodeLen;
           Rest -= RLen;
         }
@@ -2505,6 +2510,8 @@ void codeallg_init(void)
   AddInstTable(PseudoTable, ".SAVE",       0, CodeSAVE   );
   AddInstTable(PseudoTable, ".RESTORE",    0, CodeRESTORE);
   AddInstTable(PseudoTable, ".PAGE",       0, CodePAGE   );
+  AddInstTable(PseudoTable, ".TITLE",      2, CodeString );
+  AddInstTable(PseudoTable, ".END",        0, CodeEND    );
 
   ONOFFTable = CreateInstTable(47);
   AddONOFF("DOTTEDSTRUCTS", &DottedStructs, DottedStructsName, True);
