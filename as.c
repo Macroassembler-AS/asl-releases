@@ -143,6 +143,7 @@
 #include "codecop8.h"
 #include "codesc14xxx.h"
 #include "codens32k.h"
+#include "codecr16.h"
 #include "codewe32.h"
 #include "codeace.h"
 #include "codecp3f.h"
@@ -4570,6 +4571,7 @@ int main(int argc, char **argv)
     codecop8_init();
     codesc14xxx_init();
     codens32k_init();
+    codecr16_init();
     codewe32_init();
     codeace_init();
     codecp3f_init();

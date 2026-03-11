@@ -1,3 +1,8 @@
+2026-03-11  [1.42 Bld 301]
+
+- Addition    : Extend iso650 address space to 4096 bytes.
+- Addition    : Add National CR16A/B target.
+
 2026-02-14 [1.42 Bld 300]
 
 - Bugfix      : Re-add resources to Windows binaries
@@ -10,7 +15,7 @@
 - Addition    : Support WE32xxx MAU instructions
 - Addition    : Add FPGA variant of uPD650 that supports
                 a 2048 byte address space.
-- Addition    : Add TMS340 target
+- Addition    : Add TMS340 target.
 - Change      : If MCS-51 BITDATA segment is organized in
                 bits, they will be stored in packed form
                 (eight bits per byte) in output file.

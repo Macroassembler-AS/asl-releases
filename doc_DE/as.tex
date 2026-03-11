@@ -51,7 +51,7 @@
 
 \vspace{1cm}\par
 
-{\large Stand Januar 2026}
+{\large Stand M"arz 2026}
 \end{raggedright}
 
 \clearpage
@@ -296,6 +296,7 @@ folgende Prozessorfamilien implementiert:
 \item{National Semiconductor COP8}
 \item{National Semiconductor SC144xx}
 \item{National Semiconductor NS32xxx}
+\item{National Semiconductor CR16A/B}
 \item{Olympia CP-3F (bzw. SGS M380, GI LP8000)}
 \item{Fairchild ACE}
 \item{Fairchild F8}
@@ -1443,6 +1444,7 @@ mit Fragezeichen angezeigt.  Die folgenden Targets unterst"utzen dies aktuell:
 \item{8086/V20...V55}
 \item{AVR}
 \item{TMS370xxx}
+\item{uCOM-43}
 \end{itemize}
 Falls die Fragezeichen beim Weiterverarbeiten des Listings st"oren, k"ann
 diese Funktion "uber den Kommandozeilen-Schalter \tty{-no-list-unknown-values}
@@ -3372,6 +3374,8 @@ Mittel der Wahl.
 \hline
 \multicolumn{11}{|l|}{$^{10}$ modellabh"angig} \\
 \hline
+\multicolumn{11}{|l|}{$^{11}$ Nur die ersten 128 KByte sind f"ur ausf"uhrbaren Code nutzbar.} \\
+\hline
 \caption{Adre"sbereiche f"ur \tty{ORG}}
 \label{TabORG}
 \end{longtable}
@@ -4271,6 +4275,12 @@ und der NS32CG16 ist eine Embedded-Variante mit Zusatzbefehlen f"ur
 Bitblock-Transfers.
 %%-----------
 \begin{cpulist}
+   CR16A $\rightarrow$ CR16B
+\end{cpulist}
+CR16B erweitert den Adre"sraum von 256 KByte auf 2 MByte und stellt
+eine Reihe neuer Befehle zur Verf"ugung.
+%%-----------
+\begin{cpulist}
    ACE1101, ACE1202
 \end{cpulist}
 %%-----------
@@ -4325,10 +4335,9 @@ ersten beiden Familien implementieren eine Untermenge
 des $\mu$COM-43-Befehlssatzes.  Ansonsten unterscheiden
 die Varianten sich in der Menge des integrierten ROM-
 und RAM-Speichers.  iso650 ist eine FPGA-Implementierung
-des uPD650 und unterscheidet sich vom 'Original' in der
-Gr"o"se des Adre"sraumes.  Dieser ist nicht auf 2000 Byte
-beschr"ankt, sondern erstreckt sich "uber die vollen 2048
-Byte.
+des uPD650 und unterscheidet sich vom 'Original' durch
+eine NAND-Anweisung sowie einen von 2000 auf 4096 Byte
+vergr"o"serten Adre"sraum.
 %%-----------
 \begin{cpulist}
    7566 $\leftrightarrow$ 7508
@@ -6073,6 +6082,15 @@ Funktionalit"at, jedoch anderem Namen:
       \item{\tty{FLOAT} (wie \tty{DD}, nur Gleitkomma-Argumente)}
       \item{\tty{DOUBLE} (wie \tty{DQ}, nur Gleitkomma-Argumente)}
       \end{itemize}}
+\item{Auf CR16 existieren:
+      \begin{itemize}
+      \item{\tty{BYTE} oder \tty{DC8} (wie \tty{DB}, Strings oder Ganzzahl-Argumente)}
+      \item{\tty{WORD} oder \tty{DC16} (wie \tty{DW}, nur Ganzzahl-Argumente)}
+      \item{\tty{LONG} oder \tty{DC32} (wie \tty{DD}, nur Ganzzahl-Argumente)}
+      \item{\tty{DC64} (wie \tty{DQ}, nur Ganzzahl-Argumente)}
+      \item{\tty{FLOAT} oder \tty{DF32} (wie \tty{DD}, nur Gleitkomma-Argumente)}
+      \item{\tty{DOUBLE} oder \tty{DF64} (wie \tty{DQ}, nur Gleitkomma-Argumente)}
+      \end{itemize}}
 \end{itemize}
 
 Wird \tty{DB} in einem Adre"sraum angewendet, der nicht byte-adressierbar
@@ -6113,6 +6131,18 @@ reserviert wird.  Diese Anweisung ergibt daher auch nur in Adre"sr"aumen
 eine Sinn, die bitweise adressiert werden.  Das ist aktuell nur im
 {\tt BITDATA}-Segment des 8051 der Fall, falls die {\tt BITSEGSIZE:1}-Option
 benutzt wurde.
+
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+\subsection{DC24}
+\ttindex{DC24}
+
+{\em\begin{tabbing}
+G"ultigkeit: \= CR16 \\
+\end{tabbing}}
+
+\tty{DC24} funktioniert analog zu \ttindex{DW} und \ttindex{DD}, legt
+aber (Ganzzahl-)Werte mit 24 Bit L"ange ab.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -6160,14 +6190,16 @@ Die Befehle funktionieren ansonsten wie \tty{DD} und \tty{DQ}.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-\subsection{DS, DS8}
+\subsection{DS, DS8, DS16, DS32, DS64}
 \ttindex{DS}
 \ttindex{DS8}
 
 {\em\begin{tabbing}
 G"ultigkeit: \= Intel, Zilog, Toshiba, NEC, TMS370, Siemens, AMD, M16(C),\\
              \> National, ST9, TMS7000, TMS1000, Intersil, 6502, 68xx,\\
-             \> WE32xxx \\
+             \> WE32xxx, CR16 \\
+             \> CR16, SC14xxx (DS8) \\
+             \> CR16 (DS16, DS32, DS64) \\
 \end{tabbing}}
 
 Dieser Befehl stellt eine Kurzschreibweise dar, um Speicherbereiche
@@ -6181,9 +6213,8 @@ ist eine Kurzschreibweise f"ur
 }\end{quote}
 dar, lie"se sich also prinzipiell auch einfach "uber ein Makro realisieren,
 nur scheint dieser Befehl in den K"opfen einiger mit Motorola-CPUs gro"s
-gewordener Leute (gell, Michael?) so fest verdrahtet zu sein, da"s sie
-ihn als eingebauten Befehl erwarten...hoffentlich sind selbige jetzt
-zufrieden {\tt ;-)}
+gewordener Leute so fest verdrahtet zu sein, da"s sie
+ihn als eingebauten Befehl erwarten.
 
 {\tt DS8} ist beim National SC14xxx als Alias f"ur {\tt DS} definiert.
 Achten Sie aber darauf, da"s der Speicher dieser Prozessoren in Worten zu
@@ -6197,7 +6228,7 @@ die n"achstgr"o"sere gerade Zahl aufgerundet.
 \ttindex{BLKB}\ttindex{BLKW}\ttindex{BLKL}\ttindex{BLKQ}\ttindex{BLKO}
 \ttindex{BLKF}\ttindex{BLKD}\ttindex{BLKG}\ttindex{BLKH}
 
-{\em G"ultigkeit: VAX}
+{\em G"ultigkeit: VAX, CR16}
 
 Diese Befehle reservieren Speicher f"ur die angegebene Menge von Datenelementen,
 deren Typ im letzten Zeichen des Befehls kodiert ist.  Dementsprechend ist
@@ -11748,6 +11779,34 @@ unterst"utzt, die wohl im UNIX-Umfeld g"angig war.
 
 %%---------------------------------------------------------------------------
 
+\section{CR16}
+\label{CR16Spec}
+
+Als National die CR16-Architektur mit dem CR16B auf 2 MByte Adre"sraum
+erweiterte, war die Kompatibilit"at zum Vorg"anger CR16A ein Thema.  CR16B
+hat deshalb ein 'Kompatibilit"atsbit', in dem er vollst"andig bin"ar
+aufw"artskompatibel ist.  Der Preis daf"ur ist, da"s diverse Sprungbefehle
+weiterhin nur die ersten 128 Kbyte des Adre"sraumes erreichen k"onnen.  Im
+,,Large Model'' "andert sich die bin"are Kodierung dieser Befehle, so da"s
+die vollen 2 MByte erreicht werden k"onnen.  Ob man beim CR16B Code f"ur
+das kleine oder gro"se Speichermodell erzeugen will, w"ahlt man zusammen
+mit der \tty{CPU}-Anweisung:
+
+\begin{verbatim}
+   cpu cr16b:model=0
+\end{verbatim}
+
+w"ahlt das kleine Modell,
+
+\begin{verbatim}
+   cpu cr16b:model=1
+\end{verbatim}
+
+w"ahlt das gro"se Modell.  Letzteres ist auch der Default, wenn diese Option
+weggelassen wird.
+
+%%---------------------------------------------------------------------------
+
 \section{uPD78(C)1x}
 \label{78C1xSpec}
 
@@ -13657,6 +13716,10 @@ Angaben:
 	        Kontrollregister  kennt der mit CPU gesetzte Prozessor
 	        (noch) nicht.}
                {keines}
+\errentry{1441}{unbekannter Vektor}
+               {Fehler}
+               {Ein Vektor dieses Namens existiert nicht.}
+               {das fragliche Vektor-Argument}
 \errentry{1442}{Register im aktuellen Ausf"uhrungsmodus nicht zugreifbar}
                {Fehler}
                {Dieses Register ist nur im Kernel-Modus zugreifbar.}

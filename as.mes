@@ -542,6 +542,10 @@ Message ErrMsgInvReg
  "ung&uuml;ltiges Register"
  "invalid register"
 
+Message ErrMsgUnknownVector
+ "unbekannter Vektor"
+ "unknown vector"
+
 Message ErrMsgDoubleReg
  "Register mehr als einmal gelistet"
  "register(s) listed more than once"

@@ -21,6 +21,7 @@
 #include "asmsub.h"
 #include "asmpars.h"
 #include "asmitree.h"
+#include "asmcode.h"
 #include "codevars.h"
 #include "headids.h"
 #include "intpseudo.h"
@@ -31,11 +32,15 @@
 /*--------------------------------------------------------------------------*/
 /* Local Types */
 
+#define OPCODE_JTB 0x1c
+#define OPCODE_NAA 0x45
+
 typedef enum
 {
   e_ucom_45,
   e_ucom_44,
-  e_ucom_43
+  e_ucom_43,
+  e_ucom_iso650
 } family_t;
 
 typedef struct
@@ -46,6 +51,7 @@ typedef struct
 } cpu_props_t;
 
 static const cpu_props_t *p_curr_cpu_props;
+static IntType code_int_type;
 
 /*--------------------------------------------------------------------------*/
 /* Instruction Decoders */
@@ -65,6 +71,30 @@ static Boolean chk_family(family_t min_family)
     return False;
   }
   return True;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     decode_code_address(const tStrComp *p_arg, tEvalResult *p_eval_result)
+ * \brief  parse destination address in code address space
+ * \param  p_arg source argument
+ * \param  p_eval_result evaluation result
+ * \return address
+ * ------------------------------------------------------------------------ */
+
+static Word decode_code_address(const tStrComp *p_arg, tEvalResult *p_eval_result)
+{
+  Word address = EvalStrIntExpressionWithResult(p_arg, code_int_type, p_eval_result);
+
+  if (p_eval_result->OK)
+  {
+    ChkSpace(SegCode, p_eval_result->AddrSpaceMask);
+    if (!mFirstPassUnknownOrQuestionable(p_eval_result->Flags) && (address > SegLimits[SegCode]))
+    {
+      WrStrErrorPos(ErrNum_OverRange, p_arg);
+      p_eval_result->OK = False;
+    }
+  }
+  return address;
 }
 
 /*!------------------------------------------------------------------------
@@ -92,9 +122,21 @@ static void decode_fixed_uc43(Word code)
 }
 
 /*!------------------------------------------------------------------------
- * \fn     decode_imm2(Word code)
- * \brief  handle instructions with 2 bit immediate argument
+ * \fn     decode_fixed_iso650(Word code)
+ * \brief  handle instructions without arguments, iso650 only
  * \param  code machine code
+ * ------------------------------------------------------------------------ */
+
+static void decode_fixed_iso650(Word code)
+{
+  if (chk_family(e_ucom_iso650))
+    decode_fixed(code);
+}
+
+/*!------------------------------------------------------------------------
+ * \fn decode_imm2(Word code)
+ * \brief handle instructions with 2 bit immediate argument
+ * \param code machine code
  * ------------------------------------------------------------------------ */
 
 static void decode_imm2(Word code)
@@ -102,10 +144,14 @@ static void decode_imm2(Word code)
   if (ChkArgCnt(1, 1))
   {
     Boolean ok;
+    tSymbolFlags flags;
 
-    code |= (EvalStrIntExpression(&ArgStr[1], UInt2, &ok) & 3);
+    code |= EvalStrIntExpressionWithFlags(&ArgStr[1], UInt2, &ok, &flags) & 3;
     if (ok)
+    {
+      set_b_guessed(flags, CodeLen, 1, 0x03);
       put_code(code);
+    }
   }
 }
 
@@ -132,10 +178,14 @@ static void decode_imm4(Word code)
   if (ChkArgCnt(1, 1))
   {
     Boolean ok;
+    tSymbolFlags flags;
 
-    code |= (EvalStrIntExpression(&ArgStr[1], Int4, &ok) & 15);
+    code |= (EvalStrIntExpressionWithFlags(&ArgStr[1], Int4, &ok, &flags) & 15);
     if (ok)
+    {
+      set_b_guessed(flags, CodeLen, 1, 0x0f);
       put_code(code);
+    }
   }
 }
 
@@ -151,10 +201,14 @@ static void decode_stm(Word code)
    && ChkArgCnt(1, 1))
   {
     Boolean ok;
+    tSymbolFlags flags;
 
-    code |= (EvalStrIntExpression(&ArgStr[1], Int6, &ok) & 63);
+    code |= (EvalStrIntExpressionWithFlags(&ArgStr[1], Int6, &ok, &flags) & 63);
     if (ok)
+    {
+      set_b_guessed(flags, CodeLen, 1, 0x3f);
       put_code(code);
+    }
   }
 }
 
@@ -176,6 +230,7 @@ static void decode_ldi(Word code)
       ChkSpace(SegData, eval_result.AddrSpaceMask);
       if (!mFirstPassUnknownOrQuestionable(eval_result.Flags) && (address > SegLimits[SegData]))
         WrStrErrorPos(ErrNum_WOverRange, &ArgStr[1]);
+      set_b_guessed(eval_result.Flags, CodeLen, 1, 0x7f);
       put_code(code | (address & 0x7f));
     }
   }
@@ -192,12 +247,15 @@ static void decode_jmp(Word code)
   if (ChkArgCnt(1, 1))
   {
     tEvalResult eval_result;
-    Word address = EvalStrIntExpressionWithResult(&ArgStr[1], UInt11, &eval_result);
+    Word address = decode_code_address(&ArgStr[1], &eval_result);
 
     if (eval_result.OK)
     {
-      ChkSpace(SegCode, eval_result.AddrSpaceMask);
+      if ((SegLimits[SegCode] >= 0x800) && ((EProgCounter() ^ address) & 0x800))
+        BAsmCode[CodeLen++] = OPCODE_JTB;
+      set_b_guessed(eval_result.Flags, CodeLen, 1, 0x07);
       put_code(code | ((Hi(address) & 7)));
+      set_b_guessed(eval_result.Flags, CodeLen, 1, 0xff);
       BAsmCode[CodeLen++] = Lo(address);
     }
   }
@@ -214,7 +272,7 @@ static void decode_jcp(Word code)
   if (ChkArgCnt(1, 1))
   {
     tEvalResult eval_result;
-    Word address = EvalStrIntExpressionWithResult(&ArgStr[1], UInt11, &eval_result);
+    Word address = decode_code_address(&ArgStr[1], &eval_result);
 
     if (eval_result.OK)
     {
@@ -222,7 +280,6 @@ static void decode_jcp(Word code)
          instruction.  So JCP always remains in the current 64 byte page,
          even if it is located in the last byte of a 64 byte page: */
 
-      ChkSpace(SegCode, eval_result.AddrSpaceMask);
       if (!mFirstPassUnknownOrQuestionable(eval_result.Flags))
       {
         if ((EProgCounter() & 0x7c0) != (address & 0x7c0))
@@ -231,6 +288,7 @@ static void decode_jcp(Word code)
           return;
         }
       }
+      set_b_guessed(eval_result.Flags, CodeLen, 1, 0x3f);
       put_code(code | (address & 0x3f));
     }
   }
@@ -247,7 +305,7 @@ static void decode_czp(Word code)
   if (ChkArgCnt(1, 1))
   {
     tEvalResult eval_result;
-    Word address = EvalStrIntExpressionWithResult(&ArgStr[1], UInt11, &eval_result);
+    Word address = decode_code_address(&ArgStr[1], &eval_result);
 
     if (!eval_result.OK)
       return;
@@ -287,6 +345,7 @@ static void decode_czp(Word code)
     else
       WrStrErrorPos(ErrNum_TreatedAsVector, &ArgStr[1]);
 
+    set_b_guessed(eval_result.Flags, CodeLen, 1, 0x0f);
     put_code(code | address);
   }
 }
@@ -302,11 +361,13 @@ static void decode_ocd(Word code)
   if (ChkArgCnt(1, 1))
   {
     Boolean ok;
-    Byte value = EvalStrIntExpression(&ArgStr[1], Int8, &ok);
+    tSymbolFlags flags;
+    Byte value = EvalStrIntExpressionWithFlags(&ArgStr[1], Int8, &ok, &flags);
 
     if (ok)
     {
       put_code(code);
+      set_b_guessed(flags, CodeLen, 1, 0xff);
       BAsmCode[CodeLen++] = value;
     }
   }
@@ -328,6 +389,11 @@ static void add_fixed(const char *p_name, Word code)
 static void add_fixed_uc43(const char *p_name, Word code)
 {
   AddInstTable(InstTable, p_name, code, decode_fixed_uc43);
+}
+
+static void add_fixed_iso650(const char *p_name, Word code)
+{
+  AddInstTable(InstTable, p_name, code, decode_fixed_iso650);
 }
 
 static void add_imm2(const char *p_name, Word code)
@@ -429,6 +495,8 @@ static void init_fields(void)
   add_fixed("IP",  0x32);
   AddInstTable(InstTable, "STM", 0x1480, decode_stm);
   add_fixed("NOP", NOPCode);
+  add_fixed_iso650("JTB", OPCODE_JTB);
+  add_fixed_iso650("NAA", OPCODE_NAA);
 
   AddIntelPseudo(InstTable, eIntPseudoFlag_BigEndian);
 }
@@ -513,6 +581,13 @@ static void switch_to_uc43(void *p_user)
   Grans[SegData] = 1; ListGrans[SegData] = 1; SegInits[SegData] = 0;
   SegLimits[SegData] = p_curr_cpu_props->ram_end;
 
+  if (p_curr_cpu_props->rom_end > 2047)
+    code_int_type = UInt12;
+  else if (p_curr_cpu_props->rom_end > 1023)
+    code_int_type = UInt11;
+  else
+    code_int_type = UInt10;
+
   MakeCode = make_code_uc43; IsDef = is_def_uc43;
   SwitchFrom = switch_from_uc43; init_fields();
 }
@@ -531,7 +606,7 @@ static const cpu_props_t cpu_props[] =
   { "uPD556", 1999, 95, e_ucom_43 }, /* ROM is external */
   { "uPD557", 1999, 95, e_ucom_43 },
   { "uPD650", 1999, 95, e_ucom_43 },
-  { "iso650", 2047, 95, e_ucom_43 },
+  { "iso650", 4095, 95, e_ucom_iso650 },
   { "uPD651",  999, 63, e_ucom_44 },
   { "uPD652",  999, 31, e_ucom_45 },
   { "",          0,  0, e_ucom_45 }

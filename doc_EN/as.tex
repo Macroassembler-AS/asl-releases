@@ -69,7 +69,7 @@
 
 \vspace{1cm}\par
 
-{\large Edition Januar 2026}
+{\large Edition March 2026}
 \end{raggedright}
 
 \clearpage
@@ -300,6 +300,7 @@ following processor families have been implemented:
 \item{National Semiconductor COP8}
 \item{National Semiconductor SC144xx}
 \item{National Semiconductor NS32xxx}
+\item{National Semiconductor CR16A/B}
 \item{Olympia CP-3F (resp. SGS M380, GI LP8000)}
 \item{Fairchild ACE}
 \item{Fairchild F8}
@@ -1406,6 +1407,7 @@ question marks.  The following targets currently support this feature:
 \item{8086/V20...V55}
 \item{AVR}
 \item{TMS370xxx}
+\item{uCOM-43}
 \end{itemize}
 In case these question marks conflict with further processing of the
 listing, this feature may be disabled via the \tty{-no-list-unknown-values}
@@ -3265,6 +3267,8 @@ desired result when used as argument for \tty{ORG}.  The
 \hline
 \multicolumn{11}{|l|}{$^{10}$ model dependent} \\
 \hline
+\multicolumn{11}{|l|}{$^{11}$ Only the first 128 kbytes are usable for executable code.} \\
+\hline
 \caption{Address Ranges for \tty{ORG}}
 \label{TabORG}
 \end{longtable}
@@ -4160,6 +4164,12 @@ for bit block transfers.
 \end{cpulist}
 %%-----------
 \begin{cpulist}
+   CR16A $\rightarrow$ CR16B
+\end{cpulist}
+CR16B extends the address from 256 KBytes to 2 MBytes and provides a
+couple of new instructions.
+%%-----------
+\begin{cpulist}
    F3850, MK3850, \\
 \> MK3870, MK3870/10, MK3870/12, "MK3870/20, MK3870/22, \\
 \> MK3870/30, MK3870/32, MK3870/40, MK3870/42, \\
@@ -4208,8 +4218,8 @@ $\mu$COM-44, amd $\mu$COM-43 family.  The first two families
 implement a subset of the $\mu$COM-43 instruction set.  Otherwise,
 the chips differ by the amount of on-chip ROM and RAM.
 iso650 is an FPGA implementation of the uPD650.  It differs from
-the 'original' in its address space's size.  It is not limited
-to 2000 bytes, and supports the full 2048 bytes.
+the 'original' by an additional NAND instruction, and an address
+space extended from 2000 to 4096 bytes.
 %%-----------
 \begin{cpulist}
    7500 $\leftrightarrow$ 7508
@@ -5867,9 +5877,9 @@ but different names:
       order: instructions defined by National for address storage use big
       endian, \tty{BYTE} resp. \tty{WORD} in contrast use little endian.}
 \ttindex{BYTE}\ttindex{WORD}
-\item{\tty{BYTE} resp. \tty{WORD} on PDP-11, VAX and WD16 work like \tty{DB}
+\item{\tty{BYTE} resp. \tty{WORD} on PDP-11, VAX, WD16 work like \tty{DB}
       resp. \tty{DW}, however only accept integer arguments.}
-\item{\tty{LWORD} resp. \tty{QUAD} on VAXwork like \tty{DD} resp. \tty{DQ},
+\item{\tty{LWORD} resp. \tty{QUAD} on VAX work like \tty{DD} resp. \tty{DQ},
       however only accept integer arguments.}
 \ttindex{HALF}
 \item{\tty{BYTE} works on WE32xxx like \tty{DB}, \tty{HALF} like \tty{DW},
@@ -5896,6 +5906,15 @@ but different names:
       \item{\tty{LWORD} (like \tty{DD}, only integer arguments)}
       \item{\tty{FLOAT} (like \tty{DD}, only floating point arguments)}
       \item{\tty{DOUBLE} (like \tty{DQ}, only floating point arguments)}
+      \end{itemize}}
+\item{The CR16 target provides:
+      \begin{itemize}
+      \item{\tty{BYTE} or \tty{DC8} (like \tty{DB}, string or integer arguments)}
+      \item{\tty{WORD} or \tty{DC16} (like \tty{DW}, only integer arguments)}
+      \item{\tty{LONG} or \tty{DC32} (like \tty{DD}, only integer arguments)}
+      \item{\tty{DC64} (like \tty{DQ}, only integer arguments)}
+      \item{\tty{FLOAT} or \tty{DF32} (like \tty{DD}, only floating point arguments)}
+      \item{\tty{DOUBLE} or \tty{DF64} (like \tty{DQ}, only floating point arguments)}
       \end{itemize}}
 \end{itemize}
 
@@ -5935,6 +5954,18 @@ however is that it defines or reserves only a single bit.  This instruction
 therefore only makes sense if an address space is addressed bitwise.  Currently,
 this is only the case for the 8051's {\tt BITDATA} segment if the {\tt BITSEGSIZE:1}
 option has been used.
+
+%%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+\subsection{DC24}
+\ttindex{DC24}
+
+{\em\begin{tabbing}
+valid for: \= CR16 \\
+\end{tabbing}}
+
+\tty{DC24} works the same way as \ttindex{DW} and \ttindex{DD}, however
+stores (integer) values of 24 bits length.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -6000,8 +6031,7 @@ It is an abbreviation of
         DB      <count> DUP (?)
 \end{verbatim}
 Although this could easily be made by a macro, some people grown up
-with Motorola CPUs (Hi Michael!) suggest \tty{DS} to be a built-in
-instruction...I hope they are satisfied now \tty{;-)}
+with Motorola CPUs suggest \tty{DS} to be a built-in instruction.
 
 {\tt DS8} is defined as an alias for {\tt DS} on the National SC14xxx.
 Beware that the code memory of these processors is organized in words of
@@ -6015,7 +6045,7 @@ number.
 \ttindex{BLKB}\ttindex{BLKW}\ttindex{BLKL}\ttindex{BLKQ}\ttindex{BLKO}
 \ttindex{BLKF}\ttindex{BLKD}\ttindex{BLKG}\ttindex{BLKH}
 
-{\em valid for: VAX}
+{\em valid for: VAX, CR16}
 
 These instructions reserve storage space for the given number of elements,
 with the element size coded into the instruction's last character.  Therefore,
@@ -11471,6 +11501,32 @@ which used to be common in UNIX environments.
 
 %%---------------------------------------------------------------------------
 
+\section{CR16}
+\label{CR16Spec}
+
+When National extended the CR16 architecture to 2 Mbytes address space,
+compatibility to the CR16A predecessor was an issue.  The CR16B core therefore
+has a 'compatibility bit' that provides full binary upward compatibility.  The
+downside of this mode is that various branch and jump instructions still address
+only the first 128 KBytes of address space.  The binary encoding of these
+instructions changes in ''large model'', so the complete 2 MBytes address space
+can be reached.  The \tty{CPU} selects the memory model code shall be created
+for:
+
+\begin{verbatim}
+   cpu cr16b:model=0
+\end{verbatim}
+
+selects the small model, while
+
+\begin{verbatim}
+   cpu cr16b:model=1
+\end{verbatim}
+
+selects the large model.  The latter is also the default if the option is omitted.
+
+%%---------------------------------------------------------------------------
+
 \section{uPD78(C)1x}
 \label{78C1xSpec}
 
@@ -13321,6 +13377,10 @@ described by:
                {The control register used by a \tty{MOVEC} is not (yet) available
                 for the processor defined by the \tty{CPU} command.}
                {none}
+\errentry{1441}{unknown vector}
+               {error}
+               {A vector of this name does not exist.}
+               {the vector argument in question}
 \errentry{1442}{register is not accessible in current execution modee}
                {error}
                {This register may only be accessed in kernel mode.}

@@ -59,6 +59,7 @@ extern void DecodeIntelD1(Word Flags);
 extern void DecodeIntelDN(Word Flags);
 extern void DecodeIntelDB(Word Flags);
 extern void DecodeIntelDW(Word Flags);
+extern void DecodeIntelDP(Word Flags);
 extern void DecodeIntelDD(Word Flags);
 extern void DecodeIntelDM(Word Flags);
 extern void DecodeIntelDQ(Word Flags);

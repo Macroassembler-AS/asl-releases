@@ -481,6 +481,8 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
       msgno = Num_ErrMsgInvPMMUType; break;
     case ErrNum_InvCtrlReg:
       msgno = Num_ErrMsgInvCtrlReg; break;
+    case ErrNum_UnknownVector:
+      msgno = Num_ErrMsgUnknownVector; break;
     case ErrNum_RegAccessibleOnlyInExecMode:
       msgno = Num_ErrMsgRegAccessibleOnlyInExecMode; break;
     case ErrNum_RegReadOnlyInExecMode:

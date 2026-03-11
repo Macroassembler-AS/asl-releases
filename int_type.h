@@ -30,10 +30,10 @@ typedef enum
  ,SInt15   , UInt15  , Int15
  ,SInt16   , UInt16  , Int16
  ,UInt17
- ,UInt18
+ ,UInt18   , Int18
  ,UInt19
  ,SInt20   , UInt20  , Int20
- ,UInt21
+ ,UInt21   , Int21
  ,UInt22
  ,UInt23
  ,SInt24   , UInt24  , Int24

@@ -149,7 +149,7 @@ distdir: all $(UNUMLAUTTARGET)
 	@if test "$(VERSION)" = ""; then echo "VERSION is not set - please specify VERSION=... as argument"; exit 1; fi; exit 0
 	mkdir asl-$(VERSION)
 	chmod 755 asl-$(VERSION)
-	OBJDIR=$(OBJDIR) TARG_OBJDIR=$(TARG_OBJDIR) TARG_EXEXTENSION=$(TARG_EXEXTENSION) ./install.sh asl-$(VERSION)/bin asl-$(VERSION)/include asl-$(VERSION)/man asl-$(VERSION)/lib asl-$(VERSION)/doc
+	OBJDIR=$(OBJDIR) TARG_OBJDIR=$(TARG_OBJDIR) TARG_EXEXTENSION=$(TARG_EXEXTENSION) INSTROOT=asl-$(VERSION)/ ./install.sh bin include man lib doc
 
 win32-distdir: all $(UNUMLAUTTARGET)
 	rm -rf as

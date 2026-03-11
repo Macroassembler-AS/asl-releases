@@ -2566,7 +2566,7 @@ static void make_code_340xx(void)
 
 static Boolean is_def_340xx(void)
 {
-  return Memo("REG") || Memo("BES") || Memo(".BES");
+  return  Memo("REG") || Memo(".REG") || Memo("BES") || Memo(".BES");
 }
 
 /*!------------------------------------------------------------------------

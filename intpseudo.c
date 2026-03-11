@@ -73,6 +73,7 @@ struct sLayoutCtx
   Boolean (*Put8I)(Byte b, tSymbolFlags flags, struct sLayoutCtx *pCtx);
   Boolean (*Put16I)(Word w, tSymbolFlags flags, struct sLayoutCtx *pCtx);
   Boolean (*Put16F)(as_float_t f, tSymbolFlags flags, struct sLayoutCtx *pCtx);
+  Boolean (*Put24I)(LongWord l, tSymbolFlags flags, struct sLayoutCtx *pCtx);
   Boolean (*Put32I)(LongWord l, tSymbolFlags flags, struct sLayoutCtx *pCtx);
   Boolean (*Put32F)(as_float_t f, tSymbolFlags flags, struct sLayoutCtx *pCtx);
   Boolean (*Put48I)(LargeWord q, tSymbolFlags flags, struct sLayoutCtx *pCtx);
@@ -1320,6 +1321,133 @@ func_exit:
 }
 
 /*****************************************************************************
+ * Function:    LayoutPointer
+ * Purpose:     parse argument, interprete as 24-bit word,
+                and put into result buffer
+ * Result:      TRUE if no errors occured
+ *****************************************************************************/
+
+static Boolean Put24I_To_1(LongWord l, tSymbolFlags flags, struct sLayoutCtx *pCtx)
+{
+  int z;
+
+  for (z = 0; z < 3; z++, l >>= 8)
+    Put8I_To_1(l & 0xffu, flags, pCtx);
+  return True;
+}
+
+static Boolean Put24I_To_4(LongWord l, tSymbolFlags flags, struct sLayoutCtx *pCtx)
+{
+  unsigned z;
+  Byte *p_dest;
+
+  if (!IncMaxCodeLen(pCtx, 6))
+    return False;
+
+  p_dest = BAsmCode + pCtx->CurrCodeFill.FullWordCnt + (pCtx->LoHiMap ? 6 : 0);
+  for (z = 0; z < 6; z++, l >>= 4)
+    *(pCtx->LoHiMap ? --p_dest : p_dest++) = l & 0xf;
+  set_b_guessed(flags, pCtx->CurrCodeFill.FullWordCnt, 6, 0xf);
+  pCtx->CurrCodeFill.FullWordCnt += 6;
+  return True;
+}
+
+static Boolean Put24I_To_8(LongWord l, tSymbolFlags flags, struct sLayoutCtx *pCtx)
+{
+  unsigned z;
+  Byte *p_dest;
+
+  if (!IncMaxCodeLen(pCtx, 3))
+    return False;
+
+  p_dest = BAsmCode + pCtx->CurrCodeFill.FullWordCnt + (pCtx->LoHiMap ? 3 : 0);
+  for (z = 0; z < 3; z++, l >>= 8)
+    *(pCtx->LoHiMap ? --p_dest : p_dest++) = l & 0xff;
+  set_b_guessed(flags, pCtx->CurrCodeFill.FullWordCnt, 3, 0xff);
+  pCtx->CurrCodeFill.FullWordCnt += 3;
+  return True;
+}
+
+static Boolean Put24I_To_16(LongWord l, tSymbolFlags flags, struct sLayoutCtx *pCtx)
+{
+  int z;
+  Word *p_dest;
+
+  if (!IncMaxCodeLen(pCtx, 2))
+    return False;
+  p_dest = WAsmCode + pCtx->CurrCodeFill.FullWordCnt + (pCtx->LoHiMap ? 2 : 0);
+  for (z = 0; z < 2; z++, l >>= 16)
+    *(pCtx->LoHiMap ? --p_dest : p_dest++) = l & (z ? 0xffu : 0xfffful);
+  if (pCtx->LoHiMap)
+  {
+    set_w_guessed(flags, pCtx->CurrCodeFill.FullWordCnt    , 1, 0xffu);
+    set_w_guessed(flags, pCtx->CurrCodeFill.FullWordCnt + 1, 1, 0xfffful);
+  }
+  else
+  {
+    set_w_guessed(flags, pCtx->CurrCodeFill.FullWordCnt    , 1, 0xfffful);
+    set_w_guessed(flags, pCtx->CurrCodeFill.FullWordCnt + 1, 1, 0xffu);
+  }
+  pCtx->CurrCodeFill.FullWordCnt += 2;
+  return True;
+}
+
+static Boolean Put24I_To_32(LongWord l, tSymbolFlags flags, struct sLayoutCtx *pCtx)
+{
+  if (!IncMaxCodeLen(pCtx, 1))
+    return False;
+  DAsmCode[pCtx->CurrCodeFill.FullWordCnt] = l;
+  set_d_guessed(flags, pCtx->CurrCodeFill.FullWordCnt, 1, 0xffffffu);
+  pCtx->CurrCodeFill.FullWordCnt++;
+  return True;
+}
+
+static Boolean LayoutPointer(const tStrComp *pExpr, struct sLayoutCtx *pCtx)
+{
+  Boolean Result = False;
+  TempResult t;
+  Word Cnt  = 0;
+
+  as_tempres_ini(&t);
+  EvalStrExpression(pExpr, &t);
+  Result = False;
+  switch(t.Typ)
+  {
+    case TempNone:
+      break;
+    case TempInt:
+    ToInt:
+      if (pCtx->Put24I)
+      {
+        if (!pCtx->Put24I(t.Contents.Int, t.Flags, pCtx))
+          LEAVE;
+        Cnt = 3;
+        Result = True;
+        break;
+      }
+      /* fall-through */
+    case TempFloat:
+      WrStrErrorPos(ErrNum_IntButFloat, pExpr);
+      break;
+    case TempString:
+      if (MultiCharToInt(&t, 4))
+        goto ToInt;
+      WrStrErrorPos(ErrNum_IntButString, pExpr);
+      break;
+    case TempReg:
+      WrStrErrorPos(ErrNum_IntButReg, pExpr);
+      break;
+    case TempAll:
+      assert(0);
+  }
+  (void)Cnt;
+
+func_exit:
+  as_tempres_free(&t);
+  return Result;
+}
+
+/*****************************************************************************
  * Function:    LayoutDoubleWord
  * Purpose:     parse argument, interprete as 32-bit word or
                 single precision float, and put into result buffer
@@ -1795,11 +1923,11 @@ static Boolean Put48I_To_32(LargeWord l, tSymbolFlags flags, struct sLayoutCtx *
   p_dest = DAsmCode + pCtx->CurrCodeFill.FullWordCnt + (pCtx->LoHiMap ? 2 : 0);
   for (z = 0; z < min(2, LARGEBITS / 32); z++, largeint_shr32(l))
   {
-    highest_src = l & 0xfffffffful;
-    *(pCtx->LoHiMap ? --p_dest : p_dest++) = highest_src & (z ? 0xfffffffful : 0x0000fffful);
+    highest_src = l & (z ? 0x0000fffful : 0xfffffffful);
+    *(pCtx->LoHiMap ? --p_dest : p_dest++) = highest_src;
   }
   for (; z < 2; z++)
-    *(pCtx->LoHiMap ? --p_dest : p_dest++) = ((highest_src & 0x80000000ul) ? 0xfffffffful : 0x00000000ul) & (z ? 0xfffffffful : 0x0000fffful);
+    *(pCtx->LoHiMap ? --p_dest : p_dest++) = (highest_src & 0x80000000ul) ? (z ? 0x0000fffful : 0xfffffffful) : 0x00000000ul;
   if (pCtx->LoHiMap)
   {
     set_d_guessed(flags, pCtx->CurrCodeFill.FullWordCnt    , 1, 0xffffu);
@@ -3453,6 +3581,67 @@ void DecodeIntelDW(Word Flags)
 }
 
 /*!------------------------------------------------------------------------
+ * \fn     DecodeIntelDP(Word Flags)
+ * \brief  Intel-style constant disposition - 24-bit words
+ * \param  Flags Data Type & Endianess Flags
+ * ------------------------------------------------------------------------ */
+
+void DecodeIntelDP(Word Flags)
+{
+  tLayoutCtx LayoutCtx;
+
+  memset(&LayoutCtx, 0, sizeof(LayoutCtx));
+  LayoutCtx.LayoutFunc = LayoutPointer;
+  LayoutCtx.BaseElemLenBits = 24;
+  LayoutCtx.flags = resolve_flags((int_pseudo_flags_t)Flags);
+  switch (Grans[ActPC])
+  {
+    case 1:
+      switch (grans_bits_unused[ActPC])
+      {
+        case 7:
+          LayoutCtx.Put24I = (LayoutCtx.flags & eIntPseudoFlag_AllowInt) ? Put24I_To_1 : NULL;
+          LayoutCtx.Replicate = Replicate8_To_1;
+          break;
+        case 4:
+          LayoutCtx.Put24I = (LayoutCtx.flags & eIntPseudoFlag_AllowInt) ? Put24I_To_4 : NULL;
+          LayoutCtx.Replicate = Replicate8ToN_To_8;
+          break;
+        case 0:
+          LayoutCtx.Put24I = (LayoutCtx.flags & eIntPseudoFlag_AllowInt) ? Put24I_To_8 : NULL;
+          LayoutCtx.Replicate = Replicate8ToN_To_8;
+          break;
+        default:
+          goto unhandled;
+      }
+      LayoutCtx.LoHiMap = (LayoutCtx.flags & eIntPseudoFlag_BigEndian) ? 2 : 0;
+      break;
+    case 2:
+      if (grans_bits_unused[ActPC])
+        goto unhandled;
+      LayoutCtx.Put24I = (LayoutCtx.flags & eIntPseudoFlag_AllowInt) ? Put24I_To_16 : NULL;
+      LayoutCtx.LoHiMap = (LayoutCtx.flags & eIntPseudoFlag_BigEndian) ? 2 : 0;
+      LayoutCtx.Replicate = Replicate16ToN_To_16;
+      break;
+    case 4:
+      if (grans_bits_unused[ActPC])
+        goto unhandled;
+      LayoutCtx.Put24I = (Flags & eIntPseudoFlag_AllowInt) ? Put24I_To_32 : NULL;
+      LayoutCtx.LoHiMap = (Flags & eIntPseudoFlag_BigEndian) ? 1 : 0;
+      LayoutCtx.Replicate = Replicate32ToN_To_32;
+      break;
+    default:
+    unhandled:
+      fprintf(stderr, "implement DM for %u-bit words\n",
+              (unsigned)(Grans[ActPC] * 8 - grans_bits_unused[ActPC]));
+      exit(255);
+  }
+  if (*LabPart.str.p_str)
+    SetSymbolOrStructElemSize(&LabPart, eSymbolSize24Bit);
+  DecodeIntelDx(&LayoutCtx);
+}
+
+/*!------------------------------------------------------------------------
  * \fn     DecodeIntelDD(Word Flags)
  * \brief  Intel-style constant disposition - 32-bit words
  * \param  Flags Data Type & Endianess Flags
@@ -3819,6 +4008,7 @@ void AddIntelPseudo(PInstTable p_inst_table, int_pseudo_flags_t flags)
   AddInstTable(p_inst_table, "DN", flags | eIntPseudoFlag_AllowInt, DecodeIntelDN);
   AddInstTable(p_inst_table, "DB", flags | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString, DecodeIntelDB);
   AddInstTable(p_inst_table, "DW", flags | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_AllowFloat, DecodeIntelDW);
+  AddInstTable(p_inst_table, "DP", flags | eIntPseudoFlag_AllowInt, DecodeIntelDP);
   AddInstTable(p_inst_table, "DD", flags | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_AllowFloat, DecodeIntelDD);
   AddInstTable(p_inst_table, "DQ", flags | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_AllowFloat, DecodeIntelDQ);
   AddInstTable(p_inst_table, "DT", flags | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_AllowFloat, DecodeIntelDT);

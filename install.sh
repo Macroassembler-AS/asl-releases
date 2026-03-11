@@ -81,7 +81,7 @@ fi
 if [ "${LIBPATH}" != "" ]; then
  ${MKDIRHIER} ${LIBPATH}
  chmod 755 ${LIBPATH}
- if [ -f as.msg ]; then
+ if [ -f ${TARG_OBJDIR}as.msg ]; then
   for file in ${TARG_OBJDIR}*.msg; do
    base=`basename ${file}`
    #echo copy ${file} to ${LIBPATH}/${base} ...

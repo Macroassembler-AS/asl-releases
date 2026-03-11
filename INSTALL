@@ -68,7 +68,7 @@ is the file 'Makefile.def.tmpl'.  The settings to make include:
   binaries on a Linux system, set TARG_RUNCMD to 'wine' and you will be able
   to run the 'make test' target.
 
-- BINDIR, INCDIR, MANDIR, LIBDIR, DOCDIR: directiories where AS should be
+- BINDIR, INCDIR, MANDIR, LIBDIR, DOCDIR: directories where AS should be
   placed after compilation.  LIBDIR is only needed if you are using external
   (loaded at runtim) MSG files, which is currently only the case for DOS.
 

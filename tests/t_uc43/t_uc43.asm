@@ -138,9 +138,9 @@ vect4	label	16
 	jcp	$+64
 	endexpect
 	jmp	123h		; A1 23
-	jmp	7ffh		; A7 FF
+	jmp	7cfh		; A7 CF
 	expect	1320
-	jmp	800h
+	jmp	7d0h
 	endexpect
 	jpa			; 41
 	ei			; 31
@@ -182,9 +182,9 @@ vect4	label	16
 	czp	3eh
 	endexpect
 	cal	123h		; A9 23
-	cal	7ffh		; AF FF
+	cal	7cfh		; AF CF
 	expect	1320
-	cal	800h
+	cal	7d0h
 	endexpect
 	rt			; 48
 	rts			; 49
