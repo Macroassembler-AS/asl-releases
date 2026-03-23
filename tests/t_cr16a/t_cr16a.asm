@@ -258,213 +258,229 @@
 		ashuw	$-32768,r7
 		endexpect
 
-		bal	r13,*		; 35BE FFFC
-		bal	r13,*+4		; 35AE 0000
+		bal	r13,*		; 35AE 0000
+		bal	r13,*+4		; 35AE 0004
+		bal	r13,*-4		; 35BE FFFC
 		expect	1351
 		bal	r13,*+255
 		endexpect
-		bal	r13,*+256	; 35AE 00FC
-		bal	r13,*+258	; 35AE 00FE
+		bal	r13,*+254	; 35AE 00FE
+		bal	r13,*+256	; 35AE 0100
 		expect	1351
 		bal	r13,*-253
 		endexpect
-		bal	r13,*-254	; 35BE FEFE
-		bal	r13,*-256	; 35BE FEFC
+		bal	r13,*-256	; 35BE FF00
+		bal	r13,*-258	; 35BE FEFE
 
-		beq	*		; 5E1E
-		beq	*+2		; 4000
+		beq	*		; 4000
+		beq	*-2		; 5E1E
+		beq	*+2		; 4002
 		expect	1351
 		beq	*+255
 		endexpect
-		beq	*+256		; 4E1E
-		beq	*+258		; 140E 00FE
+		beq	*+254		; 4E1E
+		beq	*+256		; 140E 0100
 		expect	1351
 		beq	*-253
 		endexpect
-		beq	*-254		; 5000
-		beq	*-256		; 141E FEFC
+		beq	*-256		; 5000
+		beq	*-258		; 141E FEFE
 
-		bne	*		; 5E3E
-		bne	*+2		; 4020
+		bne	*		; 4020
+		bne	*-2		; 5E3E
+		bne	*+2		; 4022
 		expect	1351
 		bne	*+255
 		endexpect
-		bne	*+256		; 4E3E
-		bne	*+258		; 142E 00FE
+		bne	*+254		; 4E3E
+		bne	*+256		; 142E 0100
 		expect	1351
 		bne	*-253
 		endexpect
-		bne	*-254		; 5020
-		bne	*-256		; 143E FEFC
+		bne	*-256		; 5020
+		bne	*-258		; 143E FEFE
 
-		bge	*		; 5FBE
-		bge	*+2		; 41A0
+		bge	*		; 41A0
+		bge	*-2		; 5FBE
+		bge	*+2		; 41A2
 		expect	1351
 		bge	*+255
 		endexpect
-		bge	*+256		; 4FBE
-		bge	*+258		; 15AE 00FE
+		bge	*+254		; 4FBE
+		bge	*+256		; 15AE 0100
 		expect	1351
 		bge	*-253
 		endexpect
-		bge	*-254		; 51A0
-		bge	*-256		; 15BE FEFC
+		bge	*-256		; 51A0
+		bge	*-258		; 15BE FEFE
 
-		bcs	*		; 5E5E
-		bcs	*+2		; 4040
+		bcs	*		; 4040
+		bcs	*-2		; 5E5E
+		bcs	*+2		; 4042
 		expect	1351
 		bcs	*+255
 		endexpect
-		bcs	*+256		; 4E5E
-		bcs	*+258		; 144E 00FE
+		bcs	*+254		; 4E5E
+		bcs	*+256		; 144E 0100
 		expect	1351
 		bcs	*-253
 		endexpect
-		bcs	*-254		; 5040
-		bcs	*-256		; 145E FEFC
+		bcs	*-256		; 5040
+		bcs	*-258		; 145E FEFE
 
-		bcc	*		; 5E7E
-		bcc	*+2		; 4060
+		bcc	*		; 4060
+		bcc	*-2		; 5E7E
+		bcc	*+2		; 4062
 		expect	1351
 		bcc	*+255
 		endexpect
-		bcc	*+256		; 4E7E
-		bcc	*+258		; 146E 00FE
+		bcc	*+254		; 4E7E
+		bcc	*+256		; 146E 0100
 		expect	1351
 		bcc	*-253
 		endexpect
-		bcc	*-254		; 5060
-		bcc	*-256		; 147E FEFC
+		bcc	*-256		; 5060
+		bcc	*-258		; 147E FEFE
 
-		bhi	*		; 5E9E
-		bhi	*+2		; 4080
+		bhi	*		; 4080
+		bhi	*-2		; 5E9E
+		bhi	*+2		; 4082
 		expect	1351
 		bhi	*+255
 		endexpect
-		bhi	*+256		; 4E9E
-		bhi	*+258		; 148E 00FE
+		bhi	*+254		; 4E9E
+		bhi	*+256		; 148E 0100
 		expect	1351
 		bhi	*-253
 		endexpect
-		bhi	*-254		; 5080
-		bhi	*-256		; 149E FEFC
+		bhi	*-256		; 5080
+		bhi	*-258		; 149E FEFE
 
-		bls	*		; 5EBE
-		bls	*+2		; 40A0
+		bls	*		; 40A0
+		bls	*-2		; 5EBE
+		bls	*+2		; 40A2
 		expect	1351
 		bls	*+255
 		endexpect
-		bls	*+256		; 4EBE
-		bls	*+258		; 14AE 00FE
+		bls	*+254		; 4EBE
+		bls	*+256		; 14AE 0100
 		expect	1351
 		bls	*-253
 		endexpect
-		bls	*-254		; 50A0
-		bls	*-256		; 14BE FEFC
+		bls	*-256		; 50A0
+		bls	*-258		; 14BE FEFE
 
-		blo	*		; 5F5E
-		blo	*+2		; 4140
+		blo	*		; 4140
+		blo	*-2		; 5F5E
+		blo	*+2		; 4142
 		expect	1351
 		blo	*+255
 		endexpect
-		blo	*+256		; 4F5E
-		blo	*+258		; 154E 00FE
+		blo	*+254		; 4F5E
+		blo	*+256		; 154E 0100
 		expect	1351
 		blo	*-253
 		endexpect
-		blo	*-254		; 5140
-		blo	*-256		; 155E FEFC
+		blo	*-256		; 5140
+		blo	*-258		; 155E FEFE
 
-		bhs	*		; 5F7E
-		bhs	*+2		; 4160
+		bhs	*		; 4160
+		bhs	*-2		; 5F7E
+		bhs	*+2		; 4162
 		expect	1351
 		bhs	*+255
 		endexpect
-		bhs	*+256		; 4F7E
-		bhs	*+258		; 156E 00FE
+		bhs	*+254		; 4F7E
+		bhs	*+256		; 156E 0100
 		expect	1351
 		bhs	*-253
 		endexpect
-		bhs	*-254		; 5160
-		bhs	*-256		; 157E FEFC
+		bhs	*-256		; 5160
+		bhs	*-258		; 157E FEFE
 
-		bgt	*		; 5EDE
-		bgt	*+2		; 40C0
+		bgt	*		; 40C0
+		bgt	*-2		; 5EDE
+		bgt	*+2		; 40C2
 		expect	1351
 		bgt	*+255
 		endexpect
-		bgt	*+256		; 4EDE
-		bgt	*+258		; 14CE 00FE
+		bgt	*+254		; 4EDE
+		bgt	*+256		; 14CE 0100
 		expect	1351
 		bgt	*-253
 		endexpect
-		bgt	*-254		; 50C0
-		bgt	*-256		; 14DE FEFC
+		bgt	*-256		; 50C0
+		bgt	*-258		; 14DE FEFE
 
-		ble	*		; 5EFE
-		ble	*+2		; 40E0
+		ble	*		; 40E0
+		ble	*-2		; 5EFE
+		ble	*+2		; 40E2
 		expect	1351
 		ble	*+255
 		endexpect
-		ble	*+256		; 4EFE
-		ble	*+258		; 14EE 00FE
+		ble	*+254		; 4EFE
+		ble	*+256		; 14EE 0100
 		expect	1351
 		ble	*-253
 		endexpect
-		ble	*-254		; 50E0
-		ble	*-256		; 14FE FEFC
+		ble	*-256		; 50E0
+		ble	*-258		; 14FE FEFE
 
-		bfs	*		; 5F1E
-		bfs	*+2		; 4100
+		bfs	*		; 4100
+		bfs	*-2		; 5F1E
+		bfs	*+2		; 4102
 		expect	1351
 		bfs	*+255
 		endexpect
-		bfs	*+256		; 4F1E
-		bfs	*+258		; 150E 00FE
+		bfs	*+254		; 4F1E
+		bfs	*+256		; 150E 0100
 		expect	1351
 		bfs	*-253
 		endexpect
-		bfs	*-254		; 5100
-		bfs	*-256		; 151E FEFC
+		bfs	*-256		; 5100
+		bfs	*-258		; 151E FEFE
 
-		bfc	*		; 5F3E
-		bfc	*+2		; 4120
+		bfc	*		; 4120
+		bfc	*-2		; 5F3E
+		bfc	*+2		; 4122
 		expect	1351
 		bfc	*+255
 		endexpect
-		bfc	*+256		; 4F3E
-		bfc	*+258		; 152E 00FE
+		bfc	*+254		; 4F3E
+		bfc	*+256		; 152E 0100
 		expect	1351
 		bfc	*-253
 		endexpect
-		bfc	*-254		; 5120
-		bfc	*-256		; 153E FEFC
+		bfc	*-256		; 5120
+		bfc	*-258		; 153E FEFE
 
-		br	*		; 5FDE
-		br	*+2		; 41C0
+		br	*		; 41C0
+		br	*-2		; 5FDE
+		br	*+2		; 41C2
 		expect	1351
 		br	*+255
 		endexpect
-		br	*+256		; 4FDE
-		br	*+258		; 15CE 00FE
+		br	*+254		; 4FDE
+		br	*+256		; 15CE 0100
 		expect	1351
 		br	*-253
 		endexpect
-		br	*-254		; 51C0
-		br	*-256		; 15DE FEFC
+		br	*-256		; 51C0
+		br	*-258		; 15DE FEFE
 
-		blt	*		; 5F9E
-		blt	*+2		; 4180
+		blt	*		; 4180
+		blt	*-2		; 5F9E
+		blt	*+2		; 4182
 		expect	1351
 		blt	*+255
 		endexpect
-		blt	*+256		; 4F9E
-		blt	*+258		; 158E 00FE
+		blt	*+254		; 4F9E
+		blt	*+256		; 158E 0100
 		expect	1351
 		blt	*-253
 		endexpect
-		blt	*-254		; 5180
-		blt	*-256		; 159E FEFC
+		blt	*-256		; 5180
+		blt	*-258		; 159E FEFE
 
 		cmpb	r5,r7		; 4EEB
 		; CMPB: 5 bit immediate value sign-extended to 8 bits, may be used as -16,-14...-1 or 0xf0,0xf2...0xff

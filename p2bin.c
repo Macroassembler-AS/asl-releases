@@ -688,27 +688,35 @@ int main(int argc, char **argv)
   }
   AddSuffix(TargName, STRINGSIZE, BinSuffix);
 
+  /* We always have to do a 'scan pass' through the file, even without
+     auto-ranging, to find the correct MaxGran value.  Older versions assumed
+     a value of one if no auto-ranging was used, but this does not hold for
+     targets with non-byte-addressable address spaces: */
+
   MaxGran = 0;
-  if (StartAuto || StopAuto)
+  if (StartAuto)
+    StartAdr = 0xfffffffful;
+  if (StopAuto)
+    StopAdr = 0;
+  for (p_src_name = GetStringListFirst(cmd_results.file_arg_list, &p_src_run);
+       p_src_name; p_src_name = GetStringListNext(&p_src_run))
+    if (*p_src_name)
+      ProcessGroup(p_src_name, MeasureFile);
+  if ((StartAuto || StopAuto) && (StartAdr > StopAdr))
   {
-    if (StartAuto)
-      StartAdr = 0xfffffffful;
-    if (StopAuto)
-      StopAdr = 0;
-    for (p_src_name = GetStringListFirst(cmd_results.file_arg_list, &p_src_run);
-         p_src_name; p_src_name = GetStringListNext(&p_src_run))
-      if (*p_src_name)
-        ProcessGroup(p_src_name, MeasureFile);
-    if (StartAdr > StopAdr)
-    {
-      chkio_fprintf(stderr, OutName, "%s\n", getmessage(Num_ErrMsgAutoFailed));
-      exit(1);
-    }
-    if (msg_level >= e_msg_level_normal)
-    {
-      printf("%s: 0x%08lX-", getmessage(Num_InfoMessDeducedRange), LoDWord(StartAdr));
-      printf("0x%08lX\n", LoDWord(StopAdr));
-    }
+    chkio_fprintf(stderr, OutName, "%s\n", getmessage(Num_ErrMsgAutoFailed));
+    exit(1);
+  }
+  if (!MaxGran)
+  {
+    chkio_fprintf(stderr, OutName, "%s\n", getmessage(Num_ErrMsgMaxGranFailed));
+    exit(1);
+  }
+  if ((msg_level >= e_msg_level_normal) && (StartAuto || StopAuto))
+  {
+    printf("%s: 0x%08lX-0x%08lX\n", getmessage(Num_InfoMessDeducedRange),
+           (unsigned long)LoDWord(StartAdr),
+           (unsigned long)LoDWord(StopAdr));
   }
 
   OpenTarget();

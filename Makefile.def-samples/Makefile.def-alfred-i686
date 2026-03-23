@@ -119,11 +119,7 @@ ifeq ($(TARG_OBJDIR),i686-w32/)
 endif
 
 # -------------------------------------------------------------------------
-# directories where binaries, includes, and manpages should go during
-# installation
+# directoriy where binaries, includes, and manpages should go during
+# installation:
 
-BINDIR = /usr/local/bin
-INCDIR = /usr/local/include/asl
-MANDIR = /usr/local/man
-LIBDIR =
-DOCDIR = /usr/local/doc/asl
+INSTROOT:=/usr/local

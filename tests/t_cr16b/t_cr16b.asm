@@ -15,501 +15,525 @@
 	expect	1350
 	bal	10(r4,r3),*
 	endexpect
-	bal	(r4,r3),*		; 767E FFFD (displacement 0x1ffffc)
-	bal	(r4,r3),*+4		; 7660 0000 (displacement 0x000000)
+	bal	(r4,r3),*		; 7660 0000 (displacement 0x000000)
+        bal	(r4,r3),*-4		; 767E FFFD (displacement 0x1ffffc)
+	bal	(r4,r3),*+4		; 7660 0004 (displacement 0x000004)
 	expect	1351
 	bal	(r4,r3),*+255
 	endexpect
-	bal	(r4,r3),*+256		; 7660 00FC (displacement 0x0000fc)
-	bal	(r4,r3),*+258		; 7660 00FE (displacement 0x0000fe)
-	bal	(r4,r3),*+0x10002	; 7660 FFFE (displacement 0x00fffe)
-	bal	(r4,r3),*+0x10004	; 7670 0000 (displacement 0x010000)
-	bal	(r4,r3),*+0x20002	; 7670 FFFE (displacement 0x01fffe)
-	bal	(r4,r3),*+0x20004	; 7662 0000 (displacement 0x020000)
-	bal	(r4,r3),*+0x30002	; 7662 FFFE (displacement 0x02fffe)
-	bal	(r4,r3),*+0x30004	; 7672 0000 (displacement 0x030000)
+	bal	(r4,r3),*+254		; 7660 00FE (displacement 0x0000fe)
+	bal	(r4,r3),*+256		; 7660 0100 (displacement 0x000100)
+	bal	(r4,r3),*+0x0fffe	; 7660 FFFE (displacement 0x00fffe)
+	bal	(r4,r3),*+0x10000	; 7670 0000 (displacement 0x010000)
+	bal	(r4,r3),*+0x1fffe	; 7670 FFFE (displacement 0x01fffe)
+	bal	(r4,r3),*+0x20000	; 7662 0000 (displacement 0x020000)
+	bal	(r4,r3),*+0x2fffe	; 7662 FFFE (displacement 0x02fffe)
+	bal	(r4,r3),*+0x30000	; 7672 0000 (displacement 0x030000)
 	expect	1351
 	bal	(r4,r3),*-253
 	endexpect
-	bal	(r4,r3),*-254		; 767E FEFF (displacement -258     = 0xfffefe)
-	bal	(r4,r3),*-256		; 767E FEFD (displacement -260     = 0xfffefc)
-	bal	(r4,r3),*-0xfffa	; 767E 0003 (displacement -0xfffe  = 0xff0002)
-	bal	(r4,r3),*-0xfffc	; 767E 0001 (displacement -0x10000 = 0xff0000)
-	bal	(r4,r3),*-0x1fffa	; 766E 0003 (displacement -0x1fffe = 0xfe0002)
-	bal	(r4,r3),*-0x1fffc	; 766E 0001 (displacement -0x20000 = 0xfe0000)
-	bal	(r4,r3),*-0x2fffa	; 767C 0003 (displacement -0x2fffe = 0xfd0002)
-	bal	(r4,r3),*-0x2fffc	; 767C 0001 (displacement -0x30000 = 0xfd0000)
+	bal	(r4,r3),*-256		; 767E FF01 (displacement -256     = 0xffff00)
+	bal	(r4,r3),*-258		; 767E FEFF (displacement -258     = 0xfffefe)
+	bal	(r4,r3),*-0xfffe	; 767E 0003 (displacement -0xfffe  = 0xff0002)
+	bal	(r4,r3),*-0x10000	; 767E 0001 (displacement -0x10000 = 0xff0000)
+	bal	(r4,r3),*-0x1fffe	; 766E 0003 (displacement -0x1fffe = 0xfe0002)
+	bal	(r4,r3),*-0x20000	; 766E 0001 (displacement -0x20000 = 0xfe0000)
+	bal	(r4,r3),*-0x2fffe	; 767C 0003 (displacement -0x2fffe = 0xfd0002)
+	bal	(r4,r3),*-0x30000	; 767C 0001 (displacement -0x30000 = 0xfd0000)
 
-	beq	*		; 5E1E
-	beq	*+2		; 4000
+	beq	*		; 4000
+	beq	*-2		; 5E1E
+	beq	*+2		; 4002
 	expect	1351
 	beq	*+255
 	endexpect
-	beq	*+256		; 4E1E
-	beq	*+258		; 7400 00FE (displacement 0x0000fe)
-	beq	*+0x10002	; 7400 FFFE (displacement 0x00fffe)
-	beq	*+0x10004	; 7410 0000 (displacement 0x010000)
-	beq	*+0x20002	; 7410 FFFE (displacement 0x01fffe)
-	beq	*+0x20004	; 7402 0000 (displacement 0x020000)
-	beq	*+0x30002	; 7402 FFFE (displacement 0x02fffe)
-	beq	*+0x30004	; 7412 0000 (displacement 0x030000)
+	beq	*+254		; 4E1E
+	beq	*+256		; 7400 0100 (displacement 0x000100)
+	beq	*+0x0fffe	; 7400 FFFE (displacement 0x00fffe)
+	beq	*+0x10000	; 7410 0000 (displacement 0x010000)
+	beq	*+0x1fffe	; 7410 FFFE (displacement 0x01fffe)
+	beq	*+0x20000	; 7402 0000 (displacement 0x020000)
+	beq	*+0x2fffe	; 7402 FFFE (displacement 0x02fffe)
+	beq	*+0x30000	; 7412 0000 (displacement 0x030000)
 	expect	1351
 	beq	*-253
 	endexpect
-	beq	*-254		; 5000
-	beq	*-256		; 741E FEFE (displacement -260     = 0xfffefc)
-	beq	*-0xfffa	; 741E 0003 (displacement -0xfffe  = 0xff0002)
-	beq	*-0xfffc	; 741E 0001 (displacement -0x10000 = 0xff0000)
-	beq	*-0x1fffa	; 740E 0003 (displacement -0x1fffe = 0xfe0002)
-	beq	*-0x1fffc	; 740E 0001 (displacement -0x20000 = 0xfe0000)
-	beq	*-0x2fffa	; 741C 0003 (displacement -0x2fffe = 0xfd0002)
-	beq	*-0x2fffc	; 741C 0001 (displacement -0x30000 = 0xfd0000)
+	beq	*-256		; 5000
+	beq	*-258		; 741E FEFF (displacement -258     = 0xfffefe)
+	beq	*-0x0fffe	; 741E 0003 (displacement -0x0fffe = 0xff0002)
+	beq	*-0x10000	; 741E 0001 (displacement -0x10000 = 0xff0000)
+	beq	*-0x1fffe	; 740E 0003 (displacement -0x1fffe = 0xfe0002)
+	beq	*-0x20000	; 740E 0001 (displacement -0x20000 = 0xfe0000)
+	beq	*-0x2fffe	; 741C 0003 (displacement -0x2fffe = 0xfd0002)
+	beq	*-0x30000	; 741C 0001 (displacement -0x30000 = 0xfd0000)
 
 	expect	1445
 	beq0b	r7,*+2
 	endexpect
 	expect	1370
-	beq0b	r9,*
+	beq0b	r9,*-2
 	endexpect
-	beq0b	r9,*+2		; 1521
-	beq0b	r9,*+32		; 153F
+	beq0b	r9,*		; 1521
+	beq0b	r9,*+2		; 1523
+	beq0b	r9,*+30		; 153F
 	expect	1370
-	beq0b	r9,*+34
+	beq0b	r9,*+32
 	endexpect
 
 	expect	1445
 	beq0w	r7,*+2
 	endexpect
 	expect	1370
-	beq0w	r9,*
+	beq0w	r9,*-2
 	endexpect
-	beq0w	r9,*+2		; 3521
-	beq0w	r9,*+32		; 353F
+	beq0w	r9,*		; 3521
+	beq0w	r9,*+2		; 3523
+	beq0w	r9,*+30		; 353F
 	expect	1370
-	beq0w	r9,*+34
+	beq0w	r9,*+32
 	endexpect
 
 	expect	1445
 	beq1b	r7,*+2
 	endexpect
 	expect	1370
-	beq1b	r9,*
+	beq1b	r9,*-2
 	endexpect
-	beq1b	r9,*+2		; 1561
-	beq1b	r9,*+32		; 157F
+	beq1b	r9,*		; 1561
+	beq1b	r9,*+2		; 1563
+	beq1b	r9,*+30		; 157F
 	expect	1370
-	beq1b	r9,*+34
+	beq1b	r9,*+32
 	endexpect
 
 	expect	1445
 	beq1w	r7,*+2
 	endexpect
 	expect	1370
-	beq1w	r9,*
+	beq1w	r9,*-2
 	endexpect
-	beq1w	r9,*+2		; 3561
-	beq1w	r9,*+32		; 357F
+	beq1w	r9,*		; 3561
+	beq1w	r9,*+2		; 3563
+	beq1w	r9,*+30		; 357F
 	expect	1370
-	beq1w	r9,*+34
+	beq1w	r9,*+32
 	endexpect
 
-	bne	*		; 5E3E
-	bne	*+2		; 4020
+	bne	*		; 4020
+	bne	*-2		; 5E3E
+	bne	*+2		; 4022
 	expect	1351
 	bne	*+255
 	endexpect
-	bne	*+256		; 4E3E
-	bne	*+258		; 7420 00FE (displacement 0x0000fe)
-	bne	*+0x10002	; 7420 FFFE (displacement 0x00fffe)
-	bne	*+0x10004	; 7430 0000 (displacement 0x010000)
-	bne	*+0x20002	; 7430 FFFE (displacement 0x01fffe)
-	bne	*+0x20004	; 7422 0000 (displacement 0x020000)
-	bne	*+0x30002	; 7422 FFFE (displacement 0x02fffe)
-	bne	*+0x30004	; 7432 0000 (displacement 0x030000)
+	bne	*+254		; 4E3E
+	bne	*+256		; 7420 0100 (displacement 0x000100)
+	bne	*+0x0fffe	; 7420 FFFE (displacement 0x00fffe)
+	bne	*+0x10000	; 7430 0000 (displacement 0x010000)
+	bne	*+0x1fffe	; 7430 FFFE (displacement 0x01fffe)
+	bne	*+0x20000	; 7422 0000 (displacement 0x020000)
+	bne	*+0x2fffe	; 7422 FFFE (displacement 0x02fffe)
+	bne	*+0x30000	; 7432 0000 (displacement 0x030000)
 	expect	1351
 	bne	*-253
 	endexpect
-	bne	*-254		; 5020
-	bne	*-256		; 743E FEFE (displacement -260     = 0xfffefc)
-	bne	*-0xfffa	; 743E 0003 (displacement -0xfffe  = 0xff0002)
-	bne	*-0xfffc	; 743E 0001 (displacement -0x10000 = 0xff0000)
-	bne	*-0x1fffa	; 742E 0003 (displacement -0x1fffe = 0xfe0002)
-	bne	*-0x1fffc	; 742E 0001 (displacement -0x20000 = 0xfe0000)
-	bne	*-0x2fffa	; 743C 0003 (displacement -0x2fffe = 0xfd0002)
-	bne	*-0x2fffc	; 743C 0001 (displacement -0x30000 = 0xfd0000)
+	bne	*-256		; 5020
+	bne	*-258		; 743E FEFF (displacement -258     = 0xfffefe)
+	bne	*-0xfffe	; 743E 0003 (displacement -0xfffe  = 0xff0002)
+	bne	*-0x10000	; 743E 0001 (displacement -0x10000 = 0xff0000)
+	bne	*-0x1fffe	; 742E 0003 (displacement -0x1fffe = 0xfe0002)
+	bne	*-0x20000	; 742E 0001 (displacement -0x20000 = 0xfe0000)
+	bne	*-0x2fffe	; 743C 0003 (displacement -0x2fffe = 0xfd0002)
+	bne	*-0x30000	; 743C 0001 (displacement -0x30000 = 0xfd0000)
 
 	expect	1445
 	bne0b	r7,*+2
 	endexpect
 	expect	1370
-	bne0b	r9,*
+	bne0b	r9,*-2
 	endexpect
-	bne0b	r9,*+2		; 15A1
-	bne0b	r9,*+32		; 15BF
+	bne0b	r9,*		; 15A1
+	bne0b	r9,*+2		; 15A3
+	bne0b	r9,*+30		; 15BF
 	expect	1370
-	bne0b	r9,*+34
+	bne0b	r9,*+32
 	endexpect
 
 	expect	1445
 	bne0w	r7,*+2
 	endexpect
 	expect	1370
-	bne0w	r9,*
+	bne0w	r9,*-2
 	endexpect
-	bne0w	r9,*+2		; 35A1
-	bne0w	r9,*+32		; 35BF
+	bne0w	r9,*		; 35A1
+	bne0w	r9,*+2		; 35A3
+	bne0w	r9,*+30		; 35BF
 	expect	1370
-	bne0w	r9,*+34
+	bne0w	r9,*+32
 	endexpect
 
 	expect	1445
 	bne1b	r7,*+2
 	endexpect
 	expect	1370
-	bne1b	r9,*
+	bne1b	r9,*-2
 	endexpect
-	bne1b	r9,*+2		; 15E1
-	bne1b	r9,*+32		; 15FF
+	bne1b	r9,*		; 15E1
+	bne1b	r9,*+2		; 15E3
+	bne1b	r9,*+30		; 15FF
 	expect	1370
-	bne1b	r9,*+34
+	bne1b	r9,*+32
 	endexpect
 
 	expect	1445
 	bne1w	r7,*+2
 	endexpect
 	expect	1370
-	bne1w	r9,*
+	bne1w	r9,*-2
 	endexpect
-	bne1w	r9,*+2		; 35E1
-	bne1w	r9,*+32		; 35FF
+	bne1w	r9,*		; 35E1
+	bne1w	r9,*+2		; 35E3
+	bne1w	r9,*+30		; 35FF
 	expect	1370
-	bne1w	r9,*+34
+	bne1w	r9,*+32
 	endexpect
 
-	bge	*		; 5FBE
-	bge	*+2		; 41A0
+	bge	*		; 41A0
+	bge	*-2		; 5FBE
+	bge	*+2		; 41A2
 	expect	1351
 	bge	*+255
 	endexpect
-	bge	*+256		; 4FBE
-	bge	*+258		; 75A0 00FE (displacement 0x0000fe)
-	bge	*+0x10002	; 75A0 FFFE (displacement 0x00fffe)
-	bge	*+0x10004	; 75B0 0000 (displacement 0x010000)
-	bge	*+0x20002	; 75B0 FFFE (displacement 0x01fffe)
-	bge	*+0x20004	; 75A2 0000 (displacement 0x020000)
-	bge	*+0x30002	; 75A2 FFFE (displacement 0x02fffe)
-	bge	*+0x30004	; 75B2 0000 (displacement 0x030000)
+	bge	*+254		; 4FBE
+	bge	*+256		; 75A0 0100 (displacement 0x000100)
+	bge	*+0x0fffe	; 75A0 FFFE (displacement 0x00fffe)
+	bge	*+0x10000	; 75B0 0000 (displacement 0x010000)
+	bge	*+0x1fffe	; 75B0 FFFE (displacement 0x01fffe)
+	bge	*+0x20000	; 75A2 0000 (displacement 0x020000)
+	bge	*+0x2fffe	; 75A2 FFFE (displacement 0x02fffe)
+	bge	*+0x30000	; 75B2 0000 (displacement 0x030000)
 	expect	1351
 	bge	*-253
 	endexpect
-	bge	*-254		; 51A0
-	bge	*-256		; 75BE FEFE (displacement -260     = 0xfffefc)
-	bge	*-0xfffa	; 75BE 0003 (displacement -0xfffe  = 0xff0002)
-	bge	*-0xfffc	; 75BE 0001 (displacement -0x10000 = 0xff0000)
-	bge	*-0x1fffa	; 75AE 0003 (displacement -0x1fffe = 0xfe0002)
-	bge	*-0x1fffc	; 75AE 0001 (displacement -0x20000 = 0xfe0000)
-	bge	*-0x2fffa	; 75BC 0003 (displacement -0x2fffe = 0xfd0002)
-	bge	*-0x2fffc	; 75BC 0001 (displacement -0x30000 = 0xfd0000)
+	bge	*-256		; 51A0
+	bge	*-258		; 75BE FEFF (displacement -258     = 0xfffefe)
+	bge	*-0xfffe	; 75BE 0003 (displacement -0xfffe  = 0xff0002)
+	bge	*-0x10000	; 75BE 0001 (displacement -0x10000 = 0xff0000)
+	bge	*-0x1fffe	; 75AE 0003 (displacement -0x1fffe = 0xfe0002)
+	bge	*-0x20000	; 75AE 0001 (displacement -0x20000 = 0xfe0000)
+	bge	*-0x2fffe	; 75BC 0003 (displacement -0x2fffe = 0xfd0002)
+	bge	*-0x30000	; 75BC 0001 (displacement -0x30000 = 0xfd0000)
 
-	bcs	*		; 5E5E
-	bcs	*+2		; 4040
+	bcs	*		; 4040
+	bcs	*-2		; 5E5E
+	bcs	*+2		; 4042
 	expect	1351
 	bcs	*+255
 	endexpect
-	bcs	*+256		; 4E5E
-	bcs	*+258		; 7440 00FE (displacement 0x0000fe)
-	bcs	*+0x10002	; 7440 FFFE (displacement 0x00fffe)
-	bcs	*+0x10004	; 7450 0000 (displacement 0x010000)
-	bcs	*+0x20002	; 7450 FFFE (displacement 0x01fffe)
-	bcs	*+0x20004	; 7442 0000 (displacement 0x020000)
-	bcs	*+0x30002	; 7442 FFFE (displacement 0x02fffe)
-	bcs	*+0x30004	; 7452 0000 (displacement 0x030000)
+	bcs	*+254		; 4E5E
+	bcs	*+256		; 7440 0100 (displacement 0x000100)
+	bcs	*+0x0fffe	; 7440 FFFE (displacement 0x00fffe)
+	bcs	*+0x10000	; 7450 0000 (displacement 0x010000)
+	bcs	*+0x1fffe	; 7450 FFFE (displacement 0x01fffe)
+	bcs	*+0x20000	; 7442 0000 (displacement 0x020000)
+	bcs	*+0x2fffe	; 7442 FFFE (displacement 0x02fffe)
+	bcs	*+0x30000	; 7452 0000 (displacement 0x030000)
 	expect	1351
 	bcs	*-253
 	endexpect
-	bcs	*-254		; 5040
-	bcs	*-256		; 745E FEFE (displacement -260     = 0xfffefc)
-	bcs	*-0xfffa	; 745E 0003 (displacement -0xfffe  = 0xff0002)
-	bcs	*-0xfffc	; 745E 0001 (displacement -0x10000 = 0xff0000)
-	bcs	*-0x1fffa	; 744E 0003 (displacement -0x1fffe = 0xfe0002)
-	bcs	*-0x1fffc	; 744E 0001 (displacement -0x20000 = 0xfe0000)
-	bcs	*-0x2fffa	; 745C 0003 (displacement -0x2fffe = 0xfd0002)
-	bcs	*-0x2fffc	; 745C 0001 (displacement -0x30000 = 0xfd0000)
+	bcs	*-256		; 5040
+	bcs	*-258		; 745E FEFF (displacement -258     = 0xfffefe)
+	bcs	*-0xfffe	; 745E 0003 (displacement -0xfffe  = 0xff0002)
+	bcs	*-0x10000	; 745E 0001 (displacement -0x10000 = 0xff0000)
+	bcs	*-0x1fffe	; 744E 0003 (displacement -0x1fffe = 0xfe0002)
+	bcs	*-0x20000	; 744E 0001 (displacement -0x20000 = 0xfe0000)
+	bcs	*-0x2fffe	; 745C 0003 (displacement -0x2fffe = 0xfd0002)
+	bcs	*-0x30000	; 745C 0001 (displacement -0x30000 = 0xfd0000)
 
-	bcc	*		; 5E7E
-	bcc	*+2		; 4060
+	bcc	*		; 4060
+	bcc	*-2		; 5E7E
+	bcc	*+2		; 4062
 	expect	1351
 	bcc	*+255
 	endexpect
-	bcc	*+256		; 4E6E
-	bcc	*+258		; 7470 00FE (displacement 0x0000fe)
-	bcc	*+0x10002	; 7470 FFFE (displacement 0x00fffe)
-	bcc	*+0x10004	; 7470 0000 (displacement 0x010000)
-	bcc	*+0x20002	; 7470 FFFE (displacement 0x01fffe)
-	bcc	*+0x20004	; 7462 0000 (displacement 0x020000)
-	bcc	*+0x30002	; 7462 FFFE (displacement 0x02fffe)
-	bcc	*+0x30004	; 7472 0000 (displacement 0x030000)
+	bcc	*+254		; 4E7E
+	bcc	*+256		; 7460 0100 (displacement 0x000100)
+	bcc	*+0x0fffe	; 7460 FFFE (displacement 0x00fffe)
+	bcc	*+0x10000	; 7470 0000 (displacement 0x010000)
+	bcc	*+0x1fffe	; 7470 FFFE (displacement 0x01fffe)
+	bcc	*+0x20000	; 7462 0000 (displacement 0x020000)
+	bcc	*+0x2fffe	; 7462 FFFE (displacement 0x02fffe)
+	bcc	*+0x30000	; 7472 0000 (displacement 0x030000)
 	expect	1351
 	bcc	*-253
 	endexpect
-	bcc	*-254		; 5060
-	bcc	*-256		; 747E FEFE (displacement -260     = 0xfffefc)
-	bcc	*-0xfffa	; 747E 0003 (displacement -0xfffe  = 0xff0002)
-	bcc	*-0xfffc	; 747E 0001 (displacement -0x10000 = 0xff0000)
-	bcc	*-0x1fffa	; 746E 0003 (displacement -0x1fffe = 0xfe0002)
-	bcc	*-0x1fffc	; 746E 0001 (displacement -0x20000 = 0xfe0000)
-	bcc	*-0x2fffa	; 747C 0003 (displacement -0x2fffe = 0xfd0002)
-	bcc	*-0x2fffc	; 747C 0001 (displacement -0x30000 = 0xfd0000)
+	bcc	*-256		; 5060
+	bcc	*-258		; 747E FEFF (displacement -258     = 0xfffefe)
+	bcc	*-0xfffe	; 747E 0003 (displacement -0xfffe  = 0xff0002)
+	bcc	*-0x10000	; 747E 0001 (displacement -0x10000 = 0xff0000)
+	bcc	*-0x1fffe	; 746E 0003 (displacement -0x1fffe = 0xfe0002)
+	bcc	*-0x20000	; 746E 0001 (displacement -0x20000 = 0xfe0000)
+	bcc	*-0x2fffe	; 747C 0003 (displacement -0x2fffe = 0xfd0002)
+	bcc	*-0x30000	; 747C 0001 (displacement -0x30000 = 0xfd0000)
 
-	bhi	*		; 5E9E
-	bhi	*+2		; 4080
+	bhi	*		; 4080
+	bhi	*-2		; 5E9E
+	bhi	*+2		; 4082
 	expect	1351
 	bhi	*+255
 	endexpect
-	bhi	*+256		; 4E8E
-	bhi	*+258		; 7480 00FE (displacement 0x0000fe)
-	bhi	*+0x10002	; 7480 FFFE (displacement 0x00fffe)
-	bhi	*+0x10004	; 7490 0000 (displacement 0x010000)
-	bhi	*+0x20002	; 7490 FFFE (displacement 0x01fffe)
-	bhi	*+0x20004	; 7482 0000 (displacement 0x020000)
-	bhi	*+0x30002	; 7482 FFFE (displacement 0x02fffe)
-	bhi	*+0x30004	; 7492 0000 (displacement 0x030000)
+	bhi	*+254		; 4E9E
+	bhi	*+256		; 7480 0100 (displacement 0x000100)
+	bhi	*+0x0fffe	; 7480 FFFE (displacement 0x00fffe)
+	bhi	*+0x10000	; 7490 0000 (displacement 0x010000)
+	bhi	*+0x1fffe	; 7490 FFFE (displacement 0x01fffe)
+	bhi	*+0x20000	; 7482 0000 (displacement 0x020000)
+	bhi	*+0x2fffe	; 7482 FFFE (displacement 0x02fffe)
+	bhi	*+0x30000	; 7492 0000 (displacement 0x030000)
 	expect	1351
 	bhi	*-253
 	endexpect
-	bhi	*-254		; 5080
-	bhi	*-256		; 749E FEFE (displacement -260     = 0xfffefc)
-	bhi	*-0xfffa	; 749E 0003 (displacement -0xfffe  = 0xff0002)
-	bhi	*-0xfffc	; 749E 0001 (displacement -0x10000 = 0xff0000)
-	bhi	*-0x1fffa	; 748E 0003 (displacement -0x1fffe = 0xfe0002)
-	bhi	*-0x1fffc	; 748E 0001 (displacement -0x20000 = 0xfe0000)
-	bhi	*-0x2fffa	; 749C 0003 (displacement -0x2fffe = 0xfd0002)
-	bhi	*-0x2fffc	; 749C 0001 (displacement -0x30000 = 0xfd0000)
+	bhi	*-256		; 5080
+	bhi	*-258		; 749E FEFF (displacement -258     = 0xfffefe)
+	bhi	*-0xfffe	; 749E 0003 (displacement -0xfffe  = 0xff0002)
+	bhi	*-0x10000	; 749E 0001 (displacement -0x10000 = 0xff0000)
+	bhi	*-0x1fffe	; 748E 0003 (displacement -0x1fffe = 0xfe0002)
+	bhi	*-0x20000	; 748E 0001 (displacement -0x20000 = 0xfe0000)
+	bhi	*-0x2fffe	; 749C 0003 (displacement -0x2fffe = 0xfd0002)
+	bhi	*-0x30000	; 749C 0001 (displacement -0x30000 = 0xfd0000)
 
-	bls	*		; 5EBE
-	bls	*+2		; 40A0
+	bls	*		; 40A0
+	bls	*-2		; 5EBE
+	bls	*+2		; 40A2
 	expect	1351
 	bls	*+255
 	endexpect
-	bls	*+256		; 4EBE
-	bls	*+258		; 74A0 00FE (displacement 0x0000fe)
-	bls	*+0x10002	; 74A0 FFFE (displacement 0x00fffe)
-	bls	*+0x10004	; 74B0 0000 (displacement 0x010000)
-	bls	*+0x20002	; 74B0 FFFE (displacement 0x01fffe)
-	bls	*+0x20004	; 74A2 0000 (displacement 0x020000)
-	bls	*+0x30002	; 74A2 FFFE (displacement 0x02fffe)
-	bls	*+0x30004	; 74B2 0000 (displacement 0x030000)
+	bls	*+254		; 4EBE
+	bls	*+256		; 74A0 0100 (displacement 0x000100)
+	bls	*+0x0fffe	; 74A0 FFFE (displacement 0x00fffe)
+	bls	*+0x10000	; 74B0 0000 (displacement 0x010000)
+	bls	*+0x1fffe	; 74B0 FFFE (displacement 0x01fffe)
+	bls	*+0x20000	; 74A2 0000 (displacement 0x020000)
+	bls	*+0x2fffe	; 74A2 FFFE (displacement 0x02fffe)
+	bls	*+0x30000	; 74B2 0000 (displacement 0x030000)
 	expect	1351
 	bls	*-253
 	endexpect
-	bls	*-254		; 50A0
-	bls	*-256		; 74BE FEFE (displacement -260     = 0xfffefc)
-	bls	*-0xfffa	; 74BE 0003 (displacement -0xfffe  = 0xff0002)
-	bls	*-0xfffc	; 74BE 0001 (displacement -0x10000 = 0xff0000)
-	bls	*-0x1fffa	; 74AE 0003 (displacement -0x1fffe = 0xfe0002)
-	bls	*-0x1fffc	; 74AE 0001 (displacement -0x20000 = 0xfe0000)
-	bls	*-0x2fffa	; 74BC 0003 (displacement -0x2fffe = 0xfd0002)
-	bls	*-0x2fffc	; 74BC 0001 (displacement -0x30000 = 0xfd0000)
+	bls	*-256		; 50A0
+	bls	*-258		; 74BE FEFF (displacement -258     = 0xfffefe)
+	bls	*-0xfffe	; 74BE 0003 (displacement -0xfffe  = 0xff0002)
+	bls	*-0x10000	; 74BE 0001 (displacement -0x10000 = 0xff0000)
+	bls	*-0x1fffe	; 74AE 0003 (displacement -0x1fffe = 0xfe0002)
+	bls	*-0x20000	; 74AE 0001 (displacement -0x20000 = 0xfe0000)
+	bls	*-0x2fffe	; 74BC 0003 (displacement -0x2fffe = 0xfd0002)
+	bls	*-0x30000	; 74BC 0001 (displacement -0x30000 = 0xfd0000)
 
-	blo	*		; 5F5E
-	blo	*+2		; 4140
+	blo	*		; 4140
+	blo	*-2		; 5F5E
+	blo	*+2		; 4142
 	expect	1351
 	blo	*+255
 	endexpect
-	blo	*+256		; 4F5E
-	blo	*+258		; 7540 00FE (displacement 0x0000fe)
-	blo	*+0x10002	; 7540 FFFE (displacement 0x00fffe)
-	blo	*+0x10004	; 7550 0000 (displacement 0x010000)
-	blo	*+0x20002	; 7550 FFFE (displacement 0x01fffe)
-	blo	*+0x20004	; 7542 0000 (displacement 0x020000)
-	blo	*+0x30002	; 7542 FFFE (displacement 0x02fffe)
-	blo	*+0x30004	; 7552 0000 (displacement 0x030000)
+	blo	*+254		; 4F5E
+	blo	*+256		; 7540 0100 (displacement 0x000100)
+	blo	*+0x0fffe	; 7540 FFFE (displacement 0x00fffe)
+	blo	*+0x10000	; 7550 0000 (displacement 0x010000)
+	blo	*+0x1fffe	; 7550 FFFE (displacement 0x01fffe)
+	blo	*+0x20000	; 7542 0000 (displacement 0x020000)
+	blo	*+0x2fffe	; 7542 FFFE (displacement 0x02fffe)
+	blo	*+0x30000	; 7552 0000 (displacement 0x030000)
 	expect	1351
 	blo	*-253
 	endexpect
-	blo	*-254		; 5140
-	blo	*-256		; 755E FEFE (displacement -260     = 0xfffefc)
-	blo	*-0xfffa	; 755E 0003 (displacement -0xfffe  = 0xff0002)
-	blo	*-0xfffc	; 755E 0001 (displacement -0x10000 = 0xff0000)
-	blo	*-0x1fffa	; 754E 0003 (displacement -0x1fffe = 0xfe0002)
-	blo	*-0x1fffc	; 754E 0001 (displacement -0x20000 = 0xfe0000)
-	blo	*-0x2fffa	; 755C 0003 (displacement -0x2fffe = 0xfd0002)
-	blo	*-0x2fffc	; 755C 0001 (displacement -0x30000 = 0xfd0000)
+	blo	*-256		; 5140
+	blo	*-258		; 755E FEFF (displacement -258     = 0xfffefc)
+	blo	*-0xfffe	; 755E 0003 (displacement -0xfffe  = 0xff0002)
+	blo	*-0x10000	; 755E 0001 (displacement -0x10000 = 0xff0000)
+	blo	*-0x1fffe	; 754E 0003 (displacement -0x1fffe = 0xfe0002)
+	blo	*-0x20000	; 754E 0001 (displacement -0x20000 = 0xfe0000)
+	blo	*-0x2fffe	; 755C 0003 (displacement -0x2fffe = 0xfd0002)
+	blo	*-0x30000	; 755C 0001 (displacement -0x30000 = 0xfd0000)
 
-	bhs	*		; 5F7E
-	bhs	*+2		; 4160
+	bhs	*		; 4160
+	bhs	*-2		; 5F7E
+	bhs	*+2		; 4162
 	expect	1351
 	bhs	*+255
 	endexpect
-	bhs	*+256		; 4F7E
-	bhs	*+258		; 7560 00FE (displacement 0x0000fe)
-	bhs	*+0x10002	; 7560 FFFE (displacement 0x00fffe)
-	bhs	*+0x10004	; 7570 0000 (displacement 0x010000)
-	bhs	*+0x20002	; 7570 FFFE (displacement 0x01fffe)
-	bhs	*+0x20004	; 7562 0000 (displacement 0x020000)
-	bhs	*+0x30002	; 7562 FFFE (displacement 0x02fffe)
-	bhs	*+0x30004	; 7572 0000 (displacement 0x030000)
+	bhs	*+254		; 4F7E
+	bhs	*+256		; 7560 0100 (displacement 0x000100)
+	bhs	*+0x0fffe	; 7560 FFFE (displacement 0x00fffe)
+	bhs	*+0x10000	; 7570 0000 (displacement 0x010000)
+	bhs	*+0x1fffe	; 7570 FFFE (displacement 0x01fffe)
+	bhs	*+0x20000	; 7562 0000 (displacement 0x020000)
+	bhs	*+0x2fffe	; 7562 FFFE (displacement 0x02fffe)
+	bhs	*+0x30000	; 7572 0000 (displacement 0x030000)
 	expect	1351
 	bhs	*-253
 	endexpect
-	bhs	*-254		; 5160
-	bhs	*-256		; 757E FEFE (displacement -260     = 0xfffefc)
-	bhs	*-0xfffa	; 757E 0003 (displacement -0xfffe  = 0xff0002)
-	bhs	*-0xfffc	; 757E 0001 (displacement -0x10000 = 0xff0000)
-	bhs	*-0x1fffa	; 756E 0003 (displacement -0x1fffe = 0xfe0002)
-	bhs	*-0x1fffc	; 756E 0001 (displacement -0x20000 = 0xfe0000)
-	bhs	*-0x2fffa	; 757C 0003 (displacement -0x2fffe = 0xfd0002)
-	bhs	*-0x2fffc	; 757C 0001 (displacement -0x30000 = 0xfd0000)
+	bhs	*-256		; 5160
+	bhs	*-258		; 757E FEFF (displacement -258     = 0xfffefe)
+	bhs	*-0xfffe	; 757E 0003 (displacement -0xfffe  = 0xff0002)
+	bhs	*-0x10000	; 757E 0001 (displacement -0x10000 = 0xff0000)
+	bhs	*-0x1fffe	; 756E 0003 (displacement -0x1fffe = 0xfe0002)
+	bhs	*-0x20000	; 756E 0001 (displacement -0x20000 = 0xfe0000)
+	bhs	*-0x2fffe	; 757C 0003 (displacement -0x2fffe = 0xfd0002)
+	bhs	*-0x30000	; 757C 0001 (displacement -0x30000 = 0xfd0000)
 
-	bgt	*		; 5EDE
-	bgt	*+2		; 40C0
+	bgt	*		; 40C0
+	bgt	*-2		; 5EDE
+	bgt	*+2		; 40C2
 	expect	1351
 	bgt	*+255
 	endexpect
-	bgt	*+256		; 4EDE
-	bgt	*+258		; 74C0 00FE (displacement 0x0000fe)
-	bgt	*+0x10002	; 74C0 FFFE (displacement 0x00fffe)
-	bgt	*+0x10004	; 74D0 0000 (displacement 0x010000)
-	bgt	*+0x20002	; 74D0 FFFE (displacement 0x01fffe)
-	bgt	*+0x20004	; 74C2 0000 (displacement 0x020000)
-	bgt	*+0x30002	; 74C2 FFFE (displacement 0x02fffe)
-	bgt	*+0x30004	; 74D2 0000 (displacement 0x030000)
+	bgt	*+254		; 4EDE
+	bgt	*+256		; 74C0 0100 (displacement 0x000100)
+	bgt	*+0x0fffe	; 74C0 FFFE (displacement 0x00fffe)
+	bgt	*+0x10000	; 74D0 0000 (displacement 0x010000)
+	bgt	*+0x1fffe	; 74D0 FFFE (displacement 0x01fffe)
+	bgt	*+0x20000	; 74C2 0000 (displacement 0x020000)
+	bgt	*+0x2fffe	; 74C2 FFFE (displacement 0x02fffe)
+	bgt	*+0x30000	; 74D2 0000 (displacement 0x030000)
 	expect	1351
 	bgt	*-253
 	endexpect
-	bgt	*-254		; 50C0
-	bgt	*-256		; 74DE FEFE (displacement -260     = 0xfffefc)
-	bgt	*-0xfffa	; 74DE 0003 (displacement -0xfffe  = 0xff0002)
-	bgt	*-0xfffc	; 74DE 0001 (displacement -0x10000 = 0xff0000)
-	bgt	*-0x1fffa	; 74CE 0003 (displacement -0x1fffe = 0xfe0002)
-	bgt	*-0x1fffc	; 74CE 0001 (displacement -0x20000 = 0xfe0000)
-	bgt	*-0x2fffa	; 74DC 0003 (displacement -0x2fffe = 0xfd0002)
-	bgt	*-0x2fffc	; 74DC 0001 (displacement -0x30000 = 0xfd0000)
+	bgt	*-256		; 50C0
+	bgt	*-258		; 74DE FEFF (displacement -258     = 0xfffefe)
+	bgt	*-0xfffe	; 74DE 0003 (displacement -0xfffe  = 0xff0002)
+	bgt	*-0x10000	; 74DE 0001 (displacement -0x10000 = 0xff0000)
+	bgt	*-0x1fffe	; 74CE 0003 (displacement -0x1fffe = 0xfe0002)
+	bgt	*-0x20000	; 74CE 0001 (displacement -0x20000 = 0xfe0000)
+	bgt	*-0x2fffe	; 74DC 0003 (displacement -0x2fffe = 0xfd0002)
+	bgt	*-0x30000	; 74DC 0001 (displacement -0x30000 = 0xfd0000)
 
-	ble	*		; 5EFE
-	ble	*+2		; 40E0
+	ble	*		; 40E0
+	ble	*-2		; 5EFE
+	ble	*+2		; 40E2
 	expect	1351
 	ble	*+255
 	endexpect
-	ble	*+256		; 4EFE
-	ble	*+258		; 74E0 00FE (displacement 0x0000fe)
-	ble	*+0x10002	; 74E0 FFFE (displacement 0x00fffe)
-	ble	*+0x10004	; 74F0 0000 (displacement 0x010000)
-	ble	*+0x20002	; 74F0 FFFE (displacement 0x01fffe)
-	ble	*+0x20004	; 74E2 0000 (displacement 0x020000)
-	ble	*+0x30002	; 74E2 FFFE (displacement 0x02fffe)
-	ble	*+0x30004	; 74F2 0000 (displacement 0x030000)
+	ble	*+254		; 4EFE
+	ble	*+256		; 74E0 0100 (displacement 0x000100)
+	ble	*+0x0fffe	; 74E0 FFFE (displacement 0x00fffe)
+	ble	*+0x10000	; 74F0 0000 (displacement 0x010000)
+	ble	*+0x1fffe	; 74F0 FFFE (displacement 0x01fffe)
+	ble	*+0x20000	; 74E2 0000 (displacement 0x020000)
+	ble	*+0x2fffe	; 74E2 FFFE (displacement 0x02fffe)
+	ble	*+0x30000	; 74F2 0000 (displacement 0x030000)
 	expect	1351
 	ble	*-253
 	endexpect
-	ble	*-254		; 50E0
-	ble	*-256		; 74FE FEFE (displacement -260     = 0xfffefc)
-	ble	*-0xfffa	; 74FE 0003 (displacement -0xfffe  = 0xff0002)
-	ble	*-0xfffc	; 74FE 0001 (displacement -0x10000 = 0xff0000)
-	ble	*-0x1fffa	; 74EE 0003 (displacement -0x1fffe = 0xfe0002)
-	ble	*-0x1fffc	; 74EE 0001 (displacement -0x20000 = 0xfe0000)
-	ble	*-0x2fffa	; 74FC 0003 (displacement -0x2fffe = 0xfd0002)
-	ble	*-0x2fffc	; 74FC 0001 (displacement -0x30000 = 0xfd0000)
+	ble	*-256		; 50E0
+	ble	*-258		; 74FE FEFF (displacement -258     = 0xfffefe)
+	ble	*-0xfffe	; 74FE 0003 (displacement -0xfffe  = 0xff0002)
+	ble	*-0x10000	; 74FE 0001 (displacement -0x10000 = 0xff0000)
+	ble	*-0x1fffe	; 74EE 0003 (displacement -0x1fffe = 0xfe0002)
+	ble	*-0x20000	; 74EE 0001 (displacement -0x20000 = 0xfe0000)
+	ble	*-0x2fffe	; 74FC 0003 (displacement -0x2fffe = 0xfd0002)
+	ble	*-0x30000	; 74FC 0001 (displacement -0x30000 = 0xfd0000)
 
-	bfs	*		; 5F1E
-	bfs	*+2		; 4100
+	bfs	*		; 4100
+	bfs	*-2		; 5F1E
+	bfs	*+2		; 4102
 	expect	1351
 	bfs	*+255
 	endexpect
-	bfs	*+256		; 4F1E
-	bfs	*+258		; 7500 00FE (displacement 0x0000fe)
-	bfs	*+0x10002	; 7500 FFFE (displacement 0x00fffe)
-	bfs	*+0x10004	; 7510 0000 (displacement 0x010000)
-	bfs	*+0x20002	; 7510 FFFE (displacement 0x01fffe)
-	bfs	*+0x20004	; 7502 0000 (displacement 0x020000)
-	bfs	*+0x30002	; 7502 FFFE (displacement 0x02fffe)
-	bfs	*+0x30004	; 7512 0000 (displacement 0x030000)
+	bfs	*+254		; 4F1E
+	bfs	*+256		; 7500 0100 (displacement 0x000100)
+	bfs	*+0x0fffe	; 7500 FFFE (displacement 0x00fffe)
+	bfs	*+0x10000	; 7510 0000 (displacement 0x010000)
+	bfs	*+0x1fffe	; 7510 FFFE (displacement 0x01fffe)
+	bfs	*+0x20000	; 7502 0000 (displacement 0x020000)
+	bfs	*+0x2fffe	; 7502 FFFE (displacement 0x02fffe)
+	bfs	*+0x30000	; 7512 0000 (displacement 0x030000)
 	expect	1351
 	bfs	*-253
 	endexpect
-	bfs	*-254		; 5100
-	bfs	*-256		; 751E FEFE (displacement -260     = 0xfffefc)
-	bfs	*-0xfffa	; 751E 0003 (displacement -0xfffe  = 0xff0002)
-	bfs	*-0xfffc	; 751E 0001 (displacement -0x10000 = 0xff0000)
-	bfs	*-0x1fffa	; 750E 0003 (displacement -0x1fffe = 0xfe0002)
-	bfs	*-0x1fffc	; 750E 0001 (displacement -0x20000 = 0xfe0000)
-	bfs	*-0x2fffa	; 751C 0003 (displacement -0x2fffe = 0xfd0002)
-	bfs	*-0x2fffc	; 751C 0001 (displacement -0x30000 = 0xfd0000)
+	bfs	*-256		; 5100
+	bfs	*-258		; 751E FEFF (displacement -258     = 0xfffefe)
+	bfs	*-0xfffe	; 751E 0003 (displacement -0xfffe  = 0xff0002)
+	bfs	*-0x10000	; 751E 0001 (displacement -0x10000 = 0xff0000)
+	bfs	*-0x1fffe	; 750E 0003 (displacement -0x1fffe = 0xfe0002)
+	bfs	*-0x20000	; 750E 0001 (displacement -0x20000 = 0xfe0000)
+	bfs	*-0x2fffe	; 751C 0003 (displacement -0x2fffe = 0xfd0002)
+	bfs	*-0x30000	; 751C 0001 (displacement -0x30000 = 0xfd0000)
 
-	bfc	*		; 5F3E
-	bfc	*+2		; 4120
+	bfc	*		; 4120
+	bfc	*-2		; 5F3E
+	bfc	*+2		; 4122
 	expect	1351
 	bfc	*+255
 	endexpect
-	bfc	*+256		; 4F3E
-	bfc	*+258		; 7520 00FE (displacement 0x0000fe)
-	bfc	*+0x10002	; 7520 FFFE (displacement 0x00fffe)
-	bfc	*+0x10004	; 7530 0000 (displacement 0x010000)
-	bfc	*+0x20002	; 7530 FFFE (displacement 0x01fffe)
-	bfc	*+0x20004	; 7522 0000 (displacement 0x020000)
-	bfc	*+0x30002	; 7522 FFFE (displacement 0x02fffe)
-	bfc	*+0x30004	; 7532 0000 (displacement 0x030000)
+	bfc	*+254		; 4F3E
+	bfc	*+256		; 7520 0100 (displacement 0x000100)
+	bfc	*+0x0fffe	; 7520 FFFE (displacement 0x00fffe)
+	bfc	*+0x10000	; 7530 0000 (displacement 0x010000)
+	bfc	*+0x1fffe	; 7530 FFFE (displacement 0x01fffe)
+	bfc	*+0x20000	; 7522 0000 (displacement 0x020000)
+	bfc	*+0x2fffe	; 7522 FFFE (displacement 0x02fffe)
+	bfc	*+0x30000	; 7532 0000 (displacement 0x030000)
 	expect	1351
 	bfc	*-253
 	endexpect
-	bfc	*-254		; 5120
-	bfc	*-256		; 753E FEFE (displacement -260     = 0xfffefc)
-	bfc	*-0xfffa	; 753E 0003 (displacement -0xfffe  = 0xff0002)
-	bfc	*-0xfffc	; 753E 0001 (displacement -0x10000 = 0xff0000)
-	bfc	*-0x1fffa	; 752E 0003 (displacement -0x1fffe = 0xfe0002)
-	bfc	*-0x1fffc	; 752E 0001 (displacement -0x20000 = 0xfe0000)
-	bfc	*-0x2fffa	; 753C 0003 (displacement -0x2fffe = 0xfd0002)
-	bfc	*-0x2fffc	; 753C 0001 (displacement -0x30000 = 0xfd0000)
+	bfc	*-256		; 5120
+	bfc	*-258		; 753E FEFF (displacement -258     = 0xfffefe)
+	bfc	*-0xfffe	; 753E 0003 (displacement -0xfffe  = 0xff0002)
+	bfc	*-0x10000	; 753E 0001 (displacement -0x10000 = 0xff0000)
+	bfc	*-0x1fffe	; 752E 0003 (displacement -0x1fffe = 0xfe0002)
+	bfc	*-0x20000	; 752E 0001 (displacement -0x20000 = 0xfe0000)
+	bfc	*-0x2fffe	; 753C 0003 (displacement -0x2fffe = 0xfd0002)
+	bfc	*-0x30000	; 753C 0001 (displacement -0x30000 = 0xfd0000)
 
-	br	*		; 5FDE
-	br	*+2		; 41C0
+	br	*		; 41C0
+	br	*-2		; 5FDE
+	br	*+2		; 41C2
 	expect	1351
 	br	*+255
 	endexpect
-	br	*+256		; 4FDE
-	br	*+258		; 75C0 00FE (displacement 0x0000fe)
-	br	*+0x10002	; 75C0 FFFE (displacement 0x00fffe)
-	br	*+0x10004	; 75D0 0000 (displacement 0x010000)
-	br	*+0x20002	; 75D0 FFFE (displacement 0x01fffe)
-	br	*+0x20004	; 75C2 0000 (displacement 0x020000)
-	br	*+0x30002	; 75C2 FFFE (displacement 0x02fffe)
-	br	*+0x30004	; 75D2 0000 (displacement 0x030000)
+	br	*+254		; 4FDE
+	br	*+256		; 75C0 0100 (displacement 0x000100)
+	br	*+0x0fffe	; 75C0 FFFE (displacement 0x00fffe)
+	br	*+0x10000	; 75D0 0000 (displacement 0x010000)
+	br	*+0x1fffe	; 75D0 FFFE (displacement 0x01fffe)
+	br	*+0x20000	; 75C2 0000 (displacement 0x020000)
+	br	*+0x2fffe	; 75C2 FFFE (displacement 0x02fffe)
+	br	*+0x30000	; 75D2 0000 (displacement 0x030000)
 	expect	1351
 	br	*-253
 	endexpect
-	br	*-254		; 51C0
-	br	*-256		; 75DE FEFE (displacement -260     = 0xfffefc)
-	br	*-0xfffa	; 75DE 0003 (displacement -0xfffe  = 0xff0002)
-	br	*-0xfffc	; 75DE 0001 (displacement -0x10000 = 0xff0000)
-	br	*-0x1fffa	; 75CE 0003 (displacement -0x1fffe = 0xfe0002)
-	br	*-0x1fffc	; 75CE 0001 (displacement -0x20000 = 0xfe0000)
-	br	*-0x2fffa	; 75DC 0003 (displacement -0x2fffe = 0xfd0002)
-	br	*-0x2fffc	; 75DC 0001 (displacement -0x30000 = 0xfd0000)
+	br	*-256		; 51C0
+	br	*-258		; 75DE FEFF (displacement -258     = 0xfffefe)
+	br	*-0xfffe	; 75DE 0003 (displacement -0xfffe  = 0xff0002)
+	br	*-0x10000	; 75DE 0001 (displacement -0x10000 = 0xff0000)
+	br	*-0x1fffe	; 75CE 0003 (displacement -0x1fffe = 0xfe0002)
+	br	*-0x20000	; 75CE 0001 (displacement -0x20000 = 0xfe0000)
+	br	*-0x2fffe	; 75DC 0003 (displacement -0x2fffe = 0xfd0002)
+	br	*-0x30000	; 75DC 0001 (displacement -0x30000 = 0xfd0000)
 
-	blt	*		; 5F9E
-	blt	*+2		; 4180
+	blt	*		; 4180
+	blt	*-2		; 5F9E
+	blt	*+2		; 4182
 	expect	1351
 	blt	*+255
 	endexpect
-	blt	*+256		; 4F9E
-	blt	*+258		; 7580 00FE (displacement 0x0000fe)
-	blt	*+0x10002	; 7580 FFFE (displacement 0x00fffe)
-	blt	*+0x10004	; 7590 0000 (displacement 0x010000)
-	blt	*+0x20002	; 7590 FFFE (displacement 0x01fffe)
-	blt	*+0x20004	; 7582 0000 (displacement 0x020000)
-	blt	*+0x30002	; 7582 FFFE (displacement 0x02fffe)
-	blt	*+0x30004	; 7592 0000 (displacement 0x030000)
+	blt	*+254		; 4F9E
+	blt	*+256		; 7580 0100 (displacement 0x000100)
+	blt	*+0x0fffe	; 7580 FFFE (displacement 0x00fffe)
+	blt	*+0x10000	; 7590 0000 (displacement 0x010000)
+	blt	*+0x1fffe	; 7590 FFFE (displacement 0x01fffe)
+	blt	*+0x20000	; 7582 0000 (displacement 0x020000)
+	blt	*+0x2fffe	; 7582 FFFE (displacement 0x02fffe)
+	blt	*+0x30000	; 7592 0000 (displacement 0x030000)
 	expect	1351
 	blt	*-253
 	endexpect
-	blt	*-254		; 5180
-	blt	*-256		; 759E FEFE (displacement -260     = 0xfffefc)
-	blt	*-0xfffa	; 759E 0003 (displacement -0xfffe  = 0xff0002)
-	blt	*-0xfffc	; 759E 0001 (displacement -0x10000 = 0xff0000)
-	blt	*-0x1fffa	; 758E 0003 (displacement -0x1fffe = 0xfe0002)
-	blt	*-0x1fffc	; 758E 0001 (displacement -0x20000 = 0xfe0000)
-	blt	*-0x2fffa	; 759C 0003 (displacement -0x2fffe = 0xfd0002)
-	blt	*-0x2fffc	; 759C 0001 (displacement -0x30000 = 0xfd0000)
+	blt	*-256		; 5180
+	blt	*-258		; 759E FEFF (displacement -258     = 0xfffefe)
+	blt	*-0xfffe	; 759E 0003 (displacement -0xfffe  = 0xff0002)
+	blt	*-0x10000	; 759E 0001 (displacement -0x10000 = 0xff0000)
+	blt	*-0x1fffe	; 758E 0003 (displacement -0x1fffe = 0xfe0002)
+	blt	*-0x20000	; 758E 0001 (displacement -0x20000 = 0xfe0000)
+	blt	*-0x2fffe	; 759C 0003 (displacement -0x2fffe = 0xfd0002)
+	blt	*-0x30000	; 759C 0001 (displacement -0x30000 = 0xfd0000)
 
 	expect	1350
 	cbitb	6,(r2)

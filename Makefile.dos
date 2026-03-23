@@ -13,6 +13,12 @@ CURRDIR=./
 LIBM=-lm
 CHECK_TARG_CC=
 
+BINDIR:=bin
+INCDIR:=include
+MANDIR:=man
+LIBDIR:=lib
+DOCDIR:=doc
+
 # assure binaries are the default target
 
 dft: binaries
@@ -138,7 +144,7 @@ test: binaries
 	cd ..
 
 install: all $(UNUMLAUTTARGET)
-	install $(BINDIR) $(INCDIR) $(MANDIR) $(LIBDIR) $(DOCDIR)
+	install $(BINDIR) $(INCDIR) $(MANDIR) $(LIBDIR) $(DOCDIR) $(INSTROOT)
 
 clean_doc: clean_doc_DE clean_doc_EN
 
@@ -160,7 +166,7 @@ clean: clean_doc
 
 bindist-zip: $(UNUMLAUTTARGET) all
 	mkdir as
-	install as\bin as\include as\man as\lib as\doc
+	install bin include man lib doc as
 	cd as
 	zip -9 -r ..\as$(VERSION) *.*
 	cd ..

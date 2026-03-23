@@ -23,8 +23,4 @@ TARG_LD = $(LD)
 TARG_LDFLAGS = $(LDFLAGS)
 TARG_EXEXTENSION = $(HOST_EXEXTENSION)
 
-BINDIR = /usr/local/bin
-INCDIR = /usr/local/include/asl
-MANDIR = /usr/local/man
-LIBDIR =
-DOCDIR = /usr/local/doc/asl
+INSTROOT:=/usr/local

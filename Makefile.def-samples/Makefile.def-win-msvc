@@ -38,11 +38,7 @@ TARG_LDFLAGS = $(LDFLAGS)
 TARG_EXEXTENSION = $(HOST_EXEXTENSION)
 
 # -------------------------------------------------------------------------
-# directories where binaries, includes, and manpages should go during
-# installation
+# directory where binaries, includes, and manpages should go during
+# installation:
 
-BINDIR = C:/ASL/bin
-INCDIR = C:/ASL/include
-MANDIR = C:/ASL/man
-LIBDIR =
-DOCDIR = C:/ASL/doc
+INSTROOT:=C:/ASL

@@ -23,10 +23,7 @@ TARG_LDFLAGS = $(LDFLAGS)
 TARG_EXEXTENSION = $(HOST_EXEXTENSION)
 
 # -------------------------------------------------------------------------
-# directories where binaries, includes, and manpages should go during
-# installation
+# directory where binaries, includes, and manpages should go during
+# installation:
 
-BINDIR = .
-INCDIR = m:/as/include
-MANDIR = .
-LIBDIR =
+INSTROOT:=m:/as

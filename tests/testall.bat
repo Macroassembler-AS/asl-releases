@@ -9,7 +9,7 @@ set ASCMD=@asflags
 ..\..\asl -i ..\..\include -L +t 31 %1.asm
 set ASCMD=
 set P2BINCMD=@p2binflags
-..\..\p2bin -k -l 0 -r $-$ %1
+..\..\p2bin -k -l 0 %1
 set P2BINCMD=
 ..\..\bincmp %1.bin %1.ori
 if errorlevel 1 goto errcond

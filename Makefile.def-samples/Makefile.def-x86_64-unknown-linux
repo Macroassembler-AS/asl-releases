@@ -21,11 +21,7 @@ TARG_LDFLAGS = $(LDFLAGS)
 TARG_EXEXTENSION = $(HOST_EXEXTENSION)
 
 # -------------------------------------------------------------------------
-# directories where binaries, includes, and manpages should go during
-# installation
+# directory where binaries, includes, and manpages should go during
+# installation:
 
-BINDIR = /usr/local/bin
-INCDIR = /usr/local/include/asl
-MANDIR = /usr/local/man
-LIBDIR =
-DOCDIR = /usr/local/doc/asl
+INSTROOT:=/usr/local

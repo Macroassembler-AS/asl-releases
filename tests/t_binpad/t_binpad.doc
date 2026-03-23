@@ -1,0 +1,6 @@
++------------------------ Test Application BINPAD ---------------------------+
+|                                                                            |
+| Test that padding a binary file with a certain value works.  This was a    |
+| regression in 1.42 Bld 300, and was fixed in 1.42 Bld 302.                 |
+|                                                                            |
++----------------------------------------------------------------------------+

@@ -1,4 +1,9 @@
-2026-03-11  [1.42 Bld 301]
+2026-03-23 [1.42 Bld 302]
+
+- Bugfix      : CR16A/B: Correct PC-relative addressing
+- Bugfix      : correct padding of P2BIN
+
+2026-03-11 [1.42 Bld 301]
 
 - Addition    : Extend iso650 address space to 4096 bytes.
 - Addition    : Add National CR16A/B target.

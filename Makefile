@@ -16,6 +16,12 @@ LIBM=-lm
 CHECK_TARG_CC=check_targ_cc_unix
 MAKEDEFS_RC=makedefs.nul
 
+BINDIR:=bin
+INCDIR:=include/asl
+MANDIR:=man
+LIBDIR:=
+DOCDIR:=doc/asl
+
 # assure binaries are the default target
 
 dft: binaries
@@ -149,12 +155,12 @@ distdir: all $(UNUMLAUTTARGET)
 	@if test "$(VERSION)" = ""; then echo "VERSION is not set - please specify VERSION=... as argument"; exit 1; fi; exit 0
 	mkdir asl-$(VERSION)
 	chmod 755 asl-$(VERSION)
-	OBJDIR=$(OBJDIR) TARG_OBJDIR=$(TARG_OBJDIR) TARG_EXEXTENSION=$(TARG_EXEXTENSION) INSTROOT=asl-$(VERSION)/ ./install.sh bin include man lib doc
+	INSTROOT=asl-$(VERSION)/ OBJDIR=$(OBJDIR) TARG_OBJDIR=$(TARG_OBJDIR) TARG_EXEXTENSION=$(TARG_EXEXTENSION) INSTROOT=asl-$(VERSION)/ ./install.sh bin include man lib doc
 
 win32-distdir: all $(UNUMLAUTTARGET)
 	rm -rf as
 	mkdir as
-	cmd /cinstw32.cmd as\\bin as\\include as\\man as\\lib as\\doc
+	cmd /cinstw32.cmd bin include man lib doc as
 
 bindist-tgz: distdir
 	tar cvf asl-$(VERSION)-bin.tar asl-$(VERSION)

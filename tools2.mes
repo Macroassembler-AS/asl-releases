@@ -60,8 +60,12 @@ Message ErrMsgTargMissing
  "destination file specification missing!"
  
 Message ErrMsgAutoFailed
- "automatische Bereichserkennung fehlgeschlagen!"
- "automatic range setting failed!"
+ "Automatische Bereichserkennung fehlgeschlagen, leere Quelldatei(en)?"
+ "automatic range setting failed, empty source file(s)?"
+
+Message ErrMsgMaxGranFailed
+ "Ermittlung der Adre&szlig;raum-Granularit&auml;t fehlgeschlagen, leere Quelldatei(en)?"
+ "address space granularity deduction failed, empty source file(s)?"
 
 Message ErrMsgOverlap
  "Warnung: &uuml;berlappende Belegung!"
