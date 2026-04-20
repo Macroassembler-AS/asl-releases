@@ -597,18 +597,18 @@ char *USHyphens[]=
 
 /* Patterns for standard Hyphenation Pattern Memory of 8000.
    Can be used with all standard TeX versions.
-   Hyphenation trie becomes 6661 with 229 ops.
+   Hyphenation trie becomes 6772 with 229 ops. (including above)
    These patterns are based on the Hyphenation Exception Log
    published in TUGboat, Volume 10 (1989), No. 3, pp. 337-341,
    and a large number of bad hyphened words not yet published.
-   If added to Liang's before the closing bracket } of \patterns,
-   the patterns run errorfree as far as known at this moment.
+   Please send bugs or suggestions to tex-live (at) tug.org.
    Patterns do not find all admissible hyphens of the words in
    the Exception Log. The file ushyphen.max do.
    Can be used freely for non-commercial purposes.
-   Copyright 1990 G.D.C. Kuiken. e-mail: wbahkui@hdetud1.tudelft.nl
-   Postal address: P.O. Box 65791, NL 2506 EB Den Haag, Holland.
-   Patterns of March 1, 1990. */
+   Copyright (C) 1990, 2004, 2005 Gerard D.C. Kuiken.
+   Copying and distribution of this file, with or without modification,
+   are permitted in any medium without royalty provided the copyright
+   notice and this notice are preserved.   Patterns of March 1, 1990. */
 
  ".driv4 .eth1y6l1 .eu4ler .ev2 .ga4som .ge4ome",
  ".he3p6a .in5u2t .kil2ni .ko6rte .le6ice .me4gal",
@@ -666,7 +666,7 @@ char *USHyphens[]=
  "tropo5lis tropol5it tsch5ie ttribut5 turn5ar t1wh",
  "ty4pal u2ral. v3ativ va6guer v5ereig voice5p waste3w6",
  "waveg4 w3c week3n wide5sp wo4ken wrap5aro x1q",
- "xquis3 y5ched ym5etry y3stro z2z3w z2z3w",
+ "xquis3 y5ched ym5etry y3stro z2z3w",
 #endif
  NULL
 };

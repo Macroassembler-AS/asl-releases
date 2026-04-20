@@ -69,7 +69,7 @@
 
 \vspace{1cm}\par
 
-{\large Edition March 2026}
+{\large Edition April 2026}
 \end{raggedright}
 
 \clearpage
@@ -300,7 +300,7 @@ following processor families have been implemented:
 \item{National Semiconductor COP8}
 \item{National Semiconductor SC144xx}
 \item{National Semiconductor NS32xxx}
-\item{National Semiconductor CR16A/B}
+\item{National Semiconductor CR16A/B/C}
 \item{Olympia CP-3F (resp. SGS M380, GI LP8000)}
 \item{Fairchild ACE}
 \item{Fairchild F8}
@@ -4164,10 +4164,12 @@ for bit block transfers.
 \end{cpulist}
 %%-----------
 \begin{cpulist}
-   CR16A $\rightarrow$ CR16B
+   CR16A $\rightarrow$ CR16B $\rightarrow$ CR16
 \end{cpulist}
 CR16B extends the address from 256 KBytes to 2 MBytes and provides a
-couple of new instructions.
+couple of new instructions.  CR16C again extends it to 16 MBytes, it
+is however only source and no longer binary upward compatible to its
+predecessors.
 %%-----------
 \begin{cpulist}
    F3850, MK3850, \\
@@ -4478,8 +4480,9 @@ certain target supports such options.
 
 {\em
 \begin{itemize}
-\item{SUPMODE valid for: 680x0, NS32xxx, PDP-11, i960, TLCS-900,
-      SH7000, i960, 29K, Z280, XA, PowerPC, M*Core, V60, and TMS9900}
+\item{SUPMODE valid for: 680x0, NS32xxx, CR16C, PDP-11, i960,
+      TLCS-900, SH7000, i960, 29K, Z280, XA, PowerPC, M*Core,
+      V60, and TMS9900}
 \item{FPU valid for: 680x0, NS32xxx, 80x86, WE32xxx}
 \item{PMMU valid for: 680x0, NS32xxx}
 \item{CUSTOM valid for: NS32xxx}
@@ -5362,6 +5365,29 @@ The processor provides an input pin named {\tt BPS} to select which address
 range shall be directly addressable: either the first 256 words, or both
 the lowest and topmost 128 words.  The first variant is the default, an
 {\tt ASSUME BPS:1} switches to the second variant.
+
+%%. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+\subsubsection{CR16C}
+
+The CR16C may operate in an alternate mode that limits the size of registers
+\tty{R12...SP} to 16 bits, to provide better architectural upward compatibility to
+its predecessors.  The mode may be activated via the \tty{SR} bit in the
+\tty{CFG} register, and has the following additional effects on the programming
+model:
+\begin{itemize}
+\item{Additional 16 bit register pairs are available: \tty{(R13\_L,R12\_L)},
+      \tty{(RA\_L,R13\_L)}, \tty{(SP\_L,RA\_L)}, and \tty{(SP\_H,SP\_L)}.}
+\item{Index mode addressing (\tty{[Rn]abs20, [Rn]disp(rp)}) is not allowed.}
+\item{Some instructions allow shorter forms for the addressing mode \tty{disp(reg)}
+      if the displacement is either zero or smaller than 0x4000.}
+\end{itemize}
+The runtime setting of this flag may be announced via a
+\begin{verbatim}
+   assume sr:n
+\end{verbatim}
+statenemt, with \tty{n} either being zero or one.  The default is zero, i.e. all
+registers have their native width and index mode addressing is allowed.
 
 %%. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
@@ -13092,6 +13118,18 @@ described by:
                {The number of options given with this command is not
                 correct.}
                {none}
+\errentry{1116}{unknown option}
+               {error}
+               {An option of this name does not exist.}
+               {the option in question}
+\errentry{1117}{duplicate option}
+               {error}
+               {Options must not be listed more than once.}
+               {the option in question}
+\errentry{1118}{unsupported option list}
+               {error}
+               {Options must not be used in this combination.}
+               {the option list in question}
 \errentry{1120}{addressing mode must be immediate}
                {error}
                {The instruction can be used only with immediate operands
@@ -13372,6 +13410,18 @@ described by:
                {The MMU type used as argument for \tty{PMMU} command is
                 unknown to \asname{}.}
                {the unknown MMU type}
+\errentry{1437}{invalid processor register}
+               {error}
+               {A processor register of this name does not exist.}
+               {the register in question}
+\errentry{1438}{invalid base register}
+               {error}
+               {This register must not be used as base at this place.}
+               {the register in question}
+\errentry{1439}{invalid index register}
+               {error}
+               {This register must not be used as index at this place.}
+               {the register in question}
 \errentry{1440}{invalid control register}
                {error}
                {The control register used by a \tty{MOVEC} is not (yet) available
@@ -14732,8 +14782,8 @@ Ernst Ahlers, Charles Altmann, Marco Awater, Len Bayles, Andreas
 Bolsch, Rolf Buchholz, Bernd Casimir, Nils Eilers, Gunther Ewald,
 Daniel E. Germann, Michael Haardt, Stephan Hruschka, Fred van
 Kempen, Peter Kliegelh\"ofer, Ulf Meinke, Udo M\"oller, Matthias
-Paul, Norbert Rosch, Curt J.  Sampson, Steffen Schmid, Leonhard
-Schneider, Ernst Schwab, Michael Schwingen, Oliver Sellke,
+Paul, Moshe Piekarski, Norbert Rosch, Curt J.  Sampson, Steffen Schmid,
+Leonhard Schneider, Ernst Schwab, Michael Schwingen, Oliver Sellke,
 Christian Stelter, Patrik Str\"omdahl, Tadashi G.  Takaoka,
 Oliver Thamm, Thorsten Thiele, Leszek Ulman, Rob Warmelink,
 Andreas Wassatsch, John Weinrich.

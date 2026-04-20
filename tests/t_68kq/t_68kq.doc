@@ -5,6 +5,6 @@
 | embarrassing I f**ed up ADDQ/SUBQ with a recent rework.  Sadly, there      |
 | is so far no systematic test for the 68K instruction set, the 68K target   |
 | is simply from a time when I did not implement tests.  But at least, here  |
-| is a small taet for the ...Q instructions...                               |
+| is a small test for the ...Q instructions...                               |
 |                                                                            |
 +----------------------------------------------------------------------------+

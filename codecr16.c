@@ -215,6 +215,7 @@ static adr_mode_t reset_adr_vals(adr_vals_t *p_vals)
 static void append_adr_vals(const adr_vals_t *p_vals)
 {
   int z;
+  set_w_guessed(p_vals->disp_flags, CodeLen >> 1, p_vals->val_cnt, 0xffff);
   for (z = 0; z < p_vals->val_cnt; z++)
     append_word(p_vals->vals[z]);
 }
@@ -498,10 +499,11 @@ static Boolean decode_14(const tStrComp *p_arg, Word *p_result, tSymbolFlags *p_
 }
 
 /*!------------------------------------------------------------------------
- * \fn     decode_vector(const tStrComp *p_arg, Word *p_dest)
+ * \fn     decode_cr16_vector(const tStrComp *p_arg, Word *p_dest, cr16_gen_t gen)
  * \brief  parse exception vector name
  * \param  p_arg source argument
  * \param  p_dest dest buffer for vector #
+ * \param  gen CR16 core generation (A, B, C)
  * \return True if parsing succeeded
  * ------------------------------------------------------------------------ */
 
@@ -511,25 +513,29 @@ typedef struct
   Byte num;
 } vector_t;
 
-static Boolean decode_vector(const tStrComp *p_arg, Word *p_dest)
+Boolean decode_cr16_vector(const tStrComp *p_arg, Word *p_dest, cr16_gen_t gen)
 {
   static const vector_t vectors[] =
   {
-    { "SVC", 0x45 },
-    { "DVZ", 0x46 },
-    { "FLG", 0x47 },
-    { "BPT", 0x48 },
-    { "UND", 0x4a },
-    { "DBG", 0x4e },
+    { "SVC", 0x75 },
+    { "DVZ", 0x76 },
+    { "FLG", 0x77 },
+    { "BPT", 0x78 },
+    { "TRC", 0x49 },
+    { "UND", 0x7a },
+    { "IAD", 0x4c },
+    { "DBG", 0x7e },
+    { "ISE", 0x4f }
   };
   size_t z;
+  Byte mask = 0x10 << (gen - e_cr16_gen_a);
 
   for (z = 0; z < as_array_size(vectors); z++)
     if (!as_strcasecmp(p_arg->str.p_str, vectors[z].name))
     {
-      if (!(vectors[z].num & ((MomCPU == cpu_cr16b) ? 0x80 : 0x40)))
+      if (!(vectors[z].num & mask))
         continue;
-      *p_dest = vectors[z].num;
+      *p_dest = vectors[z].num & 0x0f;
       return True;
     }
   WrStrErrorPos(ErrNum_UnknownVector, p_arg);
@@ -537,10 +543,11 @@ static Boolean decode_vector(const tStrComp *p_arg, Word *p_dest)
 }
 
 /*!------------------------------------------------------------------------
- * \fn     decode_cpu_reg(const tStrComp *p_arg, Word *p_dest)
+ * \fn     decode_cpu_reg(const tStrComp *p_arg, Word *p_dest, cr16_gen_t gen)
  * \brief  parse CPU register name
  * \param  p_arg source argument
  * \param  p_dest dest buffer for vector #
+ * \param  gen CR16 core generation (A, B, C)
  * \return True if parsing succeeded
  * ------------------------------------------------------------------------ */
 
@@ -550,32 +557,33 @@ typedef struct
   Byte num;
 } cpu_reg_t;
 
-static Boolean decode_cpu_reg(const tStrComp *p_arg, Word *p_dest)
+static Boolean decode_cpu_reg(const tStrComp *p_arg, Word *p_dest, cr16_gen_t gen)
 {
   static const cpu_reg_t cpu_regs[] =
   {
-    { "PSR"     , 0xc1 },
-    { "INTBASE" , 0x43 },
-    { "INTBASEL", 0x83 },
-    { "INTBASEH", 0x84 },
-    { "CFG"     , 0x85 },
-    { "DSR"     , 0x87 },
-    { "DCR"     , 0x89 },
-    { "ISP"     , 0xcb },
-    { "CARL"    , 0x8d },
-    { "CARH"    , 0x8e }
+    { "PSR"     , 0x31 },
+    { "INTBASE" , 0x13 },
+    { "INTBASEL", 0x23 },
+    { "INTBASEH", 0x24 },
+    { "CFG"     , 0x25 },
+    { "DSR"     , 0x27 },
+    { "DCR"     , 0x29 },
+    { "ISP"     , 0x3b },
+    { "CARL"    , 0x2d },
+    { "CARH"    , 0x2e }
   };
   size_t z;
+  Byte mask = 0x10 << (gen - e_cr16_gen_a);
 
   for (z = 0; z < as_array_size(cpu_regs); z++)
     if (!as_strcasecmp(p_arg->str.p_str, cpu_regs[z].name))
     {
-      if (!(cpu_regs[z].num & ((MomCPU == cpu_cr16b) ? 0x80 : 0x40)))
+      if (!(cpu_regs[z].num & mask))
         continue;
       *p_dest = cpu_regs[z].num & 0x0f;
       return True;
     }
-  WrStrErrorPos(ErrNum_InvCtrlReg, p_arg);
+  WrStrErrorPos(ErrNum_InvProcReg, p_arg);
   return False;
 }
 
@@ -660,6 +668,7 @@ static void decode_regimm_reg(Word code)
         append_word(code | (Rdest << 5) | (adr_vals.part << 1) | 0x4001);
         break;
       case e_mode_imm:
+        set_w_guessed(adr_vals.disp_flags, CodeLen >> 1, 1, 0x001f);
         append_word(code | (Rdest << 5) | (adr_vals.part & 0x1f));
         append_adr_vals(&adr_vals);
         break;
@@ -709,7 +718,7 @@ static void decode_jump(Word code)
 /*!------------------------------------------------------------------------
  * \fn     decode_br(Word code)
  * \brief  handle branch instructions
- * \param  code machine code/conditions
+ * \param  code machine code/condition
  * ------------------------------------------------------------------------ */
 
 static void decode_br(Word code)
@@ -806,7 +815,7 @@ static void decode_excp(Word code)
   Word vector;
 
   if (ChkArgCnt(1, 1)
-   && decode_vector(&ArgStr[1], &vector))
+   && decode_cr16_vector(&ArgStr[1], &vector, (MomCPU == cpu_cr16b) ? e_cr16_gen_b : e_cr16_gen_a))
     append_word(code | (vector << 1));
 }
 
@@ -823,7 +832,7 @@ static void decode_lpr_spr(Word code)
 
   if (ChkArgCnt(2, 2)
    && decode_reg(&ArgStr[is_spr + 1], &Rsrc_dest, True)
-   && decode_cpu_reg(&ArgStr[2 - is_spr], &Rproc))
+   && decode_cpu_reg(&ArgStr[2 - is_spr], &Rproc, (MomCPU == cpu_cr16b) ? e_cr16_gen_b : e_cr16_gen_a))
     append_word(code | (Rproc << 5) | (Rsrc_dest << 1));
 }
 
@@ -1162,6 +1171,24 @@ static void add_dot_pseudo(const char *p_name, Word code, InstProc decode_fnc)
     AddInstTable(InstTable, p_name + 1, code, decode_fnc);
 }
 
+void codecr16_iter_conditions(void (*callback)(const char *, Word))
+{
+  callback("EQ", 0);
+  callback("NE", 1);
+  callback("GE", 13);
+  callback("CS", 2);
+  callback("CC", 3);
+  callback("HI", 4);
+  callback("LS", 5);
+  callback("LO", 10);
+  callback("HS", 11);
+  callback("GT", 6);
+  callback("LE", 7);
+  callback("FS", 8);
+  callback("FC", 9);
+  callback("LT", 12);
+}
+
 static void init_fields(void)
 {
   InstTable = CreateInstTable(207);
@@ -1198,20 +1225,7 @@ static void init_fields(void)
   add_regimm_reg_8_16("LSH" , 0x0a00, SInt4, SInt5);
   AddInstTable(InstTable, "TBIT", 0x3600 | UInt4, decode_regimm_reg);
 
-  add_condition("EQ", 0);
-  add_condition("NE", 1);
-  add_condition("GE", 13);
-  add_condition("CS", 2);
-  add_condition("CC", 3);
-  add_condition("HI", 4);
-  add_condition("LS", 5);
-  add_condition("LO", 10);
-  add_condition("HS", 11);
-  add_condition("GT", 6);
-  add_condition("LE", 7);
-  add_condition("FS", 8);
-  add_condition("FC", 9);
-  add_condition("LT", 12);
+  codecr16_iter_conditions(add_condition);
   AddInstTable(InstTable, "BR", 0x0e << 5, decode_br);
   AddInstTable(InstTable, "BAL", ((MomCPU == cpu_cr16b) && memory_model) ? 0x7600 : 0x340e, decode_bal);
   AddInstTable(InstTable, "EXCP", 0x7be0, decode_excp);

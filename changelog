@@ -1,7 +1,16 @@
+2026-04-20 [1.42 Bld 303]
+
+- Bugfix      : Z8000: Disallow R0 as index register
+- Addition    : Add National CR16C target.
+
 2026-03-23 [1.42 Bld 302]
 
 - Bugfix      : CR16A/B: Correct PC-relative addressing
 - Bugfix      : correct padding of P2BIN
+- Change      : Meaning of the INSTROOT variable changed:
+                Similar to the PREFIX variable on other
+                programs, it holds the full subtree where
+                things will be installed.
 
 2026-03-11 [1.42 Bld 301]
 

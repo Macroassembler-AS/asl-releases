@@ -302,6 +302,18 @@ Message ErrMsgWrongOptCnt
  "unpassende Optionszahl"
  "wrong number of options"
 
+Message ErrMsgUnknownOption
+ "unbekannte Option"
+ "unknown option"
+
+Message ErrMsgDuplicateOption
+ "doppelte Option"
+ "duplicate option"
+
+Message ErrMsgWrongOptionList
+ "nicht unterst&uuml;tzte Optionsliste"
+ "unsupported option list"
+
 Message ErrMsgOnlyImmAddr
  "nur immediate-Adressierung erlaubt"
  "addressing mode must be immediate"
@@ -534,8 +546,20 @@ Message ErrMsgRegReadOnlyInExecMode
  "Register darf im aktuellen Ausf&uuml;hrungsmodus nur gelesen werden"
  "register is read-only in current execution mode"
 
+Message ErrMsgInvProcReg
+ "ung&uuml;ltiges Prozessorregister"
+ "invalid processor register"
+
+Message ErrMsgInvBaseReg
+ "ung&uuml;ltiges Basisregister"
+ "invalid base register"
+
+Message ErrMsgInvIndexReg
+ "ung&uuml;ltiges Indexregister"
+ "invalid index register"
+
 Message ErrMsgInvCtrlReg
- "ung&uuml;ltiges Kontrollregister"
+ "ung&uuml;ltiges Steuerregister"
  "invalid control register"
 
 Message ErrMsgInvReg

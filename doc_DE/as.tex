@@ -51,7 +51,7 @@
 
 \vspace{1cm}\par
 
-{\large Stand M"arz 2026}
+{\large Stand April 2026}
 \end{raggedright}
 
 \clearpage
@@ -296,7 +296,7 @@ folgende Prozessorfamilien implementiert:
 \item{National Semiconductor COP8}
 \item{National Semiconductor SC144xx}
 \item{National Semiconductor NS32xxx}
-\item{National Semiconductor CR16A/B}
+\item{National Semiconductor CR16A/B/C}
 \item{Olympia CP-3F (bzw. SGS M380, GI LP8000)}
 \item{Fairchild ACE}
 \item{Fairchild F8}
@@ -894,10 +894,10 @@ je nach Gro"s- oder Kleinschreibung unterschiedliche Bedeutung haben.
 Momentan sind folgende Schalter definiert:
 \ttindex{SHARED}
 \begin{itemize}
-\item{\tty{l}: Assemblerlisting auf Konsole ausgeben.  Falls mehrere
+\item{\tty{l}: Assembler-Listing auf Konsole ausgeben.  Falls mehrere
       Passes ausgef"uhrt werden m"ussen, landen im Gegensatz zur
       n"achsten Option die Listings aller Durchg"ange auf der Ausgabe!}
-\item{\tty{L}: Assemblerlisting auf Datei schreiben.  Die Listdatei erh"alt
+\item{\tty{L}: Assembler-Listing auf Datei schreiben.  Die Listdatei erh"alt
       dabei den gleichen Namen wie die Quelldatei, lediglich die Endung
       wird durch \tty{LST} ersetzt, es sei denn...}
 \item{\tty{OLIST}: mit einem zus"atzlichen Argument legt einen anderen
@@ -1088,7 +1088,7 @@ bzw. \ref{ChapShareOrder}.
 \item{\tty{intsyntax}: Mit diesem Schalter kann man vom Beginn des Programms
       an die Liste der erlaubten Schreibweisen f"ur Ganzzahl-Konstanten
       erweitern oder reduzieren, analog zur gleichnamigen Pseudoanweisung
-      (siehe Abschnitt \ref{SectINTSYNTAX} f"ur eine Liste erlauber
+      (siehe Abschnitt \ref{SectINTSYNTAX} f"ur eine Liste erlaubter
       Argumente).}
 \item{\tty{supmode}: Mit diesem Schalter erlaubt man vom Beginn des Programms
       an die Verwendung von Maschinenbefehlen, die nur im Supervisor-Modus
@@ -1724,7 +1724,7 @@ $<$Registersymbol$>$ & 128 \\
 
 \section{Tempor"are Symbole}
 
-Besonders bei Programmen mit vielen aufeinanderfolgenden Schleifen oder
+Besonders bei Programmen mit vielen aufeinander folgenden Schleifen oder
 IF-artigen Strukturen steht man immer wieder vor dem Problem, sich
 st"andig neue Namen f"ur Labels ausdenken zu m"ussen.  Dabei wei"s man an
 sich genau, da"s man dieses Label nie wieder brauchen wird und am liebsten
@@ -1876,10 +1876,10 @@ kann es sich sowohl um ein einzelnes Symbol als auch um eine Konstante
 handeln.  Konstanten d"urfen entweder Integer-, Gleitkomma-, oder
 Stringkonstanten sein.
 
-\subsection{Integerkonstanten}
+\subsection{Integer-Konstanten}
 \label{SectIntConsts}
 
-Integerkonstanten bezeichnen ganze Zahlen.  Sie werden als eine
+Integer-Konstanten bezeichnen ganze Zahlen.  Sie werden als eine
 Folge von Ziffern geschrieben.  Dies kann in verschiedenen
 Zahlensystemen erfolgen, deren Notation von verwendeten
 Zielprozessor abh"angt (Tabelle
@@ -1942,17 +1942,17 @@ dieser Regel ist die PDP-11 (und der einen LSI-11 nutzende WD16):  zwecks
 besserer Kompatibilit"at zum MACRO-11 von DEC sind solche Konstanten
 ausnahmsweise Little-Endian, 'AB' ergibt also den Zahlenwert 0x4241.
 
-Die Verwendung von Buchstaben in Integerkonstanten bringt allerdings auch
+Die Verwendung von Buchstaben in Integer-Konstanten bringt allerdings auch
 einige Mehrdeutigkeiten mit sich, da Symbolnamen ja auch Ketten aus Zahlen
 und Buchstaben sind: Ein Symbolname darf nicht mit einem Zeichen von 0 bis
-9 beginnen, was bedeutet, da"s eine Integerkonstante, die nicht durch ein
+9 beginnen, was bedeutet, da"s eine Integer-Konstante, die nicht durch ein
 anderes Sonderzeichen eindeutig als solche erkennbar ist, niemals mit
 einem Buchstaben beginnen darf; notfalls mu"s man eine eigentlich
 "uberfl"ussige Null voranstellen.  Der bekannteste Fall ist das Schreiben
 von Hexadezimalkonstanten im Intel-Modus: Ist die vorderste Stelle
-zwischen A und F, so hilft das hintangestellte H "uberhaupt nichts, es
+zwischen A und F, so hilft das hintan gestellte H "uberhaupt nichts, es
 mu"s noch eine Null davor (statt F0H also 0F0H).  Die Motorola-oder
-C-Syntax, die beide das Zahlensystem am Anfang einer Integerkonstante
+C-Syntax, die beide das Zahlensystem am Anfang einer Integer-Konstante
 kennzeichnen, kennen dieses Problem nicht.
 
 Reichlich heimt"uckisch ist auch, da"s bei immer h"oheren, mit {\tt RADIX}
@@ -2001,7 +2001,7 @@ Schreibweise geschrieben, die in der allgemeinsten Form
  [-]<Vorkommastellen>[.Nachkommastellen][E[-]Exponent]
 \end{verbatim}
 lautet. \bb{ACHTUNG!} Der Assembler versucht eine Konstante zuerst als
-Integerkonstante zu verstehen und macht erst dann einen Versuch mit
+Integer-Konstante zu verstehen und macht erst dann einen Versuch mit
 Gleitkomma, falls dies gescheitert ist.  Will man aus irgendwelchen
 Gr"unden die Auswertung als Gleitkommazahl erzwingen, so kann man
 dies durch Dummy-Nachkommastellen erreichen, z.B. \tty{2.0} anstelle
@@ -2058,7 +2058,7 @@ hexadezimal ausgegeben, dies l"a"st sich jedoch mit dem
 \tty{OUTRADIX}-Befehl "andern.
 \par
 Bis auf den Einbau von Formelausdr"ucken ist dieser Escape-Mechanismus
-auch in als ASCII definierten Integerkonstanten zul"assig, z.B. so:
+auch in als ASCII definierten Integer-Konstanten zul"assig, z.B. so:
 \begin{verbatim}
    move.b   #'\n',d0
 \end{verbatim}
@@ -2203,7 +2203,7 @@ Ungleichheit ergibt einen Sinn.
 \par
 Die Bitspiegelung ist wohl etwas erkl"arungsbed"urftig: Der Operator
 spiegelt die untersten Bits im ersten Operanden, l"a"st die
-dar"uberliegenden Bits aber unver"andert.  Die Zahl der zu spiegelnden
+dar"uber liegenden Bits aber unver"andert.  Die Zahl der zu spiegelnden
 Bits ist der rechte Operand und darf zwischen 1 und 32 liegen.
 \par
 Eine keine Fu"sangel beim bin"aren Komplement: Da die Berechnung
@@ -2481,7 +2481,7 @@ l"a"st sich auf drei Arten vermeiden:
 \begin{enumerate}
 \item{Weisen Sie \asname{} explizit darauf hin, da"s er f"ur die \tty{LDD}-Befehle
       kurze Adressen verwenden darf (\tty{ldd <Var})}
-\item{Entfernen Sie diese vermaledeite, verfluchte Vorw"artsreferenz und
+\item{Entfernen Sie diese verfluchte Vorw"artsreferenz und
       setzen Sie die \tty{EQU}-Anweisung nach vorne, wo sie hingeh"ort
       (OK, ich beruhige mich ja schon wieder...)}
 \item{F"ur ganz Unentwegte: Benutzten Sie die \tty{-Y}-Option, so da"s \asname{} die
@@ -4275,10 +4275,12 @@ und der NS32CG16 ist eine Embedded-Variante mit Zusatzbefehlen f"ur
 Bitblock-Transfers.
 %%-----------
 \begin{cpulist}
-   CR16A $\rightarrow$ CR16B
+   CR16A $\rightarrow$ CR16B $\rightarrow$ CR16C
 \end{cpulist}
 CR16B erweitert den Adre"sraum von 256 KByte auf 2 MByte und stellt
-eine Reihe neuer Befehle zur Verf"ugung.
+eine Reihe neuer Befehle zur Verf"ugung.  CR16C erweitert ihn nochmals
+auf 16 MByte, ist aber nur noch Quellcode- und nicht mehr bin"ar
+aufw"artskompatibel. 
 %%-----------
 \begin{cpulist}
    ACE1101, ACE1202
@@ -4603,8 +4605,9 @@ jeweils zugeh"origen Unterkapitel mit prozessorspezifischen Hinweisen beschriebe
 
 {\em
 \begin{itemize}
-\item{G"ultigkeit SUPMODE: 680x0, NS32xxx, PDP-11, i960, TLCS-900,
-      SH7000, i960, 29K, Z280, XA, PowerPC, M*CORE, V60 und TMS9900}
+\item{G"ultigkeit SUPMODE: 680x0, NS32xxx, CR16C, PDP-11, i960,
+      TLCS-900, SH7000, i960, 29K, Z280, XA, PowerPC, M*CORE,
+      V60 und TMS9900}
 \item{G"ultigkeit FPU: 680x0, NS32xxx, 80x86, WE32xxx}
 \item{G"ultigkeit PMMU: 680x0, NS32xxx}
 \item{G"ultigkeit CUSTOM: NS32xxx}
@@ -5523,8 +5526,34 @@ festgelegt werden.  Der Default ist 0.
 Der Prozessor verf"ugt "uber einen Eingangs-Pin namens {\tt BPS}, mit dem man
 w"ahlen kann, welcher Adre"sbereich direkt adressierbar sein soll: entweder
 die untersten 256 Worte des Speichers, oder die jeweils obersten und untersten
-128 Worte.  Der Default is ersteres, mit einem {\tt ASSUME BPS:1} schaltet man
+128 Worte.  Der Default ist ersteres, mit einem {\tt ASSUME BPS:1} schaltet man
 auf die zweite Variante um.
+
+%%. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+\subsubsection{CR16C}
+
+Der CR16C kann in einer alternativen Betriebsart laufen, in der die Register
+\tty{R12...SP} auf 16 Bit beschr"ankt sind, um eine bessere architektonische
+Aufw"artskompatibilit"at zu seinen Vorg"angern zu erreichen.  Die Betriebsart
+wird durch das \tty{SR}-Bit im \tty{CFG}-Register aktiviert und hat die folgenden
+weiteren Effekte auf das Programmiermodell:
+\begin{itemize}
+\item{Weitere 16-Bit-Registerpaare: \tty{(R13\_L,R12\_L), (RA\_L,R13\_L),
+      (SP\_L,RA\_L), (SP\_H,SP\_L)}.}
+\item{Indexregister-Adressierung (\tty{[Rn]abs20, [Rn]disp(rp)}) ist
+      nicht erlaubt.}
+\item{Einige Befehle erlauben kürzere Kodierung f"ur den Adressierungsmodus
+      \tty{disp(reg)}, falls das Displacement Null oder kleiner als 0x4000
+      ist.}
+\end{itemize}
+Der Wert dieses Bits zur Laufzeit kann "uber die Anweisung
+\begin{verbatim}
+   assume sr:n
+\end{verbatim}
+mitgeteilt werden, wobei \tty{n} entweder Null oder Eins ist.  Null ist der
+Default, d.h. alle Register haben ihre volle Breite und Indexadressierung
+ist erlaubt.
 
 %%. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
@@ -6105,7 +6134,7 @@ oder 16-Bit-Wort gepackt.
 
 Der NEC 77230 nimmt mit seiner \tty{DW}-Anweisung eine Sonderstellung ein:
 Sie funktioniert eher wie \tty{DATA} bei seinen kleineren Br"udern,
-akzeptiert aber neben String- und Integerargumenten auch Gleitkommawerte
+akzeptiert aber neben String- und Integer-Argumenten auch Gleitkommawerte
 (und legt sie prozessorspezifischen 32-Bit-Format ab). \tty{DUP} gibt es {\em
 nicht}!
 
@@ -6266,7 +6295,7 @@ ein Null-Byte erg"anzt werden sollen, kann mit dem PADDING-Befehl
 eingestellt werden.
 
 Auf dem CP-1600 weicht die Verhaltensweise von {\tt BYTE} etwas ab:
-die angegebenen 16-Bit-Werte werden in jeweils zwei aufeinanderfolgenden
+die angegebenen 16-Bit-Werte werden in jeweils zwei aufeinander folgenden
 W"ortern aufgeteilt abgelegt (LSB zuerst).  Wenn einzelne Bytes (gepackt)
 abgelegt werden sollen, mu"s stattdessen {\tt TEXT} verwendet werden!
 
@@ -6684,7 +6713,7 @@ d.h. 16 Bit.  Er stellt einen Alias zu {\tt DW} dar.
 
 {\em G"ultigkeit: alle Prozessoren}
 
-\tty{ALIGN} mit einem Integerausdruck als Argument erlaubt es, den
+\tty{ALIGN} mit einem Integer-Ausdruck als Argument erlaubt es, den
 Programmz"ahler auf eine bestimmte Adresse auszurichten.  Die
 Ausrichtung erfolgt dergestalt, da"s der Programmz"ahler so weit
 erh"oht wird, da"s er ein ganzzahliges mehrfaches des Argumentes
@@ -7003,7 +7032,7 @@ vorherigen Beispiel ohne Makro.
 
 Rekursion von Makros, also das wiederholte Aufrufen eines Makros innerhalb
 seines Rumpfes oder indirekt "uber andere von ihm aufgerufene Makros ist
-vollkommen legal.  Wie bei jeder Rekusion mu"s man dabei nat"urlich
+vollkommen legal.  Wie bei jeder Rekursion mu"s man dabei nat"urlich
 sicherstellen, da"s sie irgendwann ein Ende findet.  F"ur den Fall, da"s
 man dies vergessen hat, f"uhrt \asname{} in jedem definierten Makro einen Z"ahler
 mit, der bei Beginn einer Makroexpansion inkrementiert und an deren Ende
@@ -7014,7 +7043,7 @@ abschaltet: der Speicherbedarf auf dem Heap kann so beliebig steigen und
 selbst ein Unix-System in die Knie zwingen...
 \par
 Um alle Klarheiten auszur"aumen, ein einfaches Beispiel:
-Ein an ,,Intel-Syntax'' gew"ohnter Programmierer m"ochte diex Befehle \tty{PUSH/POP}
+Ein an ,,Intel-Syntax'' gew"ohnter Programmierer m"ochte die Befehle \tty{PUSH/POP}
 unbedingt auch auf dem 68000 haben.  Er l"ost das
 folgenderma"sen:
 \begin{verbatim}
@@ -7066,7 +7095,7 @@ Im ersten Pass ist bei der Assemblierung des \tty{BSR}-Befehles das Makro
 noch nicht bekannt, es wird ein 4 Byte langer Befehl erzeugt.  Im
 zweiten Pass jedoch steht die Makrodefinition sofort (aus dem ersten
 Pass) zur Verf"ugung, es wird also ein 6 Byte langer \tty{JSR} kodiert.
-Infolgedessen sind alle darauffolgenden Labels um zwei zu niedrig,
+Infolgedessen sind alle darauf folgenden Labels um zwei zu niedrig,
 bei allen weiteren Labels sind Phasenfehler die Folge, und ein weiterer
 Pass ist erforderlich.
 \par
@@ -7226,7 +7255,7 @@ und immer mindestens eine Expansion ausf"uhrten.
 \tty{WHILE} arbeitet analog zu \tty{REPT}, allerdings tritt an die
 Stelle einer festen Anzahl als Argument ein boolescher Ausdruck, und
 der zwischen \tty{WHILE} und \tty{ENDM} eingeschlossene Code wird sooft
-assenbliert, bis der Ausdruck logisch falsch wird.  Im Extremfall kann
+assembliert, bis der Ausdruck logisch falsch wird.  Im Extremfall kann
 dies bedeuten, da"s der Code "uberhaupt nicht assembliert wird, falls die
 Bedingung bereits beim Eintritt in das Konstrukt falsch ist.  Andererseits
 kann es nat"urlich auch passieren, da"s die Bedingung immer wahr bleibt,
@@ -7931,7 +7960,7 @@ werden, indem man mit
 \begin{verbatim}
         PRTINIT <String>
 \end{verbatim}
-die Zeichenfolge angibt, die vor Listingbeginn an das Ausgabeger"at
+die Zeichenfolge angibt, die vor Beginn des Listings an das Ausgabeger"at
 geschickt werden soll und mit
 \begin{verbatim}
         PRTEXIT <String>
@@ -7969,7 +7998,7 @@ Stringausdruck.
 \par
 Beispiel:
 \par
-Bei dem bereits oben angesprochenenen Epson-Drucker soll eine Titelzeile
+Bei dem bereits oben angesprochenen Epson-Drucker soll eine Titelzeile
 im Breitdruck ausgegeben werden, wozu vorher der Kompre"smodus
 abgeschaltet werden mu"s:
 \begin{verbatim}
@@ -8539,7 +8568,7 @@ ablegen, es geht aber auch interaktiv mit \tty{READ} :
 Auf diese Weise k"onnen Programme sich w"ahrend der "Ubersetzung
 interaktiv konfigurieren, man kann sein Programm z.B. jemandem geben,
 der es mit seinen Parametern "ubersetzen kann, ohne im Quellcode
-,,herumstochern'' zu m"ussen.  Die im Beispiel gezeigte \tty{IF-}
+,,herum stochern'' zu m"ussen.  Die im Beispiel gezeigte \tty{IF-}
 Abfrage sollte "ubrigens immer verwendet werden, damit der Anwender
 nur einmal mit der Abfrage bel"astigt wird.
 \par
@@ -10620,7 +10649,7 @@ zwei vorangestellten $>$-Zeichen erzwingen.
 
 Der Z8001/8003 kann in zwei verschiedenen Modi betrieben werden:
 \begin{itemize}
-\item{{\em Nicht segmentiert}: Der Speicheradre"sraum ist auf 64 KByte
+\item{{\em Nicht segmentiert}: Der Adre"sraum ist auf 64 KByte
       beschr"ankt, alle Adressen sind 'einfache' lineare 16-Bit-
       Adressen.  Adre"sregister sind einfache 16-Bit-Register (Rn),
       und absolute Adressen in Befehlen sind ein 16-Bit-Wort lang.}
@@ -10758,7 +10787,7 @@ sich in einigen Punkten von \asname{} unterscheidet:
 \item{TAS900 unterscheidet Symbolnamen nur auf den ersten 32 Zeichen.
       \asname{} dagegen speichert Symbolnamen immer in der vollen L"ange (bis
       255 Zeichen) und unterscheidet auch auf dieser L"ange.}
-\item{Unter TAS900 k"onnen Integerkonstanten sowohl in C-Notation (mit
+\item{Unter TAS900 k"onnen Integer-Konstanten sowohl in C-Notation (mit
       vorangestellter 0 f"ur oktal bzw. 0x f"ur hexadezimal) als auch in
       normaler Intel-Notation geschrieben werden.  \asname{} unterst"utzt in der
       Default-Einstellung \bb{nur} die Intel-Notation.  Mit dem
@@ -10871,9 +10900,9 @@ TAS900        &   \asname{}                & Bedeutung/Funktion \\
 \hline
 \tty{\$NOR[MAL]}    & \tty{SUPMODE OFF}         & folgender Code im User-Modus \\
 \hline
-\tty{\$NOLIST}      & \tty{LISTING OFF}         & Assemblerlisting ausschalten \\
+\tty{\$NOLIST}      & \tty{LISTING OFF}         & Assembler-Listing ausschalten \\
 \hline
-\tty{\$LIST}        & \tty{LISTING ON}          & Assemblerlisting einschalten \\
+\tty{\$LIST}        & \tty{LISTING ON}          & Assembler-Listing einschalten \\
 \hline
 \tty{\$EJECT}       & \tty{NEWPAGE}             & neue Seite im Listing beginnen \\
 \hline
@@ -12522,7 +12551,7 @@ Ausgaben sollten sich daher problemlos umleiten lassen.
 \par
 Sofern Programme im folgenden Zahlen-oder Adre"sangaben von der
 Kommandozeile lesen, d"urfen diese auch hexadezimal geschrieben werden,
-indem man sie mit einem hintangestellten \tty{h}, einem voranstehenden
+indem man sie mit einem hintan gestellten \tty{h}, einem voranstehenden
 Dollarzeichen oder \tty{0x} wie in C versieht (z.B. \verb!$10!,
 \verb!10h! oder \verb!0x10! anstelle von 16).
 \par
@@ -13400,12 +13429,24 @@ Angaben:
                 Einzeloperanden aufgespalten werden, diese ist
                 fehlgeschlagen.}
                {keines}
-\errentry{1115}{Unpassende Optionenzahl}
+\errentry{1115}{unpassende Optionszahl}
                {Fehler}
                {Die bei diesem Befehl angegebene Zahl
 	        von Optionen liegt nicht in dem f"ur diesen
                 Befehl erlaubten Bereich.}
                {keines}
+\errentry{1116}{unbekannte Option}
+               {Fehler}
+               {Eine Option dieses Namens existiert nicht.}
+               {die fragliche Option}
+\errentry{1117}{doppelte Option}
+               {Fehler}
+               {Optionen d"urfen nicht mehfach aufgef"uhrt werden.}
+               {die fragliche Option}
+\errentry{1118}{nicht unterst"utzte Optionsliste}
+               {Fehler}
+               {Optionen sind in dieser Kombination nicht verwendbar.}
+               {die fragliche Optionsliste}
 \errentry{1120}{nur immediate-Adressierung erlaubt}
                {Fehler}
                {Der benutzte Befehl l"a"st nur
@@ -13710,7 +13751,21 @@ Angaben:
                {Fehler}
                {Die mit \tty{PMMU} angeforderte MMU kennt \asname{} nicht.}
                {der unbekannte PMMU-Typ}
-\errentry{1440}{Ung"ultiges Kontrollregister}
+\errentry{1437}{Ung"ultiges Prozessorregister}
+               {Fehler}
+               {Ein Prozessorregister dieses Namens existiert nicht.}
+               {das fragliche Register}
+\errentry{1438}{Ung"ultiges Basisregister}
+               {Fehler}
+               {Dieses Register darf an dieser Stelle nicht als Basis benutzt
+	        werden.}
+               {das fragliche Register}
+\errentry{1439}{Ung"ultiges Indexregister}
+               {Fehler}
+               {Dieses Register darf an dieser Stelle nicht als Index benutzt
+	        werden.}
+               {das fragliche Register}
+\errentry{1440}{Ung"ultiges Steuerregister}
                {Fehler}
                {Das bei z.B. \tty{MOVEC} benutzte
 	        Kontrollregister  kennt der mit CPU gesetzte Prozessor
@@ -14487,7 +14542,7 @@ Angaben:
                {Beschreibung des E/A-Fehlers}
 \errentry{10002}{Listingschreibfehler}
                {fatal}
-               {Beim Schreiben des Assemblerlistings ist ein
+               {Beim Schreiben des Assembler-Listings ist ein
                 Fehler aufgetreten.}
                {Beschreibung des E/A-Fehlers}
 \errentry{10003}{Dateilesefehler}
@@ -14627,7 +14682,7 @@ liegen.  Melden Sie dies unbedingt!!
 
 \item[159]{Papierende\\
            Offensichtlich haben Sie die Ausgaben von \asname{} direkt auf einen
-           Drucker umgeleitet.  Assemblerlistings k"onnen seeehr lang
+           Drucker umgeleitet.  Assembler-Listings k"onnen seeehr lang
            sein...}
 
 \item[160]{Ger"atelesefehler\\
@@ -15212,9 +15267,9 @@ Ernst Ahlers, Charles Altmann, Marco Awater, Len Bayles, Andreas
 Bolsch, Rolf Buchholz, Bernd Casimir, Nils Eilers, Gunther Ewald,
 Daniel E.  Germann Michael Haardt, Stephan Hruschka, Fred van
 Kempen, Peter Kliegelh"ofer, Ulf Meinke, Udo M"oller, Matthias
-Paul, Norbert Rosch, Curt J.  Sampson, Steffen Schmid, Leonhard
-Schneider, Ernst Schwab, Michael Schwingen, Oliver Sellke,
-Christian Stelter, Patrik Str"omdahl, Tadashi G.  Takaoka, Oliver
+Paul, Moshe Piekarski, Norbert Rosch, Curt J.  Sampson, Steffen Schmid,
+Leonhard Schneider, Ernst Schwab, Michael Schwingen, Oliver Sellke,
+Christian Stelter, Patrik Str"omdahl, Tadashi G. Takaoka, Oliver
 Thamm, Thorsten Thiele, Leszek Ulman, Rob Warmelink, Andreas
 Wassatsch, John Weinrich,
 \par
@@ -15388,7 +15443,7 @@ NanoProcessor.
             Kleinbuchstaben zu erzwingen;}
       \item{Variable \tty{MOMPASS}, um die Nummer des augenblicklichen Durchganges
             abfragen zu k"onnen;}
-      \item{Kommandozeilenschalter \tty{t}, um einzelne Teile des Assemblerlistings
+      \item{Kommandozeilenschalter \tty{t}, um einzelne Teile des Assembler-Listings
             ausblenden zu k"onnen;}
       \item{kennt zus"atzlich die L-Variante der TLCS-900-Reihe von Toshiba
             und die MELPS-7700-Reihe von Mitsubishi (p1);}
@@ -15445,7 +15500,7 @@ NanoProcessor.
       \item{mit der \tty{t}-Option kann nun die Zeilennumerierung im Listing
             abgeschaltet werden(p1);}
       \item{Escapesequenzen sind nun auch in in ASCII geschriebenen
-            Integerkonstanten zul"assig(p1);}
+            Integer-Konstanten zul"assig(p1);}
       \item{Mit dem Pseudobefehl \tty{PADDING} kann das Einf"ugen
             von F"ullbytes im 680x0-Modus ein- und ausgeschaltet
             werden (p2);}
@@ -16034,7 +16089,7 @@ leistet im einzelnen folgendes:
 \item{R"uckgabe einer Menge, welche die noch nicht bearbeiteten
       Kommandozeilenparameter beschreibt;}
 \item{Trenunng von positiven und negativen Schaltern;}
-\item{Eine Hintert"ur, falls die dar"uberliegende Entwicklungsumgebung die
+\item{Eine Hintert"ur, falls die dar"uber liegende Entwicklungsumgebung die
       Kommandozeile nur in Gro"s- oder Kleinschreibung "ubergibt.}
 \end{itemize}
 Dieses Modul wird nicht nur von \asname{}, sondern auch von den Hilfsprogrammen
@@ -16493,7 +16548,7 @@ Dazu m"ussen im Umschalter einige globale Variablen besetzt werden:
       ein Byte, nur z.B. Signalprozessoren und die PICs fallen aus dem
       Rahmen.}
 \item{\tty{ListGrans} : Hiermit kann wieder f"ur alle Segmente getrennt
-      festgelegt werden, in was f"ur Gruppen die Bytes im Assemblerlisting
+      festgelegt werden, in was f"ur Gruppen die Bytes im Assembler-Listing
       dargestellt werden sollen.  Beim 68000 sind z.B. Befehle immer
       ein mehrfaches von 2 Bytes lang, weshalb die entsprechende Variable
       auf 2 gesetzt ist.}
@@ -16503,7 +16558,7 @@ Dazu m"ussen im Umschalter einige globale Variablen besetzt werden:
       ChkPC}-Methode selber "ubernimmt.}
 \item{\tty{ConstMode} : Diese Variable kann die Werte \tty{ConstModeIntel},
       \tty{ConstModeMoto} oder \tty{ConstModeC} haben und bestimmt, in
-      welcher Form Zahlensysteme bei Integerkonstanten spezifiziert werden
+      welcher Form Zahlensysteme bei Integer-Konstanten spezifiziert werden
       sollen (sofern das Programm nicht vom Relaxed-Modus Gebrauch macht).}
 \item{\tty{PCSymbol} : Diese Variable enth"alt den String, mit dem aus dem
       Assembler-Programm heraus der momentane Stand des Programmz"ahlers

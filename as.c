@@ -144,6 +144,7 @@
 #include "codesc14xxx.h"
 #include "codens32k.h"
 #include "codecr16.h"
+#include "codec16c.h"
 #include "codewe32.h"
 #include "codeace.h"
 #include "codecp3f.h"
@@ -4572,6 +4573,7 @@ int main(int argc, char **argv)
     codesc14xxx_init();
     codens32k_init();
     codecr16_init();
+    codecr16c_init();
     codewe32_init();
     codeace_init();
     codecp3f_init();

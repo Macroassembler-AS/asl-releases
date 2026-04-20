@@ -33,7 +33,7 @@ typedef enum
  ,UInt18   , Int18
  ,UInt19
  ,SInt20   , UInt20  , Int20
- ,UInt21   , Int21
+ ,SInt21   , UInt21  , Int21
  ,UInt22
  ,UInt23
  ,SInt24   , UInt24  , Int24

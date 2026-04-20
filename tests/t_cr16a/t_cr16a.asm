@@ -642,7 +642,7 @@
 		lpr	r1,psr		; 7022
 		lpr	r7,intbase	; 706E
 		lpr	r13,isp		; 717A
-		expect	1440
+		expect	1437
 		lpr	sp,nix
 		endexpect
 
@@ -874,7 +874,7 @@
 		spr	psr,r1		; 7222
 		spr	intbase,r7	; 726E
 		spr	isp,r13		; 737A
-		expect	1440
+		expect	1437
 		spr	nix,sp
 		endexpect
 

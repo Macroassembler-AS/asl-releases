@@ -576,6 +576,9 @@
 	ldb	rh2,@r3
 	ld	rr4,@r6
 	ldl	rr4,@r6
+	expect	1438
+	ld	rr4,@r0
+	endexpect
 	; LD R,DA
 	ld	r2,1234h
 	ld	rh2,1234h
@@ -588,18 +591,30 @@
 	ldb	rh2,1234h(r10)
 	ld	rr4,1234h(r10)
 	ldl	rr4,1234h(r10)
+	expect	1439
+	ld	rr4,1234h(r0)
+	endexpect
 	; LD R,BA
 	ld	r2,r3(#4321h)
 	ld	rh2,r3(#4321h)
 	ldb	rh2,r3(#4321h)
 	ld	rr4,r3(#4321h)
 	ldl	rr4,r3(#4321h)
+	expect	1438
+	ldl	rr4,r0(#4321h)
+	endexpect
 	; LD R,BX
 	ld	r2,r3(r11)
 	ld	rh2,r3(r11)
 	ldb	rh2,r3(r11)
 	ld	rr4,r3(r11)
 	ldl	rr4,r3(r11)
+	expect	1438
+	ld	r2,r0(r11)
+	endexpect
+	expect	1439
+	ld	r2,r3(r0)
+	endexpect
 	; LD IR,R
 	ld	@r3,r2
 	ld	@r3,rh2

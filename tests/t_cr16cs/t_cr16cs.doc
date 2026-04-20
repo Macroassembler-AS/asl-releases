@@ -1,6 +1,6 @@
-+----------------------- Test Application DEFINED ---------------------------+
++------------------------ Test Application CR16CS ---------------------------+
 |                                                                            |
-|  A short test for the DEFINED() function, which is mainly useful if IFDEF  |
-|  is not sufficient...                                                      |
+| This is a (synthetic) test of the CR16C instruction set differences in     |
+| small model                                                                |
 |                                                                            |
 +----------------------------------------------------------------------------+

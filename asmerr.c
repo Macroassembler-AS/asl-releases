@@ -353,6 +353,12 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
       msgno = Num_ErrMsgCannotSplitArg; break;
     case ErrNum_WrongOptCnt:
       msgno = Num_ErrMsgWrongOptCnt; break;
+    case ErrNum_UnknownOption:
+      msgno = Num_ErrMsgUnknownOption; break;
+    case ErrNum_DuplicateOption:
+      msgno = Num_ErrMsgDuplicateOption; break;
+    case ErrNum_WrongOptionList:
+      msgno = Num_ErrMsgWrongOptionList; break;
     case ErrNum_OnlyImmAddr:
       msgno = Num_ErrMsgOnlyImmAddr; break;
     case ErrNum_InvOpSize:
@@ -479,6 +485,12 @@ static const char *ErrorNum2String(tErrorNum Num, char *Buf, int BufSize)
       msgno = Num_ErrMsgInvFPUType; break;
     case ErrNum_InvPMMUType:
       msgno = Num_ErrMsgInvPMMUType; break;
+    case ErrNum_InvProcReg:
+      msgno = Num_ErrMsgInvProcReg; break;
+    case ErrNum_InvBaseReg:
+      msgno = Num_ErrMsgInvBaseReg; break;
+    case ErrNum_InvIndexReg:
+      msgno = Num_ErrMsgInvIndexReg; break;
     case ErrNum_InvCtrlReg:
       msgno = Num_ErrMsgInvCtrlReg; break;
     case ErrNum_UnknownVector:
