@@ -1,3 +1,8 @@
+2026-04-26 [1.42 Bld 304]
+
+- Bugfix      : A few corrections in the 53C8xx target,
+                and replace test case for it.
+
 2026-04-20 [1.42 Bld 303]
 
 - Bugfix      : Z8000: Disallow R0 as index register

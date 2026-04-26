@@ -1,173 +1,95 @@
-; /*--------------------------------------------------*/
-; /*                                                  */
-; /* Module GENSCSI.SS                                */
-; /*                                                  */
-; /* SCRIPTS routines for generic SCSI operations.    */
-; /*                                                  */
-; /* Adapted from Symbios Logic                       */
-; /*    Software Development Kit                      */
-; /*                                                  */
-; /* Project: A Programmer's Guide to SCSI            */
-; /* Copyright (C) 1997, Brian Sawert.                */
-; /* All rights reserved.                             */
-; /* Syntax adapted to AS to serve as a test case     */
-; /*                                                  */
-; /*--------------------------------------------------*/
+	; SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only
+	cpu	sym53c895
+	page	0
 
+	nop				; 80000000 00000000
+	disconnect			; 48000000 00000000
 
-; /*--------------------------------------------------*/
-; /*                                                  */
-; /* This script is a generic skeleton for issuing    */
-; /* SCSI commands. It handles arbitration, message   */
-; /* in and out, status and data in.                  */
-; /*                                                  */
-; /* Uses table indirect mode for command, data, and  */
-; /* other buffers.                                   */
-; /*                                                  */
-; /*--------------------------------------------------*/
+	expect	1110
+	jump
+	endexpect
+	jump	0x12345678
+	jump	rel($+0x345678)
+	jump	0x12345678, when carry
+	jump	rel($+0x345678), when carry
+	jump	0x12345678, if atn
+	jump	rel($+0x345678), if atn
+	jump	0x12345678, when not carry
+	jump	rel($+0x345678), when not carry
+	jump	0x12345678, if not atn
+	jump	rel($+0x345678), if not atn
+	jump	0x12345678, if data_out
+	jump	rel($+0x345678), if data_out
+	jump	0x12345678, when data_out
+	jump	rel($+0x345678), when data_out
+	jump	0x12345678, if data_in
+	jump	rel($+0x345678), if data_in
+	jump	0x12345678, when data_in
+	jump	rel($+0x345678), when data_in
+	jump	0x12345678, if cmd
+	jump	rel($+0x345678), if command
+	jump	0x12345678, when cmd
+	jump	rel($+0x345678), when command
+	jump	0x12345678, if status
+	jump	rel($+0x345678), if status
+	jump	0x12345678, when status
+	jump	rel($+0x345678), when status
+	jump	0x12345678, if msg_out
+	jump	rel($+0x345678), if message_out
+	jump	0x12345678, when msg_out
+	jump	rel($+0x345678), when message_out
+	jump	0x12345678, if msg_in
+	jump	rel($+0x345678), if message_in
+	jump	0x12345678, when msg_in
+	jump	rel($+0x345678), when message_in
+	jump	0x12345678, if msg_in and 0xaa and mask 0x55
+	jump	rel($+0x345678), if msg_in and 0xaa and mask 0x55
+	jump	0x12345678, when msg_in and 0xaa and mask 0x55
+	jump	rel($+0x345678), when msg_in and 0xaa and mask 0x55
+	call	0x12345678, when msg_in and 0xaa and mask 0x55
+	call	rel($+0x345678), when msg_in and 0xaa and mask 0x55
+	return
+	return	when msg_in
+	return	when 0xaa and mask 0x55
+	int	0, when msg_in
+	int	0, when 0xaa and mask 0x55
+	intfly
+	intfly	0, when msg_in
+	intfly	0, when 0xaa and mask 0x55
 
+	chmov	from , with msg_out
+	chmov	0x123456, ptr 0x55, when msg_out
 
-;---------- set architecture for 53C825
-	cpu	sym53c825
+	set	ack
+	set	atn and target
+	set	ack and atn and target and carry
+	clear	ack
+	clear	atn and target
+	clear	ack and atn and target and carry
 
+	load	dstat,3,0x12345678
+	load	dstat,3,dsarel(0x345678)
+	store	dstat,3,0x12345678
+	store	dstat,3,dsarel(0x345678)
 
-;---------- set constant values
-err_cmd_complete	equ	0x00000000
-err_not_msgout		equ	0x00000001
-err_bad_reselect	equ	0x00000002
-err_bad_phase		equ	0x00000004
+	move	0x20 to dstat
+	move	scratchb + 0x20 to scratchb
+	move	from 0x12345678, with msg_out
+	move	from 0x12345678, when msg_out
+	move	memory 0x123456, 0x12345678, 0x23456789
+	move	memory no flush 0x123456, 0x12345678, 0x23456789
+	move	0x123456, 0x12345678, when msg_in
+	move	0x123456, ptr 0x12345678 , with msg_in
 
+	select	7, 0x87654321
+	select	atn 7, 0x87654321
+	select	from 0x123456, 0x87654321
+	select	atn from 0x123456, 0x87654321
+	select	atn from 0x123456, rel($+12345)
+	reselect from 0x123456, 0x87654321
 
-;---------- set up table definitions
-
-scsi_id		db	0x33, 0x00, 0x00, 0x00
-msgout_buf	db	0x80, 0x00
-cmd_buf		db	0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-stat_buf	db	?
-msgin_buf	db	2 dup (?)
-exmsgin_buf	db	4 dup (?)
-datain_buf	db	0x40 dup (?)
-
-GEN_SCRIPT:	align	4
-
-;---------- start SCSI target selection
-start_scsi:
-
-; select device from encoded SCSI ID
-; set ATN for message out after select
-	SELECT ATN FROM scsi_id, REL(bad_reselect)
-
-;---------- send identify message
-; exit if not message out phase
-	INT err_not_msgout, WHEN NOT MSG_OUT
-
-; send identify message
-	MOVE FROM msgout_buf, WHEN MSG_OUT
-	JUMP REL(handle_phase)
-
-;---------- send SCSI command
-send_cmd:
-
-; send command block to target
-	MOVE FROM cmd_buf, WHEN CMD
-	JUMP REL(handle_phase)
-
-;---------- get SCSI status
-get_status:
-
-; read status byte from data bus
-	MOVE FROM stat_buf, WHEN STATUS
-	JUMP REL(handle_phase)
-
-;---------- get SCSI message input
-get_msgin:
-
-; read message byte from data bus
-	MOVE FROM msgin_buf, WHEN MSG_IN
-	CLEAR ACK
-
-; handle Command Complete message
-	JUMP REL(cmd_complete), IF 0x00
-
-; handle Disconnect message
-	JUMP REL(wait_disconnect), IF 0x04
-
-; handle extended message
-	JUMP REL(ext_msgin), IF 0x01
-	JUMP REL(handle_phase)
-
-;---------- handle extended message
-ext_msgin:
-
-; read extended message from data bus
-	MOVE FROM exmsgin_buf, WHEN MSG_IN
-	CLEAR ACK
-	JUMP REL(handle_phase)
-
-;---------- get data input
-get_datain:
-
-; read data from bus
-	MOVE FROM datain_buf, WHEN DATA_IN
-	JUMP REL(handle_phase)
-
-;---------- handle SCSI phases
-handle_phase:
-
-; jump to appropriate handler for phase
-	JUMP REL(get_status), WHEN STATUS
-	JUMP REL(get_msgin), WHEN MSG_IN
-	JUMP REL(get_datain), WHEN DATA_IN
-	JUMP REL(send_cmd), WHEN COMMAND
-; unhandled phase
-	INT err_bad_phase
-
-;---------- SCSI command execution complete
-cmd_complete:
-
-; command complete - wait for disconnect
-	MOVE SCNTL2 & 0x7F to SCNTL2
-	CLEAR ACK
-	WAIT DISCONNECT
-	INT err_cmd_complete
-
-;---------- handle invalid select or reselect
-bad_reselect:
-
-; unhandled reselect
-	INT err_bad_reselect
-
-;---------- handle disconnect before reselect
-wait_disconnect:
-
-	MOVE SCNTL2 & 0x7F to SCNTL2
-	CLEAR ACK
-	WAIT DISCONNECT
-
-; clear DMA and SCSI fifos
-	MOVE CTEST3 | 0x04 to CTEST3
-	MOVE STEST3 | 0x02 to STEST3
-
-; wait for reselect
-	WAIT RESELECT REL(bad_reselect)
-
-; expect identify message
-	MOVE FROM msgin_buf, WHEN MSG_IN
-	CLEAR ACK
-
-; shortcut to update sync and wide options
-	SELECT FROM scsi_id, REL(handle_phase)
-
-;-----------------------------------------------------
-; standard Intel/MASM-style pseudo instructions
-
-	include "../t_dx/t_dn.inc"
-	include "../t_dx/t_db.inc"
-	include "../t_dx/t_dw.inc"
-	include "../t_dx/t_dd.inc"
-	include "../t_dx/t_dq.inc"
-	include "../t_dx/t_dt.inc"
-	include "../t_dx/t_do.inc"
-
-;---------- entry point for general SCSI script
-	end	start_scsi
+	wait	disconnect
+	wait	select 0x12345678
+	wait	select rel($+123456)
+	wait	reselect 0x12345678
+	wait	reselect rel($+123456)
