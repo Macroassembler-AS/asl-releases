@@ -1610,36 +1610,19 @@ static void CodeEND(Word Index)
 
 static void CodeLISTING(Word Index)
 {
-  Byte Value = 0xff;
-  Boolean OK;
   UNUSED(Index);
 
   if (!ChkArgCnt(1, 1));
   else if (*AttrPart.str.p_str != '\0') WrError(ErrNum_UseLessAttr);
   else
   {
-    OK = True;
-    NLS_UpString(ArgStr[1].str.p_str);
-    if (!strcmp(ArgStr[1].str.p_str, "OFF"))
-      Value = 0;
-    else if (!strcmp(ArgStr[1].str.p_str, "ON"))
-      Value = 1;
-    else if (!strcmp(ArgStr[1].str.p_str, "NOSKIPPED"))
-      Value = 2;
-    else if (!strcmp(ArgStr[1].str.p_str, "PURECODE"))
-      Value = 3;
-    else
-      OK = False;
-    if (!OK) WrStrErrorPos(ErrNum_OnlyOnOff, &ArgStr[1]);
-    else
-    {
-      tStrComp TmpComp;
-      String TmpCompStr;
+    as_liston_t new_liston;
 
-      StrCompMkTemp(&TmpComp, TmpCompStr, sizeof(TmpCompStr));
-      strmaxcpy(TmpCompStr, ListOnName, sizeof(TmpCompStr));
-      EnterIntSymbol(&TmpComp, ListOn = Value, SegNone, True);
-    }
+    NLS_UpString(ArgStr[1].str.p_str);
+    if (!as_list_liston_to_enum(ArgStr[1].str.p_str, &new_liston))
+      WrStrErrorPos(ErrNum_InvListingValue, &ArgStr[1]);
+    else
+      EnterIntSymbol(&ArgStr[1], ListOn = new_liston, SegNone, True);
   }
 }
 

@@ -1,3 +1,11 @@
+2026-05-01 [1.42 Bld 305]
+
+- Bugfix      : Correct behaviour of NOSKIPPED and PURECODE
+                options of LISTING statement.
+- Bugfix      : correct same-page check for JCP on uCOM-43.
+- Addition    : Default for LISTING may be set via command line
+                option.
+
 2026-04-26 [1.42 Bld 304]
 
 - Bugfix      : A few corrections in the 53C8xx target,

@@ -321,7 +321,7 @@ void AddMacro(PMacroRec Neu, LongInt DefSect, Boolean Protest)
   NewNode->Contents = Neu;
 
   TreeRoot = &(MacroRoot->Tree);
-  EnterTree(&TreeRoot, &(NewNode->Tree), MacroAdder, &Protest);
+  EnterTree(&TreeRoot, (PTree)NewNode, MacroAdder, &Protest);
   MacroRoot = (PMacroNode)TreeRoot;
 }
 

@@ -376,7 +376,7 @@ void AddStruct(PStructRec StructRec, char *Name, Boolean Protest)
     Node->Defined = FALSE;
     Node->StructRec = StructRec;
     TreeRoot = &(StructRoot->Tree);
-    EnterTree(&TreeRoot, &(Node->Tree), StructAdder, &Protest);
+    EnterTree(&TreeRoot, (PTree)Node, StructAdder, &Protest);
     StructRoot = (PStructNode)TreeRoot;
   }
 }

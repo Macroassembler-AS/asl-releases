@@ -29,7 +29,7 @@ typedef struct _TIfSave
   LongInt StartLine;
 } TIfSave, *PIfSave;
 
-extern Boolean IfAsm;
+extern Boolean IfAsm, ActiveIF;
 extern PIfSave FirstIfSave;
 
 extern Boolean CodeIFs(void);

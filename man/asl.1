@@ -142,6 +142,13 @@ Force AS to treat warnings as errors.
 Force AS to print all hexadecimal constants with lowercase letters, rather
 than with uppercase letters A..F which is the default.
 .TP
+.B -listing <on|off|purecode|noskipped>
+
+Define which parts of the assembled code shall be include in the listing.
+The default is to include all source, but it is possible to exclude
+code parts skipped via conditional assembly, or even to leave out the
+conditional statements themselves.
+.TP
 .B -listradix <2..36>
 Set the number system to be used in the listing.  By default, all integer
 values are printed in hex, but an arbitrary base between 2 and 36 may be

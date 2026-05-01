@@ -1558,6 +1558,7 @@ static void DecodeITOF(Word Index)
 		size = 0x03;
 		disp = 0;
 		memex = 0;
+    scale = 0;
 	}
 	else if (DecodeIndirectADD(&ArgStr[1], &regs, &disp, &flags, &memex, &scale))
 	{

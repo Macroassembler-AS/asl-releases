@@ -70,7 +70,6 @@ Byte ShareMode;                          /* 0=kein SHARED,1=Pascal-,2=C-Datei, 3
 DebugType DebugMode;                     /* Ausgabeformat Debug-Datei */
 Word NoICEMask;                          /* which symbols to use in NoICE dbg file */
 Byte ListMode;                           /* 0=kein Listing,1=Konsole,2=auf Datei */
-Byte ListOn;		    	                   /* Listing erzeugen ? */
 Integer MaxIncludeLevel;                 /* maximum include nesting level */
 Boolean MakeUseList;                     /* Belegungsliste ? */
 Boolean MakeCrossList;	                 /* Querverweisliste ? */

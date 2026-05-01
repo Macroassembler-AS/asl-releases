@@ -69,7 +69,7 @@
 
 \vspace{1cm}\par
 
-{\large Edition April 2026}
+{\large Edition May 2026}
 \end{raggedright}
 
 \clearpage
@@ -911,6 +911,10 @@ At the moment, the following switches are defined:
       to a value between 2 and 36, thereby overriding the default of 10.
       The value given by this switch can itself be overridden in the program
       by the statement odf same name.}
+\item{\tty{listing}: Defines whether the listing of assembled code shall
+      contain everything, or whether certain parts excluded by conditional 
+      assembly shall be omitted.  Valid agruments to this option are ther same
+      as described in \ref{SectListingCmd}.}
 \item{\label{listradix}\tty{LISTRADIX}: By default, all numeric output in the listing
       (addresses, generated code, symbol values) is written in hexadecimal
       notation.  This switch requests usage of a different number system in the
@@ -7695,7 +7699,7 @@ programs.
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 \subsection{LISTING}
-\ttindex{LISTING}
+\ttindex{LISTING}\label{SectListingCmd}
 
 works like \tty{MACEXP} and accepts the same parameters, but is much more
 radical: After a
@@ -13606,6 +13610,11 @@ described by:
                {This pseudo command accepts as argument either \tty{ON} or
                 \tty{OFF}}
                {none}
+\errentry{1521}{invalid LISTING value}
+               {Fehler}
+               {Only \tty{ON}, \tty{OFF}, \tty{NOSKIPPED}, or
+                \tty{PURECODE} is allowed as argument for \tty{LISTING}.}
+               {the argument in question}
 \errentry{1530}{stack is empty or undefined}
                {error}
                {It was tried to access a stack via a \tty{POPV} instruction

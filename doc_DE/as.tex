@@ -51,7 +51,7 @@
 
 \vspace{1cm}\par
 
-{\large Stand April 2026}
+{\large Stand Mai 2026}
 \end{raggedright}
 
 \clearpage
@@ -916,6 +916,10 @@ Momentan sind folgende Schalter definiert:
 \item{\label{radix}\tty{RADIX}: Stellt das Default-Zahlensystem auf
       einen Wert zwischen 2 und 36, anstelle von 10.  Dieser Wert kann
       durch die gleichnamige Anweisung im Programm "ubersteuert werden.}
+\item{\tty{listing}: Gibt vor, ob im Listing des assemblierten Codes alles
+      ausgegeben werden soll, oder durch bedingte Assemblierung ausgelassenene
+      Teile nicht.  Die erlaubten Werte sind die gleichen wie in \ref{SectListingCmd}
+      beschrieben.}
 \item{\label{listradix}\tty{LISTRADIX}: Defaultm"a"sig erfolgen alle Zahlenausgaben im Listing
       (Adressen, erzeugter Code, Symboltabelle) im Hexadezimalsystem.  Mit
       diesem Schalter kann ein beliebiges anderes Zahlensystem im Bereich
@@ -7926,7 +7930,7 @@ in neuen Programmen kein Gebrauch mehr gemacht werden.
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 \subsection{LISTING}
-\ttindex{LISTING}
+\ttindex{LISTING}\label{SectListingCmd}
 
 Mit diesem Befehl kann das Listing komplett ein- und ausgeschaltet
 werden. Nach einem
@@ -7949,6 +7953,8 @@ nur noch die jeweils benutzten Teile sehen m"ochte.
 \par
 Die momentane Einstellung l"a"st sich aus dem Symbol \tty{LISTING}
 (0=\tty{OFF}, 1=\tty{ON}, 2=\tty{NOSKIPPED}, 3=\tty{PURECODE}) auslesen.
+Der Startwert kann "uber die gleichnamige Kommandozeilen-Option
+gesetzt werden.
 
 %%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -13964,6 +13970,12 @@ Angaben:
                {Dieser Pseudobefehl darf als Argument nur \tty{ON}
                 oder \tty{OFF} haben.}
                {keines}
+\errentry{1521}{ung"ultiger LISTING-Wert}
+               {Fehler}
+               {Als Argument f"ur \tty{LISTING} sind nur die Werte
+                \tty{ON}, \tty{OFF}, \tty{NOSKIPPED} oder \tty{PURECODE}
+                erlaubt.}
+               {das fragliche Argument}
 \errentry{1530}{Stack ist leer oder nicht definiert}
                {Fehler}
                {Es wurde bei einem \tty{POPV}

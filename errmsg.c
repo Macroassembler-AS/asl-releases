@@ -393,7 +393,7 @@ int ChkExcludeCPUList(int ErrorNum, ...)
   {
     tExcludeContext Context;
 
-    *Context.Str = '\0';
+    Context.Str[0] = '\0';
     Context.First = True;
     Context.pExcludeCPUDef =
     Context.pLastCPUDef = NULL;

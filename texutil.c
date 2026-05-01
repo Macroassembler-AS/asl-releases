@@ -1026,6 +1026,8 @@ void tex_newcommand_expand_push(const tex_newcommand_t *p_cmd)
       if (new_expanded_len > expanded_len)
       {
         p_expanded_line = (char*)realloc(p_expanded_line, new_expanded_len + 1);
+        if (!p_expanded_line)
+          abort();
         p_pos = p_expanded_line + pos;
       }
       delta = arg_len - holder_len;

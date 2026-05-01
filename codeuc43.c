@@ -276,13 +276,18 @@ static void decode_jcp(Word code)
 
     if (eval_result.OK)
     {
-      /* PC[0..7] is not auto-incremented after fetching a jump or call
-         instruction.  So JCP always remains in the current 64 byte page,
-         even if it is located in the last byte of a 64 byte page: */
+      /* PC[10..8] is not auto-incremented after fetching an instruction,
+         but PC[7..0] is.  So JCP always remains in the current 256 byte field,
+         and also in the current 64 byte page, unless it is located on the last
+         byte of a 64 byte page.  Then the destination must be in the current
+         field's next page, or the field's first page, if it is located in the
+         last byte of the current field's last page: */
 
       if (!mFirstPassUnknownOrQuestionable(eval_result.Flags))
       {
-        if ((EProgCounter() & 0x7c0) != (address & 0x7c0))
+        Word next_address = (EProgCounter() & 0x700) | ((EProgCounter() + 1) & 0xff);
+
+        if ((next_address & 0x7c0) != (address & 0x7c0))
         {
           WrStrErrorPos(ErrNum_TargOnDiffPage, &ArgStr[1]);
           return;

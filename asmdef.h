@@ -24,6 +24,7 @@
 #include "tempresult.h"
 #include "addrspace.h"
 #include "chartrans.h"
+#include "asmlist.h"
 
 typedef struct _TCrossRef
 {
@@ -159,7 +160,7 @@ typedef struct _TSaveState
   CPUVar SaveCPU;
   char *pSaveCPUArgs;
   as_addrspace_t SavePC;
-  Byte SaveListOn;
+  as_liston_t SaveListOn;
   tLstMacroExp SaveLstMacroExp;
   tLstMacroExpMod SaveLstMacroExpModDefault,
                   SaveLstMacroExpModOverride;
@@ -225,7 +226,6 @@ extern Byte ShareMode;
 extern DebugType DebugMode;
 extern Word NoICEMask;
 extern Byte ListMode;
-extern Byte ListOn;
 extern Integer MaxIncludeLevel;
 extern Boolean MakeUseList;
 extern Boolean MakeCrossList;

@@ -191,6 +191,7 @@ typedef enum
   ErrNum_CustomNotEnabled = 1508,
   ErrNum_InvBitPos = 1510,
   ErrNum_OnlyOnOff = 1520,
+  ErrNum_InvListingValue = 1521,
   ErrNum_StackEmpty = 1530,
   ErrNum_NotOneBit = 1540,
   ErrNum_MissingStruct = 1550,

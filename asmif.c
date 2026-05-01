@@ -28,7 +28,11 @@
 PIfSave FirstIfSave;
 Boolean IfAsm;       /* FALSE: in einer neg. IF-Sequenz-->kein Code */
 
-static Boolean ActiveIF;
+/* True: cuurent instruction is an IF instructon that is 'sctive', i.e.
+   not within another IF....ENDIF body that is conditionally not being
+   assembled. */
+
+Boolean ActiveIF;
 
 /*!------------------------------------------------------------------------
  * \fn     ifsave_create(tIfState if_state, Boolean case_found)
@@ -496,16 +500,15 @@ Boolean IFListMask(void)
 {
   switch (ListOn)
   {
-    case 0:
-      return True;
-    case 1:
+    case e_liston_on:
       return False;
-    case 2:
-      return ((!ActiveIF) && (!IfAsm));
-    case 3:
+    case e_liston_noskipped:
+      return (!ActiveIF && !IfAsm);
+    case e_liston_purecode:
       return (ActiveIF || (!IfAsm));
+    default:
+      return True;
   }
-  return True;
 }
 
 void AsmIFInit(void)

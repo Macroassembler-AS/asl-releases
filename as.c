@@ -2476,6 +2476,7 @@ static void Produce_Code(void)
       LabelHandle(&LabPart, EProgCounter(), False);
   }
 
+  ActiveIF = False;
   if (LookupInstTable(oppart_leading_dot
                     ? main_inst_table_leading_dot
                     : main_inst_table_no_leading_dot,
@@ -3038,7 +3039,6 @@ static void AssembleFile_InitPass(void)
       SetCPUByType(0, NULL);
   }
 
-  strmaxcpy(TmpCompStr, ListOnName, sizeof(TmpCompStr)); EnterIntSymbol(&TmpComp, ListOn = 1, SegNone, True);
   SetLstMacroExp(eLstMacroExpAll);
   InitLstMacroExpMod(&LstMacroExpModOverride);
   InitLstMacroExpMod(&LstMacroExpModDefault);

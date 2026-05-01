@@ -694,6 +694,10 @@ Message ErrMsgOnlyOnOff
  "nur ON/OFF erlaubt"
  "only ON/OFF allowed"
 
+Message ErrMsgInvListingValue
+ "ung&uuml;tiger LISTING-Wert"
+ "invalid LISTING value"
+
 Message ErrMsgStackEmpty
  "Stack ist leer oder nicht definiert"
  "stack is empty or undefined"
@@ -1635,6 +1639,7 @@ Message InfoMessHelp
  "  -i <Pfad>[:Pfad]...  : Pfadliste f&uuml;r Includedateien\n" \
  "  -intsyntax <arg>[,arg] : Syntax f&uuml;r Ganzzahlen &auml;ndern\n" \
  "  -L                   : Listing auf Datei\n" \
+ "  -listing <off|on|purecode|noskipped>: Listing des assemblierten Codes beschr&auml;nken" \
  "  -listline-prefix <fmt> : Format des Pro-Zeile-Pr&auml;fix im Listing setzen\n" \
  "  -listradix <2...36>  : Zahlensystem im Listing\n" \
  "  -list-macro-handles  : Symbol-Handles von Makros im Listing anzeigen\n" \
@@ -1698,6 +1703,7 @@ Message InfoMessHelp
  "  -L                   : listing to file\n" \
  "  -l                   : listing to console\n" \
  "  -listline-prefix <fmt> : set format of listing per-line prefix\n" \
+ "  -listing <off|on|purecode|noskipped>: limit listing of assembled code" \
  "  -listradix <2...36>  : number system in listing\n" \
  "  -list-macro-handles  : list macro's symbol handles\n" \
  "  -[no-]list-unknown-values : display unknown values in listing as question marks\n" \
