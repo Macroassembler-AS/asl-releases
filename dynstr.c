@@ -155,8 +155,20 @@ size_t as_dynstr_copy(as_dynstr_t *p_dest, const as_dynstr_t *p_src)
 
 size_t as_dynstr_copy_c_str(as_dynstr_t *p_dest, const char *p_src)
 {
-  size_t len = strlen(p_src);
+  return as_dynstr_copy_raw_str(p_dest, p_src, strlen(p_src));
+}
 
+/*!------------------------------------------------------------------------
+ * \fn     as_dynstr_copy_raw_str(as_dynstr_t *p_dest, const char *p_src, size_t len)
+ * \brief  set string from raw string
+ * \param  p_str string to set
+ * \param  p_src init source
+ * \param  len source length
+ * \return actual # of characters copied
+ * ------------------------------------------------------------------------ */
+
+size_t as_dynstr_copy_raw_str(as_dynstr_t *p_dest, const char *p_src, size_t len)
+{
   if ((len >= p_dest->capacity) && p_dest->dynamic)
     as_dynstr_realloc(p_dest, as_dynstr_roundup_len(len));
 

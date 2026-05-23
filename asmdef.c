@@ -87,6 +87,7 @@ Boolean CodeOutput;	                     /* Code erzeugen */
 Boolean MacProOutput;                    /* Makroprozessorausgabe schreiben */
 Boolean MacroOutput;                     /* gelesene Makros schreiben */
 Boolean HardRanges;                      /* Bereichsfehler echte Fehler ? */
+Boolean label_leading_colon;             /* Labels have colon at beginning instead of end? */
 const char *DivideChars;                 /* Trennzeichen fuer Parameter. Inhalt Read Only! */
 Boolean HasAttrs;                        /* Opcode hat Attribut */
 const char *AttrChars;                   /* Zeichen, mit denen Attribut abgetrennt wird */
@@ -161,7 +162,8 @@ char MomCPUIdent[20],                   /* dessen Name in ASCII */
 int OutRadixBase;                       /* dito fuer Ausgabe */
 int ListRadixBase;                      /* ditto for listing */
 Boolean ListPCZeroPad;			/* PC with leading zeros? */
-const char *pCommentLeadIn;             /* list of comment lead-in sequences */
+const char *pCommentLeadIn,             /* list of comment lead-in sequences */
+           *p_extra_comment_leadin;
 
 tStrComp *ArgStr;                       /* Komponenten der Zeile */
 tStrComp LabPart, CommPart, ArgPart, OpPart, AttrPart;
@@ -169,7 +171,7 @@ char AttrSplit;
 Boolean oppart_leading_dot;
 int ArgCnt;                             /* Argumentzahl */
 int AllocArgCnt;
-as_dynstr_t OneLine;                    /* eingelesene Zeile */
+tStrComp SrcLine;                       /* eingelesene Zeile */
 #ifdef PROFILE_MEMO
 unsigned NumMemo;
 unsigned long NumMemoCnt, NumMemoSum;
@@ -468,7 +470,7 @@ void asmdef_init(void)
   StrCompAlloc(&AttrPart, STRINGSIZE);
   StrCompAlloc(&ArgPart, STRINGSIZE);
   StrCompAlloc(&CommPart, STRINGSIZE);
-  as_dynstr_ini(&OneLine, STRINGSIZE);
+  StrCompAlloc(&SrcLine, STRINGSIZE);
   ListLine = GetString();
   PrtInitString = GetString();
   PrtExitString = GetString();

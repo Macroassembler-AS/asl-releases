@@ -23,9 +23,17 @@
 
 void as_nonz_dynstr_ini(as_nonz_dynstr_t *p_str, size_t ini_capacity)
 {
-  p_str->p_str = (char*)calloc(1, ini_capacity);
-  p_str->capacity = p_str->p_str ? ini_capacity : 0;
-  p_str->len = 0;
+  if (ini_capacity > 0)
+  {
+    p_str->p_str = (char*)calloc(1, ini_capacity);
+    p_str->capacity = p_str->p_str ? ini_capacity : 0;
+    p_str->len = 0;
+  }
+  else
+  {
+    p_str->p_str = NULL;
+    p_str->capacity = p_str->len = 0;
+  }
 }
 
 /*!------------------------------------------------------------------------
@@ -118,15 +126,45 @@ size_t as_nonz_dynstr_to_c_str(char *p_dest, const as_nonz_dynstr_t *p_src, size
 
 size_t as_nonz_dynstr_copy(as_nonz_dynstr_t *p_dest, const as_nonz_dynstr_t *p_src)
 {
-  size_t trans_len;
+  if (p_dest != p_src)
+  {
+    size_t trans_len;
 
-  if (p_dest->capacity < p_src->capacity)
-    as_nonz_dynstr_realloc(p_dest, p_src->capacity);
-  trans_len = p_src->len;
-  if (trans_len > p_dest->capacity)
-    trans_len = p_dest->capacity;
-  memcpy(p_dest->p_str, p_src->p_str, p_dest->len = trans_len);
+    if (p_dest->capacity < p_src->capacity)
+      as_nonz_dynstr_realloc(p_dest, p_src->capacity);
+    trans_len = p_src->len;
+    if (trans_len > p_dest->capacity)
+      trans_len = p_dest->capacity;
+    memcpy(p_dest->p_str, p_src->p_str, p_dest->len = trans_len);
+  }
   return p_dest->len;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     as_nonz_dynstr_swap(as_nonz_dynstr_t *p_str1, as_nonz_dynstr_t *p_str2)
+ * \brief  exchange contents of two strings
+ * \param  p_str1, p_str2 strings to swap contents
+ * ------------------------------------------------------------------------ */
+
+void as_nonz_dynstr_swap(as_nonz_dynstr_t *p_str1, as_nonz_dynstr_t *p_str2)
+{
+  if (p_str1 != p_str2)
+  {
+    size_t len, capacity;
+    char *p_str;
+
+    len = p_str1->len;
+    capacity = p_str1->capacity;
+    p_str = p_str1->p_str;
+
+    p_str1->len = p_str2->len;
+    p_str1->capacity = p_str2->capacity;
+    p_str1->p_str = p_str2->p_str;
+
+    p_str2->len = len;
+    p_str2->capacity = capacity;
+    p_str2->p_str = p_str;
+  }
 }
 
 /*!------------------------------------------------------------------------
@@ -153,6 +191,19 @@ size_t as_nonz_dynstr_append_raw(as_nonz_dynstr_t *p_dest, const char *p_src, in
   memcpy(p_dest->p_str + p_dest->len, p_src, trans_len);
   p_dest->len += trans_len;
   return trans_len;
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     as_nonz_dynstr_append_char(as_nonz_dynstr_t *p_dest, char src)
+ * \brief  extend string
+ * \param  p_dest string to extend
+ * \param  src what to append
+ * \return actual # of bytes transferred
+ * ------------------------------------------------------------------------ */
+
+size_t as_nonz_dynstr_append_char(as_nonz_dynstr_t *p_dest, char src)
+{
+  return as_nonz_dynstr_append_raw(p_dest, &src, 1);
 }
 
 /*!------------------------------------------------------------------------

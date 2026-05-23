@@ -648,7 +648,7 @@ static void DecodeFixed(Word Index)
 {
   FixedOrder *pOrder = FixedOrders + Index;
 
-  if (!ChkArgCnt(0, 0));
+  if (!moto8_chk_no_args());
   else if (*AttrPart.str.p_str) WrError(ErrNum_UseLessAttr);
   else if (!ChkMinCPU(pOrder->MinCPU));
   else
@@ -1636,6 +1636,7 @@ static void InitFields(void)
   AddReg("CCRW", eRegCCRW , 1, CPU6812X);
 
   add_moto8_pseudo(InstTable, e_moto_pseudo_flags_be);
+  add_moto8_comment_onoff();
   AddMoto16Pseudo(InstTable, e_moto_pseudo_flags_be);
   AddInstTable(InstTable, "DB", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_MotoRep, DecodeIntelDB);
   AddInstTable(InstTable, "DW", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_MotoRep, DecodeIntelDW);

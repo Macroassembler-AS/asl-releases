@@ -781,6 +781,22 @@ char *strstr(const char *haystack, const char *needle)
 #endif
 
 /*!------------------------------------------------------------------------
+ * \fn     strmultchr(const char *haystack, const char *needles)
+ * \brief  find the first occurence of either character in string
+ * \param  haystack string to search in
+ * \param  needles characters to search for
+ * \return last occurence or NULL
+ * ------------------------------------------------------------------------ */
+
+char *strmultchr(const char *p_haystack, const char *p_needles)
+{
+  for (; *p_haystack; p_haystack++)
+    if (strchr(p_needles, *p_haystack))
+      return (char*)p_haystack;
+  return NULL;
+}
+
+/*!------------------------------------------------------------------------
  * \fn     strrmultchr(const char *haystack, const char *needles)
  * \brief  find the last occurence of either character in string
  * \param  haystack string to search in

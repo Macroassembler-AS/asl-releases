@@ -766,7 +766,7 @@ static void DecodeFixed(Word Index)
 {
   const BaseOrder *pOrder = FixedOrders + Index;
 
-  if (!ChkArgCnt(0, 0));
+  if (!moto8_chk_no_args());
   else if (!ChkMinCPU(pOrder->MinCPU));
   else if (Hi(pOrder->Code) == 0)
   {
@@ -1573,6 +1573,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "STBT" , InstrZ++, DecodeBit);
 
   add_moto8_pseudo(InstTable, e_moto_pseudo_flags_be);
+  add_moto8_comment_onoff();
   AddMoto16Pseudo(InstTable, e_moto_pseudo_flags_be);
   AddInstTable(InstTable, "DB", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_MotoRep, DecodeIntelDB);
   AddInstTable(InstTable, "DW", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_MotoRep, DecodeIntelDW);

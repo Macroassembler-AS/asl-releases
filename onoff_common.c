@@ -24,7 +24,8 @@ Boolean FPUAvail,    /* floating point co processor instructions allowed? */
         TargetBigEndian, /* Data storage Big Endian? */
         DoPadding,   /* align to even address? */
         Packing,     /* packed data storage? */
-        default_regsyms; /* built-in default register symbols? */
+        default_regsyms, /* built-in default register symbols? */
+        extra_comments;
 static unsigned registered, ext_registered;
 
 #define SupAllowedCmdName "SUPMODE"   /* Privileged instructions allowed */
@@ -42,6 +43,9 @@ static Boolean DefCompMode;
 #define PackingCmdName    "PACKING"
 #define PackingSymName    "PACKING"
 static Boolean DefPacking, DefPackingSet;
+
+#define extra_comments_name "EXTRACOMMENTS"
+static Boolean def_extra_comments;
 
 /*!------------------------------------------------------------------------
  * \fn     onoff_test_and_set(unsigned mask)
@@ -150,6 +154,18 @@ void onoff_packing_add(Boolean def_value)
 }
 
 /*!------------------------------------------------------------------------
+ * \fn     onoff_extra_comments_add(void)
+ * \brief  register on/off command to enable/disable extra comments
+ * ------------------------------------------------------------------------ */
+
+void onoff_extra_comments_add(void)
+{
+  if (!onoff_ext_test_and_set(e_onoff_ext_reg_extra_comments))
+    SetFlag(&extra_comments, extra_comments_name, def_extra_comments);
+  AddONOFF(extra_comments_name, &extra_comments, extra_comments_name, False);
+}
+
+/*!------------------------------------------------------------------------
  * \fn     initpass_onoff(void)
  * \brief  per-pass initialization of module
  * ------------------------------------------------------------------------ */
@@ -198,12 +214,21 @@ static as_cmd_result_t CMD_Packing(Boolean Negate, const char *Arg)
   return e_cmd_ok;
 }
 
+static as_cmd_result_t cmd_extra_comments(Boolean negate, const char *p_arg)
+{
+  UNUSED(p_arg);
+
+  def_extra_comments = !negate;
+  return e_cmd_ok;
+}
+
 static const as_cmd_rec_t onoff_params[] =
 {
   { BigEndianCmdName  , CMD_BigEndian       },
   { CompModeCmdName   , CMD_CompMode        },
   { PackingCmdName    , CMD_Packing         },
-  { SupAllowedCmdName , CMD_SupAllowed      }
+  { SupAllowedCmdName , CMD_SupAllowed      },
+  { extra_comments_name, cmd_extra_comments }
 };
 
 extern void onoff_common_init(void)
@@ -213,5 +238,6 @@ extern void onoff_common_init(void)
   DefBigEndian = False;
   DefCompMode = False;
   DefPacking = DefPackingSet = False;
+  extra_comments = False;
   AddInitPassProc(initpass_onoff);
 }

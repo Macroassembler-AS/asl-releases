@@ -58,7 +58,7 @@ extern void StrCompIncRefLeft(struct sStrComp *pComp, size_t Delta);
 extern void KillPrefBlanksStrComp(struct sStrComp *pComp);
 extern void KillPrefBlanksStrCompRef(struct sStrComp *pComp);
 
-extern void KillPostBlanksStrComp(struct sStrComp *pComp);
+extern int KillPostBlanksStrComp(struct sStrComp *pComp);
 
 extern void DumpStrComp(const char *pTitle, const struct sStrComp *pComp);
 

@@ -1,3 +1,11 @@
+2026-05-23 [1.42 Bld 306]
+
+- Addition    : Preliminary support for TBIL (Contribution by
+                Jeff Epler)
+- Addition    : Add EXTRACOMMENTS option to allow an asterisk
+                as comment leadin on 68xx targets, plus the usage
+                of end-of-line comments.
+
 2026-05-01 [1.42 Bld 305]
 
 - Bugfix      : Correct behaviour of NOSKIPPED and PURECODE

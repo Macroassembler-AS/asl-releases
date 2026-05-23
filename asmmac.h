@@ -34,7 +34,7 @@ typedef struct _MacroRec
 
 #define BufferArraySize 1024
 
-struct as_dynstr;
+struct sStrComp;
 
 typedef struct _TInputTag
 {
@@ -47,7 +47,7 @@ typedef struct _TInputTag
   LongInt StartLine;
   Boolean (*Processor)(
 #ifdef __PROTOS__
-                       struct _TInputTag *P, struct as_dynstr *p_dest
+                       struct _TInputTag *P, struct sStrComp *p_dest
 #endif
                                                       );
   LongInt ParCnt,ParZ;

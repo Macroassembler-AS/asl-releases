@@ -42,6 +42,8 @@ typedef enum
 
 struct sInstTable;
 extern void add_moto8_pseudo(struct sInstTable *p_inst_table, moto_pseudo_flags_t flags);
+extern void add_moto8_comment_onoff(void);
+extern Boolean moto8_chk_no_args(void);
 
 extern int ConvertMotoFloatDec(as_float_t F, Byte *pDest, Boolean NeedsBig);
 

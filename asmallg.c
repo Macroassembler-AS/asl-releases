@@ -181,6 +181,7 @@ static void SetCPUCore(const tCPUDef *pCPUDef, const tStrComp *pCPUArgs)
   SaveIsOccupiedFnc =
   RestoreIsOccupiedFnc = NULL;
   multi_char_le = False;
+  label_leading_colon = False;
   DecodeAttrPart = NULL;
   SwitchIsOccupied =
   PageIsOccupied =
@@ -190,6 +191,7 @@ static void SetCPUCore(const tCPUDef *pCPUDef, const tStrComp *pCPUArgs)
   assume_set(NULL, 0);
   pASSUMEOverride = NULL;
   pCommentLeadIn = Default_CommentLeadIn;
+  p_extra_comment_leadin = NULL;
   UnsetCPU();
   strmaxcpy(MomCPUArgs, pCPUArgs ? pCPUArgs->str.p_str : "", STRINGSIZE);
 
@@ -791,28 +793,30 @@ static void CodeNEWPAGE(Word Index)
 
 static void CodeString(Word Index)
 {
-  String tmp;
-  Boolean OK;
-
   if (ChkArgCnt(1, 1))
   {
-    EvalStrStringExpression(&ArgStr[1], &OK, tmp);
+    Boolean OK;
+    as_nonz_dynstr_t tmp;
+
+    as_nonz_dynstr_ini(&tmp, 0);
+    EvalStrStringExpression(&ArgStr[1], &OK, &tmp);
     if (!OK) WrError(ErrNum_InvString);
     else
     {
       switch (Index)
       {
         case 0:
-          strmaxcpy(PrtInitString, tmp, STRINGSIZE);
+          as_nonz_dynstr_to_c_str(PrtInitString, &tmp, sizeof(PrtInitString));
           break;
         case 1:
-          strmaxcpy(PrtExitString, tmp, STRINGSIZE);
+          as_nonz_dynstr_to_c_str(PrtExitString, &tmp, sizeof(PrtExitString));
           break;
         case 2:
-          strmaxcpy(PrtTitleString, tmp, STRINGSIZE);
+          as_nonz_dynstr_to_c_str(PrtTitleString, &tmp, sizeof(PrtTitleString));
           break;
       }
     }
+    as_nonz_dynstr_free(&tmp);
   }
 }
 
@@ -861,75 +865,31 @@ static void CodeDEPHASE(Word Index)
     Phases[ActPC] = 0;
 }
 
+enum { e_level_message, e_level_warning, e_level_error, e_level_fatal };
 
-static void CodeWARNING(Word Index)
+static void CodeMESSAGE(Word level)
 {
-  String mess;
-  Boolean OK;
-  UNUSED(Index);
-
   if (ChkArgCnt(1, 1))
   {
-    EvalStrStringExpression(&ArgStr[1], &OK, mess);
-    if (!OK) WrError(ErrNum_InvString);
-    else
-      WrErrorString(mess, "", True, False, NULL, NULL);
-  }
-}
+    as_nonz_dynstr_t mess;
+    Boolean OK;
 
-
-static void CodeMESSAGE(Word Index)
-{
-  String mess;
-  Boolean OK;
-  UNUSED(Index);
-
-  if (ChkArgCnt(1, 1))
-  {
-    EvalStrStringExpression(&ArgStr[1], &OK, mess);
-    if (!OK) WrError(ErrNum_InvString);
-    else
+    as_nonz_dynstr_ini(&mess, 0);
+    EvalStrStringExpression(&ArgStr[1], &OK, &mess);
+    if (OK)
     {
-      if (msg_level >= e_msg_level_normal)
-        WrConsoleLine(mess, True);
-      if (strcmp(LstName, "/dev/null"))
-        WrLstLine(mess);
+      as_nonz_dynstr_append_char(&mess, '\0');
+      if (level == e_level_message)
+      {
+        if (msg_level >= e_msg_level_normal)
+          WrConsoleLine(mess.p_str, True);
+        if (strcmp(LstName, "/dev/null"))
+          WrLstLine(mess.p_str);
+      }
+      else if ((level != e_level_error) || !FindAndTakeExpectError(ErrNum_UserError))
+        WrErrorString(mess.p_str, "", level == e_level_warning, level == e_level_fatal, NULL, NULL);
     }
-  }
-}
-
-
-static void CodeERROR(Word Index)
-{
-  String mess;
-  Boolean OK;
-  UNUSED(Index);
-
-  if (ChkArgCnt(1, 1))
-  {
-    if (FindAndTakeExpectError(ErrNum_UserError))
-      return;
-
-    EvalStrStringExpression(&ArgStr[1], &OK, mess);
-    if (!OK) WrError(ErrNum_InvString);
-    else
-      WrErrorString(mess, "", False, False, NULL, NULL);
-  }
-}
-
-
-static void CodeFATAL(Word Index)
-{
-  String mess;
-  Boolean OK;
-  UNUSED(Index);
-
-  if (ChkArgCnt(1, 1))
-  {
-    EvalStrStringExpression(&ArgStr[1], &OK, mess);
-    if (!OK) WrError(ErrNum_InvString);
-    else
-      WrErrorString(mess, "", False, True, NULL, NULL);
+    as_nonz_dynstr_free(&mess);
   }
 }
 
@@ -1307,34 +1267,41 @@ static void CodeLABEL(Word Index)
 
 static void CodeREAD(Word Index)
 {
-  String ExpStr;
-  tStrComp Exp;
-  Boolean OK;
   LongInt SaveLocHandle;
   UNUSED(Index);
 
-  StrCompMkTemp(&Exp, ExpStr, sizeof(ExpStr));
   if (ChkArgCnt(1, 2))
   {
-    if (ArgCnt == 2) EvalStrStringExpression(&ArgStr[1], &OK, Exp.str.p_str);
+    as_nonz_dynstr_t prompt;
+    Boolean OK;
+
+    as_nonz_dynstr_ini(&prompt, 0);
+    if (ArgCnt == 2)
+    {
+      EvalStrStringExpression(&ArgStr[1], &OK, &prompt);
+      if (OK) as_nonz_dynstr_append_char(&prompt, '\0');
+    }
     else
     {
-      as_snprintf(Exp.str.p_str, sizeof(ExpStr), "Read %s ? ", ArgStr[1].str.p_str);
+      as_snprintf(prompt.p_str, STRINGSIZE, "Read %s ? ", ArgStr[1].str.p_str);
       OK = True;
     }
     if (OK)
     {
       TempResult Erg;
+      String input_str;
 
       as_tempres_ini(&Erg);
-      printf("%s", Exp.str.p_str);
+      printf("%s", prompt.p_str);
       fflush(stdout);
-      if (!fgets(Exp.str.p_str, STRINGSIZE, stdin))
+      if (!fgets(input_str, sizeof(input_str), stdin))
         OK = False;
       else
       {
-        UpString(Exp.str.p_str);
-        EvalStrExpression(&Exp, &Erg);
+        tStrComp input;
+        StrCompMkTemp(&input, input_str, sizeof(input_str));
+        UpString(input_str);
+        EvalStrExpression(&input, &Erg);
       }
       if (OK)
       {
@@ -1360,6 +1327,7 @@ static void CodeREAD(Word Index)
       }
       as_tempres_free(&Erg);
     }
+    as_nonz_dynstr_free(&prompt);
   }
 }
 
@@ -2440,17 +2408,17 @@ void codeallg_init(void)
   AddInstTable(PseudoTable, "ENUM",       0,  CodeENUM      );
   AddInstTable(PseudoTable, "ENUMCONF",   0,  CodeENUMCONF  );
   AddInstTable(PseudoTable, "EQU",        0,  CodeSETEQU    );
-  AddInstTable(PseudoTable, "ERROR",      0,  CodeERROR     );
+  AddInstTable(PseudoTable, "ERROR",      e_level_error, CodeMESSAGE );
   AddInstTable(PseudoTable, "EXPECT",     0,  CodeEXPECT    );
   AddInstTable(PseudoTable, "EXPORT_SYM", 0,  CodeEXPORT    );
   AddInstTable(PseudoTable, "EXTERN_SYM", 0,  CodeEXTERN    );
   AddInstTable(PseudoTable, "EVAL",       1,  CodeSETEQU    );
-  AddInstTable(PseudoTable, "FATAL",      0,  CodeFATAL     );
+  AddInstTable(PseudoTable, "FATAL",      e_level_fatal, CodeMESSAGE );
   AddInstTable(PseudoTable, "FUNCTION",   0,  CodeFUNCTION  );
   AddInstTable(PseudoTable, "INTSYNTAX",  0,  CodeINTSYNTAX );
   AddInstTable(PseudoTable, "LABEL",      0,  CodeLABEL     );
   AddInstTable(PseudoTable, "LISTING",    0,  CodeLISTING   );
-  AddInstTable(PseudoTable, "MESSAGE",    0,  CodeMESSAGE   );
+  AddInstTable(PseudoTable, "MESSAGE",    e_level_message, CodeMESSAGE );
   AddInstTable(PseudoTable, "NEWPAGE",    0,  CodeNEWPAGE   );
   AddInstTable(PseudoTable, "NESTMAX",    0,  CodeNESTMAX   );
   AddInstTable(PseudoTable, "NEXTENUM",   1,  CodeENUM      );
@@ -2479,7 +2447,7 @@ void codeallg_init(void)
   AddInstTable(PseudoTable, "STRUC",      0,  CodeSTRUCT    );
   AddInstTable(PseudoTable, "STRUCT",     0,  CodeSTRUCT    );
   AddInstTable(PseudoTable, "UNION",      1,  CodeSTRUCT    );
-  AddInstTable(PseudoTable, "WARNING",    0,  CodeWARNING   );
+  AddInstTable(PseudoTable, "WARNING",    e_level_message, CodeMESSAGE );
   AddInstTable(PseudoTable, "=",          0,  CodeSETEQU    );
   AddInstTable(PseudoTable, ":=",         1,  CodeSETEQU    );
 

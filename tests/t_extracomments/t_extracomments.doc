@@ -1,0 +1,6 @@
++------------------- Test Application EXTRACOMMENTS -------------------------+
+|                                                                            |
+|    This is a test of the Motorola-specific way to lead in comments.        |
+|    Currently, only asterisks are supported, but no end of line comments.   |
+|                                                                            |
++----------------------------------------------------------------------------+

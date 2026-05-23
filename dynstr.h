@@ -36,7 +36,7 @@ extern int as_dynstr_realloc(as_dynstr_t *p_str, size_t new_alloc_len);
 extern void as_dynstr_free(as_dynstr_t *p_str);
 
 extern size_t as_dynstr_copy(as_dynstr_t *p_dest, const as_dynstr_t *p_src);
-
+extern size_t as_dynstr_copy_raw_str(as_dynstr_t *p_dest, const char *p_src, size_t len);
 extern size_t as_dynstr_copy_c_str(as_dynstr_t *p_dest, const char *p_src);
 
 extern size_t as_dynstr_append(as_dynstr_t *p_dest, const char *p_src, size_t len);

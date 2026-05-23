@@ -242,7 +242,7 @@ static void DecodeFixed(Word Index)
 {
   BaseOrder *pOrder = FixedOrders + Index;
 
-  if (ChkArgCnt(0, 0)
+  if (moto8_chk_no_args()
    && ChkMinCPU(pOrder->MinCPU))
   {
     CodeLen = 1;
@@ -539,7 +539,7 @@ static void DecodeTST(Word Index)
 
   if (Index == 1)
   {
-    if (ChkArgCnt(0, 0))
+    if (moto8_chk_no_args())
     {
       BAsmCode[1] = 0x0f;
       BAsmCode[2] = 0x0f;
@@ -876,6 +876,7 @@ static void InitFields(void)
   add_brset_brclr("BRSET", 0x00);
 
   add_moto8_pseudo(InstTable, e_moto_pseudo_flags_be);
+  add_moto8_comment_onoff();
   AddMoto16Pseudo(InstTable, e_moto_pseudo_flags_be);
   AddInstTable(InstTable, "DB", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_MotoRep, DecodeIntelDB);
   AddInstTable(InstTable, "DW", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_MotoRep, DecodeIntelDW);

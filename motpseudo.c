@@ -608,6 +608,33 @@ void add_moto8_pseudo(PInstTable p_inst_table, moto_pseudo_flags_t flags)
     AddInstTable(p_inst_table, "DS", e_moto_pseudo_flags_none, DecodeMotoDFS);
 }
 
+/*!------------------------------------------------------------------------
+ * \fn     add_moto8_comment_onoff(void)
+ * \brief  add option for Motorola-style extra comment leadin
+ * ------------------------------------------------------------------------ */
+
+void add_moto8_comment_onoff(void)
+{
+  p_extra_comment_leadin = "*";
+  onoff_extra_comments_add();
+}
+
+/*!------------------------------------------------------------------------
+ * \fn     moto8_chk_no_args(void)
+ * \brief  check for no instruction arguments
+ * \return True if no arguments
+ * ------------------------------------------------------------------------ */
+
+Boolean moto8_chk_no_args(void)
+{
+  /* In extra comments mode, the generic line parser cannot
+     know whether the first token after the mnemonic is an
+     instruction argument or already an end-of-line comment.
+     So ignore all arguments in extra comments mode; */
+
+  return extra_comments || ChkArgCnt(0, 0);
+}
+
 static void DigIns(char Ch, int Pos, Byte *pDest)
 {
   int bytepos = Pos >> 1, bitpos = (Pos & 1) << 2;

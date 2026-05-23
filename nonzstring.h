@@ -34,6 +34,10 @@ extern size_t as_nonz_dynstr_to_c_str(char *p_dest, const as_nonz_dynstr_t *p_sr
 
 extern size_t as_nonz_dynstr_copy(as_nonz_dynstr_t *p_dest, const as_nonz_dynstr_t *p_src);
 
+extern void as_nonz_dynstr_swap(as_nonz_dynstr_t *p_str1, as_nonz_dynstr_t *p_str2);
+
+extern size_t as_nonz_dynstr_append_char(as_nonz_dynstr_t *p_dest, char src);
+
 extern size_t as_nonz_dynstr_append_raw(as_nonz_dynstr_t *p_dest, const char *p_src, int src_len); /* -1 -> strlen */
 
 extern size_t as_nonz_dynstr_copy_c_str(as_nonz_dynstr_t *p_dest, const char *p_src);

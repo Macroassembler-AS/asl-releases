@@ -401,7 +401,7 @@ static void DecodeFixed(Word Index)
 {
   const FixedOrder *forder = FixedOrders + Index;
 
-  if (!ChkArgCnt(0, 0));
+  if (!moto8_chk_no_args());
   else if (!ChkRangeCPU(forder->MinCPU, forder->MaxCPU));
   else if (Hi(forder->Code) != 0)
   {
@@ -715,7 +715,7 @@ static void DecodeSing8(Word Code)
 
 static void DecodeSing8_Acc(Word Code)
 {
-  if (ChkArgCnt(0, 0))
+  if (moto8_chk_no_args())
   {
     BAsmCode[PrefCnt] = Code;
     CodeLen = PrefCnt + 1;
@@ -915,6 +915,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "PRWINS", 0, DecodePRWINS);
 
   add_moto8_pseudo(InstTable, e_moto_pseudo_flags_be);
+  add_moto8_comment_onoff();
   AddMoto16Pseudo(InstTable, e_moto_pseudo_flags_be);
   AddInstTable(InstTable, "DB", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_MotoRep, DecodeIntelDB);
   AddInstTable(InstTable, "DW", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_MotoRep, DecodeIntelDW);

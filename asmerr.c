@@ -890,7 +890,7 @@ void WrErrorString(const char *pMessage, const char *pAdd, Boolean Warning, Bool
   if ((ExtendErrors > 1) || ((ExtendErrors > 0) && pLineComp))
   {
     strcpy(ErrStr[++ErrStrCount], "");
-    GenLineForMarking(ErrStr[ErrStrCount], STRINGSIZE, OneLine.p_str, pLeadIn);
+    GenLineForMarking(ErrStr[ErrStrCount], STRINGSIZE, SrcLine.str.p_str, pLeadIn);
     if (pLineComp)
     {
       strcpy(ErrStr[++ErrStrCount], "");

@@ -65,9 +65,9 @@ RMB \\
 
 {\tt\begin{tabbing}
 \hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\kill
-ADR        \> BYT         \> DB          \> DC[.$<$size$>$] \> DFS     \\
-DS[.$<$size$>$] \> DW     \> FCB         \> FCC         \> FDB         \\
-PADDING     \> PRWINS(68HC11K4) \> RMB \\
+ADR        \> BYT         \> DB          \> DC[.$<$size$>$] \> DFS \\
+DS[.$<$size$>$] \> DW     \> EXTRACOMMENTS \> FCB         \> FCC \\
+ FDB       \> PADDING     \> PRWINS(68HC11K4) \> RMB \\
 \end{tabbing}}
 
 \subsubsection{Motorola/Freescale 6805/68HC(S)08}
@@ -76,9 +76,9 @@ PADDING     \> PRWINS(68HC11K4) \> RMB \\
 
 {\tt\begin{tabbing}
 \hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\kill
-ADR        \> BYT         \> DB          \> DC[.$<$size$>$] \> DFS     \\
-DS[.$<$size$>$] \> DW     \> FCB         \> FCC         \> FDB         \\
-PADDING     \> RMB \\
+ADR        \> BYT         \> DB          \> DC[.$<$size$>$] \> DFS \\
+DS[.$<$size$>$] \> DW     \> EXTRACOMMENTS \> FCB           \> FCC \\
+FDB        \> PADDING     \> RMB \\
 \end{tabbing}}
 
 \subsubsection{Motorola 6809/Hitachi 6309}
@@ -88,8 +88,8 @@ PADDING     \> RMB \\
 {\tt\begin{tabbing}
 \hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\kill
 ADR        \> ASSUME      \> BYT         \> DB          \> DC[.$<$size$>$] \\
-DFS        \> DS[.$<$size$>$] \> DW      \> FCB         \> FCC \\
-FDB        \> PADDING     \> PLAINBASE   \> RMB \\
+DFS        \> DS[.$<$size$>$] \> DW      \> EXTRACOMMENTS \> FCB \\
+FCC        \> FDB         \> PADDING     \> PLAINBASE   \> RMB \\
 \end{tabbing}}
 
 \subsubsection{Konami 052001}
@@ -99,8 +99,8 @@ FDB        \> PADDING     \> PLAINBASE   \> RMB \\
 {\tt\begin{tabbing}
 \hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\kill
 ADR        \> BYT         \> DB          \> DC[.$<$size$>$] DFS \\
-DS[.$<$size$>$] \> DW      \> FCB         \> FCC \> FDB        \\
-PADDING    \> RMB \\
+DS[.$<$size$>$] \> DW     \> EXTRACOMMENTS \> FCB         \> FCC \\
+FDB        \> PADDING     \> RMB \\
 \end{tabbing}}
 
 \subsubsection{Motorola 68HC12}
@@ -109,9 +109,9 @@ PADDING    \> RMB \\
 
 {\tt\begin{tabbing}
 \hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\kill
-ADR        \> BYT         \> DB          \> DC[.$<$size$>$] \> DFS     \\
-DS[.$<$size$>$] DW        \> FCB         \> FCC         \> FDB \\
-PADDING     \> RMB \\
+ADR        \> BYT         \> DB          \> DC[.$<$size$>$] \> DFS \\
+DS[.$<$size$>$] DW        \> EXTRACOMMENTS \> FCB           \> FCC \\
+FDB        \> PADDING     \> RMB \\
 \end{tabbing}}
 
 \subsubsection{NXP S12Z}
@@ -121,8 +121,8 @@ PADDING     \> RMB \\
 {\tt\begin{tabbing}
 \hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\kill
 ADR        \> BYT         \> DB          \> DC[.$<$size$>$] \> DEFBIT \\
-DEFBITFIELD \> DFS        \> DS[.$<$size$>$] \> DW          \> FCB \\
-FCC     \> FDB \> PADDING \> RMB \\
+DEFBITFIELD \> DFS        \> DS[.$<$size$>$] \> DW          \> EXTRACOMMENTS \\
+FCB        \> FCC         \> FDB         \> PADDING         \> RMB \\
 \end{tabbing}}
 
 \subsubsection{Motorola 68HC16}
@@ -132,8 +132,8 @@ FCC     \> FDB \> PADDING \> RMB \\
 {\tt\begin{tabbing}
 \hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\kill
 ADR        \> ASSUME      \> BYT         \> DB          \> DC[.$<$size$>$] \\
-DFS        \> DS[.$<$size$>$] \> DW      \> FCB         \> FCC \\
-FDB         \> PADDING    \> RMB \\
+DFS        \> DS[.$<$size$>$] \> DW      \> EXTRACOMMENTS \> FCB \\
+FCC        \> FDB         \> PADDING     \> RMB \\
 \end{tabbing}}
 
 \subsubsection{Freescale 68RS08}
@@ -143,8 +143,8 @@ FDB         \> PADDING    \> RMB \\
 {\tt\begin{tabbing}
 \hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\kill
 ADR        \> ASSUME      \> BYT         \> DB          \> DC[.$<$size$>$] \\
-DFS        \> DS[.$<$size$>$] \> DW      \> FCB         \> FCC \\
-FDB         \> PADDING \\
+DFS        \> DS[.$<$size$>$] \> DW      \> EXTRACOMMENTS \> FCB \\
+FCC        \> FDB         \> PADDING \\
 \end{tabbing}}
 
 \subsubsection{Hitachi H8/300(L/H)}
@@ -1193,4 +1193,14 @@ RMB \\
 \hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\kill
 DN         \> DB          \> DD          \> DO          \> DQ \\
 DS         \> DT          \> DW \\
+\end{tabbing}}
+
+\subsubsection{TBIL}
+
+{\em Default Integer Syntax: Motorolal}
+
+{\tt\begin{tabbing}
+\hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\hspace{3cm}\=\kill
+ADR        \> BYT         \> DFS         \> DW          \> FCB \\
+FCC        \> FDB         \> RMB \\
 \end{tabbing}}

@@ -1630,6 +1630,7 @@ Message InfoMessHelp
  "  -E [Name]            : Zieldatei f&uuml;r Fehlerliste,\n" \
  "                         !0..!4 f&uuml;r Standardhandles\n" \
  "                         Default <Quelldatei>.LOG\n" \
+ "  -extracomments       : EXTRACOMMENTS im Default einschalten\n" \
  "  +G                   : Code-Erzeugung unterdr&uuml;cken\n" \
  "  -g [map|atmel|noice] : Debug-Informationen schreiben\n" \
  "  -gnuerrors           : Fehlermeldungen im GNU-Format\n" \
@@ -1692,6 +1693,7 @@ Message InfoMessHelp
  "  -E <name>            : target file for error list,\n" \
  "                         !0..!4 for standard handles\n" \
  "                         default is <srcname>.LOG\n" \
+ "  -extracomments       : enable EXTRACOMMENTS mode by default\n" \
  "  +G                   : suppress code generation\n" \
  "  -g [map|atmel|noice] : write debug info\n" \
  "  -gnuerrors           : error messages in GNU format\n" \
@@ -1716,7 +1718,7 @@ Message InfoMessHelp
  "  -o <name>            : change name of code file\n" \
  "  -p                   : share file formatted for Pascal\n" \
  "  -P                   : write macro processor output\n" \
- "  -plainbase           : PLAINBASE Modus im Default einschalten\n" \
+ "  -plainbase           : enable PLAINBASE mode by default\n" \
  "  -q, -quiet           : silent operation\n" \
  "  -r                   : generate messages if repassing necessary\n" \
  "  -radix <2...36>      : set default number system\n" \

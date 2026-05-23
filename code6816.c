@@ -302,7 +302,7 @@ chk:
 
 static void DecodeFixed(Word Code)
 {
-  if (ChkArgCnt(0, 0))
+  if (moto8_chk_no_args())
   {
     BAsmCode[0] = Hi(Code);
     BAsmCode[1] = Lo(Code);
@@ -314,7 +314,7 @@ static void DecodeEmu(Word Index)
 {
   EmuOrder *pOrder = EmuOrders + Index;
 
-  if (ChkArgCnt(0, 0))
+  if (moto8_chk_no_args())
   {
     BAsmCode[0] = Hi(pOrder->Code1);
     BAsmCode[1] = Lo(pOrder->Code1);
@@ -1059,6 +1059,7 @@ static void InitFields(void)
   AddInstTable(InstTable, "BSR", 0, DecodeBsr);
 
   add_moto8_pseudo(InstTable, e_moto_pseudo_flags_be);
+  add_moto8_comment_onoff();
   AddMoto16Pseudo(InstTable, e_moto_pseudo_flags_be);
   AddInstTable(InstTable, "DB", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_MotoRep, DecodeIntelDB);
   AddInstTable(InstTable, "DW", eIntPseudoFlag_BigEndian | eIntPseudoFlag_AllowInt | eIntPseudoFlag_AllowString | eIntPseudoFlag_MotoRep, DecodeIntelDW);
