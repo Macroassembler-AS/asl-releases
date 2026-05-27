@@ -32,6 +32,6 @@ doc_??/*.pdf
 doc_??/*.toc
 
 /*.o
-/*.dep
+/*.d
 /*.rsc
 /*.msh
